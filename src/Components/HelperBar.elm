@@ -152,7 +152,7 @@ viewNavLevel op =
                 ++ (Maybe.map
                         (\path ->
                             if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
-                                [ li [ class "is-vbar-2" ] []
+                                [ li [ class "is-vbar-1" ] []
                                 , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
@@ -265,10 +265,7 @@ memberButtons roles_ op =
                     [ text "" ]
 
                 else
-                    [ viewRole (uriFromNameid op.baseUri r.nameid []) r
-
-                    --++ [ span [ class "is-vbar-1" ] [] ]
-                    ]
+                    [ viewRole (uriFromNameid op.baseUri r.nameid []) r ]
             )
         |> List.concat
         |> List.reverse

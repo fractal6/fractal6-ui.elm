@@ -1111,7 +1111,8 @@ viewModal op (State model) =
             ]
             []
         , div [ class "modal-content" ] [ viewStep op (State model) ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
@@ -1204,7 +1205,7 @@ viewHeader : Op -> Model -> Html Msg
 viewHeader op model =
     div [ class "panel-heading pt-4 pb-3" ]
         [ div [ class "level modal-card-title is-size-6" ]
-            [ div [ class "level-left" ]
+            [ div [ class "level-left is-hidden-mobile" ]
                 [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ]
                 ]
             , div [ class "level-item" ]

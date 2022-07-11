@@ -14,7 +14,7 @@
 
     @include desktop {
         // Orga Menu adjustments
-        @include until($fullhd) {
+        @include until-fullhd {
             &.has-orga-menu {
                 margin-left: 40px;
 
@@ -802,15 +802,10 @@ strong {
 }
 
 #mainPane {
-    @include until($desktop) {
-        //padding-left: 6px !important;
-        //padding-right: 6px !important;
-    }
-
     // Prevent NavbarTop overflow
     & > .columns {
         // .is-marginless
-        margin: 0 !important;
+        margin: 0;
     }
 }
 
@@ -1050,6 +1045,15 @@ strong {
             margin-bottom: 21px;
         }
     }
+
+    @include desktop-only {
+        margin-left: 4.16% !important;
+        margin-right: 4.16% !important;
+    }
+    @include widescreen-only {
+        margin-left: 4.16% !important;
+        margin-right: 4.16% !important;
+    }
 }
 
 .buttonRole {
@@ -1243,14 +1247,6 @@ strong {
 }
 
 .sidePanel {
-    &.in-horizon {
-        @media screen and (min-width: var(--tablet)) {
-            margin-left: 150px !important;
-        }
-    }
-}
-
-.sidePanel {
     position: absolute;
     background: var(--background-evidence);
     border: 1px solid var(--grey-light);
@@ -1267,18 +1263,10 @@ strong {
         .icon { color: var(--grey) !important; }
     }
 
-    &.in-horizon {
-        margin-top: -10px;
-        @media screen and (min-width: var(--tablet)) {
-            margin-left: 135px;
-        }
-    }
-
     &.is-right {
         left: auto;
         right: 0;
     }
-
 }
 
 .is-reversed > .sidePanel {
@@ -1504,11 +1492,14 @@ tr.mediaBox {
     right: 0;
     z-index: 90;
     margin: 50px;
-    @media (max-width: $tablet){
-        margin: 25px;
+    @include touch {
+        margin: 15px;
     }
-    @media (min-width: $tablet){
-        margin: 50px;
+    @include desktop-only {
+        margin: 40px;
+    }
+    @include widescreen-only {
+        margin: 40px;
     }
 
     & > .button {
@@ -1726,17 +1717,17 @@ tr.mediaBox {
     }
 
     .modal-content, .modal-card {
-        @media (min-width: $modal-width) {
-            min-width: $modal-width;
-            .modal-card-body { padding: 20px 30px 20px 30px; }
-        }
-        @media (max-width: 768px){
+        @include mobile {
             width: 98%;
             margin: 0 1%;
             max-height: calc(100vh - 20px);
         }
+        @include tablet {
+            min-width: $modal-width;
+            .modal-card-body { padding: 20px 30px 20px 30px; }
+        }
 
-        @include from($tablet) {
+        @include tablet {
             &.is-huge {
                 width: 100%;
                 margin: 0px 20px;
@@ -1789,12 +1780,12 @@ tr.mediaBox {
         &:hover { background-color: #952222 !important;}
     }
 
-    .modal-card-title, .panel-heading,
-    .modal-card-head,
+    //.modal-card-title, .panel-heading,
+    //.modal-card-head,
     .modal-card-foot, {
-        @media (max-width: 768px){
-            padding-top: 10px;
-            padding-bottom: 10px;
+        @include mobile {
+            padding-top: 3px;
+            padding-bottom: 3px;
         }
     }
 
@@ -1878,6 +1869,9 @@ tr.mediaBox {
 
         &#tensionTabTop { // tensionModal
             min-height: 42px;
+            @include mobile {
+                min-height: 0;
+            }
             background-color: var(--modal-header-background);
             border-bottom: solid 1px #ccc !important;
         }
@@ -1911,11 +1905,10 @@ tr.mediaBox {
         }
     }
 
-
     .modal-card-body {
         overflow: auto !important;
         height: 10%;
-        @media (min-width: $desktop){
+        @include desktop {
             max-height: calc(72vh);
         }
     }
@@ -2384,25 +2377,9 @@ tr.mediaBox {
 .is-vbar-1 { // next buttons
 	display: inline-block;
 	border-left: 1px solid #ccc;
-	height: 26px;
-    padding-left: 0.5rem;
-
-    margin-top: 2px !important;
-    @include until($desktop) {
-        margin-bottom: 9px !important;
-    }
-}
-
-.is-vbar-2 { // next tabs
-	display: inline-block;
-	border-left: 1px solid #ccc;
-	height: 18px;
+	height: 16px;
     margin-left: 5px;
     padding-left: 5px;
-
-    //@include until($desktop) {
-    //    margin-bottom: 9px !important;
-    //}
 }
 
 .vline {

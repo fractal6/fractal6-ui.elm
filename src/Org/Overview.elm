@@ -1037,7 +1037,7 @@ view_ global model =
                     text "wrong position"
     in
     div [ id "overview", class "columns is-centered" ]
-        [ div [ class "column is-6 is-5-desktop is-5-fullhd" ]
+        [ div [ class "column is-6 is-5-fullhd" ]
             [ --viewSearchBar global.session.user model
               viewCanvas global.session.user model
             , viewFromPos model.window_pos.bottomLeft
