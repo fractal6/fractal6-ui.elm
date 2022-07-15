@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - [css] left menu auto margin.
 - [codefactor] Consolidate the NodeDoc pseudo component. Simplify th doctoolbar keeoping only edit and revision tabs . Inline Authority and governance dropdown
+- publish tension/comment wiht Ctrl+enter.
 
 
 

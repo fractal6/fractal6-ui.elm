@@ -3,7 +3,6 @@ module Components.ContractsPage exposing (Msg(..), State, hasCid, hasLoadFailure
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Comments exposing (viewComment, viewContractCommentInput)
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -22,6 +21,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
@@ -259,7 +259,7 @@ type Msg
       -- Comments
     | PushComment
     | PushCommentPatch
-    | DoUpdateComment String
+    | DoUpdateComment Comment
     | CancelCommentPatch
     | ChangeCommentPost String String
     | ChangeCommentPatch String String
@@ -491,12 +491,12 @@ update_ apis message model =
         PushCommentPatch ->
             ( model, out0 [ patchComment apis model.comment_patch_form CommentPatchAck ] )
 
-        DoUpdateComment id ->
+        DoUpdateComment c ->
             let
                 form =
                     model.comment_patch_form
             in
-            ( { model | comment_patch_form = { form | id = id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
+            ( { model | comment_patch_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
 
         CancelCommentPatch ->
             let

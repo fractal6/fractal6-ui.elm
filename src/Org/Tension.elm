@@ -287,7 +287,7 @@ type Msg
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | CommentAck (GqlData PatchTensionPayloadID)
       -- edit comment
-    | DoUpdateComment String
+    | DoUpdateComment Comment
     | CancelCommentPatch
     | ChangeCommentPost String String
     | SubmitCommentPatch Time.Posix
@@ -878,12 +878,12 @@ update global message model =
                         _ ->
                             ( { model | tension_patch = result }, Cmd.none, Cmd.none )
 
-        DoUpdateComment id ->
+        DoUpdateComment c ->
             let
                 form =
                     model.comment_form
             in
-            ( { model | comment_form = { form | id = id } }, Ports.focusOn "updateCommentInput", Cmd.none )
+            ( { model | comment_form = { form | id = c.id } }, Cmd.batch [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ], Cmd.none )
 
         CancelCommentPatch ->
             let

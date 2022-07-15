@@ -1,7 +1,6 @@
 module Components.Comments exposing (..)
 
 import Assets as A
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD2)
@@ -11,6 +10,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionForm)
@@ -21,7 +21,7 @@ import Time
 
 
 type alias OpEditComment msg =
-    { doUpdate : String -> msg
+    { doUpdate : Comment -> msg
     , doCancelComment : msg
     , doChangeViewMode : InputViewMode -> msg
     , doChangePost : String -> String -> msg
@@ -83,7 +83,7 @@ viewComment op c form result =
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (op.doUpdate c.id) ] [ textH T.edit ] ] ]
+                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (op.doUpdate c) ] [ textH T.edit ] ] ]
                                     ]
                                 ]
 
@@ -232,7 +232,7 @@ viewCommentInput op uctx tension form result viewMode =
                                     in
                                     textarea
                                         [ id "commentInput"
-                                        , class "textarea defaultSubmit"
+                                        , class "textarea"
                                         , rows (min 15 (max line_len op.rows))
                                         , placeholder "Leave a comment"
                                         , value message
@@ -315,7 +315,7 @@ viewContractCommentInput op uctx form result viewMode =
                                 Write ->
                                     textarea
                                         [ id "commentInput"
-                                        , class "textarea defaultSubmit"
+                                        , class "textarea"
                                         , rows op.rows
                                         , placeholder "Leave a comment"
                                         , value message
