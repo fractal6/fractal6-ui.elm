@@ -6,7 +6,6 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
@@ -17,10 +16,10 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
-import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View exposing (viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

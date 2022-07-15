@@ -1282,7 +1282,7 @@ strong {
     overflow-y: auto;
 
     .panel-block, .panel-icon {
-        &:hover {
+        &:hover:not(.is-static) {
             cursor: pointer !important;
             background: var(--hbc) !important;
         }

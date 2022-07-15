@@ -8,8 +8,10 @@ import Session exposing (Apis)
 
 
 
-{-
-   GraphQL client
+{- GraphQL client
+
+   Gql request are defined in Query/
+
 -}
 
 

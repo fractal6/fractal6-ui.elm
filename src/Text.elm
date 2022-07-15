@@ -670,6 +670,11 @@ parent =
     "parent"
 
 
+pending : String
+pending =
+    "pending"
+
+
 firstLink : String
 firstLink =
     "Lead link"
@@ -716,16 +721,6 @@ security =
 
 
 -- Mandate / Members / User
-
-
-directMembers : String
-directMembers =
-    "direct members"
-
-
-subMembers : String
-subMembers =
-    "sub-circle members"
 
 
 about : String
@@ -1241,6 +1236,11 @@ clickMe =
 newReceiver : String
 newReceiver =
     "new destination"
+
+
+rolesHere : String
+rolesHere =
+    "Roles in this circle"
 
 
 noLabels : String

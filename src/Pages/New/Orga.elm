@@ -4,7 +4,6 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
-import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -27,10 +26,11 @@ import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import Json.Encode as JE
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
-import ModelCommon.Requests exposing (createOrga, login)
+import ModelCommon.Requests exposing (createOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

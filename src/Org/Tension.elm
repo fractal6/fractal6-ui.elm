@@ -11,24 +11,6 @@ import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , fromMaybeData
-        , isFailure
-        , loadingSpin
-        , viewAuthNeeded
-        , viewGqlErrors
-        , viewHttpErrors
-        , viewMaybeErrors
-        , withDefaultData
-        , withMapData
-        , withMaybeData
-        , withMaybeDataMap
-        )
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(..))
 import Components.OrgaMenu as OrgaMenu
@@ -59,6 +41,24 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , isFailure
+        , loadingSpin
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , viewMaybeErrors
+        , withDefaultData
+        , withMapData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs
@@ -78,7 +78,6 @@ import ModelCommon.Codecs
         , tensionAction2NodeType
         , uriFromUsername
         )
-import ModelCommon.Requests exposing (getQuickDoc, login, signupValidate)
 import ModelCommon.View
     exposing
         ( action2icon

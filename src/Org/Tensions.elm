@@ -11,21 +11,6 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , fromMaybeData
-        , fromMaybeWebData
-        , viewAuthNeeded
-        , viewGqlErrors
-        , viewHttpErrors
-        , withDefaultData
-        , withMaybeData
-        , withMaybeDataMap
-        )
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
@@ -50,10 +35,25 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , fromMaybeWebData
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withDefaultData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt, getQuickDoc)
+import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
 import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

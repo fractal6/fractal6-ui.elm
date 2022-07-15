@@ -5,7 +5,6 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
@@ -19,10 +18,10 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
-import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View exposing (viewOrgaMedia, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

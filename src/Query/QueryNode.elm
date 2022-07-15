@@ -574,7 +574,7 @@ lgPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.userCanJoin
-        |> with (Fractal.Object.Node.children nArchivedFilterPlus emiterOrReceiverPayload)
+        |> with (Fractal.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
 
@@ -589,8 +589,8 @@ lg2Payload =
         |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
-nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nArchivedFilter a =
+mbChildrenFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+mbChildrenFilter a =
     { a
         | filter =
             Input.buildNodeFilter
@@ -603,8 +603,8 @@ nArchivedFilter a =
     }
 
 
-nArchivedFilterPlus : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nArchivedFilterPlus a =
+lgChildrenFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+lgChildrenFilter a =
     { a
         | filter =
             Input.buildNodeFilter
@@ -810,7 +810,7 @@ membersLocalPayload =
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> hardcoded Nothing
         |> with
-            (Fractal.Object.Node.children nArchivedFilter
+            (Fractal.Object.Node.children mbChildrenFilter
                 (SelectionSet.succeed MemberNode
                     |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
                     |> with Fractal.Object.Node.name

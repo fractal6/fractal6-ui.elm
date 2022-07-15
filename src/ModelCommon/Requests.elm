@@ -2,7 +2,6 @@ module ModelCommon.Requests exposing (..)
 
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
-import Loading exposing (expectJson, fromResult, mapWeb2Data)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -14,6 +13,7 @@ import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import Loading exposing (expectJson, fromResult, mapWeb2Data)
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing
@@ -35,10 +35,10 @@ import Session exposing (Apis)
 
 
 
-{-
+{- HTTP / Rest requests modules
+
    riskyRequest are needed to set cookies on the client through CORS.
--}
-{-
+
    Why the data should be requested here instead of different Graphql Request ?
    Because one of the following raison
    - Recursive queries are handle trough DQL requests.

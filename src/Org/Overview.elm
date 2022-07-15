@@ -9,22 +9,6 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , fromMaybeData
-        , isFailure
-        , viewAuthNeeded
-        , viewGqlErrors
-        , viewHttpErrors
-        , withDefaultData
-        , withMapData
-        , withMaybeData
-        , withMaybeDataMap
-        )
 import Components.NodeDoc as NodeDoc
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
@@ -51,6 +35,22 @@ import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
+import Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , isFailure
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withDefaultData
+        , withMapData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs
@@ -69,7 +69,6 @@ import ModelCommon.Codecs
         , uriFromNameid
         )
 import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
-import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

@@ -5,19 +5,6 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , viewAuthNeeded
-        , viewGqlErrors
-        , viewHttpErrors
-        , withMapData
-        , withMaybeData
-        , withMaybeSlowly
-        )
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD2)
@@ -33,11 +20,23 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withMapData
+        , withMaybeData
+        , withMaybeSlowly
+        )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
 import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
-import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

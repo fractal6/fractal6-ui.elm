@@ -8,7 +8,6 @@ import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
@@ -33,10 +32,11 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchMembersSub)
 import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -292,11 +292,29 @@ update global message model =
             ( newModel, Cmd.none, Cmd.none )
 
         GotMembersSub result ->
-            let
-                newModel =
-                    { model | members_sub = result }
-            in
-            ( newModel, Cmd.none, Cmd.none )
+            case result of
+                Success mbs ->
+                    ( { model
+                        | members_sub =
+                            List.map
+                                (\m ->
+                                    case memberRolesFilter m.roles of
+                                        [] ->
+                                            Nothing
+
+                                        roles ->
+                                            Just { m | roles = roles }
+                                )
+                                mbs
+                                |> List.filterMap identity
+                                |> Success
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | members_sub = result }, Cmd.none, Cmd.none )
 
         OnPendingHover b ->
             ( { model | pending_hover = b }, Cmd.none, Cmd.none )
@@ -501,27 +519,13 @@ view_ us model =
                   else
                     text ""
                 , div [ class "columns mb-6 px-3-mobile" ]
-                    [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
-
-                -- pl-3 because "is-pulled-right" causes a uwanted padding to the next element.
+                    [ Lazy.lazy3 viewMembers model.now model.members_sub model.node_focus ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
-                , div [ class "columns mb-6 px-3" ]
-                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
-                    , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy3 viewGuest model.now model.members_top model.node_focus ]
+                    , div [ class "column is-3" ] [ viewPending model.now model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
             ]
-        ]
-
-
-viewUserRow : Time.Posix -> Member -> Html Msg
-viewUserRow now m =
-    tr []
-        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
-        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
-        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
         ]
 
 
@@ -536,45 +540,33 @@ viewMembers now data focus =
                 text ""
     in
     case data of
-        Success members_ ->
-            let
-                members =
-                    members_
-                        |> List.map
-                            (\m ->
-                                case memberRolesFilter focus m.roles of
-                                    [] ->
-                                        Nothing
+        Success members ->
+            if List.length members == 0 then
+                div [] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
 
-                                    r ->
-                                        Just { m | roles = r }
-                            )
-                        |> List.filterMap identity
-            in
-            case members of
-                [] ->
-                    div [] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
-
-                mbs ->
-                    div []
-                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers, goToParent ]
-                        , div [ class "table-container" ]
-                            [ div [ class "table is-fullwidth" ]
-                                [ thead []
-                                    [ tr [ class "has-background-header" ]
-                                        [ th [] []
-                                        , th [] [ textH T.username ]
-                                        , th [] [ textH T.name ]
-                                        , th [] [ textH T.roles ]
-                                        ]
+            else
+                div []
+                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.members, goToParent ]
+                    , div [ class "table-container" ]
+                        [ div [ class "table is-fullwidth" ]
+                            [ thead []
+                                [ tr [ class "has-background-header" ]
+                                    [ th [] []
+                                    , th [] [ textH T.username ]
+                                    , th [] [ textH T.name ]
+                                    , th [] [ textH T.rolesHere ]
+                                    , th [] [ textH T.rolesSub ]
                                     ]
-                                , tbody [] <|
-                                    List.map
-                                        (\m -> viewUserRow now m)
-                                        mbs
                                 ]
+                            , tbody [] <|
+                                List.map
+                                    (\m ->
+                                        Lazy.lazy3 viewMemberRow now focus m
+                                    )
+                                    members
                             ]
                         ]
+                    ]
 
         Failure err ->
             viewGqlErrors err
@@ -586,61 +578,8 @@ viewMembers now data focus =
             text ""
 
 
-viewMembersSub : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
-viewMembersSub now data focus =
-    case data of
-        Success members_ ->
-            let
-                members =
-                    members_
-                        |> List.map
-                            (\m ->
-                                case memberRolesFilter focus m.roles of
-                                    [] ->
-                                        Nothing
-
-                                    r ->
-                                        Just { m | roles = r }
-                            )
-                        |> List.filterMap identity
-            in
-            case members of
-                [] ->
-                    div [] [ [ "No sub-circle", T.member, "yet." ] |> String.join " " |> text ]
-
-                mbs ->
-                    div []
-                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.subMembers ]
-                        , div [ class "table-container" ]
-                            [ div [ class "table is-fullwidth" ]
-                                [ thead []
-                                    [ tr [ class "has-background-header" ]
-                                        [ th [] []
-                                        , th [] [ textH T.username ]
-                                        , th [] [ textH T.name ]
-                                        , th [] [ textH T.roles ]
-                                        ]
-                                    ]
-                                , tbody [] <|
-                                    List.map
-                                        (\m -> viewUserRow now m)
-                                        mbs
-                                ]
-                            ]
-                        ]
-
-        Failure err ->
-            viewGqlErrors err
-
-        LoadingSlowly ->
-            div [ class "spinner" ] []
-
-        _ ->
-            text ""
-
-
-viewGuest : Time.Posix -> GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewGuest now members_d title focus =
+viewGuest : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
+viewGuest now members_d focus =
     let
         guests =
             members_d
@@ -654,7 +593,7 @@ viewGuest now members_d title focus =
     in
     if List.length guests > 0 then
         div []
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH title ]
+            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.guest ]
             , div [ class "table-container" ]
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
@@ -667,7 +606,9 @@ viewGuest now members_d title focus =
                         ]
                     , tbody [] <|
                         List.indexedMap
-                            (\i m -> viewUserRow now m)
+                            (\i m ->
+                                Lazy.lazy2 viewGuestRow now m
+                            )
                             guests
                     ]
                 ]
@@ -677,8 +618,8 @@ viewGuest now members_d title focus =
         div [] []
 
 
-viewPending : Time.Posix -> GqlData (List Member) -> String -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
-viewPending now members_d title focus pending_hover pending_hover_i tid =
+viewPending : Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending now members_d focus pending_hover pending_hover_i tid =
     let
         guests =
             members_d
@@ -693,7 +634,7 @@ viewPending now members_d title focus pending_hover pending_hover_i tid =
     if List.length guests > 0 then
         div []
             [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
-                [ textH title
+                [ text T.pending
                 , a
                     [ class "button is-small is-primary mx-3"
                     , classList [ ( "is-invisible", not pending_hover ) ]
@@ -731,8 +672,72 @@ viewPending now members_d title focus pending_hover pending_hover_i tid =
         div [] []
 
 
-memberRolesFilter : NodeFocus -> List UserRoleExtended -> List UserRoleExtended
-memberRolesFilter focus roles =
+viewMemberRow : Time.Posix -> NodeFocus -> Member -> Html Msg
+viewMemberRow now focus m =
+    let
+        ( roles_, sub_roles_ ) =
+            List.foldl
+                (\r ( roles, sub_roles ) ->
+                    if (Maybe.map .nameid r.parent |> withDefault focus.nameid) == focus.nameid then
+                        ( r :: roles, sub_roles )
+
+                    else
+                        ( roles, r :: sub_roles )
+                )
+                ( [], [] )
+                m.roles
+                |> (\( x, y ) -> ( List.reverse x, List.reverse y ))
+    in
+    tr []
+        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
+        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
+        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+        , td [ class "pt-3" ]
+            [ case roles_ of
+                [] ->
+                    text "--"
+
+                _ ->
+                    viewMemberRoles now OverviewBaseUri roles_
+            ]
+        , td [ class "pt-3" ]
+            [ case sub_roles_ of
+                [] ->
+                    text "--"
+
+                _ ->
+                    viewMemberRoles now OverviewBaseUri sub_roles_
+            ]
+        ]
+
+
+viewGuestRow : Time.Posix -> Member -> Html Msg
+viewGuestRow now m =
+    tr []
+        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
+        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
+        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+        , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
+        ]
+
+
+viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
+viewMemberRoles now baseUri roles =
+    div [ class "buttons" ] <|
+        List.map
+            (\r -> viewMemberRole now (uriFromNameid baseUri r.nameid []) r)
+            roles
+
+
+
+--
+-- Utils
+--
+--
+
+
+memberRolesFilter : List UserRoleExtended -> List UserRoleExtended
+memberRolesFilter roles =
     roles
         |> List.map
             (\r ->
@@ -744,20 +749,7 @@ memberRolesFilter focus roles =
                     -- Filter Member with roles
                     []
 
-                else if focus.nameid == (r.parent |> Maybe.map (\p -> p.nameid) |> withDefault "") then
-                    -- Dont include top level member for sub circle member (which contains all member)
-                    -- Note: .parentid not defined in the top member query
-                    []
-
                 else
                     [ r ]
             )
         |> List.concat
-
-
-viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
-viewMemberRoles now baseUri roles =
-    div [ class "buttons" ] <|
-        List.map
-            (\r -> viewMemberRole now (uriFromNameid baseUri r.nameid []) r)
-            roles

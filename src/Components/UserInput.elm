@@ -3,7 +3,6 @@ module Components.UserInput exposing (Msg(..), State, init, subscriptions, updat
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
-import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -16,6 +15,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
 import ModelCommon.View exposing (viewUserFull)
@@ -398,10 +398,9 @@ viewInput op model =
 viewUserSelectors : Op -> Model -> Html Msg
 viewUserSelectors op model =
     div [ class "panel sidePanel" ]
-        [ loadingSpinRight (model.users_result == LoadingSlowly)
-        , div [ class "selectors" ] <|
+        [ div [ class "selectors" ] <|
             if model.lookup == [] then
-                [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
+                [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text "Please, enter a valid email address or username" ] ]
 
             else
                 model.lookup
@@ -413,6 +412,7 @@ viewUserSelectors op model =
                                 ]
                                 [ viewUserFull 1 False False u ]
                         )
+                    |> List.append [ loadingSpinRight (model.users_result == LoadingSlowly) ]
         ]
 
 
