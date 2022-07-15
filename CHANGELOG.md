@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [Helperbar] User played roles are now hidden in mobile view.
 - [UserInput] Add a better hint message when no user found in the invitation dialogue.
 - [Org/Members] merge the sub-circles roles into a solely member tables with a new column for sub-circles roles.
+- Fetch the role color when member role element/button view.
 
 ### Fixed
 - [css] left menu auto margin.
