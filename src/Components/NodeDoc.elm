@@ -1,7 +1,6 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
@@ -20,6 +19,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
@@ -272,7 +272,7 @@ setTensionType type_ data =
     { data | form = { f | type_ = Just type_ } }
 
 
-setSource : UserRole -> NodeDoc -> NodeDoc
+setSource : EmitterOrReceiver -> NodeDoc -> NodeDoc
 setSource source data =
     let
         f =
@@ -298,7 +298,7 @@ setSourceShort nameid data =
 
         newForm =
             -- only nameid is used
-            { f | source = { nameid = nameid, name = "", role_type = RoleType.Bot } }
+            { f | source = { nameid = nameid, name = "", role_type = Nothing } }
     in
     { data | form = newForm }
 
@@ -615,7 +615,7 @@ viewAboutSection data op_m =
                   else
                     span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
                 ]
-            , if data.hasInnerToolbar && isSuccess data.tid_r then
+            , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member data.node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
                 div [ class "level-right is-marginless is-small is-hidden-mobile" ] [ viewToolbar NoView data ]
 
               else

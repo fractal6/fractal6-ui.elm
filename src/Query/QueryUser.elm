@@ -74,10 +74,11 @@ userProfilePayload =
             )
         |> with
             (Fractal.Object.User.roles identity
-                (SelectionSet.map3 UserRole
+                (SelectionSet.map4 UserRole
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
                     (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                    Fractal.Object.Node.color
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
@@ -107,10 +108,11 @@ userFullPayload =
             )
         |> with
             (Fractal.Object.User.roles identity
-                (SelectionSet.map3 UserRole
+                (SelectionSet.map4 UserRole
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
                     (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                    Fractal.Object.Node.color
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )

@@ -1001,7 +1001,7 @@ view_ global model =
             , source = OverviewBaseUri
             , hasBeenPushed = True
             , receiver = nearestCircleid model.node_focus.nameid
-            , hasInnerToolbar = ternary (roletype /= Just RoleType.Guest) True False
+            , hasInnerToolbar = True
             }
 
         nodeData =

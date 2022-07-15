@@ -49,6 +49,7 @@ import ModelSchema
         , User
         , UserCommon
         , UserRole
+        , UserRoleCommon
         , UserRoleExtended
         , Username
         , shrinkNode
@@ -406,35 +407,32 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewMemberRole : Time.Posix -> String -> UserRoleExtended -> Html msg
-viewMemberRole now link r =
+viewRole : Maybe ( Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
+viewRole now_m link r =
+    let
+        since =
+            case now_m of
+                Just now ->
+                    "since the " ++ formatDate (Tuple.first now) (Tuple.second now)
+
+                Nothing ->
+                    ""
+
+        ( cls, color ) =
+            case r.color of
+                Just c ->
+                    ( "", [ colorAttr c ] )
+
+                Nothing ->
+                    ( "is-" ++ roleColor r.role_type, [] )
+    in
     a
-        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-        , attribute "data-tooltip" ([ r.name, "in", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
-        , href link
-        ]
-        [ if r.role_type == RoleType.Guest then
-            textH T.guest
-
-          else if r.role_type == RoleType.Member then
-            textH T.member
-
-          else if r.role_type == RoleType.Owner then
-            textH T.owner
-
-          else
-            -- Peer
-            text r.name
-        ]
-
-
-viewRole : String -> UserRole -> Html msg
-viewRole link r =
-    a
-        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-        , href link
-        ]
+        ([ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom " ++ cls)
+         , attribute "data-tooltip" ([ r.name, "in", getParentFragmentFromRole r, since ] |> String.join " ")
+         , href link
+         ]
+            ++ color
+        )
         [ if r.role_type == RoleType.Coordinator then
             span [ class "is-queen" ] []
 
@@ -452,11 +450,11 @@ viewRoleExt cls_ r =
     let
         ( cls, color ) =
             case r.color of
-                Nothing ->
-                    ( cls_ ++ " is-" ++ roleColor r.role_type, [] )
-
                 Just c ->
                     ( cls_, [ colorAttr c ] )
+
+                Nothing ->
+                    ( cls_ ++ " is-" ++ roleColor r.role_type, [] )
     in
     span
         ([ class ("button buttonRole " ++ cls) ] ++ color)
@@ -673,7 +671,7 @@ viewOrgaMedia_ user_m root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map (\r -> viewRole (uriFromNameid OverviewBaseUri r.nameid []) r)
+                                    |> List.map (\r -> viewRole Nothing (uriFromNameid OverviewBaseUri r.nameid []) r)
                                 )
                             ]
 

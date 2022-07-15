@@ -79,10 +79,11 @@ userCtxDecoder =
         )
         (JD.field "roles"
             (JD.list <|
-                JD.map3 UserRole
+                JD.map4 UserRole
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "role_type" <| RoleType.decoder)
+                    (JD.maybe <| JD.field "color" JD.string)
              --@DEBUG/BUG: fail silently if role_type is not present in Role !
             )
             |> JDE.withDefault []
@@ -109,6 +110,7 @@ userCtxEncoder userCtx =
                         [ ( "nameid", JE.string r.nameid )
                         , ( "name", JE.string r.name )
                         , ( "role_type", JE.string <| RoleType.toString r.role_type )
+                        , ( "color", JEE.maybe JE.string r.color )
                         ]
                     )
                     userCtx.roles

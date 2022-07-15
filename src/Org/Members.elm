@@ -37,7 +37,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub)
-import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser, viewUsernameLink)
+import ModelCommon.View exposing (roleColor, viewRole, viewUser, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -725,7 +725,7 @@ viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Htm
 viewMemberRoles now baseUri roles =
     div [ class "buttons" ] <|
         List.map
-            (\r -> viewMemberRole now (uriFromNameid baseUri r.nameid []) r)
+            (\r -> viewRole (Just ( now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r)
             roles
 
 

@@ -717,6 +717,7 @@ type alias LocalMemberNode =
     , name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
     , first_link : Maybe User
     , parent : Maybe NodeId
     , children : Maybe (List MemberNode)
@@ -728,6 +729,7 @@ type alias MemberNode =
     , name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
     , first_link : Maybe User
     , parent : Maybe NodeId
     }
@@ -755,7 +757,7 @@ membersLocalDecoder data =
 
 node2role n =
     -- n -> UserRoleExtended
-    UserRoleExtended n.name n.nameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent
+    UserRoleExtended n.name n.nameid (withDefault RoleType.Guest n.role_type) n.color n.createdAt n.parent
 
 
 membersNodeDecoder : List MemberNode -> List Member
@@ -807,6 +809,7 @@ membersLocalPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> hardcoded Nothing
         |> with
@@ -816,6 +819,7 @@ membersLocalPayload =
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
                     |> with Fractal.Object.Node.role_type
+                    |> with Fractal.Object.Node.color
                     |> with (Fractal.Object.Node.first_link identity userPayload)
                     |> hardcoded Nothing
                 )

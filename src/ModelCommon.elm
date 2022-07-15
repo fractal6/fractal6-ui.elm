@@ -1,14 +1,6 @@
 module ModelCommon exposing (..)
 
 import Array exposing (Array)
-import Loading
-    exposing
-        ( GqlData
-        , RequestResult(..)
-        , WebData
-        , withMaybeData
-        , withMaybeDataMap
-        )
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
@@ -24,6 +16,14 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import List.Extra as LE
+import Loading
+    exposing
+        ( GqlData
+        , RequestResult(..)
+        , WebData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs
     exposing
@@ -94,7 +94,7 @@ ev2eventFragment ev =
 type alias TensionForm =
     { id : String
     , uctx : UserCtx
-    , source : UserRole
+    , source : EmitterOrReceiver
     , target : PNode
     , status : Maybe TensionStatus.TensionStatus
     , type_ : Maybe TensionType.TensionType
@@ -123,7 +123,7 @@ initTensionForm tid user =
             LoggedOut ->
                 initUserctx
     , id = tid
-    , source = UserRole "" "" RoleType.Guest
+    , source = EmitterOrReceiver "" "" Nothing
     , target = initPNode
     , status = Nothing
     , type_ = Nothing

@@ -92,11 +92,12 @@ fetchMembersSub api targetid msg =
 membersDecoder : JD.Decoder (List MemberNode)
 membersDecoder =
     JD.list <|
-        JD.map6 MemberNode
+        JD.map7 MemberNode
             (JD.field "createdAt" JD.string)
             (JD.field "name" JD.string)
             (JD.field "nameid" JD.string)
             (JD.field "role_type" RoleType.decoder |> JD.maybe)
+            (JD.field "color" JD.string |> JD.maybe)
             (JD.field "first_link" userDecoder |> JD.maybe)
             (JD.field "parent" nodeIdDecoder |> JD.maybe)
 

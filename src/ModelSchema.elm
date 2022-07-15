@@ -725,6 +725,7 @@ type alias UserRole =
     { name : String
     , nameid : String
     , role_type : RoleType.RoleType
+    , color : Maybe String
     }
 
 
@@ -732,10 +733,20 @@ type alias UserRoleExtended =
     { name : String
     , nameid : String
     , role_type : RoleType.RoleType
+    , color : Maybe String
 
     --
     , createdAt : String
     , parent : Maybe NodeId
+    }
+
+
+type alias UserRoleCommon a =
+    { a
+        | name : String
+        , nameid : String
+        , role_type : RoleType.RoleType
+        , color : Maybe String
     }
 
 

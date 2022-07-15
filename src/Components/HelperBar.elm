@@ -2,7 +2,6 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
-import Loading exposing (GqlData, RequestResult(..))
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -12,6 +11,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
+import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
@@ -265,7 +265,7 @@ memberButtons roles_ op =
                     [ text "" ]
 
                 else
-                    [ viewRole (uriFromNameid op.baseUri r.nameid []) r ]
+                    [ viewRole Nothing (uriFromNameid op.baseUri r.nameid []) r ]
             )
         |> List.concat
         |> List.reverse

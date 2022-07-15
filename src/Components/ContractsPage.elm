@@ -914,6 +914,7 @@ viewContractBox c op model =
                                     else
                                         Maybe.map (\x -> nodeIdCodec op.receiverid x NodeType.Role) n.nameid |> withDefault ""
                                 , role_type = withDefault RoleType.Peer n.role_type
+                                , color = n.color
                                 }
 
                             baseUri =
@@ -924,7 +925,7 @@ viewContractBox c op model =
                                 [ viewUserFull 1 True True { username = user, name = Nothing }
                                 , text "has been invited"
                                 , text "to play the role"
-                                , span [ class "is-text-aligned" ] [ viewRole baseUri role ]
+                                , span [ class "is-text-aligned" ] [ viewRole Nothing baseUri role ]
                                 ]
 
                     TensionEvent.UserJoined ->

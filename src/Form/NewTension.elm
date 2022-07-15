@@ -4,19 +4,6 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
-import Loading
-    exposing
-        ( ErrorData
-        , GqlData
-        , ModalData
-        , RequestResult(..)
-        , isSuccess
-        , viewAuthNeeded
-        , viewGqlErrors
-        , viewRoleNeeded
-        , withDefaultData
-        , withMaybeData
-        )
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension exposing (viewNodeSelect)
 import Components.NodeDoc as NodeDoc
@@ -49,6 +36,19 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading
+    exposing
+        ( ErrorData
+        , GqlData
+        , ModalData
+        , RequestResult(..)
+        , isSuccess
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewRoleNeeded
+        , withDefaultData
+        , withMaybeData
+        )
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon
@@ -89,7 +89,7 @@ type alias Model =
     { user : UserState
     , nodeDoc : NodeDoc -- form
     , result : GqlData Tension
-    , sources : List UserRole
+    , sources : List EmitterOrReceiver
     , step : TensionStep
     , isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
@@ -280,10 +280,12 @@ setPath p model =
         sources =
             getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
                 |> List.filter (\r -> r.role_type /= RoleType.Owner)
+                |> List.map (\r -> { nameid = r.nameid, name = r.name, role_type = Just r.role_type })
 
         extras =
             getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
                 |> List.filter (\r -> r.role_type == RoleType.Owner)
+                |> List.map (\r -> { nameid = r.nameid, name = r.name, role_type = Just r.role_type })
 
         default_source =
             case List.filter (\r -> nearestCircleid r.nameid == p.focus.nameid) sources |> List.head of
@@ -315,7 +317,10 @@ setPath p model =
                             -- or first role in orga
                             (sources ++ extras) |> List.head |> withDefault model.nodeDoc.form.source
     in
-    { model | sources = sources ++ extras, path_data = Success p }
+    { model
+        | sources = sources ++ extras
+        , path_data = Success p
+    }
         |> setSource default_source
         |> setTarget (shrinkNode p.focus)
 
@@ -403,7 +408,7 @@ setTensionType type_ data =
     { data | nodeDoc = NodeDoc.setTensionType type_ data.nodeDoc }
 
 
-setSource : UserRole -> Model -> Model
+setSource : EmitterOrReceiver -> Model -> Model
 setSource source data =
     { data | nodeDoc = NodeDoc.setSource source data.nodeDoc }
 
@@ -548,7 +553,7 @@ type Msg
     | PushAck (GqlData IdPayload)
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
-    | OnChangeTensionSource UserRole
+    | OnChangeTensionSource EmitterOrReceiver
     | OnChangeTensionTarget Node
     | OnChangePost String String
     | OnSelectRoleExt RoleExtFull

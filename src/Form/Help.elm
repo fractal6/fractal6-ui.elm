@@ -3,7 +3,6 @@ module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -22,6 +21,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..))
