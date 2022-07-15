@@ -86,8 +86,8 @@ viewPathLevel op =
     nav [ class "level" ]
         [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data op.onToggleTreeMenu ]
         , div [ class "level-right mt-0" ]
-            [ A.burger "rolesMenu"
-            , div [ id "rolesMenu", class "navbar-menu" ]
+            [ --A.burger "rolesMenu"
+              div [ id "rolesMenu", class "navbar-menu is-hidden-mobile" ]
                 [ case op.user of
                     LoggedIn uctx ->
                         case op.path_data of

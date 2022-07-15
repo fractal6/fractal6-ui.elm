@@ -282,7 +282,7 @@ export const actions = {
         } else if (data.key == "tree_menu") {
             app.ports.updateMenuTreeFromJs.send(data.val);
         }
-        session.gp.resizeMe();
+        setTimeout(() => session.gp.resizeMe(), 333);
     },
     'REMOVE_SESSION' : (app, session, _) => {
         // @TODO: make a list of item to delete instead !

@@ -127,9 +127,9 @@ viewUpdateInput op uctx comment form result =
                     ]
                 ]
             ]
-        , div [ class "message-body" ]
+        , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
-                [ div [ class "control submitFocus" ]
+                [ div [ class "control" ]
                     [ case viewMode of
                         Write ->
                             let
@@ -138,7 +138,7 @@ viewUpdateInput op uctx comment form result =
                             in
                             textarea
                                 [ id "updateCommentInput"
-                                , class "textarea defaultSubmit"
+                                , class "textarea"
                                 , rows (min 15 (max line_len 7))
                                 , placeholder (upH T.leaveComment)
                                 , value message
@@ -165,7 +165,7 @@ viewUpdateInput op uctx comment form result =
                             ]
                             [ textH T.cancel ]
                         , button
-                            [ class "button is-success"
+                            [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (op.doSubmit op.doEditComment)
@@ -221,9 +221,9 @@ viewCommentInput op uctx tension form result viewMode =
                             ]
                         ]
                     ]
-                , div [ class "message-body" ]
+                , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
-                        [ div [ class "control submitFocus" ]
+                        [ div [ class "control" ]
                             [ case viewMode of
                                 Write ->
                                     let
@@ -265,7 +265,7 @@ viewCommentInput op uctx tension form result viewMode =
                                     )
                                     [ text closeOpenText ]
                                 , button
-                                    ([ class "button is-success"
+                                    ([ class "button is-success defaultSubmit"
                                      , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
                                      ]
@@ -308,9 +308,9 @@ viewContractCommentInput op uctx form result viewMode =
                             ]
                         ]
                     ]
-                , div [ class "message-body" ]
+                , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
-                        [ div [ class "control submitFocus" ]
+                        [ div [ class "control" ]
                             [ case viewMode of
                                 Write ->
                                     textarea
@@ -341,7 +341,7 @@ viewContractCommentInput op uctx form result viewMode =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button"
+                                    ([ class "button defaultSubmit"
                                      , classList [ ( "is-loading", isLoading ) ]
                                      , disabled (not isSendable)
                                      ]

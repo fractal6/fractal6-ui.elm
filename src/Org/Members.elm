@@ -460,8 +460,10 @@ view global model =
     in
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ global.session.user model ]
+        [ div [ class "orgPane" ]
+            [ HelperBar.view helperData
+            , div [ id "mainPane" ] [ view_ global.session.user model ]
+            ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg

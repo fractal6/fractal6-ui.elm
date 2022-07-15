@@ -235,7 +235,7 @@ initLabelForm tid user =
 type alias ArtefactNodeForm =
     { uctx : UserCtx
     , id : String
-    , nameid : String
+    , nameid : String -- use for roonameid identification
     , post : Post
     , mandate : Mandate
     }

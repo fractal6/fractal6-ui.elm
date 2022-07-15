@@ -90,6 +90,7 @@ toString route param params =
                     , "tension"
                     , "tensions"
                     , "user"
+                    , "users"
                     , "org"
                     ]
             then

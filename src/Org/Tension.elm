@@ -30,7 +30,7 @@ import Components.Loading as Loading
         , withMaybeDataMap
         )
 import Components.MoveTension as MoveTension
-import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..))
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(..))
 import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
@@ -299,13 +299,13 @@ type Msg
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
       -- Blob doc edit
+    | ChangeBlobEdit NodeEdit
     | ChangeBlobPost String String
     | AddDomains
     | AddPolicies
     | AddResponsabilities
-    | ChangeBlobMD String
       -- Blob Submit
-    | SubmitBlob NodeDoc Time.Posix --@debug new type to handle MdDoc
+    | SubmitBlob NodeDoc Time.Posix
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
@@ -1002,6 +1002,9 @@ update global message model =
             , Cmd.none
             )
 
+        ChangeBlobEdit value ->
+            ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Cmd.none )
+
         ChangeBlobPost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
@@ -1014,21 +1017,8 @@ update global message model =
         AddPolicies ->
             ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
 
-        ChangeBlobMD value ->
-            let
-                form =
-                    model.tension_form
-
-                newForm =
-                    { form | md = Just value }
-            in
-            ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
-
         SubmitBlob data time ->
             let
-                form =
-                    model.tension_form
-
                 newDoc =
                     data
                         |> NodeDoc.updatePost "createdAt" (fromTime time)
@@ -1077,7 +1067,7 @@ update global message model =
                                 _ ->
                                     newDoc
                     in
-                    ( { model | tension_head = th, nodeDoc = nd }
+                    ( { model | tension_head = th, nodeDoc = nd |> NodeDoc.reset }
                     , Ports.bulma_driver ""
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -1497,8 +1487,10 @@ view global model =
             _ ->
                 "Loading..."
     , body =
-        [ HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ global model ]
+        [ div [ class "orgPane" ]
+            [ HelperBar.view helperData
+            , div [ id "mainPane" ] [ view_ global model ]
+            ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu } model.moveTension |> Html.map MoveTensionMsg
@@ -2215,7 +2207,7 @@ viewDocument u t b model =
                 , hasInnerToolbar = False
                 }
 
-            msgs =
+            op =
                 { data = model.nodeDoc
                 , result = NotAsked
                 , now = model.now
@@ -2229,13 +2221,14 @@ viewDocument u t b model =
                 , onSubmitBlob = SubmitBlob
                 , onCancelBlob = CancelBlob
                 , onPushBlob = PushBlob
+                , onChangeEdit = ChangeBlobEdit
                 , onChangePost = ChangeBlobPost
                 , onAddDomains = AddDomains
                 , onAddPolicies = AddPolicies
                 , onAddResponsabilities = AddResponsabilities
                 }
         in
-        NodeDoc.view nodeData (Just msgs)
+        NodeDoc.view nodeData (Just op)
 
 
 
@@ -2506,13 +2499,14 @@ viewSidePane u t model =
                                     , onSubmitBlob = SubmitBlob
                                     , onCancelBlob = CancelBlob
                                     , onPushBlob = PushBlob
+                                    , onChangeEdit = ChangeBlobEdit
                                     , onChangePost = ChangeBlobPost
                                     , onAddDomains = AddDomains
                                     , onAddPolicies = AddPolicies
                                     , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            div [ class "mt-3" ] [ NodeDoc.viewNodeStatus op2 ]
+                            NodeDoc.viewNodeStatus op2
                         ]
                     ]
             )

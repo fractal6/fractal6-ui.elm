@@ -22,7 +22,6 @@ build_: assets
 prod:
 	npm run prod
 
-
 dev:
 	npm run dev
 

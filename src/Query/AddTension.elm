@@ -169,7 +169,7 @@ buildBlob createdAt username blob_type_m users node post =
                 [ Input.buildBlobRef
                     (\x ->
                         { x
-                            | createdAt = createdAt |> Present
+                            | createdAt = Present createdAt
                             , createdBy =
                                 Input.buildUserRef
                                     (\u -> { u | username = Present username })

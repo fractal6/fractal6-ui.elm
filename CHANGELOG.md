@@ -7,10 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unrealeased]
 
 ### New
+- tension C-enter hint to submit
 
 ### Changed 
+- AuthModal do not exists on background click.
+- user roles are now hidden in mobile view.
 
 ### Fixed
+- [css] left menu auto margin.
+- [codefactor] Consolidate the NodeDoc pseudo component. Simplify th doctoolbar keeoping only edit and revision tabs . Inline Authority and governance dropdown
+
 
 
 ## v0.6

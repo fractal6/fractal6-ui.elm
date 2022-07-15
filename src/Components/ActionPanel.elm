@@ -952,22 +952,11 @@ viewPanel op model =
             (-- EDIT ACTION
              if model.form.node.role_type /= Just RoleType.Guest then
                 [ div
-                    -- View
-                    [ class "dropdown-item button-light"
-                    , onClick
-                        (Navigate
-                            (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
-                        )
-                    ]
-                    [ A.icon1 "icon-eye" (upH T.view) ]
-                , div
                     -- Edit
                     [ class "dropdown-item button-light"
                     , onClick
                         (Navigate
-                            ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
-                                ++ "?v=edit"
-                            )
+                            (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
                         )
                     ]
                     [ A.icon1 "icon-edit-2" (upH T.edit) ]

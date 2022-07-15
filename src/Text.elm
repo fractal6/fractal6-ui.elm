@@ -245,6 +245,11 @@ publish =
     "publish"
 
 
+publishTitle : String
+publishTitle =
+    "As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
+
+
 published : String
 published =
     "published"
@@ -605,6 +610,11 @@ new =
     "new"
 
 
+reviewAndValidate : String
+reviewAndValidate =
+    "Review and validate"
+
+
 
 --Quick Search
 --(header)
@@ -960,6 +970,21 @@ newCircle =
 newRole : String
 newRole =
     "new role"
+
+
+createNewTension : String
+createNewTension =
+    "create tension"
+
+
+createNewCircle : String
+createNewCircle =
+    "Add sub-circle"
+
+
+createNewRole : String
+createNewRole =
+    "Add role"
 
 
 editTitle : String

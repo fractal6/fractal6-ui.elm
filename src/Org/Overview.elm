@@ -968,8 +968,10 @@ view global model =
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ global model ]
+        [ div [ class "orgPane" ]
+            [ HelperBar.view helperData
+            , div [ id "mainPane" ] [ view_ global model ]
+            ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = model.tree_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
@@ -1279,7 +1281,7 @@ viewCanvas us model =
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpen p)
                                 ]
-                                [ textH "Create tension" ]
+                                [ textH T.createNewTension ]
                              ]
                                 ++ (if isAdmin || True then
                                         [ div [ class "is-hbar" ] []
@@ -1287,12 +1289,12 @@ viewCanvas us model =
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
                                             ]
-                                            [ textH "Add sub-circle" ]
+                                            [ textH T.createNewCircle ]
                                         , div
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenRole p)
                                             ]
-                                            [ textH "Add role" ]
+                                            [ textH T.createNewRole ]
 
                                         --, div
                                         --    [ class "button is-success"

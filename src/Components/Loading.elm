@@ -348,7 +348,7 @@ viewRoleNeeded errMsg =
 -- RequestResult / Data methods
 
 
-isSuccess : RequestResult e a -> Bool
+isSuccess : GqlData a -> Bool
 isSuccess data =
     case data of
         Success _ ->
@@ -358,7 +358,7 @@ isSuccess data =
             False
 
 
-isFailure : RequestResult e a -> Bool
+isFailure : GqlData a -> Bool
 isFailure data =
     case data of
         Failure _ ->

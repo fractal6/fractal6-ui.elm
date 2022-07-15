@@ -23,10 +23,8 @@ import Components.NodeDoc as NodeDoc
     exposing
         ( NodeDoc
         , NodeView(..)
-        , viewAboutInput
+        , viewAboutInput2
         , viewMandateInput
-        , viewSelectAuthority
-        , viewSelectGovernance
         )
 import Components.UserInput as UserInput
 import Dict
@@ -150,24 +148,24 @@ nodeStepToString form step =
         RoleAuthorityStep ->
             case form.node.role_type of
                 Just x ->
-                    "Role (" ++ RoleType.toString x ++ ")"
+                    T.role ++ " (" ++ RoleType.toString x ++ ")"
 
                 Nothing ->
-                    "Role"
+                    T.role
 
         CircleVisibilityStep ->
             case form.node.visibility of
                 Just x ->
-                    "Circle Visibility (" ++ NodeVisibility.toString x ++ ")"
+                    T.visibility ++ " (" ++ NodeVisibility.toString x ++ ")"
 
                 Nothing ->
-                    "Circle Visibility"
+                    T.visibility
 
         NodeValidateStep ->
-            "Review and Validate"
+            T.reviewAndValidate
 
         InviteStep ->
-            "Invite"
+            T.invite
 
 
 init : UserState -> State
@@ -552,8 +550,6 @@ type Msg
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
     | OnChangeTensionTarget Node
-    | OnChangeRoleAuthority RoleType.RoleType
-    | OnChangeCircleGovernance NodeMode.NodeMode
     | OnChangePost String String
     | OnSelectRoleExt RoleExtFull
     | OnSelectVisibility NodeVisibility.NodeVisibility
@@ -854,12 +850,6 @@ update_ apis message model =
 
         OnChangeTensionTarget target ->
             ( setTarget (shrinkNode target) model, noOut )
-
-        OnChangeRoleAuthority role_type ->
-            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, noOut )
-
-        OnChangeCircleGovernance mode ->
-            ( { model | nodeDoc = NodeDoc.updatePost "mode" (NodeMode.toString mode) model.nodeDoc }, noOut )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
@@ -1424,7 +1414,7 @@ viewTension op model =
                                             textarea
                                                 [ id "textAreaModal"
                                                 , class "textarea"
-                                                , rows (min 10 (max line_len 5))
+                                                , rows (min 10 (max line_len 4))
                                                 , placeholder (upH T.leaveCommentOpt)
                                                 , value message
                                                 , onInput (OnChangePost "message")
@@ -1435,6 +1425,7 @@ viewTension op model =
                                             div [ class "mt-4 mx-3" ] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-grey-lighter" ] [] ]
                                     ]
                                 , p [ class "help-label" ] [ textH model.txt.message_help ]
+                                , div [ class "is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
                                 , br [] []
                                 ]
                             ]
@@ -1610,13 +1601,7 @@ viewNodeValidate model =
         form =
             model.nodeDoc.form
 
-        node_type =
-            withDefault NodeType.Role form.node.type_
-
-        message =
-            Dict.get "message" form.post |> withDefault ""
-
-        op_ =
+        op =
             { data = model.nodeDoc
             , result = model.result
             , onChangePost = OnChangePost
@@ -1624,31 +1609,17 @@ viewNodeValidate model =
             , onAddPolicies = OnAddPolicies
             , onAddResponsabilities = OnAddResponsabilities
             }
+
+        n =
+            Debug.log "form.node" form.node.type_
+
+        n1 =
+            Debug.log "op.node" op.data.node.type_
     in
     div [ class "modal-card-body" ]
         [ viewNodeBreadcrumb form model.nodeStep
-        , viewAboutInput False OverviewBaseUri model.txt form.node op_
-        , case node_type of
-            NodeType.Role ->
-                let
-                    role_type =
-                        withDefault RoleType.Peer form.node.role_type
-                in
-                div [ class "field mb-5" ]
-                    [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.authority ]
-                    , viewSelectAuthority "" { onSelect = OnChangeRoleAuthority, selection = role_type }
-                    ]
-
-            NodeType.Circle ->
-                let
-                    mode =
-                        withDefault NodeMode.Coordinated form.node.mode
-                in
-                div [ class "field mb-5" ]
-                    [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.governance ]
-                    , viewSelectGovernance "" { onSelect = OnChangeCircleGovernance, selection = mode }
-                    ]
-        , viewMandateInput model.txt form.node.mandate op_
+        , viewAboutInput2 False OverviewBaseUri model.txt form.node op
+        , viewMandateInput model.txt form.node.mandate op
 
         --, br [] []
         --, br [] []
@@ -1658,7 +1629,7 @@ viewNodeValidate model =
         --            [ class "textarea"
         --            , rows 3
         --            , placeholder (upH T.leaveCommentOpt)
-        --            , value message
+        --            , value (Dict.get "message" form.post |> withDefault "")
         --            , onInput <| OnChangePost "message"
         --            ]
         --            []

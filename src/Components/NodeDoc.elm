@@ -16,7 +16,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -42,9 +42,11 @@ import Time
 
 
 type alias NodeDoc =
-    { form : TensionForm
+    { node : NodeFragment --redundant with data.node (use with reset function
+    , form : TensionForm
     , result : GqlData PatchTensionPayloadID
     , mode : NodeView
+    , editMode : Maybe NodeEdit
     , doAddResponsabilities : Bool
     , doAddDomains : Bool
     , doAddPolicies : Bool
@@ -52,16 +54,22 @@ type alias NodeDoc =
 
 
 type NodeView
-    = NodeView
-    | NodeEdit
+    = NodeEdit
     | NodeVersions
     | NoView
 
 
+type NodeEdit
+    = EditAbout
+    | EditMandate
+
+
 init : String -> NodeView -> UserState -> NodeDoc
 init tid mode user =
-    { form = initTensionForm tid user
+    { node = initNodeFragment Nothing
+    , form = initTensionForm tid user
     , result = NotAsked
+    , editMode = Nothing
     , mode = mode
     , doAddResponsabilities = False
     , doAddDomains = False
@@ -75,17 +83,18 @@ initBlob nf data =
         form =
             data.form
     in
-    { data | form = { form | node = nf }, result = NotAsked }
+    { data
+        | node = nf
+        , form = { form | node = nf }
+        , result = NotAsked
+    }
 
 
 nodeViewEncoder : NodeView -> String
 nodeViewEncoder x =
     case x of
-        NodeView ->
-            ""
-
         NodeEdit ->
-            "edit"
+            ""
 
         NodeVersions ->
             "history"
@@ -97,9 +106,6 @@ nodeViewEncoder x =
 nodeViewDecoder : String -> NodeView
 nodeViewDecoder x =
     case x of
-        "edit" ->
-            NodeEdit
-
         "history" ->
             NodeVersions
 
@@ -107,7 +113,7 @@ nodeViewDecoder x =
             NoView
 
         _ ->
-            NodeView
+            NodeEdit
 
 
 
@@ -119,13 +125,35 @@ getNodeView data =
     data.mode
 
 
+getMandate : NodeDoc -> Mandate
+getMandate data =
+    data.form.node.mandate |> withDefault initMandate
+
+
+hasMandate : Maybe Mandate -> Bool
+hasMandate mandate_m =
+    let
+        mandate =
+            --data.form.node.mandate
+            withDefault initMandate mandate_m
+    in
+    mandate.purpose
+        /= ""
+        || withDefault "" mandate.responsabilities
+        /= ""
+        || withDefault "" mandate.domains
+        /= ""
+        || withDefault "" mandate.policies
+        /= ""
+
+
 
 -- State Controls
 
 
-changeMode : NodeView -> NodeDoc -> NodeDoc
-changeMode mode data =
-    { data | mode = mode }
+setNodeEdit : Maybe NodeEdit -> NodeDoc -> NodeDoc
+setNodeEdit value data =
+    { data | editMode = value }
 
 
 setResult : GqlData PatchTensionPayloadID -> NodeDoc -> NodeDoc
@@ -153,6 +181,33 @@ setForm form data =
     { data | form = form }
 
 
+resetPost : NodeDoc -> NodeDoc
+resetPost data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | post = Dict.empty } }
+
+
+resetNode : NodeDoc -> NodeDoc
+resetNode data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | node = data.node } }
+
+
+reset : NodeDoc -> NodeDoc
+reset data =
+    data |> resetNode |> resetPost |> setNodeEdit Nothing
+
+
+
+-- Update Form
+
+
 setUctx : UserCtx -> NodeDoc -> NodeDoc
 setUctx uctx data =
     let
@@ -169,6 +224,43 @@ setId tid data =
             data.form
     in
     { data | form = { form | id = tid } }
+
+
+updatePost : String -> String -> NodeDoc -> NodeDoc
+updatePost field value data =
+    { data | form = updateNodeForm field value data.form }
+
+
+updatePost2 : String -> Maybe String -> NodeDoc -> NodeDoc
+updatePost2 field value_m data =
+    case value_m of
+        Just value ->
+            { data | form = updateNodeForm field value data.form }
+
+        Nothing ->
+            data
+
+
+updateFromRoleExt : RoleExtFull -> NodeDoc -> NodeDoc
+updateFromRoleExt role data =
+    data
+        |> updatePost "name" role.name
+        -- rewite nameid by appending the #number of this role used
+        |> (\x -> updatePost2 "nameid" (Maybe.map (\nameid -> nameid ++ "-" ++ String.fromInt (withDefault 0 role.n_roles)) x.form.node.nameid) x)
+        |> updatePost "role_type" (RoleType.toString role.role_type)
+        |> updatePost "role_ext" role.id
+        |> updatePost2 "about" role.about
+        |> updatePost2 "color" role.color
+        |> (\x ->
+                let
+                    form =
+                        x.form
+
+                    node =
+                        form.node
+                in
+                { x | form = { form | node = { node | mandate = role.mandate } } }
+           )
 
 
 setTensionType : TensionType.TensionType -> NodeDoc -> NodeDoc
@@ -278,96 +370,6 @@ removeLabel label data =
     { data | form = { f | labels = LE.remove label f.labels } }
 
 
-resetPost : NodeDoc -> NodeDoc
-resetPost data =
-    let
-        form =
-            data.form
-    in
-    { data | form = { form | post = Dict.empty } }
-
-
-resetNode : NodeDoc -> NodeDoc
-resetNode data =
-    let
-        form =
-            data.form
-    in
-    { data | form = { form | node = initNodeFragment Nothing } }
-
-
-reset : NodeDoc -> NodeDoc
-reset data =
-    data |> initBlob data.form.node
-
-
-
--- Getters
-
-
-getMandate : NodeDoc -> Mandate
-getMandate data =
-    data.form.node.mandate |> withDefault initMandate
-
-
-hasMandate : Maybe Mandate -> Bool
-hasMandate mandate_m =
-    let
-        mandate =
-            --data.form.node.mandate
-            withDefault initMandate mandate_m
-    in
-    mandate.purpose
-        /= ""
-        || withDefault "" mandate.responsabilities
-        /= ""
-        || withDefault "" mandate.domains
-        /= ""
-        || withDefault "" mandate.policies
-        /= ""
-
-
-
--- Update Form
-
-
-updatePost : String -> String -> NodeDoc -> NodeDoc
-updatePost field value data =
-    { data | form = updateNodeForm field value data.form }
-
-
-updatePost2 : String -> Maybe String -> NodeDoc -> NodeDoc
-updatePost2 field value_m data =
-    case value_m of
-        Just value ->
-            { data | form = updateNodeForm field value data.form }
-
-        Nothing ->
-            data
-
-
-updateFromRoleExt : RoleExtFull -> NodeDoc -> NodeDoc
-updateFromRoleExt role data =
-    data
-        |> updatePost "name" role.name
-        -- rewite nameid by appending the #number of this role used
-        |> (\x -> updatePost2 "nameid" (Maybe.map (\nameid -> nameid ++ "-" ++ String.fromInt (withDefault 0 role.n_roles)) x.form.node.nameid) x)
-        |> updatePost "role_type" (RoleType.toString role.role_type)
-        |> updatePost "role_ext" role.id
-        |> updatePost2 "about" role.about
-        |> updatePost2 "color" role.color
-        |> (\x ->
-                let
-                    form =
-                        x.form
-
-                    node =
-                        form.node
-                in
-                { x | form = { form | node = { node | mandate = role.mandate } } }
-           )
-
-
 
 --
 
@@ -401,6 +403,7 @@ type alias Op msg =
     , onPushBlob : String -> Time.Posix -> msg
 
     -- Blob change
+    , onChangeEdit : NodeEdit -> msg
     , onChangePost : String -> String -> msg
     , onAddResponsabilities : msg
     , onAddDomains : msg
@@ -441,8 +444,7 @@ view_ data op_m =
 
                   else
                     text ""
-                , div [ id "DocContainer", class "box" ]
-                    [ viewBlob data op_m ]
+                , viewBlob data op_m
                 ]
 
         Failure err ->
@@ -467,25 +469,13 @@ viewToolbar mode data =
     div [ class "field has-addons docToolbar" ]
         [ p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" (upH T.view)
-            ]
-            [ a
-                [ class "button is-small is-rounded is-discrete"
-                , classList [ ( "is-active", mode == NodeView ) ]
-                , href
-                    (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
-                ]
-                [ A.icon ("icon-eye " ++ iconOpts) ]
-            ]
-        , p
-            [ class "control tooltip has-tooltip-arrow"
             , attribute "data-tooltip" (upH T.edit)
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
                 , classList [ ( "is-active", mode == NodeEdit ) ]
                 , href
-                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit")
+                    (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
                 ]
                 [ A.icon ("icon-edit-2 " ++ iconOpts) ]
             ]
@@ -523,6 +513,7 @@ viewNodeStatus op =
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
                         , onClick (op.onSubmit <| op.onPushBlob op.blob.id)
+                        , title T.publishTitle
                         ]
                         [ A.icon1 "icon-share" (upH T.publish)
                         , loadingSpin isLoading
@@ -538,34 +529,43 @@ viewBlob data op_m =
     case op_m of
         Just op ->
             case op.data.mode of
-                NodeView ->
-                    div [ classList [ ( "is-lazy", data.isLazy ) ] ]
-                        [ viewAboutSection data
-                        , hr [ class "has-background-border-light" ] []
-                        , viewMandateSection data.node.mandate data.node.role_type
-                        ]
-
                 NodeEdit ->
                     let
                         txt =
                             getNodeTextFromNodeType (withDefault NodeType.Role data.node.type_)
-
-                        isLoading =
-                            op.data.result == LoadingSlowly
-
-                        isSendable1 =
-                            data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
-
-                        isSendable2 =
-                            data.node.mandate /= op.data.form.node.mandate
                     in
-                    div []
-                        [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
-                        , viewBlobButtons isSendable1 isLoading op
-                        , hr [ class "has-background-border-light" ] []
-                        , viewMandateInput txt op.data.form.node.mandate op
-                        , viewBlobButtons isSendable2 isLoading op
-                        ]
+                    div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ] <|
+                        (if op.data.editMode == Just EditAbout then
+                            let
+                                isSendable =
+                                    data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
+
+                                isLoading =
+                                    op.data.result == LoadingSlowly && op.data.editMode == Just EditAbout
+                            in
+                            [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
+                            , viewBlobButtons BlobType.OnAbout isSendable isLoading op
+                            ]
+
+                         else
+                            [ viewAboutSection data (Just op.onChangeEdit) ]
+                        )
+                            ++ [ hr [ class "has-background-border-light" ] [] ]
+                            ++ (if op.data.editMode == Just EditMandate then
+                                    let
+                                        isSendable =
+                                            data.node.mandate /= op.data.form.node.mandate
+
+                                        isLoading =
+                                            op.data.result == LoadingSlowly && op.data.editMode == Just EditMandate
+                                    in
+                                    [ viewMandateInput txt op.data.form.node.mandate op
+                                    , viewBlobButtons BlobType.OnMandate isSendable isLoading op
+                                    ]
+
+                                else
+                                    [ viewMandateSection data.node.role_type data.node.mandate (Just op.onChangeEdit) ]
+                               )
 
                 NodeVersions ->
                     viewVersions op.now op.tension_blobs
@@ -574,10 +574,10 @@ viewBlob data op_m =
                     text ""
 
         Nothing ->
-            div [ classList [ ( "is-lazy", data.isLazy ) ] ]
-                [ viewAboutSection data
+            div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ]
+                [ viewAboutSection data Nothing
                 , hr [ class "has-background-border-light" ] []
-                , viewMandateSection data.node.mandate data.node.role_type
+                , viewMandateSection data.node.role_type data.node.mandate Nothing
                 ]
 
 
@@ -585,8 +585,8 @@ viewBlob data op_m =
 --- Template view
 
 
-viewAboutSection : OrgaNodeData -> Html msg
-viewAboutSection data =
+viewAboutSection : OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
+viewAboutSection data op_m =
     let
         type_ =
             withDefault NodeType.Role data.node.type_
@@ -598,7 +598,7 @@ viewAboutSection data =
     in
     div []
         [ div [ class "level subtitle" ]
-            [ div [ class "level-left", attribute "style" "width:85%;" ]
+            [ div [ class "level-left" ]
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ textH T.about ]
                 , text T.space_
@@ -616,10 +616,19 @@ viewAboutSection data =
                     span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
                 ]
             , if data.hasInnerToolbar && isSuccess data.tid_r then
-                div [ class "level-right is-marginless is-small" ] [ viewToolbar NoView data ]
+                div [ class "level-right is-marginless is-small is-hidden-mobile" ] [ viewToolbar NoView data ]
 
               else
-                text ""
+                Maybe.map
+                    (\onChangeEdit ->
+                        div
+                            [ class "button has-text-weight-normal is-pulled-right is-small"
+                            , onClick (onChangeEdit EditAbout)
+                            ]
+                            [ A.icon "icon-edit-2" ]
+                    )
+                    op_m
+                    |> withDefault (text "")
             ]
         , case data.node.about of
             Just ab ->
@@ -630,14 +639,24 @@ viewAboutSection data =
         ]
 
 
-viewMandateSection : Maybe Mandate -> Maybe RoleType.RoleType -> Html msg
-viewMandateSection mandate_m role_type_m =
+viewMandateSection : Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
+viewMandateSection role_type_m mandate_m op_m =
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
                 , textH T.mandate
                 ]
+            , Maybe.map
+                (\onChangeEdit ->
+                    div
+                        [ class "button has-text-weight-normal is-pulled-right is-small"
+                        , onClick (onChangeEdit EditMandate)
+                        ]
+                        [ A.icon "icon-edit-2" ]
+                )
+                op_m
+                |> withDefault (text "")
             ]
         , case mandate_m of
             Just mandate ->
@@ -685,7 +704,7 @@ viewMandateSubSection name maybePara =
 
 
 viewAboutInput hasBeenPushed source txt node op =
-    div [ class "pb-0" ]
+    div []
         [ div [ class "field" ]
             [ label [ class "label" ] [ textH T.name ]
             , div [ class "control" ]
@@ -699,7 +718,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
-                , if (isTensionBaseUri source && hasBeenPushed == False) || (source == OverviewBaseUri && isFailure op.result) then
+                , if (isTensionBaseUri source && not hasBeenPushed) || (OverviewBaseUri == source && isFailure op.result) then
                     viewUrlForm node.nameid (op.onChangePost "nameid") False
 
                   else
@@ -724,6 +743,99 @@ viewAboutInput hasBeenPushed source txt node op =
                 ]
             , p [ class "help-label" ] [ textH txt.about_help ]
             , br [] []
+            ]
+        ]
+
+
+viewAboutInput2 hasBeenPushed source txt node op =
+    div []
+        [ div [ class "field is-grouped" ]
+            [ div [ class "control is-expanded" ]
+                [ label [ class "label" ] [ textH T.name ]
+                , input
+                    [ class "input autofocus followFocus"
+                    , attribute "data-nextfocus" "aboutField"
+                    , type_ "text"
+                    , placeholder (upH T.name)
+                    , value (withDefault "" node.name)
+                    , onInput <| op.onChangePost "name"
+                    , required True
+                    ]
+                    []
+                , if (isTensionBaseUri source && not hasBeenPushed) || (OverviewBaseUri == source && isFailure op.result) then
+                    viewUrlForm node.nameid (op.onChangePost "nameid") False
+
+                  else
+                    text ""
+                , p [ class "help-label" ] [ textH txt.name_help ]
+                ]
+            , case node.type_ of
+                Just NodeType.Role ->
+                    div [ class "control" ]
+                        [ div [ class "field mb-5" ]
+                            [ label [ class "label is-pulled-left" ] [ textH T.authority ]
+                            , viewSelectAuthority op
+                            ]
+                        ]
+
+                Just NodeType.Circle ->
+                    div [ class "control" ]
+                        [ div [ class "field mb-5" ]
+                            [ label [ class "label is-pulled-left" ] [ textH T.governance ]
+                            , viewSelectGovernance op
+                            ]
+                        ]
+
+                Nothing ->
+                    text ""
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ textH T.about ]
+            , div [ class "control" ]
+                [ input
+                    [ id "aboutField"
+                    , class "input followFocus"
+                    , attribute "data-nextfocus" "textAreaModal"
+                    , type_ "text"
+                    , placeholder (upH T.aboutOpt)
+                    , spellcheck True
+                    , value (withDefault "" node.about)
+                    , onInput <| op.onChangePost "about"
+                    ]
+                    []
+                ]
+            , p [ class "help-label" ] [ textH txt.about_help ]
+            , br [] []
+            ]
+        ]
+
+
+
+-- @TODO
+-- viewAboutInput3 (the view use in Org.Settings
+
+
+viewUrlForm nameid_m onChangePost hasBorderDanger =
+    div [ class "urlForm" ]
+        [ div [ class "field is-horizontal" ]
+            [ div [ class "field-body control" ]
+                [ div [] [ text "URL" ]
+                , input
+                    [ class "input px-0"
+                    , disabled True
+                    , value " https://fractale.co/o/"
+                    , attribute "style" "width: 11.1em"
+                    ]
+                    []
+                , input
+                    [ class "input pl-1"
+                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
+                    , type_ "text"
+                    , value (withDefault "" nameid_m)
+                    , onInput <| onChangePost
+                    ]
+                    []
+                ]
             ]
         ]
 
@@ -754,7 +866,7 @@ viewMandateInput txt mandate op =
         purpose_len =
             List.length <| String.lines purpose
     in
-    div [ class "pb-0" ]
+    div []
         [ div [ class "field" ]
             [ div [ class "label" ]
                 [ textH T.purpose ]
@@ -857,8 +969,20 @@ viewMandateInput txt mandate op =
 ---- Components view
 
 
-viewBlobButtons : Bool -> Bool -> Op msg -> Html msg
-viewBlobButtons isSendable isLoading op =
+{-| Integrate in view\*Input when ths will be a state-full component
+-}
+viewBlobButtons : BlobType.BlobType -> Bool -> Bool -> Op msg -> Html msg
+viewBlobButtons blob_type isSendable isLoading op =
+    let
+        d =
+            op.data
+
+        f =
+            op.data.form
+
+        data =
+            { d | form = { f | blob_type = Just blob_type } }
+    in
     div []
         [ case op.data.result of
             Failure err ->
@@ -869,16 +993,13 @@ viewBlobButtons isSendable isLoading op =
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
                 [ div [ class "buttons" ]
-                    [ button
-                        [ class "button"
-                        , onClick op.onCancelBlob
-                        ]
+                    [ button [ class "button", onClick op.onCancelBlob ]
                         [ textH T.cancel ]
                     , button
                         [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (op.onSubmit <| op.onSubmitBlob op.data)
+                        , onClick (op.onSubmit <| op.onSubmitBlob data)
                         ]
                         [ textH T.saveChanges ]
                     ]
@@ -887,15 +1008,11 @@ viewBlobButtons isSendable isLoading op =
         ]
 
 
-type alias OpAuthority msg =
-    { onSelect : RoleType.RoleType -> msg
-    , selection : RoleType.RoleType
-    }
-
-
-viewSelectAuthority : String -> OpAuthority msg -> Html msg
-viewSelectAuthority position op =
+viewSelectAuthority op =
     let
+        role_type_selected =
+            withDefault RoleType.Peer op.data.form.node.role_type
+
         checked cls =
             A.icon1 ("icon-check " ++ cls) ""
 
@@ -903,9 +1020,9 @@ viewSelectAuthority position op =
             A.icon1 "icon-check is-invisible" ""
     in
     div [ class "field" ]
-        [ div [ class ("dropdown " ++ position) ]
+        [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
-                [ span [ class ("has-text-" ++ roleColor op.selection) ] [ textH (RoleType.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class ("has-text-" ++ roleColor role_type_selected) ] [ textH (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
@@ -916,9 +1033,9 @@ viewSelectAuthority position op =
                             in
                             div
                                 [ class ("dropdown-item button-light " ++ clsColor)
-                                , onClick <| op.onSelect role_type
+                                , onClick <| op.onChangePost "role_type" (RoleType.toString role_type)
                                 ]
-                                [ ternary (op.selection == role_type) (checked clsColor) unchecked
+                                [ ternary (role_type_selected == role_type) (checked clsColor) unchecked
                                 , textH (RoleType.toString role_type)
 
                                 --, span [ class "is-pulled-right mx-2 is-small tooltip" ] [ A.icon "icon-info" ]
@@ -930,15 +1047,11 @@ viewSelectAuthority position op =
         ]
 
 
-type alias OpGovernance msg =
-    { onSelect : NodeMode.NodeMode -> msg
-    , selection : NodeMode.NodeMode
-    }
-
-
-viewSelectGovernance : String -> OpGovernance msg -> Html msg
-viewSelectGovernance position op =
+viewSelectGovernance op =
     let
+        mode_selected =
+            withDefault NodeMode.Coordinated op.data.form.node.mode
+
         checked cls =
             A.icon1 ("icon-check " ++ cls) ""
 
@@ -946,15 +1059,15 @@ viewSelectGovernance position op =
             A.icon1 "icon-check is-invisible" ""
     in
     div [ class "field" ]
-        [ div [ class ("dropdown " ++ position) ]
+        [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-governance" ]
-                [ span [ class "has-text-" ] [ textH (NodeMode.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class "has-text-" ] [ textH (NodeMode.toString mode_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-governance", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
                         (\mode ->
-                            div [ class "dropdown-item button-light ", onClick <| op.onSelect mode ]
-                                [ ternary (op.selection == mode) (checked "") unchecked, textH (NodeMode.toString mode) ]
+                            div [ class "dropdown-item button-light ", onClick <| op.onChangePost "mode" (NodeMode.toString mode) ]
+                                [ ternary (mode_selected == mode) (checked "") unchecked, textH (NodeMode.toString mode) ]
                         )
                         NodeMode.list
                 ]
@@ -1100,28 +1213,3 @@ updateNodeForm field value form =
         _ ->
             -- title, message...
             { form | post = Dict.insert field value form.post }
-
-
-viewUrlForm nameid_m onChangePost hasBorderDanger =
-    div [ class "urlForm" ]
-        [ div [ class "field is-horizontal" ]
-            [ div [ class "field-body control" ]
-                [ div [] [ text "URL" ]
-                , input
-                    [ class "input px-0"
-                    , disabled True
-                    , value " https://fractale.co/o/"
-                    , attribute "style" "width: 11.1em"
-                    ]
-                    []
-                , input
-                    [ class "input pl-1"
-                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
-                    , type_ "text"
-                    , value (withDefault "" nameid_m)
-                    , onInput <| onChangePost
-                    ]
-                    []
-                ]
-            ]
-        ]

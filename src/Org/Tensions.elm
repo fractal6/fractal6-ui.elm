@@ -1217,8 +1217,10 @@ view global model =
     in
     { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ global model, ternary (model.viewMode == CircleView) (viewCircleTensions model) (text "") ]
+        [ div [ class "orgPane" ]
+            [ HelperBar.view helperData
+            , div [ id "mainPane" ] [ view_ global model, ternary (model.viewMode == CircleView) (viewCircleTensions model) (text "") ]
+            ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg

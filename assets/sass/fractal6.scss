@@ -15,7 +15,7 @@
     @include desktop {
         // Orga Menu adjustments
         @include until-fullhd {
-            &.has-orga-menu {
+            &.has-orga-menu .orgPane {
                 margin-left: 40px;
 
                 .kb-board {
@@ -25,10 +25,10 @@
         }
 
         // Tree Menu adjustments
-        &.has-tree-menu {
+        &.has-tree-menu .orgPane {
             margin-left: $tree-menu-width !important;
         }
-        &.has-tree-menu.has-orga-menu {
+        &.has-tree-menu.has-orga-menu .orgPane {
             margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
         }
 
@@ -42,10 +42,14 @@
             &:not(#overview):not(.kb-board) > .column:first-child {
                 width: 95%;
             }
-            &#overview > .column {
-                width: 47.5%;
-                &:first-child {
-                    padding-left:0;
+            &#overview {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                & > .column {
+                    width: 47.5%;
+                    &:first-child {
+                        padding-left:0;
+                    }
                 }
             }
         }
@@ -706,7 +710,7 @@ strong {
 
 #navbarTop {
     .navbar {
-        //box-shadow: 0 1px 0 0 var(--grey-dark);
+        //box-shadow: 0 1px 0 0 var(--background-evidence);
         height: $navbar-height;
     }
 
@@ -1088,7 +1092,7 @@ strong {
     }
 }
 
-#DocContainer {
+.doc-container {
     .subtitle {
         color: var(--text-light);
         font-weight: 600;
@@ -1775,20 +1779,6 @@ tr.mediaBox {
         transition: all $modal-out-duration;
     }
 
-    .modal-close {
-        background-color: #952222b8 !important;
-        &:hover { background-color: #952222 !important;}
-    }
-
-    //.modal-card-title, .panel-heading,
-    //.modal-card-head,
-    .modal-card-foot, {
-        @include mobile {
-            padding-top: 3px;
-            padding-bottom: 3px;
-        }
-    }
-
     ////// @DEBUG: LIGHT colorscheme
     ////// do not work for li in dark mode...
     //.input,
@@ -2010,6 +2000,23 @@ tr.mediaBox {
     *:not(.modal-card) > .modal-card-body {
         border-radius: 10px;
     }
+
+    .modal-close {
+        background-color: #952222b8 !important;
+        &:hover { background-color: #952222 !important;}
+    }
+
+    //.modal-card-title, .panel-heading,
+    //.modal-card-head,
+    .modal-card-foot, {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        @include mobile {
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+    }
+
 }
 
 #authModal {

@@ -128,7 +128,7 @@ orgaStepToString : OrgaForm -> OrgaStep -> String
 orgaStepToString form step =
     case step of
         OrgaVisibilityStep ->
-            "Circle Visibility"
+            T.visibility
                 ++ (case Dict.get "visibility" form.post of
                         Just visibility ->
                             " (" ++ visibility ++ ")"
@@ -138,7 +138,7 @@ orgaStepToString form step =
                    )
 
         OrgaValidateStep ->
-            "Review and validate"
+            T.reviewAndValidate
 
 
 initModel : UserState -> Maybe OrgaForm -> Model

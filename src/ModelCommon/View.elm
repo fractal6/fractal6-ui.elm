@@ -410,7 +410,7 @@ viewMemberRole : Time.Posix -> String -> UserRoleExtended -> Html msg
 viewMemberRole now link r =
     a
         [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-        , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
+        , attribute "data-tooltip" ([ r.name, "in", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
         , href link
         ]
         [ if r.role_type == RoleType.Guest then
@@ -450,9 +450,6 @@ viewRole link r =
 viewRoleExt : String -> RoleCommon a -> Html msg
 viewRoleExt cls_ r =
     let
-        f =
-            Debug.log "coloe" r
-
         ( cls, color ) =
             case r.color of
                 Nothing ->
@@ -908,6 +905,9 @@ blobTypeStr btype =
 
         BlobType.OnMandate ->
             "Mandate edited"
+
+        BlobType.OnAboutAndMandate ->
+            "Mandate and description edited"
 
         BlobType.OnDoc ->
             "File edited"

@@ -506,7 +506,7 @@ update global message model =
                 EditMenu ->
                     case model.path_data of
                         Success lg ->
-                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }) ++ "?v=edit")), Cmd.none )
+                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }))), Cmd.none )
 
                         _ ->
                             ( model, Cmd.none, Cmd.none )
@@ -1187,8 +1187,10 @@ view global model =
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ model ]
+        [ div [ class "orgPane" ]
+            [ HelperBar.view helperData
+            , div [ id "mainPane" ] [ view_ model ]
+            ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
@@ -1593,9 +1595,9 @@ viewRoleAddBox model =
                 ]
             , p [ class "control" ]
                 [ label [ class "label is-small" ] [ textH T.authority ]
-                , viewSelectAuthority "is-right"
-                    { onSelect = ChangeRoleAuthority
-                    , selection = role_type
+                , viewSelectAuthority
+                    { onChangePost = UpdateNodePost
+                    , data = model.nodeDoc
                     }
                 ]
             ]
@@ -1709,7 +1711,7 @@ viewRoles model =
                                                 ]
                                         ]
                                             ++ (if model.showMandate == d.id then
-                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection d.mandate (Just d.role_type) ] ] ]
+                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection (Just d.role_type) d.mandate Nothing ] ] ]
 
                                                 else
                                                     []

@@ -301,7 +301,8 @@ refreshModal op model =
         , classList [ ( "is-active", model.modalAuth /= Inactive ) ]
         , attribute "data-modal-close" "closeAuthModalFromJs"
         ]
-        [ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
+        --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
+        [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
             [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
             , div [ class "box" ] <|
@@ -382,7 +383,8 @@ signupModal op model =
         , classList [ ( "is-active", model.modalAuth /= Inactive ) ]
         , attribute "data-modal-close" "closeAuthModalFromJs"
         ]
-        [ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
+        --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
+        [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
             [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
             , div [ class "box" ] <|

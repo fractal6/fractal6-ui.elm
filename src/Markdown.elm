@@ -98,6 +98,8 @@ frac6Renderer style recursive =
                         ( "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
                         [ ( "(^|\\s|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
                         , ( "\\b0x[0-9a-f]+", tensionLink )
+
+                        --, ( "\\bo/[0-9a-zA-Z\\-_\]+", circleLink )
                         ]
                         t
 
@@ -221,6 +223,29 @@ tensionLink m full =
         ++ "]"
         ++ "("
         ++ (Route.Tension_Dynamic_Dynamic { param1 = "", param2 = tid } |> toHref)
+        ++ ")"
+
+
+circleLink : Regex.Match -> String -> String
+circleLink m full =
+    let
+        match =
+            m.match
+
+        ( left, tid ) =
+            if String.left 1 match /= "o" then
+                ( String.left 1 match, String.dropLeft 1 match )
+
+            else
+                ( " ", match )
+    in
+    left
+        ++ "["
+        ++ tid
+        ++ "]"
+        ++ "("
+        -- TODO: split on / to know which route to use
+        --++ (Route.Org { param1 = "", param2 = tid } |> toHref)
         ++ ")"
 
 

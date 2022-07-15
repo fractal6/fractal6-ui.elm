@@ -55,6 +55,10 @@
   it = "Pubblica"
   pt = "Publicar"
 
+[publishTitle]
+  en = "As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
+  fr = "Tant qu'une révision n'est pas publié les changements sont uniquement visibles dans la tension du circle (la page courante)."
+
 [published]
   en = "published"
   fr = "publié"

@@ -497,13 +497,6 @@ viewModalContent op model =
 
         isSendable =
             model.form.target.nameid /= ""
-
-        target =
-            if List.member model.form.target.nameid [ "", model.target ] then
-                "select a destination"
-
-            else
-                model.form.target.name
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
@@ -530,11 +523,17 @@ viewModalContent op model =
                 [ div [ class "control" ]
                     [ span [] [ textH (T.newReceiver ++ ": ") ]
                     , span [ class "dropdown" ]
-                        [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid white;" ]
+                        [ span [ class "dropdown-trigger" ]
                             [ span [ attribute "aria-controls" "target-menu" ]
-                                [ span
-                                    [ class "button is-small is-light is-inverted is-static" ]
-                                    [ text target, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                [ if List.member model.form.target.nameid [ "", model.target ] then
+                                    span
+                                        [ class "button is-small is-light is-inverted" ]
+                                        [ text "select a destination", span [ class "ml-2 icon-chevron-down1" ] [] ]
+
+                                  else
+                                    span
+                                        [ class "button is-small is-rounded has-border" ]
+                                        [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                                 ]
                             ]
                         , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
