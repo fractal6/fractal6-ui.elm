@@ -1,7 +1,7 @@
 module Auth exposing (ErrState(..), parseErr, parseErr2)
 
 import Assets as A
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData)
+import Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData)
 import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)

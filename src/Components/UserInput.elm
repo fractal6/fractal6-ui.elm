@@ -3,7 +3,7 @@ module Components.UserInput exposing (Msg(..), State, init, subscriptions, updat
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

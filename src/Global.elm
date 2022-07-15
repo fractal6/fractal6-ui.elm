@@ -17,7 +17,7 @@ import Auth exposing (parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (WindowPos)
-import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
+import Loading exposing (WebData, expectJson, toErrorData)
 import Components.Navbar as Navbar
 import Dict
 import Footbar

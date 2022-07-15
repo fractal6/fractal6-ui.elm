@@ -1,7 +1,7 @@
 module Components.ModalConfirm exposing (..)
 
 import Assets as A
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Views exposing (showMsg)

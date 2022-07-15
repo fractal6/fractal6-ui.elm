@@ -3,7 +3,7 @@ module Pages.Verification exposing (Flags, Model, Msg, page)
 import Assets as A exposing (almostThere)
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
-import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
+import Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)

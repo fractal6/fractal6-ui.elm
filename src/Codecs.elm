@@ -1,6 +1,5 @@
 module Codecs exposing (..)
 
-import Components.Loading exposing (ModalData)
 import Dict
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -11,6 +10,7 @@ import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import Loading exposing (ModalData)
 import ModelSchema
     exposing
         ( BlobId

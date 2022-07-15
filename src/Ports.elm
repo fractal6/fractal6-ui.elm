@@ -17,10 +17,10 @@ import Codecs
         , usersEncoder
         , windowEncoder
         )
-import Components.Loading exposing (ModalData)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
+import Loading exposing (ModalData)
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelSchema

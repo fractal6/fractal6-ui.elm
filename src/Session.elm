@@ -2,7 +2,7 @@ module Session exposing (..)
 
 import Array exposing (Array)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
-import Components.Loading as Loading
+import Loading
     exposing
         ( GqlData
         , WebData

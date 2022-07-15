@@ -2,7 +2,7 @@ module Components.OrgaMenu exposing (Msg(..), State, init, subscriptions, update
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

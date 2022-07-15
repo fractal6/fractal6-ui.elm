@@ -1,7 +1,7 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)

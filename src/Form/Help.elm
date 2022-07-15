@@ -3,7 +3,7 @@ module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

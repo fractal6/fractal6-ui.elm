@@ -4,7 +4,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
-import Components.Loading as Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

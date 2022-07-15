@@ -4,7 +4,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.Loading as Loading
+import Loading
     exposing
         ( ErrorData
         , GqlData

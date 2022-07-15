@@ -2,7 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
-import Components.Loading as Loading exposing (GqlData, RequestResult(..))
+import Loading exposing (GqlData, RequestResult(..))
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility

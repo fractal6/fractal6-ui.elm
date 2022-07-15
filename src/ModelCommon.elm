@@ -1,7 +1,7 @@
 module ModelCommon exposing (..)
 
 import Array exposing (Array)
-import Components.Loading as Loading
+import Loading
     exposing
         ( GqlData
         , RequestResult(..)

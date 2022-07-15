@@ -11,7 +11,7 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.Loading as Loading
+import Loading
     exposing
         ( GqlData
         , ModalData

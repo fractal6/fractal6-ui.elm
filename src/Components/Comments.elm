@@ -1,7 +1,7 @@
 module Components.Comments exposing (..)
 
 import Assets as A
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
+import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD2)

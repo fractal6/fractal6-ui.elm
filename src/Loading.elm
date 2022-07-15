@@ -1,4 +1,4 @@
-module Components.Loading exposing (..)
+module Loading exposing (..)
 
 import Assets as A
 import Extra.Events exposing (onClickPD)

@@ -2,7 +2,7 @@ module ModelCommon.Requests exposing (..)
 
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
-import Components.Loading as Loading exposing (expectJson, fromResult, mapWeb2Data)
+import Loading exposing (expectJson, fromResult, mapWeb2Data)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction

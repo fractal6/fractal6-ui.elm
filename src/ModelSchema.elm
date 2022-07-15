@@ -1,6 +1,5 @@
 module ModelSchema exposing (..)
 
-import Components.Loading exposing (ErrorData, RequestResult(..), errorGraphQLHttpToString)
 import Dict exposing (Dict)
 import Extra exposing (mor)
 import Fractal.Enum.BlobType as BlobType
@@ -19,6 +18,7 @@ import Fractal.Enum.UserType as UserType
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
+import Loading exposing (ErrorData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
 import Text as T

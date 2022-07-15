@@ -1,7 +1,6 @@
 module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
-import Components.Loading exposing (GqlData, RequestResult(..), withMaybeData)
 import Extra exposing (cleanDup, ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -10,6 +9,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing

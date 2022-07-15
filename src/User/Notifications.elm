@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Components.Loading as Loading
+import Loading
     exposing
         ( GqlData
         , ModalData

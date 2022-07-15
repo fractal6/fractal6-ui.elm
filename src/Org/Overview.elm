@@ -9,7 +9,7 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
-import Components.Loading as Loading
+import Loading
     exposing
         ( GqlData
         , ModalData

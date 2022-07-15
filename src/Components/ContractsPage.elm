@@ -3,7 +3,7 @@ module Components.ContractsPage exposing (Msg(..), State, hasCid, hasLoadFailure
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Comments exposing (viewComment, viewContractCommentInput)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

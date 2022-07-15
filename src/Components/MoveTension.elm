@@ -3,7 +3,7 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ConfirmContract as ConfirmContract
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
