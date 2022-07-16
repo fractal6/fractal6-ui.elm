@@ -3,24 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unrealeased]
 
 ### New
+### Fixed
+
+
+## [0.6.2]
+
+### New
 - tension C-enter hint to submit
+- unsubscribe from a tension from URL.
 
 ### Changed 
 - [AuthModal] do not close the modal on background click.
 - [Helperbar] User played roles are now hidden in mobile view.
 - [UserInput] Add a better hint message when no user found in the invitation dialogue.
 - [Org/Members] merge the sub-circles roles into a solely member tables with a new column for sub-circles roles.
-- Fetch the role color when member role element/button view.
+- [ui] remove modal-close button redundant with the cancel one, and add a little "delete" button for success box (now colored).
+- [schema] Fetch the role color when member role element/button view.
 
 ### Fixed
-- [css] left menu auto margin.
+- [css] left menu auto margin and border.
 - [codefactor] Consolidate the NodeDoc pseudo component. Simplify th doctoolbar keeoping only edit and revision tabs . Inline Authority and governance dropdown
-- publish tension/comment wiht Ctrl+enter.
-
+- [Comments] publish tension/comment wiht Ctrl+enter.
+- [UpdateTension] add automatically the CommentPushed event to history if a comment is present from the form.
 
 
 ## v0.6

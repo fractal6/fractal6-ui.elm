@@ -801,14 +801,6 @@ update global message model =
                 form =
                     model.tension_form
 
-                eventComment =
-                    case Dict.get "message" form.post of
-                        Just _ ->
-                            [ Ev TensionEvent.CommentPushed "" "" ]
-
-                        Nothing ->
-                            []
-
                 eventStatus =
                     case status_m of
                         Just TensionStatus.Open ->
@@ -824,7 +816,7 @@ update global message model =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
                         , status = status_m
-                        , events = eventComment ++ eventStatus
+                        , events = eventStatus
                     }
             in
             ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
@@ -854,7 +846,6 @@ update global message model =
                                             , history =
                                                 withDefault [] t.history
                                                     ++ (events
-                                                            |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
                                                     |> Just
@@ -864,7 +855,7 @@ update global message model =
                                     other
 
                         tension_c =
-                            if List.member TensionEvent.CommentPushed (List.map .event_type events) then
+                            if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
                                 case model.tension_comments of
                                     Success t ->
                                         Success { t | comments = Just (withDefault [] t.comments ++ withDefault [] tp.comments) }
@@ -1074,7 +1065,6 @@ update global message model =
                                             , history =
                                                 withDefault [] t.history
                                                     ++ (model.tension_form.events
-                                                            |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
                                                     |> Just

@@ -16,6 +16,7 @@ import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.CommentOrderable as CommentOrderable
 import Fractal.Enum.ContractOrderable as ContractOrderable
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
@@ -37,7 +38,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionForm)
+import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
 import Query.QueryContract exposing (contractPayload)
@@ -125,7 +126,14 @@ patchTensionInputEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post
+            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
+
+        pce_m =
+            if message == Nothing then
+                []
+
+            else
+                [ Ev TensionEvent.CommentPushed "" "" ]
 
         inputReq =
             { filter =
@@ -143,7 +151,7 @@ patchTensionInputEncoder f =
                             { s
                                 | updatedAt = fromMaybe updatedAt
                                 , comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvents createdAt f.uctx.username f.events
+                                , history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
                                 , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                             }
                         )
@@ -444,24 +452,26 @@ setMoveEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post
+            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
 
-        events =
-            buildEvents createdAt f.uctx.username f.events
+        pce_m =
+            if message == Nothing then
+                []
+
+            else
+                [ Ev TensionEvent.CommentPushed "" "" ]
 
         inputReq =
             { filter =
                 Input.buildTensionFilter
-                    (\ft ->
-                        { ft | id = Present [ encodeId f.tid ] }
-                    )
+                    (\ft -> { ft | id = Present [ encodeId f.tid ] })
             }
 
         patch =
             Input.buildTensionPatch
                 (\s ->
                     { s
-                        | history = events
+                        | history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
                         , comments = buildComment createdAt f.uctx.username message
                     }
                 )
@@ -612,7 +622,14 @@ actionInputEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post
+            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
+
+        pce_m =
+            if message == Nothing then
+                []
+
+            else
+                [ Ev TensionEvent.CommentPushed "" "" ]
 
         inputReq =
             { filter =
@@ -627,7 +644,7 @@ actionInputEncoder f =
                         (\s ->
                             { s
                                 | comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvents createdAt f.uctx.username f.events
+                                , history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
                                 , blobs =
                                     if f.bid /= "" then
                                         [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present
