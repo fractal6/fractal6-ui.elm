@@ -126,7 +126,7 @@ patchTensionInputEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
+            Dict.get "message" f.post |> Maybe.map String.trim |> (\x -> ternary (x == Just "") Nothing x)
 
         pce_m =
             if message == Nothing then
@@ -169,6 +169,7 @@ patchTensionInputEncoder f =
 
 
 patchLiteral url form msg =
+    -- Use the even old and new value for the updates...
     -- Can patch more than literal in reality...
     makeGQLMutation url
         (Mutation.updateTension
@@ -218,20 +219,20 @@ patchComment url form msg =
 
 
 patchCommentInputEncoder : CommentPatchForm -> Mutation.UpdateCommentRequiredArguments
-patchCommentInputEncoder form =
+patchCommentInputEncoder f =
     let
         -- new comment
         updatedAt =
-            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
 
         message =
-            Dict.get "message" form.post
+            Dict.get "message" f.post |> Maybe.map String.trim
 
         inputReq =
             { filter =
                 Input.buildCommentFilter
-                    (\f ->
-                        { f | id = Present [ encodeId form.id ] }
+                    (\x ->
+                        { x | id = Present [ encodeId f.id ] }
                     )
             }
 
@@ -452,7 +453,7 @@ setMoveEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
+            Dict.get "message" f.post |> Maybe.map String.trim |> (\x -> ternary (x == Just "") Nothing x)
 
         pce_m =
             if message == Nothing then
@@ -622,7 +623,7 @@ actionInputEncoder f =
 
         message =
             -- new comment
-            Dict.get "message" f.post |> (\x -> ternary (x == Just "") Nothing x)
+            Dict.get "message" f.post |> Maybe.map String.trim |> (\x -> ternary (x == Just "") Nothing x)
 
         pce_m =
             if message == Nothing then

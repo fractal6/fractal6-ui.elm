@@ -397,7 +397,7 @@ type alias Op msg =
     , tension_blobs : GqlData TensionBlobs
 
     -- Blob control
-    , onSubmit : (Time.Posix -> msg) -> msg
+    , onSubmit : Bool -> (Time.Posix -> msg) -> msg
     , onSubmitBlob : NodeDoc -> Time.Posix -> msg
     , onCancelBlob : msg
     , onPushBlob : String -> Time.Posix -> msg
@@ -512,7 +512,7 @@ viewNodeStatus op =
                 , if op.isAdmin then
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
-                        , onClick (op.onSubmit <| op.onPushBlob op.blob.id)
+                        , onClick (op.onSubmit isLoading <| op.onPushBlob op.blob.id)
                         , title T.publishTitle
                         ]
                         [ A.icon1 "icon-share" (upH T.publish)
@@ -999,7 +999,7 @@ viewBlobButtons blob_type isSendable isLoading op =
                         [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (op.onSubmit <| op.onSubmitBlob data)
+                        , onClick (op.onSubmit isLoading <| op.onSubmitBlob data)
                         ]
                         [ textH T.saveChanges ]
                     ]

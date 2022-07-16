@@ -80,13 +80,13 @@ addTensionInputEncoder : TensionForm -> Mutation.AddTensionRequiredArguments
 addTensionInputEncoder f =
     let
         title =
-            Dict.get "title" f.post |> withDefault ""
+            Dict.get "title" f.post |> withDefault "" |> String.trim
 
         createdAt =
             Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         message =
-            Dict.get "message" f.post |> withDefault ""
+            Dict.get "message" f.post |> withDefault "" |> String.trim
 
         events =
             f.events

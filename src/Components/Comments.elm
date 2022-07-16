@@ -25,7 +25,7 @@ type alias OpEditComment msg =
     , doCancelComment : msg
     , doChangeViewMode : InputViewMode -> msg
     , doChangePost : String -> String -> msg
-    , doSubmit : (Time.Posix -> msg) -> msg
+    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doEditComment : Time.Posix -> msg
     , now : Time.Posix
     }
@@ -34,7 +34,7 @@ type alias OpEditComment msg =
 type alias OpNewComment msg =
     { doChangeViewMode : InputViewMode -> msg
     , doChangePost : String -> String -> msg
-    , doSubmit : (Time.Posix -> msg) -> msg
+    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
     , rows : Int
     }
@@ -43,7 +43,7 @@ type alias OpNewComment msg =
 type alias OpNewCommentContract msg =
     { doChangeViewMode : InputViewMode -> msg
     , doChangePost : String -> String -> msg
-    , doSubmit : (Time.Posix -> msg) -> msg
+    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Time.Posix -> msg
     , rows : Int
     }
@@ -168,7 +168,7 @@ viewUpdateInput op uctx comment form result =
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (op.doSubmit op.doEditComment)
+                            , onClick (op.doSubmit isLoading op.doEditComment)
                             ]
                             [ textH T.updateComment ]
                         ]
@@ -191,15 +191,15 @@ viewCommentInput op uctx tension form result viewMode =
             isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
 
         doSubmit =
-            ternary isSendable [ onClick (op.doSubmit <| op.doSubmitComment Nothing) ] []
+            ternary isSendable [ onClick (op.doSubmit isLoading <| op.doSubmitComment Nothing) ] []
 
         submitCloseOpenTension =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (op.doSubmit <| op.doSubmitComment (Just TensionStatus.Closed)) ]
+                    [ onClick (op.doSubmit isLoading <| op.doSubmitComment (Just TensionStatus.Closed)) ]
 
                 TensionStatus.Closed ->
-                    [ onClick (op.doSubmit <| op.doSubmitComment (Just TensionStatus.Open)) ]
+                    [ onClick (op.doSubmit isLoading <| op.doSubmitComment (Just TensionStatus.Open)) ]
 
         closeOpenText =
             case tension.status of
@@ -294,7 +294,7 @@ viewContractCommentInput op uctx form result viewMode =
             isPostSendable [ "message" ] form.post
 
         doSubmit =
-            ternary isSendable [ onClick (op.doSubmit op.doSubmitComment) ] []
+            ternary isSendable [ onClick (op.doSubmit isLoading op.doSubmitComment) ] []
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]

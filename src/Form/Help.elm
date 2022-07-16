@@ -216,7 +216,7 @@ type Msg
     | OnChangePostAsk String String
     | OnChangePostFeedback String String
     | OnChangeLabel FeedbackType
-    | OnSubmit (Time.Posix -> Msg)
+    | OnSubmit Bool (Time.Posix -> Msg)
     | PushTension NT.Model (GqlData Tension -> Msg)
     | OnSubmitAsk Time.Posix
     | OnSubmitFeedback Time.Posix
@@ -340,8 +340,12 @@ update_ apis message model =
         OnChangeLabel type_ ->
             ( changeLabel type_ model, noOut )
 
-        OnSubmit next ->
-            ( model, out0 [ sendNow next ] )
+        OnSubmit isLoading next ->
+            if isLoading then
+                ( model, noOut )
+
+            else
+                ( model, out0 [ sendNow next ] )
 
         PushTension form ack ->
             ( model, out0 [ addOneTension apis form.nodeDoc.form ack ] )
@@ -653,7 +657,7 @@ viewAskQuestion op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit <| OnSubmitAsk)
+                            , onClick (OnSubmit isLoading <| OnSubmitAsk)
                             ]
                             [ text "Send question" ]
                         ]
@@ -797,7 +801,7 @@ viewFeedback op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit <| OnSubmitFeedback)
+                            , onClick (OnSubmit isLoading <| OnSubmitFeedback)
                             ]
                             [ text "Send feedback" ]
                         ]

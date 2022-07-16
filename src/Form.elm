@@ -28,6 +28,7 @@ isPostSendable keys post =
             (\k ->
                 Dict.get k post
                     |> Maybe.withDefault ""
+                    |> String.trim
             )
         |> List.all (\x -> String.length x > 0)
 

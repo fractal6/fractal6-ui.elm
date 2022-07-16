@@ -269,7 +269,7 @@ type Msg
     | PushTitle
     | PushBlob_ TensionForm
     | PublishBlob
-    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | Submit Bool (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
       -- Page
@@ -614,8 +614,12 @@ update global message model =
             in
             ( { model | tension_head = tension_h, tension_comments = tension_c, tension_blobs = tension_b }, Cmd.none, Cmd.none )
 
-        Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+        Submit isLoading nextMsg ->
+            if isLoading then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         -- Data queries
         GotPath isInit result ->
@@ -1584,7 +1588,7 @@ viewTension u t model =
                                 title /= t.title
 
                             doSubmit =
-                                ternary isSendable [ onClick (Submit <| SubmitTitle) ] []
+                                ternary isSendable [ onClick (Submit isLoading <| SubmitTitle) ] []
                         in
                         [ div [ class "field is-grouped" ]
                             [ p [ class "control is-expanded" ]

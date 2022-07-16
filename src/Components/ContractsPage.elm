@@ -252,7 +252,7 @@ type Msg
     | DoPopContract String
     | DoVote Int Time.Posix
     | OnVoteAck (GqlData ContractResult)
-    | OnSubmit (Time.Posix -> Msg)
+    | OnSubmit Bool (Time.Posix -> Msg)
     | OnContractsAck (GqlData Contracts)
     | OnContractAck (GqlData ContractFull)
     | OnContractDeleteAck (GqlData IdPayload)
@@ -368,10 +368,12 @@ update_ apis message model =
             in
             ( { model | contract_result_del = LoadingSlowly, form = f }, out0 [ deleteOneContract apis f OnContractDeleteAck ] )
 
-        OnSubmit next ->
-            ( model
-            , out0 [ sendNow next ]
-            )
+        OnSubmit isLoading next ->
+            if isLoading then
+                ( model, noOut )
+
+            else
+                ( model, out0 [ sendNow next ] )
 
         OnContractsAck result ->
             let
@@ -476,7 +478,7 @@ update_ apis message model =
                     ( { model | vote_result = NotAsked }, out0 [ Ports.raiseAuthModal data.form.uctx ] )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit False <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
                     ( data, ternary (data.voteForm.vote > 0) (out1 [ DoUpdateToken ]) noOut )
@@ -993,13 +995,13 @@ viewVoteBox c op model =
                 [ div
                     [ class "button is-success is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
-                    , onClick (OnSubmit <| DoVote 1)
+                    , onClick (OnSubmit isLoading <| DoVote 1)
                     ]
                     [ span [ class "mx-4" ] [ textH T.accept ] ]
                 , div
                     [ class "button is-danger is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
-                    , onClick (OnSubmit <| DoVote 0)
+                    , onClick (OnSubmit isLoading <| DoVote 0)
                     ]
                     [ span [ class "mx-4" ] [ textH T.decline ] ]
                 ]

@@ -532,7 +532,7 @@ hasData data =
 type Msg
     = -- Data control
       PushTension (GqlData Tension -> Msg)
-    | OnSubmit (Time.Posix -> Msg)
+    | OnSubmit Bool (Time.Posix -> Msg)
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Modal control
     | SetIsActive2 Bool
@@ -638,8 +638,12 @@ update_ apis message model =
         PushTension ack ->
             ( model, out0 [ addOneTension apis model.nodeDoc.form ack ] )
 
-        OnSubmit next ->
-            ( model, out0 [ sendNow next ] )
+        OnSubmit isLoading next ->
+            if isLoading then
+                ( model, noOut )
+
+            else
+                ( model, out0 [ sendNow next ] )
 
         GotPath isInit result ->
             case result of
@@ -829,7 +833,7 @@ update_ apis message model =
                     ( { model | action_result = NotAsked }, out0 [ Ports.raiseAuthModal model.nodeDoc.form.uctx ] )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit OnInvite) 500 ] [ DoUpdateToken ] )
+                    ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit True OnInvite) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
                     let
@@ -1368,7 +1372,7 @@ viewTension op model =
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (OnSubmit <| OnSubmitTension False) ] []
+            ternary isSendable [ onClick (OnSubmit isLoading <| OnSubmitTension False) ] []
     in
     case model.result of
         Success res ->
@@ -1493,13 +1497,13 @@ viewCircle op model =
             model.result == LoadingSlowly
 
         isSendable =
-            form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
+            isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
 
         submitTension =
-            ternary isSendable [ onClickPD2 (OnSubmit <| OnSubmitTension False) ] []
+            ternary isSendable [ onClickPD2 (OnSubmit isLoading <| OnSubmitTension False) ] []
 
         submitCloseTension =
-            ternary isSendable [ onClickPD2 (OnSubmit <| OnSubmitTension True) ] []
+            ternary isSendable [ onClickPD2 (OnSubmit isLoading <| OnSubmitTension True) ] []
     in
     case model.result of
         Success res ->
@@ -1773,7 +1777,7 @@ viewInviteRole model =
                         [ class "button is-light is-link"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isUsersSendable form.users) || isLoading)
-                        , onClick (OnSubmit OnInvite)
+                        , onClick (OnSubmit isLoading OnInvite)
                         ]
                         [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> textH ]
                     ]

@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - unsubscribe from a tension from URL.
 
 ### Changed 
-- [AuthModal] do not close the modal on background click.
+- [AuthModal] Do not close the modal on background click.
 - [Helperbar] User played roles are now hidden in mobile view.
 - [UserInput] Add a better hint message when no user found in the invitation dialogue.
 - [Org/Members] merge the sub-circles roles into a solely member tables with a new column for sub-circles roles.
@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [codefactor] Consolidate the NodeDoc pseudo component. Simplify th doctoolbar keeoping only edit and revision tabs . Inline Authority and governance dropdown
 - [Comments] publish tension/comment wiht Ctrl+enter.
 - [UpdateTension] add automatically the CommentPushed event to history if a comment is present from the form.
+- prevent empty message or title to be post (except for updating comment which the current way to delete the post content...)
+- prevent multiple submit of flooding the server on click of C-enter repeat
 
 
 ## v0.6
