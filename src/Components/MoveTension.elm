@@ -3,7 +3,6 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ConfirmContract as ConfirmContract
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -18,6 +17,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..), sortNode)
 import ModelCommon.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
@@ -471,15 +471,17 @@ viewModal op model =
         , div [ class "modal-content" ]
             [ case model.move_result of
                 Success _ ->
-                    div [ class "box is-light" ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    div [ class "notification is-success-light" ]
+                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+                        , A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.tensionMoved
                         ]
 
                 _ ->
                     viewModalContent op model
             ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
@@ -516,6 +518,8 @@ viewModalContent op model =
 
                         else
                             text T.notImplemented
+
+                --, button [ class "delete is-pulled-right", onClick (OnCloseSafe "" "") ] []
                 ]
             ]
         , div [ class "modal-card-body" ]

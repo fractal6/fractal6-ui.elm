@@ -2,7 +2,6 @@ module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions,
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -18,6 +17,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ContractForm, UserState(..), initContractForm)
 import ModelCommon.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
@@ -353,8 +353,9 @@ viewModal op (State model) =
                         link =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = data.id } |> toHref
                     in
-                    div [ class "box is-light" ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    div [ class "notification is-success-light" ]
+                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+                        , A.icon1 "icon-check icon-2x has-text-success" " "
                         , text "New contract created. "
                         , a
                             [ href link
@@ -367,7 +368,8 @@ viewModal op (State model) =
                 _ ->
                     viewModalContent op (State model)
             ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 

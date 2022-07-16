@@ -2,7 +2,6 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -16,6 +15,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
 import ModelCommon.View exposing (tensionTypeColor, tensionTypeIcon)
@@ -340,15 +340,17 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success _ ->
-                    div [ class "box is-light" ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    div [ class "notification is-success-light" ]
+                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+                        , A.icon1 "icon-check icon-2x has-text-success" " "
                         , text "Tension type changed."
                         ]
 
                 _ ->
                     viewModalContent op (State model)
             ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 

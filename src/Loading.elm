@@ -306,21 +306,23 @@ viewMaybeWebErrors data =
 
 
 viewAuthNeeded : (ModalData -> msg) -> Html msg
-viewAuthNeeded forward =
+viewAuthNeeded onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ text "Authentication needed" ]
+                [ text "Authentication needed"
+                , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
+                ]
             ]
         , div [ class "modal-card-body" ]
             [ p []
                 [ text "Please "
                 , button
-                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = toHref Route.Login }) ]
+                    [ class "button is-small is-primary", onClickPD (onClose { reset = True, link = toHref Route.Login }) ]
                     [ text "Login" ]
                 , text " or "
                 , button
-                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = toHref Route.Signup }) ]
+                    [ class "button is-small is-success", onClickPD (onClose { reset = True, link = toHref Route.Signup }) ]
                     [ text "Signup" ]
                 , text " to perform this action."
                 ]
@@ -328,12 +330,14 @@ viewAuthNeeded forward =
         ]
 
 
-viewRoleNeeded : ErrorData -> Html msg
-viewRoleNeeded errMsg =
+viewRoleNeeded : ErrorData -> (ModalData -> msg) -> Html msg
+viewRoleNeeded errMsg onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
-                [ text "Authorization needed" ]
+                [ text "Authorization needed"
+                , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
+                ]
             ]
         , div [ class "modal-card-body" ] <|
             List.map

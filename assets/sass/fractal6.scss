@@ -702,6 +702,13 @@ strong {
     transform: translate(-50%, 0) !important;
 }
 
+// Notification
+.notification {
+    & > a {
+        color: var(--link) !important;
+    }
+}
+
 /*
  *
  * My style
@@ -2317,6 +2324,11 @@ tr.mediaBox {
         background-color: inherit;
     }
 
+}
+
+.is-success-light {
+    background-color: var(--success-light);
+    color: var(--text-light);
 }
 
 .arrow-left { // long

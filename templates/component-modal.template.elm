@@ -313,8 +313,9 @@ viewModal op (State model) =
                     let
                         link = data.id -- example @tofix
                     in
-                    div [ class "box is-light"]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    div [ class "notification is-success-light"]
+                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+                        , A.icon1 "icon-check icon-2x has-text-success" " "
                         , text "data queried..."
                         , text " "
                         , a
@@ -327,7 +328,7 @@ viewModal op (State model) =
                 _ ->
                     viewModalContent op (State model)
                 ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 viewModalContent : Op -> State -> Html Msg

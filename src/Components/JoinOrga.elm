@@ -2,7 +2,6 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscri
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, viewAuthNeeded, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
@@ -17,6 +16,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, viewAuthNeeded, viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
 import ModelCommon.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
@@ -550,7 +550,8 @@ viewModal op (State model) =
                 _ ->
                     viewJoinStep op model
             ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
@@ -561,8 +562,9 @@ viewSuccess data op model =
             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
     in
     if List.member model.step [ JoinOne, InviteOne ] then
-        div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
-            [ A.icon1 "icon-check icon-2x has-text-success" " "
+        div [ class "notification is-success-light", onClick (OnClose { reset = True, link = "" }) ]
+            [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+            , A.icon1 "icon-check icon-2x has-text-success" " "
             , textH "Your request has been sent. "
             , a
                 [ href link

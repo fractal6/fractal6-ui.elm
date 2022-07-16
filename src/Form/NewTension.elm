@@ -1150,7 +1150,7 @@ viewStep op (State model) =
                     viewCircle op model
 
         TensionNotAuthorized errMsg ->
-            viewRoleNeeded errMsg
+            viewRoleNeeded errMsg OnClose
 
         AuthNeeded ->
             viewAuthNeeded OnClose
@@ -1162,8 +1162,9 @@ viewSuccess res model =
         link =
             Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
-    div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
-        [ A.icon1 "icon-check icon-2x has-text-success" " "
+    div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
+        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
+        , A.icon1 "icon-check icon-2x has-text-success" " "
         , textH model.txt.added
         , text " "
         , a

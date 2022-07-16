@@ -3,7 +3,6 @@ module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscript
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
@@ -26,6 +25,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors)
 import Maybe exposing (withDefault)
 import ModelCommon
     exposing
@@ -1064,7 +1064,8 @@ viewModal op model =
             ]
             []
         , div [ class "modal-content" ] [ viewModalContent op model ]
-        , button [ class "modal-close is-large", onClick (OnCloseModalSafe "" "") ] []
+
+        --, button [ class "modal-close is-large", onClick (OnCloseModalSafe "" "") ] []
         ]
 
 
@@ -1080,8 +1081,9 @@ viewModalContent op model =
                     isSelfContract model.form.uctx model.form.users
             in
             div
-                [ class "box is-light" ]
-                [ A.icon1 "icon-check icon-2x has-text-success" " "
+                [ class "notification is-success-light" ]
+                [ button [ class "delete", onClick (OnCloseModalSafe "" "") ] []
+                , A.icon1 "icon-check icon-2x has-text-success" " "
                 , textH (action2post model.state selfContract ++ ". ")
                 , if model.state == LinkAction && not selfContract then
                     let
@@ -1122,6 +1124,8 @@ viewStep1 op model =
                     |> List.singleton
                     |> span []
                 , span [ class "has-text-primary" ] [ text model.form.node.name ]
+
+                --, button [ class "delete is-pulled-right", onClick (OnCloseModalSafe "" "") ] []
                 ]
             ]
         , div [ class "modal-card-body" ] <|
