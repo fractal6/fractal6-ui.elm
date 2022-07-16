@@ -1,6 +1,6 @@
 ## Install
 
-    npm install
+    npm install [--legacy-peer-deps]
 
 
 NOTE: some packake needs `--legacy-peer-deps` options to be installed without npm trowing an error.
@@ -10,7 +10,7 @@ NOTE: some packake needs `--legacy-peer-deps` options to be installed without np
     npm install --save-dev --legacy-peer-deps node-sass
 
 
-## Launch
+## Launch
 
 **Run the test server**
 
@@ -23,7 +23,7 @@ To run webpack with the production code (i.e with optimization)
     make run_prod
 
 
-## Build
+## Build
 
 **Build the production code**
 
