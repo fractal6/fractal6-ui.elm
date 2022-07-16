@@ -52,7 +52,7 @@ The commit name should starts with a name that identify the **type** of modifica
 example: `fix/AuthModal: prevent the auth modal to be closed when a click in the background occur.`
 
 
-## Reporting issues, Question, feedback
+## Reporting issues, Questions, Feedback
 
 - Issue on the versioning system platform for bug and low-level issues (technical).
 
