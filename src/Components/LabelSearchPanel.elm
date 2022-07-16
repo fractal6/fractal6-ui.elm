@@ -4,7 +4,6 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Codecs exposing (LookupResult)
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (ternary)
@@ -16,6 +15,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
@@ -565,10 +565,10 @@ viewNew op (State model) =
                 text ""
             ]
         , div
-            [ class "button is-small is-primary mr-2"
+            [ class "button is-small  mr-2"
             , onClick (OnOpen op.targets False)
             ]
-            [ A.icon1 "icon-1x icon-plus" "", textH T.label ]
+            [ A.icon1 "icon-1x icon-tag" "", textH T.labels ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 
