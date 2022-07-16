@@ -1491,3 +1491,8 @@ guestCanCreateTensionHelp =
 notifyByEmail : String
 notifyByEmail =
     "Enable email notifications."
+
+
+beenUnsubscribe : String
+beenUnsubscribe =
+    "You've been unsubscribed from this tension"

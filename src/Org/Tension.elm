@@ -49,6 +49,7 @@ import Loading
         , WebData
         , fromMaybeData
         , isFailure
+        , isSuccess
         , loadingSpin
         , viewAuthNeeded
         , viewGqlErrors
@@ -200,6 +201,7 @@ type alias Model =
     , expandedEvents : List Int
     , subscribe_result : GqlData Bool
     , eid : String
+    , unsubscribe : String
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -272,11 +274,13 @@ type Msg
     | GotPath Bool (GqlData LocalGraph)
       -- Page
     | GotTensionHead (GqlData TensionHead)
-    | GotIsSucribe (GqlData Bool)
+    | GotIsSubscribe (GqlData Bool)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
     | ExpandEvent Int
     | ToggleSubscription String
+    | DoUnsubscribe String
+    | OnCloseUnsubscribe
     | MarkAsRead String
     | GotMarkAsRead (GqlData IdPayload)
       --
@@ -419,6 +423,7 @@ init global flags =
             , expandedEvents = []
             , subscribe_result = NotAsked
             , eid = ""
+            , unsubscribe = ""
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionForm tid global.session.user
@@ -531,6 +536,12 @@ refresh_cmds refresh global model =
 
         Nothing ->
             Cmd.none
+    , case Dict.get "unsubscribe" query |> Maybe.map List.head |> withDefault Nothing of
+        Just "email" ->
+            send (DoUnsubscribe "email")
+
+        _ ->
+            Cmd.none
     , Cmd.map AuthModalMsg (send AuthModal.OnStart)
     , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
     , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
@@ -555,7 +566,7 @@ update global message model =
                         LoggedIn uctx_ ->
                             ( uctx_
                               -- Now directly loaded in TensionLoad query
-                              --, getIsSubscribe apis uctx_.username model.tensionid GotIsSucribe
+                              --, getIsSubscribe apis uctx_.username model.tensionid GotIsSubscribe
                             , Cmd.none
                             )
 
@@ -700,7 +711,7 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 
-        GotIsSucribe result ->
+        GotIsSubscribe result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
@@ -732,12 +743,26 @@ update global message model =
             case model.tension_head of
                 Success th ->
                     ( { model | subscribe_result = LoadingSlowly }
-                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSucribe
+                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSubscribe
                     , Cmd.none
                     )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        DoUnsubscribe name ->
+            case global.session.user of
+                LoggedIn uctx ->
+                    ( { model | unsubscribe = name }
+                    , toggleTensionSubscription apis uctx.username model.tensionid False GotIsSubscribe
+                    , Cmd.none
+                    )
+
+                LoggedOut ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnCloseUnsubscribe ->
+            ( { model | unsubscribe = "" }, Cmd.none, Cmd.none )
 
         MarkAsRead eid ->
             ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
@@ -1523,6 +1548,16 @@ view_ global model =
 
                 other ->
                     text ""
+
+            -- User notification
+            , if isSuccess model.subscribe_result && model.unsubscribe /= "" then
+                div [ class "f6-notification notification is-success-light" ]
+                    [ button [ class "delete", onClick OnCloseUnsubscribe ] []
+                    , text T.beenUnsubscribe
+                    ]
+
+              else
+                text ""
             ]
         ]
 
@@ -1541,7 +1576,7 @@ viewTension u t model =
         isAuthor =
             Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
     in
-    div [ id "tensionPage" ]
+    div []
         [ div [ class "columns is-marginless" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
@@ -2516,7 +2551,7 @@ viewSidePane u t model =
           case u of
             LoggedIn uctx ->
                 let
-                    ( iconElt, txt ) =
+                    ( iconElt, subscribe_txt ) =
                         case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) |> withDefault Nothing of
                             Just True ->
                                 ( A.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText )
@@ -2537,7 +2572,7 @@ viewSidePane u t model =
                             , onClick (ToggleSubscription uctx.username)
                             ]
                             [ iconElt, loadingSpin (model.subscribe_result == LoadingSlowly) ]
-                        , p [ class "help" ] [ textH txt ]
+                        , p [ class "help" ] [ textH subscribe_txt ]
                         , case model.subscribe_result of
                             Failure err ->
                                 viewGqlErrors err

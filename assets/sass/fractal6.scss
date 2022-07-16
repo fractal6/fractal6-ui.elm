@@ -709,6 +709,16 @@ strong {
     }
 }
 
+.f6-notification {
+    position: fixed;
+    top: calc(#{$navbar-height} * 2 + 0.5em);
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    width: 25%;
+    min-width: 250px;
+}
+
 /*
  *
  * My style
@@ -2328,7 +2338,7 @@ tr.mediaBox {
 
 .is-success-light {
     background-color: var(--success-light);
-    color: var(--text-light);
+    color: lighten($dark, 10);
 }
 
 .arrow-left { // long
