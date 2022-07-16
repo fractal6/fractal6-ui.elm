@@ -706,6 +706,7 @@ strong {
 .notification {
     & > a {
         color: var(--link) !important;
+        text-decoration: none !important;
     }
 }
 
@@ -961,8 +962,9 @@ strong {
   padding-top: 25px;
   & .menu-list {
       font-size: 0.95em;
-      border-left: 0;
+      border-left: 1px solid var(--bbc);
       &:first-child {
+          border-left: 0;
           margin-right: 2px;
           margin-left: 2px;
       }
