@@ -1615,12 +1615,6 @@ viewNodeValidate model =
             , onAddPolicies = OnAddPolicies
             , onAddResponsabilities = OnAddResponsabilities
             }
-
-        n =
-            Debug.log "form.node" form.node.type_
-
-        n1 =
-            Debug.log "op.node" op.data.node.type_
     in
     div [ class "modal-card-body" ]
         [ viewNodeBreadcrumb form model.nodeStep
