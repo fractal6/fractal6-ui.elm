@@ -1,4 +1,4 @@
-# Install
+## Install
 
     npm install
 
@@ -10,7 +10,7 @@ NOTE: some packake needs `--legacy-peer-deps` options to be installed without np
     npm install --save-dev --legacy-peer-deps node-sass
 
 
-# Launch
+## Launch
 
 **Run the test server**
 
@@ -23,7 +23,7 @@ To run webpack with the production code (i.e with optimization)
     make run_prod
 
 
-# Build
+## Build
 
 **Build the production code**
 
@@ -37,7 +37,7 @@ The code will be generated in the `dist` folder.
     make gen
 
 
-# Creating new components
+## Creating new components
 
 A components is a reusable piece of code use in a application to implement a given functionality.
 By components, we mean here a state-full Elm module, that is a module which have its own state, model & Msg managed by itself. It allows to limit the complexity of the elm files and prevents file from being too big.
