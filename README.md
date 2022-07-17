@@ -1,3 +1,8 @@
+# Fractal6-ui.elm
+
+Single-page application frontend for [Fractale](https://fractale.co).
+
+
 ## Install
 
     npm install [--legacy-peer-deps]

@@ -57,3 +57,5 @@ example: `fix/AuthModal: prevent the auth modal to be closed when a click in the
 - Issue on the versioning system platform for bug and low-level issues (technical).
 
 - Tension on [Fractale](https://fractale.co/o/f6) for all the rest.
+
+- Chat on Matrix: https://matrix.to/#/#fractal6:matrix.org
