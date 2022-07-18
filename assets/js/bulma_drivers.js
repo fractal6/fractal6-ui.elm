@@ -41,9 +41,15 @@ export function BulmaDriver(app, target, handlers) {
     // Setup
     //
 
+    // Get the target node
     var $doc;
     if (!target) {
         $doc = document;
+        // Eventually clean active modal style
+        document.documentElement.classList.remove('has-modal-active');
+        document.getElementById("navbarTop").classList.remove('has-modal-active');
+        document.documentElement.classList.remove('has-modal-active2');
+        document.getElementById("navbarTop").classList.remove('has-modal-active2');
     } else {
         // @DEBUG: document handler may be added several times here...
         // --
