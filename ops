@@ -1,0 +1,1 @@
+{"author":{"id":"18f2c617c6fcebe79492fa7bd83bc8f5cec4b7122b81bb960d7b21620c0bc4b3"},"ops":[{"type":1,"timestamp":1605573435,"nonce":"4hDZyjxyGU0qlIzIFgcu0DFNaak=","title":"Update quicksearches for DelNodes and UpdateNode","message":"","files":null},{"type":5,"timestamp":1605573464,"nonce":"hlKt5XZmHKIELixrBe8zXetOkvM=","added":["fix","medium"],"removed":null}]}
