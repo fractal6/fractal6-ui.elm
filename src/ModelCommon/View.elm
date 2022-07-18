@@ -190,10 +190,10 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                     []
                 ]
             ]
-        , div [ class "media-right is-wrapped-50" ]
+        , div [ class "media-right wrapped-container-33" ]
             [ ternary showRecip (viewCircleTarget "is-pulled-right" tension.receiver) (text "")
             , br [] []
-            , span [ class "level icons-list" ]
+            , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
                     Just action ->
                         let
@@ -212,7 +212,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                         text ""
                 , if n_comments > 1 then
                     a
-                        [ class "level-item discrete-link tooltip has-tooltip-arrow "
+                        [ class "level-item discrete-link tooltip has-tooltip-arrow"
                         , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]
@@ -237,7 +237,7 @@ viewJoinNeeded focus =
 
 viewCircleTarget : String -> EmitterOrReceiver -> Html msg
 viewCircleTarget cls er =
-    span [ class ("tag has-border-light tag-circl is-rounded " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+    span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
@@ -593,7 +593,7 @@ viewNodeRef baseUri n =
             else
                 uriFromNameid baseUri n.nameid []
     in
-    a [ href ref ] [ text n.name ]
+    a [ href ref, class "is-wrapped" ] [ text n.name ]
 
 
 viewNodeRefShort : FractalBaseRoute -> String -> Html msg

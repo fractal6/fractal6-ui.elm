@@ -2426,7 +2426,7 @@ viewSidePane u t model =
                         blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
                 in
                 div [ class "media" ]
-                    [ div [ class "media-content" ]
+                    [ div [ class "media-content wrapped-container" ]
                         [ div
                             [ class "media-content"
                             , classList [ ( "is-w", hasBlobRight || hasRole ) ]

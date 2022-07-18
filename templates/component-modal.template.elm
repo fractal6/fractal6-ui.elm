@@ -341,7 +341,7 @@ viewModalContent op (State model) =
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
-            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ textH "EditMe" ]
             ]
         , div [ class "modal-card-body" ]

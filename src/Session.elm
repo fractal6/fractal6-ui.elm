@@ -2,15 +2,15 @@ module Session exposing (..)
 
 import Array exposing (Array)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
+import Fractal.Enum.NodeMode as NodeMode
+import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.RoleType as RoleType
+import Json.Decode as JD
 import Loading
     exposing
         ( GqlData
         , WebData
         )
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Json.Decode as JD
 import ModelCommon exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)

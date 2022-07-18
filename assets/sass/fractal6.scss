@@ -821,6 +821,15 @@ strong {
             padding-left: 0.75rem;
         }
     }
+
+    .level-left {
+        // level-right is hidden
+        max-width: 100%;
+        @include desktop {
+            // prevent user roles overflow
+            max-width: 75%;
+        }
+    }
 }
 
 #mainPane {
@@ -2432,27 +2441,21 @@ tr.mediaBox {
     }
 }
 
+.wrapped-container {
+    max-width: 100%;
+}
+.wrapped-container-80 {
+    max-width: 100%;
+}
+.wrapped-container-33 {
+    max-width: 33%;
+}
+
 .is-wrapped {
     max-width: 100%;
     text-overflow: ellipsis;
     overflow: hidden;
-    white-space: nowrap;
 }
-
-.is-wrapped-50 {
-    max-width: 50%;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-
-    *:not(.dropdown-content) {
-        max-width: 100%;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-}
-
 .nowrap {
     white-space: nowrap;
 }

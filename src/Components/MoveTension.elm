@@ -502,7 +502,7 @@ viewModalContent op model =
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
                         textH T.moveTension

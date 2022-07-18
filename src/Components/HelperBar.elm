@@ -2,13 +2,14 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
+import Extra exposing (ternary)
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, type_)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..))
@@ -83,7 +84,7 @@ viewPathLevel op =
                 Nothing ->
                     ( "", False )
     in
-    nav [ class "level" ]
+    nav [ class "level is-mobile" ]
         [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data op.onToggleTreeMenu ]
         , div [ class "level-right mt-0" ]
             [ --A.burger "rolesMenu"
@@ -184,7 +185,7 @@ viewNavLevel op =
 viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> msg -> Html msg
 viewPath baseUri uriQuery maybePath onToggleTreeMenu =
     div
-        [ class "breadcrumb has-arrow-separato"
+        [ class "breadcrumb wrapped-container"
         , attribute "aria-label" "breadcrumbs"
         ]
     <|
@@ -194,30 +195,34 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                 let
                     q =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
-                in
-                [ span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ] ]
-                    ++ [ g.path
-                            |> List.indexedMap
-                                (\i p ->
-                                    if i < (List.length g.path - 1) then
-                                        li []
-                                            [ a [ href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
-                                                [ div [] [ text p.name ] ]
-                                            ]
 
-                                    else
-                                        li []
-                                            [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
-                                            , a
-                                                [ class "stealth-link tag is-rounded ml-1 has-border"
-                                                , attribute "style" "weight: 500 !important;padding: 10px 10px;"
-                                                , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
-                                                ]
-                                                [ text (NodeVisibility.toString g.focus.visibility) ]
-                                            ]
-                                )
-                            |> ul [ attribute "style" "display: inline-flex;" ]
-                       ]
+                    icon =
+                        span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                in
+                [ g.path
+                    |> List.indexedMap
+                        (\i p ->
+                            if i < (List.length g.path - 1) then
+                                li [ class "wrapped-container" ]
+                                    [ ternary (i == 0) icon (text "")
+                                    , a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
+                                        [ text p.name ]
+                                    ]
+
+                            else
+                                li [ class "wrapped-container" ]
+                                    [ ternary (i == 0) icon (text "")
+                                    , a [ class "is-block is-wrapped has-text-weight-semibold", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
+                                    , a
+                                        [ class "stealth-link tag is-rounded ml-1 has-border"
+                                        , attribute "style" "weight: 500 !important;padding: 10px 10px;"
+                                        , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
+                                        ]
+                                        [ text (NodeVisibility.toString g.focus.visibility) ]
+                                    ]
+                        )
+                    |> ul []
+                ]
 
             Nothing ->
                 [ div [ class "ph-line is-1" ] [] ]

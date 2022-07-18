@@ -15,7 +15,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, title, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, style, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -598,7 +598,7 @@ viewAboutSection data op_m =
     in
     div []
         [ div [ class "level subtitle" ]
-            [ div [ class "level-left" ]
+            [ div [ class "level-left", style "max-width" "90%" ]
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ textH T.about ]
                 , text T.space_
