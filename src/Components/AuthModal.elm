@@ -2,7 +2,6 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, signup
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -16,6 +15,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
@@ -207,6 +207,9 @@ update_ apis message model =
 
         SubmitUser form ->
             case model.puid of
+                Just "" ->
+                    ( model, out0 [ login apis form.post GotSignin ] )
+
                 Just puid ->
                     ( model, out0 [ signupValidate apis form.post GotSignin ] )
 
@@ -219,7 +222,12 @@ update_ apis message model =
                     case result of
                         RemoteData.Success uctx ->
                             case model.puid of
-                                Just _ ->
+                                Just "" ->
+                                    ( { model | modalAuth = Inactive }
+                                    , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
+                                    )
+
+                                Just puid ->
                                     ( { model | modalAuth = Active form result }
                                     , Out [] [ DoUpdateUserSession uctx ] (Just ( False, uctx ))
                                     )
@@ -285,7 +293,10 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div []
         [ case model.puid of
-            Just _ ->
+            Just "" ->
+                Lazy.lazy2 signinModal op model
+
+            Just puid ->
                 Lazy.lazy2 signupModal op model
 
             Nothing ->
@@ -469,6 +480,94 @@ signupModal op model =
                                             text ""
                                     ]
                                 ]
+
+                    Inactive ->
+                        []
+            ]
+        , button [ class "modal-close is-large", onClick <| DoCloseAuthModal "" ] []
+        ]
+
+
+signinModal : Op -> Model -> Html Msg
+signinModal op model =
+    div
+        [ id "authModal"
+        , class "modal modal-pos-top modal-fx-fadeIn"
+        , classList [ ( "is-active", model.modalAuth /= Inactive ) ]
+        , attribute "data-modal-close" "closeAuthModalFromJs"
+        ]
+        --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
+        [ div [ class "modal-background" ] []
+        , div [ class "modal-content" ]
+            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
+            , div [ class "box" ] <|
+                case model.modalAuth of
+                    Active form result ->
+                        [ p [ class "field" ] [ text "You need to sign in to access this page:" ]
+                        , div [ class "field" ]
+                            [ div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ class "input autofocus followFocus"
+                                        , attribute "data-nextfocus" "passwordInput"
+                                        , type_ "text"
+                                        , placeholder "username or email"
+                                        , name "username"
+                                        , value (Dict.get "username" form.post |> withDefault "")
+                                        , attribute "autocomplete" "username"
+                                        , required True
+                                        , onInput (ChangeAuthPost "username")
+                                        ]
+                                        []
+                                    ]
+                                ]
+                            , div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ id "passwordInput"
+                                        , class "input"
+                                        , type_ "password"
+                                        , placeholder "password"
+                                        , name "password"
+                                        , attribute "autocomplete" "password"
+                                        , required True
+                                        , onInput (ChangeAuthPost "password")
+                                        , onKeydown SubmitKeyDown
+                                        ]
+                                        []
+                                    ]
+                                ]
+                            ]
+                        , div [ attribute "style" "width: 225px;" ]
+                            [ a [ class "is-size-7 is-pulled-left mb-2", href (toHref Route.Signup) ]
+                                [ textH T.createAccount ]
+                            , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
+                                [ textH T.passwordForgotten ]
+                            ]
+                        , div [ class "field is-grouped is-grouped-right" ]
+                            [ div [ class "control" ]
+                                [ if isPostSendable [ "password" ] form.post then
+                                    button
+                                        [ id "submitButton"
+                                        , class "button is-success"
+                                        , onClick (SubmitUser form)
+                                        ]
+                                        [ text T.signin ]
+
+                                  else
+                                    button [ class "button", disabled True ]
+                                        [ text T.signin ]
+                                ]
+                            ]
+                        , div []
+                            [ case result of
+                                RemoteData.Failure err ->
+                                    viewHttpErrors err
+
+                                _ ->
+                                    text ""
+                            ]
+                        ]
 
                     Inactive ->
                         []

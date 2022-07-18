@@ -472,7 +472,9 @@ init global flags =
             , now = global.now
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
-            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
+
+            -- Oen a sigin dialog if contracts are requested
+            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }

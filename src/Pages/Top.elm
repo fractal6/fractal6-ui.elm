@@ -3,7 +3,6 @@ module Pages.Top exposing (Flags, Model, Msg, page)
 import Assets as A
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
-import Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
@@ -15,6 +14,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Loading exposing (WebData, expectJson, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
@@ -335,11 +335,11 @@ viewLogin model =
                         , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                         , onClick (SubmitUser model.form)
                         ]
-                        [ text "Sign in" ]
+                        [ text T.signin ]
 
                   else
                     button [ class "button", disabled True ]
-                        [ text "Sign in" ]
+                        [ text T.signin ]
                 ]
             ]
         ]
@@ -426,11 +426,11 @@ viewSignup model =
                         , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                         , onClick (SubmitUser model.form)
                         ]
-                        [ text "Sign up" ]
+                        [ text T.signup ]
 
                   else
                     button [ class "button", disabled True ]
-                        [ text "Sign up" ]
+                        [ text T.signup ]
                 ]
             ]
         ]

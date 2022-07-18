@@ -3,7 +3,6 @@ module Pages.Login exposing (Flags, Model, Msg, page)
 import Assets as A
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
-import Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable)
@@ -15,6 +14,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Loading exposing (WebData, expectJson, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
@@ -155,20 +155,20 @@ subscriptions global model =
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Login"
-    , body = [ view_ global model ]
+    , body = [ view_ model ]
     }
 
 
-view_ : Global.Model -> Model -> Html Msg
-view_ global model =
+view_ : Model -> Html Msg
+view_ model =
     div [ id "loginForm", class "columns is-centered mt-4 p-4 is-marginless" ]
         [ div [ class "" ]
-            [ viewLogin global model ]
+            [ viewLogin model ]
         ]
 
 
-viewLogin : Global.Model -> Model -> Html Msg
-viewLogin global model =
+viewLogin : Model -> Html Msg
+viewLogin model =
     div [ class "card" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title" ]
@@ -235,11 +235,11 @@ viewLogin global model =
                             , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                             , onClick (SubmitUser model.form)
                             ]
-                            [ text "Sign in" ]
+                            [ text T.signin ]
 
                       else
                         button [ class "button", disabled True ]
-                            [ text "Sign in" ]
+                            [ text T.signin ]
                     ]
                 ]
             ]

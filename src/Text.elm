@@ -67,7 +67,12 @@ space_ =
 
 signin : String
 signin =
-    "Login"
+    "Sign in"
+
+
+signup : String
+signup =
+    "Sign up"
 
 
 signout : String
