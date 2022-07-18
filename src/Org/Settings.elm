@@ -218,10 +218,10 @@ menuToString menu =
             upH T.roles
 
         GlobalMenu ->
-            upH "Organisation"
+            upH T.organisation
 
         EditMenu ->
-            upH "edit circle"
+            upH T.editThisCircle
 
 
 menuToIcon : MenuSettings -> String

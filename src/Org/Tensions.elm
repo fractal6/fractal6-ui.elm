@@ -1410,7 +1410,7 @@ viewSearchBar model =
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ] [ text "List" ] ]
+                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ] [ text T.list ] ]
                     ]
 
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
@@ -1421,7 +1421,7 @@ viewSearchBar model =
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ] [ text "Circles" ] ]
+                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ] [ text T.byCircle ] ]
                     ]
                 ]
             ]

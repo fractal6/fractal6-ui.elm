@@ -140,6 +140,11 @@ seeMore =
     "see more"
 
 
+organisation : String
+organisation =
+    "organisation"
+
+
 organisations : String
 organisations =
     "organisations"
@@ -230,6 +235,11 @@ edit =
     "edit"
 
 
+editThisCircle : String
+editThisCircle =
+    "Edit this circle"
+
+
 cancel : String
 cancel =
     "cancel"
@@ -258,6 +268,16 @@ published =
 revisionNotPublished : String
 revisionNotPublished =
     "revision not published"
+
+
+list : String
+list =
+    "List"
+
+
+byCircle : String
+byCircle =
+    "By circle"
 
 
 by : String
