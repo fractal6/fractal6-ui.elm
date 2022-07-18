@@ -417,7 +417,8 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( { model | join_result = result }
-                    , out1 [ DoFetchNode (memberIdCodec model.form.node.nameid model.form.uctx.username) ]
+                      --, out1 [ DoFetchNode (memberIdCodec model.form.node.nameid model.form.uctx.username) ]
+                    , out1 [ DoUpdateToken ]
                     )
 
                 DuplicateErr ->

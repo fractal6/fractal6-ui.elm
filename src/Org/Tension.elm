@@ -1497,6 +1497,7 @@ view global model =
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
+            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
             }
     in
     { title =

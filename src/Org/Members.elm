@@ -474,6 +474,7 @@ view global model =
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
+            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
             }
     in
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])

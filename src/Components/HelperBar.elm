@@ -57,6 +57,7 @@ type alias Op msg =
     , onExpand : msg
     , onCollapse : msg
     , onToggleTreeMenu : msg
+    , onJoin : msg
     }
 
 
@@ -103,7 +104,7 @@ viewPathLevel op =
                                         [ textH "Pending invitation" ]
 
                                 else if List.length roles == 0 && userCanJoin then
-                                    joinButton
+                                    joinButton op
 
                                 else
                                     memberButtons roles { op | baseUri = OverviewBaseUri }
@@ -113,7 +114,7 @@ viewPathLevel op =
 
                     LoggedOut ->
                         if userCanJoin then
-                            joinButton
+                            joinButton op
 
                         else
                             text ""
@@ -228,9 +229,9 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                 [ div [ class "ph-line is-1" ] [] ]
 
 
-joinButton : Html msg
-joinButton =
-    div [ id "join", class "button is-small has-text-weight-semibold is-primary joinTrigger" ]
+joinButton : Op msg -> Html msg
+joinButton op =
+    div [ id "join", class "button is-small has-text-weight-semibold is-primary", onClick op.onJoin ]
         [ textH T.joinOrga ]
 
 

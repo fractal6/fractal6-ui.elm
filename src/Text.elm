@@ -1430,7 +1430,7 @@ labelsInfoHeader =
 labelsInfoDoc : String
 labelsInfoDoc =
     """
-  When you create a label here, you can then attach it to your tensions. You will also be able to filter the tension according to labels.
+  When you create labels here. You can then attach them to your tensions. You will also be able to filter the tension according to labels.
 
   **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
 
