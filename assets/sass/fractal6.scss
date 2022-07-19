@@ -296,6 +296,12 @@ a.is-link {
 .has-border-light {
     border: 1px solid var(--border-color-light);
 }
+.has-border-color {
+    border-color: var(--border-color) !important;
+}
+.has-border-color-light {
+    border-color: var(--border-color-light) !important;
+}
 .is-md {
     font-size: 0.9rem !important;
 }
@@ -2344,7 +2350,6 @@ tr.mediaBox {
     &:active {
         background-color: inherit;
     }
-
 }
 
 .is-success-light {
@@ -2407,14 +2412,14 @@ tr.mediaBox {
     }
 }
 
-.is-hbar {
+.hbar {
 	display: inline-block;
 	border-top: 1px solid var(--grey);
 	height: 8px;
 	width: 25px;
 }
 
-.is-vbar-1 { // next buttons
+.vbar { // next buttons
 	display: inline-block;
 	border-left: 1px solid #ccc;
 	height: 16px;
@@ -3013,6 +3018,16 @@ input:checked + section.acc .acc-title:before {
  * Ugly focus management
  *
  */
+
+.icon-input-flex-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 8px;
+    z-index: 4;
+}
 
 
 //*:focus {

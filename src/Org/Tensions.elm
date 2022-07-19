@@ -30,7 +30,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -968,11 +968,18 @@ update global message model =
             )
 
         SubmitSearchReset ->
-            -- Reset the other results
-            ( model
-            , Cmd.batch [ send SubmitSearch, send ResetData ]
-            , Cmd.none
-            )
+            if
+                (model.pattern |> withDefault "" |> String.trim)
+                    == (Dict.get "q" model.query |> withDefault [] |> List.head |> withDefault "")
+            then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                -- Send search and reset the other results
+                ( model
+                , Cmd.batch [ send SubmitSearch, send ResetData ]
+                , Cmd.none
+                )
 
         SubmitSearch ->
             let
@@ -1299,9 +1306,9 @@ viewSearchBar model =
     in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mt-0 mb-0" ]
-            [ div [ class "column is-6" ]
+            [ div [ class "column is-5" ]
                 [ div [ class "field has-addons" ]
-                    [ div [ class "control has-icons-left is-expanded" ]
+                    [ div [ class "control  is-expanded" ]
                         [ input
                             [ class "is-rounded input is-small"
                             , type_ "search"
@@ -1313,11 +1320,15 @@ viewSearchBar model =
                             , onKeydown SearchKeyDown
                             ]
                             []
-                        , span [ class "icon is-left" ] [ A.icon "icon-search" ]
+                        , span [ class "icon-input-flex-right" ]
+                            [ span [ class "vbar has-border-color" ] []
+                            , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+                                [ A.icon "icon-search" ]
+                            ]
                         ]
                     ]
                 ]
-            , div [ class "column is-6 flex-gap" ]
+            , div [ class "column is-7 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]

@@ -1284,7 +1284,7 @@ viewCanvas us model =
                                 [ textH T.createNewTension ]
                              ]
                                 ++ (if isAdmin || True then
-                                        [ div [ class "is-hbar" ] []
+                                        [ div [ class "hbar" ] []
                                         , div
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
@@ -1342,7 +1342,7 @@ viewCanvas us model =
                         []
                    )
                 ++ [ if (model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin then
-                        div [ class "is-hbar" ] []
+                        div [ class "hbar" ] []
 
                      else
                         text ""

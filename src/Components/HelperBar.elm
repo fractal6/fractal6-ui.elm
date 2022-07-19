@@ -154,7 +154,7 @@ viewNavLevel op =
                 ++ (Maybe.map
                         (\path ->
                             if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
-                                [ li [ class "is-vbar-1" ] []
+                                [ li [ class "vbar" ] []
                                 , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
