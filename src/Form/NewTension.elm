@@ -718,7 +718,15 @@ update_ apis message model =
                     ( { model | isActive2 = True } |> setStep AuthNeeded, out0 [ send (SetIsActive2 True) ] )
 
         OnOpenRole t ->
-            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t) ] )
+            let
+                cmd =
+                    if isSuccess model.result then
+                        send OnReset
+
+                    else
+                        Cmd.none
+            in
+            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t), cmd ] )
 
         OnOpenCircle t ->
             ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnSwitchTab NewCircleTab), send (OnOpen t) ] )
@@ -941,18 +949,14 @@ update_ apis message model =
                         NewRoleTab ->
                             let
                                 newNameid =
-                                    model.nodeDoc.form.node.nameid
-                                        |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Role model.nodeDoc.form.node.type_))
-                                        |> withDefault ""
+                                    getNewNameid NodeType.Role model.nodeDoc
                             in
                             ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                         NewCircleTab ->
                             let
                                 newNameid =
-                                    model.nodeDoc.form.node.nameid
-                                        |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Circle model.nodeDoc.form.node.type_))
-                                        |> withDefault ""
+                                    getNewNameid NodeType.Circle model.nodeDoc
                             in
                             ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
@@ -1194,7 +1198,12 @@ viewSuccess res model =
                         viewInviteRole model
 
                     else
-                        span [ class "m-2" ] [ text "Or ", a [ class "button is-primary", onClick DoInvite, target "_blank" ] [ text "invite someone" ], text " to this role." ]
+                        span [ class "m-2 is-inline-flex is-align-items-baseline" ]
+                            [ text "Or ", a [ class "button is-small mx-1 is-primary", onClick DoInvite, target "_blank" ] [ text "invite someone" ], text " to this role." ]
+
+          else if model.activeTab == NewCircleTab && model.activeButton == Just 0 then
+            span [ class "m-2 is-inline-flex is-align-items-baseline" ]
+                [ text "Or ", a [ class "button is-small mx-1 is-primary", onClick (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text "add a role" ], text " to this circle." ]
 
           else
             text ""
@@ -1805,3 +1814,16 @@ viewComment model =
             ]
         , p [ class "help-label" ] [ textH T.invitationMessageHelp ]
         ]
+
+
+
+--
+-- Utils
+--
+
+
+getNewNameid : NodeType.NodeType -> NodeDoc -> String
+getNewNameid type_ nodeDoc =
+    nodeDoc.form.node.nameid
+        |> Maybe.map (\nid -> nodeIdCodec nodeDoc.form.target.nameid nid (withDefault type_ nodeDoc.form.node.type_))
+        |> withDefault ""

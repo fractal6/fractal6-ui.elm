@@ -522,6 +522,7 @@ type Msg
     | SearchKeyDown Int
     | ResetData
     | OnClearFilter
+    | SubmitTextSearch
     | SubmitSearchReset
     | SubmitSearch
     | GoView TensionsView
@@ -934,7 +935,7 @@ update global message model =
             case key of
                 13 ->
                     --ENTER
-                    ( model, send SubmitSearchReset, Cmd.none )
+                    ( model, send SubmitTextSearch, Cmd.none )
 
                 27 ->
                     --ESC
@@ -967,7 +968,7 @@ update global message model =
             , Cmd.none
             )
 
-        SubmitSearchReset ->
+        SubmitTextSearch ->
             if
                 (model.pattern |> withDefault "" |> String.trim)
                     == (Dict.get "q" model.query |> withDefault [] |> List.head |> withDefault "")
@@ -975,11 +976,14 @@ update global message model =
                 ( model, Cmd.none, Cmd.none )
 
             else
-                -- Send search and reset the other results
-                ( model
-                , Cmd.batch [ send SubmitSearch, send ResetData ]
-                , Cmd.none
-                )
+                ( model, send SubmitSearchReset, Cmd.none )
+
+        SubmitSearchReset ->
+            -- Send search and reset the other results
+            ( model
+            , Cmd.batch [ send SubmitSearch, send ResetData ]
+            , Cmd.none
+            )
 
         SubmitSearch ->
             let

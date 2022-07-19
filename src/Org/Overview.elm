@@ -1323,7 +1323,7 @@ viewCanvas us model =
                         , attribute "data-tooltip" (upH "Add...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path))
                         ]
-                        [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs" ] ]
+                        [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs is-strong" ] ]
                     ]
                 )
                 model.path_data
