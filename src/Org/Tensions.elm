@@ -31,7 +31,7 @@ import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -147,6 +147,7 @@ type alias Model =
     , authors : List User
     , labels : List Label
     , tensions_count : GqlData TensionsCount
+    , hover_column : Maybe String
 
     -- Common
     , screen : Screen
@@ -266,6 +267,16 @@ defaultDepth =
 
 defaultDepthFilter =
     AllSubChildren
+
+
+depthFilter2Text : DepthFilter -> String
+depthFilter2Text x =
+    case x of
+        AllSubChildren ->
+            "Include all sub-circles"
+
+        SelectedNode ->
+            "Current circle and its direct children"
 
 
 type StatusFilter
@@ -527,6 +538,7 @@ type Msg
     | SubmitSearch
     | GoView TensionsView
     | SetOffset Int
+    | OnColumnHover (Maybe String)
       -- Common
     | NoMsg
     | LogErr String
@@ -599,6 +611,7 @@ init global flags =
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
             , tensions_count = fromMaybeData global.session.tensions_count Loading
+            , hover_column = Nothing
 
             -- Common
             , helperBar = HelperBar.create
@@ -695,13 +708,16 @@ update global message model =
     case message of
         PushTension tension ->
             let
-                tensions =
+                tensions_all =
                     hotTensionPush tension model.tensions_all
 
                 tensions_int =
                     hotTensionPush tension model.tensions_int
             in
-            ( { model | tensions_int = Success tensions_int }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
+            ( { model | tensions_int = Success tensions_int, tensions_all = Success tensions_all }
+            , Cmd.none
+            , Cmd.batch [ send (UpdateSessionTensionsInt (Just tensions_int)), send (UpdateSessionTensionsAll (Just tensions_all)) ]
+            )
 
         PassedSlowLoadTreshold ->
             let
@@ -1026,6 +1042,9 @@ update global message model =
         SetOffset v ->
             ( { model | offset = v }, Cmd.none, Cmd.none )
 
+        OnColumnHover v ->
+            ( { model | hover_column = v }, Cmd.none, Cmd.none )
+
         -- Authors
         UserSearchPanelMsg msg ->
             let
@@ -1314,7 +1333,7 @@ viewSearchBar model =
                 [ div [ class "field has-addons" ]
                     [ div [ class "control  is-expanded" ]
                         [ input
-                            [ class "is-rounded input is-small"
+                            [ class "is-rounded input is-small pr-6"
                             , type_ "search"
                             , autocomplete False
                             , autofocus False
@@ -1412,7 +1431,7 @@ viewSearchBar model =
                                 List.map
                                     (\t ->
                                         div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter t ]
-                                            [ ternary (model.depthFilter == t) checked unchecked, textH (depthFilterEncoder t) ]
+                                            [ ternary (model.depthFilter == t) checked unchecked, textH (depthFilter2Text t) ]
                                     )
                                     depthFilterList
                             ]
@@ -1602,13 +1621,27 @@ viewCircleTensions model =
             Dict.toList tensions_d
                 |> List.map
                     (\( _, ts ) ->
-                        [ div [ class "column is-3" ]
+                        let
+                            rcv_m =
+                                List.head ts
+
+                            rcv_name_m =
+                                Maybe.map (.receiver >> .name) rcv_m
+
+                            rcv_nameid_m =
+                                Maybe.map (.receiver >> .nameid) rcv_m
+                        in
+                        --[ div [ class "column is-3", onMouseEnter (OnColumnHover rcv_nameid_m) ]
+                        [ div [ class "column is-3", onMouseEnter (OnColumnHover rcv_nameid_m) ]
                             [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
-                                [ ts
-                                    |> List.head
-                                    |> Maybe.map (\h -> h.receiver.name)
-                                    |> withDefault "Loading..."
-                                    |> text
+                                [ rcv_name_m |> withDefault "Loading..." |> text
+                                , span
+                                    [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
+
+                                    --, classList [ ( "is-invisible", model.hover_column /= rcv_nameid_m ) ]
+                                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid (withDefault "" rcv_nameid_m))))
+                                    ]
+                                    [ A.icon "icon-plus" ]
                                 ]
                             , ts
                                 |> List.sortBy .createdAt
@@ -1629,6 +1662,8 @@ viewCircleTensions model =
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"
+
+                    --, onMouseLeave (OnColumnHover Nothing)
                     , attribute "style" <|
                         case model.boardHeight of
                             Just h ->

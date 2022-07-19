@@ -145,6 +145,16 @@ seeMore =
     "see more"
 
 
+seeFullList : String
+seeFullList =
+    "See full list"
+
+
+seeByCircle : String
+seeByCircle =
+    "See by circles"
+
+
 organisation : String
 organisation =
     "organisation"
@@ -282,7 +292,7 @@ list =
 
 byCircle : String
 byCircle =
-    "By circle"
+    "By circles"
 
 
 by : String

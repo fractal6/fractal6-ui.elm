@@ -1454,7 +1454,10 @@ viewActivies model =
                             if List.length tensions > 0 then
                                 List.map (\x -> mediaTension model.now model.node_focus x False True "is-size-6" Navigate) tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
-                                            [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ textH T.seeMore ] ]
+                                            [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ textH T.seeFullList ]
+                                            , text "|"
+                                            , a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ "?v=circle") ] [ textH T.seeByCircle ]
+                                            ]
                                        ]
                                     |> div [ id "tensionsTab" ]
 
