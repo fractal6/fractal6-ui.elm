@@ -1,4 +1,4 @@
-module Components.TreeMenu exposing (Msg(..), State, getOrgaData_, init, subscriptions, update, view)
+module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -154,7 +154,28 @@ getOrgaData_ (State model) =
 getList_ : State -> List String
 getList_ (State model) =
     -- Get the ordered list of nodes
-    []
+    if isSuccess model.tree_result then
+        next_ model.tree
+
+    else
+        []
+
+
+next_ : Tree Node -> List String
+next_ (Tree { node, children }) =
+    [ node.nameid ]
+        ++ (List.map
+                (\(Tree c) ->
+                    case children of
+                        [] ->
+                            []
+
+                        _ ->
+                            next_ (Tree c)
+                )
+                children
+                |> List.concat
+           )
 
 
 
@@ -248,7 +269,7 @@ update_ apis message model =
                 )
 
             else
-                ( setTree model, noOut )
+                ( model, noOut )
 
         OnReload uctx ->
             if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
@@ -264,7 +285,7 @@ update_ apis message model =
                 )
 
             else
-                ( model, noOut )
+                ( model, Out [] [] (Just ( True, True )) )
 
         OnDataAck result ->
             let
@@ -281,7 +302,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnLoad 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data |> setTree, Out [] [ DoUpdateTree (Just d) ] (Just ( True, True )) )
+                    ( setTree data, Out [] [ DoUpdateTree (Just d) ] (Just ( True, True )) )
 
                 _ ->
                     ( data, noOut )
@@ -433,17 +454,16 @@ viewSubTree depth hover focus (Tree { node, children }) =
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnOrgHover Nothing) ] [])
         [ li []
             ([ Lazy.lazy3 viewLine hover focus node ]
-                ++ (children
-                        |> List.map
-                            (\(Tree c) ->
-                                if List.member c.node.role_type [ Just RoleType.Owner, Just RoleType.Pending, Just RoleType.Peer, Just RoleType.Coordinator ] then
-                                    -- @TODO : add tag (3 roles) that is clickable and will open the roles list.
-                                    text ""
+                ++ List.map
+                    (\(Tree c) ->
+                        if List.member c.node.role_type [ Just RoleType.Owner, Just RoleType.Pending, Just RoleType.Peer, Just RoleType.Coordinator ] then
+                            -- @TODO : add tag (3 roles) that is clickable and will open the roles list.
+                            text ""
 
-                                else
-                                    viewSubTree (depth + 1) hover focus (Tree c)
-                            )
-                   )
+                        else
+                            viewSubTree (depth + 1) hover focus (Tree c)
+                    )
+                    children
             )
         ]
 

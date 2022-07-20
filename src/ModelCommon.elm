@@ -711,15 +711,30 @@ hotNodePull nameids odata =
             ( Dict.empty, Nothing )
 
 
-hotTensionPush : Tension -> GqlData TensionsList -> TensionsList
+hotTensionPush : Tension -> GqlData (List Tension) -> List Tension
 hotTensionPush tension tsData =
     -- Push a new tension in the model if data is success
     case tsData of
-        Success tensions ->
-            [ tension ] ++ tensions
+        Success data ->
+            [ tension ] ++ data
 
         _ ->
             []
+
+
+hotTensionPush2 : Tension -> GqlData TensionsDict -> TensionsDict
+hotTensionPush2 tension tsData =
+    -- Push a new tension in the model if data is success
+    case tsData of
+        Success data ->
+            let
+                ts =
+                    [ tension ] ++ (Dict.get tension.receiver.nameid data |> withDefault [])
+            in
+            Dict.insert tension.receiver.nameid ts data
+
+        _ ->
+            Dict.empty
 
 
 

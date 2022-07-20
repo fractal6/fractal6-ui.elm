@@ -56,10 +56,10 @@ type alias Session =
     , path_data : Maybe LocalGraph
     , children : Maybe (List NodeId)
     , node_data : Maybe NodeData
-    , tensions_data : Maybe TensionsList
-    , tensions_int : Maybe TensionsList
-    , tensions_ext : Maybe TensionsList
-    , tensions_all : Maybe TensionsList
+    , tensions_data : Maybe (List Tension)
+    , tensions_int : Maybe (List Tension)
+    , tensions_ext : Maybe (List Tension)
+    , tensions_all : Maybe TensionsDict
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
     , orgs_data : Maybe (List OrgaNode)

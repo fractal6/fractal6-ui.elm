@@ -40,8 +40,8 @@ type alias NodesDict =
     Dict String Node
 
 
-type alias TensionsList =
-    List Tension
+type alias TensionsDict =
+    Dict String (List Tension)
 
 
 type alias UsersDict =

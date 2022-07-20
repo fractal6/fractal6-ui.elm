@@ -43,10 +43,13 @@ import Loading
         , WebData
         , fromMaybeData
         , fromMaybeWebData
+        , isSuccess
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
         , withDefaultData
+        , withDefaultWebData
+        , withMapData
         , withMaybeData
         , withMaybeDataMap
         )
@@ -131,9 +134,9 @@ type alias Model =
     , children : WebData (List NodeId)
 
     -- Pages
-    , tensions_int : GqlData TensionsList
-    , tensions_ext : GqlData TensionsList
-    , tensions_all : GqlData TensionsList
+    , tensions_int : GqlData (List Tension)
+    , tensions_ext : GqlData (List Tension)
+    , tensions_all : GqlData TensionsDict
     , boardHeight : Maybe Float
     , query : Dict String (List String)
     , offset : Int
@@ -443,7 +446,7 @@ loadDecoder x =
     String.toInt x |> withDefault 0
 
 
-hasLoadMore : GqlData TensionsList -> Int -> Bool
+hasLoadMore : GqlData (List Tension) -> Int -> Bool
 hasLoadMore tensions offset =
     case tensions of
         Success ts ->
@@ -515,9 +518,10 @@ type Msg
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
     | GotChildren (WebData (List NodeId)) -- HTTP/Json
-    | GotTensionsInt Int (GqlData TensionsList) -- GraphQL
-    | GotTensionsExt (GqlData TensionsList) -- GraphQL
-    | GotTensionsAll (GqlData TensionsList) -- GraphQL
+    | GotChildren2 (List String) -- use TreeMenu to get children
+    | GotTensionsInt Int (GqlData (List Tension)) -- GraphQL
+    | GotTensionsExt (GqlData (List Tension)) -- GraphQL
+    | GotTensionsAll (GqlData (List Tension)) -- GraphQL
     | GotTensionsCount (GqlData TensionsCount)
       -- Page Action
     | DoLoadInit
@@ -626,24 +630,32 @@ init global flags =
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
+                |> (\m ->
+                        case TreeMenu.getList_ m.treeMenu of
+                            [] ->
+                                m
+
+                            nameids ->
+                                { m | children = RemoteData.Success (List.map NodeId nameids) }
+                   )
 
         --
         -- Refresh tensions when data are in a Loading state or if
         -- the query just changed (ie referer), regardless the "v" a "load" parameters.
         --
-        dataToLoad =
+        dataNeedLoad =
             case model.viewMode of
                 ListView ->
-                    model.tensions_int
+                    model.tensions_int == Loading
 
                 IntExtView ->
-                    model.tensions_int
+                    model.tensions_int == Loading
 
                 CircleView ->
-                    model.tensions_all
+                    model.tensions_all == Loading
 
         refresh =
-            (fs.refresh || dataToLoad == Loading)
+            (fs.refresh || dataNeedLoad)
                 || (case global.session.referer of
                         Just referer ->
                             let
@@ -673,7 +685,7 @@ init global flags =
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
 
-              else if dataToLoad /= Loading && model.offset == 0 then
+              else if not dataNeedLoad && model.offset == 0 then
                 -- Assume data are already loaded, actualise offset.
                 [ send (SetOffset 1) ]
 
@@ -708,11 +720,11 @@ update global message model =
     case message of
         PushTension tension ->
             let
-                tensions_all =
-                    hotTensionPush tension model.tensions_all
-
                 tensions_int =
                     hotTensionPush tension model.tensions_int
+
+                tensions_all =
+                    hotTensionPush2 tension model.tensions_all
             in
             ( { model | tensions_int = Success tensions_int, tensions_all = Success tensions_all }
             , Cmd.none
@@ -807,6 +819,9 @@ update global message model =
                 _ ->
                     ( { model | children = result }, Cmd.none, Cmd.none )
 
+        GotChildren2 nameids ->
+            ( { model | children = RemoteData.Success (List.map NodeId nameids) }, send (DoLoad False), Cmd.none )
+
         GotTensionsInt inc result ->
             let
                 newTensions =
@@ -842,7 +857,35 @@ update global message model =
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
 
         GotTensionsAll result ->
-            ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData result)) )
+            let
+                newResult =
+                    withMapData
+                        (\data ->
+                            --
+                            -- Convert a list of tension into a Dict of tension by Receiverid
+                            --
+                            let
+                                addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
+                                addParam value maybeValues =
+                                    case maybeValues of
+                                        Just values ->
+                                            Just (value :: values)
+
+                                        Nothing ->
+                                            Just [ value ]
+
+                                toDict2 : List ( String, Tension ) -> Dict String (List Tension)
+                                toDict2 parameters =
+                                    List.foldl
+                                        (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                                        Dict.empty
+                                        parameters
+                            in
+                            List.map (\x -> ( x.receiver.nameid, x )) data |> toDict2
+                        )
+                        result
+            in
+            ( { model | tensions_all = newResult }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData newResult)) )
 
         GotTensionsCount result ->
             ( { model | tensions_count = result }, Cmd.none, send (UpdateSessionTensionsCount (withMaybeData result)) )
@@ -851,7 +894,8 @@ update global message model =
             ( model
             , case model.depthFilter of
                 AllSubChildren ->
-                    fetchChildren apis model.node_focus.nameid GotChildren
+                    --fetchChildren apis model.node_focus.nameid GotChildren
+                    Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
 
                 SelectedNode ->
                     send (DoLoad False)
@@ -1022,20 +1066,19 @@ update global message model =
 
         GoView viewMode ->
             let
-                ( data_m, cmds ) =
-                    Tuple.mapFirst (\x -> withMaybeData x) <|
-                        case viewMode of
-                            ListView ->
-                                ( model.tensions_int, [ Ports.show "footBar" ] )
+                ( needLoad, cmds ) =
+                    case viewMode of
+                        ListView ->
+                            ( not (isSuccess model.tensions_int), [ Ports.show "footBar" ] )
 
-                            IntExtView ->
-                                ( model.tensions_int, [ Ports.show "footBar" ] )
+                        IntExtView ->
+                            ( not (isSuccess model.tensions_int), [ Ports.show "footBar" ] )
 
-                            CircleView ->
-                                ( model.tensions_all, [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
+                        CircleView ->
+                            ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
             in
             ( { model | viewMode = viewMode }
-            , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad False) ] [] ++ cmds)
+            , Cmd.batch (ternary needLoad [ send (DoLoad False) ] [] ++ cmds)
             , Cmd.none
             )
 
@@ -1207,8 +1250,15 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                extra_cmd =
+                    if out.result == Just ( True, True ) then
+                        send (GotChildren2 (TreeMenu.getList_ data))
+
+                    else
+                        Cmd.none
             in
-            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1250,7 +1300,14 @@ view global model =
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData
-            , div [ id "mainPane" ] [ view_ global model, ternary (model.viewMode == CircleView) (viewCircleTensions model) (text "") ]
+            , div [ id "mainPane" ]
+                [ view_ global model
+                , if model.viewMode == CircleView then
+                    viewCircleTensions model
+
+                  else
+                    text ""
+                ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -1287,7 +1344,7 @@ view_ global model =
 
                 CircleView ->
                     text ""
-            , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\ts -> List.length ts == 1000) |> withDefault False) then
+            , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\x -> (Dict.values x |> List.concat |> List.length) == 1000) |> withDefault False) then
                 div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small" ]
                         -- @TODO: load more for CircleView
@@ -1591,59 +1648,52 @@ viewIntExtTensions model =
 
 viewCircleTensions : Model -> Html Msg
 viewCircleTensions model =
+    let
+        -- Should alway be loaded here !
+        children =
+            withDefaultWebData [] model.children
+    in
     case model.tensions_all of
-        Success tensions ->
-            let
-                --
-                -- Convert a list of tension into a Dict of tension by Receiverid
-                --
-                addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
-                addParam value maybeValues =
-                    case maybeValues of
-                        Just values ->
-                            Just (value :: values)
+        Success data ->
+            children
+                |> List.filter
+                    (\n ->
+                        -- Ignore circle with no tensions
+                        case Dict.get n.nameid data of
+                            Nothing ->
+                                False
 
-                        Nothing ->
-                            Just [ value ]
+                            Just [] ->
+                                False
 
-                toDict2 : List ( String, Tension ) -> Dict String (List Tension)
-                toDict2 parameters =
-                    List.foldl
-                        (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                        Dict.empty
-                        parameters
-
-                tensions_d =
-                    tensions
-                        |> List.map (\x -> ( x.receiver.nameid, x ))
-                        |> toDict2
-            in
-            Dict.toList tensions_d
+                            _ ->
+                                True
+                    )
                 |> List.map
-                    (\( _, ts ) ->
+                    (\n ->
                         let
-                            rcv_m =
-                                List.head ts
+                            tensions =
+                                Dict.get n.nameid data |> withDefault []
+
+                            t_m =
+                                List.head tensions
 
                             rcv_name_m =
-                                Maybe.map (.receiver >> .name) rcv_m
-
-                            rcv_nameid_m =
-                                Maybe.map (.receiver >> .nameid) rcv_m
+                                Maybe.map (.receiver >> .name) t_m
                         in
-                        --[ div [ class "column is-3", onMouseEnter (OnColumnHover rcv_nameid_m) ]
-                        [ div [ class "column is-3", onMouseEnter (OnColumnHover rcv_nameid_m) ]
+                        --[ div [ class "column is-3", onMouseEnter (OnColumnHover (Just n.nameid) ]
+                        [ div [ class "column is-3" ]
                             [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
                                 [ rcv_name_m |> withDefault "Loading..." |> text
                                 , span
                                     [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
 
-                                    --, classList [ ( "is-invisible", model.hover_column /= rcv_nameid_m ) ]
-                                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid (withDefault "" rcv_nameid_m))))
+                                    --, classList [ ( "is-invisible", model.hover_column /= Just n.nameid ) ]
+                                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid n.nameid)))
                                     ]
                                     [ A.icon "icon-plus" ]
                                 ]
-                            , ts
+                            , tensions
                                 |> List.sortBy .createdAt
                                 |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l)
                                 |> List.map
@@ -1680,7 +1730,7 @@ viewCircleTensions model =
             div [ class "spinner" ] []
 
 
-viewTensions : Time.Posix -> NodeFocus -> Maybe String -> GqlData TensionsList -> TensionDirection -> Html Msg
+viewTensions : Time.Posix -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
 viewTensions now focus pattern tensionsData tensionDir =
     div
         [ class "box is-shrinked"

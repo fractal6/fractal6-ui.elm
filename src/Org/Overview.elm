@@ -166,7 +166,7 @@ type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
     , tree_data : GqlData NodesDict
-    , tensions_data : GqlData TensionsList
+    , tensions_data : GqlData (List Tension)
     , journal_data : GqlData (List EventNotif)
     , node_data : GqlData NodeData
     , init_tensions : Bool
@@ -216,7 +216,7 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get the current time
       -- Gql Data Queries
     | GotOrga (GqlData NodesDict)
-    | GotTensions (GqlData TensionsList)
+    | GotTensions (GqlData (List Tension))
     | GotData (GqlData NodeData)
       -- Page
     | SwitchWindow

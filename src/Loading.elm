@@ -438,7 +438,8 @@ withMaybeSlowly result =
 
 
 
--- Idem but for WebData ...:S
+--
+-- Idem but for WebData :S
 --
 
 
@@ -462,10 +463,27 @@ isWebFailure data =
             False
 
 
-withMapWebData :
-    (a -> b)
-    -> RemoteData e a
-    -> RemoteData e b --withMapWebData : (a -> b) -> WebData a -> WebData b
+withDefaultWebData : a -> RemoteData e a -> a
+withDefaultWebData default result =
+    case result of
+        RemoteData.Success d ->
+            d
+
+        _ ->
+            default
+
+
+withMaybeWebData : RemoteData e a -> Maybe a
+withMaybeWebData result =
+    case result of
+        RemoteData.Success d ->
+            Just d
+
+        _ ->
+            Nothing
+
+
+withMapWebData : (a -> b) -> RemoteData e a -> RemoteData e b
 withMapWebData resMap result =
     case result of
         RemoteData.Success d ->
@@ -495,16 +513,6 @@ mapWeb2Data fun input =
 
         RemoteData.Failure err ->
             Failure (toErrorData err)
-
-
-withMaybeWebData : RemoteData e a -> Maybe a
-withMaybeWebData result =
-    case result of
-        RemoteData.Success d ->
-            Just d
-
-        _ ->
-            Nothing
 
 
 fromMaybeWebData : Maybe a -> RemoteData e a -> RemoteData e a

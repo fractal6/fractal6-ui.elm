@@ -17,7 +17,6 @@ import Auth exposing (parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (WindowPos)
-import Loading exposing (WebData, expectJson, toErrorData)
 import Components.Navbar as Navbar
 import Dict
 import Footbar
@@ -27,6 +26,7 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
+import Loading exposing (WebData, expectJson, toErrorData)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString)
 import ModelCommon.Requests exposing (tokenack)
@@ -110,10 +110,10 @@ type Msg
     | UpdateSessionTree (Maybe NodesDict)
     | UpdateSessionData (Maybe NodeData)
     | UpdateSessionOrgs (Maybe (List OrgaNode))
-    | UpdateSessionTensions (Maybe TensionsList)
-    | UpdateSessionTensionsInt (Maybe TensionsList)
-    | UpdateSessionTensionsExt (Maybe TensionsList)
-    | UpdateSessionTensionsAll (Maybe TensionsList)
+    | UpdateSessionTensions (Maybe (List Tension))
+    | UpdateSessionTensionsInt (Maybe (List Tension))
+    | UpdateSessionTensionsExt (Maybe (List Tension))
+    | UpdateSessionTensionsAll (Maybe TensionsDict)
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)

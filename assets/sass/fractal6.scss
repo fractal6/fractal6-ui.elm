@@ -3011,7 +3011,7 @@ input:checked + section.acc .acc-title:before {
 
 /*
  *
- * Ugly focus management
+ * Extras
  *
  */
 
@@ -3025,12 +3025,18 @@ input:checked + section.acc .acc-title:before {
     z-index: 4;
 }
 
+input[type=search] {
+    // IE
+    &::-ms-clear,
+    &::-ms-reveal,
+    // Chrome
+    &::-webkit-search-decoration,
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-results-button,
+    &::-webkit-search-results-decoration {
+        //display: none;
+        //margin-right: 1rem;
+    }
+}
 
-//*:focus {
-//  /* no outline for non-keyboard-inputs elements (other see *:focus:not(:focus-visible) */
-//  outline: none !important;
-//}
-//button::-moz-focus-inner { // remove outline inside button !
-//    border: 0 !important;
-//}
 
