@@ -151,19 +151,28 @@ getOrgaData_ (State model) =
     model.tree_result
 
 
-getList_ : State -> List String
-getList_ (State model) =
+getList_ : String -> State -> List String
+getList_ nameid (State model) =
     -- Get the ordered list of nodes
+    -- starting from the given nameid
     if isSuccess model.tree_result then
-        next_ model.tree
+        next_ (Just nameid) model.tree
 
     else
         []
 
 
-next_ : Tree Node -> List String
-next_ (Tree { node, children }) =
-    [ node.nameid ]
+next_ : Maybe String -> Tree Node -> List String
+next_ nameid_m (Tree { node, children }) =
+    let
+        dive =
+            if nameid_m == Nothing || nameid_m == Just node.nameid then
+                Nothing
+
+            else
+                nameid_m
+    in
+    ternary (dive == Nothing) [ node.nameid ] []
         ++ (List.map
                 (\(Tree c) ->
                     case children of
@@ -171,7 +180,7 @@ next_ (Tree { node, children }) =
                             []
 
                         _ ->
-                            next_ (Tree c)
+                            next_ dive (Tree c)
                 )
                 children
                 |> List.concat

@@ -785,6 +785,12 @@ strong {
         span + span {
             padding-left: 15px !important;
         }
+        a {
+            color: var(--link2);
+            &:hover {
+                text-decoration: underline;
+            }
+        }
     }
 }
 

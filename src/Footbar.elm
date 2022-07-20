@@ -19,8 +19,6 @@ view =
                     , span [] [ a [ href "https://matrix.to/#/#fractal6:matrix.org", target "_blank", title "Chat on matrix" ] [ A.icon "icon-message-circle" ] ]
                     , span [] [ text "-" ]
                     , span [] [ a [ href "mailto:contact@fractale.co" ] [ text "Contact us" ] ]
-
-                    --, span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ A.icon "icon-github"  ] ]
                     ]
                 ]
             , div [ class "level-item" ] []

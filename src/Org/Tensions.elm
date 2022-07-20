@@ -631,7 +631,7 @@ init global flags =
             , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
                 |> (\m ->
-                        case TreeMenu.getList_ m.treeMenu of
+                        case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of
                             [] ->
                                 m
 
@@ -1253,7 +1253,7 @@ update global message model =
 
                 extra_cmd =
                     if out.result == Just ( True, True ) then
-                        send (GotChildren2 (TreeMenu.getList_ data))
+                        send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
 
                     else
                         Cmd.none
