@@ -40,13 +40,13 @@
         #mainPane.has-tree-menu > .columns {
             justify-content: normal;
             &:not(#overview):not(.kb-board) > .column:first-child {
-                width: 95%;
+                width: 97%;
             }
             &#overview {
                 margin-left: 0 !important;
                 margin-right: 0 !important;
                 & > .column {
-                    width: 47.5%;
+                    width: 48.75%;
                     &:first-child {
                         padding-left:0;
                     }
@@ -772,7 +772,7 @@ strong {
 #footBar {
     z-index: 10;
     position: relative;
-    box-shadow: 0 0 1px 0 var(--white-ter);
+    box-shadow: 0 0 1px 0 var(--is-highlight);
     margin-top: 3rem;
     padding: 3rem 1.5rem 3rem;
 
@@ -782,9 +782,6 @@ strong {
     animation-fill-mode: forwards;
 
     .contacts {
-        span + span {
-            padding-left: 15px !important;
-        }
         a {
             color: var(--link2);
             &:hover {
