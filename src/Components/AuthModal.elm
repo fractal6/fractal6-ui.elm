@@ -254,9 +254,20 @@ update_ apis message model =
 
                                 Inactive ->
                                     UserAuthForm Dict.empty
+                        isSendable =
+                         case model.puid of
+
+                            Just "" ->
+                                isPostSendable ["username", "password" ] form.post
+
+                            Just puid ->
+                                isPostSendable ["username", "password" ] form.post
+
+                            Nothing ->
+                                isPostSendable ["username", "password" ] form.post
                     in
                     --ENTER
-                    if isPostSendable [ "password" ] form.post then
+                    if isSendable then
                         ( model, out0 [ send (SubmitUser form) ] )
 
                     else
@@ -517,6 +528,7 @@ signinModal op model =
                                         , attribute "autocomplete" "username"
                                         , required True
                                         , onInput (ChangeAuthPost "username")
+                                        , onKeydown SubmitKeyDown
                                         ]
                                         []
                                     ]

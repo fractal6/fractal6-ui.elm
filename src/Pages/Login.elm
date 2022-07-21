@@ -191,6 +191,7 @@ viewLogin model =
                                 , attribute "autocomplete" "username"
                                 , required True
                                 , onInput (ChangeUserPost "username")
+                                , onKeydown SubmitKeyDown
                                 ]
                                 []
                             ]
