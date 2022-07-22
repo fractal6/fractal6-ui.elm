@@ -15,7 +15,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -68,7 +68,7 @@ import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 import Url exposing (Url)
 
@@ -1635,12 +1635,12 @@ viewIntExtTensions : Model -> Html Msg
 viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.internalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "Internal tensions" ]
             , viewTensions model.now model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.externalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "External tensions" ]
             , viewTensions model.now model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
@@ -1752,10 +1752,10 @@ viewTensions now focus pattern tensionsData tensionDir =
                         NodeType.Role ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ textH T.noIntTensionRole ]
+                                    div [ class "m-4" ] [ textH T.noTensionRole ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ textH T.noExtTensionRole ]
+                                    div [ class "m-4" ] [ textH T.noTensionRole ]
 
                                 ListTension ->
                                     div [ class "m-4" ] [ textH T.noTensionRole ]
@@ -1763,10 +1763,10 @@ viewTensions now focus pattern tensionsData tensionDir =
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ textH T.noIntTensionCircle ]
+                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ textH T.noExtTensionCircle ]
+                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
 
                                 ListTension ->
                                     div [ class "m-4" ] [ textH T.noTensionCircle ]

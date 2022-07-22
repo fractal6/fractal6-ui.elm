@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -26,7 +26,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -474,7 +474,25 @@ viewModal op model =
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH T.tensionMoved
+                        , case model.blob of
+                            Nothing ->
+                                text T.tensionMoved
+
+                            Just blob ->
+                                case blob.node of
+                                    Just node ->
+                                        case node.type_ of
+                                            Just NodeType.Circle ->
+                                                text T.circleMoved
+
+                                            Just NodeType.Role ->
+                                                text T.roleMoved
+
+                                            Nothing ->
+                                                text "[blob node type_ undefined (please report it)]"
+
+                                    Nothing ->
+                                        text T.notImplemented
                         ]
 
                 _ ->
@@ -508,16 +526,20 @@ viewModalContent op model =
                         textH T.moveTension
 
                     Just blob ->
-                        if blob.node /= Nothing then
-                            blob.node
-                                |> Maybe.map
-                                    (\n ->
-                                        span [] [ textH (T.moveNode ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" n.name) ] ]
-                                    )
-                                |> withDefault (text "error: node is empty")
+                        case blob.node of
+                            Just node ->
+                                case node.type_ of
+                                    Just NodeType.Circle ->
+                                        span [] [ textH (T.moveCircle ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
 
-                        else
-                            text T.notImplemented
+                                    Just NodeType.Role ->
+                                        span [] [ textH (T.moveRole ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+
+                                    Nothing ->
+                                        text "[blob node type_ undefined (please report it)]"
+
+                            Nothing ->
+                                text T.notImplemented
 
                 --, button [ class "delete is-pulled-right", onClick (OnCloseSafe "" "") ] []
                 ]

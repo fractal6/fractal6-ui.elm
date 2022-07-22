@@ -1,384 +1,1152 @@
+[signin]
+  en="Sign in"
+  fr="Connexion"
+
+[signup]
+  en="Sign up"
+  fr="S’inscrire"
+
+[signout]
+  en="Sign Out"
+  fr="Déconnexion"
+
+[signinNow]
+  en="Sign-in"
+  fr="Connectez-vous"
+
+[signupNow]
+  en="Create an account"
+  fr="Inscrivez-vous"
+
+[createYourAccount]
+  en="Create your account"
+  fr="Créez votre compte"
+
+[needAnAccount]
+  en="New to Fractale?"
+  fr="Pas de compte ?"
+
+[alreadyAnAccount]
+  en="Already an account?"
+  fr="Déjà enregistré ?"
+
+[passwordForgotten]
+  en="Forgot your password?"
+  fr="Mot de passe oublié ?"
+
+[createLabel]
+  en="Create label"
+  fr="Créer une étiquette"
+
+[updateLabel]
+  en="Update label"
+  fr="Modifier l’étiquette"
+
+[createRole]
+  en="Create role"
+  fr="Créer un rôle"
+
+[updateRole]
+  en="Update role"
+  fr="Modifier le rôle"
+
+[messageSent]
+  en="Message sent"
+  fr="Message envoyé"
+
+[profile]
+  en="Profile"
+  fr="Profil"
+
+[yourOrg]
+  en="Organisations"
+  fr="Organisations"
 
 [loading]
-  en = "loading..."
-  fr = "chargement en cours..."
-  it = "sto caricando..."
-  pt = "estou á carregar..."
+  en="Loading"
+  fr="Chargement"
 
 [seeMore]
-  en = "See more"
-  fr = "Voir plus"
-  it = "Mostra di pi"
-  pt = "Ver mais"
+  en="See more"
+  fr="Voir plus"
 
+[seeFullList]
+  en="See full list"
+  fr="Voir liste complète"
+
+[seeByCircle]
+  en="See by circles"
+  fr="Voir par cercles"
+
+[organisation]
+  en="Organisation"
+  fr="Organisation"
+
+[organisations]
+  en="Organisations"
+  fr="Organisations"
+
+[joinOrga]
+  en="Join this organisation"
+  fr="Rejoindre cette organisation"
+
+[leaveRole]
+  en="Leave role"
+  fr="Quitter le rôle"
 
 [checkItOut]
-  en = "Check it out."
+  en="Check it out."
+  fr="Consulter-le."
 
+[explore]
+  en="Explore"
+  fr="Explorateur"
+
+[dashboard]
+  en="Dashboard"
+  fr="Tableau de bord"
+
+[exploreOrganisations]
+  en="Explore organisations"
+  fr="Explorer les organisations"
+
+[newOrganisation]
+  en="New organisation"
+  fr="Nouvelle organisation"
 
 [view]
-  en = "View"
+  en="View"
+  fr="Consulter"
 
-[versions]
-  en = "Versions"
-  fr = "Versions"
-  it = "Versioni"
-  pt = "Versões"
-
-[revisions]
-  en = "Revisions"
-  fr = "Révisions"
-  it = "Revisioni"
-  pt = "Revisões"
-
-[history]
-  en = "History"
-  fr = "Historique"
-  it = "Cronologia"
-  pt = "Histórico"
-
-[edit]
-  en = "Edit"
-  fr = "Éditer"
-  it = "Modifica"
-  pt = "Modificar"
-
-[cancel]
-  en = "Cancel"
-  fr = "Effacer"
-  it = "Cancella"
-  pt = "Apagar"
-
-[publish]
-  en = "Publish"
-  fr = "Publier"
-  it = "Pubblica"
-  pt = "Publicar"
-
-[publishTitle]
-  en = "As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
-  fr = "Tant qu'une révision n'est pas publié les changements sont uniquement visibles dans la tension du circle (la page courante)."
-
-[published]
-  en = "published"
-  fr = "publié"
-  it = "pubblicato"
-  pt = "publicado"
-
-[by]
-  en = "by"
-  fr = "par"
-  it = "da"
-  pt = "por"
-
-[the]
-  en = "the"
-  fr = "le"
-  it = "il"
-  pt = "em"
-
-[saveChanges]
-  en = "Save changes"
-  fr = "Enregitrer les modifications"
-  it = "Salva le modifiche"
-  pt = "Gravar as modificações"
-
-[leaveComment]
-  en = "Leave a comment"
-  fr = "Laisser un commentaire"
-  it = "Lascia un commento"
-  pt = "Deixar um comentário"
-
-
-[name]
-  en = "Name"
-  fr = "Nom"
-  it = "Nome"
-  pt = "Nome"
-
-[circle]
-  en = "Circle"
-  fr = "Cercle"
-  it = "Cerchio"
-  pt = "Círculo"
-
-[role]
-  en = "Role"
-  fr = "Rôle"
-  it = "Ruolo"
-  pt = "Papel"
-
-[parent]
-  en = "Parent"
-  fr = "Parent"
-  it = "Genitore"
-  pt = "Mãe"
-
-[firstLink]
-  en = "Lead link"
-  fr = "Premier lien"
-  it = "Primo link"
-  pt = "Primeiro link"
-
-[phQS]
-  en = "Find a role or circle"
-  fr = "Trouver un rôle ou un cercle"
-  it = "Trova un ruolo o un cerchio"
-  pt = "Encontrar um papel ou um círculo"
-
-[document]
-  en = "Document"
-  fr = "Document"
-  it = "Documento"
-  pt = "Documento"
-
-
-[reverseTooltip]
-  en = "Reverse the organisation graph."
-  fr = "Inverser le graphe de l'organisation."
-  it = "Invertire il grafico dell'organizzazione."
-  pt = "Inverter o gráfico da organisação."
-
-[about]
-  en = "About"
-
-[mandate]
-  en = "Mandate"
-
-[purpose]
-  en = "Purpose"
-
-[responsabilities]
-  en = "Accountabilities"
-
-[domains]
-  en = "Domains"
-
-[policies]
-  en = "Policies"
-
-
-[phCirclePurpose]
-  en = "Define the purpose of the circle"
-  fr = "Definir le propos du cercle"
-  it = "Definisci il proposito del cerchio"
-  pt = "Define o propósito do círculo"
-
-[phCircleResponsabilities]
-  en = "Define the circle accountabilities"
-  fr = "Definir les competences du cercle"
-  it = "Definisci le competenze del cerchio"
-  pt = "Define as competências do círculo"
-
-[phCircleDomains]
-  en = "Define the circle domains"
-  fr = "Definir les domains du cercle"
-  it = "Definisci il dominio del cerchio"
-  pt = "Define o domínio do círculo"
-
-[phCirclePolicies]
-  en = "Define the circle policies"
-  fr = "Definir les règles du cercle"
-  it = "Definisci le regole del cerchio"
-  pt = "Define as regras do círculo"
-
-[phRolePurpose]
-  en = "Define the purpose of the role"
-  fr = "Definir le propos du rôle"
-  it = "Definisci il proposito del ruolo"
-  pt = "Define o propósito do papel"
-
-
-[phRoleResponsabilities]
-  en = "Define the role accountabilities"
-  fr = "Definir les competences du rôle"
-  it = "Definisci le competenze del ruolo"
-  pt = "Define as competências do papel"
-
-[phRoleDomains]
-  en = "Define the role domains"
-  fr = "Definir les domains du rôle"
-  it = "Definisci il dominio del ruolo"
-  pt = "Define o domínio do papel"
-
-[phRolePolicies]
-  en = "Define the role policies"
-  fr = "Definir les règles du rôle"
-  it = "Definisci le regole del ruolo"
-  pt = "Define as regras do papel"
-
-[noFirstLinksRole]
-  en = "No member is linked to this role yet."
-  fr = "Il n'y a pas encore de membre occupant ce rôle."
-  it = "Non c'è ancora nessun membro che occupa questo ruolo."
-  pt = "Não há ainda nenhum membro ã ocupar este papel."
-
-[noFirstLinksCircle]
-  en = "No member is linked to this circle yet."
-  fr = "Il n'y a pas encore de membre occupant ce cercle."
-  it = "Non c'è ancora nessun membro che occupa questo cerchio."
-  pt = "Não há ainda nenhum membro ã ocupar este círculo."
-
+[overview]
+  en="Overview"
+  fr="Vue d’ensemble"
 
 [tensions]
-  en = "Tensions"
-  fr = "Tensions"
-  it = "Tensioni"
-  pt = "Tensões"
+  en="Tensions"
+  fr="Tensions"
+
+[members]
+  en="Members"
+  fr="Membres"
+
+[settings]
+  en="Settings"
+  fr="Paramètres"
 
 [journal]
-  en = "Journal"
-  fr = "Journal"
-  it = "Giornale"
-  pt = "Jornal"
+  en="Journal"
+  fr="Journal"
+
+[labels]
+  en="Labels"
+  fr="Etiquettes"
+
+[versions]
+  en="Versions"
+  fr="Versions"
+
+[revisions]
+  en="Revisions"
+  fr="Révisions"
+
+[history]
+  en="History"
+  fr="Historique"
+
+[edit]
+  en="Edit"
+  fr="Modifier"
+
+[editThisCircle]
+  en="Edit this circle"
+  fr="Editer ce cercle"
+
+[cancel]
+  en="Cancel"
+  fr="Annuler"
+
+[confirm]
+  en="Confirm"
+  fr="Confirmer"
+
+[publish]
+  en="Publish"
+  fr="Publier"
+
+[publishTitle]
+  en="As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
+  fr="Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la tension du cercle (la page actuelle)."
+
+[published]
+  en="published"
+  fr="publié"
+
+[revisionNotPublished]
+  en="Revision not published"
+  fr="révision non publiée"
+
+[list]
+  en="List"
+  fr="Liste"
+
+[byCircle]
+  en="By circles"
+  fr="Par cercles"
+
+[by]
+  en="by"
+  fr="par"
+
+[joined]
+  en="joined"
+  fr="rejoins"
+
+[created]
+  en="Created"
+  fr="Crée"
+
+[from]
+  en="from"
+  fr="de"
+
+[to]
+  en="to"
+  fr="vers"
+
+[moved]
+  en="moved"
+  fr="délacé"
+
+[changed]
+  en="changed"
+  fr="modifié"
+
+[move]
+  en="Move"
+  fr="Déplacer"
+
+[visibility]
+  en="Visibility"
+  fr="Visibilité"
+
+[governance]
+  en="Governance"
+  fr="Gouvernance"
+
+[authority]
+  en="Authority"
+  fr="Autorité"
+
+[linkAction]
+  en="Invite someine to play this role"
+  fr="Inviter quelqu’un à jouer ce rôle"
+
+[unlinkAction]
+  en="Unlink user to the role"
+  fr="Détacher l’utilisateur du rôle"
+
+[invite]
+  en="Invite"
+  fr="Inviter"
+
+[join]
+  en="Join"
+  fr="Rejoindre"
+
+[inviteMember]
+  en="Invite someone"
+  fr="Inviter une personne"
+
+[link]
+  en="Link"
+  fr="Lier"
+
+[unlink]
+  en="Unlink"
+  fr="Détacher"
+
+[linked]
+  en="linked"
+  fr="lié"
+
+[unlinked]
+  en="unlinked"
+  fr="détaché"
+
+[left]
+  en="left"
+  fr="quitté"
+
+[roleLeft]
+  en="Role left"
+  fr="Rôle quitté"
+
+[saveChanges]
+  en="Save changes"
+	fr="Enregistrer les modifications"
+
+[leaveComment]
+  en="Leave a comment"
+  fr="Laissez un commentaire"
+
+[leaveCommentOpt]
+  en="Text (optional)"
+  fr="Texte (Optionnel)"
+
+[noResultsFound]
+  en="No results found"
+  fr="Aucun résulat trouvé"
+
+[searchUsers]
+  en="Search users"
+  fr="Recherchez des utilisateurs"
+
+[searchLabels]
+  en="Search labels"
+  fr="Recherchez des étiquettes"
+
+[editLabels]
+  en="Edit labels"
+  fr="Editer les étiquettes"
+
+[reopened]
+  en="reopened"
+  fr="Réouvrir"
+
+[closed]
+  en="closed"
+  fr="Fermé"
+
+[assigned]
+  en="assigned"
+  fr="assigné"
+
+[unassigned]
+  en="unassigned"
+  fr="désassigné"
+
+[archive]
+  en="Archive"
+  fr="Archiver"
+
+[unarchive]
+  en="Unarchive"
+  fr="Désarchiver"
+
+[archived]
+  en="archived"
+  fr="archivé"
+
+[unarchived]
+  en="unarchived"
+  fr="Désarchivé"
+
+[documentArchived]
+  en="Document archived"
+  fr="Document archivé"
+
+[documentUnarchived]
+  en="Document unarchived"
+  fr="Document désarchivé"
+
+[tensionMoved]
+  en="Tension moved"
+  fr="La tension a été déplacé"
+
+[circleMoved]
+  en="Circle moved"
+  fr="Le cercle a été déplacé"
+
+[roleMoved]
+  en="Role moved"
+  fr="Le rôle a été déplacé"
+
+[the]
+  en="the"
+  fr="le"
+
+[this]
+  en="this"
+  fr="ce"
+
+[confirmUnsaved]
+  en="You have unsaved data, please confirm to exit."
+  fr="Vous avez des données non sauvegardées, veuillez confirmer pour quitter."
+
+[confirmUnsafe]
+  en="You have unsaved data, please confirm to continue (your editing will be lost)."
+  fr="Vous avez des données non sauvegardées, veuillez confirmer pour continuer (votre édition sera perdue)."
+
+[confirmDeleteLabel]
+  en="Are you sure to delete this label"
+  fr="Etes-vous sûr de vouloir supprimer cette étiquette"
+
+[confirmDeleteRole]
+  en="Are you sure to delete this role"
+  fr="Etes-vous sûr de vouloir supprimer ce rôle"
+
+[confirmDeleteContract]
+  en="Are you sure to cancel this contract"
+  fr="Êtes-vous sûr de vouloir annuler ce contrat"
+
+[askAnotherQuestion]
+  en="Ask another question."
+  fr="Posez une autre question."
+
+[giveAnotherFeedback]
+  en="Give another feedback."
+  fr="Donnez un autre feedback."
+
+[theOrganisation]
+  en="the organisation"
+  fr="l’organisation"
+
+[moveTension]
+  en="Move tension"
+  fr="Déplacer la tension"
+
+[moveCircle]
+  en="Move circle"
+  fr="Déplacer le cercle"
+
+[moveRole]
+  en="Move role"
+  fr="Déplacer le rôle"
+
+[newContract]
+  en="New contract"
+  fr="Nouveau contrat"
+
+[contractType]
+  en="Contract type"
+  fr="Type du contrat"
+
+[contractEvent]
+  en="Event"
+  fr="Evénement"
+
+[createContract]
+  en="Create contract"
+  fr="Créer le contrat"
+
+[submit]
+  en="Submit"
+  fr="Soumettre"
+
+[add]
+  en="Add"
+  fr="Ajouter"
+
+[remove]
+  en="Remove"
+  fr="Supprimer"
+
+[subscribe]
+  en="Subscribe"
+  fr="S’abonner"
+
+[unsubscribe]
+  en="Unsubscribe"
+  fr="Se désabonner"
+
+[notifications]
+  en="Notifications"
+  fr="Notifications"
+
+[tensionSubscribeText]
+  en="You’re receiving notifications because you’re subscribed to this thread."
+  fr="Vous recevez des notifications parce que vous êtes abonné à ce fil de discussion."
+
+[tensionUnsubscribeText]
+  en="You’re not receiving notifications from this thread."
+  fr="Vous ne recevez pas les notifications de ce fil de discussion."
+
+[back]
+  en="Back"
+  fr="Retour"
+
+[almostThere]
+  en="Almost there"
+  fr="On y est presque"
+
+[sort]
+  en="Sort"
+  fr="Trier"
+
+[oldest]
+  en="Oldest"
+  fr="Plus ancien"
+
+[newest]
+  en="Newest"
+  fr="Plus récent"
+
+[reviewAndValidate]
+  en="Review and validate"
+  fr="Vérifier et valider"
+
+[subject]
+  en="Subject"
+  fr="Objet"
+
+[name]
+  en="Name"
+  fr="Nom"
+
+[username]
+  en="Username"
+  fr="Nom d’utilisateur"
+
+[email]
+  en="Email address"
+  fr="Adresse e-mail"
+
+[password]
+  en="Password"
+  fr="Mot de passe"
+
+[circle]
+  en="Circle"
+  fr="Cercle"
+
+[role]
+  en="Role"
+  fr="Rôle"
+
+[roles]
+  en="Roles"
+  fr="Rôles"
+
+[noMemberYet]
+  en="No member yet"
+  fr="Aucun membre pour le moment"
+
+[owner]
+  en="Owner"
+  fr="Propriétaire"
+
+[guest]
+  en="Guest"
+  fr="Invité"
+
+[parent]
+  en="Parent"
+  fr="Parent"
+
+[pending]
+  en="Pending"
+  fr="En attente"
+
+[firstLink]
+  en="Lead link"
+  fr="Lead link"
+
+[phQS]
+  en="Find a role or circle"
+  fr="Rechercher un rôle ou cercle"
+
+[noResultsFor]
+  en="No results for"
+  fr="Pas de résultats pour"
+
+[nodeNotFound]
+  en="Circle is archived, private or has moved."
+  fr="le cercle est archivé, privé ou a été déplacé"
+
+[label]
+  en="Label"
+  fr="Etiquette"
+
+[accept]
+  en="Accept"
+  fr="Accepter"
+
+[decline]
+  en="Decline"
+  fr="Décliner"
+
+[security]
+  en="Security"
+  fr="Sécurité"
+
+[about]
+  en="About"
+  fr="A propos"
+
+[aboutOpt]
+  en="About (optional)"
+  fr="A propos (optionnel)"
+
+[mandate]
+  en="Mandate"
+  fr="Mandat"
+
+[purpose]
+  en="Purpose"
+  fr="Raison d’être"
+
+[responsabilities]
+  en="Accountabilities"
+  fr="Responsabilités"
+
+[domains]
+  en="Domains"
+  fr="Domaines"
+
+[policies]
+  en="Policies"
+  fr="Politiques"
+
+[create]
+  en="Create"
+  fr="Créer"
+
+[phCirclePurpose]
+  en="Define the purpose of the circle"
+  fr="Définir la raison d’être du cercle"
+
+[phCircleResponsabilities]
+  en="Define the circle accountabilities"
+  fr="Définir les responsabilités du cercle"
+
+[phCircleDomains]
+  en="Define the circle domains"
+  fr="Définir les domaines du cercle"
+
+[phCirclePolicies]
+  en="Define the circle policies"
+  fr="Définir les politiques du cercle"
+
+[phRolePurpose]
+  en="Define the purpose of the role"
+  fr="Définir la raison d’être du rôle"
+
+[phRoleResponsabilities]
+  en="Define the role accountabilities"
+  fr="Définir les responsabilités du rôle"
+
+[phRoleDomains]
+  en="Define the role domains"
+  fr="Définir les domaines du rôle"
+
+[phRolePolicies]
+  en="Define the role policies"
+  fr="Définir les politiques du rôle"
+
+[addedThe]
+  en="added the"
+  fr="ajouté le"
+
+[removedThe]
+  en="removed the"
+  fr="retiré le"
+
+[description]
+  en="Description"
+  fr="Description"
+
+[hasBeen]
+  en="has been"
+  fr="a été"
+
+[toThisRole]
+  en="to this role"
+  fr="à ce rôle"
+
+[color]
+  en="Color"
+  fr="Couleur"
+
+[conversation]
+  en="Conversation"
+  fr="Conversation"
+
+[document]
+  en="Document"
+  fr="Document"
+
+[contracts]
+  en="Contracts"
+  fr="Contrats"
+
+[status]
+  en="Status"
+  fr="Statut"
+
+[type_]
+  en="Type"
+  fr="Type"
+
+[depth]
+  en="Depth"
+  fr="Profondeur"
+
+[subLabels]
+  en="Sub-circle labels"
+  fr="Étiquettes de sous-cercles"
+
+[newLabel]
+  en="New label"
+  fr="Nouvelle étiquette"
+
+[assignees]
+  en="Assignees"
+  fr="Assignés"
+
+[noneYet]
+  en="None yet"
+  fr="Aucun"
+
+[noDocument]
+  en="No document attached"
+  fr="Aucun document joint"
+
+[noOpenTensionRole]
+  en="No open tensions for this role yet."
+  fr="Aucune tension ouverte pour ce rôle pour le moment."
+
+[noOpenTensionCircle]
+  en="No open tensions for this circle yet."
+  fr="Aucune tension ouverte pour ce cercle pour le moment."
 
 [noTensionRole]
-  en = "No tensions for this role yet."
-  fr = "Il n'y a pas encore de tensions pour ce rôle."
-  it = "Non ci sono ancora tensioni per questo ruolo."
-  pt = "Ainda não há tensões para este papel."
+  en="No tensions for this role yet."
+  fr="Aucune tension pour ce rôle pour le moment."
 
 [noTensionCircle]
-  en = "No tensions for this circle yet."
-  fr = "Il n'y a pas encore de tensions pour ce cercle."
-  it = "Non ci sono ancora tensioni per questo cerchio."
-  pt = "Ainda não há tensões para este círculo."
-
-[internalTensions]
-  en = "Internal tensions"
-  fr = "Tensions internes"
-  it = "Tensioni interne"
-  pt = "Tensões internas"
-
-[externalTensions]
-  en = "External tensions"
-  fr = "Tensions externes"
-  it = "Tensioni esterne"
-  pt = "Tensões esternas"
-
-[noIntTensionRole]
-  en = "No internal tensions for this role yet."
-
-[noIntTensionCircle]
-  en = "No internal tensions for this circle yet."
-
-[noExtTensionRole]
-  en = "No external tensions for this role yet."
-
-[noExtTensionCircle]
-  en = "No external tensions for this circle yet."
+  en="No tensions for this circle yet."
+  fr="Aucune tension pour ce cercle pour le moment."
 
 [newTension]
-  en = "New tension"
+  en="New tension"
+  fr="Nouvelle tension"
 
 [newCircle]
-  en = "New circle"
+  en="New circle"
+  fr="Nouveau cercle"
 
 [newRole]
-  en = "New role"
+  en="New role"
+  fr="Nouveau rôle"
 
-[editCircle]
-  en = "Edit circle"
+[createNewTension]
+  en="Create tension"
+  fr="Créer une tension"
 
-[editRole]
-  en = "Edit role"
+[createNewCircle]
+  en="Add sub-circle"
+  fr="Ajouter un sous-cercle"
+
+[createNewRole]
+  en="Add role"
+  fr="Ajouter un rôle"
 
 [editTitle]
-  en = "Edit title"
+  en="Edit subjet"
+  fr="Editer l'objet"
 
 [tensionTitleHelp]
-  en = "Title that sumarize your tension."
+  en="Title that sumarize your tension."
+  fr="Un titre qui résume votre tension."
 
 [circleNameHelp]
-  en = "Name of the circle."
+  en="Name of the circle."
+  fr="Nom du cercle."
 
 [roleNameHelp]
-  en = "Name of the role."
+  en="Name of the role."
+  fr="Nom du rôle."
+
+[orgaNameHelp]
+  en="Organisation name."
+  fr="Nom de l'organisation"
+
+[aboutHelp]
+  en="Short description for this organisation."
+  fr="Brève description de cette organisation."
+
+[purposeHelpOrga]
+  en="Purpose of this organisation."
+  fr="Raison d'être de cette organisation."
 
 [roleAboutHelp]
-  en = "Short description of this role."
+  en="Short description for this role."
+  fr="Brève description de ce rôle."
 
 [circleAboutHelp]
-  en = "Short description of this circle."
+  en="Short description for this circle."
+  fr="Brève description de ce cercle."
 
 [tensionMessageHelp]
-  en = "Add a description to help others understand your issue."
+  en="Add a comment to help others understand your issue."
+  fr="Ajoutez un commentaire pour aider les autres à comprendre votre requête."
 
 [circleMessageHelp]
-  en = "Add a description to help others understand why a new circle should be created."
+  en="Add a comment to help others understand why a new circle should be created."
+  fr="Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau cercle devrait être créé."
 
 [roleMessageHelp]
-  en = "Add a description to help others understand why a new role should be created."
+  en="Add a comment to help others understand why a new role should be created."
+  fr="Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau rôle devrait être créé."
 
-[autoFieldMessageHelp]
-  en = "These fields are use for ressource identification."
-
-[firstLinkRoleMessageHelp]
-  en = "Select a type of role and assign an user (first link)."
-
-[firstLinkCircleMessageHelp]
-  en = "Assign an user to a coordinator Role (first link)."
+[invitationMessageHelp]
+  en="Add an invitation message."
+  fr="Ajouter un message d'invitation."
 
 [tensionAdded]
-  en = "Tension added."
+  en="Tension added."
+  fr="Tension créé."
 
 [roleAdded]
-  en = "Role added."
+  en="Role added."
+  fr="Rôle créé."
 
 [circleAdded]
-  en = "Circle added."
-
-[tensionCircleAdded]
-  en = "Tension added for circle (not published)."
-
-[tensionRoleAdded]
-  en = "Tension added for role (not published)."
+  en="Circle added."
+  fr="Cercle créé."
 
 [tensionSubmit]
-  en = "Submit tension"
+  en="Submit tension"
+  fr="Envoyer"
 
 [tensionCircleCloseSubmit]
-  en = "Create circle"
+  en="Create circle"
+  fr="Créer le cercle"
 
 [tensionRoleCloseSubmit]
-  en = "Create role"
+  en="Create role"
+  fr="Créer le rôle"
+
+[opened]
+  en="opened"
+  fr="ouvert"
+
+[updated]
+  en="updated"
+  fr="mis à jour"
+
+[edited]
+  en="edited"
+  fr="édité"
+
+[commented]
+  en="commented"
+  fr="commenté"
 
 [openedThe]
-  en = "opened the"
+  en="opened the"
+  fr="ouvert le"
 
 [updatedThe]
-  en = "updated the"
+  en="updated the"
+  fr="mis à jour le"
 
 [editedThe]
-  en = "edited the"
+  en="edited the"
+  fr="mis à jour le"
 
 [commentedThe]
-  en = "commented the"
+  en="commented the"
+  fr="commenté le"
 
-[updateTitle]
-  en = "Update title"
+[update]
+  en="Update"
+  fr="Valider"
 
-[updateComment]
-  en = "Update comment"
+[addResponsabilities]
+  en="Add accountabilities"
+  fr="Ajouter des responsabilités"
+
+[addDomains]
+  en="Add domains"
+  fr="Ajouter des domaines"
+
+[addPolicies]
+  en="Add policies"
+  fr="Ajouter des politiques"
+
+[unknown]
+  en="unknown"
+  fr="inconu"
+
+[notImplemented]
+  en="not implemented"
+  fr="non implémenté"
 
 [notOrgMember]
-  en = "You are not a member of this organisation."
-
-[notCircleMember]
-  en = "You are not a member of this circle."
-
-[notCircleCoordo]
-  en = "You are not a coordinator of this circle."
+  en="You are not a member of this organisation."
+  fr="Vous n'êtes pas membre de cette organisation."
 
 [askCoordo]
-  en = "Please, ask a coordinator of this circle to perform this action."
+  en="Please, ask a coordinator of this circle to perform this action."
+  fr="Veuillez demander à un coordinateur de ce cercle d'effectuer cette action.
 
 [joinForTension]
-  en = "Please, Join this organisation to be able to create a tension."
+  en="Please, Join this organisation to be able to create a tension (or retry)."
+  fr="Veuillez rejoindre cette organisation pour pouvoir créer une tension (ou réessayer)."
+
+[joinForComment]
+  en="Please, Join this organisation to participate to this conversation."
+  fr="Veuillez rejoindre cette organisation pour participer à cette conversation (ou réessayer)."
 
 [joinForCircle]
-  en = "Please, Join this organisation to be able to create a circle."
+  en="Please, Join this organisation to be able to create a circle (or retry)."
+  fr="Veuillez rejoindre cette organisation pour pouvoir créer une cercle (ou réessayer)."
 
 [nodeNotExist]
-  en = "Sorry, this node doesn't exist yet."
+  en="Sorry, this circle doesn’t exist."
+  fr="Désolé, ce cercle n'existe pas."
+
+[goRoot]
+  en="Go to root circle"
+  fr="Aller au cercle racine"
+
+[goParent]
+  en="Go to parent circle"
+  fr="Aller au cercle parent"
+
+[clickMe]
+  en="Click me"
+  fr="cliquez-moi"
+
+[newReceiver]
+  en="New destination"
+  fr="Nouvelle destination"
+
+[rolesHere]
+  en="Roles in this circle"
+  fr="Roles dans ce cercle"
+
+[noLabels]
+  en="No label in this circle yet"
+  fr="Pas d'étiquettes présent dans ce cercle"
+
+[noRoles]
+  en="No role in this circle yet"
+  fr="Pas de rôles présent dans ce cercle"
+
+[labelsSub]
+  en="Labels in sub-circles"
+  fr="Etiquettes dans les sous-cercles"
+
+[labelsTop]
+  en="Labels in parent circles"
+  fr="Etiquettes dans les cercles parents"
+
+[rolesSub]
+  en="Roles in sub-circles"
+  fr="Rôles dans les sous-cercles"
+
+[rolesTop]
+  en="Roles in parent circles"
+  fr="Rôles dans les cercles parents"
+
+[noDataError]
+  en="No data returned. You may try to refresh the page."
+  fr="Aucune donnée n'est retournée. Vous pouvez essayer de rafraîchir la page."
+
+[reverseTooltip]
+  en="Reverse the organisation graph."
+  fr="Inverser le graphe de l'organisation."
+
+[tensionsListTooltip]
+  en="Display tensions as List."
+  fr="Afficher les tensions sous forme de liste."
+
+[tensionsIntExtTooltip]
+  en="Display indegenous and exogenous tensions with respect to the focused circle."
+  fr="Afficher les tensions indigènes et exogènes par rapport au cercle focalisé."
+
+[tensionsCircleTooltip]
+  en="Display tensions by (targeted) circles."
+  fr="afficher les tensions par cercles (ciblés)."
+
+[labelDeleteInfoHeader]
+  en="Label present in other circles, and in labeled tensions, won’t be deleted."
+  fr="Les étiquettes présentes dans d'autres cercles, et dans les tensions étiquetées, ne seront pas supprimées."
+
+[roleDeleteInfoHeader]
+  en="Role present in other circles, and created roles, won’t be deleted."
+  fr="Les rôles présents dans d'autres cercles, et les rôles créés, ne seront pas supprimés."
+
+[contractInfoHeader]
+  en="A peer validation is needed to complete this action."
+  fr="Une validation par les pairs est nécessaire pour compléter cette action."
+
+[contractInfo]
+  en="By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
+  fr="En créant un contrat, il notifiera les rôles de l'organisation avec le niveau d'autorité capable de valider votre demande. L'action sera exécutée une fois que le contrat aura été validé."
+
+[tensionTypeHeader]
+  en="Select the right category to help finding and solving tensions."
+  fr="Sélectionnez la bonne catégorie pour vous aider à trouver et à résoudre les tensions."
+
+[tensionTypeDoc]
+  en="""
+There are three main categories of tension:
+
+- **Operational**: A general category, it can be task, an issue or whatever that need to be share in the organisation.
+- **Governance**: Concerning the structure of the organisation, the mandates etc.
+- **Help**: For help requests, questions or clarifications.
+- **Alert**: For alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
+"""
+  fr="""
+Il existe trois grandes catégories de tensions :
+
+- **Opérationnel** : Une catégorie générale, il peut s'agir d'une tâche, d'un problème ou de tout ce qui doit être partagé dans l'organisation.
+- **Gouvernance** : Concernant la structure de l'organisation, les mandats, etc.
+- * **Aide** : Pour les demandes d'aide, les questions ou les clarifications.
+- **Alert** : Pour les demandes d'alerte, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
+"""
+
+[visibilityInfoHeader]
+  en="The change will only apply on the current circle and its roles, not recursively on the sub-circles."
+  fr="La modification ne s'appliquera qu'au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+
+[visibilityPublic]
+  en="The entire world can view."
+  fr="Le monde entier peut voir."
+
+[visibilityPrivate]
+  en="Only members of the organisation can view."
+  fr="Seuls les membres de l'organisation peuvent les consulter."
+
+[visibilitySeccret]
+  en="Only roles inside this circle can view."
+  fr="Seuls les rôles à l'intérieur de ce cercle peuvent voir."
+
+[visibilityRestriction]
+  en="Users can join the organisation on invitation only."
+  fr="Les utilisateurs peuvent rejoindre l'organisation sur invitation uniquement."
+
+[circleAuthorityHeader]
+  en="The governance authority is characterized by the right to do a set of actions."
+  fr="L'autorité de gouvernance se caractérise par le droit de faire un ensemble d'actions."
+
+[circleAuthorityDoc]
+  en="""
+- Create and edit roles and circles
+- Edit tensions (title, status (Open/Close), assignees, etc)
+- Edit mandates
+- invite new members
+
+Note: To edit mandates you need to publish the modifications done in the corresponding (governance) tension.
+"""
+  fr="""
+- Créer et modifier les rôles et les cercles
+- Editer les tensions (titre, statut (Ouvert/Fermé), attributaires, etc.)
+- Modifier les mandats
+- Inviter de nouveaux membres
+
+Note : Pour éditer des mandats, vous devez publier les modifications effectuées dans la tension (gouvernance) correspondante.
+"""
+
+[authCoordinated]
+  en="Where Coordinator roles have the governance authority."
+	fr="Où seul les rôles de coordinateur ont l'autorité de gouvernance."
+
+[authAgile]
+  en="Where all roles have equal governance authority."
+  fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
+
+[labelsInfoHeader]
+  en="Creating new labels help you to sort out your tensions"
+	fr="La création de nouvelles étiquettes vous aide à trier vos tensions."
+
+[labelsInfoDoc]
+  en="""
+When you create labels here. You can then attach them to your tensions. You will also be able to filter tensions according to labels.
+
+**Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
+"""
+	fr="""
+Lorsque vous créez des étiquettes ici. Vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
+
+**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l'un des parents du cercle récepteur.
+"""
+
+[rolesInfoHeader]
+  en="Creating new roles help you to manage your organization"
+	fr="La création de nouveaux rôles vous aide à gérer votre organisation"
+
+[rolesInfoDoc]
+  en="""
+When you create a role here, you can use it as a template when you create a new role in your organisation.
+
+**Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents.
+"""
+	fr="""
+Lorsque vous créez un rôle ici, vous pouvez l'utiliser comme modèle lorsque vous créez un nouveau rôle dans votre organisation.
+
+**Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l'un de ses parents.
+"""
+
+[peerRoleInfo]
+  en="Default Role with restricted authorization."
+	fr="Rôle par défaut avec une autorisation restreinte."
+
+[coordinatorRoleInfo]
+  en="Role with administration rights at the circle level."
+	fr="Rôle avec des droits d'administration au niveau du cercle."
+
+[welcomeLetter]
+  en="""
+Welcome @{{username}},
+
+**Your account has been successfully activated.**
+
+Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
+
+You can also use it for individual projects to organise and manage your tasks and ideas.
+
+In order to help your navigation, you will find some shortcuts in the top right corner:
+- the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
+- the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
+- the **new button** (<i class="icon icon-plus"></i>) to create new organisations.
+- the **user button** to access your profile and settings.
+"""
+	fr="""
+Bienvenue @{{username}},
+
+**Votre compte a été activé avec succès.**
+
+Fractale est une plateforme destinée aux communautés et aux organisations. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l'intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
+
+Vous pouvez également l'utiliser pour des projets individuels afin d'organiser et de gérer vos tâches et vos idées.
+
+Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
+- le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
+- le bouton **d'aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
+- le bouton **de création** (<i class="icon icon-plus"></i>) pour créer de nouvelles organisations.
+- le bouton **d'utilisateur** pour accéder à votre profil et à vos paramètres.
+"""
+
+[explainJoin]
+  en="Explain your motivations for joining this organisation ?"
+	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
+
+[orgaUserInvitation]
+  en="Users can join the organisation"
+	fr="Les utilisateurs peuvent rejoindre l'organisation"
+
+[orgaUserInvitationHelp]
+  en="User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
+	fr="L'utilisateur pourra ouvrir un contrat pour rejoindre l'organisation. L'utilisateur ne pourra rejoindre l'organisation en tant qu'invité qu'après qu'un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
+
+[guestCanCreateTension]
+  en="Guests can create tension"
+	fr="Les invités peuvent créer des tensions"
+
+[guestCanCreateTensionHelp]
+  en="Guests are users that has been invited but do not play any role in the organisation."
+	fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans l'organisation."
+
+[notifyByEmail]
+  en="Enable email notifications."
+	fr="Activez les notifications par e-mail."
+
+[beenUnsubscribe]
+  en="You’ve been unsubscribed from this tension"
+	fr="Vous avez été désabonné de cette tension."
 

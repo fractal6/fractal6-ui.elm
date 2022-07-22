@@ -6,7 +6,7 @@ import Browser.Events as Events
 import Codecs exposing (LookupResult)
 import Dict exposing (Dict)
 import Dom
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -26,7 +26,7 @@ import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
@@ -33,7 +33,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

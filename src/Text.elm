@@ -1,67 +1,8 @@
 module Text exposing (..)
 
-import Html exposing (Html, span, text)
-import String.Extra as SE
-
-
-
--- String
-
-
-upH : String -> String
-upH s =
-    SE.toSentenceCase s
-
-
-upT : String -> String
-upT s =
-    SE.toTitleCase s
-
-
-upA : String -> String
-upA t =
-    String.toUpper t
-
-
-decap : String -> String
-decap t =
-    SE.decapitalize t
-
-
-toText : List String -> Html msg
-toText l =
-    l
-        |> List.intersperse " "
-        |> List.map (\x -> text x)
-        |> span []
-
-
-textH : String -> Html msg
-textH s =
-    s |> upH |> text
-
-
-textT : String -> Html msg
-textT s =
-    s |> upT |> text
-
-
-textA : String -> Html msg
-textA s =
-    s |> upA |> text
-
-
-textD : String -> Html msg
-textD s =
-    s |> decap |> text
-
-
-space_ : String
-space_ =
-    "\u{00A0}"
-
-
-
+{-
+   Auto-generated i18n
+-}
 -- General
 
 
@@ -80,19 +21,34 @@ signout =
     "Sign Out"
 
 
+email : String
+email =
+    "Email"
+
+
+signinNow : String
+signinNow =
+    "Sign-in"
+
+
+signupNow : String
+signupNow =
+    "Create an account"
+
+
+needAnAccount : String
+needAnAccount =
+    "New to Fractale?"
+
+
+alreadyAnAccount : String
+alreadyAnAccount =
+    "Already an account?"
+
+
 createYourAccount : String
 createYourAccount =
     "Create your account"
-
-
-createAccount : String
-createAccount =
-    "or create an account"
-
-
-orSignin : String
-orSignin =
-    "already an account? Sign-in"
 
 
 passwordForgotten : String
@@ -495,9 +451,14 @@ tensionMoved =
     "tension moved"
 
 
-leave : String
-leave =
-    "leave"
+circleMoved : String
+circleMoved =
+    "Circle moved"
+
+
+roleMoved : String
+roleMoved =
+    "Role moved"
 
 
 the : String
@@ -555,9 +516,14 @@ moveTension =
     "move tension"
 
 
-moveNode : String
-moveNode =
-    "move node"
+moveCircle : String
+moveCircle =
+    "move circle"
+
+
+moveRole : String
+moveRole =
+    "move role"
 
 
 newContract : String
@@ -593,11 +559,6 @@ add =
 remove : String
 remove =
     "remove"
-
-
-delete : String
-delete =
-    "delete"
 
 
 subscribe : String
@@ -640,11 +601,6 @@ sort =
     "sort"
 
 
-new : String
-new =
-    "new"
-
-
 reviewAndValidate : String
 reviewAndValidate =
     "Review and validate"
@@ -655,9 +611,9 @@ reviewAndValidate =
 --(header)
 
 
-title : String
-title =
-    "title"
+subject : String
+subject =
+    "subject"
 
 
 name : String
@@ -685,9 +641,9 @@ roles =
     "roles"
 
 
-member : String
-member =
-    "member"
+noMemberYet : String
+noMemberYet =
+    "No member yet"
 
 
 owner : String
@@ -836,16 +792,6 @@ phRoleDomains =
 phRolePolicies : String
 phRolePolicies =
     "Define the role policies"
-
-
-noFirstLinksRole : String
-noFirstLinksRole =
-    "No member is linked to this role yet."
-
-
-noFirstLinksCircle : String
-noFirstLinksCircle =
-    "No member is linked to this circle yet."
 
 
 addedThe : String
@@ -1077,16 +1023,6 @@ roleMessageHelp =
     "add a comment to help others understand why a new role should be created."
 
 
-firstLinkRoleMessageHelp : String
-firstLinkRoleMessageHelp =
-    "Select a type of role and assign an user (first link)."
-
-
-firstLinkCircleMessageHelp : String
-firstLinkCircleMessageHelp =
-    "Assign an user to a coordinator Role (first link)."
-
-
 invitationMessageHelp : String
 invitationMessageHelp =
     "Add an invitation message."
@@ -1105,16 +1041,6 @@ roleAdded =
 circleAdded : String
 circleAdded =
     "circle added."
-
-
-tensionCircleAdded : String
-tensionCircleAdded =
-    "Tension added for Circle (not published)."
-
-
-tensionRoleAdded : String
-tensionRoleAdded =
-    "Tension added for Role (not published)."
 
 
 tensionSubmit : String
@@ -1172,14 +1098,9 @@ commentedThe =
     "commented the"
 
 
-updateTitle : String
-updateTitle =
-    "update title"
-
-
-updateComment : String
-updateComment =
-    "update comment"
+update : String
+update =
+    "update"
 
 
 addResponsabilities : String
@@ -1526,6 +1447,11 @@ guestCanCreateTensionHelp =
 notifyByEmail : String
 notifyByEmail =
     "Enable email notifications."
+
+
+password : String
+password =
+    "Password"
 
 
 beenUnsubscribe : String

@@ -1,6 +1,7 @@
 module Loading exposing (..)
 
 import Assets as A
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route, toHref)
 import Graphql.Http as GqlHttp
@@ -10,7 +11,7 @@ import Http
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
-import Text as T exposing (upH, upT)
+import Text as T
 
 
 

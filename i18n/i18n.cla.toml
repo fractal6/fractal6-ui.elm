@@ -1,0 +1,384 @@
+
+[loading]
+  en = "loading..."
+  fr = "chargement en cours..."
+  it = "sto caricando..."
+  pt = "estou á carregar..."
+
+[seeMore]
+  en = "See more"
+  fr = "Voir plus"
+  it = "Mostra di pi"
+  pt = "Ver mais"
+
+
+[checkItOut]
+  en = "Check it out."
+
+
+[view]
+  en = "View"
+
+[versions]
+  en = "Versions"
+  fr = "Versions"
+  it = "Versioni"
+  pt = "Versões"
+
+[revisions]
+  en = "Revisions"
+  fr = "Révisions"
+  it = "Revisioni"
+  pt = "Revisões"
+
+[history]
+  en = "History"
+  fr = "Historique"
+  it = "Cronologia"
+  pt = "Histórico"
+
+[edit]
+  en = "Edit"
+  fr = "Éditer"
+  it = "Modifica"
+  pt = "Modificar"
+
+[cancel]
+  en = "Cancel"
+  fr = "Annuler"
+  it = "Annullare"
+  pt = "Cancelar"
+
+[publish]
+  en = "Publish"
+  fr = "Publier"
+  it = "Pubblica"
+  pt = "Publicar"
+
+[publishTitle]
+  en = "As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
+  fr = "Tant qu'une révision n'est pas publié les changements sont uniquement visibles dans la tension du circle (la page courante)."
+
+[published]
+  en = "published"
+  fr = "publié"
+  it = "pubblicato"
+  pt = "publicado"
+
+[by]
+  en = "by"
+  fr = "par"
+  it = "da"
+  pt = "por"
+
+[the]
+  en = "the"
+  fr = "le"
+  it = "il"
+  pt = "em"
+
+[saveChanges]
+  en = "Save changes"
+  fr = "Enregitrer les modifications"
+  it = "Salva le modifiche"
+  pt = "Gravar as modificações"
+
+[leaveComment]
+  en = "Leave a comment"
+  fr = "Laisser un commentaire"
+  it = "Lascia un commento"
+  pt = "Deixar um comentário"
+
+
+[name]
+  en = "Name"
+  fr = "Nom"
+  it = "Nome"
+  pt = "Nome"
+
+[circle]
+  en = "Circle"
+  fr = "Cercle"
+  it = "Cerchio"
+  pt = "Círculo"
+
+[role]
+  en = "Role"
+  fr = "Rôle"
+  it = "Ruolo"
+  pt = "Papel"
+
+[parent]
+  en = "Parent"
+  fr = "Parent"
+  it = "Genitore"
+  pt = "Mãe"
+
+[firstLink]
+  en = "Lead link"
+  fr = "Premier lien"
+  it = "Primo link"
+  pt = "Primeiro link"
+
+[phQS]
+  en = "Find a role or circle"
+  fr = "Trouver un rôle ou un cercle"
+  it = "Trova un ruolo o un cerchio"
+  pt = "Encontrar um papel ou um círculo"
+
+[document]
+  en = "Document"
+  fr = "Document"
+  it = "Documento"
+  pt = "Documento"
+
+
+[reverseTooltip]
+  en = "Reverse the organisation graph."
+  fr = "Inverser le graphe de l'organisation."
+  it = "Invertire il grafico dell'organizzazione."
+  pt = "Inverter o gráfico da organisação."
+
+[about]
+  en = "About"
+
+[mandate]
+  en = "Mandate"
+
+[purpose]
+  en = "Purpose"
+
+[responsabilities]
+  en = "Accountabilities"
+
+[domains]
+  en = "Domains"
+
+[policies]
+  en = "Policies"
+
+
+[phCirclePurpose]
+  en = "Define the purpose of the circle"
+  fr = "Definir le propos du cercle"
+  it = "Definisci il proposito del cerchio"
+  pt = "Define o propósito do círculo"
+
+[phCircleResponsabilities]
+  en = "Define the circle accountabilities"
+  fr = "Definir les competences du cercle"
+  it = "Definisci le competenze del cerchio"
+  pt = "Define as competências do círculo"
+
+[phCircleDomains]
+  en = "Define the circle domains"
+  fr = "Definir les domains du cercle"
+  it = "Definisci il dominio del cerchio"
+  pt = "Define o domínio do círculo"
+
+[phCirclePolicies]
+  en = "Define the circle policies"
+  fr = "Definir les règles du cercle"
+  it = "Definisci le regole del cerchio"
+  pt = "Define as regras do círculo"
+
+[phRolePurpose]
+  en = "Define the purpose of the role"
+  fr = "Definir le propos du rôle"
+  it = "Definisci il proposito del ruolo"
+  pt = "Define o propósito do papel"
+
+
+[phRoleResponsabilities]
+  en = "Define the role accountabilities"
+  fr = "Definir les competences du rôle"
+  it = "Definisci le competenze del ruolo"
+  pt = "Define as competências do papel"
+
+[phRoleDomains]
+  en = "Define the role domains"
+  fr = "Definir les domains du rôle"
+  it = "Definisci il dominio del ruolo"
+  pt = "Define o domínio do papel"
+
+[phRolePolicies]
+  en = "Define the role policies"
+  fr = "Definir les règles du rôle"
+  it = "Definisci le regole del ruolo"
+  pt = "Define as regras do papel"
+
+[noFirstLinksRole]
+  en = "No member is linked to this role yet."
+  fr = "Il n'y a pas encore de membre occupant ce rôle."
+  it = "Non c'è ancora nessun membro che occupa questo ruolo."
+  pt = "Não há ainda nenhum membro ã ocupar este papel."
+
+[noFirstLinksCircle]
+  en = "No member is linked to this circle yet."
+  fr = "Il n'y a pas encore de membre occupant ce cercle."
+  it = "Non c'è ancora nessun membro che occupa questo cerchio."
+  pt = "Não há ainda nenhum membro ã ocupar este círculo."
+
+
+[tensions]
+  en = "Tensions"
+  fr = "Tensions"
+  it = "Tensioni"
+  pt = "Tensões"
+
+[journal]
+  en = "Journal"
+  fr = "Journal"
+  it = "Giornale"
+  pt = "Jornal"
+
+[noTensionRole]
+  en = "No tensions for this role yet."
+  fr = "Il n'y a pas encore de tensions pour ce rôle."
+  it = "Non ci sono ancora tensioni per questo ruolo."
+  pt = "Ainda não há tensões para este papel."
+
+[noTensionCircle]
+  en = "No tensions for this circle yet."
+  fr = "Il n'y a pas encore de tensions pour ce cercle."
+  it = "Non ci sono ancora tensioni per questo cerchio."
+  pt = "Ainda não há tensões para este círculo."
+
+[internalTensions]
+  en = "Internal tensions"
+  fr = "Tensions internes"
+  it = "Tensioni interne"
+  pt = "Tensões internas"
+
+[externalTensions]
+  en = "External tensions"
+  fr = "Tensions externes"
+  it = "Tensioni esterne"
+  pt = "Tensões esternas"
+
+[noIntTensionRole]
+  en = "No internal tensions for this role yet."
+
+[noIntTensionCircle]
+  en = "No internal tensions for this circle yet."
+
+[noExtTensionRole]
+  en = "No external tensions for this role yet."
+
+[noExtTensionCircle]
+  en = "No external tensions for this circle yet."
+
+[newTension]
+  en = "New tension"
+
+[newCircle]
+  en = "New circle"
+
+[newRole]
+  en = "New role"
+
+[editCircle]
+  en = "Edit circle"
+
+[editRole]
+  en = "Edit role"
+
+[editTitle]
+  en = "Edit title"
+
+[tensionTitleHelp]
+  en = "Title that sumarize your tension."
+
+[circleNameHelp]
+  en = "Name of the circle."
+
+[roleNameHelp]
+  en = "Name of the role."
+
+[roleAboutHelp]
+  en = "Short description of this role."
+
+[circleAboutHelp]
+  en = "Short description of this circle."
+
+[tensionMessageHelp]
+  en = "Add a description to help others understand your issue."
+
+[circleMessageHelp]
+  en = "Add a description to help others understand why a new circle should be created."
+
+[roleMessageHelp]
+  en = "Add a description to help others understand why a new role should be created."
+
+[autoFieldMessageHelp]
+  en = "These fields are use for ressource identification."
+
+[firstLinkRoleMessageHelp]
+  en = "Select a type of role and assign an user (first link)."
+
+[firstLinkCircleMessageHelp]
+  en = "Assign an user to a coordinator Role (first link)."
+
+[tensionAdded]
+  en = "Tension added."
+
+[roleAdded]
+  en = "Role added."
+
+[circleAdded]
+  en = "Circle added."
+
+[tensionCircleAdded]
+  en = "Tension added for circle (not published)."
+
+[tensionRoleAdded]
+  en = "Tension added for role (not published)."
+
+[tensionSubmit]
+  en = "Submit tension"
+
+[tensionCircleCloseSubmit]
+  en = "Create circle"
+
+[tensionRoleCloseSubmit]
+  en = "Create role"
+
+[openedThe]
+  en = "opened the"
+
+[updatedThe]
+  en = "updated the"
+
+[editedThe]
+  en = "edited the"
+
+[commentedThe]
+  en = "commented the"
+
+[updateTitle]
+  en = "Update title"
+
+[updateComment]
+  en = "Update comment"
+
+[notOrgMember]
+  en = "You are not a member of this organisation."
+
+[notCircleMember]
+  en = "You are not a member of this circle."
+
+[notCircleCoordo]
+  en = "You are not a coordinator of this circle."
+
+[askCoordo]
+  en = "Please, ask a coordinator of this circle to perform this action."
+
+[joinForTension]
+  en = "Please, Join this organisation to be able to create a tension."
+
+[joinForCircle]
+  en = "Please, Join this organisation to be able to create a circle."
+
+[nodeNotExist]
+  en = "Sorry, this node doesn't exist yet."
+

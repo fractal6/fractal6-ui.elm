@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (mor, ternary)
+import Extra exposing (mor, space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable, isPostSendableOr)
@@ -35,7 +35,7 @@ import Query.QueryUser exposing (queryUserFull)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 import Time
 import Url exposing (Url)
 
@@ -595,7 +595,7 @@ viewEmailSettings user result switch_index menuFocus =
                     [ div [ class "field" ]
                         [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user == True) ] []
                         , label [ for ref_name ]
-                            [ text T.space_
+                            [ text space_
                             , text x.title
 
                             -- Use loadingSlowly because here it causes eyes distraction !

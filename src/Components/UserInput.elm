@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (diffTime)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -23,7 +23,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryUser exposing (queryUser)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -425,7 +425,7 @@ viewEmailSelector op model =
                 , onClick (OnClickEmail model.pattern)
                 ]
                 [ A.icon1 "icon-mail" T.invite
-                , text T.space_
+                , text space_
                 , span [ class "is-italic" ] [ text "\"", text (String.trim model.pattern), text "\"" ]
                 ]
             ]

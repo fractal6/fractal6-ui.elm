@@ -1,7 +1,7 @@
 module Components.Navbar exposing (view)
 
 import Assets as A
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
@@ -9,7 +9,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toString)
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Url exposing (Url)
 
 

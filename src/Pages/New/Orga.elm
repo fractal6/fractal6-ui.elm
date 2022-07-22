@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Update as Update
 import Extra.Url exposing (queryBuilder, queryParser)
@@ -39,7 +39,7 @@ import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task exposing (Task)
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 import Url as Url exposing (Url)
 

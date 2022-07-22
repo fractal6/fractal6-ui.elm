@@ -4,7 +4,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
 import Generated.Route as Route exposing (Route, toHref)
@@ -25,7 +25,7 @@ import Ports
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import String.Format as Format
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -254,17 +254,17 @@ update_ apis message model =
 
                                 Inactive ->
                                     UserAuthForm Dict.empty
+
                         isSendable =
-                         case model.puid of
+                            case model.puid of
+                                Just "" ->
+                                    isPostSendable [ "username", "password" ] form.post
 
-                            Just "" ->
-                                isPostSendable ["username", "password" ] form.post
+                                Just puid ->
+                                    isPostSendable [ "username", "password" ] form.post
 
-                            Just puid ->
-                                isPostSendable ["username", "password" ] form.post
-
-                            Nothing ->
-                                isPostSendable ["username", "password" ] form.post
+                                Nothing ->
+                                    isPostSendable [ "username", "password" ] form.post
                     in
                     --ENTER
                     if isSendable then
@@ -361,9 +361,8 @@ refreshModal op model =
                                     ]
                                 ]
                             ]
-                        , div [ attribute "style" "width: 225px;" ]
-                            [ a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
-                                [ textH T.passwordForgotten ]
+                        , div [ class "is-size-7 is-pulled-left" ]
+                            [ a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]
@@ -435,7 +434,7 @@ signupModal op model =
                                     ]
                                 , div [ class "field" ]
                                     [ div [ class "field" ]
-                                        [ div [ class "label" ] [ text "Username" ]
+                                        [ div [ class "label" ] [ text T.username ]
                                         , div [ class "control" ]
                                             [ input
                                                 [ class "input autofocus followFocus"
@@ -451,7 +450,7 @@ signupModal op model =
                                             ]
                                         ]
                                     , div [ class "field" ]
-                                        [ div [ class "label" ] [ text "Password" ]
+                                        [ div [ class "label" ] [ text T.password ]
                                         , div [ class "control" ]
                                             [ input
                                                 [ id "passwordInput"
@@ -478,8 +477,7 @@ signupModal op model =
                                                 [ textH T.confirm ]
 
                                           else
-                                            button [ class "button", disabled True ]
-                                                [ textH T.confirm ]
+                                            button [ class "button", disabled True ] [ textH T.confirm ]
                                         ]
                                     ]
                                 , div []
@@ -550,11 +548,11 @@ signinModal op model =
                                     ]
                                 ]
                             ]
-                        , div [ attribute "style" "width: 225px;" ]
-                            [ a [ class "is-size-7 is-pulled-left mb-2", href (toHref Route.Signup) ]
-                                [ textH T.createAccount ]
-                            , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
-                                [ textH T.passwordForgotten ]
+                        , div [ class "is-size-7 is-pulled-left" ]
+                            [ span [ class "mr-2" ] [ text T.needAnAccount ]
+                            , a [ href (toHref Route.Signup) ] [ text T.signupNow ]
+                            , br [ class "mb-1" ] []
+                            , a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]
@@ -567,8 +565,7 @@ signinModal op model =
                                         [ text T.signin ]
 
                                   else
-                                    button [ class "button", disabled True ]
-                                        [ text T.signin ]
+                                    button [ class "button", disabled True ] [ text T.signin ]
                                 ]
                             ]
                         , div []

@@ -1,10 +1,15 @@
 module Extra exposing (..)
 
 import Dict exposing (Dict)
-import Html exposing (Html)
+import Html exposing (Html, span, text)
 import Html.Attributes exposing (attribute)
 import Regex exposing (Regex)
 import String
+import String.Extra as SE
+
+
+
+-- Utils
 
 
 ternary test positive negative =
@@ -14,10 +19,6 @@ ternary test positive negative =
 
     else
         negative
-
-
-
--- Utils
 
 
 toMapOfList : List ( String, a ) -> Dict String (List a)
@@ -40,6 +41,59 @@ addParam_ value maybeValues =
 
 
 -- String
+
+
+upH : String -> String
+upH s =
+    SE.toSentenceCase s
+
+
+upT : String -> String
+upT s =
+    SE.toTitleCase s
+
+
+upA : String -> String
+upA t =
+    String.toUpper t
+
+
+decap : String -> String
+decap t =
+    SE.decapitalize t
+
+
+toText : List String -> Html msg
+toText l =
+    l
+        |> List.intersperse " "
+        |> List.map (\x -> text x)
+        |> span []
+
+
+textH : String -> Html msg
+textH s =
+    s |> upH |> text
+
+
+textT : String -> Html msg
+textT s =
+    s |> upT |> text
+
+
+textA : String -> Html msg
+textA s =
+    s |> upA |> text
+
+
+textD : String -> Html msg
+textD s =
+    s |> decap |> text
+
+
+space_ : String
+space_ =
+    "\u{00A0}"
 
 
 regexFromString : String -> Regex

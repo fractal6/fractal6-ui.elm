@@ -18,7 +18,7 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, toText, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -119,7 +119,7 @@ import Scroll
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import Task
-import Text as T exposing (textH, textT, toText, upH)
+import Text as T
 import Time
 import Url exposing (Url)
 
@@ -1616,7 +1616,7 @@ viewTension u t model =
                                      ]
                                         ++ doSubmit
                                     )
-                                    [ textH T.updateTitle ]
+                                    [ textH T.update ]
                                 ]
                             ]
                         , viewMaybeErrors model.title_result
@@ -1979,7 +1979,7 @@ viewEventTitle now event =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.title ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.subject ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right" ] []

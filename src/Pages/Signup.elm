@@ -4,6 +4,7 @@ import Assets as A
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isSignupSendable)
 import Generated.Route as Route exposing (Route, toHref)
@@ -24,7 +25,7 @@ import Page exposing (Document, Page)
 import Process
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 
 
 page : Page Flags Model Msg
@@ -173,7 +174,7 @@ viewSignup global model =
             [ A.welcome
             , div [ class "subtitle is-size-6 is-strong" ] [ text T.createYourAccount, text ":" ]
             , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.email ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -194,7 +195,7 @@ viewSignup global model =
                     ]
                 ]
             , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -216,7 +217,7 @@ viewSignup global model =
                     ]
                 ]
             , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -239,8 +240,10 @@ viewSignup global model =
                     ]
                 ]
             , br [] []
-            , a [ class "is-size-7 is-pulled-left", href (toHref Route.Login) ]
-                [ textH T.orSignin ]
+            , div [ class "is-size-7 is-pulled-left" ]
+                [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
+                , a [ href (toHref Route.Login) ] [ textH T.signinNow ]
+                ]
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]
                     [ if isSignupSendable model.form.post then
@@ -253,8 +256,7 @@ viewSignup global model =
                             [ text T.signup ]
 
                       else
-                        button [ class "button", disabled True ]
-                            [ text T.signup ]
+                        button [ class "button", disabled True ] [ text T.signup ]
                     ]
                 ]
             ]

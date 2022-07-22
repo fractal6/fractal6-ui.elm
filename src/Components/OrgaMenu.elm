@@ -2,10 +2,9 @@ module Components.OrgaMenu exposing (Msg(..), State, init, subscriptions, update
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostEmpty)
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
@@ -15,6 +14,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter, on
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelCommon.Codecs exposing (NodeFocus, getRootids)
@@ -23,7 +23,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryOrgaNode)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

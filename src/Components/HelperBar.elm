@@ -2,7 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -19,7 +19,7 @@ import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus
 import ModelCommon.View exposing (action2icon, roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
 import Ports
-import Text as T exposing (textH, textT)
+import Text as T
 
 
 type HelperBar

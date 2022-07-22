@@ -4,6 +4,7 @@ import Assets as A
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
 import Generated.Route as Route exposing (Route, toHref)
@@ -24,7 +25,7 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 
 
 
@@ -277,7 +278,7 @@ viewLogin model =
     div []
         [ A.welcome
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
@@ -299,7 +300,7 @@ viewLogin model =
                 ]
             ]
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
@@ -321,11 +322,11 @@ viewLogin model =
                 ]
             ]
         , br [] []
-        , div [ attribute "style" "width: 225px;" ]
-            [ a [ class "is-size-7 is-pulled-left mb-2", onClickPD (ChangeViewMode Signup), target "_blank" ]
-                [ textH T.createAccount ]
-            , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
-                [ textH T.passwordForgotten ]
+        , div [ class "is-size-7 is-pulled-left" ]
+            [ span [ class "mr-2" ] [ text T.needAnAccount ]
+            , a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signupNow ]
+            , br [ class "mb-1" ] []
+            , a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
@@ -339,8 +340,7 @@ viewLogin model =
                         [ text T.signin ]
 
                   else
-                    button [ class "button", disabled True ]
-                        [ text T.signin ]
+                    button [ class "button", disabled True ] [ text T.signin ]
                 ]
             ]
         ]
@@ -352,7 +352,7 @@ viewSignup model =
         [ A.welcome
         , div [ class "subtitle is-size-6 is-strong" ] [ text T.createYourAccount, text ":" ]
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.email ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
@@ -373,7 +373,7 @@ viewSignup model =
                 ]
             ]
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
@@ -395,7 +395,7 @@ viewSignup model =
                 ]
             ]
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
@@ -418,6 +418,10 @@ viewSignup model =
                 ]
             ]
         , br [] []
+        , div [ class "is-size-7 is-pulled-left" ]
+            [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
+            , a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ textH T.signinNow ]
+            ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
                 [ if isSignupSendable model.form.post then
@@ -430,8 +434,7 @@ viewSignup model =
                         [ text T.signup ]
 
                   else
-                    button [ class "button", disabled True ]
-                        [ text T.signup ]
+                    button [ class "button", disabled True ] [ text T.signup ]
                 ]
             ]
         ]

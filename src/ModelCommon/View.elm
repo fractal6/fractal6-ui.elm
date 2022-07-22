@@ -2,7 +2,7 @@ module ModelCommon.View exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
-import Extra exposing (colorAttr, ternary)
+import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -54,7 +54,7 @@ import ModelSchema
         , Username
         , shrinkNode
         )
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -949,27 +949,24 @@ type alias FormText =
     , ph_policies : String
     , submit : String
     , close_submit : String
-    , firstLink_help : String
-    , tension_added : String
-    , noFirstLinks : String
     }
 
 
 emptyFormText : FormText
 emptyFormText =
-    FormText "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+    FormText "" "" "" "" "" "" "" "" "" "" ""
 
 
 getTensionText : FormText
 getTensionText =
-    FormText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit "" "" "" ""
+    FormText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit ""
 
 
 getNodeTextFromNodeType : NodeType.NodeType -> FormText
 getNodeTextFromNodeType type_ =
     case type_ of
         NodeType.Circle ->
-            FormText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp T.tensionCircleAdded T.noFirstLinksCircle
+            FormText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.tensionCircleCloseSubmit
 
         NodeType.Role ->
-            FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded T.noFirstLinksRole
+            FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit

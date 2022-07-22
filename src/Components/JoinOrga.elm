@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty, isUsersSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -27,7 +27,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

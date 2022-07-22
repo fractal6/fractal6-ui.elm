@@ -7,7 +7,7 @@ import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
@@ -28,7 +28,7 @@ import Query.QueryNode exposing (queryPublicOrga)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 import Time
 import Url as Url
 

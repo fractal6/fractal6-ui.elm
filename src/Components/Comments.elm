@@ -2,7 +2,7 @@ module Components.Comments exposing (..)
 
 import Assets as A
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -16,7 +16,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionForm)
 import ModelCommon.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCtx)
-import Text as T exposing (textH, textT, toText, upH)
+import Text as T
 import Time
 
 
@@ -170,7 +170,7 @@ viewUpdateInput op uctx comment form result =
                             , disabled (not isSendable)
                             , onClick (op.doSubmit isLoading op.doEditComment)
                             ]
-                            [ textH T.updateComment ]
+                            [ textH T.update ]
                         ]
                     ]
                 ]

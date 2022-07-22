@@ -8,7 +8,7 @@ import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
 import Dom
-import Extra exposing (mor, ternary)
+import Extra exposing (mor, ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -47,7 +47,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryTension exposing (getTensionHead)
 import Session exposing (Apis, GlobalCmd(..))
 import String.Format as Format
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -212,6 +212,7 @@ action2post : PanelState -> Bool -> String
 action2post action selfContract =
     case action of
         MoveAction ->
+            -- handled by MoveTension components
             T.moved
 
         VisibilityAction ->
@@ -1084,7 +1085,7 @@ viewModalContent op model =
                 [ class "notification is-success-light" ]
                 [ button [ class "delete", onClick (OnCloseModalSafe "" "") ] []
                 , A.icon1 "icon-check icon-2x has-text-success" " "
-                , textH (action2post model.state selfContract ++ ". ")
+                , text (action2post model.state selfContract ++ ". ")
                 , if model.state == LinkAction && not selfContract then
                     let
                         link =

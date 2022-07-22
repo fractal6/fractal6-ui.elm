@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Components.Comments exposing (viewComment, viewContractCommentInput)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -47,7 +47,7 @@ import Query.PatchContract exposing (pushComment, sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -945,7 +945,7 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ T.space_), byAt op.now c.createdBy c.createdAt ] ]
+        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ space_), byAt op.now c.createdBy c.createdAt ] ]
         , div [ class "" ] <|
             case c.status of
                 ContractStatus.Closed ->

@@ -4,10 +4,9 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Codecs exposing (LookupResult)
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Dom
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -15,6 +14,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
@@ -26,7 +26,7 @@ import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
 import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

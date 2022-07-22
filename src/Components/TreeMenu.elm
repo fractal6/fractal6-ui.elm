@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
 import Dict.Extra as DE
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
@@ -28,7 +28,7 @@ import Ports
 import Query.QueryNode exposing (queryOrgaTree)
 import Session exposing (Apis, GlobalCmd(..))
 import String
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

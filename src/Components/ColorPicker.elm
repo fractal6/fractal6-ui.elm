@@ -1,9 +1,10 @@
 module Components.ColorPicker exposing (..)
 
+import Extra exposing (ternary, textH, upH)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Text as T exposing (textH, textT)
+import Text as T
 
 
 type alias ColorPicker =

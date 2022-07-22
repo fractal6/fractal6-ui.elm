@@ -3,8 +3,8 @@ module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 import Assets as A exposing (almostThere)
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
-import Loading exposing (WebData, expectJson, loadingSpin, viewHttpErrors)
 import Dict exposing (Dict)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
@@ -18,6 +18,7 @@ import Http
 import Image exposing (Image)
 import Json.Decode as JD
 import Json.Encode as JE
+import Loading exposing (WebData, expectJson, loadingSpin, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
@@ -26,7 +27,7 @@ import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 
 
 page : Page Flags Model Msg

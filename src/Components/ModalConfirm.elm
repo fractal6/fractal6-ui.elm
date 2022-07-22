@@ -1,9 +1,8 @@
 module Components.ModalConfirm exposing (..)
 
 import Assets as A
-import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Views exposing (showMsg)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -14,13 +13,14 @@ import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i,
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
+import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format
-import Text as T exposing (textH, textT)
+import Text as T
 import Time
 
 

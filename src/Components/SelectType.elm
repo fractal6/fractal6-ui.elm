@@ -4,7 +4,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -23,7 +23,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 

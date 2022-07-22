@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -46,7 +46,7 @@ import Query.QueryNotifications exposing (queryNotifications)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 import Time
 import Url exposing (Url)
 

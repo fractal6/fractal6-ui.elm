@@ -14,7 +14,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Debug
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -80,7 +80,7 @@ import Session exposing (GlobalCmd(..), NodesQuickSearch)
 import String
 import String.Extra as SE
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 import Url exposing (Url)
 

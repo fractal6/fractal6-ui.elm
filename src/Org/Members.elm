@@ -11,7 +11,7 @@ import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
@@ -47,7 +47,7 @@ import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 import Url as Url
 
@@ -543,7 +543,7 @@ viewMembers now data focus =
     case data of
         Success members ->
             if List.length members == 0 then
-                div [] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
+                div [] [ text T.noMemberYet, goToParent ]
 
             else
                 div []

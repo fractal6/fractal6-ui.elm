@@ -14,7 +14,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMa
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
@@ -55,7 +55,7 @@ import Query.QueryNode exposing (fetchNode, getCircleRights, getLabels, getRoles
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 import Url exposing (Url)
 
@@ -1810,7 +1810,7 @@ viewOrgaSettings orga_rights switch_result switch_index =
                             [ div [ class "field" ]
                                 [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val or == Just True) ] []
                                 , label [ for ref_name ]
-                                    [ text T.space_
+                                    [ text space_
                                     , text x.title
 
                                     -- Use loadingSlowly because here it causes eyes distraction !

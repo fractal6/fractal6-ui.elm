@@ -4,6 +4,7 @@ import Assets as A
 import Browser.Navigation as Nav
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
+import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable)
 import Generated.Route as Route exposing (Route, toHref)
@@ -23,7 +24,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 
 
 page : Page Flags Model Msg
@@ -177,7 +178,7 @@ viewLogin model =
         , div [ class "card-content" ]
             [ A.welcome
             , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.username ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -199,7 +200,7 @@ viewLogin model =
                     ]
                 ]
             , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.password ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -221,11 +222,11 @@ viewLogin model =
                     ]
                 ]
             , br [] []
-            , div [ attribute "style" "width: 225px;" ]
-                [ a [ class "is-size-7 is-pulled-left mb-2", href (toHref Route.Signup) ]
-                    [ textH T.createAccount ]
-                , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
-                    [ textH T.passwordForgotten ]
+            , div [ class "is-size-7 is-pulled-left" ]
+                [ span [ class "mr-2" ] [ text T.needAnAccount ]
+                , a [ href (toHref Route.Signup) ] [ text T.signupNow ]
+                , br [ class "mb-1" ] []
+                , a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
                 ]
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]
@@ -239,8 +240,7 @@ viewLogin model =
                             [ text T.signin ]
 
                       else
-                        button [ class "button", disabled True ]
-                            [ text T.signin ]
+                        button [ class "button", disabled True ] [ text T.signin ]
                     ]
                 ]
             ]

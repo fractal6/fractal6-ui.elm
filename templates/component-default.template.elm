@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, isFailure, isSuccess)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostEmpty)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
@@ -19,7 +19,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.AddData exposing (getData)
 import Session exposing (Apis, GlobalCmd(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 type State

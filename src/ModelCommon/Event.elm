@@ -2,7 +2,7 @@ module ModelCommon.Event exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
@@ -34,7 +34,7 @@ import ModelCommon.Codecs
 import ModelCommon.View exposing (byAt, statusColor)
 import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
 import String.Extra as SE
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -98,7 +98,7 @@ contractEventToText c =
             "Retired lead link"
 
         TensionEvent.UserJoined ->
-            "New member"
+            "New guest"
 
         _ ->
             c |> TensionEvent.toString |> SE.humanize

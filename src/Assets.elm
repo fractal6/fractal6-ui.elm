@@ -1,12 +1,13 @@
 module Assets exposing (..)
 
 import Assets.Logo as Logo
+import Extra exposing (space_, ternary, textH, upH)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
 import Html.Attributes exposing (attribute, class, href, style)
 import Html.Lazy as Lazy
 import String.Format as Format
-import Text as T exposing (textH, textT, upH)
+import Text as T
 
 
 {-| Assets, such as images, videos, and audio. (We only have images for now.)
@@ -47,12 +48,12 @@ icon cls =
 
 icon0 : String -> Html msg
 icon0 cls =
-    span [] [ icon cls, text T.space_ ]
+    span [] [ icon cls, text space_ ]
 
 
 icon1 : String -> String -> Html msg
 icon1 cls words =
-    span [] [ icon cls, text (T.space_ ++ T.space_ ++ words) ]
+    span [] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
 

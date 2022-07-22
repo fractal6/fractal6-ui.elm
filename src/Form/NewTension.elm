@@ -15,7 +15,7 @@ import Components.NodeDoc as NodeDoc
         )
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
@@ -77,7 +77,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRoles)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -1267,7 +1267,7 @@ viewTensionType model =
             withDefault TensionType.Operational form.type_
     in
     div []
-        [ span [ class "has-text-grey-light" ] [ textH ("type" ++ ":" ++ T.space_) ]
+        [ span [ class "has-text-grey-light" ] [ textH ("type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
             span [ class "dropdown", style "vertical-align" "unset" ]
                 [ span [ class "dropdown-trigger button-light" ]
@@ -1305,7 +1305,7 @@ viewRecipients op model =
     in
     div []
         [ -- @DEBUG: emitter is ignored now...
-          --span [ class "has-text-grey-light" ] [ textH (T.from ++ T.space_) ]
+          --span [ class "has-text-grey-light" ] [ textH (T.from ++ space_) ]
           --, span [ class "dropdown" ]
           --    [ span [ class "dropdown-trigger " ]
           --        [ span [ attribute "aria-controls" "source-menu" ]
@@ -1327,7 +1327,7 @@ viewRecipients op model =
           --                (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
           --        ]
           --    ]
-          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to ++ ":" ++ T.space_) ]
+          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to ++ ":" ++ space_) ]
         , span [ class "dropdown " ]
             [ span [ class "dropdown-trigger", onClick OnTargetClick, attribute "style" "max-width: 280px;" ]
                 [ span [ class "is-wrapped-33", attribute "aria-controls" "target-menu" ]
@@ -1398,7 +1398,7 @@ viewTension op model =
                                 [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
-                                , placeholder (upH T.title)
+                                , placeholder (upH T.subject)
                                 , spellcheck True
                                 , required True
                                 , value title
@@ -1788,7 +1788,7 @@ viewInviteRole model =
                         , disabled (not (isUsersSendable form.users) || isLoading)
                         , onClick (OnSubmit isLoading OnInvite)
                         ]
-                        [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> textH ]
+                        [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> text ]
                     ]
                 ]
             ]

@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.RoleType as RoleType
@@ -31,7 +31,7 @@ import Query.QueryUser exposing (queryUserProfile)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T
 import Time
 import Url exposing (Url)
 

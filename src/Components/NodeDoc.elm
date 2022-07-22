@@ -2,7 +2,7 @@ module Components.NodeDoc exposing (..)
 
 import Assets as A
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -27,7 +27,7 @@ import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFo
 import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
-import Text as T exposing (textH, textT, upH)
+import Text as T
 import Time
 
 
@@ -601,7 +601,7 @@ viewAboutSection data op_m =
             [ div [ class "level-left", style "max-width" "90%" ]
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ textH T.about ]
-                , text T.space_
+                , text space_
                 , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
                         [ href <| uriFromNameid OverviewBaseUri nameid [] ]
@@ -1119,7 +1119,7 @@ viewVersions_ now blobsData =
 viewVerRow : Time.Posix -> Int -> Blob -> List (Html msg)
 viewVerRow now i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text T.space_, byAt now blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt now blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
