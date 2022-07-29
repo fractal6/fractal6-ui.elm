@@ -147,7 +147,8 @@ action2submitstr : PanelState -> Bool -> String
 action2submitstr action selfContract =
     case action of
         MoveAction ->
-            T.move
+            -- handled by MoveTension components
+            ""
 
         VisibilityAction ->
             T.submit
@@ -179,33 +180,34 @@ action2header : PanelState -> NodeType.NodeType -> String
 action2header action type_ =
     case action of
         MoveAction ->
+            -- handled by MoveTension components
             ""
 
         VisibilityAction ->
-            "Change Visibility of:"
+            T.visibility_header
 
         AuthorityAction ->
             case type_ of
                 NodeType.Circle ->
-                    "Change Governance process of:"
+                    T.authority_circle_header
 
                 NodeType.Role ->
-                    "Change Authority of:"
+                    T.authority_role_header
 
         LinkAction ->
-            "New lead for role:"
+            T.link_header
 
         UnLinkAction _ ->
-            "Unlink lead for role:"
+            T.unlink_header
 
         ArchiveAction ->
-            "Archive {{type}}:"
+            T.archive_header
 
         UnarchiveAction ->
-            "Unarchive {{type}}:"
+            T.unarchive_header
 
         LeaveAction ->
-            "Leave {{type}}:"
+            T.leave_header
 
 
 action2post : PanelState -> Bool -> String
@@ -213,32 +215,32 @@ action2post action selfContract =
     case action of
         MoveAction ->
             -- handled by MoveTension components
-            T.moved
+            ""
 
         VisibilityAction ->
-            T.visibility ++ " " ++ T.changed
+            T.visibility_action_success
 
         AuthorityAction ->
-            T.authority ++ " " ++ T.changed
+            T.authority_action_success
 
         LinkAction ->
             if selfContract then
-                "Welcome to your new role"
+                T.self_link_action_success
 
             else
-                "User has been invited"
+                T.link_action_success
 
         UnLinkAction _ ->
-            "User unlinked"
+            T.unlink_action_success
 
         ArchiveAction ->
-            T.documentArchived
+            T.archive_action_success
 
         UnarchiveAction ->
-            T.documentUnarchived
+            T.unarchive_action_success
 
         LeaveAction ->
-            T.roleLeft
+            T.left_action_success
 
 
 action2color : PanelState -> String
@@ -1124,6 +1126,7 @@ viewStep1 op model =
                     |> text
                     |> List.singleton
                     |> span []
+                , text ":"
                 , span [ class "has-text-primary ml-2" ] [ text model.form.node.name ]
 
                 --, button [ class "delete is-pulled-right", onClick (OnCloseModalSafe "" "") ] []

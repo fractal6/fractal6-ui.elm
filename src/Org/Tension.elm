@@ -18,7 +18,7 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, toText, upH)
+import Extra exposing (decap, ternary, textD, textH, toText, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -1977,10 +1977,10 @@ viewEventStatus lang now event status =
         ( actionIcon, actionText ) =
             case status of
                 TensionStatus.Open ->
-                    ( "icon-alert-circle", T.reopened )
+                    ( "icon-alert-circle", T.reopened2 )
 
                 TensionStatus.Closed ->
-                    ( "icon-alert-circle", T.closed )
+                    ( "icon-alert-circle", T.closed2 )
     in
     [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
@@ -1997,7 +1997,7 @@ viewEventTitle lang now event =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right" ] []
@@ -2077,10 +2077,10 @@ viewEventAssignee lang now event isNew =
 
         ( actionText, value ) =
             if isNew then
-                ( T.assigned, withDefault "" event.new )
+                ( T.assigned2, withDefault "" event.new )
 
             else
-                ( T.unassigned, withDefault "" event.old )
+                ( T.unassigned2, withDefault "" event.old )
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
@@ -2099,10 +2099,10 @@ viewEventLabel lang now event isNew =
 
         ( actionText, value ) =
             if isNew then
-                ( T.addedThe, withDefault "unknown" event.new )
+                ( T.addedTheLabel, withDefault "unknown" event.new )
 
             else
-                ( T.removedThe, withDefault "unknown" event.old )
+                ( T.removedTheLabel, withDefault "unknown" event.old )
 
         label =
             Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just)
@@ -2111,7 +2111,7 @@ viewEventLabel lang now event isNew =
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate lang now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2124,7 +2124,7 @@ viewEventPushed lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, text (action2str action), text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2137,14 +2137,14 @@ viewEventArchived lang now event action_m isArchived =
 
         ( icon, txt ) =
             if isArchived then
-                ( A.icon "icon-archive", T.archived )
+                ( A.icon "icon-archive", T.archived2 )
 
             else
-                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
+                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived2 )
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (action2str action), text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2153,7 +2153,7 @@ viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.
 viewEventMemberLinked lang now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.linked2 ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2162,7 +2162,7 @@ viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionActio
 viewEventMemberUnlinked lang now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2175,7 +2175,7 @@ viewEventUserJoined lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined2 ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2194,31 +2194,26 @@ viewEventUserLeft lang now event action_m =
                             T.theOrganisation
 
                         _ ->
-                            T.role
+                            T.this ++ " " ++ decap T.role
 
                 Nothing ->
-                    action2str action
+                    action2str action |> decap
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left2 ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
 viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventMoved lang now event =
-    let
-        action_txt =
-            "tension"
-    in
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
                 [ viewUsernameLink event.createdBy.username
-                , strong [] [ text T.moved ]
-                , text action_txt
+                , strong [] [ text T.moved2 ]
                 , text T.from
                 , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
                 , text T.to

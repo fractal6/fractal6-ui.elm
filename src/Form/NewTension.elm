@@ -1187,10 +1187,10 @@ viewSuccess res model =
                     div []
                         [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , if isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users then
-                            text "Welcome to your new role."
+                            text T.self_link_action_success
 
                           else
-                            text "User has been invited."
+                            text T.link_action_success
                         ]
 
                 _ ->

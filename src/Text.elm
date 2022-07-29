@@ -211,7 +211,7 @@ seemore =
 
 contactUs : String
 contactUs =
-    "Contactez-nous"
+    "Nous contacter"
 
 
 seeFullList : String
@@ -362,6 +362,11 @@ publishTitle =
 published : String
 published =
     "Publié"
+
+
+archived : String
+archived =
+    "Archivé"
 
 
 revisionNotPublished : String
@@ -529,14 +534,9 @@ unlink =
     "Détacher"
 
 
-roleLeft : String
-roleLeft =
-    "Rôle quitté"
-
-
 saveChanges : String
 saveChanges =
-    "Enregistrer les modifications"
+    "Enregistrer"
 
 
 leaveComment : String
@@ -594,16 +594,6 @@ closedTension =
     "Fermé"
 
 
-reopened : String
-reopened =
-    "a réouvert"
-
-
-closed : String
-closed =
-    "a fermé"
-
-
 closedContract : String
 closedContract =
     "Fermé"
@@ -614,34 +604,49 @@ canceledContract =
     "Annulé"
 
 
-assigned : String
-assigned =
+reopened2 : String
+reopened2 =
+    "a réouvert"
+
+
+closed2 : String
+closed2 =
+    "a fermé"
+
+
+assigned2 : String
+assigned2 =
     "a assigné"
 
 
-unassigned : String
-unassigned =
+unassigned2 : String
+unassigned2 =
     "a désassigné"
 
 
-archived : String
-archived =
+addedTheLabel : String
+addedTheLabel =
+    "a ajouté l'étiquette"
+
+
+removedTheLabel : String
+removedTheLabel =
+    "a retiré l'étiquette"
+
+
+archived2 : String
+archived2 =
     "a archivé"
 
 
-unarchived : String
-unarchived =
+unarchived2 : String
+unarchived2 =
     "a désarchivé"
 
 
-moved : String
-moved =
+moved2 : String
+moved2 =
     "a déplacé"
-
-
-changed : String
-changed =
-    "modifié"
 
 
 changed2 : String
@@ -649,19 +654,19 @@ changed2 =
     "a modifié"
 
 
-updated : String
-updated =
+updated2 : String
+updated2 =
     "a mis à jour"
 
 
-linked : String
-linked =
-    "lié"
+linked2 : String
+linked2 =
+    "a été lié"
 
 
-unlinked : String
-unlinked =
-    "détaché"
+unlinked2 : String
+unlinked2 =
+    "a été détaché"
 
 
 published2 : String
@@ -669,24 +674,24 @@ published2 =
     "a publié"
 
 
-joined : String
-joined =
+joined2 : String
+joined2 =
     "a rejoint"
 
 
-left : String
-left =
+left2 : String
+left2 =
     "a quitté"
-
-
-opened : String
-opened =
-    "ouvert"
 
 
 commented : String
 commented =
     "a commenté"
+
+
+opened : String
+opened =
+    "ouvert"
 
 
 edited : String
@@ -702,31 +707,6 @@ authored =
 authoredBy : String
 authoredBy =
     "créé par"
-
-
-documentArchived : String
-documentArchived =
-    "Document archivé"
-
-
-documentUnarchived : String
-documentUnarchived =
-    "Document désarchivé"
-
-
-tensionMoved : String
-tensionMoved =
-    "La tension a été déplacé"
-
-
-circleMoved : String
-circleMoved =
-    "Le cercle a été déplacé"
-
-
-roleMoved : String
-roleMoved =
-    "Le rôle a été déplacé"
 
 
 quickHelp : String
@@ -882,6 +862,11 @@ reopenComment =
 noMessageProvided : String
 noMessageProvided =
     "Message vide"
+
+
+selectADestination : String
+selectADestination =
+    "Selectionner une destination"
 
 
 question : String
@@ -1194,24 +1179,9 @@ sinceThe =
     "depuis le"
 
 
-addedThe : String
-addedThe =
-    "ajouté le"
-
-
-removedThe : String
-removedThe =
-    "retiré le"
-
-
 description : String
 description =
     "Description"
-
-
-hasBeen : String
-hasBeen =
-    "a été"
 
 
 toThisRole : String
@@ -1639,6 +1609,16 @@ toPerformThis =
     "afin d’effectuer cette action."
 
 
+refresh : String
+refresh =
+    "Rafraîchir"
+
+
+sessionExpired : String
+sessionExpired =
+    "Votre session a expiré. Veuillez confirmer votre mot de passe"
+
+
 reverseTooltip : String
 reverseTooltip =
     "Inverser le graphe de l’organisation."
@@ -1662,6 +1642,101 @@ tensionsCircleTooltip =
 explainJoin : String
 explainJoin =
     "Expliquez vos motivations pour rejoindre cette organisation ?"
+
+
+visibility_header : String
+visibility_header =
+    "Modifier la visibilié de"
+
+
+authority_role_header : String
+authority_role_header =
+    "Modifier l'authorité de"
+
+
+authority_circle_header : String
+authority_circle_header =
+    "Modifier la gouvernance de"
+
+
+link_header : String
+link_header =
+    "Nouveau lead pour le role"
+
+
+unlink_header : String
+unlink_header =
+    "Détacher le lead pour le role"
+
+
+archive_header : String
+archive_header =
+    "Archiver le {{type}}"
+
+
+unarchive_header : String
+unarchive_header =
+    "Désarchiver le {{type}}"
+
+
+leave_header : String
+leave_header =
+    "Quitter le {{type}}"
+
+
+archive_action_success : String
+archive_action_success =
+    "Document archivé"
+
+
+unarchive_action_success : String
+unarchive_action_success =
+    "Document désarchivé"
+
+
+left_action_success : String
+left_action_success =
+    "Rôle quitté"
+
+
+move_action_success : String
+move_action_success =
+    "La tension a été déplacé"
+
+
+move_circle_action_success : String
+move_circle_action_success =
+    "Le cercle a été déplacé"
+
+
+move_role_action_success : String
+move_role_action_success =
+    "Le rôle a été déplacé"
+
+
+visibility_action_success : String
+visibility_action_success =
+    "La visibilité a été modifié"
+
+
+authority_action_success : String
+authority_action_success =
+    "L’authorité a été modifié"
+
+
+link_action_success : String
+link_action_success =
+    "L’utilisateur a été invité"
+
+
+self_link_action_success : String
+self_link_action_success =
+    "Bienvenue dans votre nouveau rôle"
+
+
+unlink_action_success : String
+unlink_action_success =
+    "Utilisateur détaché"
 
 
 orgaUserInvitation : String

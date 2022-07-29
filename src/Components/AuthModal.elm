@@ -330,7 +330,7 @@ refreshModal op model =
             , div [ class "box" ] <|
                 case model.modalAuth of
                     Active form result ->
-                        [ p [ class "field" ] [ text "Your session has expired. Please, confirm your password:" ]
+                        [ p [ class "field" ] [ text T.sessionExpired, text ":" ]
                         , div [ class "field" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
@@ -372,11 +372,11 @@ refreshModal op model =
                                         , class "button is-success"
                                         , onClick (SubmitUser form)
                                         ]
-                                        [ text "Refresh" ]
+                                        [ text T.refresh ]
 
                                   else
                                     button [ class "button", disabled True ]
-                                        [ text "Refresh" ]
+                                        [ text T.refresh ]
                                 ]
                             ]
                         , div []

@@ -420,6 +420,16 @@ defaultSortFilter =
     NewestSort
 
 
+sortFilter2Text : SortFilter -> String
+sortFilter2Text x =
+    case x of
+        NewestSort ->
+            T.newest
+
+        OldestSort ->
+            T.oldest
+
+
 
 {- Authors parameters -}
 
@@ -1581,7 +1591,7 @@ viewTensionsListHeader model =
                             List.map
                                 (\t ->
                                     div [ class "dropdown-item button-light", onClick <| ChangeSortFilter t ]
-                                        [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilterEncoder |> textH ]
+                                        [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilter2Text |> text ]
                                 )
                                 sortFilterList
                         ]

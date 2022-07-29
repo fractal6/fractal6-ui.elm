@@ -476,17 +476,17 @@ viewModal op model =
                         , A.icon1 "icon-check icon-2x has-text-success" " "
                         , case model.blob of
                             Nothing ->
-                                text T.tensionMoved
+                                text T.move_action_success
 
                             Just blob ->
                                 case blob.node of
                                     Just node ->
                                         case node.type_ of
                                             Just NodeType.Circle ->
-                                                text T.circleMoved
+                                                text T.move_circle_action_success
 
                                             Just NodeType.Role ->
-                                                text T.roleMoved
+                                                text T.move_role_action_success
 
                                             Nothing ->
                                                 text "[blob node type_ undefined (please report it)]"
@@ -554,7 +554,7 @@ viewModalContent op model =
                                 [ if List.member model.form.target.nameid [ "", model.target ] then
                                     span
                                         [ class "button is-small is-light is-inverted" ]
-                                        [ text "select a destination", span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                        [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
 
                                   else
                                     span

@@ -164,8 +164,7 @@
 
 [contactUs]
   en="Contact us"
-  fr="Contactez-nous"
-
+  fr="Nous contacter"
 
 [seeFullList]
   en="See full list"
@@ -287,6 +286,10 @@
   en="Published"
   fr="Publié"
 
+[archived]
+  en="Archived"
+  fr="Archivé"
+
 [revisionNotPublished]
   en="Revision not published"
   fr="Révision non publiée"
@@ -376,7 +379,7 @@
   fr="l’autorité"
 
 [linkAction]
-  en="Invite someine to play this role"
+  en="Invite someone to play this role"
   fr="Inviter quelqu’un à jouer ce rôle"
 
 [unlinkAction]
@@ -419,13 +422,9 @@
   en="Unlink"
   fr="Détacher"
 
-[roleLeft]
-  en="Role left"
-  fr="Rôle quitté"
-
 [saveChanges]
   en="Save changes"
-	fr="Enregistrer les modifications"
+	fr="Enregistrer"
 
 [leaveComment]
   en="Leave a comment"
@@ -471,14 +470,6 @@
   en="Closed"
   fr="Fermé"
 
-[reopened]
-  en="reopened"
-  fr="a réouvert"
-
-[closed]
-  en="closed"
-  fr="a fermé"
-
 [closedContract]
   en="Closed"
   fr="Fermé"
@@ -487,65 +478,77 @@
   en="Canceled"
   fr="Annulé"
 
-[assigned]
+[reopened2]
+  en="reopened"
+  fr="a réouvert"
+
+[closed2]
+  en="closed"
+  fr="a fermé"
+
+[assigned2]
   en="assigned"
   fr="a assigné"
 
-[unassigned]
+[unassigned2]
   en="unassigned"
   fr="a désassigné"
 
-[archived]
+[addedTheLabel]
+  en="added the label"
+  fr="a ajouté l'étiquette"
+
+[removedTheLabel]
+  en="removed the label"
+  fr="a retiré l'étiquette"
+
+[archived2]
   en="archived"
   fr="a archivé"
 
-[unarchived]
+[unarchived2]
   en="unarchived"
   fr="a désarchivé"
 
-[moved]
+[moved2]
   en="moved"
   fr="a déplacé"
-
-[changed]
-  en="changed"
-  fr="modifié"
 
 [changed2]
   en="changed"
   fr="a modifié"
 
-[updated]
+[updated2]
   en="updated"
   fr="a mis à jour"
 
-[linked]
-  en="linked"
-  fr="lié"
+[linked2]
+  en="has beenlinked"
+  fr="a été lié"
 
-[unlinked]
-  en="unlinked"
-  fr="détaché"
+[unlinked2]
+  en="has been unlinked"
+  fr="a été détaché"
 
 [published2]
   en="published"
   fr="a publié"
 
-[joined]
+[joined2]
   en="joined"
   fr="a rejoint"
 
-[left]
+[left2]
   en="left"
   fr="a quitté"
-
-[opened]
-  en="opened"
-  fr="ouvert"
 
 [commented]
   en="commented"
   fr="a commenté"
+
+[opened]
+  en="opened"
+  fr="ouvert"
 
 [edited]
   en="edited"
@@ -558,26 +561,6 @@
 [authoredBy]
   en="authored by"
   fr="créé par"
-
-[documentArchived]
-  en="Document archived"
-  fr="Document archivé"
-
-[documentUnarchived]
-  en="Document unarchived"
-  fr="Document désarchivé"
-
-[tensionMoved]
-  en="Tension moved"
-  fr="La tension a été déplacé"
-
-[circleMoved]
-  en="Circle moved"
-  fr="Le cercle a été déplacé"
-
-[roleMoved]
-  en="Role moved"
-  fr="Le rôle a été déplacé"
 
 [quickHelp]
   en="Quick help"
@@ -702,6 +685,10 @@
 [noMessageProvided]
   en="Empty message"
   fr="Message vide"
+
+[selectADestination]
+	en="select a destination"
+	fr="Selectionner une destination"
 
 [question]
   en="Question"
@@ -951,21 +938,9 @@
   en="since the"
   fr="depuis le"
 
-[addedThe]
-  en="added the"
-  fr="ajouté le"
-
-[removedThe]
-  en="removed the"
-  fr="retiré le"
-
 [description]
   en="Description"
   fr="Description"
-
-[hasBeen]
-  en="has been"
-  fr="a été"
 
 [toThisRole]
   en="to this role"
@@ -1307,6 +1282,14 @@
   en="to perform this action."
   fr="afin d’effectuer cette action."
 
+[refresh]
+	en="Refresh"
+	fr="Rafraîchir"
+
+[sessionExpired]
+	en="Your session has expired. Please, confirm your password"
+	fr="Votre session a expiré. Veuillez confirmer votre mot de passe"
+
 [reverseTooltip]
   en="Reverse the organization graph."
   fr="Inverser le graphe de l’organisation."
@@ -1326,6 +1309,88 @@
 [explainJoin]
   en="Explain your motivations for joining this organisation ?"
 	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
+
+#
+# Action Panel
+#
+
+[visibility_header]
+	en="Change Visibility of"
+	fr="Modifier la visibilié de"
+
+[authority_role_header]
+	en="Change Authority of"
+	fr="Modifier l'authorité de"
+
+[authority_circle_header]
+	en="Change Governance process of"
+	fr="Modifier la gouvernance de"
+
+[link_header]
+	en="New lead for role"
+	fr="Nouveau lead pour le role"
+
+[unlink_header]
+	en="Unlink lead for role"
+	fr="Détacher le lead pour le role"
+
+[archive_header]
+	en="Archive {{type}}"
+	fr="Archiver le {{type}}"
+
+[unarchive_header]
+	en="Unarchive {{type}}"
+	fr="Désarchiver le {{type}}"
+
+[leave_header]
+	en="Leave {{type}}"
+	fr="Quitter le {{type}}"
+
+-- Success
+
+[archive_action_success]
+  en="Document archived"
+  fr="Document archivé"
+
+[unarchive_action_success]
+  en="Document unarchived"
+  fr="Document désarchivé"
+
+[left_action_success]
+  en="Role left"
+  fr="Rôle quitté"
+
+[move_action_success]
+  en="Tension moved"
+  fr="La tension a été déplacé"
+
+[move_circle_action_success]
+  en="Circle moved"
+  fr="Le cercle a été déplacé"
+
+[move_role_action_success]
+  en="Role moved"
+  fr="Le rôle a été déplacé"
+
+[visibility_action_success]
+  en="Visibility changed"
+  fr="La visibilité a été modifié"
+
+[authority_action_success]
+  en="Authority changed"
+  fr="L’authorité a été modifié"
+
+[link_action_success]
+	en="User has been invited"
+	fr="L’utilisateur a été invité"
+
+[self_link_action_success]
+	en="Welcome to your new role"
+	fr="Bienvenue dans votre nouveau rôle"
+
+[unlink_action_success]
+	en="User unlinked"
+	fr="Utilisateur détaché"
 
 
 #
