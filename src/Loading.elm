@@ -311,21 +311,21 @@ viewAuthNeeded onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ text "Authentication needed"
+                [ text T.authenticationNeeded
                 , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
                 ]
             ]
         , div [ class "modal-card-body" ]
             [ p []
-                [ text "Please "
+                [ text T.please
                 , button
-                    [ class "button is-small is-primary", onClickPD (onClose { reset = True, link = toHref Route.Login }) ]
-                    [ text "Login" ]
-                , text " or "
+                    [ class "button is-small is-primary mx-2", onClickPD (onClose { reset = True, link = toHref Route.Login }) ]
+                    [ text T.signinNow2 ]
+                , text T.or_
                 , button
-                    [ class "button is-small is-success", onClickPD (onClose { reset = True, link = toHref Route.Signup }) ]
-                    [ text "Signup" ]
-                , text " to perform this action."
+                    [ class "button is-small is-success mx-2", onClickPD (onClose { reset = True, link = toHref Route.Signup }) ]
+                    [ text T.signupNow2 ]
+                , text T.toPerformThis
                 ]
             ]
         ]
@@ -336,7 +336,7 @@ viewRoleNeeded errMsg onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
-                [ text "Authorization needed"
+                [ text T.authorizationNeeded
                 , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
                 ]
             ]

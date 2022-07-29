@@ -42,14 +42,21 @@ The code will be generated in the `dist` folder.
     make gen
 
 
+## Routing
+
+We use [elm-spa](https://www.elm-spa.dev/) as the spa framework. It defines the routing and the Main input logic. Basycally, files located in `Pages` will be an accessible route in the browser. 
+For exemple: `Pages/o/Dynamiyc.elm` makes the route at `https://[domain_name]/o/my_org`
+
+Note: For the moment we lock the `elm-spa` version to the v4 version as it is working well, and upgrading to v6 will be time consuming while the benefits of it is not guaranteed.
+
 ## Creating new components
 
 A components is a reusable piece of code use in a application to implement a given functionality.
-By components, we mean here a state-full Elm module, that is a module which have its own state, model & Msg managed by itself. It allows to limit the complexity of the elm files and prevents file from being too big.
-For simple components that don't have states (i.e. have a few or no Msg), they can be implemented by getting the msg from the main page, as it is done
+By components, we mean here a state-full Elm module, that is a module which have its own state, Model & Msg managed by itself. It allows to limit the complexity of the elm files and prevents file from being too big.
+For simple components that don't have complex states (i.e. have a few or no Msg), they can be implemented by getting the Msg from the main page, as it is done
 in `Components/ColorPicker.elm` for example.
-For more complex components, a lot of boilerplate is involved when creating a component with Elm (for the best!) that maintain their own state.
-To help building new components without coding again and again the same thing,
+For more complex components, a lot of boilerplates are involved when creating a component with Elm (for the best!) which maintain their own state.
+To help building new components quickly without having to repeat the same code again and again, and ensure code api consistency,
 we provide a script to generate template code when creating new component:  `melm.py`.
 
 Let say that you need a new component that implements a dropdown menu, and put the file in the `src/Components/` folder.

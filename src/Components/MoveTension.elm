@@ -314,7 +314,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         -- Data
@@ -523,17 +523,17 @@ viewModalContent op model =
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
-                        textH T.moveTension
+                        text T.moveTension
 
                     Just blob ->
                         case blob.node of
                             Just node ->
                                 case node.type_ of
                                     Just NodeType.Circle ->
-                                        span [] [ textH (T.moveCircle ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveCircle ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
 
                                     Just NodeType.Role ->
-                                        span [] [ textH (T.moveRole ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveRole ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
 
                                     Nothing ->
                                         text "[blob node type_ undefined (please report it)]"
@@ -547,7 +547,7 @@ viewModalContent op model =
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ span [] [ textH (T.newReceiver ++ ": ") ]
+                    [ span [] [ text (T.newReceiver ++ ": ") ]
                     , span [ class "dropdown" ]
                         [ span [ class "dropdown-trigger" ]
                             [ span [ attribute "aria-controls" "target-menu" ]
@@ -592,13 +592,13 @@ viewModalContent op model =
                     [ textarea
                         [ class "textarea"
                         , rows 3
-                        , placeholder (upH T.leaveCommentOpt)
+                        , placeholder T.leaveCommentOpt
                         , value message
                         , onInput <| OnChangePost "message"
                         ]
                         []
                     ]
-                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+                , p [ class "help-label" ] [ text T.tensionMessageHelp ]
                 ]
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
@@ -614,7 +614,7 @@ viewModalContent op model =
                         [ class "button is-light"
                         , onClick (OnCloseSafe "" "")
                         ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
@@ -624,7 +624,7 @@ viewModalContent op model =
                          ]
                             ++ [ onClick (OnSubmit <| OnMove) ]
                         )
-                        [ textH T.move ]
+                        [ text T.move ]
                     ]
                 ]
             ]

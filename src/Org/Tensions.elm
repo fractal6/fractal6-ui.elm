@@ -15,12 +15,13 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (space_, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -57,7 +58,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
-import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionTypeColor)
+import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionStatus2String, tensionType2String, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -158,6 +159,7 @@ type alias Model =
     , refresh_trial : Int
     , url : Url
     , now : Time.Posix
+    , lang : Lang.Lang
     , empty : {}
 
     -- Components
@@ -276,10 +278,10 @@ depthFilter2Text : DepthFilter -> String
 depthFilter2Text x =
     case x of
         AllSubChildren ->
-            "Include all sub-circles"
+            T.depthAll
 
         SelectedNode ->
-            "Current circle and its direct children"
+            T.depthSelected
 
 
 type StatusFilter
@@ -323,6 +325,19 @@ defaultStatusFilter =
     OpenStatus
 
 
+statusFilter2Text : StatusFilter -> String
+statusFilter2Text x =
+    case x of
+        AllStatus ->
+            T.all
+
+        OpenStatus ->
+            tensionStatus2String TensionStatus.Open
+
+        ClosedStatus ->
+            tensionStatus2String TensionStatus.Closed
+
+
 type TypeFilter
     = AllTypes
     | OneType TensionType.TensionType
@@ -355,6 +370,16 @@ defaultType =
 
 defaultTypeFilter =
     AllTypes
+
+
+typeFilter2Text : TypeFilter -> String
+typeFilter2Text x =
+    case x of
+        AllTypes ->
+            T.all
+
+        OneType t ->
+            tensionType2String t
 
 
 type SortFilter
@@ -624,6 +649,7 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , now = global.now
+            , lang = global.session.lang
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
@@ -1354,7 +1380,7 @@ view_ global model =
               else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
                 div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small", onClick (DoLoad False) ]
-                        [ text "Load more" ]
+                        [ text T.showMore ]
                     ]
 
               else
@@ -1382,7 +1408,7 @@ viewSearchBar model =
                     , attribute "style" "margin: 0.35rem;"
                     , onClick OnClearFilter
                     ]
-                    [ text "Clear filters" ]
+                    [ text T.clearFilters ]
     in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mt-0 mb-0" ]
@@ -1394,7 +1420,7 @@ viewSearchBar model =
                             , type_ "search"
                             , autocomplete False
                             , autofocus False
-                            , placeholder "Search tensions"
+                            , placeholder T.searchTensions
                             , value (withDefault "" model.pattern)
                             , onInput ChangePattern
                             , onKeydown SearchKeyDown
@@ -1413,37 +1439,37 @@ viewSearchBar model =
                     [ div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
                             [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , textH T.status
+                            , text T.status
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
+                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, text (statusFilter2Text AllStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, textH (statusFilterEncoder OpenStatus) ]
+                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, text (statusFilter2Text OpenStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, textH (statusFilterEncoder ClosedStatus) ]
+                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, text (statusFilter2Text ClosedStatus) ]
                                 ]
                             ]
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , textH T.type_
+                            , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "type-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
-                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
+                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, text (typeFilter2Text AllTypes) ]
                                  ]
                                     ++ List.map
                                         (\t ->
                                             div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
-                                                [ ternary (model.typeFilter == OneType t) checked unchecked, span [ class (tensionTypeColor "text" t) ] [ tensionIcon2 t ] ]
+                                                [ ternary (model.typeFilter == OneType t) checked unchecked, span [ class (tensionTypeColor "text" t) ] [ text (typeFilter2Text (OneType t)) ] ]
                                         )
                                         TensionType.list
                                 )
@@ -1452,7 +1478,7 @@ viewSearchBar model =
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "is-small button" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , text "Label"
+                            , text T.label
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , LabelSearchPanel.view
@@ -1466,7 +1492,7 @@ viewSearchBar model =
                     , div [ class "control", onClick ChangeAuthor ]
                         [ div [ class "is-small button" ]
                             [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , text "Author"
+                            , text T.author
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , UserSearchPanel.view
@@ -1480,7 +1506,7 @@ viewSearchBar model =
                     , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
                             [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , textH T.depth
+                            , text T.depth
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "depth-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
@@ -1488,7 +1514,7 @@ viewSearchBar model =
                                 List.map
                                     (\t ->
                                         div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter t ]
-                                            [ ternary (model.depthFilter == t) checked unchecked, textH (depthFilter2Text t) ]
+                                            [ ternary (model.depthFilter == t) checked unchecked, text (depthFilter2Text t) ]
                                     )
                                     depthFilterList
                             ]
@@ -1547,7 +1573,7 @@ viewTensionsListHeader model =
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
                     [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
-                        [ textH T.sort
+                        [ text T.sort
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
                     , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
@@ -1587,19 +1613,19 @@ viewTensionsCount model =
                     , classList [ ( activeCls, model.statusFilter == OpenStatus ), ( inactiveCls, model.statusFilter /= OpenStatus ) ]
                     , onClick <| ChangeStatusFilter OpenStatus
                     ]
-                    [ span [] [ c.open |> String.fromInt |> text ], text "\u{00A0}Open" ]
+                    [ span [] [ c.open |> String.fromInt |> text ], text (space_ ++ T.openTension) ]
                 , div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, model.statusFilter == ClosedStatus ), ( inactiveCls, model.statusFilter /= ClosedStatus ) ]
                     , onClick <| ChangeStatusFilter ClosedStatus
                     ]
-                    [ c.closed |> String.fromInt |> text, text "\u{00A0}Closed" ]
+                    [ c.closed |> String.fromInt |> text, text (space_ ++ T.closedTension) ]
                 ]
 
         LoadingSlowly ->
             div [ class "buttons has-addons m-0" ]
-                [ button [ class "button is-rounded is-small" ] [ text "Open" ]
-                , button [ class "button is-rounded is-small" ] [ text "Closed" ]
+                [ button [ class "button is-rounded is-small" ] [ text T.openTension ]
+                , button [ class "button is-rounded is-small" ] [ text T.closedTension ]
                 ]
 
         _ ->
@@ -1626,7 +1652,7 @@ viewListTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12" ]
             [ viewTensionsListHeader model
-            , viewTensions model.now model.node_focus model.initPattern tensions_d ListTension
+            , viewTensions model.lang model.now model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
 
@@ -1636,12 +1662,12 @@ viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "Internal tensions" ]
-            , viewTensions model.now model.node_focus model.initPattern model.tensions_int InternalTension
+            , viewTensions model.lang model.now model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "External tensions" ]
-            , viewTensions model.now model.node_focus model.initPattern model.tensions_ext ExternalTension
+            , viewTensions model.lang model.now model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
 
@@ -1699,7 +1725,7 @@ viewCircleTensions model =
                                 |> List.map
                                     (\t ->
                                         div [ class "box is-shrinked2 mb-2 mx-2" ]
-                                            [ mediaTension model.now model.node_focus t True False "is-size-6" Navigate ]
+                                            [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
                                 |> div [ class "content scrollbar-thin" ]
@@ -1730,8 +1756,8 @@ viewCircleTensions model =
             div [ class "spinner" ] []
 
 
-viewTensions : Time.Posix -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
-viewTensions now focus pattern tensionsData tensionDir =
+viewTensions : Lang.Lang -> Time.Posix -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
+viewTensions lang now focus pattern tensionsData tensionDir =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -1741,35 +1767,35 @@ viewTensions now focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension now focus t True True "is-size-6 t-o" Navigate)
+                        |> List.map (\t -> mediaTension lang now focus t True True "is-size-6 t-o" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then
-                    div [ class "m-4" ] [ textH T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
+                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
 
                 else
                     case focus.type_ of
                         NodeType.Role ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole ]
 
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle ]
 
             Failure err ->
                 viewGqlErrors err

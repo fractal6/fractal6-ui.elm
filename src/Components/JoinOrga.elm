@@ -313,7 +313,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         OnRedirectPending rootnameid ->
@@ -566,13 +566,13 @@ viewSuccess data op model =
         div [ class "notification is-success-light", onClick (OnClose { reset = True, link = "" }) ]
             [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
             , A.icon1 "icon-check icon-2x has-text-success" " "
-            , textH "Your request has been sent. "
+            , text (T.requestSent ++ " ")
             , a
                 [ href link
                 , onClickPD (OnClose { reset = True, link = link })
                 , target "_blank"
                 ]
-                [ textH T.checkItOut ]
+                [ text T.checkItOut ]
             ]
 
     else
@@ -584,7 +584,7 @@ viewJoinStep op model =
     case model.step of
         JoinOne ->
             div [ class "modal-card-body" ]
-                [ div [ class "field pb-2" ] [ textH T.explainJoin ]
+                [ div [ class "field pb-2" ] [ text T.explainJoin ]
                 , viewComment False model
                 , case model.node_data of
                     Failure err ->
@@ -607,9 +607,9 @@ viewJoinStep op model =
                             --        , onClickPD (OnCloseModal { reset = True, link = link })
                             --        , target "_blank"
                             --        ]
-                            --        [ textH T.checkItOut ]
+                            --        [ text T.checkItOut ]
                             --    ]
-                            div [ class "box is-light is-warning" ] [ text "You already have a pending invitation, please check it out." ]
+                            div [ class "box is-light is-warning" ] [ text T.checkYourPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -622,7 +622,7 @@ viewJoinStep op model =
                             [ class "button is-light"
                             , onClick (OnCloseSafe "" "")
                             ]
-                            [ textH T.cancel ]
+                            [ text T.cancel ]
                         ]
                     , div [ class "level-right" ]
                         [ button
@@ -642,7 +642,7 @@ viewJoinStep op model =
                     model.node_data |> withMaybeData |> Maybe.map .name |> withDefault ""
             in
             div [ class "modal-card-body" ]
-                [ UserInput.view { label_text = span [] [ text "Invite members to ", strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg
+                [ UserInput.view { label_text = span [] [ text (T.inviteMembers ++ " " ++ T.in_ ++ " "), strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg
                 , viewComment True model
                 , case model.node_data of
                     Failure err ->
@@ -653,7 +653,7 @@ viewJoinStep op model =
                 , case model.join_result of
                     Failure err ->
                         if model.isPending then
-                            div [ class "box is-light is-warning" ] [ text "An invitation is pending, please check it out." ]
+                            div [ class "box is-light is-warning" ] [ text T.checkPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -666,7 +666,7 @@ viewJoinStep op model =
                             [ class "button is-light"
                             , onClick (OnCloseSafe "" "")
                             ]
-                            [ textH T.cancel ]
+                            [ text T.cancel ]
                         ]
                     , div [ class "level-right" ]
                         [ button
@@ -691,14 +691,14 @@ viewComment isOpt model =
             [ textarea
                 [ class "textarea"
                 , rows 3
-                , placeholder <| upH <| ternary isOpt T.leaveCommentOpt "Text"
+                , placeholder <| ternary isOpt T.leaveCommentOpt T.text
                 , value (Dict.get "message" model.form.post |> withDefault "")
                 , onInput <| OnChangePost "message"
                 ]
                 []
             ]
         , if List.member model.step [ InviteOne ] then
-            p [ class "help-label" ] [ textH T.invitationMessageHelp ]
+            p [ class "help-label" ] [ text T.invitationMessageHelp ]
 
           else
             text ""

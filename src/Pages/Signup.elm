@@ -150,7 +150,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Signup"
+    { title = T.signup_
     , body = [ view_ global model ]
     }
 
@@ -168,7 +168,7 @@ viewSignup global model =
     div [ class "card" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title" ]
-                [ text "Signup" ]
+                [ text T.signup_ ]
             ]
         , div [ class "card-content" ]
             [ A.welcome
@@ -242,7 +242,7 @@ viewSignup global model =
             , br [] []
             , div [ class "is-size-7 is-pulled-left" ]
                 [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
-                , a [ href (toHref Route.Login) ] [ textH T.signinNow ]
+                , a [ class "underlined-link", href (toHref Route.Login) ] [ textH T.signinNow ]
                 ]
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]

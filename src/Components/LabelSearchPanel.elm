@@ -430,7 +430,7 @@ view_ isInternal op model =
                                     [ id "userInput"
                                     , class "input autofocus is-small"
                                     , type_ "text"
-                                    , placeholder (upH T.searchLabels)
+                                    , placeholder T.searchLabels
                                     , value model.pattern
                                     , onInput OnChangePattern
                                     ]
@@ -482,13 +482,13 @@ viewLabelSelectors isInternal labels op model =
                   else
                     onClick (Navigate editLink)
                 ]
-                [ A.icon1 "icon-edit-2" <| upH T.editLabels ]
+                [ A.icon1 "icon-edit-2" T.editLabels ]
     in
     div []
         [ ternary isInternal viewEdit (text "")
         , div [ class "selectors" ] <|
             if labels == [] then
-                [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
+                [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
             else
                 labels
@@ -568,7 +568,7 @@ viewNew op (State model) =
             [ class "button is-small  mr-2"
             , onClick (OnOpen op.targets False)
             ]
-            [ A.icon1 "icon-1x icon-tag" "", textH T.labels ]
+            [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 

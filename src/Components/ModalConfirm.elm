@@ -94,10 +94,10 @@ viewConfirm op =
                 [ div [ class "buttons" ]
                     [ button
                         [ class "button is-small is-success", onClick op.onConfirm ]
-                        [ textH T.confirm ]
+                        [ text T.confirm ]
                     , button
                         [ class "button is-small is-danger", onClick (op.onClose { reset = True, link = "" }) ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 ]
             ]

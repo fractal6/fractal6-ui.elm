@@ -2,6 +2,7 @@ module Session exposing (..)
 
 import Array exposing (Array)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -40,6 +41,7 @@ type alias Screen =
 
 type alias SessionFlags =
     { uctx : Maybe JD.Value
+    , lang : Maybe JD.Value
     , window_pos : Maybe JD.Value
     , orga_menu : Maybe Bool
     , tree_menu : Maybe Bool
@@ -50,6 +52,7 @@ type alias SessionFlags =
 
 type alias Session =
     { user : UserState
+    , lang : Lang.Lang
     , referer : Maybe Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
@@ -114,6 +117,7 @@ resetSession : Session -> SessionFlags -> Session
 resetSession session flags =
     { referer = Nothing
     , user = LoggedOut
+    , lang = session.lang
     , token_data = RemoteData.NotAsked
     , node_focus = Nothing
     , path_data = Nothing
@@ -168,9 +172,23 @@ fromLocalSession flags =
 
                 Nothing ->
                     ( Nothing, Cmd.none )
+
+        ( lang, cmd3 ) =
+            case flags.lang of
+                Just raw ->
+                    case JD.decodeValue Lang.decoder raw of
+                        Ok v ->
+                            ( Just v, Cmd.none )
+
+                        Err err ->
+                            ( Nothing, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( Nothing, Cmd.none )
     in
     ( { referer = Nothing
       , user = user
+      , lang = Maybe.withDefault Lang.En lang
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing
       , path_data = Nothing
@@ -195,7 +213,7 @@ fromLocalSession flags =
       , labelsPanel = Nothing
       , newOrgaData = Nothing
       }
-    , [ cmd1, cmd2 ]
+    , [ cmd1, cmd2, cmd3 ]
     )
 
 

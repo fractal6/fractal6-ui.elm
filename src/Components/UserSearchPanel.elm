@@ -421,7 +421,7 @@ view_ op model =
                                 [ id "userInput"
                                 , class "input autofocus is-small"
                                 , type_ "text"
-                                , placeholder (upH T.searchUsers)
+                                , placeholder T.searchUsers
                                 , value model.pattern
                                 , onInput OnChangePattern
                                 ]
@@ -456,7 +456,7 @@ viewAssigneeSelectors : List User -> Op -> Model -> Html Msg
 viewAssigneeSelectors users op model =
     div [ class "selectors" ] <|
         if users == [] then
-            [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
+            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
         else
             users

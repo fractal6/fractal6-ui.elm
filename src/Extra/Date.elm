@@ -1,9 +1,13 @@
 module Extra.Date exposing (diffTime, formatDate)
 
 import Date
+import Fractal.Enum.Lang as Lang
 import Iso8601 exposing (toTime)
+import Text as T
 import Time exposing (Posix, posixToMillis, utc)
 import Time.Distance as Distance
+import Time.Distance.I18n as I18n
+import Time.Distance.Types exposing (Locale)
 
 
 {-| Return the delta in milli seconds
@@ -22,9 +26,12 @@ diffTime new old =
 -}
 
 
-formatDate : Posix -> String -> String
-formatDate now timePosix =
+formatDate : Lang.Lang -> Posix -> String -> String
+formatDate lang_ now timePosix =
     let
+        lang =
+            Lang.Fr
+
         time =
             case toTime timePosix of
                 Ok v ->
@@ -40,73 +47,124 @@ formatDate now timePosix =
             Date.fromPosix utc now
     in
     if Date.diff Date.Days nowDate date <= 31 then
-        Distance.inWords time now
+        --Distance.inWords time now
+        Distance.inWordsWithConfig { withAffix = True } (toTimeI18n lang) time now
 
     else if Date.diff Date.Days nowDate date <= 365 then
-        formatCurrentYear time
+        formatCurrentYear lang time
 
     else
-        formatPriorYear time
+        formatPriorYear lang time
 
 
 {-| Format date as "the 18 Dec"
 -}
-formatCurrentYear : Posix -> String
-formatCurrentYear date =
-    [ "the"
+formatCurrentYear : Lang.Lang -> Posix -> String
+formatCurrentYear lang date =
+    [ T.the
     , Time.toDay utc date |> String.fromInt
-    , Time.toMonth utc date |> toShortMonth
+    , Time.toMonth utc date |> toShortMonth lang
     ]
         |> String.join " "
 
 
 {-| Format date as "the 18 Dec, 2042"
 -}
-formatPriorYear : Posix -> String
-formatPriorYear date =
-    [ "the"
+formatPriorYear : Lang.Lang -> Posix -> String
+formatPriorYear lang date =
+    [ T.the
     , Time.toDay utc date |> String.fromInt
-    , (Time.toMonth utc date |> toShortMonth) ++ ","
+    , (Time.toMonth utc date |> toShortMonth lang) ++ ","
     , Time.toYear utc date |> String.fromInt
     ]
         |> String.join " "
 
 
-toShortMonth : Time.Month -> String
-toShortMonth month =
-    case month of
-        Time.Jan ->
-            "Jan"
+toTimeI18n : Lang.Lang -> Locale
+toTimeI18n lang =
+    case lang of
+        Lang.En ->
+            I18n.en
 
-        Time.Feb ->
-            "Feb"
+        Lang.Fr ->
+            I18n.fr
 
-        Time.Mar ->
-            "Mar"
 
-        Time.Apr ->
-            "Apr"
+toShortMonth : Lang.Lang -> Time.Month -> String
+toShortMonth lang month =
+    case lang of
+        Lang.En ->
+            case month of
+                Time.Jan ->
+                    "Jan"
 
-        Time.May ->
-            "May"
+                Time.Feb ->
+                    "Feb"
 
-        Time.Jun ->
-            "Jun"
+                Time.Mar ->
+                    "Mar"
 
-        Time.Jul ->
-            "Jul"
+                Time.Apr ->
+                    "Apr"
 
-        Time.Aug ->
-            "Aug"
+                Time.May ->
+                    "May"
 
-        Time.Sep ->
-            "Sep"
+                Time.Jun ->
+                    "Jun"
 
-        Time.Oct ->
-            "Oct"
+                Time.Jul ->
+                    "Jul"
 
-        Time.Nov ->
-            "Nov"
+                Time.Aug ->
+                    "Aug"
 
-        Time.Dec ->
-            "Dec"
+                Time.Sep ->
+                    "Sep"
+
+                Time.Oct ->
+                    "Oct"
+
+                Time.Nov ->
+                    "Nov"
+
+                Time.Dec ->
+                    "Dec"
+
+        Lang.Fr ->
+            case month of
+                Time.Jan ->
+                    "Janv"
+
+                Time.Feb ->
+                    "Févr"
+
+                Time.Mar ->
+                    "Mars"
+
+                Time.Apr ->
+                    "Avr"
+
+                Time.May ->
+                    "Mai"
+
+                Time.Jun ->
+                    "Juin"
+
+                Time.Jul ->
+                    "Juill"
+
+                Time.Aug ->
+                    "Août"
+
+                Time.Sep ->
+                    "Sept"
+
+                Time.Oct ->
+                    "Oct"
+
+                Time.Nov ->
+                    "Nov"
+
+                Time.Dec ->
+                    "Dec"

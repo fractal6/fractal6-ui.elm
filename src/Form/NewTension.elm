@@ -69,7 +69,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
-import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt)
+import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2String, tensionTypeColor, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -761,7 +761,7 @@ update_ apis message model =
                 , out0
                     [ send
                         (DoModalConfirmOpen (OnClose { reset = True, link = link })
-                            { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }
+                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
                         )
                     ]
                 )
@@ -1136,7 +1136,7 @@ viewStep op (State model) =
                                         [ class <| "button " ++ tensionTypeColor "background" tensionType
                                         , onClick (OnTensionStep TensionSource)
                                         ]
-                                        [ TensionType.toString tensionType |> text ]
+                                        [ tensionType2String tensionType |> text ]
                                     ]
                             )
                             TensionType.list
@@ -1173,14 +1173,14 @@ viewSuccess res model =
     div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
         , A.icon1 "icon-check icon-2x has-text-success" " "
-        , textH model.txt.added
+        , text model.txt.added
         , text " "
         , a
             [ href link
             , onClickPD (OnClose { reset = True, link = link })
             , target "_blank"
             ]
-            [ textH T.checkItOut ]
+            [ text T.checkItOut ]
         , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
             case model.action_result of
                 Success _ ->
@@ -1215,8 +1215,7 @@ viewHeader op model =
     div [ class "panel-heading pt-4 pb-3" ]
         [ div [ class "level modal-card-title is-size-6" ]
             [ div [ class "level-left is-hidden-mobile" ]
-                [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ]
-                ]
+                [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ] ]
             , div [ class "level-item" ]
                 [ viewTensionType model ]
             , div [ class "level-item" ]
@@ -1228,27 +1227,28 @@ viewHeader op model =
 viewTensionTabs : TensionTab -> PNode -> Html Msg
 viewTensionTabs tab targ =
     let
+        -- This is the type of the receiver node.
         type_ =
             nid2type targ.nameid
     in
     div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
-                    [ A.icon1 "icon-exchange" "Tension" ]
+                [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                    [ A.icon1 "icon-exchange" T.tension ]
                 ]
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
-                        [ A.icon1 "icon-git-branch" "Circle" ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                        [ A.icon1 "icon-git-branch" T.circle ]
                     ]
 
               else
                 text ""
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
-                        [ A.icon1 "icon-leaf" "Role" ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                        [ A.icon1 "icon-leaf" T.role ]
                     ]
 
               else
@@ -1267,7 +1267,7 @@ viewTensionType model =
             withDefault TensionType.Operational form.type_
     in
     div []
-        [ span [ class "has-text-grey-light" ] [ textH ("type" ++ ":" ++ space_) ]
+        [ span [ class "has-text-grey-light" ] [ text ("Type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
             span [ class "dropdown", style "vertical-align" "unset" ]
                 [ span [ class "dropdown-trigger button-light" ]
@@ -1398,7 +1398,7 @@ viewTension op model =
                                 [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
-                                , placeholder (upH T.subject)
+                                , placeholder T.subject
                                 , spellcheck True
                                 , required True
                                 , value title
@@ -1406,7 +1406,7 @@ viewTension op model =
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ textH model.txt.name_help ]
+                        , p [ class "help-label" ] [ text model.txt.name_help ]
                         , br [] []
                         ]
                     , div [ class "message" ]
@@ -1414,10 +1414,10 @@ viewTension op model =
                             [ div [ class "tabs is-boxed is-small pl-1" ]
                                 [ ul []
                                     [ li [ classList [ ( "is-active", model.viewMode == Write ) ] ]
-                                        [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                                        [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text T.write ] ]
                                     , li
                                         [ classList [ ( "is-active", model.viewMode == Preview ) ] ]
-                                        [ a [ onClickPD2 (OnChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                                        [ a [ onClickPD2 (OnChangeInputViewMode Preview), target "_blank" ] [ text T.preview ] ]
                                     ]
                                 ]
                             ]
@@ -1434,7 +1434,7 @@ viewTension op model =
                                                 [ id "textAreaModal"
                                                 , class "textarea"
                                                 , rows (min 10 (max line_len 4))
-                                                , placeholder (upH T.leaveCommentOpt)
+                                                , placeholder T.leaveCommentOpt
                                                 , value message
                                                 , onInput (OnChangePost "message")
                                                 ]
@@ -1443,7 +1443,7 @@ viewTension op model =
                                         Preview ->
                                             div [ class "mt-4 mx-3" ] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-grey-lighter" ] [] ]
                                     ]
-                                , p [ class "help-label" ] [ textH model.txt.message_help ]
+                                , p [ class "help-label" ] [ text model.txt.message_help ]
                                 , div [ class "is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
                                 , br [] []
                                 ]
@@ -1474,7 +1474,7 @@ viewTension op model =
                                 [ class "button is-light"
                                 , onClick (OnCloseSafe "" "")
                                 ]
-                                [ textH T.cancel ]
+                                [ text T.cancel ]
                             ]
                         , div [ class "level-right" ]
                             [ div [ class "buttons" ]
@@ -1485,7 +1485,7 @@ viewTension op model =
                                      ]
                                         ++ submitTension
                                     )
-                                    [ textH model.txt.submit ]
+                                    [ text model.txt.submit ]
                                 ]
                             ]
                         ]
@@ -1529,7 +1529,7 @@ viewCircle op model =
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ textH T.cancel ] ]
+                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                         ]
                                     ]
                                 ]
@@ -1539,7 +1539,7 @@ viewCircle op model =
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ textH T.cancel ] ]
+                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                         ]
                                     ]
                                 ]
@@ -1556,7 +1556,7 @@ viewCircle op model =
                                     , div [ class "field level is-mobile" ]
                                         [ div [ class "level-left" ]
                                             [ button [ class "button is-light", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
-                                                [ A.icon0 "icon-chevron-left", textH T.back ]
+                                                [ A.icon0 "icon-chevron-left", text T.back ]
                                             ]
                                         , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
@@ -1568,7 +1568,7 @@ viewCircle op model =
                                                      ]
                                                         ++ submitCloseTension
                                                     )
-                                                    [ textH model.txt.close_submit ]
+                                                    [ text model.txt.close_submit ]
                                                 , button
                                                     ([ class "button is-warning"
                                                      , classList
@@ -1577,7 +1577,7 @@ viewCircle op model =
                                                      ]
                                                         ++ submitTension
                                                     )
-                                                    [ textH model.txt.submit ]
+                                                    [ text model.txt.submit ]
                                                 ]
                                             ]
                                         ]
@@ -1641,13 +1641,13 @@ viewNodeValidate model =
         --        [ textarea
         --            [ class "textarea"
         --            , rows 3
-        --            , placeholder (upH T.leaveCommentOpt)
+        --            , placeholder (T.leaveCommentOpt)
         --            , value (Dict.get "message" form.post |> withDefault "")
         --            , onInput <| OnChangePost "message"
         --            ]
         --            []
         --        ]
-        --    , p [ class "help-label" ] [ textH model.txt.message_help ]
+        --    , p [ class "help-label" ] [ text model.txt.message_help ]
         --    ]
         , br [] []
         ]
@@ -1806,13 +1806,13 @@ viewComment model =
             [ textarea
                 [ class "textarea"
                 , rows 3
-                , placeholder (upH T.leaveCommentOpt)
+                , placeholder T.leaveCommentOpt
                 , value message
                 , onInput <| OnChangePost "message"
                 ]
                 []
             ]
-        , p [ class "help-label" ] [ textH T.invitationMessageHelp ]
+        , p [ class "help-label" ] [ text T.invitationMessageHelp ]
         ]
 
 

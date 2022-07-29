@@ -1,6 +1,7 @@
 module Codecs exposing (..)
 
 import Dict
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -69,8 +70,9 @@ labelsEncoder users =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map5 UserCtx
+    JD.map6 UserCtx
         (JD.field "username" JD.string)
+        (JD.field "lang" <| Lang.decoder)
         (JD.field "rights" <|
             JD.map3 UserRights
                 (JD.field "canLogin" JD.bool)
@@ -96,6 +98,7 @@ userCtxEncoder : UserCtx -> JE.Value
 userCtxEncoder userCtx =
     JE.object
         [ ( "username", JE.string userCtx.username )
+        , ( "lang", JE.string <| Lang.toString userCtx.lang )
         , ( "rights"
           , JE.object
                 [ ( "canLogin", JE.bool userCtx.rights.canLogin )

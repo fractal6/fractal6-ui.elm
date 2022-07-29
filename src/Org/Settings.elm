@@ -212,16 +212,16 @@ menuToString : MenuSettings -> String
 menuToString menu =
     case menu of
         LabelsMenu ->
-            upH T.labels
+            T.labels
 
         RolesMenu ->
-            upH T.roles
+            T.roles
 
         GlobalMenu ->
-            upH T.organisation
+            T.organisation
 
         EditMenu ->
-            upH T.editThisCircle
+            T.editThisCircle
 
 
 menuToIcon : MenuSettings -> String
@@ -535,7 +535,7 @@ update global message model =
                 , send <|
                     DoModalConfirmOpen (SafeSend msg)
                         { message = Nothing
-                        , txts = [ ( upH T.confirmUnsafe, "" ) ]
+                        , txts = [ ( T.confirmUnsafe, "" ) ]
                         }
                 , Cmd.none
                 )
@@ -1262,7 +1262,7 @@ viewSettingsContent model =
 
         GlobalMenu ->
             div []
-                [ h2 [ class "subtitle is-size-3" ] [ text "Organisation settings" ]
+                [ h2 [ class "subtitle is-size-3" ] [ text T.organisationSettings ]
                 , viewOrgaSettings model.orga_rights model.switch_result model.switch_index
                 ]
 
@@ -1326,11 +1326,11 @@ viewLabelAddBox model =
     div [ class "box" ]
         [ div [ class "field is-grouped is-grouped-multiline" ]
             [ p [ class "control" ]
-                [ label [ class "label is-small" ] [ text "Label name *" ]
+                [ label [ class "label is-small" ] [ text (T.labelName ++ " *") ]
                 , input
                     [ class "input autofocus"
                     , type_ "text"
-                    , placeholder "Label name"
+                    , placeholder T.name
                     , value name
                     , onInput (ChangeArtefactPost "name")
                     , autofocus True
@@ -1338,22 +1338,22 @@ viewLabelAddBox model =
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ textH T.color ]
+                [ label [ class "label is-small" ] [ text T.color ]
                 , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectColor }
                 ]
             , p [ class "control is-expanded" ]
-                [ label [ class "label is-small" ] [ textH T.description ]
+                [ label [ class "label is-small" ] [ text T.description ]
                 , input
                     [ class "input"
                     , type_ "text"
-                    , placeholder "Description"
+                    , placeholder T.description
                     , value (withDefault "" description)
                     , onInput (ChangeArtefactPost "description")
                     ]
                     []
                 ]
             , p [ class "control buttons", attribute "style" "margin-top: 1.5rem;" ]
-                [ button [ class "button is-small", onClick doCancel ] [ textH T.cancel ]
+                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 , button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
@@ -1361,11 +1361,11 @@ viewLabelAddBox model =
                      ]
                         ++ doSubmit
                     )
-                    [ textH txt.submit ]
+                    [ text txt.submit ]
                 ]
             ]
         , div []
-            [ span [ class "help-label" ] [ text "Preview: " ]
+            [ span [ class "help-label" ] [ text T.preview, text ": " ]
             , viewLabel "" (Label "" (ternary (name == "") "label name" name) color)
             ]
         , case result of
@@ -1388,7 +1388,7 @@ viewLabels model =
                 text ""
     in
     div [ id "labelsTable" ]
-        [ h2 [ class "subtitle is-size-3" ] [ textH T.labels, goToParent ]
+        [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success", classList [ ( "is-active", model.label_add ) ], onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
@@ -1401,16 +1401,16 @@ viewLabels model =
         , case model.labels of
             Success labels ->
                 if List.length labels == 0 then
-                    div [ class "" ] [ textH T.noLabels, text "." ]
+                    div [ class "" ] [ text T.noLabels, text "." ]
 
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr []
-                                    [ th [] [ textH T.name ]
-                                    , th [] [ textH T.description ]
-                                    , th [] [ text "" ]
+                                    [ th [] [ text T.name ]
+                                    , th [] [ text T.description ]
+                                    , th [] []
                                     , th [] []
                                     ]
                                 ]
@@ -1436,17 +1436,17 @@ viewLabels model =
                                                         text ""
                                                     ]
                                                 , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
-                                                    [ span [ class "button-light", onClick (SafeEdit <| EditLabel d) ] [ textH T.edit ]
+                                                    [ span [ class "button-light", onClick (SafeEdit <| EditLabel d) ] [ text T.edit ]
                                                     , text " · "
                                                     , span
                                                         [ class "button-light"
                                                         , onClick <|
                                                             DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
                                                                 { message = Just ( T.labelDeleteInfoHeader, "" )
-                                                                , txts = [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                , txts = [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
                                                                 }
                                                         ]
-                                                        [ textH T.remove ]
+                                                        [ text T.remove ]
                                                     ]
                                                 ]
                                         ]
@@ -1490,7 +1490,7 @@ viewLabelsExt txt_yes list_d list_ext_d =
                         withDefaultData [] list_d
                 in
                 div [ class "mt-6" ]
-                    [ textH (txt_yes ++ " ")
+                    [ text (txt_yes ++ " ")
                     , data
                         |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
                         |> List.map
@@ -1568,11 +1568,11 @@ viewRoleAddBox model =
     div [ class "box" ]
         [ div [ class "field is-grouped is-grouped-multiline" ]
             [ p [ class "control" ]
-                [ label [ class "label is-small" ] [ text "Role name *" ]
+                [ label [ class "label is-small" ] [ text (T.roleName ++ " *") ]
                 , input
                     [ class "input autofocus"
                     , type_ "text"
-                    , placeholder "Role name"
+                    , placeholder T.name
                     , value name
                     , onInput (ChangeArtefactPost "name")
                     , autofocus True
@@ -1580,22 +1580,22 @@ viewRoleAddBox model =
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ textH T.color ]
+                [ label [ class "label is-small" ] [ text T.color ]
                 , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectColor }
                 ]
             , p [ class "control is-expanded" ]
-                [ label [ class "label is-small" ] [ textH T.about ]
+                [ label [ class "label is-small" ] [ text T.about ]
                 , input
                     [ class "input"
                     , type_ "text"
-                    , placeholder "About"
+                    , placeholder T.about
                     , value (withDefault "" about)
                     , onInput (ChangeArtefactPost "about")
                     ]
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ textH T.authority ]
+                [ label [ class "label is-small" ] [ text T.authority ]
                 , viewSelectAuthority
                     { onChangePost = UpdateNodePost
                     , data = model.nodeDoc
@@ -1603,7 +1603,7 @@ viewRoleAddBox model =
                 ]
             ]
         , div [ class "field mt-2 mb-3" ]
-            [ span [ class "help-label" ] [ text "Preview: " ]
+            [ span [ class "help-label" ] [ text T.preview, text ": " ]
             , viewRoleExt "" (RoleExt "" (ternary (name == "") "role name" name) color role_type)
             ]
         , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
@@ -1616,7 +1616,7 @@ viewRoleAddBox model =
             }
         , div [ class "field is-grouped is-grouped-right" ]
             [ p [ class "control buttons" ]
-                [ button [ class "button is-small", onClick doCancel ] [ textH T.cancel ]
+                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 , button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
@@ -1624,7 +1624,7 @@ viewRoleAddBox model =
                      ]
                         ++ doSubmit
                     )
-                    [ textH txt.submit ]
+                    [ text txt.submit ]
                 ]
             ]
         , case result of
@@ -1647,7 +1647,7 @@ viewRoles model =
                 text ""
     in
     div [ id "rolesTable" ]
-        [ h2 [ class "subtitle is-size-3" ] [ textH T.roles, goToParent ]
+        [ h2 [ class "subtitle is-size-3" ] [ text T.roles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
@@ -1660,17 +1660,17 @@ viewRoles model =
         , case model.roles of
             Success roles ->
                 if List.length roles == 0 then
-                    div [ class "" ] [ textH T.noRoles, text "." ]
+                    div [ class "" ] [ text T.noRoles, text "." ]
 
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr []
-                                    [ th [] [ textH T.name ]
-                                    , th [] [ textH T.description ]
-                                    , th [] [ text "" ]
-                                    , th [] [ text "" ]
+                                    [ th [] [ text T.name ]
+                                    , th [] [ text T.description ]
+                                    , th [] []
+                                    , th [] []
                                     , th [] []
                                     ]
                                 ]
@@ -1697,17 +1697,17 @@ viewRoles model =
                                                         text ""
                                                     ]
                                                 , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
-                                                    [ span [ class "button-light", onClick (SafeEdit <| EditRole d) ] [ textH T.edit ]
+                                                    [ span [ class "button-light", onClick (SafeEdit <| EditRole d) ] [ text T.edit ]
                                                     , text " · "
                                                     , span
                                                         [ class "button-light"
                                                         , onClick <|
                                                             DoModalConfirmOpen (Submit <| SubmitDeleteRole d.id)
                                                                 { message = Just ( T.roleDeleteInfoHeader, "" )
-                                                                , txts = [ ( upH T.confirmDeleteRole, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                , txts = [ ( T.confirmDeleteRole, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
                                                                 }
                                                         ]
-                                                        [ textH T.remove ]
+                                                        [ text T.remove ]
                                                     ]
                                                 ]
                                         ]
@@ -1757,7 +1757,7 @@ viewRolesExt txt_yes list_d list_ext_d =
                         withDefaultData [] list_d
                 in
                 div [ class "mt-6" ]
-                    [ textH (txt_yes ++ " ")
+                    [ text (txt_yes ++ " ")
                     , data
                         |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
                         |> List.map

@@ -1,10 +1,26 @@
+[welcome]
+  en="Welcome to Fractale"
+  fr="Bienvenue sur Fractale"
+
+[welcomeSub]
+  en="a collective intelligence platform."
+  fr="une plateforme d’intelligence collective."
+
 [signin]
+  en="Sign in"
+  fr="Se connecter"
+
+[signin_]
   en="Sign in"
   fr="Connexion"
 
 [signup]
   en="Sign up"
   fr="S’inscrire"
+
+[signup_]
+  en="Sign up"
+  fr="Inscription"
 
 [signout]
   en="Sign Out"
@@ -17,6 +33,14 @@
 [signupNow]
   en="Create an account"
   fr="Inscrivez-vous"
+
+[signinNow2]
+  en="Sign-in"
+  fr="vous Connecter"
+
+[signupNow2]
+  en="Create an account"
+  fr="vous Inscrire"
 
 [createYourAccount]
   en="Create your account"
@@ -34,6 +58,10 @@
   en="Forgot your password?"
   fr="Mot de passe oublié ?"
 
+[recentActivities]
+  en="Recent activities"
+  fr="Activités récentes"
+
 [createLabel]
   en="Create label"
   fr="Créer une étiquette"
@@ -50,44 +78,113 @@
   en="Update role"
   fr="Modifier le rôle"
 
+[updateProfile]
+  en="Update profile"
+  fr="Modifier le profil"
+
+[updateType]
+  en="Change type"
+  fr="Modifier le type"
+
 [messageSent]
   en="Message sent"
   fr="Message envoyé"
+
+[requestSent]
+  en="Your request has been sent."
+  fr="Votre requête a été envoyé."
 
 [profile]
   en="Profile"
   fr="Profil"
 
+[publicProfil]
+  en="Public profile"
+  fr="Profil publique"
+
+[emailConf]
+  en="Email configuration"
+  fr="Configuration des e-mails"
+
+[emailHelp]
+  en="Your address is private, only you can see it."
+  fr="Votre adresse est privée, vous seul pouvez la voir."
+
+[namePH]
+  en="Choose a name for your public profile"
+  fr="Choisissez un nom pour votre profil public"
+
+[bioPH]
+  en="Tell us more about yourself"
+  fr="Dites-nous en plus sur vous"
+
+[locationPH]
+  en="City, country..."
+  fr="Ville, pays..."
+
+[questionTitlePH]
+  en="Subject of your question"
+  fr="Sujet de votre question"
+
+[questionTextPH]
+  en="Write your question here..."
+  fr="Ecrivez votre question ici..."
+
+[feedbackTitlePH]
+  en="Subject of your feedback"
+  fr="Sujet de votre question"
+
+[feedbackTextPH]
+  en="Write your feedback here..."
+  fr="Ecrivez votre feedback ici..."
+
 [yourOrg]
-  en="Organisations"
+  en="Organizations"
   fr="Organisations"
+
+[createYourOrganisation]
+  en="Create your organization"
+  fr="Creer votre organisation"
+
+[organisationVisibility]
+  en="Organization visibility"
+  fr="Visibilité de l’organisation"
+
+[organisationSettings]
+  en="Organization settings"
+  fr="Paramètres de l’organisation"
 
 [loading]
   en="Loading"
   fr="Chargement"
 
-[seeMore]
-  en="See more"
-  fr="Voir plus"
+[seemore]
+  en="see more"
+  fr="voir plus"
+
+[contactUs]
+  en="Contact us"
+  fr="Contactez-nous"
+
 
 [seeFullList]
   en="See full list"
-  fr="Voir liste complète"
+  fr="Voir la liste complète"
 
 [seeByCircle]
   en="See by circles"
   fr="Voir par cercles"
 
 [organisation]
-  en="Organisation"
+  en="Organization"
   fr="Organisation"
 
 [organisations]
-  en="Organisations"
+  en="Organizations"
   fr="Organisations"
 
 [joinOrga]
-  en="Join this organisation"
+  en="Join this organization"
   fr="Rejoindre cette organisation"
 
 [leaveRole]
@@ -96,7 +193,7 @@
 
 [checkItOut]
   en="Check it out."
-  fr="Consulter-le."
+  fr="Consulter-la."
 
 [explore]
   en="Explore"
@@ -107,12 +204,16 @@
   fr="Tableau de bord"
 
 [exploreOrganisations]
-  en="Explore organisations"
+  en="Explore organizations"
   fr="Explorer les organisations"
 
 [newOrganisation]
-  en="New organisation"
+  en="New organization"
   fr="Nouvelle organisation"
+
+[toggleLightMode]
+  en="Toggle light mode"
+  fr="Changer de thème"
 
 [view]
   en="View"
@@ -129,6 +230,10 @@
 [members]
   en="Members"
   fr="Membres"
+
+[guests]
+  en="Guests"
+  fr="Invités"
 
 [settings]
   en="Settings"
@@ -179,12 +284,12 @@
   fr="Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la tension du cercle (la page actuelle)."
 
 [published]
-  en="published"
-  fr="publié"
+  en="Published"
+  fr="Publié"
 
 [revisionNotPublished]
   en="Revision not published"
-  fr="révision non publiée"
+  fr="Révision non publiée"
 
 [list]
   en="List"
@@ -198,13 +303,9 @@
   en="by"
   fr="par"
 
-[joined]
-  en="joined"
-  fr="rejoins"
-
-[created]
-  en="Created"
-  fr="Crée"
+[in_]
+  en="in"
+  fr="dans"
 
 [from]
   en="from"
@@ -214,13 +315,25 @@
   en="to"
   fr="vers"
 
-[moved]
-  en="moved"
-  fr="délacé"
+[for]
+  en="for"
+  fr="pour"
 
-[changed]
-  en="changed"
-  fr="modifié"
+[as_]
+  en="as"
+  fr="comme"
+
+[or_]
+  en="or"
+  fr="ou"
+
+[all]
+  en="All"
+  fr="Tous"
+
+[created]
+  en="Created"
+  fr="Crée"
 
 [move]
   en="Move"
@@ -230,13 +343,37 @@
   en="Visibility"
   fr="Visibilité"
 
+[authority]
+  en="Authority"
+  fr="Autorité"
+
 [governance]
   en="Governance"
   fr="Gouvernance"
 
-[authority]
-  en="Authority"
-  fr="Autorité"
+[operational]
+  en="Operational"
+  fr="opérationnel"
+
+[help]
+  en="Help"
+  fr="Aide"
+
+[alert]
+  en="Alert"
+  fr="Alerte"
+
+[theVisibility]
+  en="the visibility"
+  fr="la visibilité"
+
+[theGovernance]
+  en="the governance"
+  fr="la gouvernance"
+
+[theAuthority]
+  en="the authority"
+  fr="l’autorité"
 
 [linkAction]
   en="Invite someine to play this role"
@@ -254,9 +391,25 @@
   en="Join"
   fr="Rejoindre"
 
-[inviteMember]
-  en="Invite someone"
-  fr="Inviter une personne"
+[join2]
+  en="Join"
+  fr="Rejoignez"
+
+[thisOrgaToParticipate]
+  en="this organization to participate to this conversation."
+  fr="cette organisation afin de participer à cette conversation."
+
+[archive]
+  en="Archive"
+  fr="Archiver"
+
+[unarchive]
+  en="Unarchive"
+  fr="Désarchiver"
+
+[inviteMembers]
+  en="Invite people"
+  fr="Inviter des personnes"
 
 [link]
   en="Link"
@@ -265,18 +418,6 @@
 [unlink]
   en="Unlink"
   fr="Détacher"
-
-[linked]
-  en="linked"
-  fr="lié"
-
-[unlinked]
-  en="unlinked"
-  fr="détaché"
-
-[left]
-  en="left"
-  fr="quitté"
 
 [roleLeft]
   en="Role left"
@@ -294,53 +435,129 @@
   en="Text (optional)"
   fr="Texte (Optionnel)"
 
+[text]
+  en="Text..."
+  fr="Texte..."
+
+[changeTensionType]
+  en="Change the tension Type"
+  fr="Modifier le Type de la tension"
+
 [noResultsFound]
   en="No results found"
   fr="Aucun résulat trouvé"
 
+[searchTensions]
+  en="Search tensions"
+  fr="Rechercher des tensions"
+
 [searchUsers]
   en="Search users"
-  fr="Recherchez des utilisateurs"
+  fr="Rechercher des utilisateurs"
 
 [searchLabels]
   en="Search labels"
-  fr="Recherchez des étiquettes"
+  fr="Rechercher des étiquettes"
 
 [editLabels]
   en="Edit labels"
   fr="Editer les étiquettes"
 
+[openTension]
+  en="Open"
+  fr="Ouvert"
+
+[closedTension]
+  en="Closed"
+  fr="Fermé"
+
 [reopened]
   en="reopened"
-  fr="Réouvrir"
+  fr="a réouvert"
 
 [closed]
   en="closed"
+  fr="a fermé"
+
+[closedContract]
+  en="Closed"
   fr="Fermé"
+
+[canceledContract]
+  en="Canceled"
+  fr="Annulé"
 
 [assigned]
   en="assigned"
-  fr="assigné"
+  fr="a assigné"
 
 [unassigned]
   en="unassigned"
-  fr="désassigné"
-
-[archive]
-  en="Archive"
-  fr="Archiver"
-
-[unarchive]
-  en="Unarchive"
-  fr="Désarchiver"
+  fr="a désassigné"
 
 [archived]
   en="archived"
-  fr="archivé"
+  fr="a archivé"
 
 [unarchived]
   en="unarchived"
-  fr="Désarchivé"
+  fr="a désarchivé"
+
+[moved]
+  en="moved"
+  fr="a déplacé"
+
+[changed]
+  en="changed"
+  fr="modifié"
+
+[changed2]
+  en="changed"
+  fr="a modifié"
+
+[updated]
+  en="updated"
+  fr="a mis à jour"
+
+[linked]
+  en="linked"
+  fr="lié"
+
+[unlinked]
+  en="unlinked"
+  fr="détaché"
+
+[published2]
+  en="published"
+  fr="a publié"
+
+[joined]
+  en="joined"
+  fr="a rejoint"
+
+[left]
+  en="left"
+  fr="a quitté"
+
+[opened]
+  en="opened"
+  fr="ouvert"
+
+[commented]
+  en="commented"
+  fr="a commenté"
+
+[edited]
+  en="edited"
+  fr="édité"
+
+[authored]
+  en="authored"
+  fr="créé"
+
+[authoredBy]
+  en="authored by"
+  fr="créé par"
 
 [documentArchived]
   en="Document archived"
@@ -362,6 +579,22 @@
   en="Role moved"
   fr="Le rôle a été déplacé"
 
+[quickHelp]
+  en="Quick help"
+  fr="Aide rapide"
+
+[askQuestion]
+  en="Ask a question"
+  fr="Poser une question"
+
+[giveFeedback]
+  en="Give feedback"
+  fr="Donner un feedback"
+
+[haveYouCheckQuickHelp]
+  en="Have you checked if your question is answered in the"
+  fr="Avez-vous vérifié si la réponse à votre question se trouve dans l’"
+
 [the]
   en="the"
   fr="le"
@@ -369,6 +602,14 @@
 [this]
   en="this"
   fr="ce"
+
+[write]
+  en="Write"
+  fr="Ecrire"
+
+[preview]
+  en="Preview"
+  fr="Aperçu"
 
 [confirmUnsaved]
   en="You have unsaved data, please confirm to exit."
@@ -399,7 +640,7 @@
   fr="Donnez un autre feedback."
 
 [theOrganisation]
-  en="the organisation"
+  en="the organization"
   fr="l’organisation"
 
 [moveTension]
@@ -420,7 +661,7 @@
 
 [contractType]
   en="Contract type"
-  fr="Type du contrat"
+  fr="Type de contrat"
 
 [contractEvent]
   en="Event"
@@ -433,6 +674,46 @@
 [submit]
   en="Submit"
   fr="Soumettre"
+
+[send]
+  en="Send"
+  fr="Envoyer"
+
+[comment]
+  en="Comment"
+  fr="Commenter"
+
+[close]
+  en="Close"
+  fr="Fermer"
+
+[closeComment]
+  en="Comment and Close"
+  fr="Commenter et Fermer"
+
+[reopen]
+  en="Reopen"
+  fr="Réouvrir"
+
+[reopenComment]
+  en="Comment and Reopen"
+  fr="Commenter et Réouvrir"
+
+[noMessageProvided]
+  en="Empty message"
+  fr="Message vide"
+
+[question]
+  en="Question"
+  fr="Question"
+
+[feedback]
+  en="Feedback"
+  fr="Feedback"
+
+[thankyouFeedback]
+  en="Thank you for your feedback, we will get back to you shortly."
+  fr="Merci pour votre retour, nous vous répondrons dans les plus brefs délais."
 
 [add]
   en="Add"
@@ -476,7 +757,7 @@
 
 [oldest]
   en="Oldest"
-  fr="Plus ancien"
+  fr="Plus ancien/ne"
 
 [newest]
   en="Newest"
@@ -488,7 +769,11 @@
 
 [subject]
   en="Subject"
-  fr="Objet"
+  fr="Sujet"
+
+[theSubject]
+  en="the subject"
+  fr="le sujet"
 
 [name]
   en="Name"
@@ -505,6 +790,14 @@
 [password]
   en="Password"
   fr="Mot de passe"
+
+[location]
+  en="Location"
+  fr="Localisation"
+
+[tension]
+  en="Tension"
+  fr="Tension"
 
 [circle]
   en="Circle"
@@ -538,6 +831,18 @@
   en="Pending"
   fr="En attente"
 
+[pendingInvitation]
+  en="Pending invitation"
+  fr="Invitation en attente"
+
+[checkYourPendingInvitation]
+  en="You already have a pending invitation, please check it out."
+  fr="Vous avez déjà une invitation en attente, veuillez la vérifier."
+
+[checkPendingInvitation]
+  en="An invitation is pending, please check it out."
+  fr="Une invitation est en attente, veuillez la vérifier."
+
 [firstLink]
   en="Lead link"
   fr="Lead link"
@@ -553,6 +858,14 @@
 [nodeNotFound]
   en="Circle is archived, private or has moved."
   fr="le cercle est archivé, privé ou a été déplacé"
+
+[pageNotFound]
+  en="Sorry, page not found"
+  fr="Désolé, cette page n’existe pas"
+
+[author]
+  en="Author"
+  fr="Auteur"
 
 [label]
   en="Label"
@@ -634,6 +947,10 @@
   en="Define the role policies"
   fr="Définir les politiques du rôle"
 
+[sinceThe]
+  en="since the"
+  fr="depuis le"
+
 [addedThe]
   en="added the"
   fr="ajouté le"
@@ -658,6 +975,10 @@
   en="Color"
   fr="Couleur"
 
+[collapse]
+  en="Collapse"
+  fr="Réduire"
+
 [conversation]
   en="Conversation"
   fr="Conversation"
@@ -678,9 +999,29 @@
   en="Type"
   fr="Type"
 
+[theType_]
+  en="the type"
+  fr="le type"
+
 [depth]
   en="Depth"
   fr="Profondeur"
+
+[depthAll]
+  en="Includes all sub-circles"
+  fr="Comprend tous les sous-cercles"
+
+[depthSelected]
+  en="Current circle and its direct children only"
+  fr="Cercle actuel et ses enfants direct uniquement"
+
+[showMore]
+  en="Load more"
+  fr="Afficher plus"
+
+[clearFilters]
+  en="Clear filters"
+  fr="Nettoyer les filtres"
 
 [subLabels]
   en="Sub-circle labels"
@@ -694,9 +1035,13 @@
   en="Assignees"
   fr="Assignés"
 
+[attached]
+  en="attached"
+  fr="joint"
+
 [noneYet]
   en="None yet"
-  fr="Aucun"
+  fr="Aucun pour l’instant"
 
 [noDocument]
   en="No document attached"
@@ -707,16 +1052,16 @@
   fr="Aucune tension ouverte pour ce rôle pour le moment."
 
 [noOpenTensionCircle]
-  en="No open tensions for this circle yet."
-  fr="Aucune tension ouverte pour ce cercle pour le moment."
+  en="No open tensions in this circle yet."
+  fr="Aucune tension ouverte dans ce cercle pour le moment."
 
 [noTensionRole]
   en="No tensions for this role yet."
   fr="Aucune tension pour ce rôle pour le moment."
 
 [noTensionCircle]
-  en="No tensions for this circle yet."
-  fr="Aucune tension pour ce cercle pour le moment."
+  en="No tensions in this circle yet."
+  fr="Aucune tension dans ce cercle pour le moment."
 
 [newTension]
   en="New tension"
@@ -744,7 +1089,19 @@
 
 [editTitle]
   en="Edit subjet"
-  fr="Editer l'objet"
+  fr="Editer le sujet"
+
+[newTensionHelp]
+  en="Create a new tension."
+  fr="Creez une nouvelle tension."
+
+[newRoleHelp]
+  en="Create or propose a new role."
+  fr="Créez ou proposez un nouveau rôle."
+
+[newCircleHelp]
+  en="Create or propose a new circle."
+  fr="Créez ou proposez un nouveau cercle."
 
 [tensionTitleHelp]
   en="Title that sumarize your tension."
@@ -758,17 +1115,25 @@
   en="Name of the role."
   fr="Nom du rôle."
 
+[roleName]
+  en="Role name"
+  fr="Nom du rôle"
+
+[labelName]
+  en="Label name"
+  fr="Nom de l’étiquette"
+
 [orgaNameHelp]
-  en="Organisation name."
-  fr="Nom de l'organisation"
+  en="Organization name."
+  fr="Nom de l’organisation"
 
 [aboutHelp]
-  en="Short description for this organisation."
+  en="Short description for this organization."
   fr="Brève description de cette organisation."
 
 [purposeHelpOrga]
-  en="Purpose of this organisation."
-  fr="Raison d'être de cette organisation."
+  en="Purpose of this organization."
+  fr="Raison d’être de cette organisation."
 
 [roleAboutHelp]
   en="Short description for this role."
@@ -792,7 +1157,7 @@
 
 [invitationMessageHelp]
   en="Add an invitation message."
-  fr="Ajouter un message d'invitation."
+  fr="Ajouter un message d’invitation."
 
 [tensionAdded]
   en="Tension added."
@@ -808,7 +1173,7 @@
 
 [tensionSubmit]
   en="Submit tension"
-  fr="Envoyer"
+  fr="Soumettre"
 
 [tensionCircleCloseSubmit]
   en="Create circle"
@@ -817,38 +1182,6 @@
 [tensionRoleCloseSubmit]
   en="Create role"
   fr="Créer le rôle"
-
-[opened]
-  en="opened"
-  fr="ouvert"
-
-[updated]
-  en="updated"
-  fr="mis à jour"
-
-[edited]
-  en="edited"
-  fr="édité"
-
-[commented]
-  en="commented"
-  fr="commenté"
-
-[openedThe]
-  en="opened the"
-  fr="ouvert le"
-
-[updatedThe]
-  en="updated the"
-  fr="mis à jour le"
-
-[editedThe]
-  en="edited the"
-  fr="mis à jour le"
-
-[commentedThe]
-  en="commented the"
-  fr="commenté le"
 
 [update]
   en="Update"
@@ -875,28 +1208,32 @@
   fr="non implémenté"
 
 [notOrgMember]
-  en="You are not a member of this organisation."
-  fr="Vous n'êtes pas membre de cette organisation."
+  en="You are not a member of this organization."
+  fr="Vous n’êtes pas membre de cette organisation."
 
 [askCoordo]
   en="Please, ask a coordinator of this circle to perform this action."
-  fr="Veuillez demander à un coordinateur de ce cercle d'effectuer cette action.
+  fr="Veuillez demander à un coordinateur de ce cercle d’effectuer cette action."
 
 [joinForTension]
-  en="Please, Join this organisation to be able to create a tension (or retry)."
+  en="Please, Join this organization to be able to create a tension (or retry)."
   fr="Veuillez rejoindre cette organisation pour pouvoir créer une tension (ou réessayer)."
 
 [joinForComment]
-  en="Please, Join this organisation to participate to this conversation."
+  en="Please, Join this organization to participate to this conversation."
   fr="Veuillez rejoindre cette organisation pour participer à cette conversation (ou réessayer)."
 
 [joinForCircle]
-  en="Please, Join this organisation to be able to create a circle (or retry)."
+  en="Please, Join this organization to be able to create a circle (or retry)."
   fr="Veuillez rejoindre cette organisation pour pouvoir créer une cercle (ou réessayer)."
 
 [nodeNotExist]
   en="Sorry, this circle doesn’t exist."
-  fr="Désolé, ce cercle n'existe pas."
+  fr="Désolé, ce cercle n’existe pas."
+
+[goHome]
+  en="Go to home page."
+  fr="Aller à la page d’accueil"
 
 [goRoot]
   en="Go to root circle"
@@ -905,6 +1242,14 @@
 [goParent]
   en="Go to parent circle"
   fr="Aller au cercle parent"
+
+[goContract]
+  en="View the contract"
+  fr="Voir le contrat"
+
+[goContracts]
+  en="View to contracts"
+  fr="Voir les contrats"
 
 [clickMe]
   en="Click me"
@@ -920,7 +1265,7 @@
 
 [noLabels]
   en="No label in this circle yet"
-  fr="Pas d'étiquettes présent dans ce cercle"
+  fr="Pas d’étiquettes présent dans ce cercle"
 
 [noRoles]
   en="No role in this circle yet"
@@ -944,11 +1289,27 @@
 
 [noDataError]
   en="No data returned. You may try to refresh the page."
-  fr="Aucune donnée n'est retournée. Vous pouvez essayer de rafraîchir la page."
+  fr="Aucune donnée n’est retournée. Vous pouvez essayer de rafraîchir la page."
+
+[authorizationNeeded]
+  en="Authorization required"
+  fr="Authorization requise"
+
+[authenticationNeeded]
+  en="Authentication required"
+  fr="Authentification requise"
+
+[please]
+  en="Please"
+  fr="Veuillez"
+
+[toPerformThis]
+  en="to perform this action."
+  fr="afin d’effectuer cette action."
 
 [reverseTooltip]
-  en="Reverse the organisation graph."
-  fr="Inverser le graphe de l'organisation."
+  en="Reverse the organization graph."
+  fr="Inverser le graphe de l’organisation."
 
 [tensionsListTooltip]
   en="Display tensions as List."
@@ -962,67 +1323,214 @@
   en="Display tensions by (targeted) circles."
   fr="afficher les tensions par cercles (ciblés)."
 
-[labelDeleteInfoHeader]
-  en="Label present in other circles, and in labeled tensions, won’t be deleted."
-  fr="Les étiquettes présentes dans d'autres cercles, et dans les tensions étiquetées, ne seront pas supprimées."
+[explainJoin]
+  en="Explain your motivations for joining this organisation ?"
+	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
 
-[roleDeleteInfoHeader]
-  en="Role present in other circles, and created roles, won’t be deleted."
-  fr="Les rôles présents dans d'autres cercles, et les rôles créés, ne seront pas supprimés."
 
-[contractInfoHeader]
-  en="A peer validation is needed to complete this action."
-  fr="Une validation par les pairs est nécessaire pour compléter cette action."
+#
+# Settings buttons
+#
 
-[contractInfo]
-  en="By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
-  fr="En créant un contrat, il notifiera les rôles de l'organisation avec le niveau d'autorité capable de valider votre demande. L'action sera exécutée une fois que le contrat aura été validé."
 
-[tensionTypeHeader]
-  en="Select the right category to help finding and solving tensions."
-  fr="Sélectionnez la bonne catégorie pour vous aider à trouver et à résoudre les tensions."
+[orgaUserInvitation]
+  en="Users can join this organisation"
+	fr="Les utilisateurs peuvent rejoindre cette organisation"
 
-[tensionTypeDoc]
-  en="""
-There are three main categories of tension:
+[orgaUserInvitationHelp]
+  en="User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
+	fr="L’utilisateur pourra ouvrir un contrat pour rejoindre cette organisation. L’utilisateur ne pourra rejoindre l’organisation en tant qu’invité qu’après qu’un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
 
-- **Operational**: A general category, it can be task, an issue or whatever that need to be share in the organisation.
-- **Governance**: Concerning the structure of the organisation, the mandates etc.
-- **Help**: For help requests, questions or clarifications.
-- **Alert**: For alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
-"""
-  fr="""
-Il existe trois grandes catégories de tensions :
+[guestCanCreateTension]
+  en="Guests can create tension"
+	fr="Les invités peuvent créer des tensions"
 
-- **Opérationnel** : Une catégorie générale, il peut s'agir d'une tâche, d'un problème ou de tout ce qui doit être partagé dans l'organisation.
-- **Gouvernance** : Concernant la structure de l'organisation, les mandats, etc.
-- * **Aide** : Pour les demandes d'aide, les questions ou les clarifications.
-- **Alert** : Pour les demandes d'alerte, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
-"""
+[guestCanCreateTensionHelp]
+  en="Guests are users that has been invited but do not play any role in the organisation."
+	fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans cette organisation."
 
-[visibilityInfoHeader]
-  en="The change will only apply on the current circle and its roles, not recursively on the sub-circles."
-  fr="La modification ne s'appliquera qu'au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+[notifyByEmail]
+  en="Enable email notifications."
+	fr="Activer les notifications par e-mail."
 
-[visibilityPublic]
-  en="The entire world can view."
-  fr="Le monde entier peut voir."
+[beenUnsubscribe]
+  en="You’ve been unsubscribed from this tension"
+	fr="Vous avez été désabonné de cette tension."
 
-[visibilityPrivate]
-  en="Only members of the organisation can view."
-  fr="Seuls les membres de l'organisation peuvent les consulter."
+[markAsRead]
+	en="Mark as read."
+	fr="Marquer comme lu."
 
-[visibilitySeccret]
-  en="Only roles inside this circle can view."
-  fr="Seuls les rôles à l'intérieur de ce cercle peuvent voir."
+[markAllAsRead]
+	en="Mark all as read"
+	fr="Tout marquer comme lu"
 
-[visibilityRestriction]
-  en="Users can join the organisation on invitation only."
-  fr="Les utilisateurs peuvent rejoindre l'organisation sur invitation uniquement."
+
+#
+# Blob State
+#
+
+
+[onNode_blob]
+	en="Document created"
+	fr="Document créé"
+
+[onAbout_blob]
+	en="Description edited"
+	fr="Description edité"
+
+[onMandate_blob]
+	en="Mandate edited"
+	fr="Mandat édité"
+
+[onAboutAndMandate_blob]
+	en="Mandate and description edited"
+	fr="Mandat et description édité"
+
+[onDoc_blob]
+	en="File edited"
+	fr="Fichier édité"
+
+
+#
+# Event Notification Text
+#
+
+
+[created_event]
+	en="New tension"
+	fr="Nouvelle tension"
+
+[closed_event]
+	en="Tension closed"
+	fr="Tension fermé"
+
+[reopened_event]
+	en="Tension reopened"
+	fr="Tension réouverte"
+
+[commentPushed_event]
+	en="New comment"
+	fr="Nouveau commentaire"
+
+[moved_event]
+	en="Tension moved"
+	fr="Tension déplacé"
+
+[titleUpdated_event]
+	en="Title updated"
+	fr="Sujet mis à jour"
+
+[typeUpdated_event]
+	en="Type updated"
+	fr="Type modifié"
+
+[authority_event]
+	en="Authority updated"
+	fr="Authorité modifié"
+
+[visibility_event]
+	en="Visibility updated"
+	fr="Visibilité modifié"
+
+[labelAdded_event]
+	en="Label added"
+	fr="Etiquette ajouté"
+
+[labelRemoved_event]
+	en="Label removed"
+	fr="Etiquette retiré"
+
+[assigneeAdded_event]
+	en="Assignee added"
+	fr="Assigné ajouté"
+
+[assigneeRemoved_event]
+	en="Assignee removed"
+	fr="Assigné retiré"
+
+[blobCommitted_event]
+	en="Mandate committed"
+	fr="Mandat modifié (draft)"
+
+[blobPushed_event]
+	en="Mandate updated"
+	fr="Mandat modifié"
+
+[memberLinked_event]
+	en="Member linked"
+	fr="Membre associé"
+
+[memberUnlinked_event]
+	en="Member unlinked"
+	fr="Membre détaché"
+
+[userJoined_event]
+	en="An user joined us"
+	fr="Un Utilisateur nous a rejoins"
+
+[userLeft_event]
+	en="An user left"
+	fr="Un utilisateur nous a quitté"
+
+
+#
+# Contract Event Text
+#
+
+-- Open contract
+
+[moved_contract]
+	en="Move tension"
+	fr="Deplacer la tension"
+
+[memberLinked_contract]
+	en="New lead link"
+	fr="Nouveau lead link"
+
+[memberUnlinked_contract]
+	en="Retired lead link"
+	fr="Lead link retiré"
+
+[userJoined_contract]
+	en="New member"
+	fr="Nouveau membre"
+
+-- Completed Success
+
+[moved_contract_success]
+	en="Congratulations, tension has been moved."
+	fr="Félicitations, la tension a été déplacée."
+
+[memberLinked_contract_success]
+	en="Congratulations, you have been link to this role."
+	fr="Félicitations, vous avez été associé à ce rôle."
+
+[memberUnlinked_contract_success]
+	en="Congratulations, you have been unlink to this role."
+	fr="Félicitations, vous avez été détaché de ce rôle."
+
+[userJoined_contract_success]
+	en="Congratulations, you've joined this organization."
+	fr="Félicitations, vous avez rejoint cette organisation."
+
+[memberLinked_contract_success_ext]
+	en="Congratulations, user has been linked."
+	fr="Félicitations, l'utilisateur a été lié."
+
+[userJoined_contract_success_ext]
+	en="Congratulations, user has joined the organization."
+	fr="Félicitations, a rejoint l'organisation."
+
+
+#
+# Messgage Info/Doc
+#
+
 
 [circleAuthorityHeader]
   en="The governance authority is characterized by the right to do a set of actions."
-  fr="L'autorité de gouvernance se caractérise par le droit de faire un ensemble d'actions."
+  fr="L’autorité de gouvernance se caractérise par le droit de faire un ensemble d’actions."
 
 [circleAuthorityDoc]
   en="""
@@ -1042,28 +1550,20 @@ Note: To edit mandates you need to publish the modifications done in the corresp
 Note : Pour éditer des mandats, vous devez publier les modifications effectuées dans la tension (gouvernance) correspondante.
 """
 
-[authCoordinated]
-  en="Where Coordinator roles have the governance authority."
-	fr="Où seul les rôles de coordinateur ont l'autorité de gouvernance."
-
-[authAgile]
-  en="Where all roles have equal governance authority."
-  fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
-
 [labelsInfoHeader]
   en="Creating new labels help you to sort out your tensions"
 	fr="La création de nouvelles étiquettes vous aide à trier vos tensions."
 
 [labelsInfoDoc]
   en="""
-When you create labels here. You can then attach them to your tensions. You will also be able to filter tensions according to labels.
+When you create labels here, you can then attach them to your tensions. You will also be able to filter tensions according to labels.
 
 **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
 """
 	fr="""
-Lorsque vous créez des étiquettes ici. Vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
+Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
 
-**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l'un des parents du cercle récepteur.
+**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l’un des parents du cercle récepteur.
 """
 
 [rolesInfoHeader]
@@ -1074,12 +1574,12 @@ Lorsque vous créez des étiquettes ici. Vous pouvez ensuite les attacher à vos
   en="""
 When you create a role here, you can use it as a template when you create a new role in your organisation.
 
-**Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents.
+**Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents circles.
 """
 	fr="""
-Lorsque vous créez un rôle ici, vous pouvez l'utiliser comme modèle lorsque vous créez un nouveau rôle dans votre organisation.
+Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous créez un nouveau rôle dans votre organisation.
 
-**Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l'un de ses parents.
+**Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
 """
 
 [peerRoleInfo]
@@ -1088,7 +1588,73 @@ Lorsque vous créez un rôle ici, vous pouvez l'utiliser comme modèle lorsque v
 
 [coordinatorRoleInfo]
   en="Role with administration rights at the circle level."
-	fr="Rôle avec des droits d'administration au niveau du cercle."
+	fr="Rôle avec des droits d’administration au niveau du cercle."
+
+[labelDeleteInfoHeader]
+  en="Label present in other circles, and in labeled tensions, won’t be deleted."
+  fr="Les étiquettes présentes dans d’autres cercles, et dans les tensions étiquetées, ne seront pas supprimées."
+
+[roleDeleteInfoHeader]
+  en="Role present in other circles, and created roles, won’t be deleted."
+  fr="Les rôles présents dans d’autres cercles, et les rôles créés, ne seront pas supprimés."
+
+[contractInfoHeader]
+  en="A peer validation is needed to complete this action."
+  fr="Une validation par les pairs est nécessaire pour compléter cette action."
+
+[contractInfo]
+  en="By creating a contract, it will notify the organization roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
+  fr="En créant un contrat, il notifiera les rôles de l’organisation avec le niveau d’autorité capable de valider votre demande. L’action sera exécutée une fois que le contrat aura été validé."
+
+[tensionTypeHeader]
+  en="Select the right category to help finding and solving tensions."
+  fr="Sélectionnez la bonne catégorie pour vous aider à trouver et à résoudre les tensions."
+
+[tensionTypeDoc]
+  en="""
+There are three main categories of tension:
+
+- **Operational**: A general category, it can be task, an issue or whatever that need to be shared or tracked in the organization.
+- **Governance**: Concerning the structure of the organization, the mandates etc.
+- **Help**: For help requests, questions or clarifications.
+- **Alert**: For alerts, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
+"""
+  fr="""
+Il existe trois grandes catégories de tensions :
+
+- **Opérationnel** : Une catégorie générale, il peut s’agir d’une tâche, d’un problème ou de tout ce qui doit être partagé ou suivie dans l’organisation.
+- **Gouvernance** : Concernant la structure de l’organisation, les mandats, etc.
+- **Aide** : Pour les demandes d’aides, les questions ou les clarifications.
+- **Alerte** : Pour les alertes, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
+"""
+
+[visibilityInfoHeader]
+  en="The change will only apply on the current circle and its roles, not recursively on the sub-circles."
+  fr="La modification ne s’appliquera qu’au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+
+[visibilityPublic]
+  en="The entire world can see it."
+  fr="Le monde entier peut la voir."
+
+[visibilityPrivate]
+  en="Visible by members of the organization only."
+  fr="Visible uniquement par les membres de l’organisation."
+
+[visibilitySeccret]
+  en="Only roles inside this circle can see it."
+  fr="Seuls les rôles à l’intérieur de ce cercle peuvent le voir."
+
+[visibilityRestriction]
+  en="Users can join this organization on invitation only."
+  fr="Les utilisateurs peuvent rejoindre cette organisation sur invitation uniquement."
+
+[authCoordinated]
+  en="Where Coordinator roles have the governance authority."
+	fr="Où seul les rôles de coordinateur ont l’autorité de gouvernance."
+
+[authAgile]
+  en="Where all roles have equal governance authority."
+  fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
 
 [welcomeLetter]
   en="""
@@ -1111,42 +1677,14 @@ Bienvenue @{{username}},
 
 **Votre compte a été activé avec succès.**
 
-Fractale est une plateforme destinée aux communautés et aux organisations. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l'intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
+Fractale est une plateforme destinée aux communautés et aux organisations. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
 
-Vous pouvez également l'utiliser pour des projets individuels afin d'organiser et de gérer vos tâches et vos idées.
+Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer vos tâches et vos idées.
 
 Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
 - le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
-- le bouton **d'aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
+- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
 - le bouton **de création** (<i class="icon icon-plus"></i>) pour créer de nouvelles organisations.
-- le bouton **d'utilisateur** pour accéder à votre profil et à vos paramètres.
+- le bouton **d’utilisateur** pour accéder à votre profil et à vos paramètres.
 """
-
-[explainJoin]
-  en="Explain your motivations for joining this organisation ?"
-	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
-
-[orgaUserInvitation]
-  en="Users can join the organisation"
-	fr="Les utilisateurs peuvent rejoindre l'organisation"
-
-[orgaUserInvitationHelp]
-  en="User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
-	fr="L'utilisateur pourra ouvrir un contrat pour rejoindre l'organisation. L'utilisateur ne pourra rejoindre l'organisation en tant qu'invité qu'après qu'un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
-
-[guestCanCreateTension]
-  en="Guests can create tension"
-	fr="Les invités peuvent créer des tensions"
-
-[guestCanCreateTensionHelp]
-  en="Guests are users that has been invited but do not play any role in the organisation."
-	fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans l'organisation."
-
-[notifyByEmail]
-  en="Enable email notifications."
-	fr="Activez les notifications par e-mail."
-
-[beenUnsubscribe]
-  en="You’ve been unsubscribed from this tension"
-	fr="Vous avez été désabonné de cette tension."
 

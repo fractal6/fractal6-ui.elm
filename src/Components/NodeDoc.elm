@@ -5,6 +5,7 @@ import Dict
 import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -469,7 +470,7 @@ viewToolbar mode data =
     div [ class "field has-addons docToolbar" ]
         [ p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" (upH T.edit)
+            , attribute "data-tooltip" T.edit
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -481,7 +482,7 @@ viewToolbar mode data =
             ]
         , p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" (upH T.revisions)
+            , attribute "data-tooltip" T.revisions
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -499,7 +500,7 @@ viewNodeStatus op =
     case op.blob.pushedFlag of
         Just flag ->
             div [ class "has-text-success is-italic" ]
-                [ textH (T.published ++ " " ++ formatDate op.now flag) ]
+                [ text (T.published ++ " " ++ formatDate op.data.form.uctx.lang op.now flag) ]
 
         Nothing ->
             let
@@ -508,14 +509,14 @@ viewNodeStatus op =
             in
             div [ class "field has-addons" ]
                 [ div [ class "has-text-warning is-italic mr-3" ]
-                    [ textH T.revisionNotPublished ]
+                    [ text T.revisionNotPublished ]
                 , if op.isAdmin then
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
                         , onClick (op.onSubmit isLoading <| op.onPushBlob op.blob.id)
                         , title T.publishTitle
                         ]
-                        [ A.icon1 "icon-share" (upH T.publish)
+                        [ A.icon1 "icon-share" T.publish
                         , loadingSpin isLoading
                         ]
 
@@ -568,7 +569,7 @@ viewBlob data op_m =
                                )
 
                 NodeVersions ->
-                    viewVersions op.now op.tension_blobs
+                    viewVersions op.data.form.uctx.lang op.now op.tension_blobs
 
                 NoView ->
                     text ""
@@ -600,7 +601,7 @@ viewAboutSection data op_m =
         [ div [ class "level subtitle" ]
             [ div [ class "level-left", style "max-width" "90%" ]
                 [ A.icon "icon-info icon-lg mr-2"
-                , span [ class "nowrap" ] [ textH T.about ]
+                , span [ class "nowrap" ] [ text T.about ]
                 , text space_
                 , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
@@ -645,7 +646,7 @@ viewMandateSection role_type_m mandate_m op_m =
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
-                , textH T.mandate
+                , text T.mandate
                 ]
             , Maybe.map
                 (\onChangeEdit ->
@@ -661,10 +662,10 @@ viewMandateSection role_type_m mandate_m op_m =
         , case mandate_m of
             Just mandate ->
                 div []
-                    [ viewMandateSubSection (upH T.purpose) (Just mandate.purpose)
-                    , viewMandateSubSection (upH T.responsabilities) mandate.responsabilities
-                    , viewMandateSubSection (upH T.domains) mandate.domains
-                    , viewMandateSubSection (upH T.policies) mandate.policies
+                    [ viewMandateSubSection T.purpose (Just mandate.purpose)
+                    , viewMandateSubSection T.responsabilities mandate.responsabilities
+                    , viewMandateSubSection T.domains mandate.domains
+                    , viewMandateSubSection T.policies mandate.policies
                     ]
 
             Nothing ->
@@ -706,13 +707,13 @@ viewMandateSubSection name maybePara =
 viewAboutInput hasBeenPushed source txt node op =
     div []
         [ div [ class "field" ]
-            [ label [ class "label" ] [ textH T.name ]
+            [ label [ class "label" ] [ text T.name ]
             , div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
-                    , placeholder (upH T.name)
+                    , placeholder T.name
                     , value (withDefault "" node.name)
                     , onInput <| op.onChangePost "name"
                     , required True
@@ -724,24 +725,24 @@ viewAboutInput hasBeenPushed source txt node op =
                   else
                     text ""
                 ]
-            , p [ class "help-label" ] [ textH txt.name_help ]
+            , p [ class "help-label" ] [ text txt.name_help ]
             ]
         , div [ class "field" ]
-            [ label [ class "label" ] [ textH T.about ]
+            [ label [ class "label" ] [ text T.about ]
             , div [ class "control" ]
                 [ input
                     [ id "aboutField"
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
-                    , placeholder (upH T.aboutOpt)
+                    , placeholder T.aboutOpt
                     , spellcheck True
                     , value (withDefault "" node.about)
                     , onInput <| op.onChangePost "about"
                     ]
                     []
                 ]
-            , p [ class "help-label" ] [ textH txt.about_help ]
+            , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
         ]
@@ -751,12 +752,12 @@ viewAboutInput2 hasBeenPushed source txt node op =
     div []
         [ div [ class "field is-grouped" ]
             [ div [ class "control is-expanded" ]
-                [ label [ class "label" ] [ textH T.name ]
+                [ label [ class "label" ] [ text T.name ]
                 , input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
-                    , placeholder (upH T.name)
+                    , placeholder T.name
                     , value (withDefault "" node.name)
                     , onInput <| op.onChangePost "name"
                     , required True
@@ -767,13 +768,13 @@ viewAboutInput2 hasBeenPushed source txt node op =
 
                   else
                     text ""
-                , p [ class "help-label" ] [ textH txt.name_help ]
+                , p [ class "help-label" ] [ text txt.name_help ]
                 ]
             , case node.type_ of
                 Just NodeType.Role ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ textH T.authority ]
+                            [ label [ class "label is-pulled-left" ] [ text T.authority ]
                             , viewSelectAuthority op
                             ]
                         ]
@@ -781,7 +782,7 @@ viewAboutInput2 hasBeenPushed source txt node op =
                 Just NodeType.Circle ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ textH T.governance ]
+                            [ label [ class "label is-pulled-left" ] [ text T.governance ]
                             , viewSelectGovernance op
                             ]
                         ]
@@ -790,21 +791,21 @@ viewAboutInput2 hasBeenPushed source txt node op =
                     text ""
             ]
         , div [ class "field" ]
-            [ label [ class "label" ] [ textH T.about ]
+            [ label [ class "label" ] [ text T.about ]
             , div [ class "control" ]
                 [ input
                     [ id "aboutField"
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
-                    , placeholder (upH T.aboutOpt)
+                    , placeholder T.aboutOpt
                     , spellcheck True
                     , value (withDefault "" node.about)
                     , onInput <| op.onChangePost "about"
                     ]
                     []
                 ]
-            , p [ class "help-label" ] [ textH txt.about_help ]
+            , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
         ]
@@ -869,13 +870,13 @@ viewMandateInput txt mandate op =
     div []
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ textH T.purpose ]
+                [ text T.purpose ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows (min 15 (max purpose_len 5))
-                    , placeholder (upH txt.ph_purpose)
+                    , placeholder txt.ph_purpose
                     , value purpose
                     , onInput <| op.onChangePost "purpose"
                     , required True
@@ -889,12 +890,12 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ textH T.responsabilities ]
+                [ div [ class "label" ] [ text T.responsabilities ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows (min 15 (max responsabilities_len 5))
-                        , placeholder (upH txt.ph_responsabilities)
+                        , placeholder txt.ph_responsabilities
                         , value responsabilities
                         , onInput <| op.onChangePost "responsabilities"
                         ]
@@ -906,12 +907,12 @@ viewMandateInput txt mandate op =
             text ""
         , if showDomains then
             div [ class "field" ]
-                [ div [ class "label" ] [ textH T.domains ]
+                [ div [ class "label" ] [ text T.domains ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 5
-                        , placeholder (upH txt.ph_domains)
+                        , placeholder txt.ph_domains
                         , value domains
                         , onInput <| op.onChangePost "domains"
                         ]
@@ -923,12 +924,12 @@ viewMandateInput txt mandate op =
             text ""
         , if showPolicies then
             div [ class "field" ]
-                [ div [ class "label" ] [ textH T.policies ]
+                [ div [ class "label" ] [ text T.policies ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 5
-                        , placeholder (upH txt.ph_policies)
+                        , placeholder txt.ph_policies
                         , value policies
                         , onInput <| op.onChangePost "policies"
                         ]
@@ -941,7 +942,7 @@ viewMandateInput txt mandate op =
         , if showResponsabilities == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddResponsabilities ]
-                    [ A.icon1 "icon-plus" "", textH T.addResponsabilities ]
+                    [ A.icon1 "icon-plus" "", text T.addResponsabilities ]
                 ]
 
           else
@@ -949,7 +950,7 @@ viewMandateInput txt mandate op =
         , if showDomains == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddDomains ]
-                    [ A.icon1 "icon-plus" "", textH T.addDomains ]
+                    [ A.icon1 "icon-plus" "", text T.addDomains ]
                 ]
 
           else
@@ -957,7 +958,7 @@ viewMandateInput txt mandate op =
         , if showPolicies == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddPolicies ]
-                    [ A.icon1 "icon-plus" "", textH T.addPolicies ]
+                    [ A.icon1 "icon-plus" "", text T.addPolicies ]
                 ]
 
           else
@@ -994,14 +995,14 @@ viewBlobButtons blob_type isSendable isLoading op =
             [ div [ class "control" ]
                 [ div [ class "buttons" ]
                     [ button [ class "button", onClick op.onCancelBlob ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     , button
                         [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
                         , onClick (op.onSubmit isLoading <| op.onSubmitBlob data)
                         ]
-                        [ textH T.saveChanges ]
+                        [ text T.saveChanges ]
                     ]
                 ]
             ]
@@ -1022,7 +1023,7 @@ viewSelectAuthority op =
     div [ class "field" ]
         [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
-                [ span [ class ("has-text-" ++ roleColor role_type_selected) ] [ textH (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class ("has-text-" ++ roleColor role_type_selected) ] [ text (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
@@ -1036,7 +1037,7 @@ viewSelectAuthority op =
                                 , onClick <| op.onChangePost "role_type" (RoleType.toString role_type)
                                 ]
                                 [ ternary (role_type_selected == role_type) (checked clsColor) unchecked
-                                , textH (RoleType.toString role_type)
+                                , text (RoleType.toString role_type)
 
                                 --, span [ class "is-pulled-right mx-2 is-small tooltip" ] [ A.icon "icon-info" ]
                                 ]
@@ -1061,13 +1062,13 @@ viewSelectGovernance op =
     div [ class "field" ]
         [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-governance" ]
-                [ span [ class "has-text-" ] [ textH (NodeMode.toString mode_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class "has-text-" ] [ text (NodeMode.toString mode_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-governance", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
                         (\mode ->
                             div [ class "dropdown-item button-light ", onClick <| op.onChangePost "mode" (NodeMode.toString mode) ]
-                                [ ternary (mode_selected == mode) (checked "") unchecked, textH (NodeMode.toString mode) ]
+                                [ ternary (mode_selected == mode) (checked "") unchecked, text (NodeMode.toString mode) ]
                         )
                         NodeMode.list
                 ]
@@ -1079,13 +1080,13 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : Time.Posix -> GqlData TensionBlobs -> Html msg
-viewVersions now blobsData =
-    Lazy.lazy2 viewVersions_ now blobsData
+viewVersions : Lang.Lang -> Time.Posix -> GqlData TensionBlobs -> Html msg
+viewVersions lang now blobsData =
+    Lazy.lazy3 viewVersions_ lang now blobsData
 
 
-viewVersions_ : Time.Posix -> GqlData TensionBlobs -> Html msg
-viewVersions_ now blobsData =
+viewVersions_ : Lang.Lang -> Time.Posix -> GqlData TensionBlobs -> Html msg
+viewVersions_ lang now blobsData =
     case blobsData of
         Success tblobs ->
             let
@@ -1096,11 +1097,11 @@ viewVersions_ now blobsData =
                 -- @debug table-container with width=100%, do not work!
                 [ table [ class "table is-fullwidth table-container" ]
                     [ thead []
-                        [ tr [] (headers |> List.map (\x -> th [] [ textH x ]))
+                        [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
                         ]
                     , tblobs.blobs
                         |> withDefault []
-                        |> List.indexedMap (\i d -> viewVerRow now i d)
+                        |> List.indexedMap (\i d -> viewVerRow lang now i d)
                         |> List.concat
                         |> tbody []
                     ]
@@ -1116,17 +1117,17 @@ viewVersions_ now blobsData =
             text ""
 
 
-viewVerRow : Time.Posix -> Int -> Blob -> List (Html msg)
-viewVerRow now i blob =
+viewVerRow : Lang.Lang -> Time.Posix -> Int -> Blob -> List (Html msg)
+viewVerRow lang now i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt now blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt lang now blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (upH T.published ++ " " ++ formatDate now flag)
+                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate lang now flag)
                         ]
                         [ A.icon "icon-flag" ]
 

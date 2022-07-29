@@ -414,7 +414,7 @@ view op (State model) =
                 , classList [ ( "is-invisible", not model.isActive ) ]
                 , onClick OnToggle
                 ]
-                [ A.icon1 "icon-chevrons-left" "Collapse" ]
+                [ A.icon1 "icon-chevrons-left" T.collapse ]
             , div [ class "pb-6 is-invisible" ] [ text "nop" ]
             ]
 

@@ -322,6 +322,11 @@ a.is-link {
     text-decoration: none !important;
     color: var(--text) !important;
 }
+.underlined-link {
+    &:hover {
+        text-decoration: underline !important;
+    }
+}
 
 .is-flex-grow {
 	flex-grow: 1 !important;
@@ -2024,6 +2029,7 @@ tr.mediaBox {
 }
 
 #confirmModal {
+    z-index: 60 !important;
     .modal-card-body {
         border-radius: 4px;
     }
@@ -2068,7 +2074,7 @@ tr.mediaBox {
 }
 
 #helpModal {
-    z-index: 90 !important;
+    z-index: 50 !important;
     .modal-content, .modal-card {
         @media (min-width: $fullhd){
             height: 90%;

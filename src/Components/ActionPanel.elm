@@ -119,93 +119,93 @@ panelAction2str : PanelState -> String
 panelAction2str action =
     case action of
         MoveAction ->
-            upH T.move
+            T.move
 
         VisibilityAction ->
-            upH T.visibility
+            T.visibility
 
         AuthorityAction ->
-            upH T.authority
+            T.authority
 
         LinkAction ->
-            upH T.firstLink
+            T.firstLink
 
         UnLinkAction _ ->
-            upH T.unlink
+            T.unlink
 
         ArchiveAction ->
-            upH T.archive
+            T.archive
 
         UnarchiveAction ->
-            upH T.unarchive
+            T.unarchive
 
         LeaveAction ->
-            upH T.leaveRole
+            T.leaveRole
 
 
 action2submitstr : PanelState -> Bool -> String
 action2submitstr action selfContract =
     case action of
         MoveAction ->
-            upH T.move
+            T.move
 
         VisibilityAction ->
-            upH T.submit
+            T.submit
 
         AuthorityAction ->
-            upH T.submit
+            T.submit
 
         LinkAction ->
             if selfContract then
-                upH T.link
+                T.link
 
             else
-                upH T.invite
+                T.invite
 
         UnLinkAction _ ->
-            upH T.unlink
+            T.unlink
 
         ArchiveAction ->
-            upH T.archive
+            T.archive
 
         UnarchiveAction ->
-            upH T.unarchive
+            T.unarchive
 
         LeaveAction ->
-            upH T.leaveRole
+            T.leaveRole
 
 
 action2header : PanelState -> NodeType.NodeType -> String
 action2header action type_ =
     case action of
         MoveAction ->
-            "Move {{type}}: "
+            ""
 
         VisibilityAction ->
-            "Change Visibility of: "
+            "Change Visibility of:"
 
         AuthorityAction ->
             case type_ of
                 NodeType.Circle ->
-                    "Change Governance process of: "
+                    "Change Governance process of:"
 
                 NodeType.Role ->
-                    "Change Authority of: "
+                    "Change Authority of:"
 
         LinkAction ->
-            "New lead for role: "
+            "New lead for role:"
 
         UnLinkAction _ ->
-            "Unlink lead for role: "
+            "Unlink lead for role:"
 
         ArchiveAction ->
-            "Archive {{type}}: "
+            "Archive {{type}}:"
 
         UnarchiveAction ->
-            "Unarchive {{type}}: "
+            "Unarchive {{type}}:"
 
         LeaveAction ->
-            "Leave {{type}}: "
+            "Leave {{type}}:"
 
 
 action2post : PanelState -> Bool -> String
@@ -831,7 +831,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         -- Components
@@ -960,7 +960,7 @@ viewPanel op model =
                             (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
                         )
                     ]
-                    [ A.icon1 "icon-edit-2" (upH T.edit) ]
+                    [ A.icon1 "icon-edit-2" T.edit ]
                 ]
 
              else
@@ -970,7 +970,7 @@ viewPanel op model =
                     if model.form.node.role_type /= Just RoleType.Guest then
                         [ div
                             [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid ]) ]
-                            [ A.icon1 "icon-plus" (upH (T.add ++ "...")) ]
+                            [ A.icon1 "icon-plus" (T.add ++ "...") ]
                         , hr [ class "dropdown-divider" ] []
                         ]
 
@@ -1096,7 +1096,7 @@ viewModalContent op model =
                         , onClickPD (OnCloseModal { reset = True, link = link })
                         , target "_blank"
                         ]
-                        [ textH T.checkItOut ]
+                        [ text T.checkItOut ]
 
                   else
                     text ""
@@ -1124,7 +1124,7 @@ viewStep1 op model =
                     |> text
                     |> List.singleton
                     |> span []
-                , span [ class "has-text-primary" ] [ text model.form.node.name ]
+                , span [ class "has-text-primary ml-2" ] [ text model.form.node.name ]
 
                 --, button [ class "delete is-pulled-right", onClick (OnCloseModalSafe "" "") ] []
                 ]
@@ -1167,7 +1167,7 @@ viewStep1 op model =
                         [ class "button is-light"
                         , onClick (OnCloseModalSafe "" "")
                         ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
@@ -1191,17 +1191,17 @@ viewComment model =
             [ textarea
                 [ class "textarea"
                 , rows 3
-                , placeholder (upH T.leaveCommentOpt)
+                , placeholder T.leaveCommentOpt
                 , value (Dict.get "message" model.form.post |> withDefault "")
                 , onInput <| OnChangePost "message"
                 ]
                 []
             ]
         , if model.state == LinkAction then
-            p [ class "help-label" ] [ textH T.invitationMessageHelp ]
+            p [ class "help-label" ] [ text T.invitationMessageHelp ]
 
           else
-            p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+            p [ class "help-label" ] [ text T.tensionMessageHelp ]
         ]
 
 

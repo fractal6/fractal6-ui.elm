@@ -362,7 +362,7 @@ refreshModal op model =
                                 ]
                             ]
                         , div [ class "is-size-7 is-pulled-left" ]
-                            [ a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
+                            [ a [ href (toHref Route.PasswordReset) ] [ text T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]
@@ -474,10 +474,10 @@ signupModal op model =
                                                 , class "button is-success"
                                                 , onClick (SubmitUser form)
                                                 ]
-                                                [ textH T.confirm ]
+                                                [ text T.confirm ]
 
                                           else
-                                            button [ class "button", disabled True ] [ textH T.confirm ]
+                                            button [ class "button", disabled True ] [ text T.confirm ]
                                         ]
                                     ]
                                 , div []
@@ -552,7 +552,7 @@ signinModal op model =
                             [ span [ class "mr-2" ] [ text T.needAnAccount ]
                             , a [ href (toHref Route.Signup) ] [ text T.signupNow ]
                             , br [ class "mb-1" ] []
-                            , a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
+                            , a [ href (toHref Route.PasswordReset) ] [ text T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]

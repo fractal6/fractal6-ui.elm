@@ -5,12 +5,16 @@
 Usage:
     i18n ls
     i18n bootstrap [-w]
+    i18n gen [--lang LANG] [-w]
 
 Commands:
     ls     List i18n items
+    bootstrap Initialiaz .toml file from a elm file containent traductions
+    gen generate an elm file in the given lang.
 
 Options:
-    -w, --write         save/replace in file.
+    -w, --write        save/replace in file.
+    -l, --lang         lang to use (DEFAULT: en).
 
 Examples:
     i18n.py ls
@@ -22,11 +26,26 @@ from string import Template
 from docopt import docopt
 from loguru import logger
 
-src_path = "src/"
+elm_header = """\
+module Text exposing (..)
+
+{-
+    Auto-generated i18n
+-}
+
+"""
+
+elm_entry_template = """\
+{k} : String
+{k} =
+    {v}
+"""
 
 class I18N(object):
 
-    i18n_output = "i18n/i18n.toml"
+    src_path = "src/"
+    i18n_input = "i18n/i18n.toml"
+    i18n_output = "src/Text.elm"
 
     def __init__(self, conf):
         self.conf = conf
@@ -37,16 +56,79 @@ class I18N(object):
             self._list_items()
         elif q["bootstrap"]:
             data = self._bootstrap()
-
             if q["--write"]:
-                with open(self.i18n_output, "w") as _f:
+                with open(self.i18n_input, "w") as _f:
                     for ll in data:
                         k = ll[0]
                         v = ll[1]
                         _f.write("[%s]\n" % k)
                         _f.write("  en=%s\n" % v)
                         _f.write("\n")
+            else:
+                print(data)
 
+        elif q["gen"]:
+            lang = q.get("LANG") or "en"
+            data = self._gen(lang)
+            if q["--write"]:
+                with open(self.i18n_output, "w") as _f:
+                    _f.write(elm_header)
+                    for ll in data:
+                        k = ll[0]
+                        v = ll[1]
+                        _f.write(elm_entry_template.format(k=k, v=v))
+                        _f.write("\n\n")
+
+                print("%s written" % self.i18n_output)
+            else:
+                print(data)
+
+    def _gen(self, lang):
+        with open(self.i18n_input) as _f:
+            lines = _f.readlines()
+
+        multiline = False
+        in_entry = False
+        entry = ""
+        # data is a tuple of (#keyword identifier, #text content, #list of named arguments)
+        data = []
+        for l in lines:
+            l = l.strip()
+            if not in_entry or (l.startswith("[") and l.endswith("]")):
+                # Got an entry
+                in_entry = True
+                entry = l[1:-1]
+                continue
+
+            if not in_entry:
+                # Ignore everithing else
+                continue
+
+            if multiline:
+                # Multiline entry
+                content += l
+                if l.endswith('"""') or l.endswith("'''"):
+                    multiline = False
+                    in_entry = False
+                    data.append([entry, content])
+                else:
+                    content += "\n"
+            else:
+                # single line entry
+                ll = l.split("=")
+                if len(ll) < 2: continue
+                k = ll[0].strip()
+                v = "=".join(ll[1:]).strip()
+                if k != lang:
+                    continue
+                if v.startswith('"""') or v.startswith("'''"):
+                    multiline = True
+                    content = v + "\n"
+                    continue
+
+                data.append([entry, v])
+
+        return data
 
     def _bootstrap(self):
         with open("src/temp.elm") as _f:
@@ -68,9 +150,9 @@ class I18N(object):
                     content += "\n"
             else:
                 ll = l.split("=")
-                if len(ll) != 2: continue
+                if len(ll) < 2: continue
                 k = ll[0].strip()
-                v = ll[1].strip()
+                v = "=".join(ll[1:]).strip()
                 if v.startswith('"""') or v.startswith("'''"):
                     multiline = True
                     last_k = k
@@ -82,7 +164,7 @@ class I18N(object):
         return data
 
     def _list_items(self):
-        with open(self.i18n_output) as _f:
+        with open(self.i18n_input) as _f:
             lines = _f.readlines()
 
         n_entries = 0
@@ -92,6 +174,8 @@ class I18N(object):
                 n_entries +=1
 
         print("Number of entries: %d" % n_entries)
+		# Number of entrie per lang
+		#grep "en=" i18n/i18n.toml  | wc -l
 
 
 if __name__ == "__main__":

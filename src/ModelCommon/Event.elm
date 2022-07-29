@@ -6,6 +6,7 @@ import Extra exposing (ternary, textH, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -38,32 +39,168 @@ import Text as T
 import Time
 
 
+eventToLink : UserEvent -> EventNotif -> String
+eventToLink ue e =
+    if
+        List.member e.event_type
+            [ TensionEvent.Closed
+            , TensionEvent.Reopened
+            , TensionEvent.CommentPushed
+            , TensionEvent.Moved
+            , TensionEvent.UserLeft
+            , TensionEvent.UserJoined
+            , TensionEvent.MemberLinked
+            , TensionEvent.MemberUnlinked
+            , TensionEvent.Visibility
+            , TensionEvent.Authority
+            ]
+    then
+        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Comment
+            ++ "?eid="
+            ++ ue.id
+            ++ "&goto="
+            ++ e.createdAt
+
+    else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived ] then
+        (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Document/Mandate
+            ++ "?eid="
+            ++ ue.id
+
+    else
+        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Tension
+            ++ "?eid="
+            ++ ue.id
+
+
+contractToLink : UserEvent -> ContractNotif -> String
+contractToLink ue c =
+    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
+
+
+viewEventMedia : Lang.Lang -> Time.Posix -> Bool -> Dict String String -> Html msg
+viewEventMedia lang now inline ev =
+    div [ class "content" ]
+        [ p [] <|
+            [ a
+                [ class "discrete-link"
+                , href (Dict.get "link" ev |> withDefault "#")
+                ]
+              <|
+                List.intersperse (text " ") <|
+                    [ A.icon (Dict.get "icon" ev |> withDefault "")
+                    , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text T.in_ ]
+                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+                    , text ":"
+                    , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
+                    ]
+            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            ]
+        ]
+
+
+viewContractMedia : Lang.Lang -> Time.Posix -> Dict String String -> Html msg
+viewContractMedia lang now ev =
+    div [ class "content" ]
+        [ p [] <|
+            [ a
+                [ class "discrete-link"
+                , href (Dict.get "link" ev |> withDefault "#")
+                ]
+              <|
+                List.intersperse (text " ") <|
+                    [ A.icon "icon-edit"
+                    , strong [ class "ml-1" ] [ Dict.get "contract" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ Dict.get "jonction" ev |> withDefault "" |> text ]
+
+                    --, A.icon (Dict.get "icon" ev |> withDefault "")
+                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text T.in_ ]
+                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+                    ]
+            , small [ class "help" ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            ]
+        ]
+
+
+viewNotifMedia : Lang.Lang -> Time.Posix -> Dict String String -> Html msg
+viewNotifMedia lang now ev =
+    div [ class "content" ]
+        [ a [ class "discrete-link", href (Dict.get "link" ev |> withDefault "#") ] <|
+            List.intersperse (text " ") <|
+                [ A.icon (Dict.get "icon" ev |> withDefault "")
+                , Dict.get "title" ev |> withDefault "no input message." |> text
+                ]
+        , small [ class "help" ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+        ]
+
+
 eventTypeToText : TensionEvent.TensionEvent -> String
 eventTypeToText e =
     case e of
         TensionEvent.Created ->
-            "New tension"
+            T.created_event
 
         TensionEvent.Closed ->
-            "Tension closed"
+            T.closed_event
 
         TensionEvent.Reopened ->
-            "Tension reopened"
+            T.reopened_event
 
         TensionEvent.CommentPushed ->
-            "New comment"
+            T.commentPushed_event
 
         TensionEvent.Moved ->
-            "Tension moved"
+            T.moved_event
+
+        TensionEvent.TitleUpdated ->
+            T.titleUpdated_event
 
         TensionEvent.TypeUpdated ->
-            "Tension type updated"
+            T.typeUpdated_event
+
+        TensionEvent.Authority ->
+            T.authority_event
+
+        TensionEvent.Visibility ->
+            T.visibility_event
+
+        TensionEvent.LabelAdded ->
+            T.labelAdded_event
+
+        TensionEvent.LabelRemoved ->
+            T.labelRemoved_event
+
+        TensionEvent.AssigneeAdded ->
+            T.assigneeAdded_event
+
+        TensionEvent.AssigneeRemoved ->
+            T.assigneeRemoved_event
 
         TensionEvent.BlobCommitted ->
-            "Mandate committed"
+            T.blobCommitted_event
 
         TensionEvent.BlobPushed ->
-            "Mandate updated"
+            T.blobCommitted_event
+
+        TensionEvent.MemberLinked ->
+            T.memberLinked_event
+
+        TensionEvent.MemberUnlinked ->
+            T.memberUnlinked_event
+
+        TensionEvent.UserJoined ->
+            T.userJoined_event
+
+        TensionEvent.UserLeft ->
+            T.userLeft_event
 
         _ ->
             e |> TensionEvent.toString |> SE.humanize
@@ -89,35 +226,45 @@ contractEventToText : TensionEvent.TensionEvent -> String
 contractEventToText c =
     case c of
         TensionEvent.Moved ->
-            "Move tension"
+            T.moved_contract
 
         TensionEvent.MemberLinked ->
-            "New lead link"
+            T.memberLinked_contract
 
         TensionEvent.MemberUnlinked ->
-            "Retired lead link"
+            T.memberUnlinked_contract
 
         TensionEvent.UserJoined ->
-            "New guest"
+            T.userJoined_contract
 
         _ ->
             c |> TensionEvent.toString |> SE.humanize
+
+
+contractToJonction : ContractType.ContractType -> String
+contractToJonction c =
+    case c of
+        ContractType.AnyCandidates ->
+            T.as_
+
+        _ ->
+            T.to
 
 
 cev2c : TensionEvent.TensionEvent -> String
 cev2c c =
     case c of
         TensionEvent.Moved ->
-            "Congratulations, tension has been moved."
+            T.moved_contract_success
 
         TensionEvent.MemberLinked ->
-            "Congratulations, you have been link to this role."
+            T.memberLinked_contract_success
 
         TensionEvent.MemberUnlinked ->
-            "Congratulations, you have been unlink to this role."
+            T.memberUnlinked_contract_success
 
         TensionEvent.UserJoined ->
-            "Congratulations, you've joined this organization."
+            T.userJoined_contract_success
 
         _ ->
             "@TODO contractEventToText"
@@ -127,10 +274,10 @@ cev2p : TensionEvent.TensionEvent -> String
 cev2p c =
     case c of
         TensionEvent.MemberLinked ->
-            "Congratulations, user has been linked."
+            T.memberLinked_contract_success_ext
 
         TensionEvent.UserJoined ->
-            "Congratulations, user has joined the organization."
+            T.userJoined_contract_success_ext
 
         _ ->
             cev2c c
@@ -204,106 +351,3 @@ eventToIcon ev =
 
         _ ->
             ""
-
-
-eventToLink : UserEvent -> EventNotif -> String
-eventToLink ue e =
-    if
-        List.member e.event_type
-            [ TensionEvent.Closed
-            , TensionEvent.Reopened
-            , TensionEvent.CommentPushed
-            , TensionEvent.Moved
-            , TensionEvent.UserLeft
-            , TensionEvent.UserJoined
-            , TensionEvent.MemberLinked
-            , TensionEvent.MemberUnlinked
-            , TensionEvent.Visibility
-            , TensionEvent.Authority
-            ]
-    then
-        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
-            -- Comment
-            ++ "?eid="
-            ++ ue.id
-            ++ "&goto="
-            ++ e.createdAt
-
-    else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived ] then
-        (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
-            -- Document/Mandate
-            ++ "?eid="
-            ++ ue.id
-
-    else
-        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
-            -- Tension
-            ++ "?eid="
-            ++ ue.id
-
-
-contractToLink : UserEvent -> ContractNotif -> String
-contractToLink ue c =
-    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
-
-
-viewEventMedia : Time.Posix -> Bool -> Dict String String -> Html msg
-viewEventMedia now inline ev =
-    div [ class "content" ]
-        [ p [] <|
-            [ a
-                [ class "discrete-link"
-                , href (Dict.get "link" ev |> withDefault "#")
-                ]
-              <|
-                List.intersperse (text " ") <|
-                    [ A.icon (Dict.get "icon" ev |> withDefault "")
-                    , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
-                    , span [ class "is-discrete" ] [ text "in" ]
-                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
-                    , text ":"
-                    , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
-                    ]
-            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
-            ]
-        ]
-
-
-viewContractMedia : Time.Posix -> Dict String String -> Html msg
-viewContractMedia now ev =
-    div [ class "content" ]
-        [ p [] <|
-            [ a
-                [ class "discrete-link"
-                , href (Dict.get "link" ev |> withDefault "#")
-                ]
-              <|
-                List.intersperse (text " ") <|
-                    [ A.icon "icon-edit"
-                    , strong [ class "ml-1" ] [ Dict.get "contract" ev |> withDefault "" |> text ]
-                    , span [ class "is-discrete" ] [ text "to" ]
-
-                    --, A.icon (Dict.get "icon" ev |> withDefault "")
-                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
-                    , span [ class "is-discrete" ] [ text "in" ]
-                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
-                    ]
-            , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
-            ]
-        ]
-
-
-viewNotifMedia : Time.Posix -> Dict String String -> Html msg
-viewNotifMedia now ev =
-    div [ class "content" ]
-        [ a [ class "discrete-link", href (Dict.get "link" ev |> withDefault "#") ] <|
-            List.intersperse (text " ") <|
-                [ A.icon (Dict.get "icon" ev |> withDefault "")
-                , Dict.get "title" ev |> withDefault "no input message." |> text
-                ]
-        , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
-        ]

@@ -17,6 +17,7 @@ import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -477,11 +478,11 @@ view global model =
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
             }
     in
-    { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData
-            , div [ id "mainPane" ] [ view_ global.session.user model ]
+            , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -493,19 +494,22 @@ view global model =
     }
 
 
-view_ : UserState -> Model -> Html Msg
-view_ us model =
+view_ : Global.Model -> Model -> Html Msg
+view_ global model =
     let
         rtid =
             tidFromPath model.path_data |> withDefault ""
 
         isAdmin =
-            case us of
+            case global.session.user of
                 LoggedIn uctx ->
                     hasAdminRole uctx model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
+
+        lang =
+            global.session.lang
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
@@ -515,14 +519,14 @@ view_ us model =
                         [ class "button is-primary is-pulled-right"
                         , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                         ]
-                        [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
+                        [ A.icon1 "icon-user-plus" T.inviteMembers ]
 
                   else
                     text ""
                 , div [ class "columns mb-6 px-3-mobile" ]
-                    [ Lazy.lazy3 viewMembers model.now model.members_sub model.node_focus ]
+                    [ Lazy.lazy4 viewMembers lang model.now model.members_sub model.node_focus ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy3 viewGuest model.now model.members_top model.node_focus ]
+                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest lang model.now model.members_top model.node_focus ]
                     , div [ class "column is-3" ] [ viewPending model.now model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
@@ -530,8 +534,8 @@ view_ us model =
         ]
 
 
-viewMembers : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
-viewMembers now data focus =
+viewMembers : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
+viewMembers lang now data focus =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
@@ -547,22 +551,22 @@ viewMembers now data focus =
 
             else
                 div []
-                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.members, goToParent ]
+                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.members, goToParent ]
                     , div [ class "table-container" ]
                         [ div [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr [ class "has-background-header" ]
                                     [ th [] []
-                                    , th [] [ textH T.username ]
-                                    , th [] [ textH T.name ]
-                                    , th [] [ textH T.rolesHere ]
-                                    , th [] [ textH T.rolesSub ]
+                                    , th [] [ text T.username ]
+                                    , th [] [ text T.name ]
+                                    , th [] [ text T.rolesHere ]
+                                    , th [] [ text T.rolesSub ]
                                     ]
                                 ]
                             , tbody [] <|
                                 List.map
                                     (\m ->
-                                        Lazy.lazy3 viewMemberRow now focus m
+                                        Lazy.lazy4 viewMemberRow lang now focus m
                                     )
                                     members
                             ]
@@ -579,8 +583,8 @@ viewMembers now data focus =
             text ""
 
 
-viewGuest : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
-viewGuest now members_d focus =
+viewGuest : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
+viewGuest lang now members_d focus =
     let
         guests =
             members_d
@@ -600,15 +604,15 @@ viewGuest now members_d focus =
                     [ thead []
                         [ tr [ class "has-background-header" ]
                             [ th [] []
-                            , th [] [ textH T.username ]
-                            , th [] [ textH T.name ]
-                            , th [] [ textH T.roles ]
+                            , th [] [ text T.username ]
+                            , th [] [ text T.name ]
+                            , th [] [ text T.roles ]
                             ]
                         ]
                     , tbody [] <|
                         List.indexedMap
                             (\i m ->
-                                Lazy.lazy2 viewGuestRow now m
+                                Lazy.lazy3 viewGuestRow lang now m
                             )
                             guests
                     ]
@@ -641,14 +645,14 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
                     , classList [ ( "is-invisible", not pending_hover ) ]
                     , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
                     ]
-                    [ text "Go to contracts" ]
+                    [ text T.goContracts ]
                 ]
             , div [ class "table-container" ]
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
                         [ tr [ class "has-background-header" ]
-                            [ th [] [ textH T.username ]
-                            , th [] [ textH T.name ]
+                            [ th [] [ text T.username ]
+                            , th [] [ text T.name ]
                             ]
                         ]
                     , tbody [] <|
@@ -658,7 +662,7 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
                                     [ td [] [ viewUsernameLink m.username ]
                                     , td [] [ m.name |> withDefault "--" |> text ]
                                     , if Just i == pending_hover_i then
-                                        td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text "Go to contract" ] ]
+                                        td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
 
                                       else
                                         text ""
@@ -673,8 +677,8 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
         div [] []
 
 
-viewMemberRow : Time.Posix -> NodeFocus -> Member -> Html Msg
-viewMemberRow now focus m =
+viewMemberRow : Lang.Lang -> Time.Posix -> NodeFocus -> Member -> Html Msg
+viewMemberRow lang now focus m =
     let
         ( roles_, sub_roles_ ) =
             List.foldl
@@ -699,7 +703,7 @@ viewMemberRow now focus m =
                     text "--"
 
                 _ ->
-                    viewMemberRoles now OverviewBaseUri roles_
+                    viewMemberRoles lang now OverviewBaseUri roles_
             ]
         , td [ class "pt-3" ]
             [ case sub_roles_ of
@@ -707,26 +711,26 @@ viewMemberRow now focus m =
                     text "--"
 
                 _ ->
-                    viewMemberRoles now OverviewBaseUri sub_roles_
+                    viewMemberRoles lang now OverviewBaseUri sub_roles_
             ]
         ]
 
 
-viewGuestRow : Time.Posix -> Member -> Html Msg
-viewGuestRow now m =
+viewGuestRow : Lang.Lang -> Time.Posix -> Member -> Html Msg
+viewGuestRow lang now m =
     tr []
         [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
         , td [ class "pt-3" ] [ viewUsernameLink m.username ]
         , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
+        , td [ class "pt-3" ] [ viewMemberRoles lang now OverviewBaseUri m.roles ]
         ]
 
 
-viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
-viewMemberRoles now baseUri roles =
+viewMemberRoles : Lang.Lang -> Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
+viewMemberRoles lang now baseUri roles =
     div [ class "buttons" ] <|
         List.map
-            (\r -> viewRole (Just ( now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r)
+            (\r -> viewRole (Just ( lang, now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r)
             roles
 
 

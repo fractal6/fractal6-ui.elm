@@ -95,15 +95,15 @@ burger targetid =
 viewNotFound : Html msg
 viewNotFound =
     div [ class "section" ]
-        [ h1 [ class "title" ] [ text "Sorry, Page Not found" ]
+        [ h1 [ class "title" ] [ text T.pageNotFound ]
         ]
 
 
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 is-highlight-3" ] [ text "Welcome to Fractale" ]
-        , p [ class "has-text-grey-light" ] [ text "a collective intelligence platform." ]
+        [ h2 [ class "mb-0 is-highlight-3" ] [ text T.welcome ]
+        , p [ class "has-text-grey-light" ] [ text T.welcomeSub ]
         ]
 
 

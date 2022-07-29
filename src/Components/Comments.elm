@@ -64,10 +64,10 @@ viewComment op c form result =
                 div [ class "message" ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile" ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
-                        , viewTensionDateAndUserC op.now c.createdAt c.createdBy
+                        , viewTensionDateAndUserC form.uctx.lang op.now c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
-                                viewUpdated op.now updatedAt
+                                viewUpdated form.uctx.lang op.now updatedAt
 
                             Nothing ->
                                 text ""
@@ -83,7 +83,7 @@ viewComment op c form result =
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (op.doUpdate c) ] [ textH T.edit ] ] ]
+                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (op.doUpdate c) ] [ text T.edit ] ] ]
                                     ]
                                 ]
 
@@ -93,7 +93,7 @@ viewComment op c form result =
                     , div [ class "message-body" ]
                         [ case c.message of
                             "" ->
-                                div [ class "help is-italic" ] [ text "No message provided." ]
+                                div [ class "help is-italic" ] [ text T.noMessageProvided ]
 
                             message ->
                                 renderMarkdown "is-human" message
@@ -122,8 +122,8 @@ viewUpdateInput op uctx comment form result =
         [ div [ class "message-header has-arrow-left" ]
             [ div [ class "tabs is-boxed is-small" ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]
-                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                     ]
                 ]
             ]
@@ -140,7 +140,7 @@ viewUpdateInput op uctx comment form result =
                                 [ id "updateCommentInput"
                                 , class "textarea"
                                 , rows (min 15 (max line_len 7))
-                                , placeholder (upH T.leaveComment)
+                                , placeholder T.leaveComment
                                 , value message
                                 , onInput (op.doChangePost "message")
                                 ]
@@ -163,14 +163,14 @@ viewUpdateInput op uctx comment form result =
                             [ class "button"
                             , onClick op.doCancelComment
                             ]
-                            [ textH T.cancel ]
+                            [ text T.cancel ]
                         , button
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (op.doSubmit isLoading op.doEditComment)
                             ]
-                            [ textH T.update ]
+                            [ text T.update ]
                         ]
                     ]
                 ]
@@ -204,10 +204,10 @@ viewCommentInput op uctx tension form result viewMode =
         closeOpenText =
             case tension.status of
                 TensionStatus.Open ->
-                    ternary (message == "") "Close tension" "Close and comment"
+                    ternary (message == "") T.close T.closeComment
 
                 TensionStatus.Closed ->
-                    ternary (message == "") "Reopen tension" "Reopen and comment"
+                    ternary (message == "") T.reopen T.reopenComment
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
@@ -216,8 +216,8 @@ viewCommentInput op uctx tension form result viewMode =
                 [ div [ class "message-header has-arrow-left" ]
                     [ div [ class "tabs is-boxed is-small" ]
                         [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                             ]
                         ]
                     ]
@@ -234,7 +234,7 @@ viewCommentInput op uctx tension form result viewMode =
                                         [ id "commentInput"
                                         , class "textarea"
                                         , rows (min 15 (max line_len op.rows))
-                                        , placeholder "Leave a comment"
+                                        , placeholder T.leaveComment
                                         , value message
                                         , onInput (op.doChangePost "message")
                                         ]
@@ -271,7 +271,7 @@ viewCommentInput op uctx tension form result viewMode =
                                      ]
                                         ++ doSubmit
                                     )
-                                    [ text "Comment" ]
+                                    [ text T.comment ]
                                 ]
                             ]
                         ]
@@ -303,8 +303,8 @@ viewContractCommentInput op uctx form result viewMode =
                 [ div [ class "message-header has-arrow-left" ]
                     [ div [ class "tabs is-boxed is-small" ]
                         [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                             ]
                         ]
                     ]
@@ -317,7 +317,7 @@ viewContractCommentInput op uctx form result viewMode =
                                         [ id "commentInput"
                                         , class "textarea"
                                         , rows op.rows
-                                        , placeholder "Leave a comment"
+                                        , placeholder T.leaveComment
                                         , value message
                                         , onInput (op.doChangePost "message")
                                         ]
@@ -347,7 +347,7 @@ viewContractCommentInput op uctx form result viewMode =
                                      ]
                                         ++ doSubmit
                                     )
-                                    [ text "Comment" ]
+                                    [ text T.comment ]
                                 ]
                             ]
                         ]

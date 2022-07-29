@@ -321,7 +321,7 @@ view_ user_s user model =
 viewProfileRight : UserState -> UserProfile -> Model -> Html Msg
 viewProfileRight user_s user model =
     div []
-        [ h1 [ class "subtitle" ] [ textH T.organisations ]
+        [ h1 [ class "subtitle" ] [ text T.organisations ]
         , if List.length (getRoles user) == 0 then
             p [ class "section content" ] <|
                 if (uctxFromUser user_s).username == model.username then
@@ -333,7 +333,7 @@ viewProfileRight user_s user model =
                                 , a [ href (toHref Route.Explore) ] [ text "Explore" ]
                                 , text "public organisations"
                                 , text ", or create your"
-                                , a [ href (toHref Route.New_Orga) ] [ textH "first organisation." ]
+                                , a [ href (toHref Route.New_Orga) ] [ text "first organisation." ]
                                 ]
                         ]
 

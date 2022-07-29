@@ -3,6 +3,7 @@ import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
+// @TODO/future: user  {username} in key to support multiple session
 export const UCTX_KEY = "user_ctx";
 
 function initQuickSearch(qs, data) {
@@ -257,8 +258,7 @@ export const actions = {
     // User Ctx -- Localstorage
     //
     'SAVE_USERCTX' : (app, session, user_ctx) => {
-        // @DEBUG: Maybe List encoder for multiple sessions ?
-        if (user_ctx.roles && user_ctx.roles.length == 0) delete user_ctx.roles
+        // Save session
         localStorage.setItem(UCTX_KEY, JSON.stringify(user_ctx.data));
 
         // If version is outdated, reload.

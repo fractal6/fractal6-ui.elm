@@ -247,7 +247,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         -- Data
@@ -362,7 +362,7 @@ viewModal op (State model) =
                             , onClickPD (OnClose { reset = True, link = link })
                             , target "_blank"
                             ]
-                            [ textH T.checkItOut ]
+                            [ text T.checkItOut ]
                         ]
 
                 _ ->
@@ -388,7 +388,7 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
-                [ textH T.newContract ]
+                [ text T.newContract ]
             ]
         , div [ class "modal-card-body" ]
             [ showMsg "0" "is-info is-light" "icon-info" T.contractInfoHeader T.contractInfo
@@ -398,13 +398,13 @@ viewModalContent op (State model) =
                     [ textarea
                         [ class "textarea"
                         , rows 3
-                        , placeholder (upH T.leaveCommentOpt)
+                        , placeholder T.leaveCommentOpt
                         , value message
                         , onInput <| OnChangePost "message"
                         ]
                         []
                     ]
-                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+                , p [ class "help-label" ] [ text T.tensionMessageHelp ]
                 ]
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
@@ -420,7 +420,7 @@ viewModalContent op (State model) =
                         [ class "button is-light"
                         , onClick (OnCloseSafe "" "")
                         ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
@@ -430,7 +430,7 @@ viewModalContent op (State model) =
                          ]
                             ++ [ onClick (OnSubmit <| OnDataQuery) ]
                         )
-                        [ textH T.createContract ]
+                        [ text T.createContract ]
                     ]
                 ]
             ]
@@ -441,15 +441,15 @@ showContractForm : ContractForm -> Html Msg
 showContractForm f =
     form [ class "box is-light form" ]
         [ div [ class "field is-horizontal" ]
-            [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractType ] ]
             , div [ class "field-body" ]
                 [ div [ class "field is-narro" ]
-                    [ input [ class "input", value (upH (contractTypeToText f.contract_type)), disabled True ] []
+                    [ input [ class "input", value (contractTypeToText f.contract_type), disabled True ] []
                     ]
                 ]
             ]
         , div [ class "field is-horizontal" ]
-            [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractEvent ] ]
             , div [ class "field-body" ] <|
                 case f.event.event_type of
                     TensionEvent.Moved ->
@@ -461,7 +461,7 @@ showContractForm f =
                                 f.event.new |> withDefault "unkown" |> nid2eor
                         in
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (upH (contractEventToText f.event.event_type)), disabled True ] []
+                            [ input [ class "input", value (contractEventToText f.event.event_type), disabled True ] []
                             ]
                         , viewTensionArrow "is-pulled-right" emitter receiver
                         ]

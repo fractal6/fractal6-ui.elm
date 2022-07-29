@@ -11,6 +11,7 @@ import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
@@ -36,7 +37,19 @@ import Loading
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
-import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
+import ModelCommon.Event
+    exposing
+        ( contractEventToText
+        , contractToJonction
+        , contractToLink
+        , contractTypeToText
+        , eventToIcon
+        , eventToLink
+        , eventTypeToText
+        , viewContractMedia
+        , viewEventMedia
+        , viewNotifMedia
+        )
 import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -360,7 +373,7 @@ view_ global model =
                         text "No notifications yet."
 
                     else
-                        viewNotifications notifications model
+                        viewNotifications global.session.lang notifications model
 
                 NotAsked ->
                     text ""
@@ -374,20 +387,20 @@ view_ global model =
                 Failure err ->
                     viewGqlErrors err
             ]
-        , div [ class "column is-2 has-text-centered" ] [ div [ class "button", onClick MarkAllAsRead ] [ text "Mark all as read" ] ]
+        , div [ class "column is-2 has-text-centered" ] [ div [ class "button", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
         ]
 
 
-viewNotifications : UserEvents -> Model -> Html Msg
-viewNotifications notifications model =
+viewNotifications : Lang.Lang -> UserEvents -> Model -> Html Msg
+viewNotifications lang notifications model =
     notifications
         |> List.map
-            (\ue -> Lazy.lazy2 viewUserEvent model.now ue)
+            (\ue -> Lazy.lazy3 viewUserEvent lang model.now ue)
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : Time.Posix -> UserEvent -> Html Msg
-viewUserEvent now ue =
+viewUserEvent : Lang.Lang -> Time.Posix -> UserEvent -> Html Msg
+viewUserEvent lang now ue =
     let
         firstEvent =
             List.head ue.event
@@ -423,7 +436,7 @@ viewUserEvent now ue =
                 ev =
                     Dict.fromList
                         [ ( "id", ue.id )
-                        , ( "title", e.event_type |> eventTypeToText )
+                        , ( "title", eventTypeToText e.event_type )
                         , ( "title_", e.tension.title )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
@@ -433,7 +446,7 @@ viewUserEvent now ue =
                         , ( "icon", eventToIcon e.event_type )
                         ]
             in
-            viewNotif ue node (viewEventMedia now False ev)
+            viewNotif ue node (viewEventMedia lang now False ev)
 
         Just (ContractEvent c) ->
             let
@@ -443,8 +456,9 @@ viewUserEvent now ue =
                 ev =
                     Dict.fromList
                         [ ( "id", ue.id )
-                        , ( "contract", c.contract_type |> contractTypeToText )
-                        , ( "title", c.event.event_type |> contractEventToText )
+                        , ( "contract", contractTypeToText c.contract_type )
+                        , ( "jonction", contractToJonction c.contract_type )
+                        , ( "title", contractEventToText c.event.event_type )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
                         , ( "date", c.createdAt )
@@ -455,7 +469,7 @@ viewUserEvent now ue =
             in
             div [ class "media mediaBox is-hoverable" ]
                 [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
-                , div [ class "media-content" ] [ viewContractMedia now ev ]
+                , div [ class "media-content" ] [ viewContractMedia lang now ev ]
                 , if not ue.isRead then
                     div
                         [ class "media-right tooltip"
@@ -499,7 +513,7 @@ viewUserEvent now ue =
                                 ev =
                                     Dict.insert "link" link ev_
                             in
-                            viewNotif ue node (viewNotifMedia now ev)
+                            viewNotif ue node (viewNotifMedia lang now ev)
 
                         Nothing ->
                             let
@@ -511,7 +525,7 @@ viewUserEvent now ue =
                                 ev =
                                     Dict.insert "link" link ev_
                             in
-                            viewNotif ue node (viewNotifMedia now ev)
+                            viewNotif ue node (viewNotifMedia lang now ev)
 
                 Nothing ->
                     -- Something has beed removed, contract ?
@@ -529,7 +543,7 @@ viewNotif ue node content =
         , if not ue.isRead then
             div
                 [ class "media-right tooltip"
-                , attribute "data-tooltip" "Mark as read."
+                , attribute "data-tooltip" T.markAsRead
                 , onClick (MarkAsRead ue.id)
                 ]
                 [ div [ class "Circle has-text-link is-w" ] [] ]

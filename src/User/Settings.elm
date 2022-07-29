@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (mor, space_, ternary, textH, textT, upH)
+import Extra exposing (mor, space_, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable, isPostSendableOr)
@@ -141,10 +141,11 @@ menuToString : MenuSettings -> ( String, String )
 menuToString menu =
     case menu of
         ProfileMenu ->
-            ( "Profile", "Public profile" )
+            ( T.profile, T.publicProfil )
 
         EmailMenu ->
-            ( "Email settings", "Email settings" )
+            --( "Email settings", "Email settings" )
+            ( T.emailConf, T.emailConf )
 
 
 menuToIcon : MenuSettings -> String
@@ -471,15 +472,15 @@ viewProfileSettings user result switch_index menuFocus form =
             isPostSendableOr [ "name", "bio", "location" ] form.post
     in
     div []
-        [ h2 [ class "subtitle is-size-3" ] [ textT (menuToString menuFocus |> Tuple.second) ]
+        [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ]
         , div [ class "mb-4" ]
             [ div [ class "field" ]
-                [ label [ class "label" ] [ text "Name" ]
+                [ label [ class "label" ] [ text T.name ]
                 , div [ class "control" ]
                     [ input
                         [ class "input"
                         , type_ "text"
-                        , placeholder "Choose a name for your public profile"
+                        , placeholder T.namePH
                         , value (withDefault "" (mor (Dict.get "name" form.post) user.name))
                         , onInput (OnChangePost "name")
                         ]
@@ -493,7 +494,7 @@ viewProfileSettings user result switch_index menuFocus form =
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , placeholder "Tell us more about yourself"
+                        , placeholder T.bioPH
                         , value (withDefault "" (mor (Dict.get "bio" form.post) user.bio))
                         , onInput (OnChangePost "bio")
                         ]
@@ -503,12 +504,12 @@ viewProfileSettings user result switch_index menuFocus form =
             ]
         , div [ class "mb-4" ]
             [ div [ class "field" ]
-                [ label [ class "label" ] [ A.icon1 "icon-map-pin" "Location" ]
+                [ label [ class "label" ] [ A.icon1 "icon-map-pin" T.location ]
                 , div [ class "control" ]
                     [ input
                         [ class "input"
                         , type_ "text"
-                        , placeholder "City, country..."
+                        , placeholder T.locationPH
                         , value (withDefault "" (mor (Dict.get "location" form.post) user.location))
                         , onInput (OnChangePost "location")
                         ]
@@ -531,7 +532,7 @@ viewProfileSettings user result switch_index menuFocus form =
                      ]
                         ++ ternary isSendable [ onClick (Submit SubmitProfile) ] []
                     )
-                    [ textH "Update profile" ]
+                    [ text T.updateProfile ]
                 ]
             ]
 
@@ -618,13 +619,13 @@ viewEmailSettings user result switch_index menuFocus =
         |> List.append
             [ div [ class "mb-4" ]
                 [ div [ class "field" ]
-                    [ label [ class "label" ] [ text "Email" ]
+                    [ label [ class "label" ] [ text T.email ]
                     , div [ class "control" ]
                         [ input [ class "input", type_ "text", value user.email, disabled True ] []
                         ]
                     ]
-                , div [ class "help-label" ] [ text "Your address is private, only you can see it." ]
+                , div [ class "help-label" ] [ text T.emailHelp ]
                 ]
             ]
-        |> List.append [ h2 [ class "subtitle is-size-3" ] [ textT (menuToString menuFocus |> Tuple.second) ] ]
+        |> List.append [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ] ]
         |> div []

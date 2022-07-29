@@ -25,6 +25,7 @@ import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -88,6 +89,7 @@ import ModelCommon.View
         , auth2val
         , statusColor
         , tensionIcon2
+        , tensionStatus2String
         , tensionTypeColor
         , viewCircleTarget
         , viewJoinNeeded
@@ -230,6 +232,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
+    , lang : Lang.Lang
     , empty : {}
 
     -- Components
@@ -471,6 +474,7 @@ init global flags =
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user
             , now = global.now
+            , lang = global.session.lang
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
 
@@ -1608,7 +1612,7 @@ viewTension u t model =
                                     []
                                 ]
                             , p [ class "control buttons" ]
-                                [ button [ class "button is-small", onClick CancelTitle ] [ textH T.cancel ]
+                                [ button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
                                 , button
                                     ([ class "button is-success is-small"
                                      , classList [ ( "is-loading", isLoading ) ]
@@ -1616,7 +1620,7 @@ viewTension u t model =
                                      ]
                                         ++ doSubmit
                                     )
-                                    [ textH T.update ]
+                                    [ text T.update ]
                                 ]
                             ]
                         , viewMaybeErrors model.title_result
@@ -1627,7 +1631,7 @@ viewTension u t model =
                         , if model.isTensionAdmin || isAuthor then
                             div
                                 [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
-                                , attribute "data-tooltip" (upH T.editTitle)
+                                , attribute "data-tooltip" T.editTitle
                                 , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
                                 ]
@@ -1647,11 +1651,11 @@ viewTension u t model =
                         -- As Governance tension get automatically closed when there are created,
                         -- there status is not relevant, I can cause confusion to user as the object exists.
                         span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                            [ t.status |> TensionStatus.toString |> text ]
+                            [ t.status |> tensionStatus2String |> text ]
 
                       else
                         text ""
-                    , viewTensionDateAndUser model.now "is-discrete" t.createdAt t.createdBy
+                    , viewTensionDateAndUser model.lang model.now "is-discrete" t.createdAt t.createdBy
 
                     -- @DEBUG: emitter and receiver not used anymore ?
                     --, viewTensionArrow "is-pulled-right" t.emitter t.receiver
@@ -1664,12 +1668,12 @@ viewTension u t model =
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
                             [ a [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ A.icon1 "icon-message-square" (upH T.conversation) ]
+                                [ A.icon1 "icon-message-square" T.conversation ]
                             ]
                         , if t.blobs /= Nothing && t.blobs /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ A.icon1 "icon-copy" (upH T.document) ]
+                                    [ A.icon1 "icon-copy" T.document ]
                                 ]
 
                           else
@@ -1677,7 +1681,7 @@ viewTension u t model =
                         , if t.contracts /= Nothing && t.contracts /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Contracts ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ A.icon1 "icon-link-2" (upH T.contracts) ]
+                                    [ A.icon1 "icon-link-2" T.contracts ]
                                 ]
 
                           else
@@ -1699,7 +1703,7 @@ viewTension u t model =
                     Contracts ->
                         case t.contracts |> withDefault [] of
                             [ c ] ->
-                                ContractsPage.view { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin, now = model.now } model.contractsPage
+                                ContractsPage.view { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin, now = model.now, lang = model.lang } model.contractsPage
                                     |> Html.map ContractsPageMsg
 
                             _ ->
@@ -1741,12 +1745,25 @@ viewConversation u t model =
                         viewJoinNeeded model.node_focus
 
                 LoggedOut ->
-                    viewJoinNeeded model.node_focus
+                    let
+                        userCanJoin =
+                            withMaybeData model.path_data
+                                |> Maybe.map
+                                    (\path ->
+                                        path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
+                                    )
+                                |> withDefault False
+                    in
+                    if userCanJoin then
+                        viewJoinNeeded model.node_focus
+
+                    else
+                        text ""
     in
     case model.tension_comments of
         Success comments ->
             div [ class "comments" ]
-                [ Lazy.lazy7 viewComments model.now t.action t.history comments model.comment_form model.comment_result model.expandedEvents
+                [ Lazy.lazy8 viewComments model.lang model.now t.action t.history comments model.comment_form model.comment_result model.expandedEvents
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -1762,7 +1779,8 @@ viewConversation u t model =
 
 
 viewComments :
-    Time.Posix
+    Lang.Lang
+    -> Time.Posix
     -> Maybe TensionAction.TensionAction
     -> Maybe (List Event)
     -> TensionComments
@@ -1770,7 +1788,7 @@ viewComments :
     -> GqlData Comment
     -> List Int
     -> Html Msg
-viewComments now action history_m comments_m comment_form comment_result expandedEvents =
+viewComments lang now action history_m comments_m comment_form comment_result expandedEvents =
     let
         comments =
             withDefault [] comments_m.comments
@@ -1790,7 +1808,7 @@ viewComments now action history_m comments_m comment_form comment_result expande
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent now action event
+                            viewEvent lang now action event
 
                         Nothing ->
                             text ""
@@ -1884,64 +1902,64 @@ viewComments now action history_m comments_m comment_form comment_result expande
         |> div []
 
 
-viewEvent : Time.Posix -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent now action event =
+viewEvent : Lang.Lang -> Time.Posix -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent lang now action event =
     let
         eventView =
             case event.event_type of
                 TensionEvent.Reopened ->
-                    viewEventStatus now event TensionStatus.Open
+                    viewEventStatus lang now event TensionStatus.Open
 
                 TensionEvent.Closed ->
-                    viewEventStatus now event TensionStatus.Closed
+                    viewEventStatus lang now event TensionStatus.Closed
 
                 TensionEvent.TitleUpdated ->
-                    viewEventTitle now event
+                    viewEventTitle lang now event
 
                 TensionEvent.TypeUpdated ->
-                    viewEventType now event
+                    viewEventType lang now event
 
                 TensionEvent.Visibility ->
-                    viewEventVisibility now event
+                    viewEventVisibility lang now event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority now event action
+                    viewEventAuthority lang now event action
 
                 TensionEvent.AssigneeAdded ->
-                    viewEventAssignee now event True
+                    viewEventAssignee lang now event True
 
                 TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee now event False
+                    viewEventAssignee lang now event False
 
                 TensionEvent.LabelAdded ->
-                    viewEventLabel now event True
+                    viewEventLabel lang now event True
 
                 TensionEvent.LabelRemoved ->
-                    viewEventLabel now event False
+                    viewEventLabel lang now event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed now event action
+                    viewEventPushed lang now event action
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived now event action True
+                    viewEventArchived lang now event action True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived now event action False
+                    viewEventArchived lang now event action False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked now event action
+                    viewEventMemberLinked lang now event action
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked now event action
+                    viewEventMemberUnlinked lang now event action
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined now event action
+                    viewEventUserJoined lang now event action
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft now event action
+                    viewEventUserLeft lang now event action
 
                 TensionEvent.Moved ->
-                    viewEventMoved now event
+                    viewEventMoved lang now event
 
                 _ ->
                     []
@@ -1953,8 +1971,8 @@ viewEvent now action event =
         div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
 
 
-viewEventStatus : Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
-viewEventStatus now event status =
+viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
+viewEventStatus lang now event status =
     let
         ( actionIcon, actionText ) =
             case status of
@@ -1966,20 +1984,20 @@ viewEventStatus now event status =
     in
     [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventTitle : Time.Posix -> Event -> List (Html Msg)
-viewEventTitle now event =
+viewEventTitle : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
+viewEventTitle lang now event =
     let
         icon =
             A.icon "icon-edit-2"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.subject ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right" ] []
@@ -1989,15 +2007,15 @@ viewEventTitle now event =
     ]
 
 
-viewEventType : Time.Posix -> Event -> List (Html Msg)
-viewEventType now event =
+viewEventType : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
+viewEventType lang now event =
     let
         icon =
             A.icon "icon-edit-2"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             , span [ class "arrow-right" ] []
@@ -2007,15 +2025,15 @@ viewEventType now event =
     ]
 
 
-viewEventVisibility : Time.Posix -> Event -> List (Html Msg)
-viewEventVisibility now event =
+viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
+viewEventVisibility lang now event =
     let
         icon =
             A.icon "icon-lock"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.visibility ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right" ] []
@@ -2025,23 +2043,23 @@ viewEventVisibility now event =
     ]
 
 
-viewEventAuthority : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventAuthority now event action =
+viewEventAuthority : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventAuthority lang now event action =
     let
         ( icon, eventText ) =
             case tensionAction2NodeType action of
                 Just NodeType.Circle ->
-                    ( A.icon "icon-key", T.governance )
+                    ( A.icon "icon-key", T.theGovernance )
 
                 Just NodeType.Role ->
-                    ( A.icon "icon-key", T.authority )
+                    ( A.icon "icon-key", T.theAuthority )
 
                 _ ->
                     ( A.icon "icon-key", "unknown action" )
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text eventText ], text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right" ] []
@@ -2051,8 +2069,8 @@ viewEventAuthority now event action =
     ]
 
 
-viewEventAssignee : Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventAssignee now event isNew =
+viewEventAssignee : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
+viewEventAssignee lang now event isNew =
     let
         icon =
             A.icon "icon-user"
@@ -2068,13 +2086,13 @@ viewEventAssignee now event isNew =
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventLabel : Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventLabel now event isNew =
+viewEventLabel : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
+viewEventLabel lang now event isNew =
     let
         icon =
             A.icon "icon-tag"
@@ -2093,26 +2111,26 @@ viewEventLabel now event isNew =
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventPushed : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventPushed now event action_m =
+viewEventPushed : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventPushed lang now event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
     in
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (action2str action), text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, text (action2str action), text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventArchived : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
-viewEventArchived now event action_m isArchived =
+viewEventArchived : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
+viewEventArchived lang now event action_m isArchived =
     let
         action =
             withDefault TensionAction.NewRole action_m
@@ -2126,44 +2144,44 @@ viewEventArchived now event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (action2str action), text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (action2str action), text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventMemberLinked : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberLinked now event action_m =
+viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberLinked lang now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventMemberUnlinked : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberUnlinked now event action_m =
+viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberUnlinked lang now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventUserJoined : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserJoined now event action_m =
+viewEventUserJoined : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserJoined lang now event action_m =
     let
         action_txt =
-            "the organisation"
+            T.theOrganisation
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventUserLeft : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserLeft now event action_m =
+viewEventUserLeft : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserLeft lang now event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
@@ -2183,13 +2201,13 @@ viewEventUserLeft now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
 
-viewEventMoved : Time.Posix -> Event -> List (Html Msg)
-viewEventMoved now event =
+viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
+viewEventMoved lang now event =
     let
         action_txt =
             "tension"
@@ -2205,7 +2223,7 @@ viewEventMoved now event =
                 , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
                 , text T.to
                 , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text (formatDate now event.createdAt)
+                , text (formatDate lang now event.createdAt)
                 ]
         ]
     ]
@@ -2341,7 +2359,7 @@ viewSidePane u t model =
                     LoggedIn _ ->
                         [ h2
                             [ class "subtitle is-h" ]
-                            [ textH T.assignees
+                            [ text T.assignees
                             , if model.isAssigneeOpen then
                                 A.icon "icon-x is-pulled-right"
 
@@ -2361,14 +2379,14 @@ viewSidePane u t model =
                         ]
 
                     LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ textH T.assignees ] ]
+                        [ h2 [ class "subtitle" ] [ text T.assignees ] ]
                 )
                     ++ [ div []
                             [ if List.length assignees > 0 then
                                 viewUsers assignees
 
                               else
-                                div [ class "help is-italic" ] [ textH T.noneYet ]
+                                div [ class "help is-italic" ] [ text T.noneYet ]
                             ]
                        ]
             ]
@@ -2383,7 +2401,7 @@ viewSidePane u t model =
                 (case u of
                     LoggedIn _ ->
                         [ h2 [ class "subtitle is-h" ]
-                            [ textH T.labels
+                            [ text T.labels
                             , if model.isLabelOpen then
                                 A.icon "icon-x is-pulled-right"
 
@@ -2403,14 +2421,14 @@ viewSidePane u t model =
                         ]
 
                     LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ textH T.labels ] ]
+                        [ h2 [ class "subtitle" ] [ text T.labels ] ]
                 )
                     ++ [ div [ class "tension-labelsList" ]
                             [ if List.length labels > 0 then
                                 viewLabels labels
 
                               else
-                                div [ class "help is-italic" ] [ textH T.noneYet ]
+                                div [ class "help is-italic" ] [ text T.noneYet ]
                             ]
                        ]
             ]
@@ -2446,7 +2464,7 @@ viewSidePane u t model =
                                     [ div [ id domid ]
                                         [ h2
                                             [ class "subtitle is-h" ]
-                                            [ textH T.document
+                                            [ text T.document
                                             , if isOpen then
                                                 A.icon "icon-x is-pulled-right"
 
@@ -2475,7 +2493,7 @@ viewSidePane u t model =
                                     ]
 
                                 LoggedOut ->
-                                    [ h2 [ class "subtitle" ] [ textH T.document ] ]
+                                    [ h2 [ class "subtitle" ] [ text T.document ] ]
                             )
                                 ++ [ div [] <|
                                         case tc.doc_type of
@@ -2552,10 +2570,10 @@ viewSidePane u t model =
                     ( iconElt, subscribe_txt ) =
                         case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) |> withDefault Nothing of
                             Just True ->
-                                ( A.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText )
+                                ( A.icon1 "icon-bell-off icon-1x" T.unsubscribe, T.tensionSubscribeText )
 
                             Just False ->
-                                ( A.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText )
+                                ( A.icon1 "icon-bell icon-1x" T.subscribe, T.tensionUnsubscribeText )
 
                             Nothing ->
                                 ( text "", "" )
@@ -2563,14 +2581,14 @@ viewSidePane u t model =
                 div [ class "media pb-0" ]
                     [ div [ class "media-content" ]
                         [ h2 [ class "subtitle" ]
-                            [ textH T.notifications ]
+                            [ text T.notifications ]
                         , p
                             [ class "button is-fullwidth has-background-evidence is-small "
                             , style "border-radius" "5px"
                             , onClick (ToggleSubscription uctx.username)
                             ]
                             [ iconElt, loadingSpin (model.subscribe_result == LoadingSlowly) ]
-                        , p [ class "help" ] [ textH subscribe_txt ]
+                        , p [ class "help" ] [ text subscribe_txt ]
                         , case model.subscribe_result of
                             Failure err ->
                                 viewGqlErrors err
@@ -2603,7 +2621,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], textH T.moveTension ]
+                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], text T.moveTension ]
                                 ]
 
                             else

@@ -65,6 +65,7 @@ userProfilePayload =
     SelectionSet.succeed UserProfile
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
+        |> with Fractal.Object.User.lang
         |> with
             (Fractal.Object.User.rights identity <|
                 SelectionSet.map3 UserRights
@@ -83,7 +84,6 @@ userProfilePayload =
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
         |> with Fractal.Object.User.notifyByEmail
-        |> with Fractal.Object.User.lang
         |> with Fractal.Object.User.bio
         |> with Fractal.Object.User.location
 

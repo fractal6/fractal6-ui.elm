@@ -18,7 +18,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
-import ModelCommon.View exposing (tensionTypeColor, tensionTypeIcon)
+import ModelCommon.View exposing (tensionType2String, tensionTypeColor, tensionTypeIcon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
@@ -213,7 +213,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         -- Data
@@ -363,7 +363,7 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ textH "Change the tension Type" ]
+                [ text T.changeTensionType ]
             ]
         , div [ class "modal-card-body" ]
             [ showMsg "selectType-0" "is-info is-light" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
@@ -380,7 +380,7 @@ viewModalContent op (State model) =
                                 , classList [ ( "is-active", isActive ), ( "is-selected", isActive ) ]
                                 , onClick (OnSetType tensionType)
                                 ]
-                                [ A.icon1 (tensionTypeIcon tensionType) (TensionType.toString tensionType) ]
+                                [ A.icon1 (tensionTypeIcon tensionType) (tensionType2String tensionType) ]
                             ]
                     )
                     TensionType.list
@@ -398,7 +398,7 @@ viewModalContent op (State model) =
                         [ class "button is-light"
                         , onClick (OnCloseSafe "" "")
                         ]
-                        [ textH T.cancel ]
+                        [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
@@ -408,7 +408,7 @@ viewModalContent op (State model) =
                          ]
                             ++ [ onClick (OnSubmit <| OnPatchData) ]
                         )
-                        [ textH "change type" ]
+                        [ text T.updateType ]
                     ]
                 ]
             ]

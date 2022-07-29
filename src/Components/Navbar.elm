@@ -61,7 +61,7 @@ view user url replaceUrl =
                                     ]
                                 , href (toHref Top)
                                 ]
-                                [ textH T.yourOrg ]
+                                [ text T.yourOrg ]
                             ]
 
                         LoggedOut ->
@@ -72,7 +72,7 @@ view user url replaceUrl =
                                 , classList [ ( "is-active", fromUrl url == Just Explore ) ]
                                 , href (toHref Explore)
                                 ]
-                                [ textH T.explore ]
+                                [ text T.explore ]
                            ]
                 , div [ class "navbar-end" ]
                     [ notificationButton user url
@@ -92,7 +92,7 @@ notificationButton user url =
             a
                 [ class "navbar-item"
                 , href (toHref Notifications)
-                , title (upH T.notifications)
+                , title T.notifications
                 , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 ]
                 [ div
@@ -138,7 +138,7 @@ newButton user =
                     [ A.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toHref New_Orga) ]
-                        [ textH T.newOrganisation ]
+                        [ text T.newOrganisation ]
                     ]
                 ]
 
@@ -158,16 +158,16 @@ userButton user url replaceUrl =
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toString UsersBaseUri uctx.username []) ]
-                        [ A.icon1 "icon-user" (upH T.profile) ]
+                        [ A.icon1 "icon-user" T.profile ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
-                        [ A.icon1 "icon-tool" (upH T.settings) ]
+                        [ A.icon1 "icon-tool" T.settings ]
                     , span [ id "themeTrigger", class "navbar-item is-w" ]
-                        [ A.icon1 "icon-moon" "Toggle dark mode" ]
+                        [ A.icon1 "icon-moon" T.toggleLightMode ]
                     , hr [ class "navbar-divider" ] []
 
                     -- Prevout logout to be log in the browser history (@debug do not work)
                     , div [ class "navbar-item button-light", onClick (replaceUrl (toHref Logout)) ]
-                        [ A.icon1 "icon-power" (upH T.signout) ]
+                        [ A.icon1 "icon-power" T.signout ]
                     ]
                 ]
 
@@ -178,5 +178,5 @@ userButton user url replaceUrl =
             else
                 div [ class "navbar-item" ]
                     [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
-                        [ textH T.join ]
+                        [ text T.join ]
                     ]

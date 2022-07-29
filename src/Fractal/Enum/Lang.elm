@@ -10,12 +10,11 @@ import Json.Decode as Decode exposing (Decoder)
 type Lang
     = En
     | Fr
-    | It
 
 
 list : List Lang
 list =
-    [ En, Fr, It ]
+    [ En, Fr ]
 
 
 decoder : Decoder Lang
@@ -29,9 +28,6 @@ decoder =
 
                     "FR" ->
                         Decode.succeed Fr
-
-                    "IT" ->
-                        Decode.succeed It
 
                     _ ->
                         Decode.fail ("Invalid Lang type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -48,9 +44,6 @@ toString enum____ =
 
         Fr ->
             "FR"
-
-        It ->
-            "IT"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -72,9 +65,6 @@ fromString enumString____ =
 
         "FR" ->
             Just Fr
-
-        "IT" ->
-            Just It
 
         _ ->
             Nothing

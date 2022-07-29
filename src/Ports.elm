@@ -225,6 +225,7 @@ saveUserCtx uctx =
         { action = "SAVE_USERCTX"
         , data =
             JE.object
+                -- @TODO: pass username to support multiple session
                 [ ( "data", userCtxEncoder uctx )
                 ]
         }

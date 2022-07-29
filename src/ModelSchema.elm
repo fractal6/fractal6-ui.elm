@@ -343,7 +343,7 @@ type alias Contract =
     , candidates : Maybe (List Username)
     , participants : List Vote
 
-    -- Maybe hardocoded
+    -- Maybe hardcoded
     , comments : Maybe (List Comment)
     }
 
@@ -510,7 +510,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx "" initUserRights [] "" ""
+    UserCtx "" Lang.En initUserRights [] "" ""
 
 
 initNodeData : NodeData
@@ -649,6 +649,7 @@ type alias NotificationsForm =
 
 type alias UserCtx =
     { username : String
+    , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
     , client_version : String
@@ -659,12 +660,12 @@ type alias UserCtx =
 type alias UserProfile =
     { username : String
     , name : Maybe String
+    , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
 
     --
     , notifyByEmail : Bool
-    , lang : Lang.Lang
     , bio : Maybe String
     , location : Maybe String
 

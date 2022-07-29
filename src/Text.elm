@@ -1,164 +1,287 @@
 module Text exposing (..)
 
 {-
-   Auto-generated i18n
+    Auto-generated i18n
 -}
--- General
+
+welcome : String
+welcome =
+    "Bienvenue sur Fractale"
+
+
+welcomeSub : String
+welcomeSub =
+    "une plateforme d’intelligence collective."
 
 
 signin : String
 signin =
-    "Sign in"
+    "Se connecter"
+
+
+signin_ : String
+signin_ =
+    "Connexion"
 
 
 signup : String
 signup =
-    "Sign up"
+    "S’inscrire"
+
+
+signup_ : String
+signup_ =
+    "Inscription"
 
 
 signout : String
 signout =
-    "Sign Out"
-
-
-email : String
-email =
-    "Email"
+    "Déconnexion"
 
 
 signinNow : String
 signinNow =
-    "Sign-in"
+    "Connectez-vous"
 
 
 signupNow : String
 signupNow =
-    "Create an account"
+    "Inscrivez-vous"
 
 
-needAnAccount : String
-needAnAccount =
-    "New to Fractale?"
+signinNow2 : String
+signinNow2 =
+    "vous Connecter"
 
 
-alreadyAnAccount : String
-alreadyAnAccount =
-    "Already an account?"
+signupNow2 : String
+signupNow2 =
+    "vous Inscrire"
 
 
 createYourAccount : String
 createYourAccount =
-    "Create your account"
+    "Créez votre compte"
+
+
+needAnAccount : String
+needAnAccount =
+    "Pas de compte ?"
+
+
+alreadyAnAccount : String
+alreadyAnAccount =
+    "Déjà enregistré ?"
 
 
 passwordForgotten : String
 passwordForgotten =
-    "forgot your password?"
+    "Mot de passe oublié ?"
+
+
+recentActivities : String
+recentActivities =
+    "Activités récentes"
 
 
 createLabel : String
 createLabel =
-    "create label"
+    "Créer une étiquette"
 
 
 updateLabel : String
 updateLabel =
-    "update label"
+    "Modifier l’étiquette"
 
 
 createRole : String
 createRole =
-    "create role"
+    "Créer un rôle"
 
 
 updateRole : String
 updateRole =
-    "update role"
+    "Modifier le rôle"
+
+
+updateProfile : String
+updateProfile =
+    "Modifier le profil"
+
+
+updateType : String
+updateType =
+    "Modifier le type"
 
 
 messageSent : String
 messageSent =
-    "message sent"
+    "Message envoyé"
+
+
+requestSent : String
+requestSent =
+    "Votre requête a été envoyé."
 
 
 profile : String
 profile =
-    "profile"
+    "Profil"
+
+
+publicProfil : String
+publicProfil =
+    "Profil publique"
+
+
+emailConf : String
+emailConf =
+    "Configuration des e-mails"
+
+
+emailHelp : String
+emailHelp =
+    "Votre adresse est privée, vous seul pouvez la voir."
+
+
+namePH : String
+namePH =
+    "Choisissez un nom pour votre profil public"
+
+
+bioPH : String
+bioPH =
+    "Dites-nous en plus sur vous"
+
+
+locationPH : String
+locationPH =
+    "Ville, pays..."
+
+
+questionTitlePH : String
+questionTitlePH =
+    "Sujet de votre question"
+
+
+questionTextPH : String
+questionTextPH =
+    "Ecrivez votre question ici..."
+
+
+feedbackTitlePH : String
+feedbackTitlePH =
+    "Sujet de votre question"
+
+
+feedbackTextPH : String
+feedbackTextPH =
+    "Ecrivez votre feedback ici..."
 
 
 yourOrg : String
 yourOrg =
-    "organisations"
+    "Organisations"
+
+
+createYourOrganisation : String
+createYourOrganisation =
+    "Creer votre organisation"
+
+
+organisationVisibility : String
+organisationVisibility =
+    "Visibilité de l’organisation"
+
+
+organisationSettings : String
+organisationSettings =
+    "Paramètres de l’organisation"
 
 
 loading : String
 loading =
-    "loading"
+    "Chargement"
 
 
-seeMore : String
-seeMore =
-    "see more"
+seemore : String
+seemore =
+    "voir plus"
+
+
+contactUs : String
+contactUs =
+    "Contactez-nous"
 
 
 seeFullList : String
 seeFullList =
-    "See full list"
+    "Voir la liste complète"
 
 
 seeByCircle : String
 seeByCircle =
-    "See by circles"
+    "Voir par cercles"
 
 
 organisation : String
 organisation =
-    "organisation"
+    "Organisation"
 
 
 organisations : String
 organisations =
-    "organisations"
+    "Organisations"
 
 
 joinOrga : String
 joinOrga =
-    "join this organisation"
+    "Rejoindre cette organisation"
 
 
 leaveRole : String
 leaveRole =
-    "leave role"
+    "Quitter le rôle"
 
 
 checkItOut : String
 checkItOut =
-    "check it out."
+    "Consulter-la."
 
 
 explore : String
 explore =
-    "explore"
+    "Explorateur"
+
+
+dashboard : String
+dashboard =
+    "Tableau de bord"
 
 
 exploreOrganisations : String
 exploreOrganisations =
-    "explore organisations"
+    "Explorer les organisations"
 
 
 newOrganisation : String
 newOrganisation =
-    "new organisation"
+    "Nouvelle organisation"
+
+
+toggleLightMode : String
+toggleLightMode =
+    "Changer de thème"
 
 
 view : String
 view =
-    "view"
+    "Consulter"
 
 
 overview : String
 overview =
-    "Overview"
+    "Vue d’ensemble"
 
 
 tensions : String
@@ -168,12 +291,17 @@ tensions =
 
 members : String
 members =
-    "Members"
+    "Membres"
+
+
+guests : String
+guests =
+    "Invités"
 
 
 settings : String
 settings =
-    "Settings"
+    "Paramètres"
 
 
 journal : String
@@ -183,487 +311,752 @@ journal =
 
 labels : String
 labels =
-    "Labels"
+    "Etiquettes"
 
 
 versions : String
 versions =
-    "versions"
+    "Versions"
 
 
 revisions : String
 revisions =
-    "revisions"
+    "Révisions"
 
 
 history : String
 history =
-    "history"
+    "Historique"
 
 
 edit : String
 edit =
-    "edit"
+    "Modifier"
 
 
 editThisCircle : String
 editThisCircle =
-    "Edit this circle"
+    "Editer ce cercle"
 
 
 cancel : String
 cancel =
-    "cancel"
+    "Annuler"
 
 
 confirm : String
 confirm =
-    "confirm"
+    "Confirmer"
 
 
 publish : String
 publish =
-    "publish"
+    "Publier"
 
 
 publishTitle : String
 publishTitle =
-    "As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
+    "Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la tension du cercle (la page actuelle)."
 
 
 published : String
 published =
-    "published"
+    "Publié"
 
 
 revisionNotPublished : String
 revisionNotPublished =
-    "revision not published"
+    "Révision non publiée"
 
 
 list : String
 list =
-    "List"
+    "Liste"
 
 
 byCircle : String
 byCircle =
-    "By circles"
+    "Par cercles"
 
 
 by : String
 by =
-    "by"
+    "par"
 
 
-joined : String
-joined =
-    "joined"
-
-
-created : String
-created =
-    "created"
+in_ : String
+in_ =
+    "dans"
 
 
 from : String
 from =
-    "from"
+    "de"
 
 
 to : String
 to =
-    "to"
+    "vers"
 
 
-moved : String
-moved =
-    "moved"
+for : String
+for =
+    "pour"
 
 
-changed : String
-changed =
-    "changed"
+as_ : String
+as_ =
+    "comme"
+
+
+or_ : String
+or_ =
+    "ou"
+
+
+all : String
+all =
+    "Tous"
+
+
+created : String
+created =
+    "Crée"
 
 
 move : String
 move =
-    "move"
+    "Déplacer"
 
 
 visibility : String
 visibility =
-    "visibility"
-
-
-governance : String
-governance =
-    "governance"
+    "Visibilité"
 
 
 authority : String
 authority =
-    "authority"
+    "Autorité"
+
+
+governance : String
+governance =
+    "Gouvernance"
+
+
+operational : String
+operational =
+    "opérationnel"
+
+
+help : String
+help =
+    "Aide"
+
+
+alert : String
+alert =
+    "Alerte"
+
+
+theVisibility : String
+theVisibility =
+    "la visibilité"
+
+
+theGovernance : String
+theGovernance =
+    "la gouvernance"
+
+
+theAuthority : String
+theAuthority =
+    "l’autorité"
 
 
 linkAction : String
 linkAction =
-    "Invite an user to this role"
+    "Inviter quelqu’un à jouer ce rôle"
 
 
 unlinkAction : String
 unlinkAction =
-    "Unlink user to the role"
+    "Détacher l’utilisateur du rôle"
 
 
 invite : String
 invite =
-    "invite"
+    "Inviter"
 
 
 join : String
 join =
-    "join"
+    "Rejoindre"
 
 
-inviteMember : String
-inviteMember =
-    "Invite member"
+join2 : String
+join2 =
+    "Rejoignez"
 
 
-link : String
-link =
-    "link"
-
-
-unlink : String
-unlink =
-    "unlink"
-
-
-linked : String
-linked =
-    "linked"
-
-
-unlinked : String
-unlinked =
-    "unlinked"
-
-
-left : String
-left =
-    "left"
-
-
-roleLeft : String
-roleLeft =
-    "role left"
-
-
-saveChanges : String
-saveChanges =
-    "save changes"
-
-
-leaveComment : String
-leaveComment =
-    "leave a comment"
-
-
-leaveCommentOpt : String
-leaveCommentOpt =
-    "Text (optional)"
-
-
-noResultsFound : String
-noResultsFound =
-    "no results found"
-
-
-searchUsers : String
-searchUsers =
-    "search users"
-
-
-searchLabels : String
-searchLabels =
-    "search labels"
-
-
-editLabels : String
-editLabels =
-    "edit labels"
-
-
-reopened : String
-reopened =
-    "reopened"
-
-
-closed : String
-closed =
-    "closed"
-
-
-assigned : String
-assigned =
-    "assigned"
-
-
-unassigned : String
-unassigned =
-    "unassigned"
+thisOrgaToParticipate : String
+thisOrgaToParticipate =
+    "cette organisation afin de participer à cette conversation."
 
 
 archive : String
 archive =
-    "archive"
+    "Archiver"
 
 
 unarchive : String
 unarchive =
-    "unarchive"
+    "Désarchiver"
+
+
+inviteMembers : String
+inviteMembers =
+    "Inviter des personnes"
+
+
+link : String
+link =
+    "Lier"
+
+
+unlink : String
+unlink =
+    "Détacher"
+
+
+roleLeft : String
+roleLeft =
+    "Rôle quitté"
+
+
+saveChanges : String
+saveChanges =
+    "Enregistrer les modifications"
+
+
+leaveComment : String
+leaveComment =
+    "Laissez un commentaire"
+
+
+leaveCommentOpt : String
+leaveCommentOpt =
+    "Texte (Optionnel)"
+
+
+text : String
+text =
+    "Texte..."
+
+
+changeTensionType : String
+changeTensionType =
+    "Modifier le Type de la tension"
+
+
+noResultsFound : String
+noResultsFound =
+    "Aucun résulat trouvé"
+
+
+searchTensions : String
+searchTensions =
+    "Rechercher des tensions"
+
+
+searchUsers : String
+searchUsers =
+    "Rechercher des utilisateurs"
+
+
+searchLabels : String
+searchLabels =
+    "Rechercher des étiquettes"
+
+
+editLabels : String
+editLabels =
+    "Editer les étiquettes"
+
+
+openTension : String
+openTension =
+    "Ouvert"
+
+
+closedTension : String
+closedTension =
+    "Fermé"
+
+
+reopened : String
+reopened =
+    "a réouvert"
+
+
+closed : String
+closed =
+    "a fermé"
+
+
+closedContract : String
+closedContract =
+    "Fermé"
+
+
+canceledContract : String
+canceledContract =
+    "Annulé"
+
+
+assigned : String
+assigned =
+    "a assigné"
+
+
+unassigned : String
+unassigned =
+    "a désassigné"
 
 
 archived : String
 archived =
-    "archived"
+    "a archivé"
 
 
 unarchived : String
 unarchived =
-    "unarchived"
+    "a désarchivé"
+
+
+moved : String
+moved =
+    "a déplacé"
+
+
+changed : String
+changed =
+    "modifié"
+
+
+changed2 : String
+changed2 =
+    "a modifié"
+
+
+updated : String
+updated =
+    "a mis à jour"
+
+
+linked : String
+linked =
+    "lié"
+
+
+unlinked : String
+unlinked =
+    "détaché"
+
+
+published2 : String
+published2 =
+    "a publié"
+
+
+joined : String
+joined =
+    "a rejoint"
+
+
+left : String
+left =
+    "a quitté"
+
+
+opened : String
+opened =
+    "ouvert"
+
+
+commented : String
+commented =
+    "a commenté"
+
+
+edited : String
+edited =
+    "édité"
+
+
+authored : String
+authored =
+    "créé"
+
+
+authoredBy : String
+authoredBy =
+    "créé par"
 
 
 documentArchived : String
 documentArchived =
-    "document archived"
+    "Document archivé"
 
 
 documentUnarchived : String
 documentUnarchived =
-    "document unarchived"
+    "Document désarchivé"
 
 
 tensionMoved : String
 tensionMoved =
-    "tension moved"
+    "La tension a été déplacé"
 
 
 circleMoved : String
 circleMoved =
-    "Circle moved"
+    "Le cercle a été déplacé"
 
 
 roleMoved : String
 roleMoved =
-    "Role moved"
+    "Le rôle a été déplacé"
+
+
+quickHelp : String
+quickHelp =
+    "Aide rapide"
+
+
+askQuestion : String
+askQuestion =
+    "Poser une question"
+
+
+giveFeedback : String
+giveFeedback =
+    "Donner un feedback"
+
+
+haveYouCheckQuickHelp : String
+haveYouCheckQuickHelp =
+    "Avez-vous vérifié si la réponse à votre question se trouve dans l’"
 
 
 the : String
 the =
-    "the"
+    "le"
 
 
 this : String
 this =
-    "this"
+    "ce"
+
+
+write : String
+write =
+    "Ecrire"
+
+
+preview : String
+preview =
+    "Aperçu"
 
 
 confirmUnsaved : String
 confirmUnsaved =
-    "you have unsaved data, please confirm to exit."
+    "Vous avez des données non sauvegardées, veuillez confirmer pour quitter."
 
 
 confirmUnsafe : String
 confirmUnsafe =
-    "you have unsaved data, please confirm to continue (your editing will be lost)."
+    "Vous avez des données non sauvegardées, veuillez confirmer pour continuer (votre édition sera perdue)."
 
 
 confirmDeleteLabel : String
 confirmDeleteLabel =
-    "are you sure to delete the label"
+    "Etes-vous sûr de vouloir supprimer cette étiquette"
 
 
 confirmDeleteRole : String
 confirmDeleteRole =
-    "are you sure to delete the role"
+    "Etes-vous sûr de vouloir supprimer ce rôle"
 
 
 confirmDeleteContract : String
 confirmDeleteContract =
-    "are you sure to cancel this contract"
+    "Êtes-vous sûr de vouloir annuler ce contrat"
 
 
 askAnotherQuestion : String
 askAnotherQuestion =
-    "ask another question."
+    "Posez une autre question."
 
 
 giveAnotherFeedback : String
 giveAnotherFeedback =
-    "give another feedback."
+    "Donnez un autre feedback."
 
 
 theOrganisation : String
 theOrganisation =
-    "the organisation"
+    "l’organisation"
 
 
 moveTension : String
 moveTension =
-    "move tension"
+    "Déplacer la tension"
 
 
 moveCircle : String
 moveCircle =
-    "move circle"
+    "Déplacer le cercle"
 
 
 moveRole : String
 moveRole =
-    "move role"
+    "Déplacer le rôle"
 
 
 newContract : String
 newContract =
-    "new contract"
+    "Nouveau contrat"
 
 
 contractType : String
 contractType =
-    "contract type"
+    "Type de contrat"
 
 
 contractEvent : String
 contractEvent =
-    "event"
+    "Evénement"
 
 
 createContract : String
 createContract =
-    "create contract"
+    "Créer le contrat"
 
 
 submit : String
 submit =
-    "submit"
+    "Soumettre"
+
+
+send : String
+send =
+    "Envoyer"
+
+
+comment : String
+comment =
+    "Commenter"
+
+
+close : String
+close =
+    "Fermer"
+
+
+closeComment : String
+closeComment =
+    "Commenter et Fermer"
+
+
+reopen : String
+reopen =
+    "Réouvrir"
+
+
+reopenComment : String
+reopenComment =
+    "Commenter et Réouvrir"
+
+
+noMessageProvided : String
+noMessageProvided =
+    "Message vide"
+
+
+question : String
+question =
+    "Question"
+
+
+feedback : String
+feedback =
+    "Feedback"
+
+
+thankyouFeedback : String
+thankyouFeedback =
+    "Merci pour votre retour, nous vous répondrons dans les plus brefs délais."
 
 
 add : String
 add =
-    "add"
+    "Ajouter"
 
 
 remove : String
 remove =
-    "remove"
+    "Supprimer"
 
 
 subscribe : String
 subscribe =
-    "subscribe"
+    "S’abonner"
 
 
 unsubscribe : String
 unsubscribe =
-    "unsubscribe"
+    "Se désabonner"
 
 
 notifications : String
 notifications =
-    "notifications"
+    "Notifications"
 
 
 tensionSubscribeText : String
 tensionSubscribeText =
-    "You’re receiving notifications because you’re subscribed to this thread."
+    "Vous recevez des notifications parce que vous êtes abonné à ce fil de discussion."
 
 
 tensionUnsubscribeText : String
 tensionUnsubscribeText =
-    "You’re not receiving notifications from this thread. "
+    "Vous ne recevez pas les notifications de ce fil de discussion."
 
 
 back : String
 back =
-    "back"
+    "Retour"
 
 
 almostThere : String
 almostThere =
-    "almost there"
+    "On y est presque"
 
 
 sort : String
 sort =
-    "sort"
+    "Trier"
+
+
+oldest : String
+oldest =
+    "Plus ancien/ne"
+
+
+newest : String
+newest =
+    "Plus récent"
 
 
 reviewAndValidate : String
 reviewAndValidate =
-    "Review and validate"
-
-
-
---Quick Search
---(header)
+    "Vérifier et valider"
 
 
 subject : String
 subject =
-    "subject"
+    "Sujet"
+
+
+theSubject : String
+theSubject =
+    "le sujet"
 
 
 name : String
 name =
-    "name"
+    "Nom"
 
 
 username : String
 username =
-    "username"
+    "Nom d’utilisateur"
+
+
+email : String
+email =
+    "Adresse e-mail"
+
+
+password : String
+password =
+    "Mot de passe"
+
+
+location : String
+location =
+    "Localisation"
+
+
+tension : String
+tension =
+    "Tension"
 
 
 circle : String
 circle =
-    "circle"
+    "Cercle"
 
 
 role : String
 role =
-    "role"
+    "Rôle"
 
 
 roles : String
 roles =
-    "roles"
+    "Rôles"
 
 
 noMemberYet : String
 noMemberYet =
-    "No member yet"
+    "Aucun membre pour le moment"
 
 
 owner : String
 owner =
-    "owner"
+    "Propriétaire"
 
 
 guest : String
 guest =
-    "Guest"
+    "Invité"
 
 
 parent : String
 parent =
-    "parent"
+    "Parent"
 
 
 pending : String
 pending =
-    "pending"
+    "En attente"
+
+
+pendingInvitation : String
+pendingInvitation =
+    "Invitation en attente"
+
+
+checkYourPendingInvitation : String
+checkYourPendingInvitation =
+    "Vous avez déjà une invitation en attente, veuillez la vérifier."
+
+
+checkPendingInvitation : String
+checkPendingInvitation =
+    "Une invitation est en attente, veuillez la vérifier."
 
 
 firstLink : String
@@ -673,787 +1066,957 @@ firstLink =
 
 phQS : String
 phQS =
-    "find a role or circle"
+    "Rechercher un rôle ou cercle"
 
 
 noResultsFor : String
 noResultsFor =
-    "no results for"
+    "Pas de résultats pour"
 
 
 nodeNotFound : String
 nodeNotFound =
-    "Node is archived, hidden or has moved."
+    "le cercle est archivé, privé ou a été déplacé"
+
+
+pageNotFound : String
+pageNotFound =
+    "Désolé, cette page n’existe pas"
+
+
+author : String
+author =
+    "Auteur"
 
 
 label : String
 label =
-    "label"
+    "Etiquette"
 
 
 accept : String
 accept =
-    "accept"
+    "Accepter"
 
 
 decline : String
 decline =
-    "decline"
-
-
-
---Canvas
+    "Décliner"
 
 
 security : String
 security =
-    "security"
-
-
-
--- Mandate / Members / User
+    "Sécurité"
 
 
 about : String
 about =
-    "about"
+    "A propos"
 
 
 aboutOpt : String
 aboutOpt =
-    "about (optional)"
+    "A propos (optionnel)"
 
 
 mandate : String
 mandate =
-    "mandate"
+    "Mandat"
 
 
 purpose : String
 purpose =
-    "purpose"
+    "Raison d’être"
 
 
 responsabilities : String
 responsabilities =
-    "accountabilities"
+    "Responsabilités"
 
 
 domains : String
 domains =
-    "domains"
+    "Domaines"
 
 
 policies : String
 policies =
-    "policies"
+    "Politiques"
 
 
 create : String
 create =
-    "create"
+    "Créer"
 
 
 phCirclePurpose : String
 phCirclePurpose =
-    "Define the purpose of the circle"
+    "Définir la raison d’être du cercle"
 
 
 phCircleResponsabilities : String
 phCircleResponsabilities =
-    "Define the circle accountabilities"
+    "Définir les responsabilités du cercle"
 
 
 phCircleDomains : String
 phCircleDomains =
-    "Define the circle domains"
+    "Définir les domaines du cercle"
 
 
 phCirclePolicies : String
 phCirclePolicies =
-    "Define the circle policies"
+    "Définir les politiques du cercle"
 
 
 phRolePurpose : String
 phRolePurpose =
-    "Define the purpose of the role"
+    "Définir la raison d’être du rôle"
 
 
 phRoleResponsabilities : String
 phRoleResponsabilities =
-    "Define the role accountabilities"
+    "Définir les responsabilités du rôle"
 
 
 phRoleDomains : String
 phRoleDomains =
-    "Define the role domains"
+    "Définir les domaines du rôle"
 
 
 phRolePolicies : String
 phRolePolicies =
-    "Define the role policies"
+    "Définir les politiques du rôle"
+
+
+sinceThe : String
+sinceThe =
+    "depuis le"
 
 
 addedThe : String
 addedThe =
-    "added the"
+    "ajouté le"
 
 
 removedThe : String
 removedThe =
-    "removed the"
+    "retiré le"
 
 
 description : String
 description =
-    "description"
+    "Description"
 
 
 hasBeen : String
 hasBeen =
-    "has been"
+    "a été"
 
 
 toThisRole : String
 toThisRole =
-    "to this role"
+    "à ce rôle"
 
 
 color : String
 color =
-    "color"
+    "Couleur"
 
 
-
--- Tension
+collapse : String
+collapse =
+    "Réduire"
 
 
 conversation : String
 conversation =
-    "conversation"
+    "Conversation"
 
 
 document : String
 document =
-    "document"
+    "Document"
 
 
 contracts : String
 contracts =
-    "contracts"
+    "Contrats"
 
 
 status : String
 status =
-    "status"
+    "Statut"
 
 
 type_ : String
 type_ =
-    "type"
+    "Type"
+
+
+theType_ : String
+theType_ =
+    "le type"
 
 
 depth : String
 depth =
-    "depth"
+    "Profondeur"
+
+
+depthAll : String
+depthAll =
+    "Comprend tous les sous-cercles"
+
+
+depthSelected : String
+depthSelected =
+    "Cercle actuel et ses enfants direct uniquement"
+
+
+showMore : String
+showMore =
+    "Afficher plus"
+
+
+clearFilters : String
+clearFilters =
+    "Nettoyer les filtres"
 
 
 subLabels : String
 subLabels =
-    "sub-circle labels"
+    "Étiquettes de sous-cercles"
 
 
 newLabel : String
 newLabel =
-    "new label"
+    "Nouvelle étiquette"
 
 
 assignees : String
 assignees =
-    "assignees"
+    "Assignés"
+
+
+attached : String
+attached =
+    "joint"
 
 
 noneYet : String
 noneYet =
-    "none yet"
+    "Aucun pour l’instant"
 
 
 noDocument : String
 noDocument =
-    "no document attached"
+    "Aucun document joint"
 
 
 noOpenTensionRole : String
 noOpenTensionRole =
-    "no open tensions for this role yet."
+    "Aucune tension ouverte pour ce rôle pour le moment."
 
 
 noOpenTensionCircle : String
 noOpenTensionCircle =
-    "no open tensions for this circle yet."
+    "Aucune tension ouverte dans ce cercle pour le moment."
 
 
 noTensionRole : String
 noTensionRole =
-    "no tensions for this role yet."
+    "Aucune tension pour ce rôle pour le moment."
 
 
 noTensionCircle : String
 noTensionCircle =
-    "no tensions for this circle yet."
-
-
-internalTensions : String
-internalTensions =
-    "internal tensions"
-
-
-externalTensions : String
-externalTensions =
-    "external tensions"
-
-
-noIntTensionRole : String
-noIntTensionRole =
-    "no internal tensions for this Role yet."
-
-
-noIntTensionCircle : String
-noIntTensionCircle =
-    "no internal tensions for this Circle yet."
-
-
-noExtTensionRole : String
-noExtTensionRole =
-    "no external tensions for this Role yet."
-
-
-noExtTensionCircle : String
-noExtTensionCircle =
-    "no external tensions for this Circle yet."
+    "Aucune tension dans ce cercle pour le moment."
 
 
 newTension : String
 newTension =
-    "new tension"
+    "Nouvelle tension"
 
 
 newCircle : String
 newCircle =
-    "new circle"
+    "Nouveau cercle"
 
 
 newRole : String
 newRole =
-    "new role"
+    "Nouveau rôle"
 
 
 createNewTension : String
 createNewTension =
-    "create tension"
+    "Créer une tension"
 
 
 createNewCircle : String
 createNewCircle =
-    "Add sub-circle"
+    "Ajouter un sous-cercle"
 
 
 createNewRole : String
 createNewRole =
-    "Add role"
+    "Ajouter un rôle"
 
 
 editTitle : String
 editTitle =
-    "edit title"
+    "Editer le sujet"
+
+
+newTensionHelp : String
+newTensionHelp =
+    "Creez une nouvelle tension."
+
+
+newRoleHelp : String
+newRoleHelp =
+    "Créez ou proposez un nouveau rôle."
+
+
+newCircleHelp : String
+newCircleHelp =
+    "Créez ou proposez un nouveau cercle."
 
 
 tensionTitleHelp : String
 tensionTitleHelp =
-    "title that sumarize your tension."
+    "Un titre qui résume votre tension."
 
 
 circleNameHelp : String
 circleNameHelp =
-    "name of the circle."
+    "Nom du cercle."
 
 
 roleNameHelp : String
 roleNameHelp =
-    "name of the role."
+    "Nom du rôle."
+
+
+roleName : String
+roleName =
+    "Nom du rôle"
+
+
+labelName : String
+labelName =
+    "Nom de l’étiquette"
 
 
 orgaNameHelp : String
 orgaNameHelp =
-    "organisation name."
+    "Nom de l’organisation"
 
 
 aboutHelp : String
 aboutHelp =
-    "short description for this organisation."
+    "Brève description de cette organisation."
 
 
 purposeHelpOrga : String
 purposeHelpOrga =
-    "purpose of this organisation."
+    "Raison d’être de cette organisation."
 
 
 roleAboutHelp : String
 roleAboutHelp =
-    "short description for this role."
+    "Brève description de ce rôle."
 
 
 circleAboutHelp : String
 circleAboutHelp =
-    "short description for this circle."
+    "Brève description de ce cercle."
 
 
 tensionMessageHelp : String
 tensionMessageHelp =
-    "Add a comment to help others understand your issue."
+    "Ajoutez un commentaire pour aider les autres à comprendre votre requête."
 
 
 circleMessageHelp : String
 circleMessageHelp =
-    "add a comment to help others understand why a new circle should be created."
+    "Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau cercle devrait être créé."
 
 
 roleMessageHelp : String
 roleMessageHelp =
-    "add a comment to help others understand why a new role should be created."
+    "Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau rôle devrait être créé."
 
 
 invitationMessageHelp : String
 invitationMessageHelp =
-    "Add an invitation message."
+    "Ajouter un message d’invitation."
 
 
 tensionAdded : String
 tensionAdded =
-    "tension added."
+    "Tension créé."
 
 
 roleAdded : String
 roleAdded =
-    "role added."
+    "Rôle créé."
 
 
 circleAdded : String
 circleAdded =
-    "circle added."
+    "Cercle créé."
 
 
 tensionSubmit : String
 tensionSubmit =
-    "submit tension"
+    "Soumettre"
 
 
 tensionCircleCloseSubmit : String
 tensionCircleCloseSubmit =
-    "create Circle"
+    "Créer le cercle"
 
 
 tensionRoleCloseSubmit : String
 tensionRoleCloseSubmit =
-    "create Role"
-
-
-opened : String
-opened =
-    "opened"
-
-
-updated : String
-updated =
-    "updated"
-
-
-edited : String
-edited =
-    "edited"
-
-
-commented : String
-commented =
-    "commented"
-
-
-openedThe : String
-openedThe =
-    "opened the"
-
-
-updatedThe : String
-updatedThe =
-    "updated the"
-
-
-editedThe : String
-editedThe =
-    "edited the"
-
-
-commentedThe : String
-commentedThe =
-    "commented the"
+    "Créer le rôle"
 
 
 update : String
 update =
-    "update"
+    "Valider"
 
 
 addResponsabilities : String
 addResponsabilities =
-    "add accountabilities"
+    "Ajouter des responsabilités"
 
 
 addDomains : String
 addDomains =
-    "add domains"
+    "Ajouter des domaines"
 
 
 addPolicies : String
 addPolicies =
-    "add policies"
+    "Ajouter des politiques"
 
 
 unknown : String
 unknown =
-    "unknown"
+    "inconu"
 
 
 notImplemented : String
 notImplemented =
-    "not implemented"
-
-
-
--- Action
---@Todo
--- Organisation
+    "non implémenté"
 
 
 notOrgMember : String
 notOrgMember =
-    "You are not a member of this organisation."
-
-
-notCircleMember : String
-notCircleMember =
-    "You are not a member of this circle."
-
-
-notCircleCoordo : String
-notCircleCoordo =
-    "You are not a coordinator of this circle."
+    "Vous n’êtes pas membre de cette organisation."
 
 
 askCoordo : String
 askCoordo =
-    "Please, ask a coordinator of this circle to perform this action."
+    "Veuillez demander à un coordinateur de ce cercle d’effectuer cette action."
 
 
 joinForTension : String
 joinForTension =
-    "Please, Join this organisation to be able to create a tension (or retry)."
+    "Veuillez rejoindre cette organisation pour pouvoir créer une tension (ou réessayer)."
 
 
 joinForComment : String
 joinForComment =
-    "Please, Join this organisation to participate to this conversation."
+    "Veuillez rejoindre cette organisation pour participer à cette conversation (ou réessayer)."
 
 
 joinForCircle : String
 joinForCircle =
-    "Please, Join this organisation to be able to create a circle (or retry)."
+    "Veuillez rejoindre cette organisation pour pouvoir créer une cercle (ou réessayer)."
 
 
 nodeNotExist : String
 nodeNotExist =
-    "Sorry, this node doesn't exist yet."
+    "Désolé, ce cercle n’existe pas."
+
+
+goHome : String
+goHome =
+    "Aller à la page d’accueil"
 
 
 goRoot : String
 goRoot =
-    "Go to root circle"
+    "Aller au cercle racine"
 
 
 goParent : String
 goParent =
-    "Go to parent circle"
+    "Aller au cercle parent"
+
+
+goContract : String
+goContract =
+    "Voir le contrat"
+
+
+goContracts : String
+goContracts =
+    "Voir les contrats"
 
 
 clickMe : String
 clickMe =
-    "Click me"
+    "cliquez-moi"
 
 
 newReceiver : String
 newReceiver =
-    "new destination"
+    "Nouvelle destination"
 
 
 rolesHere : String
 rolesHere =
-    "Roles in this circle"
+    "Roles dans ce cercle"
 
 
 noLabels : String
 noLabels =
-    "No label in this circle yet"
+    "Pas d’étiquettes présent dans ce cercle"
 
 
 noRoles : String
 noRoles =
-    "No role in this circle yet"
+    "Pas de rôles présent dans ce cercle"
 
 
 labelsSub : String
 labelsSub =
-    "Labels in sub-circles"
+    "Etiquettes dans les sous-cercles"
 
 
 labelsTop : String
 labelsTop =
-    "Labels in parent circles"
+    "Etiquettes dans les cercles parents"
 
 
 rolesSub : String
 rolesSub =
-    "Roles in sub-circles"
+    "Rôles dans les sous-cercles"
 
 
 rolesTop : String
 rolesTop =
-    "Roles in parent circles"
+    "Rôles dans les cercles parents"
 
 
 noDataError : String
 noDataError =
-    "No data returned. You may try to refresh the page."
+    "Aucune donnée n’est retournée. Vous pouvez essayer de rafraîchir la page."
 
 
+authorizationNeeded : String
+authorizationNeeded =
+    "Authorization requise"
 
---
--- Tooltip
---
+
+authenticationNeeded : String
+authenticationNeeded =
+    "Authentification requise"
+
+
+please : String
+please =
+    "Veuillez"
+
+
+toPerformThis : String
+toPerformThis =
+    "afin d’effectuer cette action."
 
 
 reverseTooltip : String
 reverseTooltip =
-    "Reverse the organisation graph."
+    "Inverser le graphe de l’organisation."
 
 
 tensionsListTooltip : String
 tensionsListTooltip =
-    "Display tensions as List."
+    "Afficher les tensions sous forme de liste."
 
 
 tensionsIntExtTooltip : String
 tensionsIntExtTooltip =
-    "Display indegenous and exogenous tensions with respect to the focused circle."
+    "Afficher les tensions indigènes et exogènes par rapport au cercle focalisé."
 
 
 tensionsCircleTooltip : String
 tensionsCircleTooltip =
-    "Display tensions by (targeted) circles."
+    "afficher les tensions par cercles (ciblés)."
 
 
-
---
--- Info / Doc
---
-
-
-labelDeleteInfoHeader : String
-labelDeleteInfoHeader =
-    "Label present in other circles, and in labeled tensions, wont' be deleted."
+explainJoin : String
+explainJoin =
+    "Expliquez vos motivations pour rejoindre cette organisation ?"
 
 
-roleDeleteInfoHeader : String
-roleDeleteInfoHeader =
-    "Role present in other circles, and created roles, wont' be deleted."
+orgaUserInvitation : String
+orgaUserInvitation =
+    "Les utilisateurs peuvent rejoindre cette organisation"
 
 
-contractInfoHeader : String
-contractInfoHeader =
-    "A peer validation is needed to complete this action."
+orgaUserInvitationHelp : String
+orgaUserInvitationHelp =
+    "L’utilisateur pourra ouvrir un contrat pour rejoindre cette organisation. L’utilisateur ne pourra rejoindre l’organisation en tant qu’invité qu’après qu’un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
 
 
-contractInfo : String
-contractInfo =
-    "By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
+guestCanCreateTension : String
+guestCanCreateTension =
+    "Les invités peuvent créer des tensions"
 
 
-tensionTypeHeader : String
-tensionTypeHeader =
-    "Select the right category to help finding and solving tensions."
+guestCanCreateTensionHelp : String
+guestCanCreateTensionHelp =
+    "Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans cette organisation."
 
 
-tensionTypeDoc : String
-tensionTypeDoc =
-    """ There are three main categories of tension:
-* **Operational**: A general category, it can be task, an issue or whatever that need to be share in the organisation.
-* **Governance**: Concerning the structure of the organisation, the mandates etc.
-* **Help**: For help requests, questions or clarifications.
-* **Alert**: For alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
-    """
+notifyByEmail : String
+notifyByEmail =
+    "Activer les notifications par e-mail."
 
 
-visibilityInfoHeader : String
-visibilityInfoHeader =
-    "The change will only apply on the current circle and its roles, not recursively on the sub-circles."
+beenUnsubscribe : String
+beenUnsubscribe =
+    "Vous avez été désabonné de cette tension."
 
 
-visibilityPublic : String
-visibilityPublic =
-    "The entire world can view."
+markAsRead : String
+markAsRead =
+    "Marquer comme lu."
 
 
-visibilityPrivate : String
-visibilityPrivate =
-    "Only members of the organisation can view."
+markAllAsRead : String
+markAllAsRead =
+    "Tout marquer comme lu"
 
 
-visibilitySeccret : String
-visibilitySeccret =
-    "Only roles inside this circle can view."
+onNode_blob : String
+onNode_blob =
+    "Document créé"
 
 
-visibilityRestriction : String
-visibilityRestriction =
-    "User can join the organisation on invitation only."
+onAbout_blob : String
+onAbout_blob =
+    "Description edité"
+
+
+onMandate_blob : String
+onMandate_blob =
+    "Mandat édité"
+
+
+onAboutAndMandate_blob : String
+onAboutAndMandate_blob =
+    "Mandat et description édité"
+
+
+onDoc_blob : String
+onDoc_blob =
+    "Fichier édité"
+
+
+created_event : String
+created_event =
+    "Nouvelle tension"
+
+
+closed_event : String
+closed_event =
+    "Tension fermé"
+
+
+reopened_event : String
+reopened_event =
+    "Tension réouverte"
+
+
+commentPushed_event : String
+commentPushed_event =
+    "Nouveau commentaire"
+
+
+moved_event : String
+moved_event =
+    "Tension déplacé"
+
+
+titleUpdated_event : String
+titleUpdated_event =
+    "Sujet mis à jour"
+
+
+typeUpdated_event : String
+typeUpdated_event =
+    "Type modifié"
+
+
+authority_event : String
+authority_event =
+    "Authorité modifié"
+
+
+visibility_event : String
+visibility_event =
+    "Visibilité modifié"
+
+
+labelAdded_event : String
+labelAdded_event =
+    "Etiquette ajouté"
+
+
+labelRemoved_event : String
+labelRemoved_event =
+    "Etiquette retiré"
+
+
+assigneeAdded_event : String
+assigneeAdded_event =
+    "Assigné ajouté"
+
+
+assigneeRemoved_event : String
+assigneeRemoved_event =
+    "Assigné retiré"
+
+
+blobCommitted_event : String
+blobCommitted_event =
+    "Mandat modifié (draft)"
+
+
+blobPushed_event : String
+blobPushed_event =
+    "Mandat modifié"
+
+
+memberLinked_event : String
+memberLinked_event =
+    "Membre associé"
+
+
+memberUnlinked_event : String
+memberUnlinked_event =
+    "Membre détaché"
+
+
+userJoined_event : String
+userJoined_event =
+    "Un Utilisateur nous a rejoins"
+
+
+userLeft_event : String
+userLeft_event =
+    "Un utilisateur nous a quitté"
+
+
+moved_contract : String
+moved_contract =
+    "Deplacer la tension"
+
+
+memberLinked_contract : String
+memberLinked_contract =
+    "Nouveau lead link"
+
+
+memberUnlinked_contract : String
+memberUnlinked_contract =
+    "Lead link retiré"
+
+
+userJoined_contract : String
+userJoined_contract =
+    "Nouveau membre"
+
+
+moved_contract_success : String
+moved_contract_success =
+    "Félicitations, la tension a été déplacée."
+
+
+memberLinked_contract_success : String
+memberLinked_contract_success =
+    "Félicitations, vous avez été associé à ce rôle."
+
+
+memberUnlinked_contract_success : String
+memberUnlinked_contract_success =
+    "Félicitations, vous avez été détaché de ce rôle."
+
+
+userJoined_contract_success : String
+userJoined_contract_success =
+    "Félicitations, vous avez rejoint cette organisation."
+
+
+memberLinked_contract_success_ext : String
+memberLinked_contract_success_ext =
+    "Félicitations, l'utilisateur a été lié."
+
+
+userJoined_contract_success_ext : String
+userJoined_contract_success_ext =
+    "Félicitations, a rejoint l'organisation."
 
 
 circleAuthorityHeader : String
 circleAuthorityHeader =
-    "The governance authority is characterized by the right to do a set of actions."
+    "L’autorité de gouvernance se caractérise par le droit de faire un ensemble d’actions."
 
 
 circleAuthorityDoc : String
 circleAuthorityDoc =
     """
-* Create and edit roles and circles
-* Edit tensions (title, status (Open/Close), assignees, etc)
-* Edit mandates
-* invite new members
+- Créer et modifier les rôles et les cercles
+- Editer les tensions (titre, statut (Ouvert/Fermé), attributaires, etc.)
+- Modifier les mandats
+- Inviter de nouveaux membres
 
-Note: To edit mandates you need to publish the modifications done in the corresponding (governance) tension.
-    """
-
-
-authCoordinated : String
-authCoordinated =
-    "Where Coordinator roles have the governance authority."
-
-
-authAgile : String
-authAgile =
-    "Where all roles have equal governance authority."
+Note : Pour éditer des mandats, vous devez publier les modifications effectuées dans la tension (gouvernance) correspondante.
+"""
 
 
 labelsInfoHeader : String
 labelsInfoHeader =
-    "Creating new labels help you to sort out your tensions"
+    "La création de nouvelles étiquettes vous aide à trier vos tensions."
 
 
 labelsInfoDoc : String
 labelsInfoDoc =
     """
-  When you create labels here. You can then attach them to your tensions. You will also be able to filter the tension according to labels.
+Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
 
-  **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
-
-  """
+**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l’un des parents du cercle récepteur.
+"""
 
 
 rolesInfoHeader : String
 rolesInfoHeader =
-    "Creating new roles help you to manage your organization"
+    "La création de nouveaux rôles vous aide à gérer votre organisation"
 
 
 rolesInfoDoc : String
 rolesInfoDoc =
     """
-  When you create a role here, you can use it as a template when you create a new role in your organisation.
+Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous créez un nouveau rôle dans votre organisation.
 
-  **Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents.
-
-  """
+**Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
+"""
 
 
 peerRoleInfo : String
 peerRoleInfo =
-    "Basic Role with restricted authorization."
+    "Rôle par défaut avec une autorisation restreinte."
 
 
 coordinatorRoleInfo : String
 coordinatorRoleInfo =
-    "Role with administration rights at the circle level."
+    "Rôle avec des droits d’administration au niveau du cercle."
 
 
+labelDeleteInfoHeader : String
+labelDeleteInfoHeader =
+    "Les étiquettes présentes dans d’autres cercles, et dans les tensions étiquetées, ne seront pas supprimées."
 
---
--- letter
---
+
+roleDeleteInfoHeader : String
+roleDeleteInfoHeader =
+    "Les rôles présents dans d’autres cercles, et les rôles créés, ne seront pas supprimés."
+
+
+contractInfoHeader : String
+contractInfoHeader =
+    "Une validation par les pairs est nécessaire pour compléter cette action."
+
+
+contractInfo : String
+contractInfo =
+    "En créant un contrat, il notifiera les rôles de l’organisation avec le niveau d’autorité capable de valider votre demande. L’action sera exécutée une fois que le contrat aura été validé."
+
+
+tensionTypeHeader : String
+tensionTypeHeader =
+    "Sélectionnez la bonne catégorie pour vous aider à trouver et à résoudre les tensions."
+
+
+tensionTypeDoc : String
+tensionTypeDoc =
+    """
+Il existe trois grandes catégories de tensions :
+
+- **Opérationnel** : Une catégorie générale, il peut s’agir d’une tâche, d’un problème ou de tout ce qui doit être partagé ou suivie dans l’organisation.
+- **Gouvernance** : Concernant la structure de l’organisation, les mandats, etc.
+- **Aide** : Pour les demandes d’aides, les questions ou les clarifications.
+- **Alerte** : Pour les alertes, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
+"""
+
+
+visibilityInfoHeader : String
+visibilityInfoHeader =
+    "La modification ne s’appliquera qu’au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+
+
+visibilityPublic : String
+visibilityPublic =
+    "Le monde entier peut la voir."
+
+
+visibilityPrivate : String
+visibilityPrivate =
+    "Visible uniquement par les membres de l’organisation."
+
+
+visibilitySeccret : String
+visibilitySeccret =
+    "Seuls les rôles à l’intérieur de ce cercle peuvent le voir."
+
+
+visibilityRestriction : String
+visibilityRestriction =
+    "Les utilisateurs peuvent rejoindre cette organisation sur invitation uniquement."
+
+
+authCoordinated : String
+authCoordinated =
+    "Où seul les rôles de coordinateur ont l’autorité de gouvernance."
+
+
+authAgile : String
+authAgile =
+    "Où tous les rôles ont une autorité égale en matière de gouvernance."
 
 
 welcomeLetter : String
 welcomeLetter =
     """
-Welcome @{{username}},
+Bienvenue @{{username}},
 
-**Your account has been successfully activated.**
+**Votre compte a été activé avec succès.**
 
-Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
+Fractale est une plateforme destinée aux communautés et aux organisations. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
 
-You can also use it for individual projects to organise and manage your tasks and ideas.
+Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer vos tâches et vos idées.
 
-In order to help your navigation, you will find some shortcuts in the top right corner:
-* the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
-* the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
-* the **new button** (<i class="icon icon-plus"></i>) to create new organisations.
-* the **user button** to access your profile and settings.
-
+Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
+- le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
+- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
+- le bouton **de création** (<i class="icon icon-plus"></i>) pour créer de nouvelles organisations.
+- le bouton **d’utilisateur** pour accéder à votre profil et à vos paramètres.
 """
 
 
-explainJoin : String
-explainJoin =
-    "Explain your motivation for joining this organisation ?"
-
-
-orgaUserInvitation : String
-orgaUserInvitation =
-    "Users can join the organisation"
-
-
-orgaUserInvitationHelp : String
-orgaUserInvitationHelp =
-    "User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
-
-
-guestCanCreateTension : String
-guestCanCreateTension =
-    "Guest can create tension"
-
-
-guestCanCreateTensionHelp : String
-guestCanCreateTensionHelp =
-    "Guest are user that has been invited but do not play any role in the organisation."
-
-
-notifyByEmail : String
-notifyByEmail =
-    "Enable email notifications."
-
-
-password : String
-password =
-    "Password"
-
-
-beenUnsubscribe : String
-beenUnsubscribe =
-    "You've been unsubscribed from this tension"

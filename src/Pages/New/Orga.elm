@@ -407,7 +407,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "createOrga", class "columns is-centered section" ]
         [ div [ class "column is-4-fullhd is-5-desktop" ]
-            [ h1 [ class "title has-text-centered" ] [ text "Create your organisation" ]
+            [ h1 [ class "title has-text-centered" ] [ text T.createYourOrganisation ]
             , viewBreadcrumb model
             , case model.step of
                 OrgaVisibilityStep ->
@@ -442,7 +442,7 @@ viewOrgaVisibility model =
             model.form
     in
     div [ class "content" ]
-        [ div [ class "subtitle" ] [ text "Organisation visibility" ]
+        [ div [ class "subtitle" ] [ text T.organisationVisibility ]
 
         -- Show the choices as card.
         , NodeVisibility.list

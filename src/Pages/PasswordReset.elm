@@ -266,8 +266,8 @@ view_ global model =
                     case model.reset2_result of
                         RemoteData.Success _ ->
                             div []
-                                [ div [ class "notification is-light is-success" ] [ textH "Your password has been updated." ]
-                                , a [ href "/" ] [ text "Go to home page." ]
+                                [ div [ class "notification is-light is-success" ] [ text "Your password has been updated." ]
+                                , a [ href "/" ] [ text T.goHome ]
                                 ]
 
                         _ ->
@@ -276,7 +276,7 @@ view_ global model =
                                     viewResetForm2 global model
 
                                 RemoteData.Success False ->
-                                    div [ class "notification is-light is-warning" ] [ textH "The session has expired, please try again." ]
+                                    div [ class "notification is-light is-warning" ] [ text "The session has expired, please try again." ]
 
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
@@ -380,7 +380,7 @@ viewResetForm global model =
                                 [ text "Reset password" ]
 
                           else
-                            button [ class "button", disabled True ] [ textH "reset password" ]
+                            button [ class "button", disabled True ] [ text "Reset password" ]
                         ]
                     ]
                 ]
@@ -394,7 +394,7 @@ viewResetForm global model =
                     text ""
             , case model.reset_result of
                 RemoteData.Success False ->
-                    div [ class "notification is-light is-warning" ] [ textH "wrong code, please try again." ]
+                    div [ class "notification is-light is-warning" ] [ text "Wrong code, please try again." ]
 
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -471,7 +471,7 @@ viewResetForm2 global model =
                                 [ text "Reset password" ]
 
                           else
-                            button [ class "button", disabled True ] [ textH "reset password" ]
+                            button [ class "button", disabled True ] [ text "Reset password" ]
                         ]
                     ]
                 ]

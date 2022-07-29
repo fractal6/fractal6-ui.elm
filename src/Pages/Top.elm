@@ -204,7 +204,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Login"
+    { title = T.welcome
     , body = [ view_ global model ]
     }
 
@@ -248,9 +248,9 @@ viewSignBox model =
             [ div [ class "card-header-title tabs is-fullwidth" ]
                 [ ul []
                     [ li [ classList [ ( "is-active", model.viewMode == Login ) ] ]
-                        [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text "Login" ] ]
+                        [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text T.signin_ ] ]
                     , li [ classList [ ( "is-active", model.viewMode == Signup ) ] ]
-                        [ a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text "Signup" ] ]
+                        [ a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signup_ ] ]
                     ]
                 ]
             ]
@@ -324,9 +324,9 @@ viewLogin model =
         , br [] []
         , div [ class "is-size-7 is-pulled-left" ]
             [ span [ class "mr-2" ] [ text T.needAnAccount ]
-            , a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signupNow ]
+            , a [ class "underlined-link", onClickPD (ChangeViewMode Signup), target "_blank" ] [ text T.signupNow ]
             , br [ class "mb-1" ] []
-            , a [ href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
+            , a [ class "underlined-link", href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
@@ -420,7 +420,7 @@ viewSignup model =
         , br [] []
         , div [ class "is-size-7 is-pulled-left" ]
             [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
-            , a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ textH T.signinNow ]
+            , a [ class "underlined-link", onClickPD (ChangeViewMode Login), target "_blank" ] [ textH T.signinNow ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]

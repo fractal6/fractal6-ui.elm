@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -67,6 +68,32 @@ import Time
 -}
 
 
+tensionStatus2String : TensionStatus.TensionStatus -> String
+tensionStatus2String s =
+    case s of
+        TensionStatus.Open ->
+            T.openTension
+
+        TensionStatus.Closed ->
+            T.closedTension
+
+
+tensionType2String : TensionType.TensionType -> String
+tensionType2String s =
+    case s of
+        TensionType.Operational ->
+            T.operational
+
+        TensionType.Governance ->
+            T.governance
+
+        TensionType.Help ->
+            T.help
+
+        TensionType.Alert ->
+            T.alert
+
+
 statusColor : TensionStatus.TensionStatus -> String
 statusColor s =
     case s of
@@ -124,16 +151,16 @@ tensionIcon2 type_ =
         cls =
             ""
     in
-    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (TensionType.toString type_) ]
+    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2String type_) ]
 
 
-mediaTension : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension now focus tension showStatus showRecip size navigate =
-    Lazy.lazy7 mediaTension_ now focus tension showStatus showRecip size navigate
+mediaTension : Lang.Lang -> Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension lang now focus tension showStatus showRecip size navigate =
+    Lazy.lazy8 mediaTension_ lang now focus tension showStatus showRecip size navigate
 
 
-mediaTension_ : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension_ now focus tension showStatus showRecip size navigate =
+mediaTension_ : Lang.Lang -> Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension_ lang now focus tension showStatus showRecip size navigate =
     let
         n_comments =
             --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
@@ -151,7 +178,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip has-tooltip-arrow"
-                , attribute "data-tooltip" (TensionType.toString tension.type_)
+                , attribute "data-tooltip" (tensionType2String tension.type_)
                 ]
                 [ tensionIcon tension.type_ ]
             ]
@@ -174,17 +201,17 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                     [ if showStatus then
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                            , attribute "data-tooltip" (TensionStatus.toString tension.status)
+                            , attribute "data-tooltip" (tensionStatus2String tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
                       else
                         text ""
                     , if showRecip then
-                        viewTensionDateAndUser now "has-text-weight-light" tension.createdAt tension.createdBy
+                        viewTensionDateAndUser lang now "has-text-weight-light" tension.createdAt tension.createdBy
 
                       else
-                        span [ class "has-text-weight-light" ] [ text (T.by ++ " "), viewUsernameLink tension.createdBy.username ]
+                        span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
                     ]
                 , div [ class "level-right" ]
                     []
@@ -203,7 +230,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                         a
                             [ class "level-item discrete-link tooltip has-tooltip-arrow"
                             , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
-                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " attached")
+                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                             ]
                             [ A.icon0 (action2icon tc ++ " icon-sm") ]
@@ -229,8 +256,8 @@ viewJoinNeeded : NodeFocus -> Html msg
 viewJoinNeeded focus =
     div [ class "box has-background-primary has-text-light" ]
         [ p []
-            [ button [ class "button is-small joinTrigger" ] [ text "Join" ]
-            , text " this organisation to participate to this conversation."
+            [ button [ class "button is-small mx-2 joinTrigger" ] [ text T.join2 ]
+            , text T.thisOrgaToParticipate
             ]
         ]
 
@@ -407,13 +434,13 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewRole : Maybe ( Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
+viewRole : Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
 viewRole now_m link r =
     let
         since =
             case now_m of
-                Just now ->
-                    "since the " ++ formatDate (Tuple.first now) (Tuple.second now)
+                Just ( lang, createdAt, uri ) ->
+                    T.sinceThe ++ " " ++ formatDate lang createdAt uri
 
                 Nothing ->
                     ""
@@ -428,7 +455,7 @@ viewRole now_m link r =
     in
     a
         ([ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom " ++ cls)
-         , attribute "data-tooltip" ([ r.name, "in", getParentFragmentFromRole r, since ] |> String.join " ")
+         , attribute "data-tooltip" ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
          , href link
          ]
             ++ color
@@ -510,69 +537,69 @@ viewProfileC user =
 -}
 
 
-viewOpenedDate : Time.Posix -> String -> Html msg
-viewOpenedDate now date =
+viewOpenedDate : Lang.Lang -> Time.Posix -> String -> Html msg
+viewOpenedDate lang now date =
     span [] <|
         List.intersperse (text " ") <|
-            [ span [] [ text T.opened ]
-            , text (formatDate now date)
+            [ span [] [ text T.authored ]
+            , text (formatDate lang now date)
             ]
 
 
-viewUpdated : Time.Posix -> String -> Html msg
-viewUpdated now date =
+viewUpdated : Lang.Lang -> Time.Posix -> String -> Html msg
+viewUpdated lang now date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ text " ·"
             , span [] [ text T.edited ]
-            , text (formatDate now date)
+            , text (formatDate lang now date)
             ]
 
 
-viewCommentedDate : Time.Posix -> String -> Html msg
-viewCommentedDate now date =
+viewCommentedDate : Lang.Lang -> Time.Posix -> String -> Html msg
+viewCommentedDate lang now date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ span [] [ text T.commented ]
-            , text (formatDate now date)
+            , text (formatDate lang now date)
             ]
 
 
-viewTensionDateAndUser : Time.Posix -> String -> String -> Username -> Html msg
-viewTensionDateAndUser now cls createdAt createdBy =
+viewTensionDateAndUser : Lang.Lang -> Time.Posix -> String -> String -> Username -> Html msg
+viewTensionDateAndUser lang now cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
-            [ viewOpenedDate now createdAt
+            [ viewOpenedDate lang now createdAt
             , text T.by
             , viewUsernameLink createdBy.username
             ]
 
 
-viewTensionDateAndUserC : Time.Posix -> String -> Username -> Html msg
-viewTensionDateAndUserC now createdAt createdBy =
+viewTensionDateAndUserC : Lang.Lang -> Time.Posix -> String -> Username -> Html msg
+viewTensionDateAndUserC lang now createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
             [ viewUsernameLink createdBy.username
-            , viewCommentedDate now createdAt
+            , viewCommentedDate lang now createdAt
             ]
 
 
-byAt : Time.Posix -> Username -> String -> Html msg
-byAt now createdBy createdAt =
+byAt : Lang.Lang -> Time.Posix -> Username -> String -> Html msg
+byAt lang now createdBy createdAt =
     span [] <|
         List.intersperse (text " ") <|
-            [ text "by"
+            [ text T.by
             , viewUsernameLink createdBy.username
-            , text (formatDate now createdAt)
+            , text (formatDate lang now createdAt)
             ]
 
 
-atBy : Time.Posix -> String -> String -> Username -> Html msg
-atBy now cls createdAt createdBy =
+atBy : Lang.Lang -> Time.Posix -> String -> String -> Username -> Html msg
+atBy lang now cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
-            [ text (formatDate now createdAt)
-            , text "by"
+            [ text (formatDate lang now createdAt)
+            , text T.by
             , viewUsernameLink createdBy.username
             ]
 
@@ -639,13 +666,13 @@ viewOrgaMedia_ user_m root =
                     [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
                         [ div [ class "control" ]
                             [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "member" ]
+                                [ span [ class "tag is-light" ] [ text T.members ]
                                 , span [ class "tag is-white" ] [ text (String.fromInt n_members) ]
                                 ]
                             ]
                         , div [ class "control" ]
                             [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "guest" ]
+                                [ span [ class "tag is-light" ] [ text T.guests ]
                                 , span [ class "tag is-white" ] [ text (String.fromInt n_guests) ]
                                 ]
                             ]
@@ -791,10 +818,10 @@ auth2str tc =
         NODE nt ->
             case nt of
                 NodeType.Circle ->
-                    upH T.governance
+                    T.governance
 
                 NodeType.Role ->
-                    upH T.authority
+                    T.authority
 
         MD ->
             T.notImplemented
@@ -804,31 +831,31 @@ action2str : TensionAction.TensionAction -> String
 action2str action =
     case action of
         TensionAction.NewCircle ->
-            upH T.circle
+            T.circle
 
         TensionAction.EditCircle ->
-            upH T.circle
+            T.circle
 
         TensionAction.ArchivedCircle ->
-            upH T.circle
+            T.circle
 
         TensionAction.NewRole ->
-            upH T.role
+            T.role
 
         TensionAction.EditRole ->
-            upH T.role
+            T.role
 
         TensionAction.ArchivedRole ->
-            upH T.role
+            T.role
 
         TensionAction.NewMd ->
-            upH T.document
+            T.document
 
         TensionAction.EditMd ->
-            upH T.document
+            T.document
 
         TensionAction.ArchivedMd ->
-            upH T.document
+            T.document
 
 
 auth2val : Node -> TensionCharac -> String
@@ -922,19 +949,19 @@ blobTypeStr : BlobType.BlobType -> String
 blobTypeStr btype =
     case btype of
         BlobType.OnNode ->
-            "Document created"
+            T.onNode_blob
 
         BlobType.OnAbout ->
-            "Description edited"
+            T.onAbout_blob
 
         BlobType.OnMandate ->
-            "Mandate edited"
+            T.onMandate_blob
 
         BlobType.OnAboutAndMandate ->
-            "Mandate and description edited"
+            T.onAboutAndMandate_blob
 
         BlobType.OnDoc ->
-            "File edited"
+            T.onDoc_blob
 
 
 type alias FormText =

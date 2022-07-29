@@ -22,8 +22,12 @@ window.addEventListener('load', _ => {
     if (theme) document.documentElement.className = theme;
     else document.documentElement.className = "dark";
     // Lang
-    // ...
-
+    var lang = localStorage.getItem("lang");
+    if (uctx && uctx.lang) {
+       lang = uctx.lang;
+    } else if (!lang) {
+        lang = DEFAULT_LANG;
+    }
 
     // Init Elm
     // --
@@ -32,6 +36,7 @@ window.addEventListener('load', _ => {
             node: document.getElementById('main'),
             flags: {
                 uctx: uctx,
+                lang: lang,
                 window_pos: window_pos,
                 orga_menu: orga_menu,
                 tree_menu: tree_menu,

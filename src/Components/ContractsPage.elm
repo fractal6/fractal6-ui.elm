@@ -10,6 +10,7 @@ import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -681,6 +682,7 @@ type alias Op =
     , receiverid : String
     , isAdmin : Bool
     , now : Time.Posix
+    , lang : Lang.Lang
     }
 
 
@@ -721,7 +723,7 @@ viewContracts op model =
 
 headers : List String
 headers =
-    [ "Event", "Validation", "Author", "Opened", "" ]
+    [ T.contractEvent, "Validation", T.author, upH T.opened, "" ]
 
 
 viewContractsTable : Contracts -> Op -> Model -> Html Msg
@@ -729,7 +731,7 @@ viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]
         [ thead [ class "is-size-7" ]
-            [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ textH x ]))
+            [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ text x ]))
             ]
         , data
             |> List.map (\d -> viewRow d op model)
@@ -757,11 +759,11 @@ viewRow d op model =
         [ td [ onClick (DoClickContract d.id) ]
             [ a
                 [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
-                [ span [] [ textH (contractEventToText d.event.event_type) ] ]
+                [ span [] [ text (contractEventToText d.event.event_type) ] ]
             ]
-        , td [] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
+        , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
-        , td [] [ text (formatDate op.now d.createdAt) ]
+        , td [] [ text (formatDate op.lang op.now d.createdAt) ]
 
         -- participant
         -- n comments icons
@@ -769,7 +771,7 @@ viewRow d op model =
             [ if isAuthor || op.isAdmin then
                 span
                     [ class "button-light"
-                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
                     [ span [ class "tag is-danger is-light is-smaller2" ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
 
@@ -873,17 +875,17 @@ viewContractBox c op model =
         [ div [ class "columns" ]
             [ div [ class "column is-5" ]
                 [ div [ class "field is-horizontal" ]
-                    [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
+                    [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractType ] ]
                     , div [ class "field-bod" ]
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (upH (contractTypeToText c.contract_type)), disabled True ] [] ]
+                            [ input [ class "input", value (contractTypeToText c.contract_type), disabled True ] [] ]
                         ]
                     ]
                 , div [ class "field is-horizontal" ]
-                    [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
+                    [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractEvent ] ]
                     , div [ class "field-bod" ]
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (upH (contractEventToText c.event.event_type)), disabled True ] [] ]
+                            [ input [ class "input", value (contractEventToText c.event.event_type), disabled True ] [] ]
                         ]
                     ]
                 ]
@@ -945,14 +947,14 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ space_), byAt op.now c.createdBy c.createdAt ] ]
+        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt op.lang op.now c.createdBy c.createdAt ] ]
         , div [ class "" ] <|
             case c.status of
                 ContractStatus.Closed ->
-                    [ span [ class "has-text-success" ] [ textH "closed" ] ]
+                    [ span [ class "has-text-success" ] [ text T.closedContract ] ]
 
                 ContractStatus.Canceled ->
-                    [ span [ class "has-text-warning" ] [ textH "canceled" ] ]
+                    [ span [ class "has-text-warning" ] [ text T.canceledContract ] ]
 
                 ContractStatus.Open ->
                     []
@@ -997,13 +999,13 @@ viewVoteBox c op model =
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
                     , onClick (OnSubmit isLoading <| DoVote 1)
                     ]
-                    [ span [ class "mx-4" ] [ textH T.accept ] ]
+                    [ span [ class "mx-4" ] [ text T.accept ] ]
                 , div
                     [ class "button is-danger is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
                     , onClick (OnSubmit isLoading <| DoVote 0)
                     ]
-                    [ span [ class "mx-4" ] [ textH T.decline ] ]
+                    [ span [ class "mx-4" ] [ text T.decline ] ]
                 ]
             , if isParticipant then
                 div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]

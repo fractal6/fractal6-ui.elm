@@ -29,6 +29,8 @@ module.exports = (env, argv) => {
     const isDev = MODE == 'development';
     const isProd = MODE == 'production';
 
+    // @TODO: get lang from build options ?
+    var DEFAULT_LANG = "EN";
     var API_URL;
     if (isDev || CMD == 'webprod') {
         API_URL = {
@@ -80,7 +82,8 @@ module.exports = (env, argv) => {
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
                 'DOC_API': JSON.stringify(API_URL.doc),
-                'VERSION': JSON.stringify(commitHash)
+                'VERSION': JSON.stringify(commitHash),
+                'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG)
             }),
             new webpack.LoaderOptionsPlugin({
                 options: {

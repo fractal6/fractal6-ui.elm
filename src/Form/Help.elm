@@ -5,7 +5,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, textT, upH)
+import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
@@ -319,7 +319,7 @@ update_ apis message model =
             in
             if doClose then
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
             else
@@ -490,17 +490,17 @@ viewModalContent op (State model) =
                         [ classList [ ( "is-active", model.activeTab == QuickHelp ) ]
                         , onClick (OnChangeTab QuickHelp)
                         ]
-                        [ span [] [ text "Quick help" ] ]
+                        [ span [] [ text T.quickHelp ] ]
                     , li
                         [ classList [ ( "is-active", model.activeTab == AskQuestion ) ]
                         , onClick (OnChangeTab AskQuestion)
                         ]
-                        [ span [] [ text "Ask a question" ] ]
+                        [ span [] [ text T.askQuestion ] ]
                     , li
                         [ classList [ ( "is-active", model.activeTab == Feedback ) ]
                         , onClick (OnChangeTab Feedback)
                         ]
-                        [ span [] [ text "Give feedback" ] ]
+                        [ span [] [ text T.giveFeedback ] ]
                     ]
                 ]
             ]
@@ -585,16 +585,16 @@ viewAskQuestion op (State model) =
             div []
                 [ div [ class "box is-light" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
-                    , textH T.messageSent
+                    , text T.messageSent
                     , text ". "
                     , a
                         [ href link
                         , onClickPD (OnClose { reset = True, link = link })
                         , target "_blank"
                         ]
-                        [ textH T.checkItOut ]
+                        [ text T.checkItOut ]
                     ]
-                , a [ onClickPD (OnResetForm AskQuestion), target "_blank" ] [ textH T.askAnotherQuestion ]
+                , a [ onClickPD (OnResetForm AskQuestion), target "_blank" ] [ text T.askAnotherQuestion ]
                 ]
 
         other ->
@@ -604,11 +604,12 @@ viewAskQuestion op (State model) =
             in
             div [ class "section pt-0" ]
                 [ p [ class "field" ]
-                    [ text "Have you checked if your question is answered in the "
-                    , span [ class "button-light has-text-info has-text-weight-semibold", onClick (OnChangeTab QuickHelp) ] [ text "Quick help?" ]
+                    [ text T.haveYouCheckQuickHelp
+                    , text space_
+                    , span [ class "button-light has-text-info has-text-weight-semibold", onClick (OnChangeTab QuickHelp) ] [ text T.quickHelp, text "?" ]
                     ]
                 , div [ class "field is-horizontal pt-2" ]
-                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Subject" ] ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text T.subject ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
@@ -616,7 +617,7 @@ viewAskQuestion op (State model) =
                                     [ class "input autofocus followFocus"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
-                                    , placeholder "Subject of your question"
+                                    , placeholder T.questionTitlePH
                                     , required True
                                     , value title
                                     , onInput (OnChangePostAsk "title")
@@ -627,7 +628,7 @@ viewAskQuestion op (State model) =
                         ]
                     ]
                 , div [ class "field is-horizontal" ]
-                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Question" ] ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text T.question ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
@@ -635,7 +636,7 @@ viewAskQuestion op (State model) =
                                     [ id "textAreaModal"
                                     , class "textarea"
                                     , rows (min 10 (max line_len 5))
-                                    , placeholder "Write your question here..."
+                                    , placeholder T.questionTextPH
                                     , required True
                                     , value message
                                     , onInput (OnChangePostAsk "message")
@@ -659,7 +660,7 @@ viewAskQuestion op (State model) =
                             , disabled (not isSendable)
                             , onClick (OnSubmit isLoading <| OnSubmitAsk)
                             ]
-                            [ text "Send question" ]
+                            [ text T.send ]
                         ]
                     ]
                 ]
@@ -692,18 +693,18 @@ viewFeedback op (State model) =
             div []
                 [ div [ class "box is-light" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
-                    , textH T.messageSent
+                    , text T.messageSent
                     , text ". "
                     , a
                         [ href link
                         , onClickPD (OnClose { reset = True, link = link })
                         , target "_blank"
                         ]
-                        [ textH T.checkItOut ]
+                        [ text T.checkItOut ]
                     ]
-                , span [ class "is-italic" ] [ text "Thank you for your feedback, we will get back to you shortly." ]
+                , span [ class "is-italic" ] [ text T.thankyouFeedback ]
                 , br [] []
-                , a [ onClickPD (OnResetForm Feedback), target "_blank" ] [ textH T.giveAnotherFeedback ]
+                , a [ onClickPD (OnResetForm Feedback), target "_blank" ] [ text T.giveAnotherFeedback ]
                 ]
 
         other ->
@@ -752,7 +753,7 @@ viewFeedback op (State model) =
                         ]
                     ]
                 , div [ class "field is-horizontal pt-2" ]
-                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Subject" ] ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text T.subject ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
@@ -760,7 +761,7 @@ viewFeedback op (State model) =
                                     [ class "input autofocus followFocus"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
-                                    , placeholder "Subject of your feedback"
+                                    , placeholder T.feedbackTitlePH
                                     , required True
                                     , value title
                                     , onInput (OnChangePostFeedback "title")
@@ -771,7 +772,7 @@ viewFeedback op (State model) =
                         ]
                     ]
                 , div [ class "field is-horizontal" ]
-                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Feedback" ] ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text T.feedback ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
@@ -779,7 +780,7 @@ viewFeedback op (State model) =
                                     [ id "textAreaModal"
                                     , class "textarea"
                                     , rows (min 10 (max line_len 5))
-                                    , placeholder "Write your feedback here..."
+                                    , placeholder T.feedbackTextPH
                                     , required True
                                     , value message
                                     , onInput (OnChangePostFeedback "message")
@@ -803,7 +804,7 @@ viewFeedback op (State model) =
                             , disabled (not isSendable)
                             , onClick (OnSubmit isLoading <| OnSubmitFeedback)
                             ]
-                            [ text "Send feedback" ]
+                            [ text T.send ]
                         ]
                     ]
                 ]

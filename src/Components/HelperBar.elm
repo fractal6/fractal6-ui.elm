@@ -101,7 +101,7 @@ viewPathLevel op =
                                 if isPending uctx rootnameid then
                                     -- show Pending button (redicrect to contract)...
                                     div [ id "joinPending", class "button is-small has-text-weight-semibold is-warning joinPendingTrigger" ]
-                                        [ textH "Pending invitation" ]
+                                        [ text T.pendingInvitation ]
 
                                 else if List.length roles == 0 && userCanJoin then
                                     joinButton op
@@ -141,9 +141,9 @@ viewNavLevel op =
              --    [ div [ class "dropdown is-hoverable" ]
              --        [ div [ class "dropdown-trigger", attribute "aria-haspopup" "true", attribute "aria-controls" "tension-menu" ] [ A.icon1 "icon-exchange" "Tensions" ]
              --        , div [ class "dropdown-menu", id "tension-menu", attribute "role" "menu" ]
-             --            [ div [ class "dropdown-content" ]
-             --                [ p [ class "dropdown-item" ] [ text "List" ]
-             --                ]
+             --            [
+             --              div [ class "dropdown-content" ] [ p [ class "dropdown-item" ] [ text T.list ] ]
+             --              , div [ class "dropdown-content" ] [ p [ class "dropdown-item" ] [ text T.byCircle ] ]
              --            ]
              --        ]
              --    ]
@@ -232,7 +232,7 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
 joinButton : Op msg -> Html msg
 joinButton op =
     div [ id "join", class "button is-small has-text-weight-semibold is-primary", onClick op.onJoin ]
-        [ textH T.joinOrga ]
+        [ text T.joinOrga ]
 
 
 memberButtons : List UserRole -> Op msg -> Html msg
@@ -268,7 +268,7 @@ memberButtons roles_ op =
         |> List.indexedMap
             (\i r ->
                 if r.role_type == RoleType.Member then
-                    [ text "" ]
+                    []
 
                 else
                     [ viewRole Nothing (uriFromNameid op.baseUri r.nameid []) r ]

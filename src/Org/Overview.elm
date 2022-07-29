@@ -20,6 +20,7 @@ import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -182,6 +183,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
+    , lang : Lang.Lang
     , empty : {}
 
     -- Components
@@ -319,6 +321,7 @@ init global flags =
             -- Common
             , refresh_trial = 0
             , now = global.now
+            , lang = global.session.lang
             , empty = {}
 
             -- Components
@@ -1066,7 +1069,7 @@ viewSearchBar us model =
                     [ class "input is-small"
                     , type_ "search"
                     , autocomplete False
-                    , placeholder (upH T.phQS)
+                    , placeholder T.phQS
                     , value model.node_quickSearch.pattern
                     , onInput ChangePattern
                     , onClick ToggleLookup
@@ -1183,7 +1186,7 @@ viewSearchList _ model =
         [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
         [ table [ class "table is-fullwidth" ] <|
             if sortedLookup == [] then
-                [ tbody [] [ td [] [ textH T.noResultsFound ] ] ]
+                [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
 
             else
                 sortedLookup
@@ -1212,10 +1215,10 @@ viewSearchList _ model =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ upH T.circle ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.circle ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ upH T.role ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.role ] ]
 
                                      else
                                         []
@@ -1224,7 +1227,7 @@ viewSearchList _ model =
                     |> List.concat
                     |> tbody []
                     |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ textH T.name ], th [] [ textH T.parent ], th [] [ textH T.firstLink ] ] ] ]
+                    |> List.append [ thead [] [ tr [] [ th [] [ text T.name ], th [] [ text T.parent ], th [] [ text T.firstLink ] ] ] ]
         ]
 
 
@@ -1281,7 +1284,7 @@ viewCanvas us model =
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpen p)
                                 ]
-                                [ textH T.createNewTension ]
+                                [ text T.createNewTension ]
                              ]
                                 ++ (if isAdmin || True then
                                         [ div [ class "hbar" ] []
@@ -1289,18 +1292,18 @@ viewCanvas us model =
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
                                             ]
-                                            [ textH T.createNewCircle ]
+                                            [ text T.createNewCircle ]
                                         , div
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenRole p)
                                             ]
-                                            [ textH T.createNewRole ]
+                                            [ text T.createNewRole ]
 
                                         --, div
                                         --    [ class "button is-success"
                                         --    , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                                         --    ]
-                                        --    [ textH "Invite member" ]
+                                        --    [ text "Invite member" ]
                                         ]
 
                                     else
@@ -1320,7 +1323,7 @@ viewCanvas us model =
                 (\path ->
                     [ div
                         [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                        , attribute "data-tooltip" (upH "Add...")
+                        , attribute "data-tooltip" (T.add ++ "...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path))
                         ]
                         [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs is-strong" ] ]
@@ -1332,7 +1335,7 @@ viewCanvas us model =
                 ++ (if isAdmin then
                         [ div
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" (upH T.inviteMember)
+                            , attribute "data-tooltip" T.inviteMembers
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
@@ -1353,13 +1356,13 @@ viewCanvas us model =
                     else
                         [ div
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" (upH T.goRoot)
+                            , attribute "data-tooltip" T.goRoot
                             , onClick (NodeClicked model.node_focus.rootnameid)
                             ]
                             [ A.icon "icon-chevrons-up" ]
                         , div
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" (upH T.goParent)
+                            , attribute "data-tooltip" T.goParent
                             , case model.path_data of
                                 Just g ->
                                     LE.getAt 1 (List.reverse g.path)
@@ -1377,7 +1380,7 @@ viewCanvas us model =
                 ++ (if isComplex then
                         [ div
                             [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" (upH T.reverseTooltip)
+                            , attribute "data-tooltip" T.reverseTooltip
                             , onClick ToggleGraphReverse
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
@@ -1428,18 +1431,18 @@ viewActivies model =
                             Nothing ->
                                 class ""
                         ]
-                        [ span [ class "help" ] [ text "Recent activities:" ] ]
+                        [ span [ class "help" ] [ text T.recentActivities, text ":" ] ]
                     ]
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
                             [ li [ classList [ ( "is-active", model.activity_tab == TensionTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= TensionTab ) ] ]
-                                    [ A.icon1 "icon-exchange icon-sm" (upH T.tensions) ]
+                                    [ A.icon1 "icon-exchange icon-sm" T.tensions ]
                                 ]
                             , li [ classList [ ( "is-active", model.activity_tab == JournalTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= JournalTab ) ] ]
-                                    [ A.icon1 "icon-history icon-sm" (upH T.journal) ]
+                                    [ A.icon1 "icon-history icon-sm" T.journal ]
                                 ]
                             ]
                         ]
@@ -1452,11 +1455,11 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension model.now model.node_focus x False True "is-size-6" Navigate) tensions
+                                List.map (\x -> mediaTension model.lang model.now model.node_focus x False True "is-size-6" Navigate) tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
-                                            [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ textH T.seeFullList ]
+                                            [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
-                                            , a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ "?v=circle") ] [ textH T.seeByCircle ]
+                                            , a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ "?v=circle") ] [ text T.seeByCircle ]
                                             ]
                                        ]
                                     |> div [ id "tensionsTab" ]
@@ -1464,10 +1467,10 @@ viewActivies model =
                             else
                                 case model.node_focus.type_ of
                                     NodeType.Role ->
-                                        div [ class "m-4" ] [ textH T.noOpenTensionRole ]
+                                        div [ class "m-4" ] [ text T.noOpenTensionRole ]
 
                                     NodeType.Circle ->
-                                        div [ class "m-4" ] [ textH T.noOpenTensionCircle ]
+                                        div [ class "m-4" ] [ text T.noOpenTensionCircle ]
 
                         Failure err ->
                             viewGqlErrors err
@@ -1478,7 +1481,7 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> viewEventNotif model.now x) events
+                            List.map (\x -> viewEventNotif model.lang model.now x) events
                                 |> div [ id "journalTab" ]
 
                         Failure err ->
@@ -1493,8 +1496,8 @@ viewActivies model =
         ]
 
 
-viewEventNotif : Time.Posix -> EventNotif -> Html Msg
-viewEventNotif now e =
+viewEventNotif : Lang.Lang -> Time.Posix -> EventNotif -> Html Msg
+viewEventNotif lang now e =
     let
         ue =
             UserEvent "" False []
@@ -1518,7 +1521,7 @@ viewEventNotif now e =
         node =
             e.tension.receiver
     in
-    viewEventMedia now True ev
+    viewEventMedia lang now True ev
 
 
 
