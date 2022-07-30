@@ -25,7 +25,7 @@
             "elm-community/json-extra": "4.3.0",
             "elm-community/list-extra": "8.6.0",
             "elm-community/string-extra": "4.0.1",
-            "gingko/time-distance": "2.3.0",
+            "gingko/time-distance": "2.3.1",
             "jorgengranseth/elm-string-format": "1.0.1",
             "justgook/elm-image": "5.0.0",
             "justinmimbs/date": "4.0.1",

@@ -1298,12 +1298,6 @@ viewCanvas us model =
                                             , onClick (NewTensionMsg <| NTF.OnOpenRole p)
                                             ]
                                             [ text T.createNewRole ]
-
-                                        --, div
-                                        --    [ class "button is-success"
-                                        --    , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
-                                        --    ]
-                                        --    [ text "Invite member" ]
                                         ]
 
                                     else
