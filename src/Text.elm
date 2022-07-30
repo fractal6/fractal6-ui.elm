@@ -114,6 +114,11 @@ explorePublicOrga =
     "Explorer les organisations publiques."
 
 
+selectColor : String
+selectColor =
+    "Selectionnez une couleur"
+
+
 recentActivities : String
 recentActivities =
     "Activités récentes"
@@ -1862,6 +1867,11 @@ unarchive_header =
 leave_header : String
 leave_header =
     "Quitter le {{type}}"
+
+
+tensionType_action_success : String
+tensionType_action_success =
+    "Type de la tension modifié."
 
 
 archive_action_success : String

@@ -91,7 +91,7 @@ view op =
             ]
             [ div [ class "colorBoxes" ]
                 [ span [ class "is-size-7" ]
-                    [ text "Select a color:" ]
+                    [ text T.selectColor, text ":" ]
                 , div []
                     (op.data.colors
                         |> List.map

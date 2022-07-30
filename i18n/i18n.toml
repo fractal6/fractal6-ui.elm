@@ -1,3 +1,7 @@
+#
+# Welcom and Accounts
+#
+
 [welcome]
   en="Welcome to Fractale"
   fr="Bienvenue sur Fractale"
@@ -85,6 +89,14 @@
 [explorePublicOrga]
 	en="Explore public organizations."
 	fr="Explorer les organisations publiques."
+
+#
+# General
+#
+
+[selectColor]
+	en="Select a color"
+	fr="Selectionnez une couleur"
 
 [recentActivities]
   en="Recent activities"
@@ -1491,6 +1503,10 @@
 	fr="Quitter le {{type}}"
 
 -- Success
+
+[tensionType_action_success]
+  en="Tension type changed."
+  fr="Type de la tension modifié."
 
 [archive_action_success]
   en="Document archived"

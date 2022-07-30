@@ -343,7 +343,7 @@ viewModal op (State model) =
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "Tension type changed."
+                        , text T.tensionType_action_success
                         ]
 
                 _ ->
