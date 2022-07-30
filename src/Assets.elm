@@ -110,10 +110,14 @@ welcome =
 almostThere : String -> String -> String -> Html msg
 almostThere username aim link =
     div []
-        [ div [ class "title is-aligned-center" ] [ textH (T.almostThere ++ "...") ]
+        [ div [ class "title is-aligned-center" ] [ text (T.almostThere ++ "...") ]
         , div [ class "notification is-light is-info" ]
-            [ textH ("Please check your email ({{}}) {{}}." |> Format.value username |> Format.value aim)
+            [ text (T.checkYourEmail |> Format.value username |> Format.value aim)
             , hr [ class "has-background-grey-light mt-5 mb-5" ] []
-            , small [] [ textH "No confirmation email received? Check your spam folder or ", a [ href link ] [ text "request new confirmation email." ] ]
+            , small []
+                [ text T.checkConfirmationEmail
+                , text (" " ++ T.or_ ++ " ")
+                , a [ href link ] [ text T.requestNewEmail ]
+                ]
             ]
         ]

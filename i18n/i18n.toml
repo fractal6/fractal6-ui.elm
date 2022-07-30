@@ -58,21 +58,49 @@
   en="Forgot your password?"
   fr="Mot de passe oublié ?"
 
+[checkYourEmail]
+	en="Please check your email ({{}}) {{}}."
+	fr="Veuillez vérifier vos e-mails ({{}}) {{}}."
+
+[checkConfirmationEmail]
+	en="No confirmation email received? Check your Spam folder"
+	fr="Vous n'avez pas reçu de courriel de confirmation ? Vérifiez votre dossier Spam"
+
+[requestNewEmail]
+	en="send a new confirmation email."
+	fr="envoyer un nouvel e-mail de confirmation."
+
+[toConfirmYourAccount]
+	en="to confirm your account"
+	fr="pour valider votre compte"
+
+[toResetYourPassword]
+	en="to reset your password"
+	fr="pour réinitialiser votre mot de passe"
+
+[gotItCreateOrga]
+	en="Got it, let's create my first organization."
+	fr="Compris, je veux créer ma première organisation"
+
+[explorePublicOrga]
+	en="Explore public organizations."
+	fr="Explorer les organisations publiques."
+
 [recentActivities]
   en="Recent activities"
   fr="Activités récentes"
 
 [createLabel]
   en="Create label"
-  fr="Créer une étiquette"
+  fr="Créer l'étiquette"
 
 [updateLabel]
   en="Update label"
   fr="Modifier l’étiquette"
 
 [createRole]
-  en="Create role"
-  fr="Créer un rôle"
+  en="Create role template"
+  fr="Créer le modéle de rôle"
 
 [updateRole]
   en="Update role"
@@ -260,7 +288,7 @@
 
 [edit]
   en="Edit"
-  fr="Modifier"
+  fr="Editer"
 
 [editThisCircle]
   en="Edit this circle"
@@ -380,11 +408,31 @@
 
 [linkAction]
   en="Invite someone to play this role"
-  fr="Inviter quelqu’un à jouer ce rôle"
+  fr="Inviter une personne à jouer ce rôle"
 
 [unlinkAction]
   en="Unlink user to the role"
   fr="Détacher l’utilisateur du rôle"
+
+[inviteOrLink]
+	en="Invite someone to this role (or link yourself)"
+	fr="Invitez une personne à jouer ce rôle (ou reliez-vous vous-même)"
+
+[inviteSomeone]
+	en="Invite Someone"
+	fr="Inviter une personne"
+
+[inviteSomeoneElse]
+	en="Invite someone else"
+	fr="Inviter une autre personne"
+
+[usernameOrEmail]
+	en="Username or email address"
+	fr="Nom d'utilisateur ou adresse email"
+
+[addRole]
+	en="Add a Role"
+	fr="Ajouter un Rôle"
 
 [invite]
   en="Invite"
@@ -744,7 +792,7 @@
 
 [oldest]
   en="Oldest"
-  fr="Plus ancien/ne"
+  fr="Plus ancien"
 
 [newest]
   en="Newest"
@@ -801,6 +849,14 @@
 [noMemberYet]
   en="No member yet"
   fr="Aucun membre pour le moment"
+
+[noNotificationsYet]
+  en="No notifications yet."
+  fr="Aucune notifications pour le moment"
+
+[noTensionsYet]
+  en="No tensions yet."
+	fr="Aucune tensions pour le moment"
 
 [owner]
   en="Owner"
@@ -944,7 +1000,15 @@
 
 [toThisRole]
   en="to this role"
-  fr="à ce rôle"
+  fr="sur ce rôle"
+
+[inThisCircle]
+  en="in this circle"
+  fr="dans ce cercle"
+
+[enterValidUserOrEmail]
+	en="Please, enter a valid email address or username"
+	fr="Veuillez entrer une adresse e-mail ou un nom d'utilisateur valide."
 
 [color]
   en="Color"
@@ -1072,11 +1136,11 @@
 
 [newRoleHelp]
   en="Create or propose a new role."
-  fr="Créez ou proposez un nouveau rôle."
+  fr="Créer ou proposez un nouveau rôle."
 
 [newCircleHelp]
   en="Create or propose a new circle."
-  fr="Créez ou proposez un nouveau cercle."
+  fr="Créer ou proposez un nouveau cercle."
 
 [tensionTitleHelp]
   en="Title that sumarize your tension."
@@ -1131,8 +1195,8 @@
   fr="Ajoutez un commentaire pour aider les autres à comprendre pourquoi un nouveau rôle devrait être créé."
 
 [invitationMessageHelp]
-  en="Add an invitation message."
-  fr="Ajouter un message d’invitation."
+  en="Write an invitation message."
+  fr="Ecrire un message d’invitation."
 
 [tensionAdded]
   en="Tension added."
@@ -1174,6 +1238,50 @@
   en="Add policies"
   fr="Ajouter des politiques"
 
+[selectRoleTemplate]
+	en="Select a role template"
+	fr="sélectionner un modèle de rôle"
+
+[selectCircleVisibility]
+	en="Choose the circle visibility"
+	fr="Selectionner la visibilité du cercle"
+
+[noTemplateRole]
+	en="No template role yet."
+	fr="Aucun rôle modéle pour le moment."
+
+[templateRoleHint]
+	en="A template role is a generic role that you can reuse in your organisation."
+	fr="Un rôle modèle est un rôle générique que vous pouvez réutiliser dans votre organisation."
+
+[adhocRoleHint]
+	en="An ad-hoc role is a role that you create from scratch."
+	fr="Un rôle ad-hoc est un rôle que vous créez de zéro, pour un besoin particulier."
+
+[youCanAdd]
+	en="You can add a"
+	fr="Vous pouvez ajouter un"
+
+[orCreate]
+	en="or make an"
+	fr="ou créer un"
+
+[needNewRole]
+	en="Need a new role? Add a"
+	fr="Besoin d'un nouveau rôle ? Ajoutez un"
+
+[templateRole]
+	en="Role template"
+	fr="Modéle de Rôle"
+
+[templateRoles]
+	en="Role templates"
+	fr="Modèles de Rôles"
+
+[adhocRole]
+	en="Ad-hoc Role"
+	fr="Rôle ad-hoc"
+
 [unknown]
   en="unknown"
   fr="inconu"
@@ -1206,9 +1314,17 @@
   en="Sorry, this circle doesn’t exist."
   fr="Désolé, ce cercle n’existe pas."
 
+[confirmToUnlinkUser]
+	en="Confirm to unlink user"
+	fr="Confirmer pour détacher l'utilisateur"
+
 [goHome]
   en="Go to home page."
-  fr="Aller à la page d’accueil"
+  fr="Aller à la page d’accueil."
+
+[goBack]
+  en="Go back"
+  fr="revenir en arrière"
 
 [goRoot]
   en="Go to root circle"
@@ -1289,6 +1405,34 @@
 [sessionExpired]
 	en="Your session has expired. Please, confirm your password"
 	fr="Votre session a expiré. Veuillez confirmer votre mot de passe"
+
+[sessionExpired2]
+	en="The session has expired, please try again."
+	fr="Votre session a expiré. Veuillez réessayer."
+
+[passwordUpdated]
+	en="Your password has been updated."
+	fr="Votre mot de passe a été mis à jour."
+
+[enterYourEmail]
+	en="Enter your email"
+	fr="Saisisser votre e-mail"
+
+[enterTheCode]
+	en="Enter the code below"
+	fr="Entrez le code ci-dessous"
+
+[newPassword]
+	en="New password"
+	fr="Nouveau mot de passe"
+
+[confirmYourPassword]
+	en="Confirm your password"
+	fr="Confirmez votre mot de passe"
+
+[resetPassword]
+	en="Reset Password"
+	fr="Réinitialiser le mot de passe"
 
 [reverseTooltip]
   en="Reverse the organization graph."
@@ -1632,17 +1776,17 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 """
 
 [rolesInfoHeader]
-  en="Creating new roles help you to manage your organization"
-	fr="La création de nouveaux rôles vous aide à gérer votre organisation"
+  en="Creating new roles template help you to manage your organization"
+	fr="La création de nouveaux rôles modéles vous aide à gérer votre organisation"
 
 [rolesInfoDoc]
   en="""
-When you create a role here, you can use it as a template when you create a new role in your organisation.
+When you create a role here, you can use it as a template when you add a new role in your organisation.
 
 **Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents circles.
 """
 	fr="""
-Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous créez un nouveau rôle dans votre organisation.
+Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous ajoutez un nouveau rôle dans votre organisation.
 
 **Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
 """
@@ -1656,12 +1800,12 @@ Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque
 	fr="Rôle avec des droits d’administration au niveau du cercle."
 
 [labelDeleteInfoHeader]
-  en="Label present in other circles, and in labeled tensions, won’t be deleted."
-  fr="Les étiquettes présentes dans d’autres cercles, et dans les tensions étiquetées, ne seront pas supprimées."
+  en="Label present in other circles and those used in labeled tensions won’t be deleted."
+  fr="Les étiquettes présentes dans d’autres cercles et utilisés dans les tensions étiquetées ne seront pas supprimées."
 
 [roleDeleteInfoHeader]
-  en="Role present in other circles, and created roles, won’t be deleted."
-  fr="Les rôles présents dans d’autres cercles, et les rôles créés, ne seront pas supprimés."
+	en="Roles in other circles and those created in your organization won’t be deleted."
+  fr="Les rôles présents dans d’autres cercles et ceux créés dans votre organisation ne seront pas supprimés."
 
 [contractInfoHeader]
   en="A peer validation is needed to complete this action."

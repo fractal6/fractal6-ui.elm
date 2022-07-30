@@ -266,7 +266,7 @@ view_ global model =
                     case model.reset2_result of
                         RemoteData.Success _ ->
                             div []
-                                [ div [ class "notification is-light is-success" ] [ text "Your password has been updated." ]
+                                [ div [ class "notification is-light is-success" ] [ text T.passwordUpdated ]
                                 , a [ href "/" ] [ text T.goHome ]
                                 ]
 
@@ -276,7 +276,7 @@ view_ global model =
                                     viewResetForm2 global model
 
                                 RemoteData.Success False ->
-                                    div [ class "notification is-light is-warning" ] [ text "The session has expired, please try again." ]
+                                    div [ class "notification is-light is-warning" ] [ text T.sessionExpired2 ]
 
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
@@ -290,7 +290,7 @@ view_ global model =
                 Nothing ->
                     case model.reset_result of
                         RemoteData.Success True ->
-                            almostThere (Dict.get "email" model.form.post |> withDefault "") "to reset your password" (toHref Route.PasswordReset)
+                            almostThere (Dict.get "email" model.form.post |> withDefault "") T.toResetYourPassword (toHref Route.PasswordReset)
 
                         _ ->
                             viewResetForm global model
@@ -308,7 +308,7 @@ viewResetForm global model =
                 ]
             , div [ class "card-content" ]
                 [ div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Enter your email" ] ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.enterYourEmail ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control" ]
@@ -329,7 +329,7 @@ viewResetForm global model =
                         ]
                     ]
                 , div [ class "field is-horizntl mt-5" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Enter the code below" ] ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.enterTheCode ] ]
                     , div [ class "field-body" ]
                         [ case model.challenge_data of
                             RemoteData.Success challenge ->
@@ -380,7 +380,7 @@ viewResetForm global model =
                                 [ text "Reset password" ]
 
                           else
-                            button [ class "button", disabled True ] [ text "Reset password" ]
+                            button [ class "button", disabled True ] [ text T.resetPassword ]
                         ]
                     ]
                 ]
@@ -415,7 +415,7 @@ viewResetForm2 global model =
                 ]
             , div [ class "card-content" ]
                 [ div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "New Password" ] ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.newPassword ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control" ]
@@ -437,7 +437,7 @@ viewResetForm2 global model =
                         ]
                     ]
                 , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Confirm your password" ] ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text T.confirmYourPassword ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control" ]
@@ -468,10 +468,10 @@ viewResetForm2 global model =
                                 , classList [ ( "is-loading", model.reset2_result == RemoteData.Loading ) ]
                                 , onClick (SubmitReset2 model.form)
                                 ]
-                                [ text "Reset password" ]
+                                [ text T.resetPassword ]
 
                           else
-                            button [ class "button", disabled True ] [ text "Reset password" ]
+                            button [ class "button", disabled True ] [ text T.resetPassword ]
                         ]
                     ]
                 ]

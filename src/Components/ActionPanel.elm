@@ -1146,12 +1146,12 @@ viewStep1 op model =
                             [ viewRoleAuthority op model ]
 
                 LinkAction ->
-                    [ UserInput.view { label_text = text "Invite someone to this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
+                    [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.userInput |> Html.map UserInputMsg
                     , viewComment model
                     ]
 
                 UnLinkAction user ->
-                    [ div [ class "mb-5" ] [ text "Confirm to unlink user: ", viewUserFull 2 True True user ]
+                    [ div [ class "mb-5" ] [ text T.confirmToUnlinkUser, text ": ", viewUserFull 2 True True user ]
                     , viewComment model
                     ]
 

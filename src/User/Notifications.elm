@@ -350,7 +350,7 @@ subscriptions _ _ =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Notifications"
+    { title = T.notifications
     , body =
         [ view_ global model
         , Help.view model.empty model.help |> Html.map HelpMsg
@@ -363,14 +363,14 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "section columns" ]
         [ div [ class "column is-3" ]
-            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-right", title "Go back", onClick GoBack ] []
+            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-right", title T.goBack, onClick GoBack ] []
             ]
         , div [ class "column is-6" ]
-            [ h2 [ class "title" ] [ text "Notifications" ]
+            [ h2 [ class "title" ] [ text T.notifications ]
             , case model.notifications_data of
                 Success notifications ->
                     if List.length notifications == 0 then
-                        text "No notifications yet."
+                        text T.noNotificationsYet
 
                     else
                         viewNotifications global.session.lang notifications model

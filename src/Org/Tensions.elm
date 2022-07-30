@@ -1575,7 +1575,7 @@ viewTensionsListHeader model =
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount model
                 , if model.node_focus.nameid /= model.node_focus.rootnameid then
-                    span [ class "is-hidden-mobile help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                    span [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
                   else
                     text ""
@@ -1599,7 +1599,7 @@ viewTensionsListHeader model =
                 ]
             ]
         , if model.node_focus.nameid /= model.node_focus.rootnameid then
-            div [ class "is-hidden-tablet help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+            div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
           else
             text ""
@@ -1744,7 +1744,7 @@ viewCircleTensions model =
                         ]
                     )
                 |> List.concat
-                |> (\x -> ternary (List.length x == 0) [ div [ class "ml-6 p-6" ] [ text "No tensions yet." ] ] x)
+                |> (\x -> ternary (List.length x == 0) [ div [ class "ml-6 p-6" ] [ text T.noTensionsYet ] ] x)
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"

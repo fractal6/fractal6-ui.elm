@@ -172,7 +172,7 @@ type MenuSettings
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, RolesMenu, GlobalMenu, EditMenu ]
+    [ LabelsMenu, RolesMenu, EditMenu, GlobalMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -215,7 +215,7 @@ menuToString menu =
             T.labels
 
         RolesMenu ->
-            T.roles
+            T.templateRoles
 
         GlobalMenu ->
             T.organisation
@@ -1225,7 +1225,7 @@ viewSettingsMenu model =
                 |> List.map
                     (\x ->
                         [ case x of
-                            EditMenu ->
+                            GlobalMenu ->
                                 hr [ class "dropdown-divider has-background-border-light" ] []
 
                             _ ->
@@ -1382,7 +1382,7 @@ viewLabels model =
     let
         goToParent =
             if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""
@@ -1641,13 +1641,13 @@ viewRoles model =
     let
         goToParent =
             if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""
     in
     div [ id "rolesTable" ]
-        [ h2 [ class "subtitle is-size-3" ] [ text T.roles, goToParent ]
+        [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]

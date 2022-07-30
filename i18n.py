@@ -46,6 +46,7 @@ class I18N(object):
     src_path = "src/"
     i18n_input = "i18n/i18n.toml"
     i18n_output = "src/Text.elm"
+    default_lang = "en"
 
     def __init__(self, conf):
         self.conf = conf
@@ -53,9 +54,9 @@ class I18N(object):
     def run(self):
         q = self.conf
         if q["ls"]:
-            self._list_items()
+            self.list_items()
         elif q["bootstrap"]:
-            data = self._bootstrap()
+            data = self.bootstrap()
             if q["--write"]:
                 with open(self.i18n_input, "w") as _f:
                     for ll in data:
@@ -68,14 +69,14 @@ class I18N(object):
                 print(data)
 
         elif q["gen"]:
-            lang = q.get("LANG") or "en"
-            data = self._gen(lang)
+            lang = q.get("LANG") or self.default_lang
+            data = self.gen(lang)
             if q["--write"]:
                 with open(self.i18n_output, "w") as _f:
                     _f.write(elm_header)
                     for ll in data:
-                        k = ll[0]
-                        v = ll[1]
+                        k = ll[1]
+                        v = ll[2]
                         _f.write(elm_entry_template.format(k=k, v=v))
                         _f.write("\n\n")
 
@@ -83,13 +84,14 @@ class I18N(object):
             else:
                 print(data)
 
-    def _gen(self, lang):
+    def gen(self, lang):
         with open(self.i18n_input) as _f:
             lines = _f.readlines()
 
         multiline = False
         in_entry = False
         entry = ""
+        l = "" # current lang
         # data is a tuple of (#keyword identifier, #text content, #list of named arguments)
         data = []
         for l in lines:
@@ -110,27 +112,48 @@ class I18N(object):
                 if l.endswith('"""') or l.endswith("'''"):
                     multiline = False
                     in_entry = False
-                    data.append([entry, content])
+                    self._append_or_replace_entry(l, entry, content, data)
                 else:
                     content += "\n"
             else:
                 # single line entry
                 ll = l.split("=")
                 if len(ll) < 2: continue
-                k = ll[0].strip()
+                l = ll[0].strip()
                 v = "=".join(ll[1:]).strip()
-                if k != lang:
+                if l not in [lang, self.default_lang]:
                     continue
                 if v.startswith('"""') or v.startswith("'''"):
                     multiline = True
                     content = v + "\n"
                     continue
 
-                data.append([entry, v])
+                self._append_or_replace_entry(l, entry, v, data)
 
         return data
 
-    def _bootstrap(self):
+    def _append_or_replace_entry(self, l, entry, v, data):
+        if len(data) == 0:
+            # Empty data
+            data.append([l, entry, v])
+            return
+
+        last_lang =  data[-1][0]
+        last_entry = data[-1][1]
+
+        if entry != last_entry:
+            # Normal append
+            data.append([l, entry, v])
+            return
+
+        if l == self.default_lang:
+            # Do not replace default lang entry if entry already exists
+            return
+
+        # replace defualt lang by current
+        data[-1] = [l, entry, v]
+
+    def bootstrap(self):
         with open("src/temp.elm") as _f:
             lines = _f.readlines()
 
@@ -163,7 +186,7 @@ class I18N(object):
 
         return data
 
-    def _list_items(self):
+    def list_items(self):
         with open(self.i18n_input) as _f:
             lines = _f.readlines()
 

@@ -123,8 +123,7 @@ type TensionTab
 
 
 type TensionStep
-    = TensionTypes
-    | TensionSource
+    = TensionSource
     | TensionFinal
     | TensionNotAuthorized ErrorData
     | AuthNeeded
@@ -1122,27 +1121,6 @@ viewModal op (State model) =
 viewStep : Op -> State -> Html Msg
 viewStep op (State model) =
     case model.step of
-        TensionTypes ->
-            -- See also Components.SelectType
-            div [ class "modal-card" ]
-                [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]
-                , div [ class "modal-card-body" ]
-                    [ div [ class "level buttonRadio" ] <|
-                        List.map
-                            (\tensionType ->
-                                div [ class "level-item" ]
-                                    [ div
-                                        [ class <| "button " ++ tensionTypeColor "background" tensionType
-                                        , onClick (OnTensionStep TensionSource)
-                                        ]
-                                        [ tensionType2String tensionType |> text ]
-                                    ]
-                            )
-                            TensionType.list
-                    ]
-                ]
-
         TensionSource ->
             text "not implemented; remove in commit 7169bad"
 
@@ -1199,11 +1177,14 @@ viewSuccess res model =
 
                     else
                         span [ class "m-2 is-inline-flex is-align-items-baseline" ]
-                            [ text "Or ", a [ class "button is-small mx-1 is-primary", onClick DoInvite, target "_blank" ] [ text "invite someone" ], text " to this role." ]
+                            [ textH T.or_, a [ class "button is-small mx-2 is-primary", onClick DoInvite, target "_blank" ] [ text T.inviteSomeone ], text T.toThisRole ]
 
           else if model.activeTab == NewCircleTab && model.activeButton == Just 0 then
             span [ class "m-2 is-inline-flex is-align-items-baseline" ]
-                [ text "Or ", a [ class "button is-small mx-1 is-primary", onClick (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text "add a role" ], text " to this circle." ]
+                [ textH T.or_
+                , a [ class "button is-small mx-2 is-primary", onClick (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text T.addRole ]
+                , text T.inThisCircle
+                ]
 
           else
             text ""
@@ -1664,7 +1645,7 @@ viewRolesExt model =
 
         -- Show the help information
         --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
-        , div [ class "subtitle" ] [ text "Select a role template" ]
+        , div [ class "subtitle" ] [ text T.selectRoleTemplate ]
         , case model.roles_result of
             Success roles ->
                 List.map
@@ -1684,25 +1665,26 @@ viewRolesExt model =
                     roles
                     |> (\l ->
                             l
-                                ++ [ div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
+                                ++ [ br [ class "clearfix" ] []
+                                   , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text "No template role yet.", br [ class "mb-4" ] [], text "You can create a " ]
+                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-4" ] [], text T.youCanAdd ]
 
                                           else
-                                            text ""
+                                            span [ class "content is-small" ] [ text T.needNewRole ]
                                         , span
-                                            [ class "button is-small has-text-link"
-                                            , title "A template role is a generic role that you can reuse in your organisation."
+                                            [ class "button is-small has-text-link mx-2"
+                                            , title T.templateRoleHint
                                             , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
                                             ]
-                                            [ textH "template role" ]
-                                        , span [ class "content is-small px-2" ] [ text "or make an" ]
+                                            [ text T.templateRole ]
+                                        , span [ class "content is-small" ] [ text T.orCreate ]
                                         , span
-                                            [ class "button is-small has-text-link"
-                                            , title "An ad-hoc role is a role that you create from scratch."
+                                            [ class "button is-small has-text-link mx-2"
+                                            , title T.adhocRoleHint
                                             , onClick (OnChangeNodeStep NodeValidateStep)
                                             ]
-                                            [ textH "Ad-hoc role" ]
+                                            [ text T.adhocRole ]
                                         ]
                                    ]
                        )
@@ -1724,7 +1706,7 @@ viewCircleVisibility model =
     in
     div [ class "modal-card-body" ]
         [ viewNodeBreadcrumb form model.nodeStep
-        , div [ class "subtitle" ] [ text "Choose the circle visibility" ]
+        , div [ class "subtitle" ] [ text T.selectCircleVisibility ]
 
         -- Show the choices as card.
         , NodeVisibility.list
@@ -1772,7 +1754,7 @@ viewInviteRole model =
     in
     div [ class "columns is-centered mt-2" ]
         [ div [ class "column is-8" ]
-            [ UserInput.view { label_text = text "Invite someone to this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
+            [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.userInput |> Html.map UserInputMsg
             , viewComment model
             , case model.action_result of
                 Failure err ->

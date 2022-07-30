@@ -170,7 +170,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Signup"
+    { title = T.signup
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
@@ -202,7 +202,7 @@ viewVerification global model =
             RemoteData.NotAsked ->
                 case global.session.user of
                     LoggedOut ->
-                        almostThere (withDefault "" model.email) "to confirm your account" (toHref Route.Signup)
+                        almostThere (withDefault "" model.email) T.toConfirmYourAccount (toHref Route.Signup)
 
                     LoggedIn uctx ->
                         welcome uctx
@@ -218,10 +218,10 @@ welcome uctx =
                 |> renderMarkdown "is-human"
             ]
         , div [ class "is-aligned-center" ]
-            [ a [ class "button is-success is-light", href (toHref Route.New_Orga) ] [ text "Got it, let's create my first organization." ]
+            [ a [ class "button is-success is-light", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
             , br [] []
             , text "or"
             , br [] []
-            , a [ class "button is-success is-light", href (toHref Route.Explore) ] [ text "Explore public organization." ]
+            , a [ class "button is-success is-light", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
             ]
         ]

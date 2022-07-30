@@ -366,7 +366,7 @@ viewInput op model =
                             --, type_ "text"
                             , rows 1
                             , style "resize" "none"
-                            , placeholder <| ternary hasSelected "Invite someone else" "Username or email address"
+                            , placeholder <| ternary hasSelected (ternary (not model.multiSelect && hasSelected) "" T.inviteSomeoneElse) T.usernameOrEmail
                             , value model.pattern
                             , ternary (not model.multiSelect && hasSelected)
                                 (onClick NoMsg)
@@ -400,7 +400,7 @@ viewUserSelectors op model =
     div [ class "panel sidePanel" ]
         [ div [ class "selectors" ] <|
             if model.lookup == [] then
-                [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text "Please, enter a valid email address or username" ] ]
+                [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.enterValidUserOrEmail ] ]
 
             else
                 model.lookup

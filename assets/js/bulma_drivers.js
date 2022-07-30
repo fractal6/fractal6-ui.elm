@@ -397,6 +397,10 @@ function richText(e, el) {
 		el.selectionStart =
 			el.selectionEnd = start + 1;
     }
+    // Breaking space or not ???
+    //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)
+    //    el.value = "x";
+    //}
 }
 
 //

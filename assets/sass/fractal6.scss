@@ -654,25 +654,28 @@ strong {
 .table, table.table {
     border: 1px solid var(--table-border-color);
     border-radius: 6px !important;
+
+    thead th {
+        font-weight: 600;
+        font-size: 90% !important;
+        color: var(--is-discrete);
+    }
+
 	th:first-child {
 		border-radius: 6px 0 0 0;
 	}
-
 	th:last-child {
 		border-radius: 0 6px 0 0;
 	}
-
 	td:first-child, th:first-child {
 		border-left: medium none;
 	}
-
 	th {
 		border-top: medium none;
         border: none;
 		padding-top: .5rem;
 		padding-bottom: .5rem;
 	}
-
 	td {
 		padding-top: 1.1rem;
 		padding-bottom: 1.1rem;

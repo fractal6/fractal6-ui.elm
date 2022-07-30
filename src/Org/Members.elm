@@ -539,7 +539,7 @@ viewMembers lang now data focus =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
-                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""
@@ -551,7 +551,7 @@ viewMembers lang now data focus =
 
             else
                 div []
-                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.members, goToParent ]
+                    [ h2 [ class "subtitle is-size-3" ] [ text T.members, goToParent ]
                     , div [ class "table-container" ]
                         [ div [ class "table is-fullwidth" ]
                             [ thead []
