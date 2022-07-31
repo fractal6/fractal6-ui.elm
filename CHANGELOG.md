@@ -5,19 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+## [0.6.3]
+
 ### New
-- Tensions/By Circles: circle view as "new tension" butto shortcutn in each columnn
+- 18n translations, language settings and i18n build rules.
+- Tensions/By Circles: circle view as "new tension" button shortcut in each columnn
 - Tensions/By Circles: fix column order 
 - TreeMenu: new method to get the list of nodes ordered as the tree menu.
 - Tensions: search  button on search icon at right in the search bar.
 
 ### Changed
 - User Signin prompt if landing on a contract page unlloged.
+- Reinitialized scroll position when navigating
 
 ### Fixed
 - Join organisation button initialization
-- Loose scrool bar when browser navigation wiwth an active modal 
-- UI: wrapping loog node names
+- Loose scrool bar when browser navigation with an active modal 
+- UI: wrapping long node names
 
 
 ## [0.6.2]
