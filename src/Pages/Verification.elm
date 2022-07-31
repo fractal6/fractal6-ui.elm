@@ -181,7 +181,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
-        [ div [ class "column is-5" ]
+        [ div [ class "column is-7 is-5-fullhd" ]
             [ viewVerification global model ]
         ]
 
@@ -212,16 +212,16 @@ viewVerification global model =
 welcome : UserCtx -> Html Msg
 welcome uctx =
     div []
-        [ div [ class "mt-2 mb-6 is-size-6" ]
+        [ div [ class "mt-2 mb-6 is-size-bg" ]
             [ T.welcomeLetter
                 |> Format.namedValue "username" uctx.username
                 |> renderMarkdown "is-human"
             ]
         , div [ class "is-aligned-center" ]
-            [ a [ class "button is-success is-light", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
+            [ a [ class "button is-success is-light breakable", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
             , br [] []
-            , text "or"
+            , text T.or_
             , br [] []
-            , a [ class "button is-success is-light", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
+            , a [ class "button is-success is-light breakable", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
             ]
         ]

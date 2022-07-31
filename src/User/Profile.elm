@@ -19,6 +19,7 @@ import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
@@ -323,22 +324,24 @@ viewProfileRight user_s user model =
     div []
         [ h1 [ class "subtitle" ] [ text T.organisations ]
         , if List.length (getRoles user) == 0 then
-            p [ class "section content" ] <|
-                if (uctxFromUser user_s).username == model.username then
-                    List.intersperse (text " ")
-                        [ p [] [ text "Welcome," ]
-                        , p [] <|
-                            List.intersperse (text " ") <|
-                                [ text "You can"
-                                , a [ href (toHref Route.Explore) ] [ text "Explore" ]
-                                , text "public organisations"
-                                , text ", or create your"
-                                , a [ href (toHref Route.New_Orga) ] [ text "first organisation." ]
-                                ]
-                        ]
+            p [ class "section content" ]
+                [ if (uctxFromUser user_s).username == model.username then
+                    --List.intersperse (text " ")
+                    --    [ p [] [ text "Welcome," ]
+                    --    , p [] <|
+                    --        List.intersperse (text " ") <|
+                    --            [ text "You can"
+                    --            , a [ href (toHref Route.Explore) ] [ text "Explore" ]
+                    --            , text "public organisations"
+                    --            , text ", or create your"
+                    --            , a [ href (toHref Route.New_Orga) ] [ text "first organisation." ]
+                    --            ]
+                    --    ]
+                    renderMarkdown "is-human is-size-bg" T.welcomeNoOrga
 
-                else
-                    [ p [] [ text "Nothing to show yet." ] ]
+                  else
+                    p [] [ text T.nothingToShow ]
+                ]
 
           else
             case model.orgas of

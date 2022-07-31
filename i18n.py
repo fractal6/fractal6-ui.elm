@@ -89,35 +89,31 @@ class I18N(object):
             lines = _f.readlines()
 
         multiline = False
-        in_entry = False
+        in_entry = False # not used
         entry = ""
         l = "" # current lang
         # data is a tuple of (#keyword identifier, #text content, #list of named arguments)
         data = []
-        for l in lines:
-            l = l.strip()
-            if not in_entry or (l.startswith("[") and l.endswith("]")):
+        for line in lines:
+            line = line.strip()
+            if line.startswith("[") and line.endswith("]"):
                 # Got an entry
-                in_entry = True
-                entry = l[1:-1]
+                entry = line[1:-1]
                 continue
-
-            if not in_entry:
-                # Ignore everithing else
+            elif line.startswith("#"):
                 continue
 
             if multiline:
                 # Multiline entry
-                content += l
-                if l.endswith('"""') or l.endswith("'''"):
+                content += line
+                if line.endswith('"""') or line.endswith("'''"):
                     multiline = False
-                    in_entry = False
                     self._append_or_replace_entry(l, entry, content, data)
                 else:
                     content += "\n"
             else:
-                # single line entry
-                ll = l.split("=")
+                # Single line entry
+                ll = line.split("=")
                 if len(ll) < 2: continue
                 l = ll[0].strip()
                 v = "=".join(ll[1:]).strip()

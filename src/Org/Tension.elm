@@ -2029,7 +2029,7 @@ viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventVisibility lang now event =
     let
         icon =
-            A.icon "icon-lock"
+            A.icon "icon-eye"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]

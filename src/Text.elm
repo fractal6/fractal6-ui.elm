@@ -114,6 +114,23 @@ explorePublicOrga =
     "Explorer les organisations publiques."
 
 
+gotIt : String
+gotIt =
+    "J'ai compris"
+
+
+nothingToShow : String
+nothingToShow =
+    "Rien à afficher pour le moment."
+
+
+welcomeNoOrga : String
+welcomeNoOrga =
+    """Bienvenue,
+Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [Première Organisation](/new/orga).
+"""
+
+
 selectColor : String
 selectColor =
     "Selectionnez une couleur"
@@ -2147,12 +2164,12 @@ circleAuthorityHeader =
 circleAuthorityDoc : String
 circleAuthorityDoc =
     """
-- Create and edit roles and circles
-- Edit tensions (title, status (Open/Close), assignees, etc)
-- Edit mandates
-- invite new members
+- Créer et modifier les rôles et les cercles
+- Editer les tensions (titre, statut (Ouvert/Fermé), attributaires, etc.)
+- Modifier les mandats
+- Inviter de nouveaux membres
 
-Note: To edit mandates you need to publish the modifications done in the corresponding (governance) tension.
+Note : Pour éditer des mandats, vous devez publier les modifications effectuées dans la tension (gouvernance) correspondante.
 """
 
 
@@ -2164,9 +2181,9 @@ labelsInfoHeader =
 labelsInfoDoc : String
 labelsInfoDoc =
     """
-When you create labels here, you can then attach them to your tensions. You will also be able to filter tensions according to labels.
+Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
 
-**Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
+**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l’un des parents du cercle récepteur.
 """
 
 
@@ -2178,9 +2195,9 @@ rolesInfoHeader =
 rolesInfoDoc : String
 rolesInfoDoc =
     """
-When you create a role here, you can use it as a template when you add a new role in your organisation.
+Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous ajoutez un nouveau rôle dans votre organisation.
 
-**Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents circles.
+**Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
 """
 
 
@@ -2222,12 +2239,12 @@ tensionTypeHeader =
 tensionTypeDoc : String
 tensionTypeDoc =
     """
-There are three main categories of tension:
+Il existe trois grandes catégories de tensions :
 
-- **Operational**: A general category, it can be task, an issue or whatever that need to be shared or tracked in the organization.
-- **Governance**: Concerning the structure of the organization, the mandates etc.
-- **Help**: For help requests, questions or clarifications.
-- **Alert**: For alerts, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
+- **Opérationnel** : Une catégorie générale, il peut s’agir d’une tâche, d’un problème ou de tout ce qui doit être partagé ou suivie dans l’organisation.
+- **Gouvernance** : Concernant la structure de l’organisation, les mandats, etc.
+- **Aide** : Pour les demandes d’aides, les questions ou les clarifications.
+- **Alerte** : Pour les alertes, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
 """
 
 
@@ -2266,22 +2283,34 @@ authAgile =
     "Où tous les rôles ont une autorité égale en matière de gouvernance."
 
 
+signinNeeded : String
+signinNeeded =
+    "Vous devez vous connecter pour accéder à cette page"
+
+
+signinOnInvite : String
+signinOnInvite =
+    """Vous avez été invité à rejoindre une organisation sur **Fractale**.
+Mais d'abord, vous devez **configurer votre compte** :
+"""
+
+
 welcomeLetter : String
 welcomeLetter =
     """
-Welcome @{{username}},
+Bienvenue @{{username}},
 
-**Your account has been successfully activated.**
+**Votre compte a été activé avec succès.**
 
-Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
+Fractale est une plateforme destinée aux organisations et collectifs. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
 
-You can also use it for individual projects to organise and manage your tasks and ideas.
+Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer votre travail.
 
-In order to help your navigation, you will find some shortcuts in the top right corner:
-- the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
-- the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
-- the **new button** (<i class="icon icon-plus"></i>) to create new organisations.
-- the **user button** to access your profile and settings.
+Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
+- le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
+- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
+- le bouton **de création** (<i class="icon icon-plus"></i>) pour créer de nouvelles organisations.
+- le bouton **d’utilisateur** pour accéder à votre profil et à vos paramètres.
 """
 
 

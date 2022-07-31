@@ -419,19 +419,11 @@ signupModal op model =
                                         |> renderMarkdown "is-human"
                                     ]
                                 , div [ class "is-aligned-center" ]
-                                    [ button [ class "button is-success is-light ", onClick <| DoCloseAuthModal "" ] [ text "Got it" ]
-                                    ]
+                                    [ button [ class "button is-success is-light ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
                                 ]
 
                             _ ->
-                                [ p [ class "field" ]
-                                    [ text "You have been invited to join an organisation on "
-                                    , strong [] [ text "Fractale" ]
-                                    , text ". "
-                                    , br [ class "mb-1" ] []
-                                    , text "But first, you need to "
-                                    , strong [] [ text "setup your account:" ]
-                                    ]
+                                [ renderMarkdown "field" T.signinOnInvite
                                 , div [ class "field" ]
                                     [ div [ class "field" ]
                                         [ div [ class "label" ] [ text T.username ]
@@ -512,7 +504,7 @@ signinModal op model =
             , div [ class "box" ] <|
                 case model.modalAuth of
                     Active form result ->
-                        [ p [ class "field" ] [ text "You need to sign in to access this page:" ]
+                        [ p [ class "field" ] [ text T.signinNeeded, text ":" ]
                         , div [ class "field" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]

@@ -96,7 +96,8 @@ frac6Renderer style recursive =
                     mardownRoutine
                         style
                         ( "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
-                        [ ( "(^|\\s|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
+                        --[ ( "(^|\\s|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
+                        [ ( "\\b@[a-z]+", userLink )
                         , ( "\\b0x[0-9a-f]+", tensionLink )
 
                         --, ( "\\bo/[0-9a-zA-Z\\-_\]+", circleLink )
@@ -134,21 +135,22 @@ mardownRoutine style rep next_replacers content =
         matches =
             Regex.find (regexFromString reg) content
     in
+    -- Split on the regex (without including that regex)
     Regex.split (regexFromString reg) content
         |> List.indexedMap
             (\i next_content ->
                 [ case LE.uncons next_replacers of
-                    Nothing ->
-                        text next_content
-
                     Just ( next_replacer, rest_replacers ) ->
                         mardownRoutine style next_replacer rest_replacers next_content
+
+                    Nothing ->
+                        text next_content
                 , case LE.getAt i matches of
                     Just match ->
                         renderMdDefault style (replacer match content)
 
                     Nothing ->
-                        text " "
+                        text ""
                 ]
             )
         |> List.concat
@@ -177,6 +179,9 @@ frac6Parser content =
 userLink : Regex.Match -> String -> String
 userLink m full =
     let
+        g =
+            Debug.log "match" full
+
         match =
             m.match
 

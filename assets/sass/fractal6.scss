@@ -117,6 +117,10 @@ hr {
     }
 }
 
+.is-size-bg {
+    font-size: 1.3rem;
+}
+
 .column {
     /*  Fix/scrollable column */
     &.is-fullheight {
@@ -379,6 +383,11 @@ strong {
     &.is-danger {
         background-color: var(--danger-hover);
     }
+}
+
+.breakable {
+    height: 100%;
+    white-space: normal;
 }
 
 .card.is-selected {

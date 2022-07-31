@@ -94,6 +94,22 @@
 # General
 #
 
+[gotIt]
+	en="Got it"
+	fr="J'ai compris"
+
+[nothingToShow]
+	en="Nothing to show yet."
+	fr="Rien à afficher pour le moment."
+
+[welcomeNoOrga]
+	en="""Welcome,
+You can [Explore](/explore) public organizations or create your [First Organization](/new/orga).
+	"""
+	fr="""Bienvenue,
+Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [Première Organisation](/new/orga).
+	"""
+
 [selectColor]
 	en="Select a color"
 	fr="Selectionnez une couleur"
@@ -1881,15 +1897,27 @@ Il existe trois grandes catégories de tensions :
   en="Where all roles have equal governance authority."
   fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
 
+[signinNeeded]
+	en="You need to sign-in to access this page"
+	fr="Vous devez vous connecter pour accéder à cette page"
+
+[signinOnInvite]
+	en="""You have been invited to join an organisation on **Fractale**.
+But first, you need to **setup your account**:
+	"""
+	fr="""Vous avez été invité à rejoindre une organisation sur **Fractale**.
+Mais d'abord, vous devez **configurer votre compte** :
+	"""
+
 [welcomeLetter]
   en="""
 Welcome @{{username}},
 
 **Your account has been successfully activated.**
 
-Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
+Fractale is a platform for organisations and collectives. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
 
-You can also use it for individual projects to organise and manage your tasks and ideas.
+You can also use it for individual projects to organise and manage your work.
 
 In order to help your navigation, you will find some shortcuts in the top right corner:
 - the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
@@ -1902,9 +1930,9 @@ Bienvenue @{{username}},
 
 **Votre compte a été activé avec succès.**
 
-Fractale est une plateforme destinée aux communautés et aux organisations. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
+Fractale est une plateforme destinée aux organisations et collectifs. Nous nous attachons à vous offrir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et faire passer la communication asynchrone à un niveau supérieur.
 
-Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer vos tâches et vos idées.
+Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer votre travail.
 
 Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
 - le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.

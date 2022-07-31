@@ -759,7 +759,7 @@ viewRow d op model =
         [ td [ onClick (DoClickContract d.id) ]
             [ a
                 [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
-                [ span [] [ text (contractEventToText d.event.event_type) ] ]
+                [ text (contractEventToText d.event.event_type), Maybe.map (\x -> " | " ++ x) d.event.new |> withDefault "" |> text ]
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
