@@ -31,6 +31,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
 import ModelCommon.Requests exposing (createOrga)
+import ModelCommon.View exposing (visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -451,17 +452,6 @@ viewOrgaVisibility model =
                     let
                         isActive =
                             Just x == NodeVisibility.fromString (Dict.get "visibility" form.post |> withDefault "")
-
-                        ( icon, description ) =
-                            case x of
-                                NodeVisibility.Public ->
-                                    ( "icon-globe", T.visibilityPublic )
-
-                                NodeVisibility.Private ->
-                                    ( "icon-users", T.visibilityPrivate )
-
-                                NodeVisibility.Secret ->
-                                    ( "icon-lock", T.visibilitySeccret )
                     in
                     div
                         [ class "card has-border column is-paddingless m-3 is-h"
@@ -470,8 +460,8 @@ viewOrgaVisibility model =
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
                         ]
                         [ div [ class "card-content p-4", onClick (OnSelectVisibility x) ]
-                            [ h2 [ class "is-strong is-size-5 mb-5" ] [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
-                            , div [ class "content is-smaller2" ] [ text description ]
+                            [ h2 [ class "is-strong is-size-5 mb-5" ] [ A.icon1 (visibility2icon x ++ " icon-bg") (NodeVisibility.toString x) ]
+                            , div [ class "content is-smaller2" ] [ text (visibility2descr x) ]
                             ]
                         ]
                 )

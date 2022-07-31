@@ -39,7 +39,7 @@ import ModelCommon
         , makeCandidateContractForm
         )
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nearestCircleid, nid2rootid)
-import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull)
+import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -1227,16 +1227,13 @@ viewVisibility op model =
                         isActive =
                             x == withDefault model.form.node.visibility model.form.fragment.visibility
 
-                        ( icon, description ) =
-                            case x of
-                                NodeVisibility.Public ->
-                                    ( "icon-globe", T.visibilityPublic )
+                        extra_descr =
+                            if isRoot && x == NodeVisibility.Private then
+                                -- Tell user that the organisation setting may be modified
+                                " " ++ T.visibilityRestriction
 
-                                NodeVisibility.Private ->
-                                    ( "icon-users", T.visibilityPrivate ++ " " ++ ternary isRoot T.visibilityRestriction "" )
-
-                                NodeVisibility.Secret ->
-                                    ( "icon-lock", T.visibilitySeccret )
+                            else
+                                ""
                     in
                     div
                         [ class "card has-border column is-paddingless m-3 is-h"
@@ -1245,9 +1242,9 @@ viewVisibility op model =
                         ]
                         [ div [ class "card-content p-4" ]
                             [ h2 [ class "is-strong is-size-5" ]
-                                [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
+                                [ A.icon1 (visibility2icon x ++ " icon-bg") (NodeVisibility.toString x) ]
                             , div [ class "content is-small" ]
-                                [ text description ]
+                                [ text (visibility2descr x ++ extra_descr) ]
                             ]
                         ]
                 )

@@ -759,6 +759,32 @@ getAvatarOrga name =
 -}
 
 
+visibility2icon : NodeVisibility.NodeVisibility -> String
+visibility2icon visibility =
+    case visibility of
+        NodeVisibility.Public ->
+            "icon-globe"
+
+        NodeVisibility.Private ->
+            "icon-lock"
+
+        NodeVisibility.Secret ->
+            "icon-eye-off"
+
+
+visibility2descr : NodeVisibility.NodeVisibility -> String
+visibility2descr visibility =
+    case visibility of
+        NodeVisibility.Public ->
+            T.visibilityPublic
+
+        NodeVisibility.Private ->
+            T.visibilityPrivate
+
+        NodeVisibility.Secret ->
+            T.visibilitySeccret
+
+
 auth2str : TensionCharac -> String
 auth2str tc =
     case tc.doc_type of

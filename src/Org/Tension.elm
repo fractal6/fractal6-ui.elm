@@ -104,6 +104,7 @@ import ModelCommon.View
         , viewUserFull
         , viewUsernameLink
         , viewUsers
+        , visibility2icon
         )
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -2482,7 +2483,7 @@ viewSidePane u t model =
                                                 [ div [ class "level is-mobile mb-3" ] <|
                                                     [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
                                                     , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                                    , span [ class "level-right" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
+                                                    , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
                                                     ]
                                                 , viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type }
                                                 ]
