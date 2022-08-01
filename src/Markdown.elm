@@ -1,7 +1,7 @@
 module Markdown exposing (renderMarkdown)
 
 import Assets as A
-import Extra exposing (regexFromString)
+import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (class, href, style, target, title)
@@ -95,10 +95,9 @@ frac6Renderer style recursive =
                 if recursive then
                     mardownRoutine
                         style
-                        ( "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
-                        --[ ( "(^|\\s|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
-                        [ ( "\\b@[a-z]+", userLink )
-                        , ( "\\b0x[0-9a-f]+", tensionLink )
+                        ( "(^|[^\\w\\[\\`])https?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
+                        [ ( "(^|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
+                        , ( "(^|[^\\w\\[\\`])0x[0-9a-f]+", tensionLink )
 
                         --, ( "\\bo/[0-9a-zA-Z\\-_\]+", circleLink )
                         ]
@@ -135,23 +134,39 @@ mardownRoutine style rep next_replacers content =
         matches =
             Regex.find (regexFromString reg) content
     in
-    -- Split on the regex (without including that regex)
+    -- Split on the regex (and append the regex replacer)
     Regex.split (regexFromString reg) content
         |> List.indexedMap
             (\i next_content ->
                 [ case LE.uncons next_replacers of
                     Just ( next_replacer, rest_replacers ) ->
+                        -- Keep going the regex matching on that part
                         mardownRoutine style next_replacer rest_replacers next_content
 
                     Nothing ->
+                        -- No more regex replacer
                         text next_content
-                , case LE.getAt i matches of
-                    Just match ->
-                        renderMdDefault style (replacer match content)
-
-                    Nothing ->
-                        text ""
                 ]
+                    ++ (case LE.getAt i matches of
+                            Just match ->
+                                -- regex replacement
+                                let
+                                    reg_replacement =
+                                        replacer match content
+                                in
+                                -- Fix because left space are ignored  in renderMdDefault...
+                                -- Needed for regex that do not support word boundary (\b).
+                                -- Word boundary based regex at the start of string was removed in favor of a sub-reg match
+                                -- bacause of space inconsistence... (splited but present on match.)
+                                if String.left 1 reg_replacement == " " then
+                                    [ text " ", renderMdDefault style (String.dropLeft 1 reg_replacement) ]
+
+                                else
+                                    [ renderMdDefault style reg_replacement ]
+
+                            Nothing ->
+                                []
+                       )
             )
         |> List.concat
         |> span []
@@ -172,16 +187,48 @@ frac6Parser content =
         --|> Regex.replace (regexFromString "\\b0x[0-9a-f]+") tensionLink
         -- Autolink
         --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~:=]+") autoLink
-        -- JumpLine
+        --
+        -- Force line break
         |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  " ++ m.match)
+
+
+autoLink : Regex.Match -> String -> String
+autoLink m full =
+    let
+        match =
+            m.match
+
+        ( parts, right ) =
+            if List.member (String.right 1 match) [ ".", "," ] then
+                ( String.dropRight 1 match, String.right 1 match )
+
+            else
+                ( match, "" )
+
+        ( left, link ) =
+            if String.left 1 parts /= "h" then
+                ( String.left 1 parts, String.dropLeft 1 parts )
+
+            else
+                ( " ", parts )
+    in
+    if String.slice (m.index - 2) m.index full == "](" then
+        match
+
+    else
+        left
+            ++ "["
+            ++ link
+            ++ "]"
+            ++ "("
+            ++ link
+            ++ ")"
+            ++ right
 
 
 userLink : Regex.Match -> String -> String
 userLink m full =
     let
-        g =
-            Debug.log "match" full
-
         match =
             m.match
 
@@ -252,37 +299,3 @@ circleLink m full =
         -- TODO: split on / to know which route to use
         --++ (Route.Org { param1 = "", param2 = tid } |> toHref)
         ++ ")"
-
-
-autoLink : Regex.Match -> String -> String
-autoLink m full =
-    let
-        match =
-            m.match
-
-        ( parts, right ) =
-            if List.member (String.right 1 match) [ ".", "," ] then
-                ( String.dropRight 1 match, String.right 1 match )
-
-            else
-                ( match, "" )
-
-        ( left, link ) =
-            if String.left 1 parts /= "h" then
-                ( String.left 1 parts, String.dropLeft 1 parts )
-
-            else
-                ( " ", parts )
-    in
-    if String.slice (m.index - 2) m.index full == "](" then
-        match
-
-    else
-        left
-            ++ "["
-            ++ link
-            ++ "]"
-            ++ "("
-            ++ link
-            ++ ")"
-            ++ right
