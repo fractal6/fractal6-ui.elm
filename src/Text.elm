@@ -1266,6 +1266,11 @@ phRolePolicies =
     "Définir les politiques du rôle"
 
 
+thisNameUrlIsTaken : String
+thisNameUrlIsTaken =
+    "Ce nom (URL) est déjà utilisé."
+
+
 sinceThe : String
 sinceThe =
     "depuis le"
@@ -2270,7 +2275,7 @@ visibilitySeccret =
 
 visibilityRestriction : String
 visibilityRestriction =
-    "Les utilisateurs peuvent rejoindre cette organisation sur invitation uniquement."
+    "Les utilisateurs pourront rejoindre cette organisation sur invitation uniquement."
 
 
 authCoordinated : String
@@ -2293,6 +2298,36 @@ signinOnInvite =
     """Vous avez été invité à rejoindre une organisation sur **Fractale**.
 Mais d'abord, vous devez **configurer votre compte** :
 """
+
+
+youHaveBeenInvitedRole : String
+youHaveBeenInvitedRole =
+    ", You have been invited to play the role"
+
+
+userHasBeenInvitedRole : String
+userHasBeenInvitedRole =
+    "has been invited to play the role"
+
+
+youHaveBeenInvitedOrga : String
+youHaveBeenInvitedOrga =
+    ", You have been invited as guest."
+
+
+userHasBeenInvitedOrga : String
+userHasBeenInvitedOrga =
+    "has been invited as guest."
+
+
+invitationRejected : String
+invitationRejected =
+    "L'invitation a été refusée."
+
+
+alreadyVoted : String
+alreadyVoted =
+    "Vous avez déjà voté, mais vous pouvez encore changer votre vote."
 
 
 welcomeLetter : String

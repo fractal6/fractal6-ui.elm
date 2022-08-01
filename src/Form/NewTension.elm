@@ -960,7 +960,7 @@ update_ apis message model =
                             ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 DuplicateErr ->
-                    ( setResult (Failure [ "Duplicate Error: this name (URL) is already taken." ]) model, noOut )
+                    ( setResult (Failure [ "Duplicate Error: " ++ T.thisNameUrlIsTaken ]) model, noOut )
 
                 _ ->
                     ( setResult result model, noOut )

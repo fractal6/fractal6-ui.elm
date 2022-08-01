@@ -1018,6 +1018,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Define the role policies"
   fr="Définir les politiques du rôle"
 
+[thisNameUrlIsTaken]
+  en="This name (URL) is already taken."
+  fr="Ce nom (URL) est déjà utilisé."
+
 [sinceThe]
   en="since the"
   fr="depuis le"
@@ -1765,7 +1769,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 
 #
-# Messgage Info/Doc
+# Message Info/Doc
 #
 
 
@@ -1886,8 +1890,8 @@ Il existe trois grandes catégories de tensions :
   fr="Seuls les rôles à l’intérieur de ce cercle peuvent le voir."
 
 [visibilityRestriction]
-  en="Users can join this organization on invitation only."
-  fr="Les utilisateurs peuvent rejoindre cette organisation sur invitation uniquement."
+  en="Users will be able to join this organization by invitation only."
+  fr="Les utilisateurs pourront rejoindre cette organisation sur invitation uniquement."
 
 [authCoordinated]
   en="Where Coordinator roles have the governance authority."
@@ -1908,6 +1912,26 @@ But first, you need to **setup your account**:
 	fr="""Vous avez été invité à rejoindre une organisation sur **Fractale**.
 Mais d'abord, vous devez **configurer votre compte** :
 	"""
+
+[youHaveBeenInvitedRole]
+  en=", You have been invited to play the role"
+
+[userHasBeenInvitedRole]
+  en="has been invited to play the role"
+
+[youHaveBeenInvitedOrga]
+  en=", You have been invited as guest."
+
+[userHasBeenInvitedOrga]
+  en="has been invited as guest."
+
+[invitationRejected]
+  en="Invitation was declined."
+  fr="L'invitation a été refusée."
+
+[alreadyVoted]
+  en="You've already voted, but you can still change your vote."
+  fr="Vous avez déjà voté, mais vous pouvez encore changer votre vote."
 
 [welcomeLetter]
   en="""

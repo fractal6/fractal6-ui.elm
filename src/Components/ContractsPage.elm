@@ -906,6 +906,9 @@ viewContractBox c op model =
                             user =
                                 c.event.new |> withDefault "unkown"
 
+                            isYou =
+                                user == model.form.uctx.username
+
                             n =
                                 nodeFromTension c.tension
 
@@ -927,8 +930,11 @@ viewContractBox c op model =
                         div [ class "subtitle", attribute "style" "line-height: 2.5; " ] <|
                             List.intersperse (text " ") <|
                                 [ viewUserFull 1 True True { username = user, name = Nothing }
-                                , text "has been invited"
-                                , text "to play the role"
+                                , if isYou then
+                                    text T.youHaveBeenInvitedRole
+
+                                  else
+                                    text T.userHasBeenInvitedRole
                                 , span [ class "is-text-aligned" ] [ viewRole Nothing baseUri role ]
                                 ]
 
@@ -936,11 +942,18 @@ viewContractBox c op model =
                         let
                             user =
                                 c.event.new |> withDefault "unkown"
+
+                            isYou =
+                                user == model.form.uctx.username
                         in
                         span [] <|
                             List.intersperse (text " ") <|
                                 [ viewUserFull 1 True True { username = user, name = Nothing }
-                                , text "has been invited as guest."
+                                , if isYou then
+                                    text T.youHaveBeenInvitedOrga
+
+                                  else
+                                    text T.userHasBeenInvitedOrga
                                 ]
 
                     _ ->
@@ -989,7 +1002,7 @@ viewVoteBox c op model =
             ]
 
     else if isSuccess && model.voteForm.vote == 0 then
-        div [ class "notification is-danger is-light" ] [ text "Invitation has been rejected." ]
+        div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
 
     else
         div [ class "mb-5" ]
@@ -1008,7 +1021,7 @@ viewVoteBox c op model =
                     [ span [ class "mx-4" ] [ text T.decline ] ]
                 ]
             , if isParticipant then
-                div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]
+                div [ class "help has-text-centered" ] [ text T.alreadyVoted ]
 
               else
                 text ""

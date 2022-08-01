@@ -496,14 +496,14 @@ viewOrgaValidate model =
     in
     div []
         [ div [ class "field" ]
-            [ div [ class "label" ] [ textH T.name ]
+            [ div [ class "label" ] [ text T.name ]
             , div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , autocomplete False
                     , type_ "text"
-                    , placeholder (upH T.name)
+                    , placeholder T.name
                     , value name
                     , onInput <| ChangeNodePost "name"
                     , onBlur SaveData
@@ -516,15 +516,15 @@ viewOrgaValidate model =
                   else
                     text ""
                 ]
-            , p [ class "help" ] [ textH T.orgaNameHelp ]
+            , p [ class "help" ] [ text T.orgaNameHelp ]
             , if model.isDuplicate then
-                div [ class "has-text-danger" ] [ text "This name (URL) is already taken." ]
+                div [ class "has-text-danger" ] [ text T.thisNameUrlIsTaken ]
 
               else
                 text ""
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ textH T.about ]
+            [ div [ class "label" ] [ text T.about ]
             , div [ class "control" ]
                 [ input
                     [ id "aboutField"
@@ -532,23 +532,23 @@ viewOrgaValidate model =
                     , attribute "data-nextfocus" "textAreaModal"
                     , autocomplete False
                     , type_ "text"
-                    , placeholder (upH T.aboutOpt)
+                    , placeholder T.aboutOpt
                     , value about
                     , onInput <| ChangeNodePost "about"
                     , onBlur SaveData
                     ]
                     []
                 ]
-            , p [ class "help" ] [ textH T.aboutHelp ]
+            , p [ class "help" ] [ text T.aboutHelp ]
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ textH T.purpose ]
+            [ div [ class "label" ] [ text T.purpose ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows 5
-                    , placeholder (upH T.purpose)
+                    , placeholder T.purpose
                     , value purpose
                     , onInput <| ChangeNodePost "purpose"
                     , onBlur SaveData
@@ -556,12 +556,12 @@ viewOrgaValidate model =
                     ]
                     []
                 ]
-            , p [ class "help" ] [ textH T.purposeHelpOrga ]
+            , p [ class "help" ] [ text T.purposeHelpOrga ]
             ]
         , div [ class "field pt-3 level is-mobile" ]
             [ div [ class "level-left" ]
                 [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
-                    [ A.icon0 "icon-chevron-left", textH T.back ]
+                    [ A.icon0 "icon-chevron-left", text T.back ]
                 ]
             , div [ class "level-right" ]
                 [ div [ class "buttons" ]
@@ -572,7 +572,7 @@ viewOrgaValidate model =
                          ]
                             ++ submitOrga
                         )
-                        [ textH T.create ]
+                        [ text T.create ]
                     ]
                 ]
             ]
