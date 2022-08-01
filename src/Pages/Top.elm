@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
+import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, strong, text, textarea, ul)
@@ -16,6 +17,7 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (WebData, expectJson, viewHttpErrors)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
@@ -54,6 +56,7 @@ type alias Model =
     { form : UserAuthForm
     , result : WebData UserCtx
     , viewMode : ViewMode
+    , lang : Lang.Lang
     }
 
 
@@ -94,6 +97,7 @@ init global flags =
             { form = { post = Dict.empty }
             , result = RemoteData.NotAsked
             , viewMode = Login
+            , lang = global.session.lang
             }
     in
     ( model
@@ -220,19 +224,30 @@ viewHero model =
         [ div [ class "hero-body" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-6-desktop is-6-widescreen is-6-fullhd" ]
-                    [ h1 [ class "title is-1" ]
-                        --[ text "Build unstoppable organizations" ]
-                        --[ text "Self-organization", br [] [], text "for humans" ]
-                        [ text "Collective Intelligence", br [] [], text "at Work" ]
-                    , h2 [ class "subtitle" ] <|
-                        List.intersperse (text " ")
-                            [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]
-                            , text "is a collaborative platform inspired by"
-                            , text "self-organized systems and open source culture."
-                            , text "Join a network that enact collective intelligence to build transparent and resilient organization."
+                    [ case model.lang of
+                        Lang.En ->
+                            h1 [ class "title" ]
+                                --[ text "Build unstoppable organizations" ]
+                                --[ text "Self-organization", br [] [], text "for humans" ]
+                                --[ text "Collective Intelligence", br [] [], text "at Work" ]
+                                [ text "Your organization"
+                                , br [] []
+                                , text "is a living thing."
+                                , br [] []
+                                , text "Give it a home"
+                                ]
 
-                            --Design your organisations roles and cirlces, invite members, manage your tensions..
-                            ]
+                        Lang.Fr ->
+                            h1 [ class "title" ]
+                                [ text "Votre organisation"
+                                , br [] []
+                                , text "est un être vivant."
+                                , br [] []
+                                , text "Donnez-lui un toit"
+                                ]
+                    , h2 [ class "subtitle" ] [ renderMarkdown "" T.heroSubtitle ]
+
+                    --Design your organisations roles and cirlces, invite members, manage your tensions..
                     ]
                 , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]
                     [ viewSignBox model ]

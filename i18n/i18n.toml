@@ -2,6 +2,10 @@
 # Welcom and Accounts
 #
 
+[heroSubtitle]
+  en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open source culture. Join a network that enact collective intelligence to build transparent and resilient organizations."
+  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open-source. Rejoignez un réseau qui met en œuvre l'intelligence collective pour construire des organisations transparentes et résilientes."
+
 [welcome]
   en="Welcome to Fractale"
   fr="Bienvenue sur Fractale"
@@ -321,6 +325,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 [editThisCircle]
   en="Edit this circle"
   fr="Editer ce cercle"
+
+[editThisRole]
+  en="Edit this role"
+  fr="Editer ce rôle"
 
 [cancel]
   en="Cancel"
