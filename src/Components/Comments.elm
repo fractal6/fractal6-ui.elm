@@ -160,17 +160,17 @@ viewUpdateInput op uctx comment form result =
                 [ div [ class "control" ]
                     [ div [ class "buttons" ]
                         [ button
-                            [ class "button"
-                            , onClick op.doCancelComment
-                            ]
-                            [ text T.cancel ]
-                        , button
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (op.doSubmit isLoading op.doEditComment)
                             ]
                             [ text T.update ]
+                        , button
+                            [ class "button"
+                            , onClick op.doCancelComment
+                            ]
+                            [ text T.cancel ]
                         ]
                     ]
                 ]
@@ -258,13 +258,6 @@ viewCommentInput op uctx tension form result viewMode =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
-                                     ]
-                                        ++ submitCloseOpenTension
-                                    )
-                                    [ text closeOpenText ]
-                                , button
                                     ([ class "button is-success defaultSubmit"
                                      , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
@@ -272,6 +265,13 @@ viewCommentInput op uctx tension form result viewMode =
                                         ++ doSubmit
                                     )
                                     [ text T.comment ]
+                                , button
+                                    ([ class "button"
+                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                     ]
+                                        ++ submitCloseOpenTension
+                                    )
+                                    [ text closeOpenText ]
                                 ]
                             ]
                         ]

@@ -1353,8 +1353,7 @@ viewLabelAddBox model =
                     []
                 ]
             , p [ class "control buttons", attribute "style" "margin-top: 1.5rem;" ]
-                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
-                , button
+                [ button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
                      , disabled (not isSendable)
@@ -1362,6 +1361,7 @@ viewLabelAddBox model =
                         ++ doSubmit
                     )
                     [ text txt.submit ]
+                , button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 ]
             ]
         , div []
@@ -1616,8 +1616,7 @@ viewRoleAddBox model =
             }
         , div [ class "field is-grouped is-grouped-right" ]
             [ p [ class "control buttons" ]
-                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
-                , button
+                [ button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
                      , disabled (not isSendable)
@@ -1625,6 +1624,7 @@ viewRoleAddBox model =
                         ++ doSubmit
                     )
                     [ text txt.submit ]
+                , button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 ]
             ]
         , case result of

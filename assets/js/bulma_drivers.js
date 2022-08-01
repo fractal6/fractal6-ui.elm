@@ -385,17 +385,32 @@ function submitFocus(e, el) {
 
 function richText(e, el) {
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
+        // Ignore if Tab occurs at the beginning ot not after a new line or tab
+        console.log(el.selectionStart)
+        if (el.selectionStart == 0 || ! ["\n", "\t"].includes(el.value[el.selectionStart-1])) return
+
 		e.preventDefault();
 		var start = el.selectionStart;
 		var end = el.selectionEnd;
 
+        if (el.value[el.selectionStart-2] == "\n") {
+            // 4 space (Tab) for **code** indentation
+            var replacer = "\t";
+
+        } else {
+            // Assumes we are in a **list content**
+            // 2 space for sublist indentation
+            var replacer = "  ";
+        }
+
 		// set textarea value to: text before caret + tab + text after caret
 		el.value = el.value.substring(0, start) +
-			"\t" + el.value.substring(end);
+			replacer + el.value.substring(end);   // Insert double space
+			//"\t" + el.value.substring(end); // Insert Tab
 
 		// put caret at right position again
 		el.selectionStart =
-			el.selectionEnd = start + 1;
+			el.selectionEnd = start + replacer.length;
     }
     // Breaking space or not ???
     //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)

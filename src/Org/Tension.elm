@@ -1612,8 +1612,7 @@ viewTension u t model =
                                     []
                                 ]
                             , p [ class "control buttons" ]
-                                [ button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
-                                , button
+                                [ button
                                     ([ class "button is-success is-small"
                                      , classList [ ( "is-loading", isLoading ) ]
                                      , disabled (not isSendable)
@@ -1621,6 +1620,7 @@ viewTension u t model =
                                         ++ doSubmit
                                     )
                                     [ text T.update ]
+                                , button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
                                 ]
                             ]
                         , viewMaybeErrors model.title_result
