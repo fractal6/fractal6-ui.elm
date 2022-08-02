@@ -153,7 +153,7 @@ userButtons : UserState -> Url -> (String -> msg) -> List (Html msg)
 userButtons user url replaceUrl =
     case user of
         LoggedIn uctx ->
-            [ div [ class "navbar-item is-hoverabl" ]
+            [ div [ class "navbar-item has-dropdown is-hoverabl" ]
                 [ div
                     [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"

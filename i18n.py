@@ -8,9 +8,9 @@ Usage:
     i18n gen [--lang LANG] [-w]
 
 Commands:
-    ls     List i18n items
-    bootstrap Initialiaz .toml file from a elm file containent traductions
-    gen generate an elm file in the given lang.
+    ls          List i18n items
+    bootstrap   Initialiaz .toml file from a elm file containing traductions
+    gen         generate an elm file in the given lang.
 
 Options:
     -w, --write        save/replace in file.
@@ -18,13 +18,13 @@ Options:
 
 Examples:
     i18n.py ls
+    i18n.py gen -w -l fr
 '''
 
 import os
 import re
 from string import Template
 from docopt import docopt
-from loguru import logger
 
 elm_header = """\
 module Text exposing (..)

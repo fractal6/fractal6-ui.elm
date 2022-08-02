@@ -30,7 +30,7 @@ module.exports = (env, argv) => {
     const isProd = MODE == 'production';
 
     // @TODO: get lang from build options ?
-    var DEFAULT_LANG = "EN";
+    var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
     var API_URL;
     if (isDev || CMD == 'webprod') {
         API_URL = {
@@ -59,7 +59,7 @@ module.exports = (env, argv) => {
 
     console.log(
         '\x1b[36m%s\x1b[0m',
-        `Webpack run: Building for "${MODE}"\n`
+        `Webpack run: Building for mode: "${MODE}", Lang: "${DEFAULT_LANG}"\n`
     );
 
     // common webpack config (valid for dev and prod)

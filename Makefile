@@ -1,9 +1,11 @@
 .ONESHELL:
 SHELL := /bin/bash
 OUTPUT := dist
+LANGS := en fr
 elm-js := elm.js
 elm-min-js := elm.min.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
+
 
 default: run
 
@@ -25,25 +27,43 @@ prod:
 dev:
 	npm run dev
 
-deploy: prod
-	git rev-parse --short HEAD > ../public-build/client_version
-	rm -rf ../public-build/static
-	cp -r dist/* ../public-build/
-	cd ../public-build/
-	git add *
-	git commit -m all
-	git push origin main
-	cd -
-
+# Deploy on Netlyfy
 deploy_netlify: prod
-	cd ../build
-	rm static -rf
-	cp ../fractal6-ui.elm/dist/* . -r
-	cp ../fractal6-ui.elm/netlify.toml .
-	git add *
-	git commit -m all
-	git push origin master
-	cd -
+	cd ../build && \
+		rm static -rf && \
+		cp ../fractal6-ui.elm/dist/* . -r && \
+		cp ../fractal6-ui.elm/netlify.toml . && \
+		git add * && \
+		git commit -m all && \
+		git push origin master && \
+		cd -
+
+# Publish builds for all LANGS
+BUILD_DIRS := $(addprefix public/, $(LANGS))
+#.PHONY: $(BUILD_DIRS)
+publish: $(BUILD_DIRS)
+	git rev-parse --short HEAD > ../public-build/client_version && \
+		cd ../public-build/ && \
+		git add * && \
+		git commit -m all && \
+		git push origin main && \
+		cd - && \
+		echo "-- $@ done"
+
+publish_test: $(BUILD_DIRS)
+	git rev-parse --short HEAD > ../public-build/client_version
+	echo "-- $@ done"
+# --
+$(BUILD_DIRS): public/%:
+    # @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
+	./i18n.py gen -w -l $* && \
+		npm run prod -- --env lang=$* && \
+		rm -rf ../public-build/$* && \
+		mkdir ../public-build/$* && \
+		cp -r dist/* ../public-build/$* && \
+		# replace "/static/" link in the index.html entry point
+		sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html
+		echo "buid $* lang to $@"
 
 gen:
 	# Remove all directive due to a bug of elm-graphql who
@@ -61,6 +81,14 @@ review:
 # =================================
 
 assets: icon css js
+
+install:
+	# Node.js
+	npm install
+	# Python
+	pip install docopt
+	pip install loguru
+
 
 elm-spa:
 	elm-spa build .
@@ -82,7 +110,7 @@ icon:
 	cp ../fractal6-logo/img/v1/favicon.ico assets/images/logo/favicon.ico
 	cp ../fractal6-logo/img/v1/favicon*.png assets/images/logo/
 
-generate_starwars:
+_generate_starwars:
 	./node_modules/.bin/elm-graphql https://elm-graphql.herokuapp.com/ --base StarWars --output ./src
 
 _elm-spa-org-alias:

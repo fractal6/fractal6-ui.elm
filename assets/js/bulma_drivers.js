@@ -594,9 +594,9 @@ function triggerLang(e, el, app) {
     if (!lang) return
     localStorage.setItem('lang', lang);
     app.ports.updateLangFromJs.send(lang);
-    //setTimeout(() => {
-    //    var loc = window.location;
-    //    //window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
-    //}, 333);
+    setTimeout(() => {
+        var loc = window.location;
+        window.location = loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search;
+    }, 333);
 }
 
