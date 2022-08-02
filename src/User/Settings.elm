@@ -1,6 +1,7 @@
 module User.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
+import Assets.Logo as Logo
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -25,7 +26,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAut
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
-import ModelCommon.View exposing (viewProfileC)
+import ModelCommon.View exposing (lang2str, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -264,6 +265,10 @@ update global message model =
                     ( { model | user = result }, Cmd.none, Cmd.none )
 
         GotUserPatch result ->
+            let
+                form =
+                    model.form
+            in
             case result of
                 Success user ->
                     ( { model
@@ -272,12 +277,17 @@ update global message model =
                         , user_result = result
                         , form = initUserProfileForm model.username
                       }
-                    , Cmd.none
+                    , case form.lang of
+                        Just lang ->
+                            Ports.reloadLang (Lang.toString lang)
+
+                        Nothing ->
+                            Cmd.none
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | user_result = result }, Cmd.none, Cmd.none )
+                    ( { model | user_result = result, form = { form | lang = Nothing } }, Cmd.none, Cmd.none )
 
         ChangeMenuFocus menu ->
             let
@@ -298,7 +308,11 @@ update global message model =
             ( { model | form = { f | post = Dict.insert field value f.post } }, Cmd.none, Cmd.none )
 
         SwitchLang lang ->
-            ( { model | user_result = Loading }
+            let
+                form =
+                    model.form
+            in
+            ( { model | user_result = Loading, form = { form | lang = Just lang } }
             , patchUser apis (initUserProfileForm model.username |> (\x -> { x | lang = Just lang })) GotUserPatch
             , Cmd.none
             )
@@ -535,45 +549,35 @@ viewProfileSettings user result switch_index menuFocus form =
                     [ text T.updateProfile ]
                 ]
             ]
-
-        --, hr [ class "has-border-light", style "margin-top" "80px" ] []
-        --, div [ class "mb-4" ]
-        --    [ div [ class "field is-horizontal" ]
-        --        [ div [ class "field-label" ] [ label [ class "label" ] [ A.icon1 "icon-globe" "Language" ] ]
-        --        , div [ class "field-body control" ]
-        --            [ span [ class "select" ]
-        --                [ select [] <|
-        --                    List.map
-        --                        (\x ->
-        --                            let
-        --                                locale =
-        --                                    case x of
-        --                                        Lang.En ->
-        --                                            "english"
-        --                                        Lang.Fr ->
-        --                                            "français"
-        --                                        Lang.It ->
-        --                                            "italian"
-        --                            in
-        --                            option [ onClick (SwitchLang x), selected (x == user.lang) ] [ textH locale ]
-        --                        )
-        --                    <|
-        --                        Lang.list
-        --                ]
-        --            ]
-        --        ]
-        --    ]
+        , hr [ class "has-border-light", style "margin-top" "80px" ] []
+        , div [ class "mb-4" ]
+            [ div [ class "field is-horizontal" ]
+                --[ div [ class "field-label" ] [ label [ class "label" ] [ A.icon1 "icon-globe" T.language ] ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ span [ class "is-inline-flex" ] [ Logo.i18n, text (space_ ++ T.language) ] ] ]
+                , div [ class "field-body control" ]
+                    [ span [ class "select" ]
+                        [ select [] <|
+                            List.map
+                                (\x ->
+                                    option [ onClick (SwitchLang x), selected (x == user.lang) ] [ text (lang2str x) ]
+                                )
+                            <|
+                                Lang.list
+                        ]
+                    ]
+                ]
+            ]
         ]
 
 
 type alias SwitchRecord =
-    { index : Int -- reference index
+    { index : Int
     , msg :
         Int
         -> Bool
-        -> Msg -- Msg
-    , title : String -- title text
-    , help : String -- help text
+        -> Msg
+    , title : String
+    , help : String
     , val : UserFull -> Bool
     }
 

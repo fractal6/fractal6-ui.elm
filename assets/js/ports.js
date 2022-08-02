@@ -448,6 +448,10 @@ export const actions = {
     'FORCE_RELOAD': (app, session, target) => {
         window.location.reload(true);
     },
+    'RELOAD_LANG': (app, session, lang) => {
+        var loc = window.location;
+        window.location = loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search;
+    },
     'FIT_HEIGHT': (app, session, id) => {
         var fitElement = id => {
             // SOlved with Browser.Dom.getElement

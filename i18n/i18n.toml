@@ -866,6 +866,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Location"
   fr="Localisation"
 
+[language]
+  en="Language"
+  fr="Langue"
+
 [tension]
   en="Tension"
   fr="Tension"
@@ -1184,7 +1188,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [tensionTitleHelp]
   en="Title that sumarize your tension."
-  fr="Un titre qui résume votre tension."
+  fr="Titre qui résume votre tension."
 
 [circleNameHelp]
   en="Name of the circle."

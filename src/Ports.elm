@@ -534,6 +534,14 @@ forceReload =
         }
 
 
+reloadLang : String -> Cmd msg
+reloadLang lang =
+    outgoing
+        { action = "RELOAD_LANG"
+        , data = JE.string lang
+        }
+
+
 
 --
 -- Encoder

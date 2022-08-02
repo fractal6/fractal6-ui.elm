@@ -1076,6 +1076,11 @@ location =
     "Localisation"
 
 
+language : String
+language =
+    "Langue"
+
+
 tension : String
 tension =
     "Tension"
@@ -1473,7 +1478,7 @@ newCircleHelp =
 
 tensionTitleHelp : String
 tensionTitleHelp =
-    "Un titre qui résume votre tension."
+    "Titre qui résume votre tension."
 
 
 circleNameHelp : String
