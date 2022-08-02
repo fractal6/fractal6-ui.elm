@@ -9,7 +9,7 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, title, type_)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..))
@@ -217,6 +217,12 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                                     , a
                                         [ class "stealth-link tag is-rounded ml-1 has-border"
                                         , attribute "style" "weight: 500 !important;padding: 10px 10px;"
+                                        , case nid2type p.nameid of
+                                            NodeType.Circle ->
+                                                title T.editThisCircle
+
+                                            NodeType.Role ->
+                                                title T.editThisRole
                                         , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
                                         ]
                                         [ text (NodeVisibility.toString g.focus.visibility) ]

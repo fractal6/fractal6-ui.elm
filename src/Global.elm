@@ -20,6 +20,7 @@ import Codecs exposing (WindowPos)
 import Components.Navbar as Navbar
 import Dict
 import Footbar
+import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
 import Html exposing (Html, div, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
@@ -121,6 +122,7 @@ type Msg
     | UpdateSessionMenuOrga (Maybe Bool)
     | UpdateSessionMenuTree (Maybe Bool)
     | UpdateSessionScreen Screen
+    | UpdateSessionLang String
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
@@ -394,6 +396,18 @@ update msg model =
             in
             ( { model | session = { session | screen = data } }, Cmd.none )
 
+        UpdateSessionLang data ->
+            let
+                session =
+                    model.session
+            in
+            case Lang.fromString data of
+                Just lang ->
+                    ( { model | session = { session | lang = lang } }, Cmd.none )
+
+                Nothing ->
+                    ( model, Ports.logErr ("Error: Bad lang format: " ++ data) )
+
         UpdateSessionAuthorsPanel data ->
             let
                 session =
@@ -426,6 +440,7 @@ subscriptions _ =
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
         , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
+        , Ports.updateLangFromJs UpdateSessionLang
         ]
 
 

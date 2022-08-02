@@ -14,7 +14,6 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
@@ -735,6 +734,16 @@ roleColor rt =
 
         RoleType.Retired ->
             "warning"
+
+
+lang2str : Lang.Lang -> String
+lang2str lang =
+    case lang of
+        Lang.En ->
+            "English"
+
+        Lang.Fr ->
+            "Français"
 
 
 

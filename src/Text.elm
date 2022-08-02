@@ -4,6 +4,11 @@ module Text exposing (..)
     Auto-generated i18n
 -}
 
+heroSubtitle : String
+heroSubtitle =
+    "**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open-source. Rejoignez un réseau qui met en œuvre l'intelligence collective pour construire des organisations transparentes et résilientes."
+
+
 welcome : String
 welcome =
     "Bienvenue sur Fractale"
@@ -394,6 +399,11 @@ edit =
 editThisCircle : String
 editThisCircle =
     "Editer ce cercle"
+
+
+editThisRole : String
+editThisRole =
+    "Editer ce rôle"
 
 
 cancel : String

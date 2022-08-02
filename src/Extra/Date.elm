@@ -27,11 +27,8 @@ diffTime new old =
 
 
 formatDate : Lang.Lang -> Posix -> String -> String
-formatDate lang_ now timePosix =
+formatDate lang now timePosix =
     let
-        lang =
-            Lang.Fr
-
         time =
             case toTime timePosix of
                 Ok v ->

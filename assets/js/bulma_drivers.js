@@ -134,6 +134,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $langTrigger = $doc.querySelectorAll('.langTrigger');
+    if ($langTrigger.length > 0) {
+        $langTrigger.forEach( el => {
+            setupHandler("click", triggerLang, el, el, app);
+        });
+    }
+
     const $notifTrigger = $doc.querySelectorAll('.notifTrigger');
     if ($notifTrigger.length > 0) {
         $notifTrigger.forEach( el => {
@@ -579,5 +586,17 @@ function triggerTheme(e, el, app) {
     }
     document.documentElement.className = theme;
     localStorage.setItem('theme', theme);
+}
+
+function triggerLang(e, el, app) {
+    // Toggle theme color
+    var lang = el.dataset.lang;
+    if (!lang) return
+    localStorage.setItem('lang', lang);
+    app.ports.updateLangFromJs.send(lang);
+    //setTimeout(() => {
+    //    var loc = window.location;
+    //    //window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+    //}, 333);
 }
 

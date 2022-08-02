@@ -759,8 +759,10 @@ strong {
         & > * {
             color: var(--white-ter);
         }
-        &:hover, &.is-active, *:hover {
-            color: var(--link2);
+        &:hover, &.is-active, &:not(.notMe) *:hover {
+            &:not(.notMe) {
+                color: var(--link2);
+            }
         }
         @include mobile {
             & > .button {

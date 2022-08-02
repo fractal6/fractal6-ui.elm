@@ -319,11 +319,11 @@ viewAuthNeeded onClose =
             [ p []
                 [ text T.please
                 , button
-                    [ class "button is-small is-primary mx-2", onClickPD (onClose { reset = True, link = toHref Route.Login }) ]
+                    [ class "button is-small is-primary is-text-aligned mx-2", onClickPD (onClose { reset = True, link = toHref Route.Login }) ]
                     [ text T.signinNow2 ]
                 , text T.or_
                 , button
-                    [ class "button is-small is-success mx-2", onClickPD (onClose { reset = True, link = toHref Route.Signup }) ]
+                    [ class "button is-small is-success is-text-aligned mx-2", onClickPD (onClose { reset = True, link = toHref Route.Signup }) ]
                     [ text T.signupNow2 ]
                 , text T.toPerformThis
                 ]

@@ -1,7 +1,9 @@
 module Components.Navbar exposing (view)
 
 import Assets as A
+import Assets.Logo as Logo
 import Extra exposing (ternary, textH, upH)
+import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
@@ -9,6 +11,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toString)
+import ModelCommon.View exposing (lang2str)
 import Text as T
 import Url exposing (Url)
 
@@ -74,12 +77,12 @@ view user url replaceUrl =
                                 ]
                                 [ text T.explore ]
                            ]
-                , div [ class "navbar-end" ]
+                , div [ class "navbar-end" ] <|
                     [ notificationButton user url
                     , helpButton user
                     , newButton user
-                    , userButton user url replaceUrl
                     ]
+                        ++ userButtons user url replaceUrl
                 ]
             ]
         ]
@@ -146,11 +149,11 @@ newButton user =
             text ""
 
 
-userButton : UserState -> Url -> (String -> msg) -> Html msg
-userButton user url replaceUrl =
+userButtons : UserState -> Url -> (String -> msg) -> List (Html msg)
+userButtons user url replaceUrl =
     case user of
         LoggedIn uctx ->
-            div [ class "navbar-item has-dropdown is-hoverabl" ]
+            [ div [ class "navbar-item is-hoverabl" ]
                 [ div
                     [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"
@@ -170,13 +173,28 @@ userButton user url replaceUrl =
                         [ A.icon1 "icon-power" T.signout ]
                     ]
                 ]
+            ]
 
         LoggedOut ->
             if fromUrl url == Just Signup then
-                text ""
+                []
 
             else
-                div [ class "navbar-item" ]
+                [ div [ class "navbar-item has-dropdown is-hoverable" ]
+                    [ div
+                        [ class "navbar-link"
+                        , attribute "style" "padding-right: 1.85rem;"
+                        ]
+                        [ Logo.i18n ]
+                    , div [ class "navbar-dropdown is-right" ] <|
+                        List.map
+                            (\lang ->
+                                span [ class "navbar-item button-light langTrigger", attribute "data-lang" (Lang.toString lang) ] [ text (lang2str lang) ]
+                            )
+                            Lang.list
+                    ]
+                , div [ class "navbar-item notMe" ]
                     [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
                         [ text T.join ]
                     ]
+                ]
