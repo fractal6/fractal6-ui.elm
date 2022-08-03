@@ -596,7 +596,9 @@ function triggerLang(e, el, app) {
     app.ports.updateLangFromJs.send(lang);
     setTimeout(() => {
         var loc = window.location;
-        window.location = loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search;
+        window.location.replace(
+            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
+        );
     }, 333);
 }
 

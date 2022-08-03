@@ -206,6 +206,11 @@ emailHelp =
     "Votre adresse est privée, vous seul pouvez la voir."
 
 
+languageHelp : String
+languageHelp =
+    "Changer la langue du système."
+
+
 namePH : String
 namePH =
     "Choisissez un nom pour votre profil public"

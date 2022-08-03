@@ -263,12 +263,10 @@ export const actions = {
 
         // If version is outdated, reload.
         if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
-            var loc = window.location;
-
-            // Prevent bad redirection because /new/orga send a navigate rediction with a timeout.
-            // @debug: catch re redirection here.
-            if (loc.pathname != "/new/orga") {
-                window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+            // Prevent bad redirection because /new/orga send a navigate redirection with a timeout.
+            // @debug: catch redirection here.
+            if (window.location.pathname != "/new/orga") {
+                window.location.reload(true);
             }
         }
 
@@ -450,7 +448,21 @@ export const actions = {
     },
     'RELOAD_LANG': (app, session, lang) => {
         var loc = window.location;
-        window.location = loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search;
+        window.location.replace(
+            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
+        );
+		// May try this to force reoload ?
+        // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
+		//$.ajax({
+		//	url: window.location.href,
+		//	headers: {
+		//		"Pragma": "no-cache",
+		//		"Expires": -1,
+		//		"Cache-Control": "no-cache"
+		//	}
+		//}).done(function () {
+		//	window.location.reload(true);
+		//});
     },
     'FIT_HEIGHT': (app, session, id) => {
         var fitElement = id => {

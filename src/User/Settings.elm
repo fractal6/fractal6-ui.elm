@@ -561,11 +561,11 @@ viewProfileSettings user result switch_index menuFocus form =
                                 (\x ->
                                     option [ onClick (SwitchLang x), selected (x == user.lang) ] [ text (lang2str x) ]
                                 )
-                            <|
                                 Lang.list
                         ]
                     ]
                 ]
+            , div [ class "help-label" ] [ text T.languageHelp ]
             ]
         ]
 

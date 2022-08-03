@@ -170,6 +170,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Your address is private, only you can see it."
   fr="Votre adresse est privée, vous seul pouvez la voir."
 
+[languageHelp]
+  en="Change the system language."
+  fr="Changer la langue du système."
+
 [namePH]
   en="Choose a name for your public profile"
   fr="Choisissez un nom pour votre profil public"
