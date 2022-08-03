@@ -42,14 +42,29 @@ Bulma + custom Sass files. See `assets/sass/`.
 - `hotfix/*`: A bug fix for production release.
 - `fix/*`: A fix an identified bug or issue.
 - `feat/*`: A new feature.
-- `codefactor/*`: Refactoring/Improvements of existing features.
+- `refactor/*`: Refactoring/Improvements of existing features.
 
 
 ### Git commits
 
-The commit name should starts with a name that identify the **type** of modifications done (e.g. fix, feat, codefactor, optimization etc), then a **context** that help to determine the scope of the changes (e.g. a file name file modified or a thematic) and finally a short comment that explain, as explicitly as possible, not what modification has been done, but what behaviour has been fixed, added or removed for example.
+The commit name should starts with a name that identify the **type** of modifications done (e.g. fix, feat, refactor, perf etc), then a **context** that help to determine the scope of the changes (e.g. a file name file modified or a thematic) and finally a short comment that explain, as explicitly as possible, not what modification has been done, but what behaviour has been fixed, added or removed for example.
 
 example: `fix/AuthModal: prevent the auth modal to be closed when a click in the background occur.`
+
+Here are some common used for so called semantic commit message:
+
+- feat: A new feature
+- fix: A bug fix
+- perf: A code change that improves performance
+- refactor: A code change that neither fixes a bug nor adds a feature
+- style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- build: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+- test: Adding missing tests or correcting existing tests
+- docs: Documentation only changes
+
+Extra : 
+- ui: A code change that affecta  visual components (size or position of button, with of something etc)
+
 
 
 ## Reporting issues, Questions, Feedback
