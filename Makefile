@@ -55,19 +55,19 @@ publish_test: $(BUILD_DIRS)
 	echo "-- $@ done"
 # --
 $(BUILD_DIRS): public/%:
-    # @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
-		./i18n.py gen -w -l $* && \
-			if [ $(MAKECMDGOALS) == publish_test ]; then \
-				npm run prod -- --env lang=$* --env debug=test; \
-			else \
-				npm run prod -- --env lang=$*; \
-			fi && \
-			rm -rf ../public-build/$* && \
-			mkdir ../public-build/$* && \
-			cp -r dist/* ../public-build/$* && \
-			# replace "/static/" link in the index.html entry point
-			sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html && \
-			echo "buid $* lang to $@"
+	# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
+	# Build frontend and Replace "/static/" link in the index.html entry point
+	./i18n.py gen -w -l $* && \
+		if [ $(MAKECMDGOALS) == publish_test ]; then \
+			npm run prod -- --env lang=$* --env debug=test; \
+		else \
+			npm run prod -- --env lang=$*; \
+		fi && \
+		rm -rf ../public-build/$* && \
+		mkdir ../public-build/$* && \
+		cp -r dist/* ../public-build/$* && \
+		sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html && \
+		echo "buid $* lang to $@"
 
 gen:
 	# Remove all directive due to a bug of elm-graphql who
