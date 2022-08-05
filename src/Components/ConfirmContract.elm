@@ -362,7 +362,7 @@ viewModal op (State model) =
                             , onClickPD (OnClose { reset = True, link = link })
                             , target "_blank"
                             ]
-                            [ text T.checkItOut ]
+                            [ text T.checkItOut_masc ]
                         ]
 
                 _ ->

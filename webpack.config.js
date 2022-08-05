@@ -32,7 +32,7 @@ module.exports = (env, argv) => {
     // @TODO: get lang from build options ?
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
     var API_URL;
-    if (isDev || CMD == 'webprod') {
+    if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
             auth: 'http://localhost:8888/auth',
             graphql: 'http://localhost:8888/api',

@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch'
-import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
+import { BulmaDriver, InitBulma, catchEsc, updateLang } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -447,22 +447,7 @@ export const actions = {
         window.location.reload(true);
     },
     'RELOAD_LANG': (app, session, lang) => {
-        var loc = window.location;
-        window.location.replace(
-            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
-        );
-		// May try this to force reoload ?
-        // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
-		//$.ajax({
-		//	url: window.location.href,
-		//	headers: {
-		//		"Pragma": "no-cache",
-		//		"Expires": -1,
-		//		"Cache-Control": "no-cache"
-		//	}
-		//}).done(function () {
-		//	window.location.reload(true);
-		//});
+        updateLang(app, lang);
     },
     'FIT_HEIGHT': (app, session, id) => {
         var fitElement = id => {
@@ -503,5 +488,8 @@ export const actions = {
         setTimeout(() => {
             fitElement(id);
         }, 333)
+    },
+    'RESET_SCROLL': (app, session, _) => {
+        window.scroll(0, 0);
     },
 }

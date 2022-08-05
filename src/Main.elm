@@ -104,6 +104,7 @@ update msg model =
                 -- * check if jwt cookie has expired !
                 -- * activate the Subscrition triggers
                 , Ports.bulma_driver ""
+                , Ports.resetScroll
                 , Ports.show "footBar"
                 ]
             )

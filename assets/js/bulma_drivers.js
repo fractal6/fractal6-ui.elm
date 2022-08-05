@@ -34,6 +34,29 @@ export function catchEnter(e, fun, ...args) {
     }
 }
 
+export function updateLang(app, lang) {
+    localStorage.setItem('lang', lang);
+    app.ports.updateLangFromJs.send(lang);
+    setTimeout(() => {
+        var loc = window.location;
+        window.location.replace(
+            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
+        );
+		// May try this to force reoload ?
+        // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
+		//$.ajax({
+		//	url: window.location.href,
+		//	headers: {
+		//		"Pragma": "no-cache",
+		//		"Expires": -1,
+		//		"Cache-Control": "no-cache"
+		//	}
+		//}).done(function () {
+		//	window.location.reload(true);
+		//});
+    }, 333);
+}
+
 
 
 export function BulmaDriver(app, target, handlers) {
@@ -592,13 +615,6 @@ function triggerLang(e, el, app) {
     // Toggle theme color
     var lang = el.dataset.lang;
     if (!lang) return
-    localStorage.setItem('lang', lang);
-    app.ports.updateLangFromJs.send(lang);
-    setTimeout(() => {
-        var loc = window.location;
-        window.location.replace(
-            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
-        );
-    }, 333);
+    updateLang(app, lang);
 }
 

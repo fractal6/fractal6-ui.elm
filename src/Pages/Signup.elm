@@ -234,7 +234,7 @@ viewSignup global model =
                                 , onKeydown SubmitKeyDown
                                 ]
                                 []
-                            , p [ class "help" ] [ text "Password must be 8 characters or longer." ]
+                            , p [ class "help" ] [ text T.passwordRequirements ]
                             ]
                         ]
                     ]

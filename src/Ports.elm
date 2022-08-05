@@ -542,6 +542,14 @@ reloadLang lang =
         }
 
 
+resetScroll : Cmd msg
+resetScroll =
+    outgoing
+        { action = "RESET_SCROLL"
+        , data = JE.string ""
+        }
+
+
 
 --
 -- Encoder

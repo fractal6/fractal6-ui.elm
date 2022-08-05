@@ -1158,7 +1158,13 @@ viewSuccess res model =
             , onClickPD (OnClose { reset = True, link = link })
             , target "_blank"
             ]
-            [ text T.checkItOut ]
+            [ case model.activeTab of
+                NewTensionTab ->
+                    text T.checkItOut_fem
+
+                _ ->
+                    text T.checkItOut_masc
+            ]
         , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
             case model.action_result of
                 Success _ ->

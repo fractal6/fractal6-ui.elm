@@ -572,7 +572,7 @@ viewSuccess data op model =
                 , onClickPD (OnClose { reset = True, link = link })
                 , target "_blank"
                 ]
-                [ text T.checkItOut ]
+                [ text T.checkItOut_fem ]
             ]
 
     else
@@ -607,7 +607,7 @@ viewJoinStep op model =
                             --        , onClickPD (OnCloseModal { reset = True, link = link })
                             --        , target "_blank"
                             --        ]
-                            --        [ text T.checkItOut ]
+                            --        [ text T.checkItOut_fem ]
                             --    ]
                             div [ class "box is-light is-warning" ] [ text T.checkYourPendingInvitation ]
 

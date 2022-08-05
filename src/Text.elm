@@ -79,6 +79,11 @@ alreadyAnAccount =
     "Déjà enregistré ?"
 
 
+passwordRequirements : String
+passwordRequirements =
+    "Le mot de passe doit comporter 8 caractères ou plus."
+
+
 passwordForgotten : String
 passwordForgotten =
     "Mot de passe oublié ?"
@@ -158,7 +163,7 @@ updateLabel =
 
 createRole : String
 createRole =
-    "Créer le modéle de rôle"
+    "Créer le modèle de rôle"
 
 
 updateRole : String
@@ -311,9 +316,14 @@ leaveRole =
     "Quitter le rôle"
 
 
-checkItOut : String
-checkItOut =
+checkItOut_fem : String
+checkItOut_fem =
     "Consulter-la."
+
+
+checkItOut_masc : String
+checkItOut_masc =
+    "Consulter-le."
 
 
 explore : String
@@ -873,7 +883,7 @@ confirmDeleteContract =
 
 askAnotherQuestion : String
 askAnotherQuestion =
-    "Posez une autre question."
+    "Poser une autre question."
 
 
 giveAnotherFeedback : String
@@ -1153,7 +1163,7 @@ checkYourPendingInvitation =
 
 checkPendingInvitation : String
 checkPendingInvitation =
-    "Une invitation est en attente, veuillez la vérifier."
+    "Une invitation similaire est en attente, veuillez la vérifier."
 
 
 firstLink : String
@@ -1378,7 +1388,7 @@ showMore =
 
 clearFilters : String
 clearFilters =
-    "Nettoyer les filtres"
+    "Réinitialiser les filtres"
 
 
 subLabels : String
@@ -1468,17 +1478,17 @@ editTitle =
 
 newTensionHelp : String
 newTensionHelp =
-    "Creez une nouvelle tension."
+    "Créer une nouvelle tension."
 
 
 newRoleHelp : String
 newRoleHelp =
-    "Créer ou proposez un nouveau rôle."
+    "Créer ou proposer un nouveau rôle."
 
 
 newCircleHelp : String
 newCircleHelp =
-    "Créer ou proposez un nouveau cercle."
+    "Créer ou proposer un nouveau cercle."
 
 
 tensionTitleHelp : String
@@ -1603,7 +1613,7 @@ addPolicies =
 
 selectRoleTemplate : String
 selectRoleTemplate =
-    "sélectionner un modèle de rôle"
+    "Sélectionner un modèle de rôle"
 
 
 selectCircleVisibility : String
@@ -1613,7 +1623,7 @@ selectCircleVisibility =
 
 noTemplateRole : String
 noTemplateRole =
-    "Aucun rôle modéle pour le moment."
+    "Aucun modèle de rôle pour le moment."
 
 
 templateRoleHint : String
@@ -1643,7 +1653,7 @@ needNewRole =
 
 templateRole : String
 templateRole =
-    "Modéle de Rôle"
+    "Modèle de Rôle"
 
 
 templateRoles : String
@@ -2214,7 +2224,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 
 rolesInfoHeader : String
 rolesInfoHeader =
-    "La création de nouveaux rôles modéles vous aide à gérer votre organisation"
+    "La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
 
 
 rolesInfoDoc : String
@@ -2275,12 +2285,17 @@ Il existe trois grandes catégories de tensions :
 
 visibilityInfoHeader : String
 visibilityInfoHeader =
-    "La modification ne s’appliquera qu’au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+    "La modification s’appliquera au cercle actuel et à ses rôles, mais non de manière récursive aux sous-cercles."
 
 
 visibilityPublic : String
 visibilityPublic =
     "Le monde entier peut la voir."
+
+
+visibilityPublicCircle : String
+visibilityPublicCircle =
+    "Le monde entier peut le voir."
 
 
 visibilityPrivate : String
@@ -2322,22 +2337,22 @@ Mais d'abord, vous devez **configurer votre compte** :
 
 youHaveBeenInvitedRole : String
 youHaveBeenInvitedRole =
-    ", You have been invited to play the role"
+    ", Vous avez été invité à jouer le rôle"
 
 
 userHasBeenInvitedRole : String
 userHasBeenInvitedRole =
-    "has been invited to play the role"
+    "a été invité à jouer le rôle"
 
 
 youHaveBeenInvitedOrga : String
 youHaveBeenInvitedOrga =
-    ", You have been invited as guest."
+    ", Vous avez été invité à cette organisation."
 
 
 userHasBeenInvitedOrga : String
 userHasBeenInvitedOrga =
-    "has been invited as guest."
+    "a été invité dans cette organisation."
 
 
 invitationRejected : String

@@ -1039,9 +1039,7 @@ viewPanel op model =
                 -- LEAVE ACTION
                 ++ (if op.hasRole then
                         [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
-                            [ p []
-                                [ A.icon1 "icon-log-out" (panelAction2str LeaveAction) ]
-                            ]
+                            [ A.icon1 "icon-log-out" (panelAction2str LeaveAction) ]
                         ]
                             |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
@@ -1098,7 +1096,7 @@ viewModalContent op model =
                         , onClickPD (OnCloseModal { reset = True, link = link })
                         , target "_blank"
                         ]
-                        [ text T.checkItOut ]
+                        [ text T.view ]
 
                   else
                     text ""
@@ -1134,6 +1132,9 @@ viewStep1 op model =
             ]
         , div [ class "modal-card-body" ] <|
             case model.state of
+                MoveAction ->
+                    []
+
                 VisibilityAction ->
                     [ viewVisibility op model ]
 
@@ -1155,7 +1156,15 @@ viewStep1 op model =
                     , viewComment model
                     ]
 
-                _ ->
+                LeaveAction ->
+                    [ showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" "Are you sure you wan't to leave this organization ?" ""
+                    , viewComment model
+                    ]
+
+                ArchiveAction ->
+                    [ viewComment model ]
+
+                UnarchiveAction ->
                     [ viewComment model ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
             [ case model.action_result of
@@ -1248,7 +1257,7 @@ viewVisibility op model =
                             [ h2 [ class "is-strong is-size-5" ]
                                 [ A.icon1 (visibility2icon x ++ " icon-bg") (NodeVisibility.toString x) ]
                             , div [ class "content is-small" ]
-                                [ text (visibility2descr x ++ extra_descr) ]
+                                [ text (visibility2descr x), span [ class "help" ] [ text extra_descr ] ]
                             ]
                         ]
                 )

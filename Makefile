@@ -49,21 +49,25 @@ publish: $(BUILD_DIRS)
 		git push origin main && \
 		cd - && \
 		echo "-- $@ done"
-
+# --
 publish_test: $(BUILD_DIRS)
 	git rev-parse --short HEAD > ../public-build/client_version
 	echo "-- $@ done"
 # --
 $(BUILD_DIRS): public/%:
     # @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
-	./i18n.py gen -w -l $* && \
-		npm run prod -- --env lang=$* && \
-		rm -rf ../public-build/$* && \
-		mkdir ../public-build/$* && \
-		cp -r dist/* ../public-build/$* && \
-		# replace "/static/" link in the index.html entry point
-		sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html
-		echo "buid $* lang to $@"
+		./i18n.py gen -w -l $* && \
+			if [ $(MAKECMDGOALS) == publish_test ]; then \
+				npm run prod -- --env lang=$* --env debug=test; \
+			else \
+				npm run prod -- --env lang=$*; \
+			fi && \
+			rm -rf ../public-build/$* && \
+			mkdir ../public-build/$* && \
+			cp -r dist/* ../public-build/$* && \
+			# replace "/static/" link in the index.html entry point
+			sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html && \
+			echo "buid $* lang to $@"
 
 gen:
 	# Remove all directive due to a bug of elm-graphql who
@@ -109,6 +113,7 @@ js:
 icon:
 	cp ../fractal6-logo/img/v1/favicon.ico assets/images/logo/favicon.ico
 	cp ../fractal6-logo/img/v1/favicon*.png assets/images/logo/
+	cp ../fractal6-logo/img/v1/fractale-inv.svg assets/images/
 
 _generate_starwars:
 	./node_modules/.bin/elm-graphql https://elm-graphql.herokuapp.com/ --base StarWars --output ./src

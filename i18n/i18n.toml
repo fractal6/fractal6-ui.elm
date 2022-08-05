@@ -62,6 +62,10 @@
   en="Already an account?"
   fr="Déjà enregistré ?"
 
+[passwordRequirements]
+  en="Password must be 8 characters or longer."
+  fr="Le mot de passe doit comporter 8 caractères ou plus."
+
 [passwordForgotten]
   en="Forgot your password?"
   fr="Mot de passe oublié ?"
@@ -132,7 +136,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [createRole]
   en="Create role template"
-  fr="Créer le modéle de rôle"
+  fr="Créer le modèle de rôle"
 
 [updateRole]
   en="Update role"
@@ -254,9 +258,13 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Leave role"
   fr="Quitter le rôle"
 
-[checkItOut]
+[checkItOut_fem]
   en="Check it out."
   fr="Consulter-la."
+
+[checkItOut_masc]
+  en="Check it out."
+  fr="Consulter-le."
 
 [explore]
   en="Explore"
@@ -704,7 +712,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [askAnotherQuestion]
   en="Ask another question."
-  fr="Posez une autre question."
+  fr="Poser une autre question."
 
 [giveAnotherFeedback]
   en="Give another feedback."
@@ -927,8 +935,8 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   fr="Vous avez déjà une invitation en attente, veuillez la vérifier."
 
 [checkPendingInvitation]
-  en="An invitation is pending, please check it out."
-  fr="Une invitation est en attente, veuillez la vérifier."
+  en="An similar invitation is pending, please check it out."
+  fr="Une invitation similaire est en attente, veuillez la vérifier."
 
 [firstLink]
   en="Lead link"
@@ -1107,8 +1115,8 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   fr="Afficher plus"
 
 [clearFilters]
-  en="Clear filters"
-  fr="Nettoyer les filtres"
+  en="Reset filters"
+  fr="Réinitialiser les filtres"
 
 [subLabels]
   en="Sub-circle labels"
@@ -1180,15 +1188,15 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [newTensionHelp]
   en="Create a new tension."
-  fr="Creez une nouvelle tension."
+  fr="Créer une nouvelle tension."
 
 [newRoleHelp]
   en="Create or propose a new role."
-  fr="Créer ou proposez un nouveau rôle."
+  fr="Créer ou proposer un nouveau rôle."
 
 [newCircleHelp]
   en="Create or propose a new circle."
-  fr="Créer ou proposez un nouveau cercle."
+  fr="Créer ou proposer un nouveau cercle."
 
 [tensionTitleHelp]
   en="Title that sumarize your tension."
@@ -1288,7 +1296,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [selectRoleTemplate]
 	en="Select a role template"
-	fr="sélectionner un modèle de rôle"
+	fr="Sélectionner un modèle de rôle"
 
 [selectCircleVisibility]
 	en="Choose the circle visibility"
@@ -1296,7 +1304,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [noTemplateRole]
 	en="No template role yet."
-	fr="Aucun rôle modéle pour le moment."
+	fr="Aucun modèle de rôle pour le moment."
 
 [templateRoleHint]
 	en="A template role is a generic role that you can reuse in your organisation."
@@ -1320,7 +1328,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [templateRole]
 	en="Role template"
-	fr="Modéle de Rôle"
+	fr="Modèle de Rôle"
 
 [templateRoles]
 	en="Role templates"
@@ -1829,7 +1837,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 
 [rolesInfoHeader]
   en="Creating new roles template help you to manage your organization"
-	fr="La création de nouveaux rôles modéles vous aide à gérer votre organisation"
+	fr="La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
 
 [rolesInfoDoc]
   en="""
@@ -1890,15 +1898,19 @@ Il existe trois grandes catégories de tensions :
 """
 
 [visibilityInfoHeader]
-  en="The change will only apply on the current circle and its roles, not recursively on the sub-circles."
-  fr="La modification ne s’appliquera qu’au cercle actuel et à ses rôles, et non de manière récursive aux sous-cercles."
+  en="The change will apply on the current circle and its roles, but not recursively to the sub-circles."
+  fr="La modification s’appliquera au cercle actuel et à ses rôles, mais non de manière récursive aux sous-cercles."
 
 [visibilityPublic]
   en="The entire world can see it."
   fr="Le monde entier peut la voir."
 
+[visibilityPublicCircle]
+  en="The entire world can see it."
+  fr="Le monde entier peut le voir."
+
 [visibilityPrivate]
-  en="Visible by members of the organization only."
+  en="Only members of the organization can see it."
   fr="Visible uniquement par les membres de l’organisation."
 
 [visibilitySeccret]
@@ -1931,15 +1943,19 @@ Mais d'abord, vous devez **configurer votre compte** :
 
 [youHaveBeenInvitedRole]
   en=", You have been invited to play the role"
+  fr=", Vous avez été invité à jouer le rôle"
 
 [userHasBeenInvitedRole]
   en="has been invited to play the role"
+  fr="a été invité à jouer le rôle"
 
 [youHaveBeenInvitedOrga]
-  en=", You have been invited as guest."
+  en=", You have been invited to this organization."
+  fr=", Vous avez été invité à cette organisation."
 
 [userHasBeenInvitedOrga]
-  en="has been invited as guest."
+  en="has been invited to this organization."
+  fr="a été invité dans cette organisation."
 
 [invitationRejected]
   en="Invitation was declined."
