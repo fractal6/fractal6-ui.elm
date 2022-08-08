@@ -17,6 +17,10 @@ NOTE: some packake needs `--legacy-peer-deps` options to be installed without np
 
 ## Launch
 
+First, generate the elm i18n langage source code (it will generate the `src/Text.elm` file): 
+
+    ./i18n.py gen -w -l
+
 **Run the test server**
 
 Build the code and run a webpack dev server (hot reload)

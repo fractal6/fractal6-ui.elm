@@ -30,7 +30,8 @@ elm_header = """\
 module Text exposing (..)
 
 {-
-    Auto-generated i18n
+    Auto-generated i18n.
+    DO NOT EDIT
 -}
 
 """

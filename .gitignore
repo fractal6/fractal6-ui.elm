@@ -4,6 +4,9 @@ public/
 dist/
 !public/index.html
 
+# Auto-generated
+src/Text.elm
+
 # temp data from icomoon
 assets/icons/Read*.txt
 assets/icons/demo-files/
