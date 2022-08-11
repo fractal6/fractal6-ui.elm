@@ -403,7 +403,12 @@ update msg model =
             in
             case Lang.fromString data of
                 Just lang ->
-                    ( { model | session = { session | lang = lang } }, Cmd.none )
+                    case session.user of
+                        LoggedIn user ->
+                            ( { model | session = { session | lang = lang, user = LoggedIn { user | lang = lang } } }, Cmd.none )
+
+                        LoggedOut ->
+                            ( { model | session = { session | lang = lang } }, Cmd.none )
 
                 Nothing ->
                     ( model, Ports.logErr ("Error: Bad lang format: " ++ data) )

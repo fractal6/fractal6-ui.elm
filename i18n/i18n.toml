@@ -342,6 +342,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Edit this role"
   fr="Editer ce rôle"
 
+[viewOnMap]
+  en="View on the flow chart"
+  fr="Voir sur l'organigramme"
+
 [cancel]
   en="Cancel"
   fr="Annuler"

@@ -63,7 +63,8 @@ Here are some common used for so called semantic commit message:
 - docs: Documentation only changes
 
 Extra : 
-- ui: A code change that affecta  visual components (size or position of button, with of something etc)
+- ui: A code change that affects visual components (size or position of button, with of something etc)
+- ux: A code change that affects interaction, usability or ergonomics. 
 
 
 

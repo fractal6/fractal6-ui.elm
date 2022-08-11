@@ -605,12 +605,16 @@ viewAboutSection data op_m =
                 , text space_
                 , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
-                        [ href <| uriFromNameid OverviewBaseUri nameid [] ]
+                        [ href <| uriFromNameid OverviewBaseUri nameid []
+                        , title T.viewOnMap
+                        ]
                         [ text <| withDefault "" data.node.name ]
 
                   else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
                     a
-                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r } ]
+                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r }
+                        , title T.edit
+                        ]
                         [ text <| withDefault "" data.node.name ]
 
                   else
