@@ -1606,6 +1606,9 @@ viewTension u t model =
 
         isAuthor =
             Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
+
+        blob_m =
+            t.blobs |> withDefault [] |> List.head
     in
     div []
         [ div [ class "columns is-marginless" ]
@@ -1657,7 +1660,7 @@ viewTension u t model =
 
                     else
                         [ span [ class "is-human" ] [ text t.title ]
-                        , if model.isTensionAdmin || isAuthor then
+                        , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
                                 [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
                                 , attribute "data-tooltip" T.editTitle
