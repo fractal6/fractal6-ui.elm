@@ -176,25 +176,28 @@ userButtons user url replaceUrl =
             ]
 
         LoggedOut ->
-            if fromUrl url == Just Signup then
-                []
-
-            else
-                [ div [ class "navbar-item has-dropdown is-hoverable" ]
-                    [ div
-                        [ class "navbar-link"
-                        , attribute "style" "padding-right: 1.85rem;"
-                        ]
-                        [ Logo.i18n ]
-                    , div [ class "navbar-dropdown is-right" ] <|
-                        List.map
-                            (\lang ->
-                                span [ class "navbar-item button-light langTrigger", attribute "data-lang" (Lang.toString lang) ] [ text (lang2str lang) ]
-                            )
-                            Lang.list
+            [ div [ class "navbar-item has-dropdown is-hoverable" ]
+                [ div
+                    [ class "navbar-link"
+                    , attribute "style" "padding-right: 1.85rem;"
                     ]
-                , div [ class "navbar-item notMe" ]
-                    [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
-                        [ text T.join ]
-                    ]
+                    [ Logo.i18n ]
+                , div [ class "navbar-dropdown is-right" ] <|
+                    List.map
+                        (\lang ->
+                            span [ class "navbar-item button-light langTrigger", attribute "data-lang" (Lang.toString lang) ] [ text (lang2str lang) ]
+                        )
+                        Lang.list
                 ]
+            ]
+                ++ (if List.member (fromUrl url) [ Just Login, Just Signup ] then
+                        []
+
+                    else
+                        [ div [ class "navbar-item" ] [ a [ href (toHref Login) ] [ text T.signin ] ]
+                        , div [ class "navbar-item notMe" ]
+                            [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
+                                [ text T.join ]
+                            ]
+                        ]
+                   )

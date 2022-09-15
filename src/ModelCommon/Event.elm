@@ -93,7 +93,7 @@ viewEventMedia lang now inline ev =
                     [ A.icon (Dict.get "icon" ev |> withDefault "")
                     , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
-                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+                    , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     , text ":"
@@ -121,7 +121,7 @@ viewContractMedia lang now ev =
                     --, A.icon (Dict.get "icon" ev |> withDefault "")
                     , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
-                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+                    , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]

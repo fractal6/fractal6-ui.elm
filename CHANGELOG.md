@@ -5,6 +5,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+## [0.6.5]
+
+### New
+- [ux] add the orga map legend
+- [ux] ActionPanel now works to manages roles in Members pages and HelperBar user's roles.
+- [ux] add i18n translation dropdown when unlogged
+- [ux] add signin button to the navbartop.
+
+### Changed
+- [ui] icon for owner and coordinator roles
+- [ui/ux] better action panel icon, order and consistency
+- [ux] helperBar user's role do not link the overview page anymore but open the action panel instead.
+- [ux] A propos node title do not link to overview/tension page to avoid confusing user more than necessary.
+- [ux] do not alwayr reset the page scroll on navigation.
+
+### Fixed
+- [ui/ux] tension receiver handle circle and roles (with color!)
+- [ux] TreeMenu and OrgaMenu (side menu) focus updates.
+- [ui] Improved traduction and notification messages.
+
+
 ## [0.6.3]
 
 ### New

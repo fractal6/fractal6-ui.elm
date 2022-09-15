@@ -27,6 +27,21 @@ onClickPD2 msg =
             (JD.succeed msg)
 
 
+onClickPos msg =
+    --onClickPos : msg -> Html.Attribute msg
+    on "click" (JD.map msg eventPos)
+
+
+eventPos : JD.Decoder (Maybe ( Int, Int ))
+eventPos =
+    JD.maybe <|
+        JD.map2 Tuple.pair
+            --(JD.at [ "target", "offsetTop" ] JD.int)
+            --(JD.at [ "target", "offsetLeft" ] JD.int)
+            (JD.field "clientX" JD.int)
+            (JD.field "clientY" JD.int)
+
+
 
 -- onLoad
 

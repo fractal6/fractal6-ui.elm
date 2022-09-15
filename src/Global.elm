@@ -27,9 +27,9 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
-import Loading exposing (WebData, expectJson, toErrorData)
+import Loading exposing (RequestResult(..), WebData, expectJson, toErrorData)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
 import ModelCommon.Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
@@ -98,6 +98,7 @@ type Msg
     | ReplaceUrl String
     | SetTime Time.Posix
     | UpdateReferer Url
+    | NavigateNode String
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserTokenAck (WebData UserCtx)
     | UpdateUserToken
@@ -162,6 +163,14 @@ update msg model =
             in
             ( { model | session = { session | referer = referer } }, Cmd.none )
 
+        NavigateNode nameid ->
+            case urlToFractalRoute model.url of
+                Just OverviewBaseUri ->
+                    ( model, Nav.replaceUrl model.key (uriFromNameid OverviewBaseUri nameid []) )
+
+                _ ->
+                    ( model, Cmd.none )
+
         UpdateUserSession uctx ->
             let
                 session =
@@ -198,7 +207,7 @@ update msg model =
             case result of
                 RemoteData.Success uctx ->
                     ( newModel
-                    , send (UpdateUserSession uctx)
+                    , sendSleep (UpdateUserSession uctx) 300
                     )
 
                 _ ->
@@ -284,7 +293,7 @@ update msg model =
             ( { model | session = { session | node_focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
-            -- Update also children. Children are used to account for the depth of tensions search.
+            -- Update also children. Children are used to manage tensions depth search option.
             let
                 session =
                     model.session
@@ -302,8 +311,26 @@ update msg model =
             let
                 session =
                     model.session
+
+                -- Eventually update path_data
+                pdata =
+                    Maybe.map
+                        (\path_data ->
+                            -- @optimize: only of node_focus.nameid == path_data.focus.nameid
+                            case getNode path_data.focus.nameid (Maybe.map (\d -> Success d) data |> Maybe.withDefault NotAsked) of
+                                Just n ->
+                                    let
+                                        f focus =
+                                            { focus | visibility = n.visibility, mode = n.mode, name = n.name }
+                                    in
+                                    { path_data | focus = f path_data.focus }
+
+                                Nothing ->
+                                    path_data
+                        )
+                        model.session.path_data
             in
-            ( { model | session = { session | tree_data = data } }, Cmd.none )
+            ( { model | session = { session | tree_data = data, path_data = pdata } }, Cmd.none )
 
         UpdateSessionData data ->
             let

@@ -160,6 +160,8 @@ export const GraphPack = {
     roleColors: {
         [RoleType.Coordinator]: "#ffdaa1",
         [RoleType.Guest]: "#f4fdf5",
+        [RoleType.Pending]: "#1abc9c",
+        [RoleType.Retired]: "#8e44ad",
         [RoleType.Bot]: "#eeeeee",
         //[RoleType.Bot]: "#81b987",
         //[RoleType.Bot]: "rgb(0,0,0,0)", // transparent
@@ -291,6 +293,7 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
 
         // Draw canvas buttons
+        this.$canvasButtons.style.height = this.height-20 +"px";
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
         this.$canvasButtons.classList.remove("is-invisible");
@@ -586,8 +589,6 @@ export const GraphPack = {
         var text, textWidth, textHeight = ctx2d.measureText('M').width;
 
         // Name
-        if (node.data.role_type == RoleType.Guest) return
-
         text = node.data.name;
         var textWidth = ctx2d.measureText(text).width;
         if (textWidth+textHeight/2 > node.ctx.rayon*2) {
@@ -617,7 +618,14 @@ export const GraphPack = {
                 //ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.5);
                 ctx2d.fillText('\ue962', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
             } else if (node.data.type_ == NodeType.Role) {
-                ctx2d.fillText('\uf06c', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                // Role type icon
+                if (node.data.role_type == RoleType.Coordinator) {
+                    ctx2d.fillText('\ue963', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                } else if (node.data.role_type == RoleType.Owner) {
+                    ctx2d.fillText('\ue964', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                } else {
+                    ctx2d.fillText('\uf06c', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                }
             }
             ctx2d.fill();
 

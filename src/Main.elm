@@ -104,8 +104,15 @@ update msg model =
                 -- * check if jwt cookie has expired !
                 -- * activate the Subscrition triggers
                 , Ports.bulma_driver ""
-                , Ports.resetScroll
                 , Ports.show "footBar"
+                , if
+                    (String.split "/" model.url.path |> List.take 2)
+                        == (String.split "/" url.path |> List.take 2)
+                  then
+                    Cmd.none
+
+                  else
+                    Ports.resetScroll
                 ]
             )
 

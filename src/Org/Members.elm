@@ -5,6 +5,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
@@ -28,7 +29,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -36,15 +37,15 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub)
-import ModelCommon.View exposing (roleColor, viewRole, viewUser, viewUsernameLink)
+import ModelCommon.View exposing (viewRole2, viewUser, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
-import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersLocal)
+import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
@@ -70,30 +71,50 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( Cmd.none, send (NavigateRaw link) )
+                        ( [], send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
-                        ( Cmd.none, send (ReplaceUrl url) )
+                        ( [], send (ReplaceUrl url) )
 
                     DoUpdateToken ->
-                        ( Cmd.none, send UpdateUserToken )
+                        ( [], send UpdateUserToken )
 
                     DoUpdateUserSession uctx ->
-                        ( Cmd.none, send (UpdateUserSession uctx) )
+                        ( [], send (UpdateUserSession uctx) )
 
                     DoUpdateOrgs orgs ->
-                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
-
-                    DoUpdateTree tree ->
-                        ( Cmd.none, send (UpdateSessionTree tree) )
+                        ( [], send (UpdateSessionOrgs orgs) )
 
                     DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+                        ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)) ], Cmd.none )
+
+                    -- Tree Data
+                    DoUpdateTree tree ->
+                        ( [], send (UpdateSessionTree tree) )
+
+                    DoFocus nameid ->
+                        ( [], send (NavigateNode nameid) )
+
+                    DoFetchNode nameid ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False) ], Cmd.none )
+
+                    DoAddNodes nodes ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes) ], Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send OnReload ], Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids) ], Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
 
                     _ ->
-                        ( Cmd.none, Cmd.none )
+                        ( [], Cmd.none )
             )
         |> List.unzip
+        |> Tuple.mapFirst List.concat
 
 
 
@@ -117,6 +138,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
+    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
@@ -138,6 +160,7 @@ type alias Model =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
+    | OnReload
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Page
@@ -154,6 +177,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -161,6 +185,7 @@ type Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 
@@ -211,12 +236,12 @@ init global flags =
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , actionPanel = ActionPanel.init global.session.user
             }
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
-            , queryMembersLocal apis newFocus.nameid GotMembers
-            , fetchMembersSub apis newFocus.nameid GotMembersSub
+            , send OnReload
             , sendSleep PassedSlowLoadTreshold 500
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
@@ -251,6 +276,15 @@ update global message model =
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
+
+        OnReload ->
+            ( model
+            , Cmd.batch
+                [ queryMembersLocal apis model.node_focus.nameid GotMembers
+                , fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                ]
+            , Cmd.none
+            )
 
         -- Data queries
         GotPath isInit result ->
@@ -371,6 +405,9 @@ update global message model =
             in
             ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
 
+        OpenActionPanel domid nameid pos ->
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
+
         -- Components
         NewTensionMsg msg ->
             let
@@ -445,6 +482,16 @@ update global message model =
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ActionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ActionPanel.update apis msg model.actionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -455,6 +502,7 @@ subscriptions _ model =
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         |> Sub.batch
 
 
@@ -476,6 +524,14 @@ view global model =
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
+            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
     { title = T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -490,6 +546,7 @@ view global model =
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
 
@@ -503,13 +560,16 @@ view_ global model =
         isAdmin =
             case global.session.user of
                 LoggedIn uctx ->
-                    hasAdminRole uctx model.node_focus.rootnameid
+                    hasLazyAdminRole uctx model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
 
         lang =
             global.session.lang
+
+        isPanelOpen =
+            ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
@@ -524,9 +584,9 @@ view_ global model =
                   else
                     text ""
                 , div [ class "columns mb-6 px-3-mobile" ]
-                    [ Lazy.lazy4 viewMembers lang model.now model.members_sub model.node_focus ]
+                    [ Lazy.lazy5 viewMembers lang model.now model.members_sub model.node_focus isPanelOpen ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest lang model.now model.members_top model.node_focus ]
+                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy5 viewGuest lang model.now model.members_top model.node_focus isPanelOpen ]
                     , div [ class "column is-3" ] [ viewPending model.now model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
@@ -534,8 +594,8 @@ view_ global model =
         ]
 
 
-viewMembers : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
-viewMembers lang now data focus =
+viewMembers : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
+viewMembers lang now data focus isPanelOpen =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
@@ -566,7 +626,7 @@ viewMembers lang now data focus =
                             , tbody [] <|
                                 List.map
                                     (\m ->
-                                        Lazy.lazy4 viewMemberRow lang now focus m
+                                        Lazy.lazy5 viewMemberRow lang now focus m isPanelOpen
                                     )
                                     members
                             ]
@@ -583,8 +643,8 @@ viewMembers lang now data focus =
             text ""
 
 
-viewGuest : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
-viewGuest lang now members_d focus =
+viewGuest : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
+viewGuest lang now members_d focus isPanelOpen =
     let
         guests =
             members_d
@@ -612,7 +672,7 @@ viewGuest lang now members_d focus =
                     , tbody [] <|
                         List.indexedMap
                             (\i m ->
-                                Lazy.lazy3 viewGuestRow lang now m
+                                Lazy.lazy4 viewGuestRow lang now m isPanelOpen
                             )
                             guests
                     ]
@@ -647,7 +707,7 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
                     ]
                     [ text T.goContracts ]
                 ]
-            , div [ class "table-container" ]
+            , div [ class "table-container", style "min-width" "375px" ]
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
                         [ tr [ class "has-background-header" ]
@@ -677,8 +737,8 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
         div [] []
 
 
-viewMemberRow : Lang.Lang -> Time.Posix -> NodeFocus -> Member -> Html Msg
-viewMemberRow lang now focus m =
+viewMemberRow : Lang.Lang -> Time.Posix -> NodeFocus -> Member -> Bool -> Html Msg
+viewMemberRow lang now focus m isPanelOpen =
     let
         ( roles_, sub_roles_ ) =
             List.foldl
@@ -703,7 +763,7 @@ viewMemberRow lang now focus m =
                     text "--"
 
                 _ ->
-                    viewMemberRoles lang now OverviewBaseUri roles_
+                    viewMemberRoles lang now OverviewBaseUri roles_ isPanelOpen
             ]
         , td [ class "pt-3" ]
             [ case sub_roles_ of
@@ -711,26 +771,28 @@ viewMemberRow lang now focus m =
                     text "--"
 
                 _ ->
-                    viewMemberRoles lang now OverviewBaseUri sub_roles_
+                    viewMemberRoles lang now OverviewBaseUri sub_roles_ isPanelOpen
             ]
         ]
 
 
-viewGuestRow : Lang.Lang -> Time.Posix -> Member -> Html Msg
-viewGuestRow lang now m =
+viewGuestRow : Lang.Lang -> Time.Posix -> Member -> Bool -> Html Msg
+viewGuestRow lang now m isPanelOpen =
     tr []
         [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
         , td [ class "pt-3" ] [ viewUsernameLink m.username ]
         , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ] [ viewMemberRoles lang now OverviewBaseUri m.roles ]
+        , td [ class "pt-3" ] [ viewMemberRoles lang now OverviewBaseUri m.roles isPanelOpen ]
         ]
 
 
-viewMemberRoles : Lang.Lang -> Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
-viewMemberRoles lang now baseUri roles =
+viewMemberRoles : Lang.Lang -> Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
+viewMemberRoles lang now baseUri roles isPanelOpen =
     div [ class "buttons" ] <|
         List.map
-            (\r -> viewRole (Just ( lang, now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r)
+            (\r ->
+                viewRole2 (Just ( lang, now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
+            )
             roles
 
 

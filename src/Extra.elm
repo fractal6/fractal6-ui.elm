@@ -137,9 +137,38 @@ mor ma mb =
 -- Colors
 
 
+{-|
+
+    Get Color style from string color
+
+-}
 colorAttr : String -> Html.Attribute msg
 colorAttr color =
-    attribute "style" ("background-color:" ++ color ++ "; color:" ++ colorToTextColor color ++ ";")
+    let
+        c =
+            if String.startsWith "#" color then
+                color
+
+            else
+                "var(--" ++ color ++ ")"
+
+        ch =
+            if String.startsWith "#" color then
+                color ++ "cc"
+
+            else
+                "var(--" ++ color ++ "-hover)"
+    in
+    attribute "style"
+        ("background-color:"
+            ++ c
+            ++ "; color:"
+            ++ colorToTextColor c
+            ++ ";"
+            ++ "--hover-color:"
+            ++ ch
+            ++ ";"
+        )
 
 
 {-|

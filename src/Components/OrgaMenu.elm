@@ -110,6 +110,8 @@ type Msg
     | OnToggle
     | SetIsActive2 Bool
     | OnOrgHover (Maybe String)
+      --
+    | OnUpdateFocus NodeFocus
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -163,7 +165,11 @@ update_ apis message model =
                             ( setDataResult (Success []) model, noOut )
 
                         rootids ->
-                            if model.isActive2 && not (isSuccess model.orgs_result) then
+                            if model.focus.nameid == "" then
+                                -- Happens for exemple when a tension page is visited without the nameid name (which is optional) in the url
+                                ( model, noOut )
+
+                            else if model.isActive2 && not (isSuccess model.orgs_result) then
                                 ( setDataResult LoadingSlowly model
                                 , out0 [ queryOrgaNode apis rootids OnDataAck ]
                                 )
@@ -218,6 +224,13 @@ update_ apis message model =
 
         OnOrgHover v ->
             ( { model | hover = v }, noOut )
+
+        OnUpdateFocus focus ->
+            if isSuccess model.orgs_result then
+                ( { model | focus = focus }, noOut )
+
+            else
+                ( { model | focus = focus }, out0 [ send OnLoad ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

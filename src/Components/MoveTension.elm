@@ -21,7 +21,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewG
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..), sortNode)
 import ModelCommon.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
-import ModelCommon.View exposing (action2icon, roleColor)
+import ModelCommon.View exposing (action2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)

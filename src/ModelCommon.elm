@@ -123,7 +123,7 @@ initTensionForm tid user =
             LoggedOut ->
                 initUserctx
     , id = tid
-    , source = EmitterOrReceiver "" "" Nothing
+    , source = EmitterOrReceiver "" "" Nothing Nothing
     , target = initPNode
     , status = Nothing
     , type_ = Nothing
@@ -238,6 +238,7 @@ type alias ArtefactNodeForm =
     , nameid : String -- use for roonameid identification
     , post : Post
     , mandate : Mandate
+    , role_type : RoleType.RoleType
     }
 
 
@@ -254,6 +255,7 @@ initArtefactNodeForm user nameid initColor =
     , nameid = nameid
     , post = Dict.fromList [ ( "color", initColor ) ]
     , mandate = initMandate
+    , role_type = RoleType.Peer
     }
 
 
@@ -546,10 +548,24 @@ getParents nameid odata =
 
 getChildren : String -> GqlData NodesDict -> List Node
 getChildren nid odata =
+    let
+        parentid =
+            nearestCircleid nid
+    in
     odata
         |> withMaybeDataMap
             (\x ->
-                x |> Dict.values |> List.filter (\n -> Just (nearestCircleid nid) == Maybe.map .nameid n.parent)
+                x |> Dict.values |> List.filter (\n -> n.first_link /= Nothing && (Just parentid == Maybe.map .nameid n.parent))
+            )
+        |> withDefault []
+
+
+getOwners : GqlData NodesDict -> List Node
+getOwners odata =
+    odata
+        |> withMaybeDataMap
+            (\x ->
+                x |> Dict.values |> List.filter (\n -> n.role_type == Just RoleType.Owner)
             )
         |> withDefault []
 
@@ -624,7 +640,7 @@ localGraphFromOrga nameid orga_d =
                                             Maybe.map
                                                 (\p ->
                                                     if p.nameid == nameid then
-                                                        Just { name = c.name, nameid = c.nameid, role_type = c.role_type }
+                                                        Just { name = c.name, nameid = c.nameid, role_type = c.role_type, color = c.color }
 
                                                     else
                                                         Nothing
@@ -783,7 +799,7 @@ orgaToUsers nd =
 
   - Admin User of the orga
   - User with coordo role below that node
-  - User with the first corrdo role on parent, if no cordo below.
+  - User with the first coordo role on parent, if no coordo below.
 
 -}
 getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole

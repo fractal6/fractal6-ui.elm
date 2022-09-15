@@ -68,7 +68,7 @@ import ModelCommon
         , sortNode
         , tensionToActionForm
         )
-import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
+import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2String, tensionTypeColor, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
@@ -279,12 +279,12 @@ setPath p model =
         sources =
             getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
                 |> List.filter (\r -> r.role_type /= RoleType.Owner)
-                |> List.map (\r -> { nameid = r.nameid, name = r.name, role_type = Just r.role_type })
+                |> List.map ur2eor
 
         extras =
             getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
                 |> List.filter (\r -> r.role_type == RoleType.Owner)
-                |> List.map (\r -> { nameid = r.nameid, name = r.name, role_type = Just r.role_type })
+                |> List.map ur2eor
 
         default_source =
             case List.filter (\r -> nearestCircleid r.nameid == p.focus.nameid) sources |> List.head of
@@ -1211,8 +1211,8 @@ viewHeader op model =
         ]
 
 
-viewTensionTabs : TensionTab -> PNode -> Html Msg
-viewTensionTabs tab targ =
+viewTensionTabs : Bool -> TensionTab -> PNode -> Html Msg
+viewTensionTabs isAdmin tab targ =
     let
         -- This is the type of the receiver node.
         type_ =
@@ -1224,7 +1224,7 @@ viewTensionTabs tab targ =
                 [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" T.tension ]
                 ]
-            , if type_ == NodeType.Circle then
+            , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
                     [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" T.circle ]
@@ -1232,7 +1232,7 @@ viewTensionTabs tab targ =
 
               else
                 text ""
-            , if type_ == NodeType.Circle then
+            , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
                     [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" T.role ]
@@ -1352,6 +1352,9 @@ viewTension op model =
         form =
             model.nodeDoc.form
 
+        isAdmin =
+            hasLazyAdminRole form.uctx form.target.nameid
+
         title =
             Dict.get "title" form.post |> withDefault ""
 
@@ -1377,7 +1380,7 @@ viewTension op model =
         other ->
             div [ class "panel modal-card submitFocus" ]
                 [ viewHeader op model
-                , Lazy.lazy2 viewTensionTabs model.activeTab form.target
+                , Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1486,6 +1489,9 @@ viewCircle op model =
         form =
             model.nodeDoc.form
 
+        isAdmin =
+            hasLazyAdminRole form.uctx form.target.nameid
+
         node_type =
             withDefault NodeType.Role form.node.type_
 
@@ -1508,7 +1514,7 @@ viewCircle op model =
         other ->
             div [ class "panel modal-card submitFocus" ] <|
                 [ viewHeader op model
-                , Lazy.lazy2 viewTensionTabs model.activeTab form.target
+                , Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->

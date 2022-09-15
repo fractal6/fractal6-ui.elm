@@ -4,6 +4,7 @@ import Assets as A
 import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
+import Extra.Events exposing (onClickPos)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
@@ -28,9 +29,11 @@ import ModelCommon.Codecs
         , FractalBaseRoute(..)
         , NodeFocus
         , TensionCharac
+        , eor2ur
         , getOrgaRoles
         , getTensionCharac
         , nid2rootid
+        , nid2type
         , uriFromNameid
         , uriFromUsername
         )
@@ -263,7 +266,12 @@ viewJoinNeeded focus =
 
 viewCircleTarget : String -> EmitterOrReceiver -> Html msg
 viewCircleTarget cls er =
-    span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+    case nid2type er.nameid of
+        NodeType.Circle ->
+            span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+
+        NodeType.Role ->
+            viewRole "is-tiny" Nothing (uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
@@ -433,8 +441,8 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewRole : Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
-viewRole now_m link r =
+viewRole : String -> Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
+viewRole cls now_m link r =
     let
         since =
             case now_m of
@@ -444,13 +452,14 @@ viewRole now_m link r =
                 Nothing ->
                     ""
 
-        ( cls, color ) =
+        color =
             case r.color of
                 Just c ->
-                    ( "", [ colorAttr c ] )
+                    [ colorAttr c ]
 
                 Nothing ->
-                    ( "is-" ++ roleColor r.role_type, [] )
+                    --( "is-" ++ roleColor r.role_type, [] )
+                    [ colorAttr (roleColor r.role_type) ]
     in
     a
         ([ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom " ++ cls)
@@ -459,41 +468,53 @@ viewRole now_m link r =
          ]
             ++ color
         )
-        [ if r.role_type == RoleType.Coordinator then
-            span [ class "is-queen" ] []
+        [ A.icon1 (role2icon r) r.name ]
 
-          else if r.role_type == RoleType.Owner then
-            span [ class "is-king" ] []
 
-          else
-            text ""
-        , text r.name
-        ]
+viewRole2 : Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
+viewRole2 now_m link r msg =
+    let
+        since =
+            case now_m of
+                Just ( lang, createdAt, uri ) ->
+                    T.sinceThe ++ " " ++ formatDate lang createdAt uri
+
+                Nothing ->
+                    ""
+
+        color =
+            case r.color of
+                Just c ->
+                    [ colorAttr c ]
+
+                Nothing ->
+                    --( "is-" ++ roleColor r.role_type, [] )
+                    [ colorAttr (roleColor r.role_type) ]
+    in
+    div
+        ([ class "button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-top"
+         , attribute "data-tooltip" ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
+         , onClickPos (msg "actionPanelHelper" r.nameid)
+         ]
+            ++ color
+        )
+        [ A.icon1 (role2icon r) r.name ]
 
 
 viewRoleExt : String -> RoleCommon a -> Html msg
-viewRoleExt cls_ r =
+viewRoleExt cls r =
     let
-        ( cls, color ) =
+        color =
             case r.color of
                 Just c ->
-                    ( cls_, [ colorAttr c ] )
+                    [ colorAttr c ]
 
                 Nothing ->
-                    ( cls_ ++ " is-" ++ roleColor r.role_type, [] )
+                    [ colorAttr (roleColor r.role_type) ]
     in
     span
         ([ class ("button buttonRole " ++ cls) ] ++ color)
-        [ if r.role_type == RoleType.Coordinator then
-            span [ class "is-queen" ] []
-
-          else if r.role_type == RoleType.Owner then
-            span [ class "is-king" ] []
-
-          else
-            text ""
-        , text r.name
-        ]
+        [ A.icon1 (role2icon r) r.name ]
 
 
 viewProfileC : UserCommon a -> Html msg
@@ -697,7 +718,7 @@ viewOrgaMedia_ user_m root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map (\r -> viewRole Nothing (uriFromNameid OverviewBaseUri r.nameid []) r)
+                                    |> List.map (\r -> viewRole "" Nothing (uriFromNameid OverviewBaseUri r.nameid []) r)
                                 )
                             ]
 
@@ -727,13 +748,54 @@ roleColor rt =
             "link"
 
         RoleType.Guest ->
-            "primary"
+            "blue-grey"
 
         RoleType.Pending ->
-            "warning"
+            "turquoise"
 
         RoleType.Retired ->
-            "warning"
+            "purple"
+
+
+colorFromRole : RoleCommon a -> String
+colorFromRole r =
+    case r.role_type of
+        RoleType.Owner ->
+            "var(--orange-frac6)"
+
+        RoleType.Member ->
+            "var(--primary)"
+
+        RoleType.Coordinator ->
+            "var(--orange-frac6)"
+
+        RoleType.Peer ->
+            "var(--primary)"
+
+        RoleType.Bot ->
+            "var(--link)"
+
+        RoleType.Guest ->
+            "var(--primary)"
+
+        RoleType.Pending ->
+            "var(--warning)"
+
+        RoleType.Retired ->
+            "var(--warning)"
+
+
+role2icon : RoleCommon a -> String
+role2icon r =
+    case r.role_type of
+        RoleType.Coordinator ->
+            "icon-king"
+
+        RoleType.Owner ->
+            "icon-queen"
+
+        _ ->
+            "ml--1"
 
 
 lang2str : Lang.Lang -> String

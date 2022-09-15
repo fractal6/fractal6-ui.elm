@@ -4,10 +4,8 @@ import Extra exposing (ternary)
 import Json.Decode as JD
 
 
-
---import DOM
-
-
+{-| Detect keyboard input
+-}
 key k msg =
     JD.field "key" JD.string
         |> JD.andThen
@@ -16,6 +14,8 @@ key k msg =
             )
 
 
+{-| Detect click outside a given object ID
+-}
 outsideClickClose : String -> msg -> JD.Decoder msg
 outsideClickClose targetId msg =
     -- like: DOM.target (isOutside targetId)
@@ -54,7 +54,16 @@ isOutside targetId =
                         (JD.fail "continue")
                 )
 
-        --, DOM.hasClass targetId |> JD.andThen (\x -> ternary x (JD.succeed False) (JD.fail "continue"))
+        -- ignore if a modal is open (@DEBUG: do not work, never get inside)
+        , JD.field "class" (JD.list JD.string)
+            |> JD.andThen
+                (\cls ->
+                    ternary (List.member "has-modal-active" cls)
+                        -- found match by id
+                        (JD.succeed False)
+                        -- try next decoder
+                        (JD.fail "continue")
+                )
         , JD.lazy (\_ -> isOutside targetId |> JD.field "parentNode")
 
         -- fallback if all previous decoders failed

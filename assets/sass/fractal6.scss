@@ -90,6 +90,13 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+@include mobile {
+  .reverse-columns {
+    flex-direction: column-reverse;
+    display: flex;
+  }
+}
+
 .dropdown-content {
       .dropdown-item:hover {
           background-color: var(--dropdown-item-hover-background-color) !important;
@@ -373,6 +380,15 @@ strong {
     }
 }
 
+.is-item-aligned {
+    vertical-align: middle;
+    display: inline-block;
+    .button, span, svg {
+        vertical-align: middle;
+        display: inline-block;
+    }
+}
+
 .button.is-selected {
     outline: 4px solid $grey;
     outline-style: outset;
@@ -436,6 +452,9 @@ strong {
 }
 .is-smaller2 {
     font-size: 80% !important;
+}
+.is-tiny {
+    font-size: 65% !important;
 }
 .is-larger {
     font-size: 120% !important;
@@ -690,7 +709,6 @@ strong {
 		padding-bottom: 1.1rem;
         border-bottom: 1px solid var(--table-border-color);
 	}
-
 }
 
 // Card
@@ -707,10 +725,10 @@ strong {
     }
 }
 
+// @debug: hover is not computed from variable defined here...
 .is-primary {
     &:hover {
-        background-color: var(--primary) !important;
-        filter: invert(10%);
+        background-color: darken($primary, 5) !important;
     }
 }
 
@@ -737,6 +755,10 @@ strong {
     transform: translate(-50%, -50%);
     width: 25%;
     min-width: 250px;
+}
+
+.ml--1 {
+    margin-left: -6px;
 }
 
 /*
@@ -967,7 +989,6 @@ strong {
         padding: 10px !important;
         z-index: 100;
     }
-
 }
 
 #tree-menu {
@@ -1014,7 +1035,6 @@ strong {
       bottom: 1px;
       background-color: var(--tree-menu-background-color);
   }
-
 }
 
 .treeMenu {
@@ -1034,7 +1054,6 @@ strong {
             color: var(--link) !important;
         }
     }
-
 }
 
 .hinter {
@@ -1113,7 +1132,6 @@ strong {
 }
 
 .buttonRole {
-    //border-width: 0 !important;
     font-weight: 500;
     border-radius: 10px !important;
     &.is-orange {
@@ -1122,6 +1140,12 @@ strong {
         .is-king, .is-queen {
             color: var(--white) !important;
         }
+    }
+    // Border transparency get overwirtten somewhere.
+    border: 1px solid transparent !important;
+    &:hover {
+        background-color: var(--hover-color) !important;
+        //filter: brightness(1.2);
     }
 }
 
@@ -1133,7 +1157,6 @@ strong {
             border: 1px solid var(--link);
         }
     }
-
 }
 
 #activities {
@@ -1256,7 +1279,6 @@ strong {
             //line-height: 1.5;
         }
     }
-
 }
 
 .commentInput {
@@ -1348,9 +1370,7 @@ strong {
     .panel-icon {
         font-size: 1.5rem;
     }
-
 }
-
 
 #colorPicker {
     position: absolute;
@@ -1384,7 +1404,7 @@ strong {
     .dropdown-content {
         position: absolute;
         z-index: 25;
-        min-width: 11rem;
+        min-width: 12rem;
         &.is-right {
             left: auto;
             right: 0;
@@ -1622,9 +1642,19 @@ tr.mediaBox {
     //background-image: linear-gradient(white, black) ;
 }
 
+#canvasLegend {
+    position: absolute;
+    //margin: 10px;
+    svg {
+        margin-right: 4px;
+    }
+    z-index: 2;
+}
+
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
     position: absolute;
+    user-select: none;
 
     // Content
     color: black;
@@ -1716,8 +1746,9 @@ tr.mediaBox {
 
 #canvasButtons {
     position: absolute;
-    flex-direction: column;
     //display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 
     .button {
         margin-right: 0;
@@ -2361,6 +2392,9 @@ tr.mediaBox {
     &.is-danger {
         color: var(--red);
     }
+    &.is-success {
+        color: var(--green-frac6);
+    }
 
     &.is-link:hover {
         color: var(--link);
@@ -2416,18 +2450,16 @@ tr.mediaBox {
 .is-queen {
     font-size: 1.2rem;
     padding-right: 5px;
-    color: $orange;
     &::after {
-        content: " \2655 ";
+        //content: " \2655 ";
+        content: "\2654";
     }
 }
 .is-king {
     font-size: 1.2rem;
     padding-right: 5px;
-    color: $orange;
     &::after {
-        //content: " \2655 ";
-        content: "\2654";
+        content: " \2655 ";
     }
 }
 
@@ -2701,7 +2733,6 @@ tr.mediaBox {
         transform: translate3d(-50%, -50%, 0) rotate(360deg);
     }
 }
-
 
 /*
  *

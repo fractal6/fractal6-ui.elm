@@ -16,7 +16,7 @@ import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
-import ModelCommon.View exposing (action2icon, roleColor, viewRole)
+import ModelCommon.View exposing (action2icon, viewRole2)
 import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
 import Ports
 import Text as T
@@ -58,6 +58,7 @@ type alias Op msg =
     , onCollapse : msg
     , onToggleTreeMenu : msg
     , onJoin : msg
+    , onOpenPanel : String -> String -> Maybe ( Int, Int ) -> msg
     }
 
 
@@ -277,7 +278,7 @@ memberButtons roles_ op =
                     []
 
                 else
-                    [ viewRole Nothing (uriFromNameid op.baseUri r.nameid []) r ]
+                    [ viewRole2 Nothing (uriFromNameid op.baseUri r.nameid []) r op.onOpenPanel ]
             )
         |> List.concat
         |> List.reverse

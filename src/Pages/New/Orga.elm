@@ -207,7 +207,7 @@ type Msg
     | OnSelectVisibility NodeVisibility.NodeVisibility
     | ChangeNodePost String String -- {field value}
     | CheckExist
-    | CheckExistAck (GqlData { nameid : String })
+    | CheckExistAck (GqlData NodeId)
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
       -- Common

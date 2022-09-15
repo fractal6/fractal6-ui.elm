@@ -70,7 +70,8 @@ labelsEncoder users =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map6 UserCtx
+    JD.map7 UserCtx
+        (JD.maybe <| JD.field "name" JD.string)
         (JD.field "username" JD.string)
         (JD.field "lang" <| Lang.decoder)
         (JD.field "rights" <|
@@ -97,7 +98,8 @@ userCtxDecoder =
 userCtxEncoder : UserCtx -> JE.Value
 userCtxEncoder userCtx =
     JE.object
-        [ ( "username", JE.string userCtx.username )
+        [ ( "name", JEE.maybe JE.string userCtx.name )
+        , ( "username", JE.string userCtx.username )
         , ( "lang", JE.string <| Lang.toString userCtx.lang )
         , ( "rights"
           , JE.object
@@ -218,15 +220,18 @@ blobIdDecoder =
 
 nodeIdDecoder : JD.Decoder NodeId
 nodeIdDecoder =
-    JD.map NodeId (JD.field "nameid" JD.string)
+    JD.map2 NodeId
+        (JD.field "nameid" JD.string)
+        (JD.maybe (JD.field "source" blobIdDecoder))
 
 
 emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
 emitterOrReceiverDecoder =
-    JD.map3 EmitterOrReceiver
+    JD.map4 EmitterOrReceiver
         (JD.field "name" JD.string)
         (JD.field "nameid" JD.string)
         (JD.maybe (JD.field "role_type" RoleType.decoder))
+        (JD.maybe (JD.field "color" JD.string))
 
 
 

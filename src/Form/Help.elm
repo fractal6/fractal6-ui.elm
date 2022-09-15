@@ -1,4 +1,4 @@
-module Form.Help exposing (Msg, State, init, subscriptions, update, view)
+module Form.Help exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)

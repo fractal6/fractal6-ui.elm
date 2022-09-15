@@ -5,6 +5,7 @@ module Query.QueryNode exposing
     , contractEventPayload
     , emiterOrReceiverPayload
     , fetchNode
+    , fetchNode2
     , fetchNodeData
     , getCircleRights
     , getLabels
@@ -353,9 +354,34 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.userCanJoin
 
 
+nodeOrgaPayload2 : SelectionSet Node Fractal.Object.Node
+nodeOrgaPayload2 =
+    SelectionSet.succeed Node
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with (Fractal.Object.Node.parent identity nodeIdPayload2)
+        |> with Fractal.Object.Node.type_
+        |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
+        |> with (Fractal.Object.Node.first_link identity userPayload)
+        |> with Fractal.Object.Node.visibility
+        |> with Fractal.Object.Node.mode
+        |> with (Fractal.Object.Node.source identity blobIdPayload)
+        |> with Fractal.Object.Node.userCanJoin
+
+
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
 nodeIdPayload =
-    SelectionSet.map NodeId Fractal.Object.Node.nameid
+    SelectionSet.succeed NodeId
+        |> with Fractal.Object.Node.nameid
+        |> hardcoded Nothing
+
+
+nodeIdPayload2 : SelectionSet NodeId Fractal.Object.Node
+nodeIdPayload2 =
+    SelectionSet.succeed NodeId
+        |> with Fractal.Object.Node.nameid
+        |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
 blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
@@ -436,6 +462,15 @@ fetchNode url nid msg =
         (Query.getNode
             (nidFilter nid)
             nodeOrgaPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+fetchNode2 url nid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeOrgaPayload2
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -525,6 +560,7 @@ emiterOrReceiverPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
@@ -1116,8 +1152,9 @@ tensionEventPayload =
         |> with Fractal.Object.Event.event_type
         |> with
             (Fractal.Object.Event.tension identity
-                (SelectionSet.map3 (\a b c -> { id = a, receiver = b, title = c })
+                (SelectionSet.map4 (\a b c d -> { id = a, emitterid = b, receiver = c, title = d })
                     (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    Fractal.Object.Tension.emitterid
                     (Fractal.Object.Tension.receiver identity pNodePayload)
                     Fractal.Object.Tension.title
                 )

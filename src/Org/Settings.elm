@@ -5,6 +5,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -24,6 +25,7 @@ import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
@@ -35,9 +37,9 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
-import ModelCommon.View exposing (getNodeTextFromNodeType, roleColor, viewLabel, viewRoleExt)
+import ModelCommon.View exposing (getNodeTextFromNodeType, viewLabel, viewRoleExt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -51,7 +53,7 @@ import Query.PatchNode
         , updateOneRole
         )
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, getCircleRights, getLabels, getRoles, queryLocalGraph)
+import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
@@ -91,11 +93,30 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+
+                    -- Tree Data
                     DoUpdateTree tree ->
                         ( Cmd.none, send (UpdateSessionTree tree) )
 
-                    DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
+                    DoFetchNode nameid ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+
+                    DoAddNodes nodes ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -151,6 +172,7 @@ type alias Model =
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
+    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
@@ -293,7 +315,6 @@ type Msg
     | GotRole (GqlData RoleExtFull)
     | GotRoleDel (GqlData RoleExtFull)
     | ToggleMandate String
-    | ChangeRoleAuthority RoleType.RoleType
     | AddDomains
     | AddPolicies
     | AddResponsabilities
@@ -315,6 +336,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -326,6 +348,7 @@ type Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 
@@ -413,6 +436,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , actionPanel = ActionPanel.init global.session.user
             }
 
         cmds =
@@ -777,11 +801,11 @@ update global message model =
                             Dict.fromList
                                 ([ ( "name", role.name ) ]
                                     ++ (role.color |> Maybe.map (\x -> [ ( "color", x ) ]) |> withDefault [])
-                                    ++ [ ( "role_type", RoleType.toString role.role_type ) ]
                                     ++ (role.about |> Maybe.map (\x -> [ ( "about", x ) ]) |> withDefault [])
                                     ++ [ ( "old_name", role.name ) ]
                                 )
                         , mandate = withDefault initMandate role.mandate
+                        , role_type = role.role_type
                     }
             in
             ( { model
@@ -916,16 +940,6 @@ update global message model =
                 _ ->
                     ( { model | role_result_del = result }, Cmd.none, Cmd.none )
 
-        ChangeRoleAuthority role_type ->
-            let
-                form =
-                    model.artefact_form
-
-                newForm =
-                    { form | post = Dict.insert "role_type" (RoleType.toString role_type) form.post }
-            in
-            ( { model | artefact_form = newForm }, Cmd.none, Cmd.none )
-
         AddResponsabilities ->
             ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
 
@@ -944,7 +958,7 @@ update global message model =
                     NodeDoc.updatePost field value model.nodeDoc
             in
             ( { model
-                | artefact_form = { form | mandate = NodeDoc.getMandate newNodeDoc }
+                | artefact_form = { form | mandate = NodeDoc.getMandate newNodeDoc, role_type = NodeDoc.getRoleType newNodeDoc |> withDefault form.role_type }
                 , nodeDoc = newNodeDoc
                 , hasUnsavedData = True
               }
@@ -1067,6 +1081,9 @@ update global message model =
             in
             ( model, send (Navigate (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
 
+        OpenActionPanel domid nameid pos ->
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, Cmd.none, Cmd.none )
@@ -1151,6 +1168,16 @@ update global message model =
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ActionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ActionPanel.update apis msg model.actionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1163,6 +1190,7 @@ subscriptions _ model =
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         |> Sub.batch
 
 
@@ -1184,6 +1212,14 @@ view global model =
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
+            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1199,6 +1235,7 @@ view global model =
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
 
@@ -1538,7 +1575,7 @@ viewRoleAddBox model =
             Dict.get "about" form.post
 
         role_type =
-            Dict.get "role_type" form.post |> Maybe.map RoleType.fromString |> withDefault Nothing |> withDefault RoleType.Peer
+            form.role_type
 
         isLoading =
             result == LoadingSlowly

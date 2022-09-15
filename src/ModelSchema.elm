@@ -99,7 +99,8 @@ type alias OrgaAgg =
 
 
 type alias NodeId =
-    { nameid : String }
+    -- User fetchNode2 to fetch the source, else it is hardcoded to Nothing
+    { nameid : String, source : Maybe BlobId }
 
 
 type alias LocalGraph =
@@ -161,6 +162,7 @@ type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
     }
 
 
@@ -510,7 +512,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx "" Lang.En initUserRights [] "" ""
+    UserCtx Nothing "" Lang.En initUserRights [] "" ""
 
 
 initNodeData : NodeData
@@ -612,7 +614,7 @@ type alias EventNotif =
     { createdAt : String
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
-    , tension : { id : String, receiver : PNode, title : String }
+    , tension : { id : String, emitterid : String, receiver : PNode, title : String }
     }
 
 
@@ -648,7 +650,8 @@ type alias NotificationsForm =
 
 
 type alias UserCtx =
-    { username : String
+    { name : Maybe String
+    , username : String
     , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
@@ -722,7 +725,6 @@ type alias UserRights =
 
 
 type alias UserRole =
-    -- similar to EmitterOrReceiver
     { name : String
     , nameid : String
     , role_type : RoleType.RoleType

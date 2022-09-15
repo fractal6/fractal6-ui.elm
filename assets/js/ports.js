@@ -342,7 +342,7 @@ export const actions = {
         // outside click listener
         const outsideClickListener = event => {
             if (event.target.closest("#"+id) === null) {
-                // @debug; doesnt work!
+                // @debug; doesnt work with elm events!
                 //event.stopPropagation();
                 closeEvent();
             }

@@ -253,7 +253,7 @@ addRoleInputEncoder form =
         inputReq =
             { rootnameid = nid2rootid form.nameid
             , name = Dict.get "name" form.post |> withDefault ""
-            , role_type = Dict.get "role_type" form.post |> withDefault "" |> RoleType.fromString |> withDefault RoleType.Peer
+            , role_type = form.role_type
             }
 
         inputOpt =
@@ -316,7 +316,6 @@ updateRoleInputEncoder form =
                     |> Dict.remove "name"
                     |> Dict.remove "color"
                     |> Dict.remove "about"
-                    |> Dict.remove "role_type"
 
             else if Dict.get "name" form.post == Dict.get "old_name" form.post then
                 -- remove name to avoid making extra request due to @unique
@@ -333,14 +332,14 @@ updateRoleInputEncoder form =
                             { i
                                 | name = fromMaybe (Dict.get "name" post)
                                 , color = fromMaybe (Dict.get "color" post)
-                                , role_type = fromMaybe (Dict.get "role_type" post |> withDefault "" |> RoleType.fromString)
                                 , about = fromMaybe (Dict.get "about" post)
                                 , mandate =
                                     if form.id == "" then
                                         Absent
 
                                     else
-                                        buildMandate form.mandate |> Present
+                                        Present (buildMandate form.mandate)
+                                , role_type = Present form.role_type
                                 , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                             }
                         )

@@ -69,6 +69,7 @@ import ModelCommon.Codecs
         , DocType(..)
         , FractalBaseRoute(..)
         , NodeFocus
+        , eor2ur
         , focusFromNameid
         , focusFromPath
         , focusState
@@ -78,6 +79,7 @@ import ModelCommon.Codecs
         , nid2rootid
         , nodeFromFragment
         , tensionAction2NodeType
+        , uriFromNameid
         , uriFromUsername
         )
 import ModelCommon.View
@@ -96,6 +98,7 @@ import ModelCommon.View
         , viewLabel
         , viewLabels
         , viewNodeRefShort
+        , viewRole
         , viewRoleExt
         , viewTensionArrow
         , viewTensionDateAndUser
@@ -113,7 +116,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleTensionSubscription)
-import Query.QueryNode exposing (fetchNode, queryFocusNode, queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
 import RemoteData exposing (RemoteData)
@@ -169,11 +172,30 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+
+                    -- Tree Data
                     DoUpdateTree tree ->
                         ( Cmd.none, send (UpdateSessionTree tree) )
 
-                    DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
+                    DoFetchNode nameid ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+
+                    DoAddNodes nodes ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -221,6 +243,7 @@ type alias Model =
     -- Blob Edit
     , nodeDoc : NodeDoc
     , publish_result : GqlData BlobFlag
+    , hasBeenPushed : Bool
 
     -- Side Pane
     , isTensionAdmin : Bool
@@ -324,7 +347,7 @@ type Msg
       -- move tension
     | DoMove TensionHead
       -- Node Action
-    | OpenActionPanel String Blob
+    | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Common
     | NoMsg
     | LogErr String
@@ -455,6 +478,7 @@ init global flags =
                                     x
                        )
             , publish_result = NotAsked
+            , hasBeenPushed = False
 
             -- Side Pane
             , isTensionAdmin = withDefault False global.session.isAdmin
@@ -656,6 +680,7 @@ update global message model =
                             , Cmd.batch
                                 [ Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
                                 , Cmd.map TreeMenuMsg (send (TreeMenu.OnUpdateFocus newFocus))
+                                , Cmd.map OrgaMenuMsg (send (OrgaMenu.OnUpdateFocus newFocus))
                                 ]
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
@@ -692,6 +717,7 @@ update global message model =
                 OkAuth th ->
                     ( { model
                         | tension_head = result
+                        , hasBeenPushed = th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
                         , subscribe_result = fromMaybeData th.isSubscribed NotAsked
                         , nodeDoc =
                             case th.action of
@@ -1160,6 +1186,7 @@ update global message model =
                                 | publish_result = result
                                 , tension_head = Success newTh
                                 , tension_form = resetForm
+                                , hasBeenPushed = True
                               }
                             , Cmd.none
                             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (Just newTh)) ]
@@ -1260,21 +1287,8 @@ update global message model =
             )
 
         -- Node Action
-        OpenActionPanel domid blob ->
-            let
-                parentid =
-                    model.tension_head |> withMaybeDataMap (\th -> th.receiver.nameid) |> withDefault ""
-
-                tid =
-                    model.tensionid
-
-                bid =
-                    blob.id
-
-                node =
-                    blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid
-            in
-            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
+        OpenActionPanel domid nameid pos ->
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
         NewTensionMsg msg ->
             let
@@ -1503,6 +1517,14 @@ view global model =
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
+            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
     { title =
@@ -1525,6 +1547,7 @@ view global model =
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
 
@@ -2160,9 +2183,18 @@ viewEventMemberLinked lang now event action_m =
 
 viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventMemberUnlinked lang now event action_m =
+    let
+        action_txt =
+            case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
+                NODE NodeType.Circle ->
+                    T.toThisOrganisation
+
+                _ ->
+                    T.toThisRole
+    in
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2175,7 +2207,7 @@ viewEventUserJoined lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined2 ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.joined2 ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2201,7 +2233,7 @@ viewEventUserLeft lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left2 ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.left2 ], text action_txt, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
@@ -2247,7 +2279,7 @@ viewDocument u t b model =
                 , source = model.baseUri
 
                 --, focus = model.node_focus
-                , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                , hasBeenPushed = model.hasBeenPushed
                 , receiver = t.receiver.nameid
                 , hasInnerToolbar = False
                 }
@@ -2334,7 +2366,7 @@ viewSidePane u t model =
             isAdmin || isAuthor
 
         hasBlobRight =
-            isAdmin && Maybe.map .action_type tc_m /= Just NEW && blob_m /= Nothing
+            isAdmin && model.hasBeenPushed && blob_m /= Nothing
 
         rid =
             nid2rootid t.receiver.nameid
@@ -2353,7 +2385,7 @@ viewSidePane u t model =
                 (case u of
                     LoggedIn _ ->
                         [ h2
-                            [ class "subtitle is-h" ]
+                            [ class "subtitle", classList [ ( "is-h", hasAssigneeRight ) ] ]
                             [ text T.assignees
                             , if model.isAssigneeOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -2395,7 +2427,7 @@ viewSidePane u t model =
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn _ ->
-                        [ h2 [ class "subtitle is-h" ]
+                        [ h2 [ class "subtitle", classList [ ( "is-h", hasLabelRight ) ] ]
                             [ text T.labels
                             , if model.isLabelOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -2433,11 +2465,11 @@ viewSidePane u t model =
             (\blob tc ->
                 -- Hide if there is no document
                 let
-                    isOpen =
-                        ActionPanel.isOpen_ model.actionPanel
-
                     domid =
                         "actionPanelContent"
+
+                    isOpen =
+                        ActionPanel.isOpen_ domid model.actionPanel && (hasBlobRight || hasRole)
 
                     node =
                         blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
@@ -2448,7 +2480,7 @@ viewSidePane u t model =
                             [ class "media-content"
                             , classList [ ( "is-w", hasBlobRight || hasRole ) ]
                             , if not isOpen then
-                                onClick (OpenActionPanel domid blob)
+                                onClick (OpenActionPanel domid node.nameid Nothing)
 
                               else
                                 onClick (ActionPanelMsg ActionPanel.OnClose)
@@ -2458,7 +2490,7 @@ viewSidePane u t model =
                                 LoggedIn _ ->
                                     [ div [ id domid ]
                                         [ h2
-                                            [ class "subtitle is-h" ]
+                                            [ class "subtitle", classList [ ( "is-h", hasBlobRight || hasRole ) ] ]
                                             [ text T.document
                                             , if isOpen then
                                                 A.icon "icon-x is-pulled-right"
@@ -2473,8 +2505,6 @@ viewSidePane u t model =
                                             let
                                                 panelData =
                                                     { tc = tc
-                                                    , isAdmin = hasBlobRight
-                                                    , hasRole = hasRole
                                                     , isRight = False
                                                     , domid = domid
                                                     , tree_data = TreeMenu.getOrgaData_ model.treeMenu
@@ -2498,7 +2528,7 @@ viewSidePane u t model =
                                                     , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
                                                     , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
                                                     ]
-                                                , viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type }
+                                                , viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
                                                 ]
 
                                             NODE NodeType.Role ->
@@ -2506,7 +2536,11 @@ viewSidePane u t model =
                                                     [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
                                                     , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
                                                     ]
-                                                , viewRoleExt "is-small mb-3" (RoleExt "" node.name node.color (withDefault RoleType.Pending node.role_type))
+                                                , if model.hasBeenPushed then
+                                                    viewRole "" Nothing (uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
+
+                                                  else
+                                                    viewRoleExt "is-small mb-3" (RoleExt "" node.name node.color (withDefault RoleType.Pending node.role_type))
                                                 ]
 
                                             MD ->
@@ -2514,13 +2548,13 @@ viewSidePane u t model =
                                    ]
                                 ++ [ Maybe.map
                                         (\fs ->
-                                            div [] [ span [ class "is-highlight mt-3" ] [ text T.firstLink, text ": " ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-highlight" ] [ text T.firstLink, text ": " ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
                                    ]
                                 ++ [ if tc.action_type == ARCHIVE then
-                                        div [ class "mt-3 has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
+                                        div [ class "mt-2 has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
 
                                      else
                                         text ""

@@ -361,12 +361,12 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "notifications", class "section columns" ]
-        [ div [ class "column is-3" ]
-            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-right", title T.goBack, onClick GoBack ] []
-            ]
-        , div [ class "column is-6" ]
-            [ h2 [ class "title" ] [ text T.notifications ]
+    div [ id "notifications", class "section columns reverse-columns" ]
+        [ div [ class "column is-2 is-3-fullhd" ] []
+        , div [ class "column is-8 is-6-fullhd" ]
+            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-left", title T.goBack, onClick GoBack ] []
+            , br [] []
+            , h2 [ class "title" ] [ text T.notifications ]
             , case model.notifications_data of
                 Success notifications ->
                     if List.length notifications == 0 then
@@ -387,7 +387,7 @@ view_ global model =
                 Failure err ->
                     viewGqlErrors err
             ]
-        , div [ class "column is-2 has-text-centered" ] [ div [ class "button", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
+        , div [ class "column is-2 has-text-centered" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
         ]
 
 
@@ -436,7 +436,12 @@ viewUserEvent lang now ue =
                 ev =
                     Dict.fromList
                         [ ( "id", ue.id )
-                        , ( "title", eventTypeToText e.event_type )
+                        , if e.event_type == TensionEvent.UserLeft && node.nameid == nid2rootid node.nameid && node.nameid == e.tension.emitterid then
+                            -- Anchor tension !
+                            ( "title", T.userLeft_orga_event )
+
+                          else
+                            ( "title", eventTypeToText e.event_type )
                         , ( "title_", e.tension.title )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
@@ -473,7 +478,7 @@ viewUserEvent lang now ue =
                 , if not ue.isRead then
                     div
                         [ class "media-right tooltip"
-                        , attribute "data-tooltip" "A vote is waited from you."
+                        , attribute "data-tooltip" T.voteWaited
                         ]
                         [ div [ class "Circle has-text-info" ] [] ]
 

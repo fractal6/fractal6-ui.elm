@@ -2,6 +2,8 @@
 // Colors
 //
 
+$hover-color: initial !default;
+
 // -- whites
 $white: hsl(0, 0%, 98%);
 $white-light: #f9f9f9;
@@ -136,6 +138,7 @@ $tree-menu-width: 240px;
     --green-frac6-lighter: #{$green-frac6-lighter};
     --blue-frac6: #{$blue-frac6};
 
+    --hover-color: #{$hover-color};
     //
     // Dimmension
     //
@@ -188,13 +191,11 @@ $success: hsl(141, 71%, 38%);
 $warning: $orange;
 $danger:  hsl(368, 100%, 61%);
 $link-light: lighten($link, 20);
-$link-hover: lighten($link, 10);
 $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
 $link-visited: $link;
 $link-focus-border: $grey-light;
 $link-discrete: $blue-grey;
-$danger-hover: lighten($danger, 5);
 $is-discrete: $grey;
 $is-highlight: $dark;
 $is-highlight2: lighten($is-highlight, 5);
@@ -202,6 +203,17 @@ $is-highlight3: $grey;
 
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
+
+// Hover case
+$primary-hover: lighten($primary, 10);
+$link-hover: lighten($link, 10);
+$danger-hover: lighten($danger, 10);
+$orange-hover: lighten($orange, 10);
+$warning-hover: lighten($warning, 10);
+$info-hover: lighten($info, 10);
+$turquoise-hover: lighten($turquoise, 10);
+$purple-hover: lighten($purple, 10);
+$blue-grey-hover: lighten($blue-grey, 10);
 
 // Background colors
 $nbc: $primary;
@@ -344,6 +356,17 @@ $button-vote-danger-background: $danger;
   --is-highlight2: #{$is-highlight2};
   --is-highlight3: #{$is-highlight3};
   --success-light: #{$success-light};
+
+  // Hover case
+  --primary-hover: #{$primary-hover};
+  --link-hover: #{$link-hover};
+  --danger-hover: #{$danger-hover};
+  --orange-hover: #{$orange-hover};
+  --warning-hover: #{$warning-hover};
+  --info-hover: #{$info-hover};
+  --turquoise-hover: #{$turquoise-hover};
+  --purple-hover: #{$purple-hover};
+  --blue-grey-hover: #{$blue-grey-hover};
 
   // Background colors
   --nbc: #{$nbc};
@@ -492,13 +515,11 @@ $success: hsl(141, 71%, 38%);
 $warning: $orange;
 $danger:  hsl(368, 100%, 61%);
 $link-light: lighten($link, 20);
-$link-hover: darken($link, 20);
 $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
 $link-visited: $link;
 $link-focus-border: $grey-light;
 $link-discrete: $blue-light;
-$danger-hover: lighten($danger, 5);
 $is-discrete: $grey-light;
 $is-highlight: $white-ter;
 $is-highlight2: darken($is-highlight, 5);
@@ -506,6 +527,17 @@ $is-highlight3: $grey-lighter;
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
+
+// Hover case
+$primary-hover: darken($primary, 5);
+$link-hover: darken($link, 18);
+$danger-hover: darken($danger, 5);
+$orange-hover: darken($orange, 5);
+$warning-hover: darken($warning, 5);
+$info-hover: darken($info, 5);
+$turquoise-hover: darken($turquoise, 5);
+$purple-hover: darken($purple, 5);
+$blue-grey-hover: darken($blue-grey, 5);
 
 // Background colors
 $nbc: #172335;
@@ -653,6 +685,17 @@ $button-vote-danger-background: $danger-light;
   --is-highlight2: #{$is-highlight2};
   --is-highlight3: #{$is-highlight3};
   --success-light: #{$success-light};
+
+  // Hover case
+  --primary-hover: #{$primary-hover};
+  --link-hover: #{$link-hover};
+  --danger-hover: #{$danger-hover};
+  --orange-hover: #{$orange-hover};
+  --warning-hover: #{$warning-hover};
+  --info-hover: #{$info-hover};
+  --turquoise-hover: #{$turquoise-hover};
+  --purple-hover: #{$purple-hover};
+  --blue-grey-hover: #{$blue-grey-hover};
 
   // Background colors
   --nbc: #{$nbc};

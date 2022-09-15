@@ -34,16 +34,21 @@ import ModelCommon
         , UserForm
         , UserState(..)
         , blobFromTensionHead
+        , getNode
+        , getNodeRights
+        , getOwners
         , initActionForm
         , isSelfContract
         , makeCandidateContractForm
+        , uctxFromUser
         )
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nearestCircleid, nid2rootid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, userFromBaseMember)
 import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
+import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
 import Session exposing (Apis, GlobalCmd(..))
 import String.Format as Format
@@ -64,6 +69,9 @@ type alias Model =
     , state : PanelState
     , step : ActionStep
     , domid : String -- allow multiple panel to coexists
+    , targetid : String -- real nameid of the target (case of node whithout tension ->  membership roles)
+    , role_type : Maybe RoleType.RoleType -- real role_type
+    , pos : Maybe ( Int, Int )
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -101,6 +109,9 @@ initModel user =
     , state = LinkAction -- random
     , step = StepOne
     , domid = ""
+    , targetid = ""
+    , role_type = Nothing
+    , pos = Nothing
 
     -- Common
     , refresh_trial = 0
@@ -273,9 +284,9 @@ action2color action =
 -- Global methods
 
 
-isOpen_ : State -> Bool
-isOpen_ (State model) =
-    model.isOpen || model.isModalActive
+isOpen_ : String -> State -> Bool
+isOpen_ domid (State model) =
+    domid == model.domid && (model.isOpen || model.isModalActive)
 
 
 
@@ -297,7 +308,7 @@ open domid tid bid node data =
 
 close : Model -> Model
 close data =
-    { data | isOpen = False }
+    { data | isOpen = False, pos = Nothing }
 
 
 setActionResult : GqlData IdPayload -> Model -> Model
@@ -329,11 +340,7 @@ closeModal data =
 
 reset : Model -> Model
 reset data =
-    let
-        f =
-            data.form
-    in
-    { data | isOpen = False, isModalActive = False, form = initActionForm f.tid (LoggedIn f.uctx), action_result = NotAsked }
+    initModel data.user
 
 
 setStep : ActionStep -> Model -> Model
@@ -392,6 +399,7 @@ setActionForm data =
                     ]
 
                 UnLinkAction user ->
+                    -- see (1)
                     [ Ev TensionEvent.MemberUnlinked user.username "" ]
 
                 ArchiveAction ->
@@ -401,10 +409,15 @@ setActionForm data =
                     [ Ev TensionEvent.BlobUnarchived "" "" ]
 
                 LeaveAction ->
+                    -- see (1)
                     [ Ev TensionEvent.UserLeft
                         data.form.uctx.username
-                        (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
+                        (data.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
                     ]
+
+        -- (1) for membership node, as their is no blob, role_type need to pass to the backend
+        -- to avoid extra database request (not that this only work is the membersip node is not presen in the tree (ie. not for Owner node...)
+        -- (see QueryNode.nodeOrgaFilter)
     in
     data |> setEvents events
 
@@ -529,7 +542,9 @@ isSendable model =
 
 type Msg
     = -- Data
-      OnOpen String String String Node
+      OnOpen_ String String String Node
+    | OnOpen String String (GqlData NodesDict) (Maybe ( Int, Int ))
+    | OnGetNode (GqlData Node)
     | OnClose
     | OnReset
     | PushAction ActionForm PanelState
@@ -600,12 +615,67 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnOpen domid tid bid node ->
-            if model.isOpen == False then
+        OnOpen_ domid tid bid node ->
+            if not model.isOpen then
                 ( open domid tid bid node model, noOut )
 
             else
                 ( close model, noOut )
+
+        OnOpen domid nameid tree pos ->
+            -- Open panel in HelperBar
+            if not model.isOpen then
+                let
+                    cmds =
+                        ternary (isSuccess tree) [] [ Ports.requireTreeData ]
+                in
+                case getNode nameid tree of
+                    Just node ->
+                        let
+                            ( tid, bid ) =
+                                node.source
+                                    |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                                    |> withDefault
+                                        -- Members Roles have no tension attached. They are attached to the root node tension.
+                                        (getNode (nid2rootid node.nameid) tree
+                                            |> Maybe.map (\n -> n.source)
+                                            |> withDefault Nothing
+                                            |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                                            |> withDefault ( "", "" )
+                                        )
+                        in
+                        ( { model | pos = pos, targetid = nameid, role_type = node.role_type }, out0 ([ send (OnOpen_ domid tid bid node) ] ++ cmds) )
+
+                    Nothing ->
+                        ( { model | pos = pos, targetid = nameid, domid = domid }, out0 ([ fetchNode2 apis nameid OnGetNode ] ++ cmds) )
+
+            else
+                ( close model, noOut )
+
+        OnGetNode result ->
+            case result of
+                Success node ->
+                    let
+                        ( tid, bid ) =
+                            node.source
+                                |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                                |> withDefault
+                                    (node.parent
+                                        |> Maybe.map (\n -> n.source)
+                                        |> withDefault Nothing
+                                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                                        |> withDefault ( "", "" )
+                                    )
+                    in
+                    case model.pos of
+                        Just pos ->
+                            ( { model | role_type = node.role_type }, out0 [ send (OnOpen_ model.domid tid bid node) ] )
+
+                        Nothing ->
+                            ( { model | role_type = node.role_type }, noOut )
+
+                _ ->
+                    ( model, noOut )
 
         OnClose ->
             ( close model, noOut )
@@ -724,7 +794,8 @@ update_ apis message model =
                             LeaveAction ->
                                 -- Ignore Guest deletion (either non visible or very small)
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing })
-                                , DoFocus (nearestCircleid model.form.node.nameid)
+
+                                --, DoFocus (nearestCircleid model.form.node.nameid)
                                 ]
 
                     else
@@ -916,8 +987,6 @@ subscriptions (State model) =
 
 type alias Op =
     { tc : TensionCharac
-    , isAdmin : Bool
-    , hasRole : Bool
     , isRight : Bool -- view option
     , domid : String
     , tree_data : GqlData NodesDict
@@ -944,7 +1013,42 @@ view op (State model) =
 
 viewPanel : Op -> Model -> Html Msg
 viewPanel op model =
-    div [ class "actionPanelStyle" ]
+    let
+        pos =
+            case model.pos of
+                Just ( a, b ) ->
+                    attribute "style"
+                        ("position:absolute; left:"
+                            ++ String.fromInt (a + 50)
+                            ++ "px;"
+                            ++ "top:"
+                            ++ String.fromInt (b + 25)
+                            ++ "px;"
+                        )
+
+                Nothing ->
+                    attribute "style" ""
+
+        hasRole =
+            playsRole model.form.uctx model.targetid
+
+        isOwner_ =
+            isOwner model.form.uctx model.targetid
+
+        ownerRole =
+            model.role_type == Just RoleType.Owner
+
+        isAdmin =
+            isOwner_
+                || (List.length (getNodeRights model.form.uctx model.form.node op.tree_data) > 0 && not ownerRole)
+
+        isBaseMember_ =
+            isBaseMember model.targetid
+
+        isCircle =
+            model.role_type == Nothing
+    in
+    div [ class "actionPanelStyle", pos ]
         [ div
             [ class "dropdown-content"
 
@@ -953,7 +1057,7 @@ viewPanel op model =
             ]
           <|
             (-- EDIT ACTION
-             if model.form.node.role_type /= Just RoleType.Guest then
+             if not (List.member model.form.node.role_type [ Just RoleType.Guest, Just RoleType.Owner ]) then
                 [ div
                     -- Edit
                     [ class "dropdown-item button-light"
@@ -973,20 +1077,21 @@ viewPanel op model =
                         [ div
                             [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid ]) ]
                             [ A.icon1 "icon-plus" (T.add ++ "...") ]
-                        , hr [ class "dropdown-divider" ] []
                         ]
 
                     else
                         []
                    )
                 -- ACTION
-                ++ (if op.isAdmin then
+                ++ (if isAdmin && not isBaseMember_ then
                         let
                             isRoot =
                                 nid2rootid model.form.node.nameid == model.form.node.nameid
                         in
-                        [ -- Move Action
-                          if not isRoot then
+                        [ hr [ class "dropdown-divider" ] []
+
+                        -- Move Action
+                        , if not isRoot then
                             div [ class "dropdown-item button-light", onClick OnActionMove ]
                                 [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (panelAction2str MoveAction) ]
 
@@ -1002,19 +1107,11 @@ viewPanel op model =
                                 div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
                                     [ A.icon1 "icon-lock" (panelAction2str VisibilityAction) ]
 
-                            -- Link/Unlink Action
                             NodeType.Role ->
-                                case model.form.node.first_link of
-                                    Just user ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal (UnLinkAction user)) ]
-                                            [ A.icon1 "icon-user-plus" (panelAction2str (UnLinkAction user)) ]
-
-                                    Nothing ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal LinkAction) ]
-                                            [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
+                                text ""
                         ]
                             ++ -- ARCHIVE ACTION
-                               (if not isRoot then
+                               (if not (isRoot && isBaseMember_) then
                                     [ case op.tc.action_type of
                                         EDIT ->
                                             div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
@@ -1027,21 +1124,53 @@ viewPanel op model =
                                         NEW ->
                                             div [] [ text T.notImplemented ]
                                     ]
-                                        |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
                                 else
                                     []
+                               )
+                            |> (\l ->
+                                    if isCircle then
+                                        l
+
+                                    else
+                                        l ++ [ hr [ class "dropdown-divider" ] [] ]
                                )
 
                     else
                         []
                    )
-                -- LEAVE ACTION
-                ++ (if op.hasRole then
+                -- LINK/LEAVE ACTION
+                ++ (if hasRole && not isCircle then
                         [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
-                            [ A.icon1 "icon-log-out" (panelAction2str LeaveAction) ]
+                            [ if isBaseMember_ then
+                                A.icon1 "icon-log-out" T.leaveOrga
+
+                              else
+                                A.icon1 "icon-log-out" (panelAction2str LeaveAction)
+                            ]
                         ]
-                            |> List.append [ hr [ class "dropdown-divider" ] [] ]
+
+                    else if isAdmin && not isBaseMember_ && not isCircle then
+                        -- Link/Unlink Action
+                        [ case model.form.node.first_link of
+                            Just user ->
+                                div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
+                                    [ A.icon1 "icon-user-x" (panelAction2str (UnLinkAction user)) ]
+
+                            Nothing ->
+                                div [ class "dropdown-item button-light is-success", onClick (OnOpenModal LinkAction) ]
+                                    [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
+                        ]
+
+                    else if isAdmin && (isBaseMember_ && not ownerRole) && not isCircle then
+                        --  Remove User (Assume Guest)
+                        let
+                            user =
+                                userFromBaseMember model.targetid |> withDefault "" |> (\u -> { username = u, name = Nothing })
+                        in
+                        [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
+                            [ A.icon1 "icon-user-plus" T.removeUser ]
+                        ]
 
                     else
                         []
@@ -1157,7 +1286,11 @@ viewStep1 op model =
                     ]
 
                 LeaveAction ->
-                    [ showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" "Are you sure you wan't to leave this organization ?" ""
+                    [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.user).roles) == 1 then
+                        showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" T.confirmLeaveOrga ""
+
+                      else
+                        text ""
                     , viewComment model
                     ]
 

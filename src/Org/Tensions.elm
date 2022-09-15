@@ -7,6 +7,7 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
@@ -56,7 +57,7 @@ import Loading
         )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
 import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionStatus2String, tensionType2String, tensionTypeColor)
 import ModelSchema exposing (..)
@@ -64,7 +65,7 @@ import Page exposing (Document, Page)
 import Ports
 import Process
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
@@ -112,11 +113,30 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+
+                    -- Tree Data
                     DoUpdateTree tree ->
                         ( Cmd.none, send (UpdateSessionTree tree) )
 
-                    DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
+                    DoFetchNode nameid ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+
+                    DoAddNodes nodes ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -160,6 +180,7 @@ type alias Model =
     , url : Url
     , now : Time.Posix
     , lang : Lang.Lang
+    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
@@ -585,6 +606,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -594,6 +616,7 @@ type Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 
@@ -665,6 +688,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , actionPanel = ActionPanel.init global.session.user
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of
@@ -672,7 +696,7 @@ init global flags =
                                 m
 
                             nameids ->
-                                { m | children = RemoteData.Success (List.map NodeId nameids) }
+                                { m | children = RemoteData.Success (List.map (\x -> NodeId x Nothing) nameids) }
                    )
 
         --
@@ -856,7 +880,7 @@ update global message model =
                     ( { model | children = result }, Cmd.none, Cmd.none )
 
         GotChildren2 nameids ->
-            ( { model | children = RemoteData.Success (List.map NodeId nameids) }, send (DoLoad False), Cmd.none )
+            ( { model | children = RemoteData.Success (List.map (\x -> NodeId x Nothing) nameids) }, send (DoLoad False), Cmd.none )
 
         GotTensionsInt inc result ->
             let
@@ -1215,6 +1239,9 @@ update global message model =
             in
             ( { model | node_focus = { node_focus | nameid = node_focus.rootnameid } }, send SubmitSearchReset, Cmd.none )
 
+        OpenActionPanel domid nameid pos ->
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
+
         -- Components
         NewTensionMsg msg ->
             let
@@ -1296,6 +1323,16 @@ update global message model =
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
+        ActionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ActionPanel.update apis msg model.actionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1309,6 +1346,7 @@ subscriptions _ model =
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         |> Sub.batch
 
 
@@ -1330,6 +1368,14 @@ view global model =
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
+            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
     { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1351,6 +1397,7 @@ view global model =
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
 

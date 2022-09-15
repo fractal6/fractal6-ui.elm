@@ -24,7 +24,7 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
@@ -129,6 +129,11 @@ getNodeView data =
 getMandate : NodeDoc -> Mandate
 getMandate data =
     data.form.node.mandate |> withDefault initMandate
+
+
+getRoleType : NodeDoc -> Maybe RoleType.RoleType
+getRoleType data =
+    data.form.node.role_type
 
 
 hasMandate : Maybe Mandate -> Bool
@@ -299,7 +304,7 @@ setSourceShort nameid data =
 
         newForm =
             -- only nameid is used
-            { f | source = { nameid = nameid, name = "", role_type = Nothing } }
+            { f | source = { nameid = nameid, name = "", role_type = Nothing, color = Nothing } }
     in
     { data | form = newForm }
 
@@ -603,22 +608,24 @@ viewAboutSection data op_m =
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ text T.about ]
                 , text space_
-                , if isTensionBaseUri data.source && data.hasBeenPushed then
-                    a
-                        [ href <| uriFromNameid OverviewBaseUri nameid []
-                        , title T.viewOnMap
-                        ]
-                        [ text <| withDefault "" data.node.name ]
-
-                  else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
-                    a
-                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r }
-                        , title T.edit
-                        ]
-                        [ text <| withDefault "" data.node.name ]
-
-                  else
-                    span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
+                , --if isTensionBaseUri data.source && data.hasBeenPushed then
+                  --  a
+                  --      [ href <| uriFromNameid OverviewBaseUri nameid []
+                  --      , title T.viewOnMap
+                  --      ]
+                  --      [ text <| withDefault "" data.node.name ]
+                  --else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
+                  --  a
+                  --      [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r }
+                  --      , case nid2type nameid of
+                  --          NodeType.Circle ->
+                  --              title T.editThisCircle
+                  --          NodeType.Role ->
+                  --              title T.editThisRole
+                  --      ]
+                  --      [ text <| withDefault "" data.node.name ]
+                  --else
+                  span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
                 ]
             , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member data.node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
                 div [ class "level-right is-marginless is-small is-hidden-mobile" ] [ viewToolbar NoView data ]

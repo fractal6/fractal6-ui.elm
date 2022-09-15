@@ -20,6 +20,7 @@ import ModelSchema
         , UserCommon
         , UserCtx
         , UserRole
+        , UserRoleCommon
         )
 import Url exposing (Url)
 
@@ -370,6 +371,16 @@ isBaseMember nameid =
             False
 
 
+userFromBaseMember : String -> Maybe String
+userFromBaseMember nameid =
+    case String.split "#" nameid of
+        [ a, b, c ] ->
+            String.dropLeft 1 c |> Just
+
+        _ ->
+            Nothing
+
+
 nid2eor : String -> EmitterOrReceiver
 nid2eor nid =
     let
@@ -389,6 +400,25 @@ nid2eor nid =
     { nameid = nid
     , name = name
     , role_type = Nothing
+    , color = Nothing
+    }
+
+
+eor2ur er =
+    --eor2ur : NodeCommon a -> UserRole
+    { name = er.name
+    , nameid = er.nameid
+    , role_type = withDefault RoleType.Member er.role_type
+    , color = er.color
+    }
+
+
+ur2eor : UserRoleCommon a -> EmitterOrReceiver
+ur2eor ur =
+    { name = ur.name
+    , nameid = ur.nameid
+    , role_type = Just ur.role_type
+    , color = ur.color
     }
 
 
@@ -557,8 +587,15 @@ hasRole uctx nameid =
         |> List.member nameid
 
 
-hasAdminRole : UserCtx -> String -> Bool
-hasAdminRole uctx nameid =
+playsRole : UserCtx -> String -> Bool
+playsRole uctx nameid =
+    uctx.roles
+        |> List.map .nameid
+        |> List.member nameid
+
+
+hasLazyAdminRole : UserCtx -> String -> Bool
+hasLazyAdminRole uctx nameid =
     -- has admin role somewhere in the organisation
     -- @debug: assignees, etc...
     uctx.roles

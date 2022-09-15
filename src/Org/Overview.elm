@@ -2,7 +2,9 @@ port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions,
 
 import Array
 import Assets as A
+import Assets.Logo as Logo
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
@@ -14,6 +16,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Debug
 import Dict exposing (Dict)
+import Dom
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
@@ -63,7 +66,7 @@ import ModelCommon.Codecs
         , NodeFocus
         , focusFromNameid
         , focusState
-        , hasAdminRole
+        , hasLazyAdminRole
         , nameidFromFlags
         , nearestCircleid
         , nid2rootid
@@ -74,7 +77,7 @@ import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNode exposing (fetchNode, fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
+import Query.QueryNode exposing (fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), NodesQuickSearch)
@@ -116,27 +119,8 @@ mapGlobalOutcmds gcmds =
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
 
-                    DoFetchNode nameid ->
-                        ( send (FetchNewNode nameid False), Cmd.none )
-
                     DoPushTension tension ->
                         ( send (PushTension tension), Cmd.none )
-
-                    DoAddNodes nodes ->
-                        ( send (AddNodes nodes), Cmd.none )
-
-                    DoUpdateNode nameid fun ->
-                        ( send (UpdateNode nameid fun), Cmd.none )
-
-                    DoDelNodes nameids ->
-                        ( send (DelNodes nameids), Cmd.none )
-
-                    DoMoveNode a b c ->
-                        ( send (MoveNode a b c), Cmd.none )
-
-                    DoFocus nameid ->
-                        -- delay cause bulma driver not working (rejoin orga after leave)
-                        ( sendSleep (OnFocus nameid) 500, Cmd.none )
 
                     DoCreateTension nameid ->
                         ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
@@ -150,8 +134,27 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    -- Tree Data
                     DoUpdateTree tree ->
-                        ( Cmd.none, send (UpdateSessionTree tree) )
+                        ( send (OnUpdateTree tree), Cmd.none )
+
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
+                    DoFetchNode nameid ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+
+                    DoAddNodes nodes ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -178,6 +181,7 @@ type alias Model =
     , next_focus : Maybe String
     , activity_tab : ActivityTab
     , depth : Maybe Int
+    , legend : Bool
 
     -- common
     , helperBar : HelperBar
@@ -214,6 +218,7 @@ nfirstTensions =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | LoadOrga
+    | OnUpdateTree (Maybe NodesDict)
     | PushTension Tension
     | Submit (Time.Posix -> Msg) -- Get the current time
       -- Gql Data Queries
@@ -222,6 +227,7 @@ type Msg
     | GotData (GqlData NodeData)
       -- Page
     | SwitchWindow
+    | SetLegend Bool
       -- Quick search
     | LookupFocus String
     | ToggleLookup
@@ -233,19 +239,11 @@ type Msg
     | ChangeActivityTab ActivityTab
     | GotJournal (GqlData (List EventNotif))
       -- Node Action
-    | OpenActionPanel String Node
-      -- Graphpack
-    | FetchNewNode String Bool
-    | NewNodesAck (GqlData (List Node))
-    | AddNodes (List Node)
-    | UpdateNode String (Node -> Node)
-    | DelNodes (List String)
-    | MoveNode String String String
+    | OpenActionPanel String String (Maybe ( Int, Int ))
       -- GP JS Interop
     | NodeClicked String
     | NodeHovered String
     | NodeFocused ( String, Int )
-    | OnFocus String
     | OnClearTooltip
     | ToggleGraphReverse
       -- Common
@@ -317,6 +315,7 @@ init global flags =
             , next_focus = Nothing
             , activity_tab = TensionTab
             , depth = Nothing
+            , legend = False
 
             -- Common
             , refresh_trial = 0
@@ -407,6 +406,21 @@ update global message model =
         LoadOrga ->
             ( model, queryOrgaTree apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
+        OnUpdateTree tree ->
+            case tree of
+                Just data ->
+                    ( { model | tree_data = Success data }, Cmd.none, send (UpdateSessionTree tree) )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
+
+        PushTension tension ->
+            let
+                tensions =
+                    hotTensionPush tension model.tensions_data
+            in
+            ( { model | tensions_data = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
+
         PassedSlowLoadTreshold ->
             let
                 tree_data =
@@ -433,6 +447,9 @@ update global message model =
                     { win | bottomLeft = win.topRight, topRight = win.bottomLeft }
             in
             ( { model | window_pos = newWin }, Ports.saveWindowpos newWin, send (UpdateSessionWindow (Just newWin)) )
+
+        SetLegend val ->
+            ( { model | legend = val }, Cmd.none, Cmd.none )
 
         -- Data queries
         GotOrga result ->
@@ -615,129 +632,12 @@ update global message model =
             ( { model | journal_data = result }, Cmd.none, Cmd.none )
 
         -- Node Action
-        OpenActionPanel domid node ->
-            let
-                rootSource =
-                    getNode (nid2rootid node.nameid) model.tree_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
-
-                ( tid, bid ) =
-                    node.source
-                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                        |> withDefault
-                            (rootSource
-                                |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                                |> withDefault ( "", "" )
-                            )
-            in
-            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
-
-        -- Graphpack
-        PushTension tension ->
-            let
-                tensions =
-                    hotTensionPush tension model.tensions_data
-            in
-            ( { model | tensions_data = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
-
-        FetchNewNode nameid focus ->
-            ( model
-            , Cmd.batch
-                [ queryNodesSub apis nameid NewNodesAck
-                , if focus then
-                    sendSleep (OnFocus nameid) 750
-
-                  else
-                    Cmd.none
-                ]
-            , Cmd.none
-            )
-
-        NewNodesAck result ->
-            case result of
-                Success nodes ->
-                    ( model, send (AddNodes nodes), Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        AddNodes nodes ->
-            let
-                ndata =
-                    hotNodePush nodes model.tree_data
-
-                cmds =
-                    model.next_focus
-                        |> Maybe.map (\nid -> [ send (NodeClicked nid) ])
-                        |> withDefault [ Cmd.none ]
-            in
-            ( { model | tree_data = Success ndata, next_focus = Nothing }
-            , Cmd.batch ([ Ports.addQuickSearchNodes nodes, List.map (\n -> n.first_link) nodes |> List.filterMap identity |> Ports.addQuickSearchUsers ] ++ cmds)
-            , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionTree (Just ndata)) ]
-            )
-
-        UpdateNode nameid fun ->
-            let
-                node_m =
-                    getNode nameid model.tree_data
-                        |> Maybe.map fun
-            in
-            case node_m of
-                Just n ->
-                    let
-                        ndata =
-                            hotNodeInsert n model.tree_data
-
-                        pdata =
-                            if model.node_focus.nameid == nameid then
-                                let
-                                    fun2 focus =
-                                        { focus | visibility = n.visibility, mode = n.mode, name = n.name }
-                                in
-                                Maybe.map (\x -> { x | focus = fun2 x.focus }) model.path_data
-
-                            else
-                                model.path_data
-                    in
-                    ( { model | tree_data = Success ndata, path_data = pdata }
-                    , Cmd.none
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTree (Just ndata)) ]
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
-
-        DelNodes nameids ->
-            let
-                ( ndata, _ ) =
-                    hotNodePull nameids model.tree_data
-
-                newFocus =
-                    nameids
-                        |> List.head
-                        |> Maybe.map (\nid -> getParentId nid model.tree_data)
-                        |> withDefault Nothing
-                        |> withDefault model.node_focus.rootnameid
-            in
-            ( { model | tree_data = Success ndata }
-              --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , Cmd.batch [ send (NodeClicked newFocus) ]
-            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTree (Just ndata)) ]
-            )
-
-        MoveNode nameid_old parentid_new nameid_new ->
-            let
-                ( ndata, _ ) =
-                    hotNodePull [ nameid_old ] model.tree_data
-            in
-            ( { model | tree_data = Success ndata, next_focus = Just parentid_new }
-              --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , Cmd.batch [ send (FetchNewNode nameid_new False) ]
-            , Cmd.none
-            )
+        OpenActionPanel domid nameid pos ->
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
         -- JS interop
         NodeClicked nameid ->
-            ( model, Cmd.none, ReplaceUrl (uriFromNameid OverviewBaseUri nameid []) |> send )
+            ( model, Cmd.none, send (NavigateNode nameid) )
 
         NodeHovered nid ->
             let
@@ -762,8 +662,8 @@ update global message model =
 
                         cmds =
                             [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-                            , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.tree_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
-                                send (FetchNewNode model.node_focus.nameid True)
+                            , if not (isFailure model.node_data) && (getNode model.node_focus.nameid model.tree_data == Nothing) then
+                                Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid True)
 
                               else
                                 Cmd.none
@@ -776,9 +676,6 @@ update global message model =
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
-
-        OnFocus nameid ->
-            ( model, Ports.focusGraphPack nameid, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -892,7 +789,7 @@ subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
 
     -- @CODEFACTOR: since node_hovered is know, leftClick and rightClick could be replace by a JS .click() function on #doTension and #doAction...
-    -- wha would be the advantage of using .click instead of ports ?
+    -- what would be the advantage of using .click instead of ports ?
     , nodeLeftClickedFromJs
         (\nameid ->
             case localGraphFromOrga nameid model.tree_data of
@@ -904,11 +801,16 @@ subscriptions _ model =
         )
     , case model.node_hovered of
         Just node ->
-            nodeRightClickedFromJs (\_ -> OpenActionPanel "actionPanelContentTooltip" node)
+            nodeRightClickedFromJs (\_ -> OpenActionPanel "actionPanelContentTooltip" node.nameid Nothing)
 
         Nothing ->
             --nodeRightClickedFromJs (\_ -> ActionPanelMsg ActionPanel.OnClose)
             Sub.none
+    , if model.legend then
+        Events.onMouseUp (Dom.outsideClickClose "canvasLegend" (SetLegend False))
+
+      else
+        Sub.none
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
     , Ports.lookupNodeFromJs ChangeNodeLookup
@@ -967,6 +869,14 @@ view global model =
             , onCollapse = CollapseRoles
             , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
+            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -981,6 +891,7 @@ view global model =
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
 
@@ -1130,9 +1041,13 @@ viewActionPanel domid us node o actionPanel =
                         -- @DEBUG/@FIX: archive circle can be query now...
                         -- Action type should be queried with queryNodesSub !
                         -- @TODO: special color/sape for archive circle.
-                        { tc = { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
-                        , isAdmin = isAdmin
-                        , hasRole = hasRole
+                        { tc =
+                            case node.type_ of
+                                NodeType.Circle ->
+                                    { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
+
+                                NodeType.Role ->
+                                    { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
                         , isRight = True
                         , domid = domid
                         , tree_data = o
@@ -1143,7 +1058,7 @@ viewActionPanel domid us node o actionPanel =
                         [ span
                             [ class "button is-small is-link2 clickMe"
                             , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
-                            , onClick (OpenActionPanel domid node)
+                            , onClick (OpenActionPanel domid node.nameid Nothing)
                             ]
                             [ i [ class "icon-ellipsis-v" ] [] ]
                         ]
@@ -1237,7 +1152,7 @@ viewCanvas us model =
         isAdmin =
             case us of
                 LoggedIn uctx ->
-                    hasAdminRole uctx model.node_focus.rootnameid
+                    hasLazyAdminRole uctx model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
@@ -1260,6 +1175,35 @@ viewCanvas us model =
 
             _ ->
                 text ""
+        , if model.legend then
+            div [ id "canvasLegend", class "box has-background-warning-light has-text-dark p-3" ]
+                [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text "Circles and sub-circles (group, team, ...)" ] ]
+                , br [ class "mb-3" ] []
+                , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text "Focused circle/role" ] ]
+                , br [ class "mb-5" ] []
+                , A.icon1 "icon-git-branch icon-lg" "Symbol for circle"
+                , br [ class "mb-2" ] []
+                , A.icon1 "icon-leaf icon-lg" "Symbol for role"
+                , br [ class "mb-2" ] []
+                , A.icon1 "icon-queen icon-lg" "Symbol for owner role"
+                , br [ class "mb-2" ] []
+                , A.icon1 "icon-king icon-lg" "Symbol for coordinator role"
+                , br [ class "mb-5" ] []
+                , A.icon1 "icon-globe icon-lg" "Public visibility (no restriction)"
+                , br [ class "mb-2" ] []
+                , A.icon1 "icon-lock icon-lg" "Private visibility (members only)"
+                , br [ class "mb-2" ] []
+                , A.icon1 "icon-eye-off icon-lg" "Secret visibility (roles only)"
+                , br [ class "mb-5" ] []
+                , span
+                    [ class "button-light has-text-info is-size-7 is-pulled-right"
+                    , onClick (HelpMsg Help.OnOpen)
+                    ]
+                    [ text T.help ]
+                ]
+
+          else
+            text ""
         , canvas [ id "canvasOrga", class "is-invisible" ] []
 
         {- Hidden classes use in graphpack_d3.js -}
@@ -1280,30 +1224,25 @@ viewCanvas us model =
                                         FromNameid model.node_focus.rootnameid
                         in
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
-                            ([ div
+                            [ div
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpen p)
                                 ]
                                 [ text T.createNewTension ]
-                             ]
-                                ++ (if isAdmin || True then
-                                        [ div [ class "hbar" ] []
-                                        , div
-                                            [ class "button is-success"
-                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
-                                            ]
-                                            [ text T.createNewCircle ]
-                                        , div
-                                            [ class "button is-success"
-                                            , onClick (NewTensionMsg <| NTF.OnOpenRole p)
-                                            ]
-                                            [ text T.createNewRole ]
-                                        ]
-
-                                    else
-                                        []
-                                   )
-                            )
+                            , div [ class "hbar", classList [ ( "is-invisible", not isAdmin ) ] ] []
+                            , div
+                                [ class "button is-success"
+                                , classList [ ( "is-invisible", not isAdmin ) ]
+                                , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
+                                ]
+                                [ text T.createNewCircle ]
+                            , div
+                                [ class "button is-success"
+                                , classList [ ( "is-invisible", not isAdmin ) ]
+                                , onClick (NewTensionMsg <| NTF.OnOpenRole p)
+                                ]
+                                [ text T.createNewRole ]
+                            ]
 
                     else
                         text ""
@@ -1339,7 +1278,7 @@ viewCanvas us model =
                         []
                    )
                 ++ [ if (model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin then
-                        div [ class "hbar" ] []
+                        div [ class "hbar", style "margin-right" "8px" ] []
 
                      else
                         text ""
@@ -1383,6 +1322,16 @@ viewCanvas us model =
                     else
                         []
                    )
+                ++ [ div
+                        [ class "tag is-rounded has-border is-light is-info is-small tooltip has-tooltip-arrow has-tooltip-top"
+
+                        -- Pushed to bottom in flex/column parent.
+                        , attribute "style" "margin-top:auto; user-select:none;"
+                        , attribute "data-tooltip" "Show the legend"
+                        , onClick (SetLegend (not model.legend))
+                        ]
+                        [ text "Legend" ]
+                   ]
             )
         , div
             [ id "nodeTooltip"

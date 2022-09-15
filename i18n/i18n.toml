@@ -44,11 +44,11 @@
 
 [signinNow2]
   en="Sign-in"
-  fr="vous Connecter"
+  fr="Vous Connecter"
 
 [signupNow2]
   en="Create an account"
-  fr="vous Inscrire"
+  fr="Vous Inscrire"
 
 [createYourAccount]
   en="Create your account"
@@ -256,7 +256,15 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [leaveRole]
   en="Leave role"
-  fr="Quitter le rôle"
+  fr="Quitter ce rôle"
+
+[removeUser]
+  en="Remove user"
+  fr="Retirer l'utilisateur"
+
+[leaveOrga]
+  en="Leave organization"
+  fr="Quitter cette organisation"
 
 [checkItOut_fem]
   en="Check it out."
@@ -714,6 +722,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Are you sure to cancel this contract"
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
 
+[confirmLeaveOrga]
+  en="Are you sure you want to leave this organization ?"
+  fr="Etes vous sûr de vouloir quitter cette organisation ?"
+
 [askAnotherQuestion]
   en="Ask another question."
   fr="Poser une autre question."
@@ -824,7 +836,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [tensionSubscribeText]
   en="You’re receiving notifications because you’re subscribed to this thread."
-  fr="Vous recevez des notifications parce que vous êtes abonné à ce fil de discussion."
+  fr="Vous recevez des notifications car vous êtes abonné à ce fil de discussion."
 
 [tensionUnsubscribeText]
   en="You’re not receiving notifications from this thread."
@@ -1065,6 +1077,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 [inThisCircle]
   en="in this circle"
   fr="dans ce cercle"
+
+[toThisOrganisation]
+  en="to this organization"
+  fr="de cette organization"
 
 [enterValidUserOrEmail]
 	en="Please, enter a valid email address or username"
@@ -1416,11 +1432,11 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [noLabels]
   en="No label in this circle yet"
-  fr="Pas d’étiquettes présent dans ce cercle"
+  fr="Aucune étiquette dans ce cercle"
 
 [noRoles]
   en="No role in this circle yet"
-  fr="Pas de rôles présent dans ce cercle"
+  fr="Aucun rôles dans ce cercle"
 
 [labelsSub]
   en="Labels in sub-circles"
@@ -1638,6 +1654,9 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 	en="Mark all as read"
 	fr="Tout marquer comme lu"
 
+[voteWaited]
+  en="A vote is waited from you."
+  fr="Un vote est attendu de votre part."
 
 #
 # Blob State
@@ -1731,8 +1750,8 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 	fr="Mandat modifié"
 
 [memberLinked_event]
-	en="Member linked"
-	fr="Membre associé"
+	en="A role has been linked"
+	fr="Un rôle a été lié"
 
 [memberUnlinked_event]
 	en="Member unlinked"
@@ -1743,7 +1762,11 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 	fr="Un Utilisateur nous a rejoins"
 
 [userLeft_event]
-	en="An user left"
+	en="An user left his role"
+	fr="Un utilisateur à quitté son rôle"
+
+[userLeft_orga_event]
+	en="An user left us"
 	fr="Un utilisateur nous a quitté"
 
 
@@ -1777,7 +1800,7 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 
 [memberLinked_contract_success]
 	en="Congratulations, you have been link to this role."
-	fr="Félicitations, vous avez été associé à ce rôle."
+	fr="Félicitations, vous avez été lié à ce rôle."
 
 [memberUnlinked_contract_success]
 	en="Congratulations, you have been unlink to this role."
@@ -1788,12 +1811,12 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 	fr="Félicitations, vous avez rejoint cette organisation."
 
 [memberLinked_contract_success_ext]
-	en="Congratulations, user has been linked."
-	fr="Félicitations, l'utilisateur a été lié."
+	en="Congratulations, an user has been linked."
+	fr="Félicitations, un utilisateur a été lié."
 
 [userJoined_contract_success_ext]
-	en="Congratulations, user has joined the organization."
-	fr="Félicitations, a rejoint l'organisation."
+	en="Congratulations, an user has joined the organization."
+	fr="Félicitations, un utilisateur a rejoint l'organisation."
 
 
 #
