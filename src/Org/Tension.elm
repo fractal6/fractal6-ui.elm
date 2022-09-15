@@ -431,6 +431,9 @@ init global flags =
                     |> Maybe.map focusFromPath
                     |> withDefault newFocus_
 
+        refresh =
+            Maybe.map (\th -> tensionChanged2 th global.url) global.session.tension_head |> withDefault True
+
         nodeView =
             Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
 
@@ -478,7 +481,13 @@ init global flags =
                                     x
                        )
             , publish_result = NotAsked
-            , hasBeenPushed = False
+            , hasBeenPushed =
+                case global.session.tension_head of
+                    Just th ->
+                        th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+
+                    Nothing ->
+                        False
 
             -- Side Pane
             , isTensionAdmin = withDefault False global.session.isAdmin
@@ -507,9 +516,6 @@ init global flags =
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
-
-        refresh =
-            tensionChanged2 model.tension_head global.url || model.tension_head == Loading
     in
     ( { model | subscribe_result = withMapData (\x -> withDefault False x.isSubscribed) model.tension_head }
     , Cmd.batch (refresh_cmds refresh global model)
@@ -2277,8 +2283,6 @@ viewDocument u t b model =
                 , node = b.node |> withDefault (initNodeFragment Nothing)
                 , isLazy = False
                 , source = model.baseUri
-
-                --, focus = model.node_focus
                 , hasBeenPushed = model.hasBeenPushed
                 , receiver = t.receiver.nameid
                 , hasInnerToolbar = False
@@ -2292,8 +2296,6 @@ viewDocument u t b model =
                 , blob = b
                 , isAdmin = model.isTensionAdmin
                 , tension_blobs = model.tension_blobs
-
-                --, onBlobEdit = DoBlobEdit
                 , onSubmit = Submit
                 , onSubmitBlob = SubmitBlob
                 , onCancelBlob = CancelBlob
@@ -2572,8 +2574,6 @@ viewSidePane u t model =
                                     , blob = blob
                                     , isAdmin = model.isTensionAdmin
                                     , tension_blobs = model.tension_blobs
-
-                                    --, onBlobEdit = DoBlobEdit
                                     , onSubmit = Submit
                                     , onSubmitBlob = SubmitBlob
                                     , onCancelBlob = CancelBlob
@@ -2703,13 +2703,11 @@ tensionChanged from_m to =
     tid1 /= tid2
 
 
-tensionChanged2 : GqlData TensionHead -> Url -> Bool
-tensionChanged2 t_m to =
+tensionChanged2 : TensionHead -> Url -> Bool
+tensionChanged2 th to =
     let
         tid1 =
-            t_m
-                |> withMaybeDataMap (\x -> x.id)
-                |> withDefault ""
+            th.id
 
         tid2 =
             url2tid to
