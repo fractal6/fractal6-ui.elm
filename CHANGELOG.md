@@ -18,7 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [ui/ux] better action panel icon, order and consistency
 - [ux] helperBar user's role do not link the overview page anymore but open the action panel instead.
 - [ux] A propos node title do not link to overview/tension page to avoid confusing user more than necessary.
-- [ux] do not alwayr reset the page scroll on navigation.
+- [ux] do not always reset the page scroll on navigation.
+- [ux/tension] tension node hav no more a "edit title" button. Title edit automatically when blob is pushed.
 
 ### Fixed
 - [ui/ux] tension receiver handle circle and roles (with color!)

@@ -495,11 +495,7 @@ type alias TensionBlobFlagPayload =
     { tension : Maybe (List (Maybe TensionBlobFlag)) }
 
 
-type alias TensionBlobFlag =
-    { blobs : Maybe (List BlobFlag) }
-
-
-publishBlobDecoder : Maybe TensionBlobFlagPayload -> Maybe BlobFlag
+publishBlobDecoder : Maybe TensionBlobFlagPayload -> Maybe TensionBlobFlag
 publishBlobDecoder data =
     case data of
         Just d ->
@@ -510,14 +506,6 @@ publishBlobDecoder data =
                     )
                 |> withDefault []
                 |> List.head
-                |> Maybe.map (\t -> t.blobs)
-                |> withDefault Nothing
-                |> withDefault []
-                |> List.head
-                |> Maybe.map
-                    (\b ->
-                        { pushedFlag = b.pushedFlag }
-                    )
 
         Nothing ->
             Nothing
@@ -529,7 +517,8 @@ publishBlob url bid form msg =
             (publishBlobInputEncoder bid form)
             (SelectionSet.map TensionBlobFlagPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map TensionBlobFlag
+                    SelectionSet.map2 TensionBlobFlag
+                        Fractal.Object.Tension.title
                         (Fractal.Object.Tension.blobs (bidFilter bid) <|
                             SelectionSet.map BlobFlag (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
                         )

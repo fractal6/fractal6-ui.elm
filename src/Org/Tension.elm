@@ -242,7 +242,7 @@ type alias Model =
 
     -- Blob Edit
     , nodeDoc : NodeDoc
-    , publish_result : GqlData BlobFlag
+    , publish_result : GqlData TensionBlobFlag
     , hasBeenPushed : Bool
 
     -- Side Pane
@@ -335,10 +335,10 @@ type Msg
     | AddPolicies
     | AddResponsabilities
       -- Blob Submit
-    | SubmitBlob NodeDoc Time.Posix
+    | CommitBlob NodeDoc Time.Posix
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
-    | PushBlobAck (GqlData BlobFlag)
+    | PushBlobAck (GqlData TensionBlobFlag)
     | CancelBlob
       -- Assignees
     | DoAssigneeEdit
@@ -1075,7 +1075,7 @@ update global message model =
         AddPolicies ->
             ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
 
-        SubmitBlob data time ->
+        CommitBlob data time ->
             let
                 newDoc =
                     data
@@ -1170,20 +1170,15 @@ update global message model =
                                     th.blobs
                                         |> Maybe.map
                                             (\bs ->
-                                                let
-                                                    -- @debug r.pushedFlag not sync
-                                                    pushedFlag =
-                                                        Dict.get "createdAt" model.tension_form.post
-                                                in
                                                 bs
                                                     |> List.head
                                                     |> Maybe.map
-                                                        (\b -> [ { b | pushedFlag = pushedFlag } ])
+                                                        (\b -> [ { b | pushedFlag = withDefault [] r.blobs |> List.head |> Maybe.map .pushedFlag |> withDefault b.pushedFlag } ])
                                             )
                                         |> withDefault Nothing
 
                                 newTh =
-                                    { th | blobs = blobs }
+                                    { th | blobs = blobs, title = r.title }
 
                                 resetForm =
                                     initTensionForm model.tensionid global.session.user
@@ -2300,7 +2295,7 @@ viewDocument u t b model =
                 , isAdmin = model.isTensionAdmin
                 , tension_blobs = model.tension_blobs
                 , onSubmit = Submit
-                , onSubmitBlob = SubmitBlob
+                , onSubmitBlob = CommitBlob
                 , onCancelBlob = CancelBlob
                 , onPushBlob = PushBlob
                 , onChangeEdit = ChangeBlobEdit
@@ -2578,7 +2573,7 @@ viewSidePane u t model =
                                     , isAdmin = model.isTensionAdmin
                                     , tension_blobs = model.tension_blobs
                                     , onSubmit = Submit
-                                    , onSubmitBlob = SubmitBlob
+                                    , onSubmitBlob = CommitBlob
                                     , onCancelBlob = CancelBlob
                                     , onPushBlob = PushBlob
                                     , onChangeEdit = ChangeBlobEdit

@@ -397,7 +397,7 @@ type alias Op msg =
     { data : NodeDoc
     , result : GqlData Tension -- result from new tension components
     , now : Time.Posix
-    , publish_result : GqlData BlobFlag
+    , publish_result : GqlData TensionBlobFlag
     , blob : Blob
     , isAdmin : Bool
     , tension_blobs : GqlData TensionBlobs
@@ -1199,28 +1199,11 @@ updateNodeForm field value form =
             { form | node = { node | mode = NodeMode.fromString value } }
 
         "name" ->
-            case form.action of
-                Nothing ->
-                    { form | node = { node | name = Just value } }
+            if List.member form.action [ Just TensionAction.NewRole, Just TensionAction.NewCircle ] then
+                { form | node = { node | name = Just value, nameid = Just (nameidEncoder value) }, post = Dict.insert "title" value form.post }
 
-                Just action ->
-                    if List.member action [ TensionAction.NewRole, TensionAction.NewCircle ] then
-                        let
-                            newPost =
-                                ternary (value == "")
-                                    (Dict.insert "title" value form.post)
-                                    (Dict.insert "title" ("[" ++ action2str action ++ "] " ++ value) form.post)
-
-                            newData =
-                                { node
-                                    | name = Just value
-                                    , nameid = Just (nameidEncoder value)
-                                }
-                        in
-                        { form | post = newPost, node = newData }
-
-                    else
-                        { form | node = { node | name = Just value } }
+            else
+                { form | node = { node | name = Just value } }
 
         _ ->
             -- title, message...

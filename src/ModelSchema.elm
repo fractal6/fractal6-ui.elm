@@ -310,6 +310,10 @@ type alias Blob =
     }
 
 
+type alias TensionBlobFlag =
+    { title : String, blobs : Maybe (List BlobFlag) }
+
+
 type alias BlobFlag =
     { pushedFlag : Maybe String }
 
