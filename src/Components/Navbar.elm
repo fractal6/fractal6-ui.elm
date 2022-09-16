@@ -80,7 +80,8 @@ view user url replaceUrl =
                 , div [ class "navbar-end" ] <|
                     [ notificationButton user url
                     , helpButton user
-                    , newButton user
+
+                    --, newButton user
                     ]
                         ++ userButtons user url replaceUrl
                 ]
@@ -166,6 +167,9 @@ userButtons user url replaceUrl =
                         [ A.icon1 "icon-tool" T.settings ]
                     , span [ id "themeTrigger", class "navbar-item is-w" ]
                         [ A.icon1 "icon-moon" T.toggleLightMode ]
+                    , hr [ class "navbar-divider" ] []
+                    , a [ class "navbar-item", href (toHref New_Orga) ]
+                        [ A.icon1 "icon-plus" T.newOrganisation ]
                     , hr [ class "navbar-divider" ] []
 
                     -- Prevout logout to be log in the browser history (@debug do not work)

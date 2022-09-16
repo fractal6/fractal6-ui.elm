@@ -42,7 +42,7 @@ export function updateLang(app, lang) {
         window.location.replace(
             loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
         );
-		// May try this to force reoload ?
+		// Maybe try this to force reoload ?
         // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
 		//$.ajax({
 		//	url: window.location.href,
