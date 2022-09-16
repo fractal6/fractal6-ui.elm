@@ -1531,6 +1531,46 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
 
 #
+# Legend
+#
+
+[circlesLegend]
+  en="Circles and sub-circles (group, team, ...)"
+  fr="Cercles et sous-cercles (groupe, équipe, ...)"
+
+[focusLegend]
+  en="Focused circle/role"
+  fr="Cercle/rôle courant"
+
+[circleLegend]
+  en="Symbol for circle"
+  fr="Symbole de cercle"
+
+[roleLegend]
+  en="Symbol for role"
+  fr="Symbole de rôle"
+
+[ownerLegend]
+  en="Symbol for owner role"
+  fr="Symbole de rôle propriétaire"
+
+[coordoLegend]
+  en="Symbol for coordinator role"
+  fr="Symbole de rôle coordinateur"
+
+[visibilityPublicLegend]
+  en="Public visibility"
+  fr="Visibilité publique"
+
+[visibilityPrivateLegend]
+  en="Private visibility (members only)"
+  fr="Visibilité privé (membres uniquement)"
+
+[visibilitySecretLegend]
+  en="Secret visibility (roles only)"
+  fr="Visibilité secrète (rôles uniquement)"
+
+#
 # Action Panel
 #
 

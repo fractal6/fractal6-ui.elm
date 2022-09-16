@@ -1177,23 +1177,23 @@ viewCanvas us model =
                 text ""
         , if model.legend then
             div [ id "canvasLegend", class "box has-background-warning-light has-text-dark p-3" ]
-                [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text "Circles and sub-circles (group, team, ...)" ] ]
+                [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text T.circlesLegend ] ]
                 , br [ class "mb-3" ] []
-                , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text "Focused circle/role" ] ]
+                , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text T.focusLegend ] ]
                 , br [ class "mb-5" ] []
-                , A.icon1 "icon-git-branch icon-lg" "Symbol for circle"
+                , A.icon1 "icon-git-branch icon-lg" T.circleLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-leaf icon-lg" "Symbol for role"
+                , A.icon1 "icon-leaf icon-lg" T.roleLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-queen icon-lg" "Symbol for owner role"
+                , A.icon1 "icon-queen icon-lg" T.ownerLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-king icon-lg" "Symbol for coordinator role"
+                , A.icon1 "icon-king icon-lg" T.coordoLegend
                 , br [ class "mb-5" ] []
-                , A.icon1 "icon-globe icon-lg" "Public visibility (no restriction)"
+                , A.icon1 "icon-globe icon-lg" T.visibilityPublicLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-lock icon-lg" "Private visibility (members only)"
+                , A.icon1 "icon-lock icon-lg" T.visibilityPrivateLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-eye-off icon-lg" "Secret visibility (roles only)"
+                , A.icon1 "icon-eye-off icon-lg" T.visibilitySecretLegend
                 , br [ class "mb-5" ] []
                 , span
                     [ class "button-light has-text-info is-size-7 is-pulled-right"
