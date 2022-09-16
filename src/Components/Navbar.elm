@@ -42,30 +42,33 @@ view user url replaceUrl =
                                 orgUrl =
                                     isOrgUrl url
                             in
-                            [ if orgUrl then
-                                div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
-
-                              else
-                                text ""
-                            , a
-                                [ class "navbar-item"
-                                , classList
-                                    [ ( "is-active"
-                                      , case fromUrl url of
-                                            Just (Dynamic a) ->
-                                                ternary (a.param1 == uctx.username) True False
-
-                                            Just (User_Dynamic a) ->
-                                                ternary (a.param1 == uctx.username) True False
-
-                                            _ ->
-                                                False
-                                      )
-                                    ]
-                                , href (toHref Top)
+                            (if orgUrl then
+                                [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
+                                , div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger" ] [ A.icon "icon-git-branch" ]
                                 ]
-                                [ text T.yourOrg ]
-                            ]
+
+                             else
+                                []
+                            )
+                                ++ [ a
+                                        [ class "navbar-item"
+                                        , classList
+                                            [ ( "is-active"
+                                              , case fromUrl url of
+                                                    Just (Dynamic a) ->
+                                                        ternary (a.param1 == uctx.username) True False
+
+                                                    Just (User_Dynamic a) ->
+                                                        ternary (a.param1 == uctx.username) True False
+
+                                                    _ ->
+                                                        False
+                                              )
+                                            ]
+                                        , href (toHref Top)
+                                        ]
+                                        [ text T.yourOrg ]
+                                   ]
 
                         LoggedOut ->
                             []
