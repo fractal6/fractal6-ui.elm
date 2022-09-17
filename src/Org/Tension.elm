@@ -18,7 +18,7 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (decap, ternary, textD, textH, toText, upH)
+import Extra exposing (decap, ternary, textD, textH, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -123,6 +123,7 @@ import RemoteData exposing (RemoteData)
 import Scroll
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
+import String.Format as Format
 import Task
 import Text as T
 import Time
@@ -1921,7 +1922,7 @@ viewComments lang now action history_m comments_m comment_form comment_result ex
                         , attribute "style" "left:10%;"
                         , onClick (ExpandEvent x.i)
                         ]
-                        [ toText [ "Show", String.fromInt x.n, "older events" ] ]
+                        [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
 
                 else
                     Lazy.lazy viewCommentOrEvent x

@@ -1530,6 +1530,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
   en="Explain your motivations for joining this organisation ?"
 	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
 
+[showOlderEvents]
+  en="Show {} older events"
+  fr="Afficher {} autres événements"
+
 #
 # Legend
 #
