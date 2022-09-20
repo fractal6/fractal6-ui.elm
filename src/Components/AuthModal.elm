@@ -37,7 +37,7 @@ type alias Model =
     { user : UserState
     , modalAuth : ModalAuth
     , refreshAfter : Bool
-    , puid : Maybe String
+    , modalType : ModalType
     }
 
 
@@ -46,8 +46,23 @@ initModel user puid =
     { user = user
     , modalAuth = Inactive
     , refreshAfter = False
-    , puid = puid
+    , modalType =
+        case puid of
+            Just "" ->
+                SigninModal
+
+            Just x ->
+                SignupModal x
+
+            Nothing ->
+                RefreshModal
     }
+
+
+type ModalType
+    = RefreshModal
+    | SigninModal
+    | SignupModal String -- puid
 
 
 type alias UserAuthForm =
@@ -129,8 +144,8 @@ update_ apis message model =
     case message of
         -- Token Refresh
         OnStart ->
-            case model.puid of
-                Just puid ->
+            case model.modalType of
+                SignupModal puid ->
                     case model.user of
                         LoggedIn _ ->
                             -- @future: manage multiple loggin:
@@ -140,7 +155,7 @@ update_ apis message model =
                         LoggedOut ->
                             ( model, out0 [ send (DoOpenSignupModal puid) ] )
 
-                Nothing ->
+                _ ->
                     ( model, noOut )
 
         DoOpenAuthModal refresh uctx ->
@@ -163,11 +178,11 @@ update_ apis message model =
                         )
 
                 LoggedOut ->
-                    ( model, noOut )
+                    ( { model | modalType = SigninModal, modalAuth = Active { post = Dict.empty } RemoteData.NotAsked }, out0 [ Ports.open_auth_modal ] )
 
         DoOpenSignupModal puid ->
             ( { model
-                | puid = Just puid
+                | modalType = SignupModal puid
                 , modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked
                 , refreshAfter = True
               }
@@ -206,14 +221,14 @@ update_ apis message model =
                     ( model, noOut )
 
         SubmitUser form ->
-            case model.puid of
-                Just "" ->
+            case model.modalType of
+                SigninModal ->
                     ( model, out0 [ login apis form.post GotSignin ] )
 
-                Just puid ->
+                SignupModal puid ->
                     ( model, out0 [ signupValidate apis form.post GotSignin ] )
 
-                Nothing ->
+                RefreshModal ->
                     ( model, out0 [ login apis form.post GotSignin ] )
 
         GotSignin result ->
@@ -221,18 +236,18 @@ update_ apis message model =
                 Active form _ ->
                     case result of
                         RemoteData.Success uctx ->
-                            case model.puid of
-                                Just "" ->
+                            case model.modalType of
+                                SigninModal ->
                                     ( { model | modalAuth = Inactive }
                                     , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
 
-                                Just puid ->
+                                SignupModal puid ->
                                     ( { model | modalAuth = Active form result }
                                     , Out [] [ DoUpdateUserSession uctx ] (Just ( False, uctx ))
                                     )
 
-                                Nothing ->
+                                RefreshModal ->
                                     ( { model | modalAuth = Inactive }
                                     , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
@@ -256,14 +271,14 @@ update_ apis message model =
                                     UserAuthForm Dict.empty
 
                         isSendable =
-                            case model.puid of
-                                Just "" ->
+                            case model.modalType of
+                                SigninModal ->
                                     isPostSendable [ "username", "password" ] form.post
 
-                                Just puid ->
+                                SignupModal puid ->
                                     isPostSendable [ "username", "password" ] form.post
 
-                                Nothing ->
+                                RefreshModal ->
                                     isPostSendable [ "username", "password" ] form.post
                     in
                     --ENTER
@@ -303,14 +318,14 @@ type alias Op =
 view : Op -> State -> Html Msg
 view op (State model) =
     div []
-        [ case model.puid of
-            Just "" ->
+        [ case model.modalType of
+            SigninModal ->
                 Lazy.lazy2 signinModal op model
 
-            Just puid ->
+            SignupModal puid ->
                 Lazy.lazy2 signupModal op model
 
-            Nothing ->
+            RefreshModal ->
                 Lazy.lazy2 refreshModal op model
         ]
 
