@@ -644,7 +644,7 @@ viewAboutSection data op_m =
             ]
         , case data.node.about of
             Just ab ->
-                p [ class "is-human" ] [ text ab ]
+                renderMarkdown "is-human" ab
 
             Nothing ->
                 text ""

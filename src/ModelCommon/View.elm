@@ -20,6 +20,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Identicon
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs
@@ -677,7 +678,7 @@ viewOrgaMedia_ user_m root =
                     [ a [ href (uriFromNameid OverviewBaseUri root.nameid []) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
-                            p [ class "is-human pt-1" ] [ text ab ]
+                            renderMarkdown "is-human pt-1" ab
 
                         Nothing ->
                             text ""
