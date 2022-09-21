@@ -893,7 +893,12 @@ strong {
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         @include mobile {
-            font-size: 3rem !important;
+            font-size: 2rem !important;
+        }
+    }
+    .subtitle {
+        @include mobile {
+            font-size: 1rem !important;
         }
     }
 

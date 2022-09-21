@@ -11,7 +11,7 @@ import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
@@ -223,44 +223,52 @@ viewHero model =
     div [ id "welcome", class "hero is-bold" ]
         [ div [ class "hero-body" ]
             [ div [ class "columns is-centered" ]
-                [ div [ class "column is-6-desktop is-6-widescreen is-6-fullhd" ]
-                    [ case model.lang of
-                        Lang.En ->
-                            h1 [ class "title" ]
-                                --[ text "Build unstoppable organizations" ]
-                                --[ text "Self-organization", br [] [], text "for humans" ]
-                                --[ text "Collective Intelligence", br [] [], text "at Work" ]
-                                [ text "Your organization"
-                                , br [] []
-                                , text "is a living thing."
-                                , br [] []
-                                , text "Give it a home"
-                                ]
+                [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
+                    [ h1 [ class "title" ] [ renderMarkdown "" T.heroTitle ]
 
-                        Lang.Fr ->
-                            h1 [ class "title" ]
-                                [ text "Votre organisation"
-                                , br [] []
-                                , text "est un être vivant."
-                                , br [] []
-                                , text "Donnez-lui un toit"
+                    --[ text "Build unstoppable organizations" ]
+                    --[ text "Self-organization", br [] [], text "for humans" ]
+                    --[ text "Collective Intelligence", br [] [], text "at Work" ]
+                    , div [ class "columns is-vcentered" ]
+                        [ div [ class "column is-7" ] [ h2 [ class "subtitle" ] [ renderMarkdown "" T.heroSubtitle ] ]
+                        , div [ class "column is-5" ]
+                            [ a
+                                [ class "button is-primary"
+                                , href (toHref Route.Signup)
+                                , style "border-radius" "8px"
                                 ]
-                    , h2 [ class "subtitle" ] [ renderMarkdown "" T.heroSubtitle ]
-
-                    --Design your organisations roles and cirlces, invite members, manage your tensions..
+                                [ text T.tryNow ]
+                            ]
+                        ]
                     ]
                 , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]
                     [ viewSignBox model ]
                 ]
+            , br [] []
+            , br [] []
+            , div [ class "columns is-centered" ]
+                [ div [ class "column is-11 is-9-fullhd" ]
+                    [ div [ class "columns is-5 is-variable content" ]
+                        [ div [ class "column is-4" ] [ h1 [] [ logo, text T.about ], p [] [ renderMarkdown "is-huma" T.aboutHero ] ]
+                        , div [ class "column is-4" ] [ h1 [] [ logo, text T.forNpo ], p [] [ renderMarkdown "is-huma" T.npoHero ] ]
+                        , div [ class "column is-4" ] [ h1 [] [ logo, text T.forCorp ], p [] [ renderMarkdown "is-huma" T.corpHero ] ]
+                        ]
+                    ]
+                ]
             ]
         ]
+
+
+logo : Html Msg
+logo =
+    span [ attribute "style" "position:relative;top:10px;right:10px;" ] [ A.logo1 "white" ]
 
 
 viewSignBox : Model -> Html Msg
 viewSignBox model =
     div [ class "card" ]
         [ div [ class "card-header" ]
-            [ div [ class "card-header-title tabs is-fullwidth" ]
+            [ div [ class "card-header-title tabs is-fullwidth p-0" ]
                 [ ul []
                     [ li [ classList [ ( "is-active", model.viewMode == Login ) ] ]
                         [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text T.signin_ ] ]

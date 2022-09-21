@@ -1,18 +1,66 @@
 #
-# Welcom and Accounts
+# Welcome and Accounts
 #
 
+[heroTitle]
+  en="""Your organization
+        is a living thing,
+        give it a home."""
+  fr="""Votre organisation
+        est un être vivant,
+        donez-lui un toit."""
+
 [heroSubtitle]
-  en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open source culture. Join a network that enact collective intelligence to build transparent and resilient organizations."
-  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open-source. Rejoignez un réseau qui met en œuvre l'intelligence collective pour construire des organisations transparentes et résilientes."
+  en="""Design your organization
+      Invite collaborators
+      Collect tasks - feedback - [tensions](https://doc.fractale.co/tension/)
+      Process them
+      Evolve organically"""
+  fr="""Dessinez votre organisation
+        Invitez des collaborateurs
+        Collectez tâches - feedback - [tensions](https://doc.fractale.co/tension/)
+        Traitez-les
+        Evoluez organiquement"""
+
+
+[aboutHero]
+  en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organizations."
+  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective pour favoriser la transparence, l'évolution et la résilience des organisations."
+
+[npoHero]
+  en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make their governance structures transparent and provide a memory to the organization."
+  fr="De quelque membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs de faciliter la coordinations d'équipes, rendre transparente leurs structures de gouvernance et fournit une mémoire à l'organisation."
+
+[corpHero]
+  en="From *Agile* methods to *Holacracy*, Fractale allows you to implement management and project tracking methods, in a easy way, that favors relationships based on trust and commitment between peers."
+  fr="Des méthodes *Agiles* à l'*Holacratie*, Fractale vous permet de mettre en œuvre des méthodes de management et de suivie de projets, de manière simple, qui privilégient les relations fondées sur la confiance et l'engagement entre pairs."
+
+[forNpo]
+  en="For Nonprofits"
+  fr="Pour les collectifs"
+
+[forCorp]
+  en="For companies"
+  fr="Pour les entreprises"
+
+[tryNow]
+  en="Try it now"
+  fr="Essayez maintenant"
+
+#
+# [I am an NPO]
+# [Je suis une Nonprofit]"
+#
+# [I am a corp]
+# [Je suis une entreprise]
 
 [welcome]
   en="Welcome to Fractale"
   fr="Bienvenue sur Fractale"
 
 [welcomeSub]
-  en="a collective intelligence platform."
-  fr="une plateforme d’intelligence collective."
+  en="a collective intelligence platform"
+  fr="une plateforme d’intelligence collective"
 
 [signin]
   en="Sign in"
@@ -2042,7 +2090,7 @@ Welcome @{{username}},
 
 **Your account has been successfully activated.**
 
-Fractale is a platform for organisations and collectives. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
+Fractale is a platform for organisations and collectives. We are working to provide you the best experience and tools to enact collective intelligence and build open and robust asynchronous communication system.
 
 You can also use it for individual projects to organise and manage your work.
 
