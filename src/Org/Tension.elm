@@ -1332,7 +1332,10 @@ update global message model =
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
         UpdateUctx uctx ->
-            ( { model | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data }
+            ( { model
+                | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data
+                , nodeDoc = NodeDoc.setUctx uctx model.nodeDoc
+              }
             , Cmd.none
             , Cmd.none
             )
