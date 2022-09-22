@@ -252,7 +252,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "explore", class "section" ]
+    div [ id "explore", class "top-section" ]
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-7" ]
                 [ viewPublicOrgas model ]

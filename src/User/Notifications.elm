@@ -361,7 +361,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "notifications", class "section columns reverse-columns" ]
+    div [ id "notifications", class "top-section columns reverse-columns" ]
         [ div [ class "column is-2 is-3-fullhd" ] []
         , div [ class "column is-8 is-6-fullhd" ]
             [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-left", title T.goBack, onClick GoBack ] []

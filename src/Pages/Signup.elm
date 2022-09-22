@@ -157,7 +157,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "signupForm", class "columns is-centered mt-4 p-4 is-marginless" ]
+    div [ id "signupForm", class "columns is-centered top-section" ]
         [ div [ class "" ]
             [ viewSignup global model ]
         ]

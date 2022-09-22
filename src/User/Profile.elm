@@ -307,7 +307,7 @@ view global model =
 
 view_ : UserState -> UserProfile -> Model -> Html Msg
 view_ user_s user model =
-    div [ id "profile", class "section" ]
+    div [ id "profile", class "top-section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
                 [ div [ class "columns is-centered m-0" ]

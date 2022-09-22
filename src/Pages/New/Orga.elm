@@ -405,7 +405,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "createOrga", class "columns is-centered section" ]
+    div [ id "createOrga", class "columns is-centered top-section" ]
         [ div [ class "column is-4-fullhd is-5-desktop" ]
             [ h1 [ class "title has-text-centered" ] [ text T.createYourOrganisation ]
             , viewBreadcrumb model

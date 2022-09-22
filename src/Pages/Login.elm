@@ -162,7 +162,7 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
-    div [ id "loginForm", class "columns is-centered mt-4 p-4 is-marginless" ]
+    div [ id "loginForm", class "columns is-centered top-section" ]
         [ div [ class "" ]
             [ viewLogin model ]
         ]

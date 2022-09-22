@@ -1791,7 +1791,19 @@ viewCircleTensions model =
                         ]
                     )
                 |> List.concat
-                |> (\x -> ternary (List.length x == 0) [ div [ class "ml-6 p-6" ] [ text T.noTensionsYet ] ] x)
+                |> (\x ->
+                        if List.length x == 0 then
+                            [ div [ class "ml-6 p-6" ]
+                                [ text T.noTensionsYet
+                                , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
+                                    (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
+                                    (text "")
+                                ]
+                            ]
+
+                        else
+                            x
+                   )
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"

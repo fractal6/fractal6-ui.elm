@@ -472,6 +472,14 @@ strong {
   white-space: pre-line !important;
 }
 
+[data-tooltip] {
+    @include mobile {
+        // Prevent navbartop overflow
+         &::before {
+            width:0
+        }
+    }
+}
 .tooltip {
     // Tooltip has fadin, and no fadout
     transition: none !important;
@@ -881,12 +889,30 @@ strong {
 #mainPane {
     // Prevent NavbarTop overflow
     & > .columns {
-        // .is-marginless
         margin: 0;
     }
 }
 
+.top-section {
+    margin: 3rem 0 0;
+    padding: 0 10px 0;
+
+    // Prevent NavbarTop overflow
+    & > .columns, &.columns {
+        margin-left: 0;
+        margin-right: 0;
+        & > .column {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+}
+
 #welcome {
+    @include desktop {
+        margin-top: 5rem;
+    }
+
     .title {
         font-size: 4.2rem !important;
         font-weight: 600 !important;
@@ -896,21 +922,13 @@ strong {
             font-size: 2rem !important;
         }
     }
-    .subtitle {
+    .card h2 {
+        font-size: 1.6rem !important;
         @include mobile {
-            font-size: 1rem !important;
+            font-size: 1.3rem !important;
         }
     }
 
-    .columns {
-        @include mobile {
-            padding: 0;
-        }
-    }
-
-    @include desktop {
-        margin-top: 2rem;
-    }
 }
 
 #loginForm, #signupForm {
@@ -2088,6 +2106,17 @@ tr.mediaBox {
 .modal {
     *:not(.modal-card) > .modal-card-body {
         border-radius: 10px;
+    }
+
+    .modal-card-body {
+        @include mobile {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            & > .section {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
     }
 
     .modal-close {

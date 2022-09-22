@@ -412,28 +412,26 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
-    div [ id "settings", class "columns is-centered is-marginles" ]
+    div [ id "settings", class "columns is-centered top-section" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
-            [ div [ class "section" ]
-                [ div [ class "columns" ]
-                    [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
-                    , div [ class "column" ]
-                        [ case model.user of
-                            Success user ->
-                                viewSettingsContent user model
+            [ div [ class "columns" ]
+                [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                , div [ class "column" ]
+                    [ case model.user of
+                        Success user ->
+                            viewSettingsContent user model
 
-                            NotAsked ->
-                                text ""
+                        NotAsked ->
+                            text ""
 
-                            Loading ->
-                                text ""
+                        Loading ->
+                            text ""
 
-                            LoadingSlowly ->
-                                div [ class "spinner" ] []
+                        LoadingSlowly ->
+                            div [ class "spinner" ] []
 
-                            Failure err ->
-                                viewGqlErrors err
-                        ]
+                        Failure err ->
+                            viewGqlErrors err
                     ]
                 ]
             ]

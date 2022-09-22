@@ -11,16 +11,16 @@
         donez-lui un toit."""
 
 [heroSubtitle]
-  en="""Design your organization
-      Invite collaborators
-      Collect tasks - feedback - [tensions](https://doc.fractale.co/tension/)
-      Process them
-      Evolve organically"""
-  fr="""Dessinez votre organisation
-        Invitez des collaborateurs
-        Collectez tâches - feedback - [tensions](https://doc.fractale.co/tension/)
-        Traitez-les
-        Evoluez organiquement"""
+  en="""Design your organization,
+      Invite collaborators,
+      Collect [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
+      Process them,
+      Evolve organically."""
+  fr="""Dessinez votre organisation,
+        Invitez des collaborateurs,
+        Collectez des [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
+        Traitez-les,
+        Evoluez organiquement."""
 
 
 [aboutHero]
@@ -40,7 +40,7 @@
   fr="Pour les collectifs"
 
 [forCorp]
-  en="For companies"
+  en="For Companies"
   fr="Pour les entreprises"
 
 [tryNow]
@@ -2097,8 +2097,7 @@ You can also use it for individual projects to organise and manage your work.
 In order to help your navigation, you will find some shortcuts in the top right corner:
 - the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
 - the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
-- the **new button** (<i class="icon icon-plus"></i>) to create new organisations.
-- the **user button** to access your profile and settings.
+- the **user button** to access your profile plus other shortcuts.
 """
 	fr="""
 Bienvenue @{{username}},

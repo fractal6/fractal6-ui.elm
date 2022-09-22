@@ -215,44 +215,43 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    viewHero model
+    div [ id "welcome", class "top-section" ]
+        [ viewHero model
+        ]
 
 
 viewHero : Model -> Html Msg
 viewHero model =
-    div [ id "welcome", class "hero is-bold" ]
-        [ div [ class "hero-body" ]
-            [ div [ class "columns is-centered" ]
-                [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
-                    [ h1 [ class "title" ] [ renderMarkdown "" T.heroTitle ]
+    div []
+        [ div [ class "columns is-centered pb-6 m-0" ]
+            [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
+                [ h1 [ class "title" ] [ renderMarkdown "" T.heroTitle ]
 
-                    --[ text "Build unstoppable organizations" ]
-                    --[ text "Self-organization", br [] [], text "for humans" ]
-                    --[ text "Collective Intelligence", br [] [], text "at Work" ]
-                    , div [ class "columns is-vcentered" ]
-                        [ div [ class "column is-7" ] [ h2 [ class "subtitle" ] [ renderMarkdown "" T.heroSubtitle ] ]
-                        , div [ class "column is-5" ]
-                            [ a
-                                [ class "button is-primary"
-                                , href (toHref Route.Signup)
-                                , style "border-radius" "8px"
-                                ]
-                                [ text T.tryNow ]
+                --[ text "Build unstoppable organizations" ]
+                --[ text "Self-organization", br [] [], text "for humans" ]
+                --[ text "Collective Intelligence", br [] [], text "at Work" ]
+                , div [ class "columns is-vcentered" ]
+                    [ div [ class "column is-6" ] [ h2 [ class "subtitle" ] [ renderMarkdown "" T.heroSubtitle ] ]
+                    , div [ class "column is-5" ]
+                        [ a
+                            [ class "button is-primary"
+                            , href (toHref Route.Signup)
+                            , style "border-radius" "8px"
                             ]
+                            [ text T.tryNow ]
                         ]
                     ]
-                , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]
-                    [ viewSignBox model ]
                 ]
-            , br [] []
-            , br [] []
-            , div [ class "columns is-centered" ]
-                [ div [ class "column is-11 is-9-fullhd" ]
-                    [ div [ class "columns is-5 is-variable content" ]
-                        [ div [ class "column is-4" ] [ h1 [] [ logo, text T.about ], p [] [ renderMarkdown "is-huma" T.aboutHero ] ]
-                        , div [ class "column is-4" ] [ h1 [] [ logo, text T.forNpo ], p [] [ renderMarkdown "is-huma" T.npoHero ] ]
-                        , div [ class "column is-4" ] [ h1 [] [ logo, text T.forCorp ], p [] [ renderMarkdown "is-huma" T.corpHero ] ]
-                        ]
+            , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]
+                [ viewSignBox model ]
+            ]
+        , br [] []
+        , div [ class "columns is-centered m-0" ]
+            [ div [ class "column is-11 is-9-fullhd" ]
+                [ div [ class "columns is-5 is-variable content" ]
+                    [ div [ class "column is-4" ] [ h1 [] [ logo, text T.about ], p [] [ renderMarkdown "is-huma" T.aboutHero ] ]
+                    , div [ class "column is-4" ] [ h1 [] [ logo, text T.forNpo ], p [] [ renderMarkdown "is-huma" T.npoHero ] ]
+                    , div [ class "column is-4" ] [ h1 [] [ logo, text T.forCorp ], p [] [ renderMarkdown "is-huma" T.corpHero ] ]
                     ]
                 ]
             ]

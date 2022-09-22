@@ -97,7 +97,8 @@ install:
 
 
 elm-spa:
-	elm-spa build .
+	npm run build:elm-spa
+
 
 elm:
 	elm make src/Main.elm --optimize --output=$(elm-js)

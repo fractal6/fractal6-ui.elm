@@ -180,7 +180,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ class "columns is-centered section" ]
+    div [ class "columns is-centered top-section" ]
         [ div [ class "column is-7 is-5-fullhd" ]
             [ viewVerification global model ]
         ]

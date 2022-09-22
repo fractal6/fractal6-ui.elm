@@ -28,5 +28,5 @@ page =
 view : Document Msg
 view =
     { title = "Page not found"
-    , body = [ div [ class "section" ] [ A.viewNotFound ] ]
+    , body = [ div [ class "top-section" ] [ A.viewNotFound ] ]
     }

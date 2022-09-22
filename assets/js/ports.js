@@ -103,8 +103,11 @@ export const actions = {
         InitBulma(app, session, "")
     },
     'OPEN_AUTH_MODAL': (app, session, message) => {
-        document.documentElement.classList.add('has-modal-active2');
-        document.getElementById("navbarTop").classList.add('has-modal-active2');
+        setTimeout(() => {
+            // @DEBUG: the class does not persist without the setTimeout. Why ?
+            document.documentElement.classList.add('has-modal-active2');
+            document.getElementById("navbarTop").classList.add('has-modal-active2');
+        }, 333);
     },
     'CLOSE_AUTH_MODAL': (app, session, message) => {
         document.documentElement.classList.remove('has-modal-active2');

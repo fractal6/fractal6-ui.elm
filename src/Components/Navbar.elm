@@ -5,7 +5,7 @@ import Assets.Logo as Logo
 import Extra exposing (ternary, textH, upH)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
-import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
+import Html exposing (Html, a, button, div, header, hr, i, nav, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
@@ -28,9 +28,15 @@ view user url replaceUrl =
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ A.logo0 "white"
+                    , case user of
+                        LoggedOut ->
+                            strong [ attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]
 
-                    --, span [ class "has-text-orange", attribute "style" "padding-top: 10px; font-size: 0.65rem; margin-left: -2px;" ] [ text "Alpha" ]
-                    , span [ class "has-text-orange", attribute "style" "position:relative; top: -10px; font-size: 0.65rem;" ] [ text "Beta" ]
+                        _ ->
+                            text ""
+
+                    --, span [ class "has-text-orange", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                    , span [ class "has-text-orange", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
                     ]
                 , A.burger "userMenu"
                 ]
