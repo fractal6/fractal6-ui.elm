@@ -1680,23 +1680,23 @@ viewRolesExt model =
                                 ++ [ br [ class "clearfix" ] []
                                    , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-4" ] [], text T.youCanAdd ]
+                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-4" ] [], text T.youCanMake ]
 
                                           else
                                             span [ class "content is-small" ] [ text T.needNewRole ]
-                                        , span
-                                            [ class "button is-small has-text-link mx-2"
-                                            , title T.templateRoleHint
-                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
-                                            ]
-                                            [ text T.templateRole ]
-                                        , span [ class "content is-small" ] [ text T.orCreate ]
                                         , span
                                             [ class "button is-small has-text-link mx-2"
                                             , title T.adhocRoleHint
                                             , onClick (OnChangeNodeStep NodeValidateStep)
                                             ]
                                             [ text T.adhocRole ]
+                                        , span [ class "content is-small" ] [ text T.orAdd ]
+                                        , span
+                                            [ class "button is-small has-text-link mx-2"
+                                            , title T.templateRoleHint
+                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
+                                            ]
+                                            [ text T.templateRole ]
                                         ]
                                    ]
                        )

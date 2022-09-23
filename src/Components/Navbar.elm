@@ -171,7 +171,7 @@ userButtons user url replaceUrl =
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toString UsersBaseUri uctx.username []) ]
-                        [ A.icon1 "icon-user" T.profile ]
+                        [ A.icon1 "icon-home" "Home" ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
                     , span [ id "themeTrigger", class "navbar-item is-w" ]
