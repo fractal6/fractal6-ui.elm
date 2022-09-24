@@ -648,9 +648,9 @@ buildAddNotifInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+                { updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent, link = Absent }
     in
-    AddNotifInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+    AddNotifInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract, link = optionals____.link }
 
 
 type alias AddNotifInputRequiredFields =
@@ -664,6 +664,7 @@ type alias AddNotifInputOptionalFields =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -679,6 +680,7 @@ type alias AddNotifInputRaw =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -693,7 +695,7 @@ type AddNotifInput
 encodeAddNotifInput : AddNotifInput -> Value
 encodeAddNotifInput (AddNotifInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ), ( "link", Encode.string |> Encode.optional input____.link ) ]
 
 
 buildAddOrgaAggInput :
@@ -4170,9 +4172,9 @@ buildNotifPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent, link = Absent }
     in
-    NotifPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+    NotifPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract, link = optionals____.link }
 
 
 type alias NotifPatchOptionalFields =
@@ -4182,6 +4184,7 @@ type alias NotifPatchOptionalFields =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -4197,6 +4200,7 @@ type alias NotifPatchRaw =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -4211,7 +4215,7 @@ type NotifPatch
 encodeNotifPatch : NotifPatch -> Value
 encodeNotifPatch (NotifPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ), ( "link", Encode.string |> Encode.optional input____.link ) ]
 
 
 buildNotifRef :
@@ -4221,9 +4225,9 @@ buildNotifRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent, link = Absent }
     in
-    NotifRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+    NotifRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract, link = optionals____.link }
 
 
 type alias NotifRefOptionalFields =
@@ -4234,6 +4238,7 @@ type alias NotifRefOptionalFields =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -4250,6 +4255,7 @@ type alias NotifRefRaw =
     , message : OptionalArgument String
     , tension_ : OptionalArgument TensionRef
     , contract : OptionalArgument ContractRef
+    , link : OptionalArgument String
     }
 
 
@@ -4264,7 +4270,7 @@ type NotifRef
 encodeNotifRef : NotifRef -> Value
 encodeNotifRef (NotifRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ), ( "link", Encode.string |> Encode.optional input____.link ) ]
 
 
 buildOrgaAggFilter :

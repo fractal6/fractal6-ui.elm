@@ -14,11 +14,12 @@ type NotifHasFilter
     | Message
     | Tension_
     | Contract
+    | Link
 
 
 list : List NotifHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension_, Contract ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension_, Contract, Link ]
 
 
 decoder : Decoder NotifHasFilter
@@ -44,6 +45,9 @@ decoder =
 
                     "contract" ->
                         Decode.succeed Contract
+
+                    "link" ->
+                        Decode.succeed Link
 
                     _ ->
                         Decode.fail ("Invalid NotifHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -72,6 +76,9 @@ toString enum____ =
 
         Contract ->
             "contract"
+
+        Link ->
+            "link"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -105,6 +112,9 @@ fromString enumString____ =
 
         "contract" ->
             Just Contract
+
+        "link" ->
+            Just Link
 
         _ ->
             Nothing

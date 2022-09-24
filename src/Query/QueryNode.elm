@@ -1192,3 +1192,4 @@ notifEventPayload =
                 )
             )
         |> with (Fractal.Object.Notif.contract identity (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id)))
+        |> with Fractal.Object.Notif.link

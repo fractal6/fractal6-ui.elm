@@ -178,7 +178,12 @@ update_ apis message model =
                         )
 
                 LoggedOut ->
-                    ( { model | modalType = SigninModal, modalAuth = Active { post = Dict.empty } RemoteData.NotAsked }, out0 [ Ports.open_auth_modal ] )
+                    case model.modalType of
+                        SignupModal puid ->
+                            ( model, out0 [ send (DoOpenSignupModal puid) ] )
+
+                        _ ->
+                            ( { model | modalType = SigninModal, modalAuth = Active { post = Dict.empty } RemoteData.NotAsked }, out0 [ Ports.open_auth_modal ] )
 
         DoOpenSignupModal puid ->
             ( { model

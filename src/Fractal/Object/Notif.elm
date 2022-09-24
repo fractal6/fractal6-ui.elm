@@ -59,6 +59,11 @@ contract fillInOptionals____ object____ =
     Object.selectionForCompositeField "contract" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+link : SelectionSet (Maybe String) Fractal.Object.Notif
+link =
+    Object.selectionForField "(Maybe String)" "link" [] (Decode.string |> Decode.nullable)
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Notif
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

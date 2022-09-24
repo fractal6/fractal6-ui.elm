@@ -52,3 +52,13 @@ messageMin =
 messageMax : SelectionSet (Maybe String) Fractal.Object.NotifAggregateResult
 messageMax =
     Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
+
+
+linkMin : SelectionSet (Maybe String) Fractal.Object.NotifAggregateResult
+linkMin =
+    Object.selectionForField "(Maybe String)" "linkMin" [] (Decode.string |> Decode.nullable)
+
+
+linkMax : SelectionSet (Maybe String) Fractal.Object.NotifAggregateResult
+linkMax =
+    Object.selectionForField "(Maybe String)" "linkMax" [] (Decode.string |> Decode.nullable)

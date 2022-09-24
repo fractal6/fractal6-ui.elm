@@ -638,6 +638,7 @@ type alias NotifNotif =
     , message : Maybe String
     , tension : Maybe { id : String, receiver : PNode }
     , contract : Maybe { id : String }
+    , link : Maybe String
     }
 
 

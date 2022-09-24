@@ -11,11 +11,12 @@ type NotifOrderable
     = CreatedAt
     | UpdatedAt
     | Message
+    | Link
 
 
 list : List NotifOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message ]
+    [ CreatedAt, UpdatedAt, Message, Link ]
 
 
 decoder : Decoder NotifOrderable
@@ -32,6 +33,9 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
+
+                    "link" ->
+                        Decode.succeed Link
 
                     _ ->
                         Decode.fail ("Invalid NotifOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,6 +55,9 @@ toString enum____ =
 
         Message ->
             "message"
+
+        Link ->
+            "link"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -75,6 +82,9 @@ fromString enumString____ =
 
         "message" ->
             Just Message
+
+        "link" ->
+            Just Link
 
         _ ->
             Nothing

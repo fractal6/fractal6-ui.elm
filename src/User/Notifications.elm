@@ -522,10 +522,18 @@ viewUserEvent lang now ue =
 
                         Nothing ->
                             let
+                                d =
+                                    Debug.log "link" n.link
+
                                 link =
-                                    (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id } |> toHref)
-                                        ++ "?eid="
-                                        ++ ue.id
+                                    case n.link of
+                                        Just l ->
+                                            l
+
+                                        Nothing ->
+                                            (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id } |> toHref)
+                                                ++ "?eid="
+                                                ++ ue.id
 
                                 ev =
                                     Dict.insert "link" link ev_
