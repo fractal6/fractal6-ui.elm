@@ -977,13 +977,16 @@ viewContractBox c op model =
 viewVoteBox : ContractFull -> Op -> Model -> Html Msg
 viewVoteBox c op model =
     let
+        participants =
+            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid)
+
         -- @doublon
         isCandidate =
             c.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member model.form.uctx.username
 
         -- @doublon
         isParticipant =
-            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
+            participants |> List.member model.form.uctx.username
 
         isLoading =
             model.vote_result == LoadingSlowly
@@ -1005,21 +1008,44 @@ viewVoteBox c op model =
         div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
 
     else
+        let
+            isPendingCandidateVote =
+                case c.candidates of
+                    Just [ invitedOne ] ->
+                        not (List.member invitedOne.username participants)
+
+                    _ ->
+                        True
+        in
         div [ class "mb-5" ]
-            [ p [ class "buttons is-centered voteButton" ]
-                [ div
-                    [ class "button is-success is-rounded"
-                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
-                    , onClick (OnSubmit isLoading <| DoVote 1)
+            [ p [ class "buttons is-centered voteButton" ] <|
+                (-- If contract is an user invitation and the candidate vote is waited
+                 -- Only show a "cancel invitation" button for coordinator.
+                 if isPendingCandidateVote && not isCandidate then
+                    [ div
+                        [ class "button is-danger is-rounded"
+                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
+                        , onClick (OnSubmit isLoading <| DoVote 0)
+                        ]
+                        [ span [ class "mx-4" ] [ text T.cancelInvitation ] ]
                     ]
-                    [ span [ class "mx-4" ] [ text T.accept ] ]
-                , div
-                    [ class "button is-danger is-rounded"
-                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
-                    , onClick (OnSubmit isLoading <| DoVote 0)
+
+                 else
+                    -- Otherwire show a "Accept/Cancel" buttons
+                    [ div
+                        [ class "button is-success is-rounded"
+                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
+                        , onClick (OnSubmit isLoading <| DoVote 1)
+                        ]
+                        [ span [ class "mx-4" ] [ text T.accept ] ]
+                    , div
+                        [ class "button is-danger is-rounded"
+                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
+                        , onClick (OnSubmit isLoading <| DoVote 0)
+                        ]
+                        [ span [ class "mx-4" ] [ text T.decline ] ]
                     ]
-                    [ span [ class "mx-4" ] [ text T.decline ] ]
-                ]
+                )
             , if isParticipant then
                 div [ class "help has-text-centered" ] [ text T.alreadyVoted ]
 
