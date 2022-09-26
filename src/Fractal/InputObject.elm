@@ -13,6 +13,8 @@ import Fractal.Enum.ContractHasFilter
 import Fractal.Enum.ContractOrderable
 import Fractal.Enum.ContractStatus
 import Fractal.Enum.ContractType
+import Fractal.Enum.EventCountHasFilter
+import Fractal.Enum.EventCountOrderable
 import Fractal.Enum.EventFragmentHasFilter
 import Fractal.Enum.EventFragmentOrderable
 import Fractal.Enum.EventHasFilter
@@ -261,6 +263,40 @@ encodeAddContractInput : AddContractInput -> Value
 encodeAddContractInput (AddContractInput input____) =
     Encode.maybeObject
         [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "contractid", Encode.string input____.contractid |> Just ), ( "tension", encodeTensionRef input____.tension |> Just ), ( "status", Encode.enum Fractal.Enum.ContractStatus.toString input____.status |> Just ), ( "contract_type", Encode.enum Fractal.Enum.ContractType.toString input____.contract_type |> Just ), ( "closedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.closedAt ), ( "event", encodeEventFragmentRef input____.event |> Just ), ( "participants", (encodeVoteRef |> Encode.list) input____.participants |> Just ), ( "candidates", (encodeUserRef |> Encode.list) |> Encode.optional input____.candidates ), ( "pending_candidates", (encodePendingUserRef |> Encode.list) |> Encode.optional input____.pending_candidates ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input____.comments ), ( "isValidator", Encode.bool |> Encode.optional input____.isValidator ) ]
+
+
+buildAddEventCountInput :
+    (AddEventCountInputOptionalFields -> AddEventCountInputOptionalFields)
+    -> AddEventCountInput
+buildAddEventCountInput fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { unread_events = Absent, pending_contracts = Absent }
+    in
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+
+
+type alias AddEventCountInputOptionalFields =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Type for the AddEventCountInput input object.
+-}
+type alias AddEventCountInput =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Encode a AddEventCountInput into a value that can be used as an argument.
+-}
+encodeAddEventCountInput : AddEventCountInput -> Value
+encodeAddEventCountInput input____ =
+    Encode.maybeObject
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
 
 
 buildAddEventFragmentInput :
@@ -990,9 +1026,9 @@ buildAddUserInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { name = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, subscriptions = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
+                { name = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, subscriptions = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, email = required____.email, password = required____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = required____.notifyByEmail, lang = required____.lang, subscriptions = optionals____.subscriptions, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
+    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, email = required____.email, password = required____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = required____.notifyByEmail, lang = required____.lang, subscriptions = optionals____.subscriptions, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias AddUserInputRequiredFields =
@@ -1022,6 +1058,7 @@ type alias AddUserInputOptionalFields =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -1053,6 +1090,7 @@ type alias AddUserInputRaw =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -1067,7 +1105,7 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string input____.email |> Just ), ( "password", Encode.string input____.password |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool input____.notifyByEmail |> Just ), ( "lang", Encode.enum Fractal.Enum.Lang.toString input____.lang |> Just ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string input____.email |> Just ), ( "password", Encode.string input____.password |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool input____.notifyByEmail |> Just ), ( "lang", Encode.enum Fractal.Enum.Lang.toString input____.lang |> Just ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildAddUserRightsInput :
@@ -2170,6 +2208,166 @@ encodeDgraphDefault : DgraphDefault -> Value
 encodeDgraphDefault input____ =
     Encode.maybeObject
         [ ( "value", Encode.string |> Encode.optional input____.value ) ]
+
+
+buildEventCountFilter :
+    (EventCountFilterOptionalFields -> EventCountFilterOptionalFields)
+    -> EventCountFilter
+buildEventCountFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    EventCountFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias EventCountFilterOptionalFields =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.EventCountHasFilter.EventCountHasFilter))
+    , and : OptionalArgument (List (Maybe EventCountFilter))
+    , or : OptionalArgument (List (Maybe EventCountFilter))
+    , not : OptionalArgument EventCountFilter
+    }
+
+
+{-| Type alias for the `EventCountFilter` attributes. Note that this type
+needs to use the `EventCountFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias EventCountFilterRaw =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.EventCountHasFilter.EventCountHasFilter))
+    , and : OptionalArgument (List (Maybe EventCountFilter))
+    , or : OptionalArgument (List (Maybe EventCountFilter))
+    , not : OptionalArgument EventCountFilter
+    }
+
+
+{-| Type for the EventCountFilter input object.
+-}
+type EventCountFilter
+    = EventCountFilter EventCountFilterRaw
+
+
+{-| Encode a EventCountFilter into a value that can be used as an argument.
+-}
+encodeEventCountFilter : EventCountFilter -> Value
+encodeEventCountFilter (EventCountFilter input____) =
+    Encode.maybeObject
+        [ ( "has", (Encode.enum Fractal.Enum.EventCountHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeEventCountFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeEventCountFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeEventCountFilter |> Encode.optional input____.not ) ]
+
+
+buildEventCountOrder :
+    (EventCountOrderOptionalFields -> EventCountOrderOptionalFields)
+    -> EventCountOrder
+buildEventCountOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    EventCountOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias EventCountOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.EventCountOrderable.EventCountOrderable
+    , desc : OptionalArgument Fractal.Enum.EventCountOrderable.EventCountOrderable
+    , then_ : OptionalArgument EventCountOrder
+    }
+
+
+{-| Type alias for the `EventCountOrder` attributes. Note that this type
+needs to use the `EventCountOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias EventCountOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.EventCountOrderable.EventCountOrderable
+    , desc : OptionalArgument Fractal.Enum.EventCountOrderable.EventCountOrderable
+    , then_ : OptionalArgument EventCountOrder
+    }
+
+
+{-| Type for the EventCountOrder input object.
+-}
+type EventCountOrder
+    = EventCountOrder EventCountOrderRaw
+
+
+{-| Encode a EventCountOrder into a value that can be used as an argument.
+-}
+encodeEventCountOrder : EventCountOrder -> Value
+encodeEventCountOrder (EventCountOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.EventCountOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.EventCountOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeEventCountOrder |> Encode.optional input____.then_ ) ]
+
+
+buildEventCountPatch :
+    (EventCountPatchOptionalFields -> EventCountPatchOptionalFields)
+    -> EventCountPatch
+buildEventCountPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { unread_events = Absent, pending_contracts = Absent }
+    in
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+
+
+type alias EventCountPatchOptionalFields =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Type for the EventCountPatch input object.
+-}
+type alias EventCountPatch =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Encode a EventCountPatch into a value that can be used as an argument.
+-}
+encodeEventCountPatch : EventCountPatch -> Value
+encodeEventCountPatch input____ =
+    Encode.maybeObject
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
+
+
+buildEventCountRef :
+    (EventCountRefOptionalFields -> EventCountRefOptionalFields)
+    -> EventCountRef
+buildEventCountRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { unread_events = Absent, pending_contracts = Absent }
+    in
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+
+
+type alias EventCountRefOptionalFields =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Type for the EventCountRef input object.
+-}
+type alias EventCountRef =
+    { unread_events : OptionalArgument Int
+    , pending_contracts : OptionalArgument Int
+    }
+
+
+{-| Encode a EventCountRef into a value that can be used as an argument.
+-}
+encodeEventCountRef : EventCountRef -> Value
+encodeEventCountRef input____ =
+    Encode.maybeObject
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
 
 
 buildEventFilter :
@@ -6008,6 +6206,55 @@ encodeUpdateContractInput (UpdateContractInput input____) =
         [ ( "filter", encodeContractFilter input____.filter |> Just ), ( "set", encodeContractPatch |> Encode.optional input____.set ), ( "remove", encodeContractPatch |> Encode.optional input____.remove ) ]
 
 
+buildUpdateEventCountInput :
+    UpdateEventCountInputRequiredFields
+    -> (UpdateEventCountInputOptionalFields -> UpdateEventCountInputOptionalFields)
+    -> UpdateEventCountInput
+buildUpdateEventCountInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateEventCountInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateEventCountInputRequiredFields =
+    { filter : EventCountFilter }
+
+
+type alias UpdateEventCountInputOptionalFields =
+    { set : OptionalArgument EventCountPatch
+    , remove : OptionalArgument EventCountPatch
+    }
+
+
+{-| Type alias for the `UpdateEventCountInput` attributes. Note that this type
+needs to use the `UpdateEventCountInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateEventCountInputRaw =
+    { filter : EventCountFilter
+    , set : OptionalArgument EventCountPatch
+    , remove : OptionalArgument EventCountPatch
+    }
+
+
+{-| Type for the UpdateEventCountInput input object.
+-}
+type UpdateEventCountInput
+    = UpdateEventCountInput UpdateEventCountInputRaw
+
+
+{-| Encode a UpdateEventCountInput into a value that can be used as an argument.
+-}
+encodeUpdateEventCountInput : UpdateEventCountInput -> Value
+encodeUpdateEventCountInput (UpdateEventCountInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeEventCountFilter input____.filter |> Just ), ( "set", encodeEventCountPatch |> Encode.optional input____.set ), ( "remove", encodeEventCountPatch |> Encode.optional input____.remove ) ]
+
+
 buildUpdateEventFragmentInput :
     UpdateEventFragmentInputRequiredFields
     -> (UpdateEventFragmentInputOptionalFields -> UpdateEventFragmentInputOptionalFields)
@@ -7093,9 +7340,9 @@ buildUserPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
+                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
+    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias UserPatchOptionalFields =
@@ -7121,6 +7368,7 @@ type alias UserPatchOptionalFields =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -7152,6 +7400,7 @@ type alias UserPatchRaw =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -7166,7 +7415,7 @@ type UserPatch
 encodeUserPatch : UserPatch -> Value
 encodeUserPatch (UserPatch input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildUserRef :
@@ -7176,9 +7425,9 @@ buildUserRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
+                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
+    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias UserRefOptionalFields =
@@ -7205,6 +7454,7 @@ type alias UserRefOptionalFields =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -7237,6 +7487,7 @@ type alias UserRefRaw =
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
+    , event_count : OptionalArgument EventCountRef
     }
 
 
@@ -7251,7 +7502,7 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildUserRightsFilter :

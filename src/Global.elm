@@ -27,13 +27,14 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
-import Loading exposing (RequestResult(..), WebData, expectJson, toErrorData)
+import Loading exposing (GqlData, RequestResult(..), WebData, expectJson, toErrorData)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
 import ModelCommon.Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
 import Process
+import Query.QueryNotifications exposing (queryNotifCount)
 import RemoteData exposing (RemoteData)
 import Session
     exposing
@@ -82,6 +83,7 @@ init flags url key =
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
          , now
+         , sendSleep RefreshNotifCount 1000
          ]
             ++ cmds
         )
@@ -124,6 +126,9 @@ type Msg
     | UpdateSessionMenuTree (Maybe Bool)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
+    | UpdateSessionNotif NotifCount
+    | RefreshNotifCount
+    | AckNotifCount (GqlData NotifCount)
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
@@ -178,16 +183,14 @@ update msg model =
             in
             ( { model | session = { session | user = LoggedIn uctx } }
               -- Update Components when Uctx change !
-            , [ case model.session.tree_data of
-                    Just ndata ->
-                        [ Ports.saveUserCtx uctx
-                        , Ports.redrawGraphPack ndata
-                        ]
+            , [ Ports.saveUserCtx uctx, sendSleep RefreshNotifCount 1000 ]
+                ++ (case model.session.tree_data of
+                        Just ndata ->
+                            [ Ports.redrawGraphPack ndata ]
 
-                    Nothing ->
-                        [ Ports.saveUserCtx uctx ]
-              ]
-                |> List.concat
+                        Nothing ->
+                            []
+                   )
                 |> Cmd.batch
             )
 
@@ -440,6 +443,29 @@ update msg model =
                 Nothing ->
                     ( model, Ports.logErr ("Error: Bad lang format: " ++ data) )
 
+        UpdateSessionNotif data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | notif = data } }, Cmd.none )
+
+        RefreshNotifCount ->
+            case model.session.user of
+                LoggedIn uctx ->
+                    ( model, queryNotifCount apis { uctx = uctx } AckNotifCount )
+
+                LoggedOut ->
+                    ( model, Cmd.none )
+
+        AckNotifCount result ->
+            case result of
+                Success data ->
+                    ( model, send (UpdateSessionNotif data) )
+
+                _ ->
+                    ( model, Cmd.none )
+
         UpdateSessionAuthorsPanel data ->
             let
                 session =
@@ -473,6 +499,7 @@ subscriptions _ =
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
         , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
+        , Ports.updateNotifFromJs (always RefreshNotifCount)
         ]
 
 
@@ -496,7 +523,7 @@ layout { page, url, session, msg1 } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Lazy.lazy3 Navbar.view session.user url msg1
+            [ Lazy.lazy4 Navbar.view session.user session.notif url msg1
             , div [ id "body" ] page.body
             , Footbar.view
             ]

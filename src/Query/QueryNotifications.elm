@@ -1,4 +1,4 @@
-module Query.QueryNotifications exposing (queryNotifications)
+module Query.QueryNotifications exposing (queryNotifCount, queryNotifications)
 
 import Dict exposing (Dict)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -14,6 +14,7 @@ import Fractal.Object
 import Fractal.Object.AddNodePayload
 import Fractal.Object.Contract
 import Fractal.Object.Event
+import Fractal.Object.EventCount
 import Fractal.Object.EventFragment
 import Fractal.Object.Mandate
 import Fractal.Object.Node
@@ -42,6 +43,40 @@ import Query.QueryNode
         )
 import Query.QueryUser exposing (usernameFilter)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Query event count
+
+-}
+--notifCountDecoder : Maybe IsSubscribe -> Maybe Bool
+
+
+notifCountDecoder : Maybe { event_count : Maybe NotifCount } -> Maybe NotifCount
+notifCountDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d.event_count
+            )
+        |> withDefault Nothing
+
+
+queryNotifCount url f msg =
+    makeGQLQuery url
+        (Query.getUser (usernameFilter f.uctx.username)
+            (SelectionSet.map2 (\_ x -> { event_count = x })
+                Fractal.Object.User.username
+                (Fractal.Object.User.event_count identity
+                    (SelectionSet.map2 NotifCount
+                        (Fractal.Object.EventCount.unread_events |> SelectionSet.map (\a -> withDefault 0 a))
+                        (Fractal.Object.EventCount.pending_contracts |> SelectionSet.map (\a -> withDefault 0 a))
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse notifCountDecoder >> msg)
 
 
 

@@ -283,6 +283,26 @@ markAllAsRead =
     Object.selectionForField "(Maybe String)" "markAllAsRead" [] (Decode.string |> Decode.nullable)
 
 
+type alias EventCountOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventCountFilter }
+
+
+event_count :
+    (EventCountOptionalArguments -> EventCountOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventCount
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+event_count fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventCountFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "event_count" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias SubscriptionsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

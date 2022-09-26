@@ -1097,3 +1097,47 @@ aggregateNotif fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "aggregateNotif" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryEventCountOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventCountFilter
+    , order : OptionalArgument Fractal.InputObject.EventCountOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryEventCount :
+    (QueryEventCountOptionalArguments -> QueryEventCountOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventCount
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryEventCount fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventCountFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeEventCountOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryEventCount" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateEventCountOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventCountFilter }
+
+
+aggregateEventCount :
+    (AggregateEventCountOptionalArguments -> AggregateEventCountOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventCountAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateEventCount fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventCountFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateEventCount" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

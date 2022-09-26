@@ -28,6 +28,7 @@ import ModelSchema
         ( Label
         , Node
         , NodesDict
+        , NotifCount
         , User
         , UserCtx
         )
@@ -75,6 +76,9 @@ port updateMenuTreeFromJs : (Maybe Bool -> msg) -> Sub msg
 
 
 port updateLangFromJs : (String -> msg) -> Sub msg
+
+
+port updateNotifFromJs : (() -> msg) -> Sub msg
 
 
 port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg

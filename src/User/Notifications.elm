@@ -214,10 +214,30 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadNotifications 500, send UpdateUserToken )
 
-                OkAuth th ->
+                OkAuth data ->
+                    let
+                        ( i, j ) =
+                            List.filter (\x -> not x.isRead) data
+                                |> List.foldr
+                                    (\a ( ne, nc ) ->
+                                        case List.head a.event of
+                                            Just (TensionEvent _) ->
+                                                ( ne + 1, nc )
+
+                                            Just (NotifEvent n) ->
+                                                ( ne + 1, nc )
+
+                                            Just (ContractEvent c) ->
+                                                ( ne, nc + 1 )
+
+                                            Nothing ->
+                                                ( ne, nc )
+                                    )
+                                    ( 0, 0 )
+                    in
                     ( { model | notifications_data = result }
                     , Cmd.none
-                    , Cmd.none
+                    , send (UpdateSessionNotif { unread_events = i, pending_contracts = j })
                     )
 
                 _ ->
@@ -244,7 +264,7 @@ update global message model =
                                 )
                                 model.notifications_data
                     in
-                    ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
+                    ( { model | notifications_data = newData }, Cmd.none, send RefreshNotifCount )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -268,7 +288,7 @@ update global message model =
                                 (List.map (\a -> ternary (editableEvent a.event) { a | isRead = True } a))
                                 model.notifications_data
                     in
-                    ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
+                    ( { model | notifications_data = newData }, Cmd.none, send RefreshNotifCount )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )

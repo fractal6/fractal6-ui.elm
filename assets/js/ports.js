@@ -275,6 +275,7 @@ export const actions = {
 
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
+        app.ports.updateNotifFromJs.send();
     },
     'SAVE_SESSION_ITEM' : (app, session, data) => {
         localStorage.setItem(data.key, JSON.stringify(data.val));

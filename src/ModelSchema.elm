@@ -758,6 +758,17 @@ type alias UserRoleCommon a =
     }
 
 
+type alias NotifCount =
+    { unread_events : Int
+    , pending_contracts : Int
+    }
+
+
+initNotifCount : NotifCount
+initNotifCount =
+    { unread_events = 0, pending_contracts = 0 }
+
+
 initUserRights : UserRights
 initUserRights =
     UserRights False False UserType.Regular

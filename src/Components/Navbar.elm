@@ -12,12 +12,13 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toString)
 import ModelCommon.View exposing (lang2str)
+import ModelSchema exposing (NotifCount)
 import Text as T
 import Url exposing (Url)
 
 
-view : UserState -> Url -> (String -> msg) -> Html msg
-view user url replaceUrl =
+view : UserState -> NotifCount -> Url -> (String -> msg) -> Html msg
+view user notif url replaceUrl =
     let
         orgUrl =
             isOrgUrl url
@@ -49,8 +50,8 @@ view user url replaceUrl =
                     (case user of
                         LoggedIn uctx ->
                             (if orgUrl then
-                                [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
-                                , div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger" ] [ A.icon "icon-git-branch" ]
+                                [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu" ]
+                                , div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ]
                                 ]
 
                              else
@@ -78,7 +79,7 @@ view user url replaceUrl =
 
                         LoggedOut ->
                             if orgUrl then
-                                [ div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger" ] [ A.icon "icon-git-branch" ] ]
+                                [ div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ] ]
 
                             else
                                 []
@@ -91,7 +92,7 @@ view user url replaceUrl =
                                 [ text T.explore ]
                            ]
                 , div [ class "navbar-end" ] <|
-                    [ notificationButton user url
+                    [ notificationButton user notif url
                     , helpButton user
 
                     --, newButton user
@@ -102,8 +103,8 @@ view user url replaceUrl =
         ]
 
 
-notificationButton : UserState -> Url -> Html msg
-notificationButton user url =
+notificationButton : UserState -> NotifCount -> Url -> Html msg
+notificationButton user notif url =
     case user of
         LoggedIn _ ->
             a
@@ -113,10 +114,21 @@ notificationButton user url =
                 , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 ]
                 [ div
-                    [ class "navbar-link is-arrowless notifTrigger"
+                    [ class "navbar-link is-arrowless notifTrigger "
                     , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                     ]
-                    [ A.icon "icon-bg icon-bell" ]
+                    [ A.icon "icon-bg icon-bell"
+                    , if notif.unread_events > 0 then
+                        span [ class "badge is-link2", style "margin-top" "-5px", title T.unreadNotif ] []
+
+                      else
+                        text ""
+                    , if notif.pending_contracts > 0 then
+                        span [ class "badge is-info is-top-left", attribute "style" "left:5px;margin-top:1px;", title T.pendingContract ] []
+
+                      else
+                        text ""
+                    ]
                 ]
 
         LoggedOut ->

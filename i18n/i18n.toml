@@ -153,8 +153,8 @@
   en="Governance Transparency"
   fr="Gouvernance Transparente"
 [govTranspAbout]
-  en="Keep anyone to the same page. Engage your peers by sharing the structure of your organisation, the purposes of your circles and the mandates of your roles. Roles comes with authority rules that allows giving responsabilities and trust to members and autonomy to circles's gouvernances."
-  fr="Faites en sorte que tout le monde soit sur la même longueur d'onde. Engagez vos pairs en partageant la structure de votre organisation, les objectifs de vos cercles et les mandats de vos rôles. Les rôles sont accompagnés de règles d'autorité qui permettent de donner des responsabilités et de la confiance aux membres et de l'autonomie aux gouvernances des cercles."
+  en="Keep anyone to the same page. Engage your peers by sharing the structure of your organisation, the purposes of your circles and the mandates of your roles. Roles comes with authority rules that allows giving responsabilities and trust to members and autonomy in the governance of circles."
+  fr="Faites en sorte que tout le monde soit sur la même longueur d'onde. Engagez vos pairs en partageant la structure de votre organisation, les objectifs de vos cercles et les mandats de vos rôles. Les rôles sont accompagnés de règles d'autorité qui permettent de donner des responsabilités et de la confiance aux membres et de l'autonomie dans la gouvernances des cercles."
 
 [govFeat1]
   en="Dynamic Organigram"
@@ -166,11 +166,11 @@
   en="Distributed Authority"
   fr="Authorité Distribué"
 [govFeat4]
-  en="Controled visibility"
-  fr="Contrôle de la visibilité"
+  en="Controlled Visibility"
+  fr="Contrôle de la Visibilité"
 [govFeat5]
-  en="Mandates"
-  fr="Mandats"
+  en="Mandates and Contracts (mutual validation)"
+  fr="Mandats et Contrats (validation mutuelle)"
 [govFeat6]
   en="Intuitive Navigation"
   fr="Navigation Intuitive"
@@ -182,8 +182,8 @@
   en="Asynchronous Communication"
   fr="Communication Asynchrone"
 [asyncComAbout]
-  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A Tension is a general communication object that is akin to an email and can be sent to any circles of Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. Thus notifications are naturally determined by the members of that circles, while tension can be searched and filtered according to the structure of the organization itself."
-  fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle de Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Ainsi, les notifications sont naturellement déterminées par les membres des cercles cibles, tandis que les tensions peuvent être recherchées et filtrées en fonction de la structure de l'organisation elle-même."
+  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A Tension is a general communication object that is akin to an email and can be sent to any circles in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. Thus notifications are naturally determined by tension type and the members of target circles, while tension can be searched and filtered based directly on the structure of the organization itself."
+  fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle dans Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Ainsi, les notifications sont naturellement déterminées par le type de tension et les membres des cercles cibles, tandis que les tensions peuvent être recherchées et filtrées en se basant directement sur la structure de l'organisation."
 
 [asyncFeat1]
   en="Tensions Driven Communication"
@@ -195,17 +195,17 @@
   en="Markdown Support"
   fr="Markdown Support"
 [asyncFeat4]
-  en="Email Notifications by subscriptions"
-  fr="Notifications par e-mail par souscriptions"
+  en="Email Notifications, per tension subscriptions"
+  fr="Notifications E-mail, abonnements par tension"
 [asyncFeat5]
   en="Labels"
   fr="Etiquettes"
 [asyncFeat6]
   en="Project Management"
-  fr="Mangement de Projet"
+  fr="Management de Projet"
 [asyncFeat7]
   en="Full-Text Search and Filtering"
-  fr="Recherche de texte et filtrage"
+  fr="Recherche Fulltext et Filtrage"
 
 
 # Roadmap
@@ -215,7 +215,7 @@
   * Manage tensions in Project boards, **Kanban** style.
   * Events and **Shared Calendars**.
   * **Mailing lists** linked to circles (Create tension an notify bunch of peer directly by sending email.
-  * **Voting system** for Roles election (sortition, majority judment, etc).
+  * **Voting system** for Roles election (sortition, majority judgment, etc).
   * **Find** peers and recruit collaborators across Fractale by publishing open roles.
   """
   fr="""
@@ -223,12 +223,27 @@
   * Événements et **Calendriers Partagés**.
   * **Listes de diffusion** liées aux cercles (créer une tension et notifier un groupe de pairs directement par l'envoi d'un e-mail).
   * **Système de vote** pour l'élection des Rôles (tirage au sort, jugement majoritaire, etc).
-  * **Trouvez** des pairs et recrutez des collaborateurs dans l'ensemble de Fractale en publiant les rôles ouverts.
+  * **Trouvez** des pairs et recrutez des collaborateurs dans l'ensemble de Fractale en publiant des rôles ouverts.
   """
 
 #
 # General
 #
+
+[unreadNotif]
+  en="You have unread events"
+  fr="Vous avez des évènements non-lues"
+[pendingContract]
+  en="You have pending contracts"
+  fr="Vous avez des contrats en attente"
+
+[showOrgaMenu]
+  en="Show/hide your organizations"
+  fr="Afficher/masquer vos organisations"
+[showCircleMenu]
+  en="Show/hide the circles tree"
+  fr="Afficher/masquer l'arbre des cercles"
+
 
 [gotIt]
 	en="Got it"

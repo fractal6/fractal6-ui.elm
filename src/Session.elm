@@ -53,6 +53,7 @@ type alias SessionFlags =
 type alias Session =
     { user : UserState
     , lang : Lang.Lang
+    , notif : NotifCount
     , referer : Maybe Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
@@ -118,6 +119,7 @@ resetSession session flags =
     { referer = Nothing
     , user = LoggedOut
     , lang = session.lang
+    , notif = initNotifCount
     , token_data = RemoteData.NotAsked
     , node_focus = Nothing
     , path_data = Nothing
@@ -189,6 +191,7 @@ fromLocalSession flags =
     ( { referer = Nothing
       , user = user
       , lang = Maybe.withDefault Lang.En lang
+      , notif = initNotifCount
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing
       , path_data = Nothing

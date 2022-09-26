@@ -235,9 +235,9 @@ view_ global model =
                     --    ]
                     , div [ class "subtitle is-4" ]
                         [ text (T.keepInTouch1 ++ ",")
-                        , br [] []
+                        , br [ class "mb-1" ] []
                         , text (T.keepInTouch2 ++ ",")
-                        , br [] []
+                        , br [ class "mb-1" ] []
                         , a [ class "button is-primary is-size-5 is-text-aligned", href (toHref Route.Signup), style "border-radius" "8px" ] [ text T.joinUs ]
                         ]
                     ]

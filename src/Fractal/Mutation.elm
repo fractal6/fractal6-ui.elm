@@ -754,3 +754,39 @@ deleteNotif :
     -> SelectionSet (Maybe decodesTo) RootMutation
 deleteNotif requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteNotif" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeNotifFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddEventCountRequiredArguments =
+    { input : List Fractal.InputObject.AddEventCountInput }
+
+
+addEventCount :
+    AddEventCountRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddEventCountPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addEventCount requiredArgs____ object____ =
+    Object.selectionForCompositeField "addEventCount" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddEventCountInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateEventCountRequiredArguments =
+    { input : Fractal.InputObject.UpdateEventCountInput }
+
+
+updateEventCount :
+    UpdateEventCountRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateEventCountPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateEventCount requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateEventCount" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateEventCountInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteEventCountRequiredArguments =
+    { filter : Fractal.InputObject.EventCountFilter }
+
+
+deleteEventCount :
+    DeleteEventCountRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteEventCountPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteEventCount requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteEventCount" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeEventCountFilter ] object____ (Basics.identity >> Decode.nullable)

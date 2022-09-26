@@ -17,6 +17,10 @@ type AddContractPayload
     = AddContractPayload
 
 
+type AddEventCountPayload
+    = AddEventCountPayload
+
+
 type AddEventFragmentPayload
     = AddEventFragmentPayload
 
@@ -113,6 +117,10 @@ type DeleteContractPayload
     = DeleteContractPayload
 
 
+type DeleteEventCountPayload
+    = DeleteEventCountPayload
+
+
 type DeleteEventFragmentPayload
     = DeleteEventFragmentPayload
 
@@ -183,6 +191,14 @@ type Event
 
 type EventAggregateResult
     = EventAggregateResult
+
+
+type EventCount
+    = EventCount
+
+
+type EventCountAggregateResult
+    = EventCountAggregateResult
 
 
 type EventFragment
@@ -299,6 +315,10 @@ type UpdateCommentPayload
 
 type UpdateContractPayload
     = UpdateContractPayload
+
+
+type UpdateEventCountPayload
+    = UpdateEventCountPayload
 
 
 type UpdateEventFragmentPayload
