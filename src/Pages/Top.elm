@@ -234,7 +234,12 @@ view_ global model =
                     --    , li [] [ text "GraphQL API" ]
                     --    ]
                     , div [ class "subtitle is-4" ]
-                        [ text (T.keepInTouch ++ ", "), a [ class "button is-primary is-size-5 is-text-aligned", href (toHref Route.Signup), style "border-radius" "8px" ] [ text T.joinUs ], text "." ]
+                        [ text (T.keepInTouch1 ++ ",")
+                        , br [] []
+                        , text (T.keepInTouch2 ++ ",")
+                        , br [] []
+                        , a [ class "button is-primary is-size-5 is-text-aligned", href (toHref Route.Signup), style "border-radius" "8px" ] [ text T.joinUs ]
+                        ]
                     ]
                 ]
             ]

@@ -383,12 +383,15 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Rejoindre cette organisation"
 
 [joinUs]
-  en="join us"
-  fr="rejoignez-nous"
+  en="Join us"
+  fr="Rejoignez-nous"
 
-[keepInTouch]
-  en="Be the first to be informed and let's co-design the tool you need"
-  fr="Soyez les premiers à être informés et co-construisons l'outil dont vous avez besoin"
+[keepInTouch1]
+  en="Be the first to be informed"
+  fr="Soyez les premiers à être informés"
+[keepInTouch2]
+  en="Let's co-design the tool you need"
+  fr="Co-construisons l'outil dont vous avez besoin"
 
 [moreToCome]
   en="Upcoming Features"
