@@ -5,10 +5,10 @@
 [heroTitle]
   en="""Your organization
         is a living thing,
-        give it a home."""
+        Give it a home."""
   fr="""Votre organisation
         est un être vivant,
-        donez-lui un toit."""
+        Donez-lui un toit."""
 
 [heroSubtitle]
   en="""Design your organization,
@@ -32,7 +32,7 @@
   fr="De quelque membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs de faciliter la coordinations d'équipes, rendre transparente leurs structures de gouvernance et fournit une mémoire à l'organisation."
 
 [corpHero]
-  en="From *Agile* methods to *Holacracy*, Fractale allows you to implement management and project tracking methods, in a easy way, that favors relationships based on trust and commitment between peers."
+  en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in a easy way, that favors relationships based on trust and commitment between peers."
   fr="Des méthodes _**Agiles**_ à l'_**Holacratie**_, Fractale vous permet de mettre en œuvre des méthodes de management et de suivie de projets, de manière simple, qui privilégient les relations fondées sur la confiance et l'engagement entre pairs."
 
 [forNpo]
@@ -146,6 +146,86 @@
 	en="Explore public organizations."
 	fr="Explorer les organisations publiques."
 
+
+# Features
+
+[govTransp]
+  en="Governance Transparency"
+  fr="Gouvernance Transparente"
+[govTranspAbout]
+  en="Keep anyone to the same page. Engage your peers by sharing the structure of your organisation, the purposes of your circles and the mandates of your roles. Roles comes with authority rules that allows giving responsabilities and trust to members and autonomy to circles's gouvernances."
+  fr="Faites en sorte que tout le monde soit sur la même longueur d'onde. Engagez vos pairs en partageant la structure de votre organisation, les objectifs de vos cercles et les mandats de vos rôles. Les rôles sont accompagnés de règles d'autorité qui permettent de donner des responsabilités et de la confiance aux membres et de l'autonomie aux gouvernances des cercles."
+
+[govFeat1]
+  en="Dynamic Organigram"
+  fr="Organigramme dynamique"
+[govFeat2]
+  en="Roles and Circles"
+  fr="Rôles et Cercles"
+[govFeat3]
+  en="Distributed Authority"
+  fr="Authorité Distribué"
+[govFeat4]
+  en="Controled visibility"
+  fr="Contrôle de la visibilité"
+[govFeat5]
+  en="Mandates"
+  fr="Mandats"
+[govFeat6]
+  en="Intuitive Navigation"
+  fr="Navigation Intuitive"
+[govFeat7]
+  en="History Journal"
+  fr="Historique"
+
+[asyncCom]
+  en="Asynchronous Communication"
+  fr="Communication Asynchrone"
+[asyncComAbout]
+  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A Tension is a general communication object that is akin to an email and can be sent to any circles of Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. Thus notifications are naturally determined by the members of that circles, while tension can be searched and filtered according to the structure of the organization itself."
+  fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle de Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Ainsi, les notifications sont naturellement déterminées par les membres des cercles cibles, tandis que les tensions peuvent être recherchées et filtrées en fonction de la structure de l'organisation elle-même."
+
+[asyncFeat1]
+  en="Tensions Driven Communication"
+  fr="Tensions Driven Communication"
+[asyncFeat2]
+  en="Discussion Threads"
+  fr="Fils de Discussion"
+[asyncFeat3]
+  en="Markdown Support"
+  fr="Markdown Support"
+[asyncFeat4]
+  en="Email Notifications by subscriptions"
+  fr="Notifications par e-mail par souscriptions"
+[asyncFeat5]
+  en="Labels"
+  fr="Etiquettes"
+[asyncFeat6]
+  en="Project Management"
+  fr="Mangement de Projet"
+[asyncFeat7]
+  en="Full-Text Search and Filtering"
+  fr="Recherche de texte et filtrage"
+
+
+# Roadmap
+
+[roadmapX]
+  en="""
+  * Manage tensions in Project boards, **Kanban** style.
+  * Events and **Shared Calendars**.
+  * **Mailing lists** linked to circles (Create tension an notify bunch of peer directly by sending email.
+  * **Voting system** for Roles election (sortition, majority judment, etc).
+  * **Find** peers and recruit collaborators across Fractale by publishing open roles.
+  """
+  fr="""
+  * Gérer les tensions dans les tableaux de projet, à la **Kanban**.
+  * Événements et **Calendriers Partagés**.
+  * **Listes de diffusion** liées aux cercles (créer une tension et notifier un groupe de pairs directement par l'envoi d'un e-mail).
+  * **Système de vote** pour l'élection des Rôles (tirage au sort, jugement majoritaire, etc).
+  * **Trouvez** des pairs et recrutez des collaborateurs dans l'ensemble de Fractale en publiant les rôles ouverts.
+  """
+
 #
 # General
 #
@@ -163,7 +243,7 @@
 You can [Explore](/explore) public organizations or create your [First Organization](/new/orga).
 	"""
 	fr="""Bienvenue,
-Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [Première Organisation](/new/orga).
+Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Première Organisation](/new/orga).
 	"""
 
 [selectColor]
@@ -301,6 +381,18 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 [joinOrga]
   en="Join this organization"
   fr="Rejoindre cette organisation"
+
+[joinUs]
+  en="join us"
+  fr="rejoignez-nous"
+
+[keepInTouch]
+  en="Be the first to be informed and let's co-design the tool you need"
+  fr="Soyez les premiers à être informés et co-construisons l'outil dont vous avez besoin"
+
+[moreToCome]
+  en="Upcoming Features"
+  fr="Fonctionnalités à venir"
 
 [leaveRole]
   en="Leave role"
@@ -1037,6 +1129,10 @@ Vous pouvez [Explorer](/explorer) les organisations publiques ou créer votre [P
 [decline]
   en="Decline"
   fr="Décliner"
+
+[cancelInvitation]
+  en="Cancel invitation"
+  fr="Annuler l'invitation"
 
 [security]
   en="Security"
@@ -2096,11 +2192,11 @@ Welcome @{{username}},
 
 Fractale is a platform for organisations and collectives. We are dedicated to provide you the best experience and tools to enact collective intelligence and build open and robust asynchronous communication system.
 
-You can also use it for individual projects to organise and manage your work.
+You can also use it for individual projects to organise, manage or share your work.
 
 In order to help your navigation, you will find some shortcuts in the top right corner:
 - the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
-- the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
+- the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us <i class="icon-send"></i>.
 - the **user button** to access your profile and other shortcuts.
 """
 	fr="""
@@ -2110,11 +2206,11 @@ Bienvenue @{{username}},
 
 Fractale est une plateforme destinée aux organisations et collectifs. Nous nous consacrons à vous fournir la meilleure expérience et les meilleurs outils pour mettre en œuvre l'intelligence collective et construire un système de communication asynchrone ouvert et robuste.
 
-Vous pouvez également l’utiliser pour des projets individuels afin d’organiser et de gérer votre travail.
+Vous pouvez également l’utiliser pour des projets individuels afin d’organiser, gérer ou partager votre travail.
 
 Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
 - le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
-- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter.
+- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter <i class="icon-send"></i>.
 - le bouton **d’utilisateur** pour accéder à votre profil et d'autre raccourcis.
 """
 

@@ -24,7 +24,7 @@ $size-7: 0.9rem;
 $sizes: $size-1 $size-2 $size-3 $size-4 $size-5 $size-6 $size-7;
 
 $weight-light: 400;
-$weight-normal: 600;
+$weight-normal: 500;
 $weight-medium: 600;
 $weight-semibold: 700;
 $weight-bold: 800;
@@ -32,7 +32,16 @@ $weight-bold: 800;
 
 .is-human {
     //@include zenFontFace;
-    @include OpenFace;
+    //@include OpenFace;
+    @include OpenRecursive;
+    /* set variation axis values */
+    --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
+    --casl: "CASL" 0; /* Casual: Linear to Casual */
+    //--wght: "wght" 400; /* Weight: Light to ExtraBlack; usually set with `font-weight` */
+    --slnt: "slnt" 0; /* Slant: 0 to -15 degrees, auto cursive at -14 */
+    --CRSV: "CRSV" 0.5;  /* Cursive: always roman, auto substitution, or always cursive */
+    /* apply axis values with CSS custom properties */
+    font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
 }
 
 // Fix size of Zen font size
@@ -62,11 +71,26 @@ $weight-bold: 800;
 }
 
 
+
+.is-recursive {
+    @include OpenRecursive;
+    /* set variation axis values */
+    --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
+    --casl: "CASL" 1; /* Casual: Linear to Casual */
+    //--wght: "wght" 400; /* Weight: Light to ExtraBlack; usually set with `font-weight` */
+    --slnt: "slnt" 0; /* Slant: 0 to -15 degrees, auto cursive at -14 */
+    --CRSV: "CRSV" 0.5;  /* Cursive: always roman, auto substitution, or always cursive */
+    /* apply axis values with CSS custom properties */
+    font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
+}
+
+
 /*
  *
  * Icon fonts
  *
  */
+
 
 ////$fa-font-path: "fonts";
 //$fa-font-path: '~@fortawesome/fontawesome-free/webfonts';

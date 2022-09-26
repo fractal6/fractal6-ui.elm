@@ -16,13 +16,26 @@
 //    font-family: Lato;
 //    src: url(../fonts/Lato-Regular.ttf);
 //}
+//@font-face {
+//    font-family: OpenSans;
+//    src: url(../fonts/OpenSans-Regular.ttf);
+//}
+
 @font-face {
-    font-family: OpenSans;
-    src: url(../fonts/OpenSans-Regular.ttf);
+    font-family: ArrowTypeRecursive;
+    //font-style: oblique 0deg 15deg;
+    //font-weight: 400 1000;
+    //font-display: swap;
+    src: url('../fonts/Recursive_VF_1.084--subset-GF_latin_basic.woff2') format('woff2');
+    //src: url('../fonts/RecursiveSansCslSt-Regular.woff2') format('woff2');
 }
 
 @mixin defaultFontFace {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+}
+
+@mixin OpenRecursive {
+    font-family: ArrowTypeRecursive !important;
 }
 
 //@mixin zenFontFace {
@@ -32,9 +45,10 @@
 //    font-weight: $weight-normal !important;
 //}
 
-@mixin OpenFace {
-    font-family: OpenSans !important;
-}
+//@mixin OpenFace {
+//    font-family: OpenSans !important;
+//}
+
 
 //
 // Imports

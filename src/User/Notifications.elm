@@ -522,9 +522,6 @@ viewUserEvent lang now ue =
 
                         Nothing ->
                             let
-                                d =
-                                    Debug.log "link" n.link
-
                                 link =
                                     case n.link of
                                         Just l ->

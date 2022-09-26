@@ -26,6 +26,8 @@
     blockquote {
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
+      padding-left: 15px;
+      padding-right: 0;
       background: inherit;
       font-weight: 600;
       font-style: italic;
@@ -41,7 +43,7 @@
       display: inline;
     }
     strong {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--is-highlight);
     }
 

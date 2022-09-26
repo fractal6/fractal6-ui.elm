@@ -18,6 +18,10 @@ import Url exposing (Url)
 
 view : UserState -> Url -> (String -> msg) -> Html msg
 view user url replaceUrl =
+    let
+        orgUrl =
+            isOrgUrl url
+    in
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar is-fixed-top"
@@ -30,7 +34,7 @@ view user url replaceUrl =
                     [ A.logo0 "white"
                     , case user of
                         LoggedOut ->
-                            strong [ attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]
+                            strong [ class "is-recursiv", attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]
 
                         _ ->
                             text ""
@@ -44,10 +48,6 @@ view user url replaceUrl =
                 [ div [ class "navbar-start" ] <|
                     (case user of
                         LoggedIn uctx ->
-                            let
-                                orgUrl =
-                                    isOrgUrl url
-                            in
                             (if orgUrl then
                                 [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
                                 , div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger" ] [ A.icon "icon-git-branch" ]
@@ -77,7 +77,11 @@ view user url replaceUrl =
                                    ]
 
                         LoggedOut ->
-                            []
+                            if orgUrl then
+                                [ div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger" ] [ A.icon "icon-git-branch" ] ]
+
+                            else
+                                []
                     )
                         ++ [ a
                                 [ class "navbar-item"

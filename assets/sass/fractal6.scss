@@ -389,6 +389,13 @@ strong {
     }
 }
 
+.is-icon-aligned {
+    i {
+        display: inline-block;
+        vertical-align: sub;
+    }
+}
+
 .button.is-selected {
     outline: 4px solid $grey;
     outline-style: outset;
@@ -735,7 +742,7 @@ strong {
 
 // @debug: hover is not computed from variable defined here...
 .is-primary {
-    &:hover {
+    &:not(.hero):hover {
         background-color: darken($primary, 5) !important;
     }
 }
@@ -768,6 +775,34 @@ strong {
 .ml--1 {
     margin-left: -6px;
 }
+
+.is-fullvh-desktop {
+    @include desktop {
+        min-height: 100vh;
+    }
+}
+
+figure {
+    border-radius: 10px;
+    img, iframe {
+        border-radius: 10px;
+    }
+}
+figcaption {
+    //class "p-3 is-italic is-aligned-center"
+    text-align: center;
+    font-style: italic;
+    padding: 0.75rem;
+}
+
+.shadow {
+    -moz-box-shadow:    2px 2px 5px 5px lighten($primary, 5);
+    -webkit-box-shadow: 2px 2px 5px 5px lighten($primary, 5);
+    box-shadow:         2px 2px 5px 5px lighten($primary, 5);
+}
+
+
+// END FIX BULMA
 
 /*
  *
@@ -908,18 +943,62 @@ strong {
     }
 }
 
+.dub-top-section {
+    margin-left: -10px;
+    padding-left: 10px;
+    margin-right: -10px;
+    padding-right: 10px;
+}
+
 #welcome {
     @include desktop {
         margin-top: 5rem;
     }
+    @include mobile {
+        .hero-body {
+            padding-left: 5px;
+            padding-right: 5px;
+            .title {
+                font-size: 2rem;
+            }
+            .content {
+                font-size: 100% !important;
+            }
+        }
+    }
 
-    .title {
-        font-size: 4.2rem !important;
-        font-weight: 600 !important;
+    .custom-b-1 {
+        padding-bottom: 2rem;
+        @include fullhd {
+            padding-bottom: 4.5rem;
+        }
+    }
+
+    // Sections
+    scroll-behavior: smooth;
+
+    // Padding bewteen fullheight screen (100vh)
+    #welcome-2 > div > div {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+        @include desktop {
+            & figure:first-child {
+                margin-top: 4rem;
+            }
+        }
+    }
+    // remove margin above the footer
+    & > div:last-child {
+        margin-bottom: calc(-#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
+    }
+
+    .top-title {
+        font-size: 4.5rem !important;
+        font-weight: 800 !important;
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         @include mobile {
-            font-size: 2rem !important;
+            font-size: 2.4rem !important;
         }
     }
     .card h2 {
@@ -929,6 +1008,14 @@ strong {
         }
     }
 
+}
+
+.is-primary-2 {
+    background-color: darken($primary, 10);
+}
+
+.is-info-2 {
+    background-color: darken($info, 40);
 }
 
 #loginForm, #signupForm {
@@ -1298,8 +1385,7 @@ strong {
 
         .message-body {
             padding: 1rem 0.9rem !important;
-            //font-size: 15px;
-            //line-height: 1.5;
+            font-size: 15px;
         }
     }
 }
