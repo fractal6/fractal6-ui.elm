@@ -482,8 +482,9 @@ strong {
 [data-tooltip] {
     @include mobile {
         // Prevent navbartop overflow
-         &::before {
-            width:0
+         &::after,&::before {
+            width:0 !important;
+            visibility: hidden !important;
         }
     }
 }
