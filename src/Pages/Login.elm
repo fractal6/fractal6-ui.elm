@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable)
+import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -71,7 +72,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.empty }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
             , result = RemoteData.NotAsked
             }
     in

@@ -94,7 +94,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.empty }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
             , result = RemoteData.NotAsked
             , viewMode = Login
             , lang = global.session.lang
@@ -172,10 +172,6 @@ update global msg model =
             )
 
         ChangeViewMode viewMode ->
-            let
-                form =
-                    model.form
-            in
             ( { model | viewMode = viewMode, result = RemoteData.NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitEnter key ->
