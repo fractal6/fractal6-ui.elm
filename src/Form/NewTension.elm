@@ -1199,9 +1199,9 @@ viewSuccess res model =
 
 viewHeader : Op -> Model -> Html Msg
 viewHeader op model =
-    div [ class "panel-heading pt-4 pb-3" ]
+    div [ class "panel-heading pt-2 pb-2", style "border-radius" "0" ]
         [ div [ class "level modal-card-title is-size-6" ]
-            [ div [ class "level-left is-hidden-mobile" ]
+            [ div [ class "level-left is-hidden" ]
                 [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ] ]
             , div [ class "level-item" ]
                 [ viewTensionType model ]
@@ -1379,8 +1379,8 @@ viewTension op model =
 
         other ->
             div [ class "panel modal-card submitFocus" ]
-                [ viewHeader op model
-                , Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                [ Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                , viewHeader op model
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1513,8 +1513,8 @@ viewCircle op model =
 
         other ->
             div [ class "panel modal-card submitFocus" ] <|
-                [ viewHeader op model
-                , Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                [ Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                , viewHeader op model
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->
