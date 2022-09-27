@@ -2051,10 +2051,7 @@ tr.mediaBox {
         }
 
         &#tensionTabTop { // tensionModal
-            min-height: 42px;
-            @include mobile {
-                min-height: 0;
-            }
+            min-height: 35px;
             background-color: var(--modal-header-background);
             border-bottom: solid 1px #ccc !important;
         }

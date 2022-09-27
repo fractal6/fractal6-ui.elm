@@ -110,9 +110,15 @@ frac6Renderer style recursive =
             Markdown.Html.oneOf
                 [ Markdown.Html.tag "i"
                     (\cls content ->
-                        span [] [ i [ class cls ] [], span [] content ]
+                        span [] ([ i [ class cls ] [] ] ++ content)
                     )
                     |> Markdown.Html.withAttribute "class"
+                , Markdown.Html.tag "span"
+                    -- @DEBUG: span does not work because p tag are inserted and break lines
+                    (\cls content ->
+                        span [ class (withDefault "" cls) ] content
+                    )
+                    |> Markdown.Html.withOptionalAttribute "class"
                 , Markdown.Html.tag "div"
                     (\cls content ->
                         div [ class (withDefault "" cls) ] content
