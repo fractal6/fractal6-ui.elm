@@ -217,6 +217,7 @@
   * **Mailing lists** linked to circles (Create tension an notify bunch of peer directly by sending email.
   * **Voting system** for Roles election (sortition, majority judgment, etc).
   * **Find** peers and recruit collaborators across Fractale by publishing open roles.
+  * Mobile App.
   """
   fr="""
   * Gérer les tensions dans les tableaux de projet, à la **Kanban**.
@@ -224,6 +225,7 @@
   * **Listes de diffusion** liées aux cercles (créer une tension et notifier un groupe de pairs directement par l'envoi d'un e-mail).
   * **Système de vote** pour l'élection des Rôles (tirage au sort, jugement majoritaire, etc).
   * **Trouvez** des pairs et recrutez des collaborateurs dans l'ensemble de Fractale en publiant des rôles ouverts.
+  * Application Mobile.
   """
 
 #

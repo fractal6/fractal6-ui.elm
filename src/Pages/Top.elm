@@ -224,15 +224,6 @@ view_ global model =
                     [ div [ class "title is-2" ]
                         [ text (T.moreToCome ++ "...") ]
                     , renderMarkdown "pb-6 is-size-5" T.roadmapX
-
-                    --ul [ class "pt-4 pb-6 is-size-5" ]
-                    --    [ li [] [ text T.roadmap1 ]
-                    --    , li [] [ text T.roadmap2 ]
-                    --    , li [] [ text T.roadmap3 ]
-                    --    , li [] [ text T.roadmap4 ]
-                    --    , li [] [ text T.roadmap5 ]
-                    --    , li [] [ text "GraphQL API" ]
-                    --    ]
                     , div [ class "subtitle is-4" ]
                         [ text (T.keepInTouch1 ++ ",")
                         , br [ class "mb-1" ] []
