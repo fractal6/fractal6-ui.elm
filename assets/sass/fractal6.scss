@@ -1023,6 +1023,9 @@ figcaption {
     @include desktop {
         min-width: 400px;
     }
+    @include mobile {
+       margin-top: 10px;
+    }
 }
 
 #createOrga {
