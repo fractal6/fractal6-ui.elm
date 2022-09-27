@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+## [0.6.6]
+
+### New
+- New Welcome Page describing Fractale.
+- Unread notification hints (unread events + peding contracts) in navbar, computed at page initialization, token refresh, an notifification page na vigation.
+
+### Changed
+- [ui] switched header in new tension form to be more consistent.
+
+### Fixed
+- improved translations
+- improved mobile style and navigation
+
+
 ## [0.6.5]
 
 ### New
