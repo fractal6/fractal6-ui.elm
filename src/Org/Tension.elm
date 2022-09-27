@@ -722,29 +722,41 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
 
                 OkAuth th ->
-                    ( { model
-                        | tension_head = result
-                        , hasBeenPushed = th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
-                        , subscribe_result = fromMaybeData th.isSubscribed NotAsked
-                        , nodeDoc =
+                    let
+                        hasBeenPushed =
+                            th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+
+                        ( targetid, nodeDoc ) =
                             case th.action of
                                 Just action ->
                                     case (getTensionCharac action).doc_type of
                                         NODE _ ->
-                                            NodeDoc.initBlob (nodeFromTension th) model.nodeDoc
+                                            let
+                                                node =
+                                                    nodeFromTension th
+                                            in
+                                            ( ternary hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
+                                            , NodeDoc.initBlob node model.nodeDoc
+                                            )
 
                                         MD ->
                                             -- not implemented
-                                            model.nodeDoc
+                                            ( th.receiver.nameid, model.nodeDoc )
 
                                 Nothing ->
                                     -- No Document attached or Unknown format
-                                    model.nodeDoc
+                                    ( th.receiver.nameid, model.nodeDoc )
+                    in
+                    ( { model
+                        | tension_head = result
+                        , hasBeenPushed = hasBeenPushed
+                        , subscribe_result = fromMaybeData th.isSubscribed NotAsked
+                        , nodeDoc = nodeDoc
                       }
                     , Cmd.batch
-                        [ queryLocalGraph apis th.receiver.nameid (GotPath True)
+                        [ queryLocalGraph apis targetid (GotPath True)
                         , Ports.bulma_driver ""
-                        , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid th.receiver.nameid)))
+                        , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
                         ]
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )

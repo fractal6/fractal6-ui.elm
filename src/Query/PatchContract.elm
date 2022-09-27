@@ -20,7 +20,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm)
-import ModelCommon.Codecs exposing (memberIdCodec, nodeIdCodec)
+import ModelCommon.Codecs exposing (memberIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
 import Query.PatchTension exposing (pushCommentFilter)

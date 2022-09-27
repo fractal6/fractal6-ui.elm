@@ -149,9 +149,20 @@ viewNavLevel op =
              --        ]
              --    ]
              --]
-             , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
-                [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" T.members ] ]
              ]
+                ++ (Maybe.map
+                        (\path ->
+                            if path.focus.type_ /= NodeType.Role then
+                                [ li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
+                                    [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" T.members ] ]
+                                ]
+
+                            else
+                                []
+                        )
+                        op.path_data
+                        |> withDefault []
+                   )
                 ++ (Maybe.map
                         (\path ->
                             if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then

@@ -136,6 +136,17 @@ getRoleType data =
     data.form.node.role_type
 
 
+getNodeNameid : String -> NodeFragment -> String
+getNodeNameid receiverid node =
+    let
+        type_ =
+            withDefault NodeType.Role node.type_
+    in
+    node.nameid
+        |> Maybe.map (\nid -> nodeIdCodec receiverid nid type_)
+        |> withDefault ""
+
+
 hasMandate : Maybe Mandate -> Bool
 hasMandate mandate_m =
     let
@@ -594,13 +605,8 @@ viewBlob data op_m =
 viewAboutSection : OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
 viewAboutSection data op_m =
     let
-        type_ =
-            withDefault NodeType.Role data.node.type_
-
         nameid =
-            data.node.nameid
-                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
-                |> withDefault ""
+            getNodeNameid data.receiver data.node
     in
     div []
         [ div [ class "level subtitle" ]
