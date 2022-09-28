@@ -214,7 +214,7 @@
   en="""
   * Manage tensions in Project boards, **Kanban** style.
   * Events and **Shared Calendars**.
-  * **Mailing lists** linked to circles (Create tension an notify bunch of peer directly by sending email.
+  * **Mailing lists** linked to circles (create tension an notify bunch of peer directly by sending email).
   * **Voting system** for Roles election (sortition, majority judgment, etc).
   * **Find** peers and recruit collaborators across Fractale by publishing open roles.
   * GraphQL API.
