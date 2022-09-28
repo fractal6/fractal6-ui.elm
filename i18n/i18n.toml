@@ -182,8 +182,8 @@
   en="Asynchronous Communication"
   fr="Communication Asynchrone"
 [asyncComAbout]
-  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A Tension is a general communication object that is akin to an email and can be sent to any circles in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. Thus notifications are naturally determined by tension type and the members of target circles, while tension can be searched and filtered based directly on the structure of the organization itself."
-  fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle dans Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Ainsi, les notifications sont naturellement déterminées par le type de tension et les membres des cercles cibles, tandis que les tensions peuvent être recherchées et filtrées en se basant directement sur la structure de l'organisation."
+  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A tension is a general communication object that is akin to an email and can be sent to any circle in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. The recipients of the notifications are naturally determined by the members of the targeted circle and the type of tension. Tensions can be searched and filtered based directly on the structure of the organization."
+  fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle dans Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Les destinataires des notifications sont naturellement déterminés par les membres du cercle ciblé et le type de tension. Les tensions peuvent être recherchées et filtrées en se basant directement sur la structure de l'organisation."
 
 [asyncFeat1]
   en="Tensions Driven Communication"
@@ -217,8 +217,9 @@
   * **Mailing lists** linked to circles (Create tension an notify bunch of peer directly by sending email.
   * **Voting system** for Roles election (sortition, majority judgment, etc).
   * **Find** peers and recruit collaborators across Fractale by publishing open roles.
+  * GraphQL API.
   * Data importers.
-  * Mobile App.
+  * Mobile app.
   """
   fr="""
   * Gérer les tensions dans les tableaux de projet, à la **Kanban**.
@@ -226,8 +227,9 @@
   * **Listes de diffusion** liées aux cercles (créer une tension et notifier un groupe de pairs directement par l'envoi d'un e-mail).
   * **Système de vote** pour l'élection des Rôles (tirage au sort, jugement majoritaire, etc).
   * **Trouvez** des pairs et recrutez des collaborateurs dans l'ensemble de Fractale en publiant des rôles ouverts.
-  * Importateurs de données
-  * Application Mobile.
+  * GraphQL API.
+  * Importateurs de données.
+  * Application mobile.
   """
 
 #
