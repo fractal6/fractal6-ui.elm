@@ -30,12 +30,13 @@ dev:
 # Deploy on Netlyfy
 deploy_netlify: prod
 	$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
+	$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
 	cd ../build && \
 		rm static -rf && \
 		cp ../fractal6-ui.elm/dist/* . -r && \
 		cp ../fractal6-ui.elm/netlify.toml . && \
 		git add * && \
-		git commit -m $(BRANCH_NAME) && \
+		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
 		git push origin master && \
 		cd -
 
@@ -44,10 +45,11 @@ BUILD_DIRS := $(addprefix public/, $(LANGS))
 #.PHONY: $(BUILD_DIRS)
 publish: $(BUILD_DIRS)
 	$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
+	$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
 	git rev-parse --short HEAD > ../public-build/client_version && \
 		cd ../public-build/ && \
 		git add * && \
-		git commit -m $(BRANCH_NAME) && \
+		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
 		git push origin main && \
 		cd - && \
 		echo "-- $@ done"
