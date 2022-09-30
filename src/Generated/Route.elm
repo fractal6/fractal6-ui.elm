@@ -10,6 +10,7 @@ import Url.Parser as Parser exposing ((</>), Parser)
 
 type Route
     = Top
+    | About
     | Explore
     | Login
     | Logout
@@ -50,6 +51,7 @@ routes : Parser (Route -> a) a
 routes =
     Parser.oneOf
         [ Parser.map Top Parser.top
+        , Parser.map About (Parser.s "about")
         , Parser.map Explore (Parser.s "explore")
         , Parser.map Login (Parser.s "login")
         , Parser.map Logout (Parser.s "logout")
@@ -130,6 +132,9 @@ toHref route =
             case route of
                 Top ->
                     []
+                
+                About ->
+                    [ "about" ]
                 
                 Explore ->
                     [ "explore" ]

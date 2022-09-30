@@ -867,10 +867,14 @@ figcaption {
     animation-fill-mode: forwards;
 
     .contacts {
-        a {
-            color: var(--link2);
-            &:hover {
-                text-decoration: underline;
+        span {
+            font-size: $size-small;
+            a {
+                padding-left: 1rem;
+                color: var(--link2);
+                &:hover {
+                    text-decoration: underline;
+                }
             }
         }
     }

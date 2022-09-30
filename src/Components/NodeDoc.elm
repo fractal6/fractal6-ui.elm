@@ -841,7 +841,7 @@ viewUrlForm nameid_m onChangePost hasBorderDanger =
                 , input
                     [ class "input px-0"
                     , disabled True
-                    , value " https://fractale.co/o/"
+                    , value " https://fractale.co/*/"
                     , attribute "style" "width: 11.1em"
                     ]
                     []

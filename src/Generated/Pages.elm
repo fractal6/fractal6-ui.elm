@@ -11,6 +11,7 @@ import Generated.Route as Route exposing (Route)
 import Global
 import Page exposing (Bundle, Document)
 import Pages.Top
+import Pages.About
 import Pages.Explore
 import Pages.Login
 import Pages.Logout
@@ -48,6 +49,7 @@ import Pages.Tension.Dynamic.Dynamic.Contract.Dynamic
 
 type Model
     = Top_Model Pages.Top.Model
+    | About_Model Pages.About.Model
     | Explore_Model Pages.Explore.Model
     | Login_Model Pages.Login.Model
     | Logout_Model Pages.Logout.Model
@@ -81,6 +83,7 @@ type Model
 
 type Msg
     = Top_Msg Pages.Top.Msg
+    | About_Msg Pages.About.Msg
     | Explore_Msg Pages.Explore.Msg
     | Login_Msg Pages.Login.Msg
     | Logout_Msg Pages.Logout.Msg
@@ -125,6 +128,7 @@ type alias UpgradedPage flags model msg =
 
 type alias UpgradedPages =
     { top : UpgradedPage Pages.Top.Flags Pages.Top.Model Pages.Top.Msg
+    , about : UpgradedPage Pages.About.Flags Pages.About.Model Pages.About.Msg
     , explore : UpgradedPage Pages.Explore.Flags Pages.Explore.Model Pages.Explore.Msg
     , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
     , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
@@ -160,6 +164,7 @@ type alias UpgradedPages =
 pages : UpgradedPages
 pages =
     { top = Pages.Top.page |> Page.upgrade Top_Model Top_Msg
+    , about = Pages.About.page |> Page.upgrade About_Model About_Msg
     , explore = Pages.Explore.page |> Page.upgrade Explore_Model Explore_Msg
     , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
     , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
@@ -201,6 +206,9 @@ init route =
     case route of
         Route.Top ->
             pages.top.init ()
+        
+        Route.About ->
+            pages.about.init ()
         
         Route.Explore ->
             pages.explore.init ()
@@ -299,6 +307,9 @@ update bigMsg bigModel =
     case ( bigMsg, bigModel ) of
         ( Top_Msg msg, Top_Model model ) ->
             pages.top.update msg model
+        
+        ( About_Msg msg, About_Model model ) ->
+            pages.about.update msg model
         
         ( Explore_Msg msg, Explore_Model model ) ->
             pages.explore.update msg model
@@ -400,6 +411,9 @@ bundle bigModel =
     case bigModel of
         Top_Model model ->
             pages.top.bundle model
+        
+        About_Model model ->
+            pages.about.bundle model
         
         Explore_Model model ->
             pages.explore.bundle model

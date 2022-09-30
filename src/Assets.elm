@@ -75,6 +75,11 @@ logo2 color =
     Lazy.lazy Logo.logo_fractal { color = color, h = "96", w = "128" }
 
 
+logo_about : String -> Html msg
+logo_about color =
+    Lazy.lazy Logo.logo_about { color = color, h = "", w = "500" }
+
+
 {-| A burger button used when the terminal is in mobile/collapse state.
 -}
 burger : String -> Html msg

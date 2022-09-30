@@ -6,22 +6,26 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style, targ
 import Text as T
 
 
+logo_footer : Html msg
+logo_footer =
+    a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 "lightgray" ]
+
+
 view : Html msg
 view =
     div [ id "footBar", class "footer" ]
-        [ div [ class "level" ]
-            [ div [ class "level-left" ] [ small [] [ text "Copyright © 2020 - 2022 The Fractale Team" ] ]
+        [ div [ class "level m-0" ]
+            [ small [ class "level-item is-hidden-mobile" ] [ logo_footer, text "© 2020 - 2022 The Fractale Team" ]
             , div [ class "level-item" ]
-                [ div [ class "contacts" ]
-                    [ small [ class "px-2" ] [ a [ href "https://doc.fractale.co", target "_blank" ] [ text "Documentation" ] ]
-                    , small [ class "px-2" ] [ text "-" ]
-                    , small [ class "px-2" ] [ a [ href "https://gitlab.com/fractal6", target "_blank", title "gitlab.com" ] [ A.icon "icon-gitlab" ] ]
-                    , small [ class "px-2" ] [ text "-" ]
-                    , small [ class "px-2" ] [ a [ href "https://matrix.to/#/#fractal6:matrix.org", target "_blank", title "Chat on matrix" ] [ A.icon "icon-message-circle" ] ]
-                    , small [ class "px-2" ] [ text "-" ]
-                    , small [ class "px-2" ] [ a [ href "mailto:contact@fractale.co" ] [ text T.contactUs ] ]
+                [ div [ class "columns is-mobile is-multiline is-centered contacts" ]
+                    [ span [ class "column is-narrow" ] [ a [ href "/about" ] [ text "About" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://doc.fractale.co", target "_blank" ] [ text "Docs" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://gitlab.com/fractal6", target "_blank", title "gitlab.com" ] [ text "Code" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://matrix.to/#/#fractal6:matrix.org", target "_blank", title "Chat on matrix" ] [ text "Community" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "mailto:contact@fractale.co" ] [ text T.contactUs ] ]
                     ]
                 ]
-            , div [ class "level-item" ] []
+            , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2020 - 2022 The Fractale Team" ]
             ]
+        , div [ class "level m-0 is-hidden-tablet" ] [ small [ class "level-item" ] [ logo_footer, text "© 2020 - 2022 The Fractale Team" ] ]
         ]
