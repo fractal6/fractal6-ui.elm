@@ -275,7 +275,7 @@ viewHero model =
                   else
                     --div [ class "has-text-centered" ] [ A.logo_about "#34663d" ]
                     --div [ class "has-text-centered" ] [ A.logo_about "#7888ae" ]
-                    div [ class "has-text-centered" ] [ A.logo_about "#375a7f" ]
+                    div [ attribute "style" "margin-left: -50px;" ] [ A.logo_about "#375a7f" ]
                 ]
             ]
         , br [] []
