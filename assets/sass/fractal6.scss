@@ -2102,45 +2102,41 @@ tr.mediaBox {
 }
 
 #tensionModal {
-
-    // Input Message
-    .message {
-        border-color: transparent !important;
-        background-color: inherit !important;
-        .tabs, .tabs.is-boxed  {
-            li a  {
-                color: var(--grey-light) !important;
-                text-decoration: none !important;
-            }
-            li a:hover{
-                background-color: inherit !important;
-            }
-            li.is-active a {
-                background-color: var(--bbc)  !important;
-                border-top-width: 2px !important;
-            }
-        }
-    }
-    .message-header {
-        font-weight: 500 !important;
-        padding: 0 !important;
-        a {
-            font-weight: 600 !important;
-            text-decoration: none !important;
-            &:hover { text-decoration: underline !important; }
-        }
-    }
-    .message-body {
-        padding: 0;
-    }
-
-    .panel-heading .level-left {
-        //background-image: linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%), linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%);
-        //background-clip: content-box, padding-box;
-    }
-
     .panel-heading {
         border-bottom: 1px var(--border-color-light) solid;
+    }
+
+    // Input Message
+    .modal-card-body {
+        .message {
+            border-color: transparent !important;
+            background-color: inherit !important;
+            .tabs, .tabs.is-boxed  {
+                li a  {
+                    color: var(--grey-light) !important;
+                    text-decoration: none !important;
+                }
+                li a:hover{
+                    background-color: inherit !important;
+                }
+                li.is-active a {
+                    background-color: var(--bbc)  !important;
+                    border-top-width: 2px !important;
+                }
+            }
+        }
+        .message-header {
+            font-weight: 500 !important;
+            padding: 0 !important;
+            a {
+                font-weight: 600 !important;
+                text-decoration: none !important;
+                &:hover { text-decoration: underline !important; }
+            }
+        }
+        .message-body {
+            padding: 0;
+        }
     }
 }
 
