@@ -27,7 +27,7 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
-import Loading exposing (GqlData, RequestResult(..), WebData, expectJson, toErrorData)
+import Loading exposing (GqlData, RequestResult(..), WebData)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
 import ModelCommon.Requests exposing (tokenack)

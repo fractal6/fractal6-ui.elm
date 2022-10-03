@@ -123,11 +123,6 @@ errorsDecoder =
             JD.list errorDecoder
 
 
-errorsDecoder2 : JD.Decoder (List ErrorDebug)
-errorsDecoder2 =
-    JD.list <| errorDecoder
-
-
 errorDecoder : JD.Decoder ErrorDebug
 errorDecoder =
     JD.map3 ErrorDebug
@@ -173,37 +168,25 @@ errorHttpToString httpError =
 
 errorGraphQLHttpToString : GqlHttp.HttpError -> String
 errorGraphQLHttpToString httpError =
-    case httpError of
-        GqlHttp.BadUrl message ->
-            message
+    let
+        err =
+            case httpError of
+                GqlHttp.BadUrl message ->
+                    BadUrl message
 
-        GqlHttp.Timeout ->
-            "Server is taking too long to respond. Please try again later."
+                GqlHttp.Timeout ->
+                    Timeout
 
-        GqlHttp.NetworkError ->
-            "Unable to reach server."
+                GqlHttp.NetworkError ->
+                    NetworkError
 
-        GqlHttp.BadStatus metadata body ->
-            if metadata.statusCode == 401 then
-                let
-                    errMsg =
-                        case JD.decodeString errorsDecoder body of
-                            Ok err ->
-                                err.errors |> List.map (\e -> e.message) |> String.join "\n"
+                GqlHttp.BadStatus metadata body ->
+                    BadStatus metadata.statusCode body
 
-                            Err errJD ->
-                                "unknown error;\n" ++ JD.errorToString errJD
-                in
-                "Unauthaurized: " ++ errMsg
-
-            else if body == "" then
-                "Request failed with status code: " ++ String.fromInt metadata.statusCode
-
-            else
-                body
-
-        GqlHttp.BadPayload body ->
-            "Graphql Http JSON decoder unexpected error."
+                GqlHttp.BadPayload message ->
+                    BadBody (JD.errorToString message)
+    in
+    errorHttpToString err
 
 
 toErrorData : HttpError String -> ErrorData
@@ -249,36 +232,6 @@ loadingSpinRight isLoading =
         text ""
 
 
-viewGqlErrors : ErrorData -> Html msg
-viewGqlErrors errMsg =
-    errMsg
-        |> List.map
-            (\e ->
-                let
-                    err =
-                        case JD.decodeString errorsDecoder e of
-                            Ok err_ ->
-                                err_.errors
-                                    |> List.head
-                                    |> Maybe.map (\x -> upH x.message)
-                                    |> withDefault e
-
-                            Err err_ ->
-                                case JD.decodeString errorsDecoder2 e of
-                                    Ok err2_ ->
-                                        err2_
-                                            |> List.head
-                                            |> Maybe.map (\x -> upH x.message)
-                                            |> withDefault e
-
-                                    Err t ->
-                                        e
-                in
-                p [] [ text err ]
-            )
-        |> div [ class "box has-background-danger is-size-6" ]
-
-
 viewHttpErrors : HttpError String -> Html msg
 viewHttpErrors httpErr =
     httpErr
@@ -304,6 +257,36 @@ viewMaybeWebErrors data =
 
         _ ->
             text ""
+
+
+viewGqlErrors : ErrorData -> Html msg
+viewGqlErrors errMsg =
+    errMsg
+        |> List.map
+            (\e ->
+                let
+                    err =
+                        case JD.decodeString errorsDecoder e of
+                            Ok err_ ->
+                                err_.errors
+                                    |> List.head
+                                    |> Maybe.map (\x -> upH x.message)
+                                    |> withDefault e
+
+                            Err err_ ->
+                                case JD.decodeString (JD.list errorDecoder) e of
+                                    Ok err2_ ->
+                                        err2_
+                                            |> List.head
+                                            |> Maybe.map (\x -> upH x.message)
+                                            |> withDefault e
+
+                                    Err t ->
+                                        e
+                in
+                p [ class "message-body" ] [ text err ]
+            )
+        |> div [ class "message is-danger is-light mt-2" ]
 
 
 viewAuthNeeded : (ModalData -> msg) -> Html msg

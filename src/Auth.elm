@@ -72,34 +72,30 @@ parseErr data trial =
             OkAuth d
 
         Failure err ->
-            if List.length err == 1 then
-                case List.head err of
-                    Just err_ ->
-                        let
-                            gqlErr =
-                                err_
-                                    |> String.replace "\n" ""
-                                    |> SE.rightOf "{"
-                                    |> SE.insertAt "{" 0
-                                    |> JD.decodeString errorsDecoder
-                        in
-                        case gqlErr of
-                            Ok errGql ->
-                                case List.head errGql.errors of
-                                    Just e ->
-                                        messageToErrState e.message trial
+            case List.head err of
+                Just err_ ->
+                    let
+                        gqlErr =
+                            err_
+                                |> String.replace "\n" ""
+                                |> SE.rightOf "{"
+                                |> SE.insertAt "{" 0
+                                |> JD.decodeString errorsDecoder
+                    in
+                    case gqlErr of
+                        Ok errGql ->
+                            case List.head errGql.errors of
+                                Just e ->
+                                    messageToErrState e.message trial
 
-                                    Nothing ->
-                                        UnknownErr
+                                Nothing ->
+                                    UnknownErr
 
-                            Err errJD ->
-                                messageToErrState err_ trial
+                        Err errJD ->
+                            messageToErrState err_ trial
 
-                    Nothing ->
-                        UnknownErr
-
-            else
-                UnknownErr
+                Nothing ->
+                    UnknownErr
 
         _ ->
             NoErr
@@ -114,38 +110,30 @@ parseErr2 data trial =
             OkAuth d
 
         RemoteData.Failure error ->
-            let
-                err =
-                    toErrorData error
-            in
-            if List.length err == 1 then
-                case List.head err of
-                    Just err_ ->
-                        let
-                            gqlErr =
-                                err_
-                                    |> String.replace "\n" ""
-                                    |> SE.rightOf "{"
-                                    |> SE.insertAt "{" 0
-                                    |> JD.decodeString errorsDecoder
-                        in
-                        case gqlErr of
-                            Ok errGql ->
-                                case List.head errGql.errors of
-                                    Just e ->
-                                        messageToErrState e.message trial
+            case List.head (toErrorData error) of
+                Just err_ ->
+                    let
+                        gqlErr =
+                            err_
+                                |> String.replace "\n" ""
+                                |> SE.rightOf "{"
+                                |> SE.insertAt "{" 0
+                                |> JD.decodeString errorsDecoder
+                    in
+                    case gqlErr of
+                        Ok errGql ->
+                            case List.head errGql.errors of
+                                Just e ->
+                                    messageToErrState e.message trial
 
-                                    Nothing ->
-                                        UnknownErr
+                                Nothing ->
+                                    UnknownErr
 
-                            Err errJD ->
-                                messageToErrState err_ trial
+                        Err errJD ->
+                            messageToErrState err_ trial
 
-                    Nothing ->
-                        UnknownErr
-
-            else
-                UnknownErr
+                Nothing ->
+                    UnknownErr
 
         _ ->
             NoErr

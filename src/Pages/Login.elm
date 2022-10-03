@@ -16,7 +16,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
-import Loading exposing (WebData, expectJson, viewHttpErrors)
+import Loading exposing (WebData, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)

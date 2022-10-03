@@ -18,7 +18,7 @@ import Http
 import Image exposing (Image)
 import Json.Decode as JD
 import Json.Encode as JE
-import Loading exposing (WebData, expectJson, loadingSpin, viewHttpErrors)
+import Loading exposing (WebData, loadingSpin, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
