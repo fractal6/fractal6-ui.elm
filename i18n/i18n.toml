@@ -29,11 +29,11 @@
 
 [npoHero]
   en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make their governance structures transparent and provide a memory to the organization."
-  fr="De quelque membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs de faciliter la coordinations d'équipes, rendre transparente leurs structures de gouvernance et fournit une mémoire à l'organisation."
+  fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs de faciliter la coordinations d'équipes, rendre transparentes leurs structures de gouvernance et fournit une mémoire à l'organisation."
 
 [corpHero]
   en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in a easy way, that favors relationships based on trust and commitment between peers."
-  fr="Des méthodes _**Agiles**_ à l'_**Holacratie**_, Fractale vous permet de mettre en œuvre des méthodes de management et de suivie de projets, de manière simple, qui privilégient les relations fondées sur la confiance et l'engagement entre pairs."
+  fr="Des méthodes _**Agiles**_ à l'_**Holacratie**_, Fractale vous permet de mettre en œuvre des méthodes de management et de suivi de projets, de manière simple, qui privilégient les relations fondées sur la confiance et l'engagement entre pairs."
 
 [forNpo]
   en="For Nonprofits"
@@ -1975,7 +1975,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [userJoined_event]
 	en="An user joined us"
-	fr="Un Utilisateur nous a rejoins"
+	fr="Un utilisateur nous a rejoint"
 
 [userLeft_event]
 	en="An user left his role"
