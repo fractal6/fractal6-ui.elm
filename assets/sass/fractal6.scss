@@ -408,6 +408,12 @@ strong {
     }
 }
 
+.button.is-multiline {
+    white-space: unset; //@debug: or normal ?
+    height: auto;
+    //flex-direction: column;
+}
+
 .breakable {
     height: 100%;
     white-space: normal;

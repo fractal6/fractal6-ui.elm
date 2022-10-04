@@ -514,7 +514,7 @@ viewRoleExt cls r =
                     [ colorAttr (roleColor r.role_type) ]
     in
     span
-        ([ class ("button buttonRole " ++ cls) ] ++ color)
+        ([ class ("button is-multiline buttonRole " ++ cls) ] ++ color)
         [ A.icon1 (role2icon r) r.name ]
 
 
