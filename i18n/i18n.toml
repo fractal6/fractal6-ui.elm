@@ -12,28 +12,28 @@
 
 [heroSubtitle]
   en="""Design your organization,
-      Invite collaborators,
-      Collect [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
-      Share, distribute and process them,
+      Invite your collaborators,
+      Collect and identify [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
+      Share, discuss and solve them,
       Evolve organically."""
   fr="""Dessinez votre organisation,
-        Invitez des collaborateurs,
-        Collectez des [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
-        Partagez, distribuez et traitez-les,
+        Invitez vos collaborateurs,
+        Collectez et identifiez les [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
+        Partagez, échangez et résolvez-les,
         Evoluez organiquement."""
 
 
 [aboutHero]
   en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organizations."
-  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective pour favoriser la transparence, l'évolution et la résilience des organisations."
+  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective qui favorise la transparence, accompagne l'évolution et renforce la résilience des organisations."
 
 [npoHero]
-  en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make their governance structures transparent and provide a memory to the organization."
-  fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs de faciliter la coordinations d'équipes, rendre transparentes leurs structures de gouvernance et fournit une mémoire à l'organisation."
+  en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make governance structures transparent while providing a memory to the organization."
+  fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs (Non-Profit Organization) de faciliter la coordination d'équipes, rendre transparentes les structures de gouvernance et fluidifier l'information tout en fournissant une mémoire à l'organisation."
 
 [corpHero]
-  en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in a easy way, that favors relationships based on trust and commitment between peers."
-  fr="Des méthodes _**Agiles**_ à l'_**Holacratie**_, Fractale vous permet de mettre en œuvre des méthodes de management et de suivi de projets, de manière simple, qui privilégient les relations fondées sur la confiance et l'engagement entre pairs."
+  en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in a easy and intuitive way. Boost the engagement of your teams around clear objectives while making your communication more fluid."
+  fr="Des méthodes _**Agiles**_ à l'_**Holacratie**_, Fractale vous permet de mettre en œuvre un management et du suivi de projets, de manière simple et intuitive. Favorisez l'implication de vos équipes autour d'objectifs clairs tout en fluidifiant votre communication."
 
 [forNpo]
   en="For Nonprofits"
