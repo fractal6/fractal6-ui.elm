@@ -349,7 +349,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [feedbackTitlePH]
   en="Subject of your feedback"
-  fr="Sujet de votre question"
+  fr="Sujet de votre feedback"
 
 [feedbackTextPH]
   en="Write your feedback here..."
@@ -1703,8 +1703,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
 
 [showOlderEvents]
-  en="Show {} older events"
-  fr="Afficher {} autres événements"
+  en="Show {{}} older events"
+  fr="Afficher {{}} autres événements"
 
 #
 # Legend
