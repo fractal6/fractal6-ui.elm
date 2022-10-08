@@ -280,7 +280,7 @@ viewHero model =
             ]
         , br [] []
         , div [ class "columns is-centered pb-6 mb-5 m-0" ]
-            [ div [ class "column is-11 is-9-fullhd" ]
+            [ div [ class "column is-11-desktop is-9-fullhd" ]
                 [ div [ class "columns is-5 is-variable content" ]
                     [ div [ class "column is-4" ] [ h1 [] [ logo, text T.about ], p [] [ renderMarkdown "is-human" T.aboutHero ] ]
                     , div [ class "column is-4" ] [ h1 [] [ logo, text T.forNpo ], p [] [ renderMarkdown "is-human" T.npoHero ] ]
