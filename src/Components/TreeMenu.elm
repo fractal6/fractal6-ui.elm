@@ -512,7 +512,7 @@ view op (State model) =
             , class "is-hidden-touch"
             , classList [ ( "off", not model.isActive ) ]
             ]
-            [ viewOrgas model
+            [ viewTreeMenu model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             , div
                 [ class "button is-small bottom-button"
@@ -528,8 +528,8 @@ view op (State model) =
             [ div [ class "hinter" ] [] ]
 
 
-viewOrgas : Model -> Html Msg
-viewOrgas model =
+viewTreeMenu : Model -> Html Msg
+viewTreeMenu model =
     div [ class "menu", onMouseLeave (OnOrgHover Nothing) ]
         [ case model.tree_result of
             Success data ->

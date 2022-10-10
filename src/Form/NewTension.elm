@@ -709,8 +709,20 @@ update_ apis message model =
                                 )
 
                             else
+                                let
+                                    switch_cmd =
+                                        case model.activeTab of
+                                            NewTensionTab ->
+                                                Cmd.none
+
+                                            NewRoleTab ->
+                                                send (OnSwitchTab NewRoleTab)
+
+                                            NewCircleTab ->
+                                                send (OnSwitchTab NewCircleTab)
+                                in
                                 ( { data | isActive2 = True } |> setUctx uctx
-                                , out0 [ sendSleep (SetIsActive2 True) 10 ]
+                                , out0 [ sendSleep (SetIsActive2 True) 10, switch_cmd ]
                                 )
 
                 LoggedOut ->
@@ -725,10 +737,10 @@ update_ apis message model =
                     else
                         Cmd.none
             in
-            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t), cmd ] )
+            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ send (OnOpen t), cmd ] )
 
         OnOpenCircle t ->
-            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnSwitchTab NewCircleTab), send (OnOpen t) ] )
+            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnOpen t) ] )
 
         OnClose data ->
             let

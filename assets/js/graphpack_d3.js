@@ -191,7 +191,7 @@ export const GraphPack = {
     centerY: null,
     rayon: null,
     zoomCtx: null,
-    circlesPadding: 8, // 1.8
+    circlesPadding: 4, // 1.8
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
     fontstyleCircle: "Arial, fractaleicon",
@@ -511,6 +511,10 @@ export const GraphPack = {
         var n, opac;
         var defOpac = (node == this.focusedNode)
 
+        if (node.data.children.length > 99) {
+            // Do not print names in cercle too many child
+            return
+        }
         for (var i=0; i < node.data.children.length; i++) {
             n = node.children[i];
             if (!n.ctx || node.depth !== n.depth-1) continue
@@ -523,9 +527,9 @@ export const GraphPack = {
             } else {
                 opac = "80";
             }
-            if (n.data.type_ === NodeType.Circle && this.circles_len < 100 ) {
+            if (n.data.type_ === NodeType.Circle) {
                 this.drawCircleName(n, opac)
-            } else if (this.roles_len < 100) {
+            } else {
                 this.drawRoleName(n, opac)
             }
         }
@@ -1307,6 +1311,7 @@ export const GraphPack = {
                 test = x**2 + y**2 <= (this.zoomedNode.ctx.rayon)**2 ;
                 break
             case 'InVoid':
+                if (!this.rootNode.ctx) break
                 var x = p.mouseX - this.rootNode.ctx.centerX;
                 var y = p.mouseY - this.rootNode.ctx.centerY;
                 // Security margin when movin to a tooltip that is outside the anchor

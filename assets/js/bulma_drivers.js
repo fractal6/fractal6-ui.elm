@@ -70,15 +70,20 @@ export function BulmaDriver(app, target, handlers) {
         $doc = document;
         // Eventually clean active modal style
         document.documentElement.classList.remove('has-modal-active');
-        document.getElementById("navbarTop").classList.remove('has-modal-active');
-        document.documentElement.classList.remove('has-modal-active2');
-        document.getElementById("navbarTop").classList.remove('has-modal-active2');
-    } else {
+        var nvt = document.getElementById("navbarTop");
+        if (nvt) {
+            nvt.classList.remove('has-modal-active');
+            nvt.classList.remove('has-modal-active2');
+        }
+    } else if (document.getElementById(target)) {
         // @DEBUG: document handler may be added several times here...
         // --
         // Use parentNode to be sure to not miss the target in the case
         // where the eltId is defined at the same level of the wanted selector.
         $doc = document.getElementById(target).parentNode;
+    } else {
+        console.log("Bulma init target not found");
+        return
     }
 
     //
@@ -523,7 +528,10 @@ function buttonToggleHandler(e, btn) {
 // Activate modal
 function triggerModal(e, el) {
     document.documentElement.classList.add('has-modal-active');
-    document.getElementById("navbarTop").classList.add('has-modal-active');
+    var nvt = document.getElementById("navbarTop");
+    if (nvt) {
+        nvt.classList.add('has-modal-active');
+    }
     var $t = document.getElementById(el.dataset.modal);
     if ($t) {
         $t.classList.add("is-active");
@@ -560,7 +568,10 @@ function closeModal(e, modal, app) {
         modal.classList.remove('is-active');
         // Fix block scrolling
         document.documentElement.classList.remove('has-modal-active');
-        document.getElementById("navbarTop").classList.remove('has-modal-active');
+        var nvt = document.getElementById("navbarTop");
+        if (nvt) {
+            nvt.classList.remove('has-modal-active');
+        }
     }
 }
 

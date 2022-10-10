@@ -828,7 +828,8 @@ getNodeRights uctx target_ odata =
     else
         let
             childrenRoles =
-                getChildren target.nameid odata |> List.filter (\n -> n.type_ == NodeType.Role)
+                getChildren target.nameid odata
+                    |> List.filter (\n -> n.type_ == NodeType.Role)
 
             childrenCoordos =
                 List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles

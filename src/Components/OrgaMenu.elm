@@ -277,7 +277,7 @@ view op (State model) =
             , classList [ ( "off", not model.isActive ) ]
             , onMouseLeave (OnOrgHover Nothing)
             ]
-            [ Lazy.lazy4 viewOrgas model.hover model.focus model.orgs_result op
+            [ Lazy.lazy4 viewOrgaMenu model.hover model.focus model.orgs_result op
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
 
@@ -285,8 +285,8 @@ view op (State model) =
         text ""
 
 
-viewOrgas : Maybe String -> NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
-viewOrgas hover focus orgs_result op =
+viewOrgaMenu : Maybe String -> NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
+viewOrgaMenu hover focus orgs_result op =
     div []
         ((case orgs_result of
             Success data ->
