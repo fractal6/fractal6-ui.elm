@@ -2487,10 +2487,7 @@ tr.mediaBox {
             background-color: var(--background-evidence);
             border-radius: 50px;
         }
-        &.content,
-        .content,
-        &.content strong
-        {
+        &.content, .content, &.content strong {
             color: var(--link) !important;
         }
     }

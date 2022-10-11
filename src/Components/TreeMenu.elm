@@ -631,7 +631,7 @@ viewRoleLine focus roles =
             ]
             [ div [ class "level is-mobile" ]
                 [ div [ class "level-left", attribute "style" "width:82%;" ]
-                    [ span [ class "tag is-rounded is-small has-background-border-light" ]
+                    [ span [ class "tag is-small has-background-border-light" ]
                         [ text "+", text (String.fromInt (List.length roles)), text " roles" ]
                     ]
                 ]
