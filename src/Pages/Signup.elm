@@ -20,7 +20,7 @@ import Loading exposing (WebData, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
-import ModelCommon.Requests exposing (signup)
+import Requests exposing (signup)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process

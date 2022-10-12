@@ -698,7 +698,7 @@ assignedTensionDecoder data =
         addParam value maybeValues =
             case maybeValues of
                 Just values ->
-                    Just (value :: values)
+                    Just (values ++ [ value ])
 
                 Nothing ->
                     Just [ value ]
@@ -713,12 +713,11 @@ assignedTensionDecoder data =
     data
         |> Maybe.map
             (\x ->
-                List.sortBy .createdAt (withDefault [] x.tensions_assigned)
+                withDefault [] x.tensions_assigned
+                    --|> List.sortBy .createdAt
                     |> List.map (\y -> ( nid2rootid y.receiver.nameid, y ))
                     |> toDict2
-                    |> Just
             )
-        |> Maybe.withDefault Nothing
 
 
 queryAssignedTensions url form msg =
@@ -737,6 +736,15 @@ assignedTensionsPayload first =
         |> with Fractal.Object.User.username
         |> with
             (Fractal.Object.User.tensions_assigned
-                (\a -> { a | first = Present first })
+                (\a ->
+                    { a
+                        | first = Present first
+                        , filter = Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) |> Present
+                        , order =
+                            Input.buildTensionOrder
+                                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
+                                |> Present
+                    }
+                )
                 tensionPayload
             )

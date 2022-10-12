@@ -26,7 +26,7 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
-import ModelCommon.Requests exposing (getQuickDoc)
+import Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports

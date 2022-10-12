@@ -5,7 +5,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html
 import Http
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Requests exposing (logout)
+import Requests exposing (logout)
 import Page exposing (Document, Page)
 
 

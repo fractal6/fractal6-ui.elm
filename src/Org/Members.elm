@@ -38,7 +38,6 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMay
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchMembersSub)
 import ModelCommon.View exposing (viewRole2, viewUser, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -47,6 +46,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
+import Requests exposing (fetchMembersSub)
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
@@ -534,7 +534,7 @@ view global model =
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
-    { title = T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData

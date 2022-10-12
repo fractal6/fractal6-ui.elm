@@ -30,7 +30,7 @@ import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, vie
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
-import ModelCommon.Requests exposing (createOrga)
+import Requests exposing (createOrga)
 import ModelCommon.View exposing (visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

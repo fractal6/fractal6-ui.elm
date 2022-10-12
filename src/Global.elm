@@ -30,7 +30,7 @@ import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
-import ModelCommon.Requests exposing (tokenack)
+import Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
 import Process

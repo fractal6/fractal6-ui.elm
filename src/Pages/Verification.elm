@@ -21,7 +21,7 @@ import Loading exposing (WebData, viewHttpErrors)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Requests exposing (signupValidate)
+import Requests exposing (signupValidate)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process

@@ -247,13 +247,6 @@ init global flags =
             , can_referer =
                 Maybe.map
                     (\r ->
-                        let
-                            f =
-                                Debug.log "1" (String.dropLeft 1 r.path |> String.split "/" |> List.head |> withDefault "" |> String.append "/")
-
-                            g =
-                                Debug.log "2" (toHref Route.Notifications)
-                        in
                         if
                             (String.dropLeft 1 r.path
                                 |> String.split "/"
@@ -598,7 +591,7 @@ viewUserEvent lang now ue =
             let
                 -- LabelAdded is the first entry of the list
                 -- when a label is added at the creation of a tension.
-                -- I guess is because the timestamp are equal which messed up the orders (@dgraph) ???
+                -- I guess it's because the timestamp are equal which messed up the orders (@dgraph) ?
                 e =
                     ue.event
                         |> List.map
@@ -639,7 +632,7 @@ viewUserEvent lang now ue =
                         , ( "icon", eventToIcon e.event_type )
                         ]
             in
-            viewNotif ue node (viewEventMedia lang now False ev)
+            viewNotif False ue node (viewEventMedia lang now False ev)
 
         Just (ContractEvent c) ->
             let
@@ -660,19 +653,7 @@ viewUserEvent lang now ue =
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
             in
-            div [ class "media mediaBox is-hoverable" ]
-                [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
-                , div [ class "media-content" ] [ viewContractMedia lang now ev ]
-                , if not ue.isRead then
-                    div
-                        [ class "media-right tooltip"
-                        , attribute "data-tooltip" T.voteWaited
-                        ]
-                        [ div [ class "Circle has-text-info" ] [] ]
-
-                  else
-                    text ""
-                ]
+            viewNotif True ue node (viewContractMedia lang now ev)
 
         Just (NotifEvent n) ->
             case n.tension of
@@ -681,10 +662,27 @@ viewUserEvent lang now ue =
                         node =
                             tension.receiver
 
-                        ev_ =
+                        link =
+                            case n.contract of
+                                Just contract ->
+                                    -- Contract notification (e.g contract cancelled)
+                                    (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id, param3 = contract.id } |> toHref)
+                                        ++ "?eid="
+                                        ++ ue.id
+
+                                Nothing ->
+                                    withDefault
+                                        ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id } |> toHref)
+                                            ++ "?eid="
+                                            ++ ue.id
+                                        )
+                                        n.link
+
+                        ev =
                             Dict.fromList
                                 [ ( "id", ue.id )
                                 , ( "title", withDefault "no input message." n.message )
+                                , ( "link", link )
 
                                 --, ( "title_", tension.title )
                                 , ( "target", node.name )
@@ -694,36 +692,7 @@ viewUserEvent lang now ue =
                                 , ( "icon", "icon-info" )
                                 ]
                     in
-                    case n.contract of
-                        Just contract ->
-                            -- Contract notification (e.g contract cancelled)
-                            let
-                                link =
-                                    (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id, param3 = contract.id } |> toHref)
-                                        ++ "?eid="
-                                        ++ ue.id
-
-                                ev =
-                                    Dict.insert "link" link ev_
-                            in
-                            viewNotif ue node (viewNotifMedia lang now ev)
-
-                        Nothing ->
-                            let
-                                link =
-                                    case n.link of
-                                        Just l ->
-                                            l
-
-                                        Nothing ->
-                                            (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id } |> toHref)
-                                                ++ "?eid="
-                                                ++ ue.id
-
-                                ev =
-                                    Dict.insert "link" link ev_
-                            in
-                            viewNotif ue node (viewNotifMedia lang now ev)
+                    viewNotif False ue node (viewNotifMedia lang now ev)
 
                 Nothing ->
                     -- Something has beed removed, contract ?
@@ -733,18 +702,30 @@ viewUserEvent lang now ue =
             text ""
 
 
-viewNotif : UserEvent -> PNode -> Html Msg -> Html Msg
-viewNotif ue node content =
+viewNotif : Bool -> UserEvent -> PNode -> Html Msg -> Html Msg
+viewNotif isContract ue node content =
+    let
+        ( tooltip_cls, tooltip_txt ) =
+            if isContract then
+                ( T.voteWaited, "has-text-info" )
+
+            else
+                ( T.markAsRead, "has-text-link is-w" )
+    in
     div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
+        [ div [ class "media-left" ] [ viewOrga True node.nameid ]
         , div [ class "media-content" ] [ content ]
         , if not ue.isRead then
             div
                 [ class "media-right tooltip"
-                , attribute "data-tooltip" T.markAsRead
-                , onClick (MarkAsRead ue.id)
+                , attribute "data-tooltip" tooltip_txt
+                , if isContract then
+                    onClick NoMsg
+
+                  else
+                    onClick (MarkAsRead ue.id)
                 ]
-                [ div [ class "Circle has-text-link is-w" ] [] ]
+                [ div [ class ("Circle " ++ tooltip_cls) ] [] ]
 
           else
             text ""

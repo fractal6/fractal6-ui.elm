@@ -58,7 +58,6 @@ import Loading
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
 import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionStatus2String, tensionType2String, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -68,6 +67,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
+import Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import Task
 import Text as T
@@ -929,7 +929,7 @@ update global message model =
                                 addParam value maybeValues =
                                     case maybeValues of
                                         Just values ->
-                                            Just (value :: values)
+                                            Just (values ++ [ value ])
 
                                         Nothing ->
                                             Just [ value ]
@@ -1378,7 +1378,7 @@ view global model =
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
-    { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData
@@ -1704,7 +1704,8 @@ viewListTensions model =
                     model.tensions_int
 
                 other ->
-                    other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l) |> Success
+                    --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
+                    other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12" ]
@@ -1777,8 +1778,8 @@ viewCircleTensions model =
                                     [ A.icon "icon-plus" ]
                                 ]
                             , tensions
-                                |> List.sortBy .createdAt
-                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l)
+                                --|> List.sortBy .createdAt
+                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                                 |> List.map
                                     (\t ->
                                         div [ class "box is-shrinked2 mb-2 mx-2" ]

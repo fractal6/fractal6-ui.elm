@@ -38,7 +38,6 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMay
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
 import ModelCommon.View exposing (getNodeTextFromNodeType, viewLabel, viewRoleExt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -55,6 +54,7 @@ import Query.PatchNode
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData exposing (RemoteData)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
 import Text as T
@@ -1222,7 +1222,7 @@ view global model =
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
-    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData

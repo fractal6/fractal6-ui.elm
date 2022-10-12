@@ -879,7 +879,7 @@ view global model =
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
-    { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData
@@ -1116,14 +1116,14 @@ viewSearchList _ model =
                                 [ th [] [ text n.name ] ]
                                     ++ (case n.type_ of
                                             NodeType.Circle ->
-                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> LE.last |> withDefault "") |> withDefault "" |> text ]
                                                 , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
 
                                                 --, td [] [ n.first_link |> Maybe.map (\p -> viewUsernameLink p.username) |> withDefault (text "--") ]
                                                 ]
 
                                             NodeType.Role ->
-                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> LE.last |> withDefault "") |> withDefault "" |> text ]
                                                 , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
                                                 ]
                                        )

@@ -20,6 +20,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Identicon
+import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -651,7 +652,7 @@ viewNodeRefShort baseUri nid =
             uriFromNameid baseUri nid []
 
         name =
-            nid |> String.split "#" |> List.reverse |> List.head |> withDefault nid
+            nid |> String.split "#" |> LE.last |> withDefault nid
     in
     a [ href ref ] [ text name ]
 

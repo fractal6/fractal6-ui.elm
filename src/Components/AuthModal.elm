@@ -19,7 +19,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSucce
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
-import ModelCommon.Requests exposing (login, signupValidate)
+import Requests exposing (login, signupValidate)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)

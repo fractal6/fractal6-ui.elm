@@ -21,7 +21,7 @@ import Json.Encode as JE
 import Loading exposing (WebData, loadingSpin, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
+import Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)

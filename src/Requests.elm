@@ -1,4 +1,4 @@
-module ModelCommon.Requests exposing (..)
+module Requests exposing (..)
 
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)

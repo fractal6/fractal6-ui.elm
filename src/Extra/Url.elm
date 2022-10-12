@@ -24,7 +24,7 @@ queryParser url =
         addParam value maybeValues =
             case maybeValues of
                 Just values ->
-                    Just (value :: values)
+                    Just (values ++ [ value ])
 
                 Nothing ->
                     Just [ value ]

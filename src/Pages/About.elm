@@ -21,7 +21,7 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
-import ModelCommon.Requests exposing (login, signup)
+import Requests exposing (login, signup)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
