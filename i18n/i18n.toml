@@ -998,6 +998,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Notifications"
   fr="Notifications"
 
+[assigned]
+  en="Assigned"
+  fr="Assignés"
+
+[assignedTensions]
+  en="Assigned Tensions"
+  fr="Tensions Assignées"
+
 [tensionSubscribeText]
   en="You’re receiving notifications because you’re subscribed to this thread."
   fr="Vous recevez des notifications car vous êtes abonné à ce fil de discussion."
@@ -1085,6 +1093,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [noNotificationsYet]
   en="No notifications yet."
   fr="Aucune notifications pour le moment"
+
+[noAssignedYet]
+  en="No assigned tensions."
+  fr="Aucune tensions assignées."
 
 [noTensionsYet]
   en="No tensions yet."

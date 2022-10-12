@@ -167,7 +167,7 @@ menuToString menu =
             ( T.notifications, T.notifications )
 
         AssignedMenu ->
-            ( "Assigned", "Assigned Tensions" )
+            ( T.assigned, T.assignedTensions )
 
 
 menuToIcon : MenuNotif -> String
@@ -504,7 +504,13 @@ view_ global model =
         [ div [ class "column is-2 is-3-fullhd" ] [ viewMenu model ]
         , div [ class "column is-8 is-6-fullhd pt-0" ]
             [ div []
-                [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-left", title T.goBack, onClick GoBack ] []
+                [ div
+                    [ class "is-strong arrow-left is-w is-h bc is-pulled-left"
+                    , attribute "style" "position:relative; top:-15px;"
+                    , title T.goBack
+                    , onClick GoBack
+                    ]
+                    []
                 , case model.menuFocus of
                     NotificationsMenu ->
                         div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
@@ -519,7 +525,7 @@ view_ global model =
                     case model.notifications_data of
                         Success notifications ->
                             if List.length notifications == 0 then
-                                text T.noNotificationsYet
+                                p [ class "content" ] [ text T.noNotificationsYet ]
 
                             else
                                 viewNotifications global.session.lang model.now notifications
@@ -537,7 +543,7 @@ view_ global model =
                     case model.assigned_data of
                         Success assigned ->
                             if Dict.size assigned == 0 then
-                                text T.noNotificationsYet
+                                p [ class "content" ] [ text T.noAssignedYet ]
 
                             else
                                 viewAssigned global.session.lang model.now assigned
