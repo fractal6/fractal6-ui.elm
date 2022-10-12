@@ -6,17 +6,19 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Extra.Events exposing (onClickPD2)
+import Extra exposing (mor, ternary, textH, upH, upT)
+import Extra.Events exposing (onClickPD)
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.Lang as Lang
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, title, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, target, title, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -36,7 +38,7 @@ import Loading
         )
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
 import ModelCommon.Event
     exposing
         ( contractEventToText
@@ -50,12 +52,13 @@ import ModelCommon.Event
         , viewEventMedia
         , viewNotifMedia
         )
-import ModelCommon.View exposing (byAt, viewOrga)
+import ModelCommon.View exposing (byAt, mediaTension, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
+import Query.QueryTension exposing (queryAssignedTensions)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
@@ -113,7 +116,10 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { uctx : UserCtx
     , notifications_data : GqlData UserEvents
+    , assigned_data : GqlData (Dict String (List Tension))
     , eid : String
+    , menuFocus : MenuNotif
+    , can_referer : Maybe Url
 
     -- Common
     , help : Help.State
@@ -124,6 +130,56 @@ type alias Model =
     }
 
 
+type MenuNotif
+    = NotificationsMenu
+    | AssignedMenu
+
+
+menuEncoder : MenuNotif -> String
+menuEncoder menu =
+    case menu of
+        NotificationsMenu ->
+            "last"
+
+        AssignedMenu ->
+            "assigned"
+
+
+menuDecoder : String -> MenuNotif
+menuDecoder menu =
+    case menu of
+        "assigned" ->
+            AssignedMenu
+
+        _ ->
+            NotificationsMenu
+
+
+menuList : List MenuNotif
+menuList =
+    [ NotificationsMenu, AssignedMenu ]
+
+
+menuToString : MenuNotif -> ( String, String )
+menuToString menu =
+    case menu of
+        NotificationsMenu ->
+            ( T.notifications, T.notifications )
+
+        AssignedMenu ->
+            ( "Assigned", "Assigned Tensions" )
+
+
+menuToIcon : MenuNotif -> String
+menuToIcon menu =
+    case menu of
+        NotificationsMenu ->
+            "icon-mail"
+
+        AssignedMenu ->
+            "icon-exchange"
+
+
 
 ---- MSG ----
 
@@ -131,11 +187,14 @@ type alias Model =
 type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
     | LoadNotifications
+    | LoadAssigned
     | GotNotifications (GqlData UserEvents)
+    | GotAssigned (GqlData (Dict String (List Tension)))
     | MarkAsRead String
     | GotMarkAsRead (GqlData IdPayload)
     | MarkAllAsRead
     | GotMarkAllAsRead (GqlData IdPayload)
+    | ChangeMenuFocus MenuNotif
       -- Common
     | NoMsg
     | PassedSlowLoadTreshold -- timer
@@ -160,17 +219,56 @@ init global flags =
             case global.session.user of
                 LoggedIn uctx_ ->
                     ( uctx_
-                    , [ send LoadNotifications, sendSleep PassedSlowLoadTreshold 500 ]
+                    , case menu of
+                        NotificationsMenu ->
+                            [ send LoadNotifications, sendSleep PassedSlowLoadTreshold 500 ]
+
+                        AssignedMenu ->
+                            [ send LoadAssigned, sendSleep PassedSlowLoadTreshold 500 ]
                     , [ send (UpdateSessionFocus Nothing) ]
                     )
 
                 LoggedOut ->
                     ( initUserctx, [], [ Global.navigate <| Route.Login ] )
 
+        -- Query parameters
+        query =
+            queryParser global.url
+
+        menu =
+            Dict.get "m" query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+
         model =
             { uctx = uctx
             , notifications_data = Loading
+            , assigned_data = Loading
             , eid = ""
+            , menuFocus = menu
+            , can_referer =
+                Maybe.map
+                    (\r ->
+                        let
+                            f =
+                                Debug.log "1" (String.dropLeft 1 r.path |> String.split "/" |> List.head |> withDefault "" |> String.append "/")
+
+                            g =
+                                Debug.log "2" (toHref Route.Notifications)
+                        in
+                        if
+                            (String.dropLeft 1 r.path
+                                |> String.split "/"
+                                |> List.head
+                                |> withDefault ""
+                                |> String.append "/"
+                            )
+                                == toHref Route.Notifications
+                        then
+                            withDefault r global.session.can_referer
+
+                        else
+                            r
+                    )
+                    global.session.referer
 
             -- common
             , help = Help.init global.session.user
@@ -182,7 +280,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Cmd.batch gcmds
+    , Cmd.batch (gcmds ++ [ send (UpdateCanReferer model.can_referer) ])
     )
 
 
@@ -198,13 +296,16 @@ update global message model =
     in
     case message of
         PassedSlowLoadTreshold ->
-            ( { model | notifications_data = withMaybeSlowly model.notifications_data }, Cmd.none, Cmd.none )
+            ( { model | notifications_data = withMaybeSlowly model.notifications_data, assigned_data = withMaybeSlowly model.assigned_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         LoadNotifications ->
             ( model, queryNotifications apis { first = 50, uctx = model.uctx } GotNotifications, Cmd.none )
+
+        LoadAssigned ->
+            ( model, queryAssignedTensions apis { first = 50, uctx = model.uctx } GotAssigned, Cmd.none )
 
         GotNotifications result ->
             case parseErr result model.refresh_trial of
@@ -243,6 +344,20 @@ update global message model =
                 _ ->
                     ( { model | notifications_data = result }, Cmd.none, Cmd.none )
 
+        GotAssigned result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal model.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep LoadAssigned 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    ( { model | assigned_data = result }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | assigned_data = result }, Cmd.none, Cmd.none )
+
         MarkAsRead eid ->
             ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
 
@@ -271,6 +386,17 @@ update global message model =
 
         MarkAllAsRead ->
             ( model, markAllAsRead apis model.uctx.username GotMarkAllAsRead, Cmd.none )
+
+        ChangeMenuFocus menu ->
+            let
+                url =
+                    toHref Route.Notifications
+
+                query =
+                    queryBuilder
+                        [ ( "m", menuEncoder menu ) ]
+            in
+            ( model, Cmd.none, Nav.pushUrl global.key (url ++ "?" ++ query) )
 
         GotMarkAllAsRead result ->
             case parseErr result model.refresh_trial of
@@ -318,7 +444,7 @@ update global message model =
             ( model, gcmd, Ports.close_modal )
 
         GoBack ->
-            ( model, Cmd.none, send <| NavigateRaw <| withDefault "" <| Maybe.map .path <| global.session.referer )
+            ( model, Cmd.none, send <| NavigateRaw <| withDefault "" <| Maybe.map .path <| model.can_referer )
 
         -- Help
         HelpMsg msg ->
@@ -381,41 +507,83 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "notifications", class "top-section columns reverse-columns" ]
-        [ div [ class "column is-2 is-3-fullhd" ] []
-        , div [ class "column is-8 is-6-fullhd" ]
-            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-left", title T.goBack, onClick GoBack ] []
+    div [ id "notifications", class "top-section columns" ]
+        [ div [ class "column is-2 is-3-fullhd" ] [ viewMenu model ]
+        , div [ class "column is-8 is-6-fullhd pt-0" ]
+            [ div []
+                [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-left", title T.goBack, onClick GoBack ] []
+                , case model.menuFocus of
+                    NotificationsMenu ->
+                        div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
+
+                    AssignedMenu ->
+                        text ""
+                ]
             , br [] []
-            , h2 [ class "title" ] [ text T.notifications ]
-            , case model.notifications_data of
-                Success notifications ->
-                    if List.length notifications == 0 then
-                        text T.noNotificationsYet
+            , h2 [ class "title" ] [ text (menuToString model.menuFocus |> Tuple.second) ]
+            , case model.menuFocus of
+                NotificationsMenu ->
+                    case model.notifications_data of
+                        Success notifications ->
+                            if List.length notifications == 0 then
+                                text T.noNotificationsYet
 
-                    else
-                        viewNotifications global.session.lang notifications model
+                            else
+                                viewNotifications global.session.lang model.now notifications
 
-                NotAsked ->
-                    text ""
+                        LoadingSlowly ->
+                            div [ class "spinner" ] []
 
-                Loading ->
-                    text ""
+                        Failure err ->
+                            viewGqlErrors err
 
-                LoadingSlowly ->
-                    div [ class "spinner" ] []
+                        _ ->
+                            text ""
 
-                Failure err ->
-                    viewGqlErrors err
+                AssignedMenu ->
+                    case model.assigned_data of
+                        Success assigned ->
+                            if Dict.size assigned == 0 then
+                                text T.noNotificationsYet
+
+                            else
+                                viewAssigned global.session.lang model.now assigned
+
+                        LoadingSlowly ->
+                            div [ class "spinner" ] []
+
+                        Failure err ->
+                            viewGqlErrors err
+
+                        _ ->
+                            text ""
             ]
-        , div [ class "column is-2 has-text-centered" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
         ]
 
 
-viewNotifications : Lang.Lang -> UserEvents -> Model -> Html Msg
-viewNotifications lang notifications model =
+viewMenu : Model -> Html Msg
+viewMenu model =
+    nav [ id "menuSettings", class "menu mt-desktop" ]
+        [ ul [ class "menu-list" ] <|
+            (menuList
+                |> List.map
+                    (\x ->
+                        [ li []
+                            [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
+                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first) ]
+                            ]
+                        ]
+                    )
+                |> List.concat
+            )
+        ]
+
+
+viewNotifications : Lang.Lang -> Time.Posix -> UserEvents -> Html Msg
+viewNotifications lang now notifications =
     notifications
         |> List.map
-            (\ue -> Lazy.lazy3 viewUserEvent lang model.now ue)
+            (\ue -> Lazy.lazy3 viewUserEvent lang now ue)
         |> div [ class "box is-shrinked" ]
 
 
@@ -590,3 +758,25 @@ editableEvent event =
 
         _ ->
             True
+
+
+viewAssigned : Lang.Lang -> Time.Posix -> Dict String (List Tension) -> Html Msg
+viewAssigned lang now tensions_d =
+    Dict.keys tensions_d
+        |> List.map
+            (\rootid ->
+                let
+                    tensions =
+                        Dict.get rootid tensions_d |> withDefault []
+
+                    orgaName =
+                        upT rootid
+                in
+                div []
+                    [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
+                    , tensions
+                        |> List.map (\t -> mediaTension lang now (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o" Navigate)
+                        |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
+                    ]
+            )
+        |> div []

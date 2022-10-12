@@ -165,6 +165,12 @@ hr {
     }
 }
 
+.mt-desktop {
+    @include desktop {
+        margin-top: 2rem;
+    }
+}
+
 .form {
     .field-label {
         flex-grow: 1;

@@ -92,7 +92,6 @@ type alias Model =
     , user : GqlData UserFull
     , user_result : GqlData UserFull
     , menuFocus : MenuSettings
-    , menuList : List MenuSettings
     , hasUnsavedData : Bool
     , switch_index : Int
     , form : UserProfileForm
@@ -209,7 +208,6 @@ init global flags =
             , user = Loading
             , user_result = NotAsked
             , menuFocus = menu
-            , menuList = menuList
             , hasUnsavedData = False
             , switch_index = -1
             , form = initUserProfileForm username
@@ -442,7 +440,7 @@ viewSettingsMenu : Model -> Html Msg
 viewSettingsMenu model =
     nav [ id "menuSettings", class "menu" ]
         [ ul [ class "menu-list" ] <|
-            (model.menuList
+            (menuList
                 |> List.map
                     (\x ->
                         [ li []

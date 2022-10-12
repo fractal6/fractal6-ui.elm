@@ -100,6 +100,7 @@ type Msg
     | ReplaceUrl String
     | SetTime Time.Posix
     | UpdateReferer Url
+    | UpdateCanReferer (Maybe Url)
     | NavigateNode String
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserTokenAck (WebData UserCtx)
@@ -167,6 +168,13 @@ update msg model =
                             Just url
             in
             ( { model | session = { session | referer = referer } }, Cmd.none )
+
+        UpdateCanReferer referer ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | can_referer = referer } }, Cmd.none )
 
         NavigateNode nameid ->
             case urlToFractalRoute model.url of

@@ -7,6 +7,7 @@ module Query.QueryTension exposing
     , getTensionHead
     , nodeFragmentPayload
     , queryAllTension
+    , queryAssignedTensions
     , queryCircleTension
     , queryExtTension
     , queryIntTension
@@ -46,6 +47,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
+import ModelCommon.Codecs exposing (nid2rootid)
 import ModelSchema exposing (..)
 import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
 import RemoteData exposing (RemoteData)
@@ -668,3 +670,73 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
                 )
                 |> Present
     }
+
+
+
+{-
+   Query assigned to user tension
+-}
+
+
+type alias AssignedTensions =
+    { username : String
+    , tensions_assigned : Maybe (List Tension)
+    }
+
+
+
+-- Response Decoder
+
+
+assignedTensionDecoder : Maybe AssignedTensions -> Maybe (Dict String (List Tension))
+assignedTensionDecoder data =
+    --
+    -- Convert a list of tension into a Dict of tension by Receiverid
+    --
+    let
+        addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
+        addParam value maybeValues =
+            case maybeValues of
+                Just values ->
+                    Just (value :: values)
+
+                Nothing ->
+                    Just [ value ]
+
+        toDict2 : List ( String, Tension ) -> Dict String (List Tension)
+        toDict2 parameters =
+            List.foldl
+                (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                Dict.empty
+                parameters
+    in
+    data
+        |> Maybe.map
+            (\x ->
+                List.sortBy .createdAt (withDefault [] x.tensions_assigned)
+                    |> List.map (\y -> ( nid2rootid y.receiver.nameid, y ))
+                    |> toDict2
+                    |> Just
+            )
+        |> Maybe.withDefault Nothing
+
+
+queryAssignedTensions url form msg =
+    --@DEBUG: Archived Nodes are not filtered
+    makeGQLQuery url
+        (Query.getUser
+            (\a -> { a | username = Present form.uctx.username })
+            (assignedTensionsPayload form.first)
+        )
+        (RemoteData.fromResult >> decodeResponse assignedTensionDecoder >> msg)
+
+
+assignedTensionsPayload : Int -> SelectionSet AssignedTensions Fractal.Object.User
+assignedTensionsPayload first =
+    SelectionSet.succeed AssignedTensions
+        |> with Fractal.Object.User.username
+        |> with
+            (Fractal.Object.User.tensions_assigned
+                (\a -> { a | first = Present first })
+                tensionPayload
+            )

@@ -55,6 +55,7 @@ type alias Session =
     , lang : Lang.Lang
     , notif : NotifCount
     , referer : Maybe Url
+    , can_referer : Maybe Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
@@ -117,6 +118,7 @@ type alias NodesQuickSearch =
 resetSession : Session -> SessionFlags -> Session
 resetSession session flags =
     { referer = Nothing
+    , can_referer = Nothing
     , user = LoggedOut
     , lang = session.lang
     , notif = initNotifCount
@@ -189,6 +191,7 @@ fromLocalSession flags =
                     ( Nothing, Cmd.none )
     in
     ( { referer = Nothing
+      , can_referer = Nothing
       , user = user
       , lang = Maybe.withDefault Lang.En lang
       , notif = initNotifCount
