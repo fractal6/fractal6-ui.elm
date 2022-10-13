@@ -67,6 +67,7 @@ import ModelCommon.Codecs
     exposing
         ( ActionType(..)
         , DocType(..)
+        , FocusState
         , FractalBaseRoute(..)
         , NodeFocus
         , eor2ur
@@ -100,7 +101,6 @@ import ModelCommon.View
         , viewNodeRefShort
         , viewRole
         , viewRoleExt
-        , viewTensionArrow
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
         , viewUpdated
@@ -180,6 +180,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateTree tree ->
                         ( Cmd.none, send (UpdateSessionTree tree) )
 
+                    DoUpdatePath path ->
+                        ( Cmd.none, send (UpdateSessionPath path) )
+
                     DoFocus nameid ->
                         ( Cmd.none, send (NavigateNode nameid) )
 
@@ -215,6 +218,7 @@ type alias Model =
     , lookup_users : List User
 
     -- Page
+    , focusState : FocusState
     , tensionid : String
     , baseUri : FractalBaseRoute
     , contractid : Maybe String
@@ -447,8 +451,9 @@ init global flags =
             , activeTab = tab
             , nodeView = nodeView
             , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
-            , path_data = fromMaybeData global.session.path_data Loading
-            , tension_head = fromMaybeData global.session.tension_head Loading
+            , path_data = ternary fs.orgChange Loading (fromMaybeData global.session.path_data Loading)
+            , tension_head = ternary fs.orgChange Loading (fromMaybeData global.session.tension_head Loading)
+            , focusState = fs
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
@@ -754,7 +759,12 @@ update global message model =
                         , nodeDoc = nodeDoc
                       }
                     , Cmd.batch
-                        [ queryLocalGraph apis targetid (GotPath True)
+                        [ if model.focusState.orgChange || not (isSuccess model.path_data) then
+                            -- Do not change the context of the user anonimosly, its confusing
+                            queryLocalGraph apis (nid2rootid targetid) (GotPath True)
+
+                          else
+                            Cmd.none
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
                         ]
@@ -1699,9 +1709,7 @@ viewTension u t model =
                       else
                         text ""
                     , viewTensionDateAndUser model.lang model.now "is-discrete" t.createdAt t.createdBy
-
-                    -- @DEBUG: emitter and receiver not used anymore ?
-                    --, viewTensionArrow "is-pulled-right" t.emitter t.receiver
+                    , viewCircleTarget "is-pulled-right" t.receiver
                     ]
                 ]
             ]

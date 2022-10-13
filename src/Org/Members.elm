@@ -92,6 +92,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateTree tree ->
                         ( [], send (UpdateSessionTree tree) )
 
+                    DoUpdatePath path ->
+                        ( [], send (UpdateSessionPath path) )
+
                     DoFocus nameid ->
                         ( [], send (NavigateNode nameid) )
 

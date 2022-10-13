@@ -19,7 +19,6 @@ import ModelSchema
         , FocusNode
         , IdPayload
         , Label
-        , LocalGraph
         , Node
         , NodeId
         , NodesDict

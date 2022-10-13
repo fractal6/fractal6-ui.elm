@@ -20,7 +20,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, uctxFromUser)
+import ModelCommon exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
 import ModelCommon.View exposing (action2icon, viewOrga0)
 import ModelSchema exposing (..)
@@ -355,7 +355,7 @@ update_ apis message model =
             ( { model | hover = v }, noOut )
 
         OnUpdateFocus focus ->
-            if isSuccess model.tree_result then
+            if isSuccess model.tree_result && model.focus.rootnameid == focus.rootnameid then
                 ( { model | focus = focus }, noOut )
 
             else
@@ -479,7 +479,10 @@ update_ apis message model =
                     model.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
             ( model
-            , out2 [ Ports.send_if_mobile "triggerMenuTreeFromJs" ] [ DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q) ]
+            , out2 [ Ports.send_if_mobile "triggerMenuTreeFromJs" ]
+                [ DoUpdatePath (localGraphFromOrga n.nameid model.tree_result)
+                , DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q)
+                ]
             )
 
         Do gcmds ->

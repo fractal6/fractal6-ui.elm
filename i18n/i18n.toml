@@ -1086,22 +1086,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Roles"
   fr="Rôles"
 
-[noMemberYet]
-  en="No member yet"
-  fr="Aucun membre pour le moment"
-
-[noNotificationsYet]
-  en="No notifications yet."
-  fr="Aucune notifications pour le moment"
-
-[noAssignedYet]
-  en="No assigned tensions."
-  fr="Aucune tensions assignées."
-
-[noTensionsYet]
-  en="No tensions yet."
-	fr="Aucune tensions pour le moment"
-
 [owner]
   en="Owner"
   fr="Propriétaire"
@@ -1609,6 +1593,23 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [newReceiver]
   en="New destination"
   fr="Nouvelle destination"
+
+[noMemberYet]
+  en="No member in this circle yet"
+  fr="Aucun membre dans ce cercle"
+
+[noNotificationsYet]
+  en="No notifications yet."
+  fr="Aucune notifications pour le moment"
+
+[noAssignedYet]
+  en="No assigned tensions."
+  fr="Aucune tensions assignées."
+
+[noTensionsYet]
+  en="No tensions yet."
+	fr="Aucune tensions pour le moment"
+
 
 [rolesHere]
   en="Roles in this circle"

@@ -94,6 +94,7 @@ type GlobalCmd
       -- Menu Left
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoUpdateTree (Maybe NodesDict)
+    | DoUpdatePath (Maybe LocalGraph)
       -- @FIX: Make this in Global to define the mapGlobalOutcms only once ?!
       -- Or: User only Ports, and add Subscription in Global to trigger update from JS !
       -- Or: use a type to return directly Global.Cmd !
