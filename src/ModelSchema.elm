@@ -215,6 +215,8 @@ type alias Label =
     { id : String
     , name : String
     , color : Maybe String
+
+    -- nodes are hardcoded in Query/, not in Request...
     , nodes : List NameidPayload
     }
 

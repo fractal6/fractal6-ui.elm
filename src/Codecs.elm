@@ -47,7 +47,7 @@ labelDecoder =
         (JD.field "id" JD.string)
         (JD.field "name" JD.string)
         (JD.maybe <| JD.field "color" JD.string)
-        (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
+        (JD.field "nodes" (JD.list (JD.map NameidPayload (JD.field "nameid" JD.string))) |> JDE.withDefault [])
 
 
 labelEncoder : Label -> List ( String, JE.Value )
