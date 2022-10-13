@@ -2553,10 +2553,10 @@ viewSidePane u t model =
                                                     , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
                                                     ]
                                                 , if model.hasBeenPushed then
-                                                    viewRole "" Nothing (uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
+                                                    viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
 
                                                   else
-                                                    viewRoleExt "is-small mb-3" (RoleExt "" node.name node.color (withDefault RoleType.Pending node.role_type))
+                                                    viewRoleExt "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = withDefault RoleType.Pending node.role_type }
                                                 ]
 
                                             MD ->

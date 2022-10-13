@@ -47,8 +47,8 @@ import ModelSchema
         , NodeExt
         , PNode
         , Post
-        , RoleCommon
         , RoleExt
+        , RoleExtCommon
         , RoleExtFull
         , Tension
         , User
@@ -273,7 +273,7 @@ viewCircleTarget cls er =
             span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
-            viewRole "is-tiny" Nothing (uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
+            viewRole "is-tiny" Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
@@ -443,9 +443,17 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewRole : String -> Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> Html msg
-viewRole cls now_m link r =
+viewRoleExt : String -> Maybe String -> RoleExtCommon a -> Html msg
+viewRoleExt cls link_m r =
+    viewRole cls Nothing link_m { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
+
+
+viewRole : String -> Maybe ( Lang.Lang, Time.Posix, String ) -> Maybe String -> UserRoleCommon a -> Html msg
+viewRole cls_ now_m link_m r =
     let
+        hasTooltip =
+            r.nameid /= ""
+
         since =
             case now_m of
                 Just ( lang, createdAt, uri ) ->
@@ -453,6 +461,13 @@ viewRole cls now_m link r =
 
                 Nothing ->
                     ""
+
+        cls =
+            if hasTooltip then
+                cls_ ++ " tooltip has-tooltip-arrow has-tooltip-bottom"
+
+            else
+                cls_
 
         color =
             case r.color of
@@ -462,10 +477,21 @@ viewRole cls now_m link r =
                 Nothing ->
                     --( "is-" ++ roleColor r.role_type, [] )
                     [ colorAttr (roleColor r.role_type) ]
+
+        a_or_span =
+            case link_m of
+                Just _ ->
+                    a
+
+                Nothing ->
+                    span
+
+        link =
+            withDefault "#" link_m
     in
-    a
-        ([ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom " ++ cls)
-         , attribute "data-tooltip" ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
+    a_or_span
+        ([ class ("button buttonRole is-multiline " ++ cls)
+         , attribute (ternary hasTooltip "data-tooltip" "data-void") ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
          , href link
          ]
             ++ color
@@ -500,22 +526,6 @@ viewRole2 now_m link r msg =
          ]
             ++ color
         )
-        [ A.icon1 (role2icon r) r.name ]
-
-
-viewRoleExt : String -> RoleCommon a -> Html msg
-viewRoleExt cls r =
-    let
-        color =
-            case r.color of
-                Just c ->
-                    [ colorAttr c ]
-
-                Nothing ->
-                    [ colorAttr (roleColor r.role_type) ]
-    in
-    span
-        ([ class ("button is-multiline buttonRole " ++ cls) ] ++ color)
         [ A.icon1 (role2icon r) r.name ]
 
 
@@ -720,7 +730,7 @@ viewOrgaMedia_ user_m root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map (\r -> viewRole "" Nothing (uriFromNameid OverviewBaseUri r.nameid []) r)
+                                    |> List.map (\r -> viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) r)
                                 )
                             ]
 
@@ -759,7 +769,7 @@ roleColor rt =
             "purple"
 
 
-colorFromRole : RoleCommon a -> String
+colorFromRole : RoleExtCommon a -> String
 colorFromRole r =
     case r.role_type of
         RoleType.Owner ->
@@ -787,7 +797,7 @@ colorFromRole r =
             "var(--warning)"
 
 
-role2icon : RoleCommon a -> String
+role2icon : RoleExtCommon a -> String
 role2icon r =
     case r.role_type of
         RoleType.Coordinator ->

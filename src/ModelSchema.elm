@@ -231,6 +231,7 @@ type alias RoleExt =
     , name : String
     , color : Maybe String
     , role_type : RoleType.RoleType
+    , nodes : List NameidPayload
     }
 
 
@@ -246,7 +247,7 @@ type alias RoleExtFull =
     }
 
 
-type alias RoleCommon a =
+type alias RoleExtCommon a =
     { a
         | name : String
         , color : Maybe String

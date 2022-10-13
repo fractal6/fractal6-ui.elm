@@ -1680,7 +1680,7 @@ viewRolesExt model =
                             , attribute "style" "min-width: 150px;"
                             ]
                             [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
-                                [ h2 [ class "mb-3" ] [ viewRoleExt "" role ]
+                                [ h2 [ class "mb-3" ] [ viewRoleExt "" Nothing role ]
                                 , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
                                 ]
                             ]

@@ -1293,8 +1293,8 @@ viewSettingsContent model =
             div []
                 [ --@todo lazy loading...
                   viewRoles model
-                , viewRolesExt T.rolesTop model.roles model.roles_top
-                , viewRolesExt T.rolesSub model.roles model.roles_sub
+                , viewRolesExt model.url T.rolesTop model.roles model.roles_top
+                , viewRolesExt model.url T.rolesSub model.roles model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -1532,7 +1532,7 @@ viewLabelsExt txt_yes list_d list_ext_d =
                         |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
                         |> List.map
                             (\d ->
-                                viewLabel "ml-2" (Label d.id d.name d.color)
+                                viewLabel "ml-2" d
                             )
                         |> span []
                     ]
@@ -1641,7 +1641,7 @@ viewRoleAddBox model =
             ]
         , div [ class "field mt-2 mb-3" ]
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
-            , viewRoleExt "" (RoleExt "" (ternary (name == "") "role name" name) color role_type)
+            , viewRoleExt "" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
         , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
             (Just form.mandate)
@@ -1723,7 +1723,7 @@ viewRoles model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt "button-light" (RoleExt d.id d.name d.color d.role_type) ]
+                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt "button-light" Nothing d ]
                                                 , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
@@ -1781,8 +1781,8 @@ viewRoles model =
         ]
 
 
-viewRolesExt : String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
-viewRolesExt txt_yes list_d list_ext_d =
+viewRolesExt : Url -> String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
+viewRolesExt url txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
@@ -1792,6 +1792,9 @@ viewRolesExt txt_yes list_d list_ext_d =
                 let
                     circle_data =
                         withDefaultData [] list_d
+
+                    q =
+                        url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
@@ -1799,7 +1802,15 @@ viewRolesExt txt_yes list_d list_ext_d =
                         |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
                         |> List.map
                             (\d ->
-                                viewRoleExt "ml-2" (RoleExt d.id d.name d.color d.role_type)
+                                let
+                                    link_m =
+                                        List.head d.nodes
+                                            |> Maybe.map
+                                                (\n ->
+                                                    uriFromNameid SettingsBaseUri n.nameid [] ++ q
+                                                )
+                                in
+                                viewRoleExt "ml-2" link_m d
                             )
                         |> span []
                     ]

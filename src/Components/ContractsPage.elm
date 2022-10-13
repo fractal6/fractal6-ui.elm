@@ -935,7 +935,7 @@ viewContractBox c op model =
 
                                   else
                                     text T.userHasBeenInvitedRole
-                                , span [ class "is-text-aligned" ] [ viewRole "" Nothing baseUri role ]
+                                , span [ class "is-text-aligned" ] [ viewRole "is-small" Nothing (Just baseUri) role ]
                                 ]
 
                     TensionEvent.UserJoined ->

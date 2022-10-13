@@ -20,6 +20,7 @@ import ModelSchema
         ( Count
         , Label
         , Member
+        , NameidPayload
         , NodeId
         , Post
         , RoleExt
@@ -180,11 +181,12 @@ fetchRolesSub api targetid msg =
 
 roleDecoder : JD.Decoder RoleExt
 roleDecoder =
-    JD.map4 RoleExt
+    JD.map5 RoleExt
         (JD.field "id" JD.string)
         (JD.field "name" JD.string)
         (JD.field "color" JD.string |> JD.maybe)
         (JD.field "role_type" RoleType.decoder)
+        (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
 
 
 

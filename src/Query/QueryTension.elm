@@ -324,8 +324,7 @@ circleTensionDecoder data =
                     tchild =
                         node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
                 in
-                List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
-                    |> List.reverse
+                (tin ++ tout ++ tchild)
                     |> uniqueBy .id
                     |> List.take nCircleTensionPpg
                     |> Just
@@ -342,7 +341,7 @@ subCircleTensionDecoder child =
         tout =
             child.tensions_out |> withDefault []
     in
-    tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout
+    tin ++ tout
 
 
 queryCircleTension url targetid msg =
