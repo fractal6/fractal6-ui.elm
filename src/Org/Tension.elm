@@ -2156,13 +2156,13 @@ viewEventLabel lang now event isNew =
                 ( T.removedTheLabel, withDefault "unknown" event.old )
 
         label =
-            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just)
+            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text (formatDate lang now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" Nothing label, text (formatDate lang now event.createdAt) ]
         ]
     ]
 

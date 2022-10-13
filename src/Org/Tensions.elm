@@ -674,7 +674,7 @@ init global flags =
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , sortFilter = Dict.get "sort" query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
+            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
             , tensions_count = fromMaybeData global.session.tensions_count Loading
             , hover_column = Nothing
 

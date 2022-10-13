@@ -1107,10 +1107,11 @@ nodeLabelsPayload =
 
 labelPayload : SelectionSet Label Fractal.Object.Label
 labelPayload =
-    SelectionSet.map3 Label
-        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
-        Fractal.Object.Label.name
-        Fractal.Object.Label.color
+    SelectionSet.succeed Label
+        |> with (Fractal.Object.Label.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Label.name
+        |> with Fractal.Object.Label.color
+        |> hardcoded []
 
 
 

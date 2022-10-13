@@ -221,7 +221,7 @@ initLabelForm tid user =
                 initUserctx
     , tid = tid
     , targets = []
-    , label = Label "" "" Nothing
+    , label = Label "" "" Nothing []
     , isNew = False
     , events = []
     , post = Dict.empty

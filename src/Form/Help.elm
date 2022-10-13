@@ -26,12 +26,12 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
-import Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
+import Requests exposing (getQuickDoc)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -72,13 +72,13 @@ labelCodec : FeedbackType -> Label
 labelCodec type_ =
     case type_ of
         BugReport ->
-            Label "0xc5f2" "bug" (Just "#ff4136")
+            Label "0xc5f2" "bug" (Just "#ff4136") []
 
         FeatureRequest ->
-            Label "0xc5f3" "feature request" (Just "#0074d9")
+            Label "0xc5f3" "feature request" (Just "#0074d9") []
 
         Praise ->
-            Label "0xc5f4" "Praise" (Just "#dddddd")
+            Label "0xc5f4" "Praise" (Just "#dddddd") []
 
 
 init : UserState -> State

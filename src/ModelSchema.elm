@@ -212,7 +212,11 @@ type alias Count =
 
 
 type alias Label =
-    { id : String, name : String, color : Maybe String }
+    { id : String
+    , name : String
+    , color : Maybe String
+    , nodes : List NameidPayload
+    }
 
 
 type alias LabelFull =

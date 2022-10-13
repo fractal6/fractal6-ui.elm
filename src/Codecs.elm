@@ -19,6 +19,7 @@ import ModelSchema
         , FocusNode
         , IdPayload
         , Label
+        , NameidPayload
         , Node
         , NodeId
         , NodesDict
@@ -42,10 +43,11 @@ import ModelSchema
 
 labelDecoder : JD.Decoder Label
 labelDecoder =
-    JD.map3 Label
+    JD.map4 Label
         (JD.field "id" JD.string)
         (JD.field "name" JD.string)
         (JD.maybe <| JD.field "color" JD.string)
+        (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
 
 
 labelEncoder : Label -> List ( String, JE.Value )

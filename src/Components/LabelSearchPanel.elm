@@ -529,7 +529,7 @@ viewLabelSelectors isInternal labels op model =
                                     (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                                 ]
                                 [ span [ class "panel-icon" ] [ A.icon iconCls ]
-                                , viewLabel "" l_
+                                , viewLabel "" Nothing l_
                                 , loadingSpin isLoading
                                 ]
                         )

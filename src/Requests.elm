@@ -1,7 +1,7 @@
 module Requests exposing (..)
 
 import Bytes exposing (Bytes)
-import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
+import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -135,14 +135,6 @@ fetchLabelsSub api targetid msg =
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-labelDecoder : JD.Decoder Label
-labelDecoder =
-    JD.map3 Label
-        (JD.field "id" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "color" JD.string |> JD.maybe)
 
 
 {-|

@@ -1288,8 +1288,8 @@ viewSettingsContent model =
             div []
                 [ --@todo lazy loading...
                   viewLabels model
-                , viewLabelsExt T.labelsTop model.labels model.labels_top
-                , viewLabelsExt T.labelsSub model.labels model.labels_sub
+                , viewLabelsExt model.url T.labelsTop model.labels model.labels_top
+                , viewLabelsExt model.url T.labelsSub model.labels model.labels_sub
                 ]
 
         RolesMenu ->
@@ -1406,7 +1406,7 @@ viewLabelAddBox model =
             ]
         , div []
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
-            , viewLabel "" (Label "" (ternary (name == "") "label name" name) color)
+            , viewLabel "" Nothing (Label "" (ternary (name == "") "label name" name) color [])
             ]
         , case result of
             Failure err ->
@@ -1466,7 +1466,7 @@ viewLabels model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [ onClick (SafeEdit <| EditLabel d) ] [ viewLabel "button-light" (Label d.id d.name d.color) ]
+                                                [ td [ onClick (SafeEdit <| EditLabel d) ] [ viewLabel "button-light" Nothing (Label d.id d.name d.color []) ]
                                                 , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
                                                     [ if n_nodes > 1 then
@@ -1517,8 +1517,8 @@ viewLabels model =
         ]
 
 
-viewLabelsExt : String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
-viewLabelsExt txt_yes list_d list_ext_d =
+viewLabelsExt : Url -> String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
+viewLabelsExt url txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
@@ -1528,6 +1528,9 @@ viewLabelsExt txt_yes list_d list_ext_d =
                 let
                     circle_data =
                         withDefaultData [] list_d
+
+                    q =
+                        url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
@@ -1535,7 +1538,15 @@ viewLabelsExt txt_yes list_d list_ext_d =
                         |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
                         |> List.map
                             (\d ->
-                                viewLabel "ml-2" d
+                                let
+                                    link_m =
+                                        List.head d.nodes
+                                            |> Maybe.map
+                                                (\n ->
+                                                    uriFromNameid SettingsBaseUri n.nameid [] ++ q
+                                                )
+                                in
+                                viewLabel "ml-2" link_m d
                             )
                         |> span []
                     ]
