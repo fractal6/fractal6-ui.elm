@@ -30,7 +30,7 @@ view user notif url replaceUrl =
             , attribute "aria-label" "main navigation"
             ]
             [ div [ class "navbar-brand" ]
-                [ a [ class "navbar-item", href "/" ]
+                ([ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ A.logo0 "white"
                     , case user of
@@ -43,46 +43,48 @@ view user notif url replaceUrl =
                     --, span [ class "has-text-orange", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
                     , span [ class "has-text-orange", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
                     ]
-                , A.burger "userMenu"
-                ]
+                 ]
+                    ++ (if orgUrl then
+                            case user of
+                                LoggedIn uctx ->
+                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu" ]
+                                    , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ]
+                                    ]
+
+                                LoggedOut ->
+                                    [ div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ] ]
+
+                        else
+                            []
+                       )
+                    ++ [ A.burger "userMenu" ]
+                )
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
                     (case user of
                         LoggedIn uctx ->
-                            (if orgUrl then
-                                [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu" ]
-                                , div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ]
+                            [ a
+                                [ class "navbar-item"
+                                , classList
+                                    [ ( "is-active"
+                                      , case fromUrl url of
+                                            Just (Dynamic a) ->
+                                                ternary (a.param1 == uctx.username) True False
+
+                                            Just (User_Dynamic a) ->
+                                                ternary (a.param1 == uctx.username) True False
+
+                                            _ ->
+                                                False
+                                      )
+                                    ]
+                                , href (toHref Top)
                                 ]
-
-                             else
-                                []
-                            )
-                                ++ [ a
-                                        [ class "navbar-item"
-                                        , classList
-                                            [ ( "is-active"
-                                              , case fromUrl url of
-                                                    Just (Dynamic a) ->
-                                                        ternary (a.param1 == uctx.username) True False
-
-                                                    Just (User_Dynamic a) ->
-                                                        ternary (a.param1 == uctx.username) True False
-
-                                                    _ ->
-                                                        False
-                                              )
-                                            ]
-                                        , href (toHref Top)
-                                        ]
-                                        [ text T.yourOrg ]
-                                   ]
+                                [ text T.yourOrg ]
+                            ]
 
                         LoggedOut ->
-                            if orgUrl then
-                                [ div [ class "navbar-item button-light is-hidden-touch menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ] ]
-
-                            else
-                                []
+                            []
                     )
                         ++ [ a
                                 [ class "navbar-item"

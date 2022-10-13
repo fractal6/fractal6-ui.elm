@@ -211,7 +211,7 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
 
                     icon =
-                        A.icon0 "icon-layers icon-lg"
+                        span [ class "button-light", onClick onToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
 
                     --span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
                 in

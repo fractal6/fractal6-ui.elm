@@ -554,6 +554,14 @@ resetScroll =
         }
 
 
+send_if_mobile : String -> Cmd msg
+send_if_mobile p =
+    outgoing
+        { action = "SEND_IF_MOBILE"
+        , data = JE.string p
+        }
+
+
 
 --
 -- Encoder

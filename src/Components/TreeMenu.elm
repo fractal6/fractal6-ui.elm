@@ -478,7 +478,9 @@ update_ apis message model =
                 q =
                     model.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, out1 [ DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q) ] )
+            ( model
+            , out2 [ Ports.send_if_mobile "triggerMenuTreeFromJs" ] [ DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q) ]
+            )
 
         Do gcmds ->
             ( model, out1 gcmds )
@@ -509,7 +511,6 @@ view op (State model) =
     if model.isActive2 then
         div
             [ id "tree-menu"
-            , class "is-hidden-touch"
             , classList [ ( "off", not model.isActive ) ]
             ]
             [ viewTreeMenu model
@@ -524,7 +525,7 @@ view op (State model) =
             ]
 
     else
-        div [ id "tree-hinter", class "is-hidden-touch", onClick OnToggle ]
+        div [ id "tree-hinter", onClick OnToggle ]
             [ div [ class "hinter" ] [] ]
 
 

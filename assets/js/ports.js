@@ -496,4 +496,12 @@ export const actions = {
     'RESET_SCROLL': (app, session, _) => {
         window.scroll(0, 0);
     },
+    'SEND_IF_MOBILE': (app, session, msg) => {
+        // Use case that motivate the use of availableWidth instead ?
+        if (window.screen.width < 769) {
+            setTimeout(() => {
+                app.ports[msg].send(null);
+            }, 500)
+        }
+    },
 }
