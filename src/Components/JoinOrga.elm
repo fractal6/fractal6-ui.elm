@@ -129,38 +129,36 @@ setJoinResult result model =
     { model | join_result = result }
 
 
-makeJoinForm : UserState -> Node -> Time.Posix -> ActionForm
-makeJoinForm user node time =
+makeJoinForm : UserState -> Node -> Time.Posix -> ActionForm -> ActionForm
+makeJoinForm user node time f =
     let
         ( tid, bid ) =
             node.source
                 |> Maybe.map (\b -> ( b.tension.id, b.id ))
                 |> withDefault ( "", "" )
-
-        f =
-            initActionForm tid user
     in
     { f
-        | events = [ Ev TensionEvent.UserJoined "" f.uctx.username ]
-        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
+        | tid = tid
+        , uctx = uctxFromUser user
+        , events = [ Ev TensionEvent.UserJoined "" f.uctx.username ]
+        , post = Dict.insert "createdAt" (fromTime time) f.post
         , users = [ { username = f.uctx.username, name = Nothing, email = "", pattern = "" } ]
         , node = node
     }
 
 
-makeInviteForm : UserState -> Node -> Time.Posix -> ActionForm
-makeInviteForm user node time =
+makeInviteForm : UserState -> Node -> Time.Posix -> ActionForm -> ActionForm
+makeInviteForm user node time f =
     let
         ( tid, bid ) =
             node.source
                 |> Maybe.map (\b -> ( b.tension.id, b.id ))
                 |> withDefault ( "", "" )
-
-        f =
-            initActionForm tid user
     in
     { f
-        | post = Dict.fromList [ ( "createdAt", fromTime time ) ]
+        | tid = tid
+        , uctx = uctxFromUser user
+        , post = Dict.insert "createdAt" (fromTime time) f.post
         , node = node
     }
 
@@ -331,7 +329,7 @@ update_ apis message model =
                     let
                         -- Time is ignored here, we just want the contractid
                         form =
-                            makeJoinForm model.user node (Time.millisToPosix 0)
+                            makeJoinForm model.user node (Time.millisToPosix 0) model.form
                     in
                     ( { model | form = form }, out0 [ getContractId apis (form2cid form) OnContractIdAck ] )
 
@@ -404,10 +402,10 @@ update_ apis message model =
                     ( model, noOut )
 
         OnJoin2 node time ->
-            ( { model | form = makeJoinForm model.user node time, join_result = NotAsked }, noOut )
+            ( { model | form = makeJoinForm model.user node time model.form, join_result = NotAsked }, noOut )
 
         OnInvite2 node time ->
-            ( { model | form = makeInviteForm model.user node time, join_result = NotAsked }, noOut )
+            ( { model | form = makeInviteForm model.user node time model.form, join_result = NotAsked }, noOut )
 
         OnJoinAck result ->
             case parseErr result model.refresh_trial of
@@ -688,13 +686,27 @@ viewJoinStep op model =
 
 viewComment : Bool -> Model -> Html Msg
 viewComment isOpt model =
+    let
+        message =
+            Dict.get "message" model.form.post |> withDefault ""
+
+        line_len =
+            List.length <| String.lines message
+
+        ( max_len, min_len ) =
+            if model.screen.w < 769 then
+                ( 5, 2 )
+
+            else
+                ( 10, 3 )
+    in
     div [ class "field" ]
         [ div [ class "control submitFocus" ]
             [ textarea
                 [ class "textarea"
-                , rows 3
+                , rows (min max_len (max line_len min_len))
                 , placeholder <| ternary isOpt T.leaveCommentOpt T.text
-                , value (Dict.get "message" model.form.post |> withDefault "")
+                , value message
                 , onInput <| OnChangePost "message"
                 ]
                 []
