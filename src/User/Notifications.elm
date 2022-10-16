@@ -264,7 +264,7 @@ init global flags =
                     global.session.referer
 
             -- common
-            , help = Help.init global.session.user
+            , help = Help.init global.session.user global.session.screen
             , refresh_trial = 0
             , now = global.now
             , empty = {}

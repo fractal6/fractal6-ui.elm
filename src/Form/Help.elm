@@ -32,7 +32,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Screen)
 import Text as T
 import Time
 
@@ -51,6 +51,7 @@ type alias Model =
     , formFeedback : NT.Model
 
     -- Common
+    , screen : Screen
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     }
@@ -81,16 +82,16 @@ labelCodec type_ =
             Label "0xc5f4" "Praise" (Just "#dddddd") []
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> Screen -> State
+init user screen =
+    initModel user screen |> State
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> Screen -> Model
+initModel user screen =
     let
         form =
-            NT.initModel user
+            NT.initModel user screen
                 |> NT.setSourceShort "f6#feedback#help-bot"
                 |> NT.setTargetShort "f6#feedback"
 
@@ -109,6 +110,7 @@ initModel user =
     , formFeedback = formFeedback
 
     -- Common
+    , screen = screen
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -161,7 +163,7 @@ resetForm tab data =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.formAsk.user
+    initModel model.formAsk.user model.screen
 
 
 setDocResult : WebData QuickDoc -> Model -> Model
@@ -601,6 +603,13 @@ viewAskQuestion op (State model) =
             let
                 line_len =
                     List.length <| String.lines message
+
+                ( max_len, min_len ) =
+                    if model.screen.w < 769 then
+                        ( 5, 2 )
+
+                    else
+                        ( 10, 5 )
             in
             div [ class "section pt-0" ]
                 [ p [ class "field" ]
@@ -635,7 +644,7 @@ viewAskQuestion op (State model) =
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
-                                    , rows (min 10 (max line_len 5))
+                                    , rows (min max_len (max line_len min_len))
                                     , placeholder T.questionTextPH
                                     , required True
                                     , value message
@@ -711,6 +720,13 @@ viewFeedback op (State model) =
             let
                 line_len =
                     List.length <| String.lines message
+
+                ( max_len, min_len ) =
+                    if model.screen.w < 769 then
+                        ( 5, 2 )
+
+                    else
+                        ( 10, 5 )
             in
             div [ class "section pt-0" ]
                 [ div [ class "field is-horizontal" ]
@@ -779,7 +795,7 @@ viewFeedback op (State model) =
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
-                                    , rows (min 10 (max line_len 5))
+                                    , rows (min max_len (max line_len min_len))
                                     , placeholder T.feedbackTextPH
                                     , required True
                                     , value message

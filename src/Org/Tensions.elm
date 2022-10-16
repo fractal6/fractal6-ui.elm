@@ -680,14 +680,14 @@ init global flags =
 
             -- Common
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user
-            , tensionForm = NTF.init global.session.user
+            , help = Help.init global.session.user global.session.screen
+            , tensionForm = NTF.init global.session.user global.session.screen
             , refresh_trial = 0
             , url = global.url
             , now = global.now
             , lang = global.session.lang
             , empty = {}
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user

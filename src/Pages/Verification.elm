@@ -21,11 +21,11 @@ import Loading exposing (WebData, viewHttpErrors)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import Requests exposing (signupValidate)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process
 import RemoteData exposing (RemoteData)
+import Requests exposing (signupValidate)
 import Session exposing (GlobalCmd(..))
 import String.Format as Format
 import Task
@@ -96,7 +96,7 @@ init global flags =
             , result = RemoteData.NotAsked
             , email_token = Dict.get "email_token" query |> Maybe.map List.head |> withDefault Nothing
             , email = Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
-            , help = Help.init global.session.user
+            , help = Help.init global.session.user global.session.screen
             }
     in
     ( model

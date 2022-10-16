@@ -30,14 +30,14 @@ import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, vie
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
-import Requests exposing (createOrga)
 import ModelCommon.View exposing (visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
-import Session exposing (GlobalCmd(..))
+import Requests exposing (createOrga)
+import Session exposing (GlobalCmd(..), Screen)
 import Task exposing (Task)
 import Text as T
 import Time
@@ -142,8 +142,8 @@ orgaStepToString form step =
             T.reviewAndValidate
 
 
-initModel : UserState -> Maybe OrgaForm -> Model
-initModel user form_m =
+initModel : UserState -> Screen -> Maybe OrgaForm -> Model
+initModel user screen form_m =
     { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
@@ -151,7 +151,7 @@ initModel user form_m =
     , hasBeenDuplicated = False
     , isWriting = Nothing
     , exist_result = NotAsked
-    , help = Help.init user
+    , help = Help.init user screen
     , refresh_trial = 0
     , authModal = AuthModal.init user Nothing
     }
@@ -175,13 +175,13 @@ init global flags =
     in
     case global.session.user of
         LoggedOut ->
-            ( initModel global.session.user Nothing
+            ( initModel global.session.user global.session.screen Nothing
             , send (Navigate "/")
             , Cmd.none
             )
 
         LoggedIn uctx ->
-            ( initModel global.session.user global.session.newOrgaData
+            ( initModel global.session.user global.session.screen global.session.newOrgaData
                 |> (\m ->
                         { m
                             | step =

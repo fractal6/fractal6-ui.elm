@@ -222,7 +222,7 @@ mediaTension_ lang now focus tension showStatus showRecip size navigate =
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
-            [ ternary showRecip (viewCircleTarget "is-pulled-right" tension.receiver) (text "")
+            [ ternary showRecip (viewCircleTarget "is-small is-pulled-right" tension.receiver) (text "")
             , br [] []
             , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
@@ -273,7 +273,7 @@ viewCircleTarget cls er =
             span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
-            viewRole "is-tiny" Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
+            viewRole (cls ++ " is-tiny") Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg

@@ -839,7 +839,6 @@ viewContractPage c op model =
                                 , doChangePost = ChangeCommentPost
                                 , doSubmit = OnSubmit
                                 , doSubmitComment = SubmitCommentPost
-                                , rows = 4
                                 }
                         in
                         viewContractCommentInput opNew uctx model.comment_form model.comment_result model.inputViewMode

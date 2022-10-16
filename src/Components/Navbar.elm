@@ -47,16 +47,17 @@ view user notif url replaceUrl =
                     ++ (if orgUrl then
                             case user of
                                 LoggedIn uctx ->
-                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu" ]
-                                    , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ]
+                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu icon-bg" ]
+                                    , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
                                     ]
 
                                 LoggedOut ->
-                                    [ div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch" ] ]
+                                    [ div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] ]
 
                         else
                             []
                        )
+                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" user notif url ] ]
                     ++ [ A.burger "userMenu" ]
                 )
             , div [ id "userMenu", class "navbar-menu" ]
@@ -64,7 +65,7 @@ view user notif url replaceUrl =
                     (case user of
                         LoggedIn uctx ->
                             [ a
-                                [ class "navbar-item"
+                                [ class "navbar-item is-size-7"
                                 , classList
                                     [ ( "is-active"
                                       , case fromUrl url of
@@ -78,9 +79,9 @@ view user notif url replaceUrl =
                                                 False
                                       )
                                     ]
-                                , href (toHref Top)
+                                , href (toString UsersBaseUri uctx.username [])
                                 ]
-                                [ text T.yourOrg ]
+                                [ text T.home ]
                             ]
 
                         LoggedOut ->
@@ -94,7 +95,7 @@ view user notif url replaceUrl =
                                 [ text T.explore ]
                            ]
                 , div [ class "navbar-end" ] <|
-                    [ notificationButton user notif url
+                    [ notificationButton "is-hidden-touch" user notif url
                     , helpButton user
 
                     --, newButton user
@@ -105,18 +106,18 @@ view user notif url replaceUrl =
         ]
 
 
-notificationButton : UserState -> NotifCount -> Url -> Html msg
-notificationButton user notif url =
+notificationButton : String -> UserState -> NotifCount -> Url -> Html msg
+notificationButton cls user notif url =
     case user of
         LoggedIn _ ->
             a
-                [ class "navbar-item"
+                [ class ("navbar-item " ++ cls)
                 , href (toHref Notifications)
                 , title T.notifications
                 , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 ]
                 [ div
-                    [ class "navbar-link is-arrowless notifTrigger "
+                    [ class "navbar-link is-arrowless notifTrigger"
                     , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                     ]
                     [ A.icon "icon-bg icon-bell"
@@ -142,14 +143,12 @@ helpButton user =
     case user of
         LoggedIn _ ->
             div
-                [ class "navbar-item"
+                [ class "navbar-item helpTrigger"
                 , title "Help and feedback"
                 ]
-                [ div
-                    [ class "navbar-link is-arrowless helpTrigger" ]
-                    [ div [ class "button is-rounded is-small has-background-navbar", style "height" "inherit" ]
-                        [ A.icon "icon-question" ]
-                    ]
+                [ div [ class "navbar-link is-arrowless is-hidden-touch" ]
+                    [ div [ class "button is-rounded is-small has-background-navbar", style "height" "inherit" ] [ A.icon "icon-question" ] ]
+                , div [ class "button-light is-hidden-tablet" ] [ A.icon1 "icon-question" "Help" ]
                 ]
 
         LoggedOut ->
@@ -189,7 +188,7 @@ userButtons user url replaceUrl =
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toString UsersBaseUri uctx.username []) ]
-                        [ A.icon1 "icon-home" "Home" ]
+                        [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
                     , span [ id "themeTrigger", class "navbar-item is-w" ]

@@ -36,7 +36,6 @@ type alias OpNewComment msg =
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
-    , rows : Int
     }
 
 
@@ -45,7 +44,6 @@ type alias OpNewCommentContract msg =
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Time.Posix -> msg
-    , rows : Int
     }
 
 
@@ -233,7 +231,7 @@ viewCommentInput op uctx tension form result viewMode =
                                     textarea
                                         [ id "commentInput"
                                         , class "textarea"
-                                        , rows (min 15 (max line_len op.rows))
+                                        , rows (min 15 (max line_len 7))
                                         , placeholder T.leaveComment
                                         , value message
                                         , onInput (op.doChangePost "message")
@@ -313,10 +311,14 @@ viewContractCommentInput op uctx form result viewMode =
                         [ div [ class "control" ]
                             [ case viewMode of
                                 Write ->
+                                    let
+                                        line_len =
+                                            List.length <| String.lines message
+                                    in
                                     textarea
                                         [ id "commentInput"
                                         , class "textarea"
-                                        , rows op.rows
+                                        , rows (min 10 (max line_len 4))
                                         , placeholder T.leaveComment
                                         , value message
                                         , onInput (op.doChangePost "message")

@@ -505,8 +505,8 @@ init global flags =
             -- Common
             , inputViewMode = Write
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user
-            , tensionForm = NTF.init global.session.user
+            , help = Help.init global.session.user global.session.screen
+            , tensionForm = NTF.init global.session.user global.session.screen
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
             , contractsPage = ContractsPage.init rootnameid global.session.user
@@ -515,7 +515,7 @@ init global flags =
             , now = global.now
             , lang = global.session.lang
             , empty = {}
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
             -- Oen a sigin dialog if contracts are requested
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
@@ -1787,7 +1787,6 @@ viewConversation u t model =
                                 , doChangePost = ChangeTensionPost
                                 , doSubmit = Submit
                                 , doSubmitComment = SubmitComment
-                                , rows = 7
                                 }
                         in
                         viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode

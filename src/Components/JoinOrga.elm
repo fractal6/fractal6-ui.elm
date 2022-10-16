@@ -26,7 +26,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Screen)
 import Text as T
 import Time
 
@@ -46,6 +46,7 @@ type alias Model =
     , isPending : Bool
 
     -- Common
+    , screen : Screen
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -60,8 +61,8 @@ type JoinStep
     | AuthNeeded
 
 
-initModel : String -> UserState -> Model
-initModel nameid user =
+initModel : String -> UserState -> Screen -> Model
+initModel nameid user screen =
     { user = user
     , isOpen = False
     , form = initActionForm "" user -- set later
@@ -72,6 +73,7 @@ initModel nameid user =
     , isPending = False
 
     -- Common
+    , screen = screen
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
@@ -80,9 +82,9 @@ initModel nameid user =
     }
 
 
-init : String -> UserState -> State
-init nameid user =
-    initModel nameid user |> State
+init : String -> UserState -> Screen -> State
+init nameid user screen =
+    initModel nameid user screen |> State
 
 
 
@@ -110,7 +112,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.nameid model.user
+    initModel model.nameid model.user model.screen
 
 
 updatePost : String -> String -> Model -> Model

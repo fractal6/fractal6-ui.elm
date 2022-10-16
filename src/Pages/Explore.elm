@@ -123,7 +123,7 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , help = Help.init global.session.user
+            , help = Help.init global.session.user global.session.screen
             , refresh_trial = 0
             , authModal = AuthModal.init global.session.user Nothing
             }

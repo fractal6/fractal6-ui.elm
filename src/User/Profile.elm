@@ -137,7 +137,7 @@ init global flags =
 
             -- common
             , refresh_trial = 0
-            , help = Help.init global.session.user
+            , help = Help.init global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , empty = {}
             }

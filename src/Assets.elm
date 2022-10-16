@@ -100,8 +100,7 @@ burger targetid =
 viewNotFound : Html msg
 viewNotFound =
     div [ class "section" ]
-        [ h1 [ class "title" ] [ text T.pageNotFound ]
-        ]
+        [ h1 [ class "title" ] [ text T.pageNotFound ] ]
 
 
 welcome : Html msg

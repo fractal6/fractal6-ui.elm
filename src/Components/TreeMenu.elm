@@ -528,8 +528,8 @@ view op (State model) =
             ]
 
     else
-        div [ id "tree-hinter", onClick OnToggle ]
-            [ div [ class "hinter" ] [] ]
+        div [ id "tree-hinter" ]
+            [ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
 
 
 viewTreeMenu : Model -> Html Msg

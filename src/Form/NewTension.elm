@@ -76,7 +76,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRoles)
-import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen)
 import Text as T
 import Time
 
@@ -107,6 +107,7 @@ type alias Model =
     , force_init : Bool
 
     -- Common
+    , screen : Screen
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
 
@@ -167,13 +168,13 @@ nodeStepToString form step =
             T.invite
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> Screen -> State
+init user screen =
+    initModel user screen |> State
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> Screen -> Model
+initModel user screen =
     { user = user
     , result = NotAsked
     , sources = []
@@ -195,6 +196,7 @@ initModel user =
     , roles_result = Loading
 
     -- Common
+    , screen = screen
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
@@ -471,7 +473,7 @@ resetPost data =
 
 resetModel : Model -> Model
 resetModel data =
-    initModel data.user
+    initModel data.user data.screen
 
 
 
@@ -1431,11 +1433,18 @@ viewTension op model =
                                             let
                                                 line_len =
                                                     List.length <| String.lines message
+
+                                                ( max_len, min_len ) =
+                                                    if model.screen.w < 769 then
+                                                        ( 5, 2 )
+
+                                                    else
+                                                        ( 10, 4 )
                                             in
                                             textarea
                                                 [ id "textAreaModal"
                                                 , class "textarea"
-                                                , rows (min 10 (max line_len 4))
+                                                , rows (min max_len (max line_len min_len))
                                                 , placeholder T.leaveCommentOpt
                                                 , value message
                                                 , onInput (OnChangePost "message")

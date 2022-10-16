@@ -497,7 +497,7 @@ export const actions = {
         window.scroll(0, 0);
     },
     'SEND_IF_MOBILE': (app, session, msg) => {
-        // Use case that motivate the use of availableWidth instead ?
+        // Use case that motivate the use of availableWidth or window.innerWidth instead ?
         if (window.screen.width < 769) {
             setTimeout(() => {
                 app.ports[msg].send(null);

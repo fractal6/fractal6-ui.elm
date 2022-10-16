@@ -21,10 +21,10 @@ import Json.Encode as JE
 import Loading exposing (WebData, loadingSpin, viewHttpErrors)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
+import Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
@@ -103,7 +103,7 @@ init global flags =
             , reset2_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
-            , help = Help.init global.session.user
+            , help = Help.init global.session.user global.session.screen
             }
     in
     case model.token_reset of

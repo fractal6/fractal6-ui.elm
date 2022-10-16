@@ -230,12 +230,12 @@ init global flags =
 
             -- Common
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user
-            , tensionForm = NTF.init global.session.user
+            , help = Help.init global.session.user global.session.screen
+            , tensionForm = NTF.init global.session.user global.session.screen
             , refresh_trial = 0
             , now = global.now
             , empty = {}
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user

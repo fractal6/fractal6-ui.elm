@@ -328,10 +328,10 @@ init global flags =
 
             -- Components
             , helperBar = HelperBar.create
-            , help = Help.init session.user
-            , tensionForm = NTF.init session.user
+            , help = Help.init session.user session.screen
+            , tensionForm = NTF.init session.user session.screen
             , actionPanel = ActionPanel.init session.user
-            , joinOrga = JoinOrga.init newFocus.nameid session.user
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
             , authModal = AuthModal.init session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
