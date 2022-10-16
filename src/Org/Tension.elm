@@ -751,24 +751,37 @@ update global message model =
                                 Nothing ->
                                     -- No Document attached or Unknown format
                                     ( th.receiver.nameid, model.nodeDoc )
+
+                        hasLocalGraph =
+                            isSuccess model.path_data && not model.focusState.orgChange
+
+                        isAdmin =
+                            getTensionRights (uctxFromUser global.session.user) result model.path_data
                     in
                     ( { model
                         | tension_head = result
                         , hasBeenPushed = hasBeenPushed
                         , subscribe_result = fromMaybeData th.isSubscribed NotAsked
                         , nodeDoc = nodeDoc
+                        , isTensionAdmin =
+                            ternary hasLocalGraph
+                                isAdmin
+                                model.isTensionAdmin
                       }
                     , Cmd.batch
-                        [ if model.focusState.orgChange || not (isSuccess model.path_data) then
-                            -- Do not change the context of the user anonimosly, its confusing
-                            queryLocalGraph apis (nid2rootid targetid) (GotPath True)
-
-                          else
+                        [ ternary hasLocalGraph
+                            -- Do not change the context of the user anonymously, its confusing
                             Cmd.none
+                            (queryLocalGraph apis (nid2rootid targetid) (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
                         ]
-                    , send (UpdateSessionTensionHead (withMaybeData result))
+                    , Cmd.batch
+                        [ send (UpdateSessionTensionHead (withMaybeData result))
+                        , ternary hasLocalGraph
+                            (send (UpdateSessionAdmin (Just isAdmin)))
+                            Cmd.none
+                        ]
                     )
 
                 _ ->
