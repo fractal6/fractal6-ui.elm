@@ -137,7 +137,7 @@ viewUpdateInput op uctx comment form result =
                             textarea
                                 [ id "updateCommentInput"
                                 , class "textarea"
-                                , rows (min 15 (max line_len 7))
+                                , rows (min 15 (max line_len 6))
                                 , placeholder T.leaveComment
                                 , value message
                                 , onInput (op.doChangePost "message")
@@ -231,7 +231,7 @@ viewCommentInput op uctx tension form result viewMode =
                                     textarea
                                         [ id "commentInput"
                                         , class "textarea"
-                                        , rows (min 15 (max line_len 7))
+                                        , rows (min 15 (max line_len 6))
                                         , placeholder T.leaveComment
                                         , value message
                                         , onInput (op.doChangePost "message")
