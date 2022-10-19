@@ -535,12 +535,12 @@ subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
                                 [ Input.buildTensionFilter
                                     (\d1 ->
                                         { d1
-                                            | emitterid = { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present } |> Present
+                                            | receiverid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present }
                                             , or =
                                                 Present
                                                     [ Input.buildTensionFilter
                                                         (\d2 ->
-                                                            { d2 | receiverid = { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present } |> Present }
+                                                            { d2 | emitterid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present } }
                                                         )
                                                         |> Just
                                                     ]

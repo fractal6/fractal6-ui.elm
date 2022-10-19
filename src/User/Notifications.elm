@@ -713,10 +713,10 @@ viewNotif isContract ue node content =
     let
         ( tooltip_cls, tooltip_txt ) =
             if isContract then
-                ( T.voteWaited, "has-text-info" )
+                ( "has-text-info", T.voteWaited )
 
             else
-                ( T.markAsRead, "has-text-link is-w" )
+                ( "has-text-link is-w", T.markAsRead )
     in
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] [ viewOrga True node.nameid ]
