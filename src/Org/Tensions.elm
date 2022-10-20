@@ -17,7 +17,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -161,7 +161,6 @@ type alias Model =
     , tensions_int : GqlData (List Tension)
     , tensions_ext : GqlData (List Tension)
     , tensions_all : GqlData TensionsDict
-    , boardHeight : Maybe Float
     , query : Dict String (List String)
     , offset : Int
     , pattern : Maybe String
@@ -174,7 +173,13 @@ type alias Model =
     , authors : List User
     , labels : List Label
     , tensions_count : GqlData TensionsCount
+
+    -- Board
+    , boardHeight : Maybe Float
     , hover_column : Maybe String
+    , movingTension : Maybe Tension
+    , movingHoverC : Maybe Int
+    , movingHoverT : Maybe String
 
     -- Common
     , screen : Screen
@@ -601,7 +606,12 @@ type Msg
     | SubmitSearch
     | GoView TensionsView
     | SetOffset Int
+      -- Board
     | OnColumnHover (Maybe String)
+    | OnMove Tension
+    | OnCancelMove
+    | OnMoveEnterC Int
+    | OnMoveEnterT String
       -- Common
     | NoMsg
     | LogErr String
@@ -656,7 +666,6 @@ init global flags =
             , screen = global.session.screen
             , path_data = fromMaybeData global.session.path_data Loading
             , children = fromMaybeWebData global.session.children RemoteData.Loading
-            , boardHeight = Nothing
             , tensions_int = fromMaybeData global.session.tensions_int Loading
             , tensions_ext = fromMaybeData global.session.tensions_ext Loading
             , tensions_all = fromMaybeData global.session.tensions_all Loading
@@ -676,7 +685,13 @@ init global flags =
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
             , tensions_count = fromMaybeData global.session.tensions_count Loading
+
+            -- Board
+            , boardHeight = Nothing
             , hover_column = Nothing
+            , movingTension = Nothing
+            , movingHoverC = Nothing
+            , movingHoverT = Nothing
 
             -- Common
             , helperBar = HelperBar.create
@@ -1150,6 +1165,18 @@ update global message model =
 
         OnColumnHover v ->
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
+
+        OnMove t ->
+            ( { model | movingTension = Just t }, Cmd.none, Cmd.none )
+
+        OnCancelMove ->
+            ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+        OnMoveEnterC hover ->
+            ( { model | movingHoverC = Just hover }, Cmd.none, Cmd.none )
+
+        OnMoveEnterT hover ->
+            ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
 
         -- Authors
         UserSearchPanelMsg msg ->
@@ -1756,11 +1783,14 @@ viewCircleTensions model =
                             _ ->
                                 True
                     )
-                |> List.map
-                    (\n ->
+                |> List.indexedMap
+                    (\i n ->
                         let
                             tensions =
                                 Dict.get n.nameid data |> withDefault []
+
+                            lastTid =
+                                LE.last tensions |> Maybe.map .id
 
                             t_m =
                                 List.head tensions
@@ -1768,8 +1798,12 @@ viewCircleTensions model =
                             rcv_name_m =
                                 Maybe.map (.receiver >> .name) t_m
                         in
-                        --[ div [ class "column is-3", onMouseEnter (OnColumnHover (Just n.nameid) ]
-                        [ div [ class "column is-3" ]
+                        [ div
+                            [ class "column is-3"
+                            , onDragEnter (OnMoveEnterC i)
+
+                            --, onMouseEnter (OnColumnHover (Just n.nameid)
+                            ]
                             [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
                                 [ rcv_name_m |> withDefault "Loading..." |> text
                                 , span
@@ -1783,12 +1817,46 @@ viewCircleTensions model =
                             , tensions
                                 --|> List.sortBy .createdAt
                                 |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
-                                |> List.map
-                                    (\t ->
-                                        div [ class "box is-shrinked2 mb-2 mx-2" ]
+                                |> List.indexedMap
+                                    (\j t ->
+                                        let
+                                            draggedTid =
+                                                Maybe.map .id model.movingTension
+
+                                            isDragged =
+                                                draggedTid == Just t.id
+
+                                            belowTid =
+                                                LE.getAt (j + 1) tensions |> Maybe.map .id
+
+                                            isHovered =
+                                                model.movingHoverT == Just t.id && draggedTid /= belowTid
+                                        in
+                                        [ div
+                                            [ class "box is-shrinked2 mb-2 mx-2"
+                                            , attribute "draggable" "true"
+                                            , attribute "ondragover" "return false"
+                                            , onDragStart <| OnMove t
+                                            , onDragEnd OnCancelMove
+                                            , onDragEnter (OnMoveEnterT t.id)
+                                            , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
+                                            ]
                                             [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
+                                        ]
+                                            ++ (if isHovered && not isDragged then
+                                                    [ div
+                                                        [ class "box is-shrinked2 mb-2 mx-2"
+                                                        , style "opacity" "0.6"
+                                                        , style "height" "4rem"
+                                                        ]
+                                                        []
+                                                    ]
+
+                                                else
+                                                    []
+                                               )
                                     )
-                                |> List.append []
+                                |> List.concat
                                 |> div [ class "content scrollbar-thin" ]
                             ]
                         , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
