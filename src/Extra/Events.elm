@@ -158,7 +158,7 @@ onDrop message =
         JD.map
             (\_ ->
                 { message = message
-                , stopPropagation = False
+                , stopPropagation = True
                 , preventDefault = True
                 }
             )

@@ -181,6 +181,7 @@ type alias Model =
     , movingHoverC0 : Maybe Int
     , movingHoverC : Maybe Int
     , movingHoverT : Maybe String
+    , dragCount : Int
 
     -- Common
     , screen : Screen
@@ -612,7 +613,9 @@ type Msg
     | OnMove Int Tension
     | OnCancelHov
     | OnEndMove
-    | OnMoveEnterC Int
+    | OnMoveEnterC Int Bool
+    | OnMoveLeaveC Int
+    | OnMoveLeaveC_ Int
     | OnMoveEnterT String
     | OnMoveDrop String
       -- Common
@@ -696,6 +699,7 @@ init global flags =
             , movingHoverC0 = Nothing
             , movingHoverC = Nothing
             , movingHoverT = Nothing
+            , dragCount = 0
 
             -- Common
             , helperBar = HelperBar.create
@@ -1171,33 +1175,59 @@ update global message model =
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
         OnMove c t ->
-            ( { model | movingHoverC0 = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+            ( { model | dragCount = 0, movingHoverC0 = Just c, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
 
         OnEndMove ->
-            ( model, sendSleep OnCancelHov 100, Cmd.none )
+            let
+                cmds =
+                    [ sendSleep OnCancelHov 300 ]
+            in
+            Maybe.map2
+                (\t tid ->
+                    if t.id == tid then
+                        ( model, Cmd.batch cmds, Cmd.none )
+
+                    else
+                        -- move from t.receiver to "hoverT.receiverid"
+                        ( model, Cmd.batch cmds, Cmd.none )
+                )
+                model.movingTension
+                model.movingHoverT
+                |> withDefault
+                    ( model, Cmd.batch cmds, Cmd.none )
 
         OnCancelHov ->
-            let
-                f =
-                    Debug.log "cancel hov" ""
-            in
             ( { model | movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
-        OnMoveEnterC hover ->
-            let
-                f =
-                    Debug.log "move enter" hover
-            in
+        OnMoveEnterC hover reset ->
             if Just hover == model.movingHoverC then
-                ( model, Cmd.none, Cmd.none )
+                if reset then
+                    ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+                else
+                    ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
 
             else
-                ( { model | movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+                ( { model | dragCount = 1, movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+        OnMoveLeaveC hover ->
+            ( { model | dragCount = model.dragCount - 1 }, sendSleep (OnMoveLeaveC_ hover) 50, Cmd.none )
+
+        OnMoveLeaveC_ hover ->
+            if model.dragCount < 0 then
+                ( model, send OnCancelHov, Cmd.none )
+
+            else
+                ( model, Cmd.none, Cmd.none )
 
         OnMoveEnterT hover ->
             ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
 
         OnMoveDrop nameid ->
+            let
+                f =
+                    Debug.log "move drop" nameid
+            in
             ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }
             , Cmd.none
             , Cmd.none
@@ -1825,7 +1855,8 @@ viewCircleTensions model =
                         in
                         [ div
                             [ class "column is-3"
-                            , onDragEnter (OnMoveEnterC i)
+                            , onDragEnter (OnMoveEnterC i False)
+                            , onDragLeave (OnMoveLeaveC i)
                             , onDrop (OnMoveDrop n.nameid)
                             , attribute "ondragover" "return false"
 
@@ -1853,24 +1884,22 @@ viewCircleTensions model =
                                             itemDragged =
                                                 draggedTid == Just t.id
 
-                                            belowTid =
-                                                LE.getAt (j + 1) tensions |> Maybe.map .id
-
-                                            isHoveredDown =
-                                                -- hovered tension
-                                                (model.movingHoverT == Just t.id)
-                                                    -- exclude the dragged item
-                                                    && not itemDragged
-                                                    -- exclude if the dragged item is below
-                                                    && (draggedTid /= belowTid)
+                                            upperTid =
+                                                LE.getAt (j - 1) tensions |> Maybe.map .id
 
                                             isHoveredUp =
-                                                (model.movingHoverT == Just t.id)
-                                                    && (draggedTid == belowTid)
+                                                -- exclude the dragged item
+                                                not itemDragged
+                                                    -- hovered tension
+                                                    && (model.movingHoverT == Just t.id)
+                                                    -- exclude if the dragged item is next
+                                                    && (draggedTid /= upperTid)
 
                                             hasLastColumn =
-                                                -- not in intial column
-                                                (model.movingHoverC0 /= Just i)
+                                                ---- not in intial column
+                                                --(model.movingHoverC0 /= Just i)
+                                                -- exclude the dragged item
+                                                not itemDragged
                                                     -- nothing to drag
                                                     && (model.movingHoverT == Nothing)
                                                     -- last item
@@ -1888,17 +1917,25 @@ viewCircleTensions model =
                                             [ draggingDiv ]
                                             []
                                             ++ [ div
-                                                    [ class "box is-shrinked2 mb-2 mx-2"
-                                                    , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
-                                                    , attribute "draggable" "true"
-                                                    , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                                    , onDragStart <| OnMove i t
-                                                    , onDragEnd OnEndMove
-                                                    , onDragEnter (OnMoveEnterT t.id)
-                                                    ]
+                                                    ([ class "box is-shrinked2 mb-2 mx-2"
+                                                     , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
+                                                     , attribute "draggable" "true"
+                                                     , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
+                                                     , onDragStart <| OnMove i t
+                                                     , onDragEnd OnEndMove
+                                                     , onDragEnter (OnMoveEnterT t.id)
+                                                     ]
+                                                        ++ (if j_last == j then
+                                                                -- reset hoverT to draw below
+                                                                [ onDragLeave (OnMoveEnterC i True) ]
+
+                                                            else
+                                                                []
+                                                           )
+                                                    )
                                                     [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
                                                ]
-                                            ++ ternary (isHoveredDown || hasLastColumn)
+                                            ++ ternary hasLastColumn
                                                 [ draggingDiv ]
                                                 []
                                     )
@@ -1926,7 +1963,6 @@ viewCircleTensions model =
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"
 
-                    --, onDragLeave (OnMoveEnterC -1)
                     --, onMouseLeave (OnColumnHover Nothing)
                     , attribute "style" <|
                         case model.boardHeight of
