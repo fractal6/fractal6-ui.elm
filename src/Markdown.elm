@@ -4,7 +4,7 @@ import Assets as A
 import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, div, i, span, text)
-import Html.Attributes exposing (class, href, style, target, title)
+import Html.Attributes exposing (class, href, rel, style, target, title)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Markdown.Html
@@ -79,7 +79,7 @@ frac6Renderer style recursive =
                             not (startsWith "https://fractale.co" lk || startsWith "http://fractale.co" lk)
                                 && (startsWith "https://" lk || startsWith "http://" lk)
                         then
-                            [ href link.destination, target "_blank" ]
+                            [ href link.destination, target "_blank", rel "noopener" ]
 
                         else
                             [ href link.destination, class "is-link" ]

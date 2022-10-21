@@ -1816,6 +1816,10 @@ tr.mediaBox {
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
     position: absolute;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
 
     // Content
@@ -3098,7 +3102,11 @@ header .acc-title {
     width: 100%;
 	display: inline-block;
 	cursor: pointer;
-	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .acc-content {
     // About using overflow and max-height for making transition.
@@ -3256,4 +3264,9 @@ input[type=search] {
     }
 }
 
+.is-dragging {
+    * {
+        pointer-events: none;
+    }
+}
 

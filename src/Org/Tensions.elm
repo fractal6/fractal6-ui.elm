@@ -17,7 +17,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragStart, onDrop, onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -178,6 +178,7 @@ type alias Model =
     , boardHeight : Maybe Float
     , hover_column : Maybe String
     , movingTension : Maybe Tension
+    , movingHoverC0 : Maybe Int
     , movingHoverC : Maybe Int
     , movingHoverT : Maybe String
 
@@ -608,10 +609,12 @@ type Msg
     | SetOffset Int
       -- Board
     | OnColumnHover (Maybe String)
-    | OnMove Tension
-    | OnCancelMove
+    | OnMove Int Tension
+    | OnCancelHov
+    | OnEndMove
     | OnMoveEnterC Int
     | OnMoveEnterT String
+    | OnMoveDrop String
       -- Common
     | NoMsg
     | LogErr String
@@ -690,6 +693,7 @@ init global flags =
             , boardHeight = Nothing
             , hover_column = Nothing
             , movingTension = Nothing
+            , movingHoverC0 = Nothing
             , movingHoverC = Nothing
             , movingHoverT = Nothing
 
@@ -1166,17 +1170,38 @@ update global message model =
         OnColumnHover v ->
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
-        OnMove t ->
-            ( { model | movingTension = Just t }, Cmd.none, Cmd.none )
+        OnMove c t ->
+            ( { model | movingHoverC0 = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
 
-        OnCancelMove ->
-            ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+        OnEndMove ->
+            ( model, sendSleep OnCancelHov 100, Cmd.none )
+
+        OnCancelHov ->
+            let
+                f =
+                    Debug.log "cancel hov" ""
+            in
+            ( { model | movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
         OnMoveEnterC hover ->
-            ( { model | movingHoverC = Just hover }, Cmd.none, Cmd.none )
+            let
+                f =
+                    Debug.log "move enter" hover
+            in
+            if Just hover == model.movingHoverC then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
         OnMoveEnterT hover ->
             ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
+
+        OnMoveDrop nameid ->
+            ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }
+            , Cmd.none
+            , Cmd.none
+            )
 
         -- Authors
         UserSearchPanelMsg msg ->
@@ -1789,8 +1814,8 @@ viewCircleTensions model =
                             tensions =
                                 Dict.get n.nameid data |> withDefault []
 
-                            lastTid =
-                                LE.last tensions |> Maybe.map .id
+                            j_last =
+                                List.length tensions - 1
 
                             t_m =
                                 List.head tensions
@@ -1801,6 +1826,8 @@ viewCircleTensions model =
                         [ div
                             [ class "column is-3"
                             , onDragEnter (OnMoveEnterC i)
+                            , onDrop (OnMoveDrop n.nameid)
+                            , attribute "ondragover" "return false"
 
                             --, onMouseEnter (OnColumnHover (Just n.nameid)
                             ]
@@ -1823,38 +1850,57 @@ viewCircleTensions model =
                                             draggedTid =
                                                 Maybe.map .id model.movingTension
 
-                                            isDragged =
+                                            itemDragged =
                                                 draggedTid == Just t.id
 
                                             belowTid =
                                                 LE.getAt (j + 1) tensions |> Maybe.map .id
 
-                                            isHovered =
-                                                model.movingHoverT == Just t.id && draggedTid /= belowTid
-                                        in
-                                        [ div
-                                            [ class "box is-shrinked2 mb-2 mx-2"
-                                            , attribute "draggable" "true"
-                                            , attribute "ondragover" "return false"
-                                            , onDragStart <| OnMove t
-                                            , onDragEnd OnCancelMove
-                                            , onDragEnter (OnMoveEnterT t.id)
-                                            , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            ]
-                                            [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
-                                        ]
-                                            ++ (if isHovered && not isDragged then
-                                                    [ div
-                                                        [ class "box is-shrinked2 mb-2 mx-2"
-                                                        , style "opacity" "0.6"
-                                                        , style "height" "4rem"
-                                                        ]
-                                                        []
-                                                    ]
+                                            isHoveredDown =
+                                                -- hovered tension
+                                                (model.movingHoverT == Just t.id)
+                                                    -- exclude the dragged item
+                                                    && not itemDragged
+                                                    -- exclude if the dragged item is below
+                                                    && (draggedTid /= belowTid)
 
-                                                else
+                                            isHoveredUp =
+                                                (model.movingHoverT == Just t.id)
+                                                    && (draggedTid == belowTid)
+
+                                            hasLastColumn =
+                                                -- not in intial column
+                                                (model.movingHoverC0 /= Just i)
+                                                    -- nothing to drag
+                                                    && (model.movingHoverT == Nothing)
+                                                    -- last item
+                                                    && (j_last == j && model.movingHoverC == Just i)
+
+                                            draggingDiv =
+                                                div
+                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging"
+                                                    , style "opacity" "0.6"
+                                                    , style "height" "4rem"
+                                                    ]
                                                     []
-                                               )
+                                        in
+                                        ternary isHoveredUp
+                                            [ draggingDiv ]
+                                            []
+                                            ++ [ div
+                                                    [ class "box is-shrinked2 mb-2 mx-2"
+                                                    , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
+                                                    , attribute "draggable" "true"
+                                                    , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
+                                                    , onDragStart <| OnMove i t
+                                                    , onDragEnd OnEndMove
+                                                    , onDragEnter (OnMoveEnterT t.id)
+                                                    ]
+                                                    [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
+                                               ]
+                                            ++ ternary (isHoveredDown || hasLastColumn)
+                                                [ draggingDiv ]
+                                                []
                                     )
                                 |> List.concat
                                 |> div [ class "content scrollbar-thin" ]
@@ -1880,6 +1926,7 @@ viewCircleTensions model =
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"
 
+                    --, onDragLeave (OnMoveEnterC -1)
                     --, onMouseLeave (OnColumnHover Nothing)
                     , attribute "style" <|
                         case model.boardHeight of

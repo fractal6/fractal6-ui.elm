@@ -147,13 +147,18 @@ onDragEnter message =
     on "dragenter" (JD.succeed message)
 
 
+onDragLeave : msg -> Html.Attribute msg
+onDragLeave message =
+    on "dragleave" (JD.succeed message)
+
+
 onDrop : msg -> Html.Attribute msg
 onDrop message =
     custom "drop" <|
         JD.map
             (\_ ->
                 { message = message
-                , stopPropagation = True
+                , stopPropagation = False
                 , preventDefault = True
                 }
             )
