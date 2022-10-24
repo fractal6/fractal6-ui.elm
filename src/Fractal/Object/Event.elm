@@ -45,6 +45,26 @@ event_type =
     Object.selectionForField "Enum.TensionEvent.TensionEvent" "event_type" [] Fractal.Enum.TensionEvent.decoder
 
 
+type alias MentionedOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+mentioned :
+    (MentionedOptionalArguments -> MentionedOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Event
+mentioned fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "mentioned" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 old : SelectionSet (Maybe String) Fractal.Object.Event
 old =
     Object.selectionForField "(Maybe String)" "old" [] (Decode.string |> Decode.nullable)

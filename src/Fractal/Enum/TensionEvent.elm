@@ -20,6 +20,7 @@ type TensionEvent
     | LabelRemoved
     | BlobCreated
     | BlobCommitted
+    | Mentioned
     | BlobPushed
     | BlobArchived
     | BlobUnarchived
@@ -34,7 +35,7 @@ type TensionEvent
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
+    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Mentioned, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -78,6 +79,9 @@ decoder =
 
                     "BlobCommitted" ->
                         Decode.succeed BlobCommitted
+
+                    "Mentioned" ->
+                        Decode.succeed Mentioned
 
                     "BlobPushed" ->
                         Decode.succeed BlobPushed
@@ -154,6 +158,9 @@ toString enum____ =
 
         BlobCommitted ->
             "BlobCommitted"
+
+        Mentioned ->
+            "Mentioned"
 
         BlobPushed ->
             "BlobPushed"
@@ -235,6 +242,9 @@ fromString enumString____ =
 
         "BlobCommitted" ->
             Just BlobCommitted
+
+        "Mentioned" ->
+            Just Mentioned
 
         "BlobPushed" ->
             Just BlobPushed

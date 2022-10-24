@@ -212,6 +212,30 @@ history fillInOptionals____ object____ =
     Object.selectionForCompositeField "history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias MentionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter
+    , order : OptionalArgument Fractal.InputObject.EventOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+mentions :
+    (MentionsOptionalArguments -> MentionsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+mentions fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "mentions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias ContractsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ContractFilter
     , order : OptionalArgument Fractal.InputObject.ContractOrder
@@ -408,6 +432,26 @@ historyAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "historyAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias MentionsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter }
+
+
+mentionsAggregate :
+    (MentionsAggregateOptionalArguments -> MentionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
+mentionsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "mentionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias ContractsAggregateOptionalArguments =

@@ -771,7 +771,7 @@ update global message model =
                     , Cmd.batch
                         [ ternary hasLocalGraph
                             -- Do not change the context of the user anonymously, its confusing
-                            Cmd.none
+                            (Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none)
                             (queryLocalGraph apis (nid2rootid targetid) (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
@@ -2024,6 +2024,9 @@ viewEvent lang now action event =
                 TensionEvent.Moved ->
                     viewEventMoved lang now event
 
+                TensionEvent.Mentioned ->
+                    viewEventMentioned lang now event
+
                 _ ->
                     []
     in
@@ -2294,6 +2297,41 @@ viewEventMoved lang now event =
                 ]
         ]
     ]
+
+
+viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
+viewEventMentioned lang now event =
+    case event.mentioned of
+        Just { id, title, receiverid } ->
+            let
+                goto =
+                    withDefault "" event.new
+            in
+            [ div [ class "media-left" ] [ A.icon "icon-message-square" ]
+            , div [ class "media-content" ]
+                [ span [] <|
+                    List.intersperse (text " ")
+                        [ viewUsernameLink event.createdBy.username
+                        , strong [] [ text T.mentioned2 ]
+                        , text (formatDate lang now event.createdAt)
+                        , div [ attribute "style" "display: flex; gap:15px;" ]
+                            [ a
+                                [ class "is-strong is-size-6 discrete-link"
+                                , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
+                                ]
+                                [ text title ]
+                            , a
+                                [ class "discrete-link is-discrete"
+                                , href (uriFromNameid OverviewBaseUri receiverid [])
+                                ]
+                                [ text receiverid ]
+                            ]
+                        ]
+                ]
+            ]
+
+        Nothing ->
+            []
 
 
 
@@ -2757,4 +2795,5 @@ eventFromForm event form =
     , event_type = event.event_type
     , old = Just event.old
     , new = Just event.new
+    , mentioned = Nothing
     }

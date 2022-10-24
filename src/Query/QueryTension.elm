@@ -242,6 +242,13 @@ eventPayload =
         |> with Fractal.Object.Event.event_type
         |> with Fractal.Object.Event.old
         |> with Fractal.Object.Event.new
+        |> with
+            (Fractal.Object.Event.mentioned identity <|
+                SelectionSet.map3 (\a b c -> { id = a, title = b, receiverid = c })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    Fractal.Object.Tension.title
+                    Fractal.Object.Tension.receiverid
+            )
 
 
 contractPayloadId : SelectionSet IdPayload Fractal.Object.Contract

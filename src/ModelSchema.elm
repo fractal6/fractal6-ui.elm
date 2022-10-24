@@ -332,6 +332,7 @@ type alias Event =
     , event_type : TensionEvent.TensionEvent
     , old : Maybe String
     , new : Maybe String
+    , mentioned : Maybe { id : String, title : String, receiverid : String }
     }
 
 

@@ -14,13 +14,14 @@ type EventHasFilter
     | Message
     | Tension
     | Event_type
+    | Mentioned
     | Old
     | New
 
 
 list : List EventHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Event_type, Old, New ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Event_type, Mentioned, Old, New ]
 
 
 decoder : Decoder EventHasFilter
@@ -46,6 +47,9 @@ decoder =
 
                     "event_type" ->
                         Decode.succeed Event_type
+
+                    "mentioned" ->
+                        Decode.succeed Mentioned
 
                     "old" ->
                         Decode.succeed Old
@@ -80,6 +84,9 @@ toString enum____ =
 
         Event_type ->
             "event_type"
+
+        Mentioned ->
+            "mentioned"
 
         Old ->
             "old"
@@ -119,6 +126,9 @@ fromString enumString____ =
 
         "event_type" ->
             Just Event_type
+
+        "mentioned" ->
+            Just Mentioned
 
         "old" ->
             Just Old
