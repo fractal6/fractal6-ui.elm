@@ -2324,7 +2324,7 @@ viewEventMentioned lang now event =
                                 [ class "discrete-link is-discrete"
                                 , href (uriFromNameid OverviewBaseUri receiverid [])
                                 ]
-                                [ text receiverid ]
+                                [ receiverid |> String.replace "#" "/" |> text ]
                             ]
                         ]
                 ]
