@@ -916,15 +916,11 @@ update_ apis message model =
                 ( cmds, gcmds ) =
                     out.result
                         |> Maybe.map
-                            (\x ->
-                                let
-                                    closing =
-                                        Tuple.first x
-                                in
-                                if closing && Tuple.second x /= Nothing then
+                            (\( closing, d ) ->
+                                if closing && d /= Nothing then
                                     let
                                         ( nameid, parentid_new, nameid_new ) =
-                                            Tuple.second x |> withDefault ( "", "", "" )
+                                            Maybe.map Tuple.second d |> withDefault ( "", "", "" )
                                     in
                                     ( [], [ DoMoveNode nameid parentid_new nameid_new ] )
 

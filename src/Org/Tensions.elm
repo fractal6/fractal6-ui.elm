@@ -12,6 +12,7 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
+import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
@@ -19,6 +20,7 @@ import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
+import Fifo exposing (Fifo)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
@@ -178,9 +180,9 @@ type alias Model =
     , boardHeight : Maybe Float
     , hover_column : Maybe String
     , movingTension : Maybe Tension
-    , movingHoverC0 : Maybe Int
-    , movingHoverC : Maybe Int
-    , movingHoverT : Maybe String
+    , moveFifo : Fifo ( Int, Tension )
+    , movingHoverC : Maybe { pos : Int, to_receiverid : String }
+    , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
     , dragCount : Int
 
     -- Common
@@ -190,7 +192,6 @@ type alias Model =
     , url : Url
     , now : Time.Posix
     , lang : Lang.Lang
-    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
@@ -198,6 +199,8 @@ type alias Model =
     , tensionForm : NTF.State
     , authorsPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
+    , actionPanel : ActionPanel.State
+    , moveTension : MoveTension.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
@@ -610,13 +613,13 @@ type Msg
     | SetOffset Int
       -- Board
     | OnColumnHover (Maybe String)
-    | OnMove Int Tension
+    | OnMove { pos : Int, to_receiverid : String } Tension
     | OnCancelHov
     | OnEndMove
-    | OnMoveEnterC Int Bool
-    | OnMoveLeaveC Int
-    | OnMoveLeaveC_ Int
-    | OnMoveEnterT String
+    | OnMoveEnterC { pos : Int, to_receiverid : String } Bool
+    | OnMoveLeaveC
+    | OnMoveLeaveC_
+    | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
     | OnMoveDrop String
       -- Common
     | NoMsg
@@ -636,6 +639,7 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | MoveTensionMsg MoveTension.Msg
 
 
 
@@ -696,7 +700,7 @@ init global flags =
             , boardHeight = Nothing
             , hover_column = Nothing
             , movingTension = Nothing
-            , movingHoverC0 = Nothing
+            , moveFifo = Fifo.empty
             , movingHoverC = Nothing
             , movingHoverT = Nothing
             , dragCount = 0
@@ -709,6 +713,7 @@ init global flags =
             , url = global.url
             , now = global.now
             , lang = global.session.lang
+            , moveTension = MoveTension.init global.session.user
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
@@ -1175,7 +1180,7 @@ update global message model =
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
         OnMove c t ->
-            ( { model | dragCount = 0, movingHoverC0 = Just c, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+            ( { model | dragCount = 0, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
 
         OnEndMove ->
             let
@@ -1183,16 +1188,23 @@ update global message model =
                     [ sendSleep OnCancelHov 300 ]
             in
             Maybe.map2
-                (\t tid ->
-                    if t.id == tid then
+                (\t { pos, to_receiverid } ->
+                    --if t.id == tid then
+                    if t.receiver.nameid == to_receiverid then
                         ( model, Cmd.batch cmds, Cmd.none )
 
                     else
-                        -- move from t.receiver to "hoverT.receiverid"
-                        ( model, Cmd.batch cmds, Cmd.none )
+                        let
+                            cmd =
+                                Cmd.map MoveTensionMsg (send (MoveTension.OnMoveRaw t.id t.receiver.nameid to_receiverid))
+
+                            j =
+                                Maybe.map (\x -> x.pos) model.movingHoverT |> withDefault -1
+                        in
+                        ( { model | moveFifo = Fifo.insert ( j, t ) model.moveFifo }, Cmd.batch (cmd :: cmds), Cmd.none )
                 )
                 model.movingTension
-                model.movingHoverT
+                model.movingHoverC
                 |> withDefault
                     ( model, Cmd.batch cmds, Cmd.none )
 
@@ -1210,10 +1222,10 @@ update global message model =
             else
                 ( { model | dragCount = 1, movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
-        OnMoveLeaveC hover ->
-            ( { model | dragCount = model.dragCount - 1 }, sendSleep (OnMoveLeaveC_ hover) 50, Cmd.none )
+        OnMoveLeaveC ->
+            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveC_ 50, Cmd.none )
 
-        OnMoveLeaveC_ hover ->
+        OnMoveLeaveC_ ->
             if model.dragCount < 0 then
                 ( model, send OnCancelHov, Cmd.none )
 
@@ -1418,6 +1430,55 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        MoveTensionMsg msg ->
+            let
+                ( data, out ) =
+                    MoveTension.update apis msg model.moveTension
+
+                ( tensions_all, moveFifo ) =
+                    Maybe.map
+                        (\( tid, ( old_nid, new_nid, _ ) ) ->
+                            let
+                                ( move, moveFifo_ ) =
+                                    Fifo.remove model.moveFifo
+                            in
+                            ( withMapData
+                                -- Add the moved tension to list
+                                (Dict.update new_nid
+                                    (\ts_m ->
+                                        Maybe.map2
+                                            (\ts ( pos, tension ) ->
+                                                let
+                                                    r =
+                                                        tension.receiver
+
+                                                    t =
+                                                        { tension | receiver = { r | nameid = new_nid } }
+                                                in
+                                                if pos < 0 then
+                                                    ts ++ [ t ]
+
+                                                else
+                                                    LE.splitAt pos ts |> (\( a, b ) -> a ++ [ t ] ++ b)
+                                            )
+                                            ts_m
+                                            move
+                                    )
+                                    -- Remove the moved tension from list
+                                    >> Dict.update old_nid (Maybe.map (List.filter (\t -> t.id /= tid)))
+                                )
+                                model.tensions_all
+                            , moveFifo_
+                            )
+                        )
+                        (Maybe.map Tuple.second out.result |> withDefault Nothing)
+                        |> withDefault ( model.tensions_all, model.moveFifo )
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | moveFifo = moveFifo, tensions_all = tensions_all, moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1432,6 +1493,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 
 
@@ -1855,9 +1917,11 @@ viewCircleTensions model =
                         in
                         [ div
                             [ class "column is-3"
-                            , onDragEnter (OnMoveEnterC i False)
-                            , onDragLeave (OnMoveLeaveC i)
-                            , onDrop (OnMoveDrop n.nameid)
+                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n.nameid } False)
+                            , onDragLeave OnMoveLeaveC
+
+                            -- @DEBUG not working
+                            --, onDrop (OnMoveDrop n.nameid)
                             , attribute "ondragover" "return false"
 
                             --, onMouseEnter (OnColumnHover (Just n.nameid)
@@ -1891,19 +1955,17 @@ viewCircleTensions model =
                                                 -- exclude the dragged item
                                                 not itemDragged
                                                     -- hovered tension
-                                                    && (model.movingHoverT == Just t.id)
+                                                    && (Maybe.map .tid model.movingHoverT == Just t.id)
                                                     -- exclude if the dragged item is next
                                                     && (draggedTid /= upperTid)
 
                                             hasLastColumn =
-                                                ---- not in intial column
-                                                --(model.movingHoverC0 /= Just i)
                                                 -- exclude the dragged item
                                                 not itemDragged
                                                     -- nothing to drag
                                                     && (model.movingHoverT == Nothing)
                                                     -- last item
-                                                    && (j_last == j && model.movingHoverC == Just i)
+                                                    && (j_last == j && Maybe.map .pos model.movingHoverC == Just i)
 
                                             draggingDiv =
                                                 div
@@ -1921,13 +1983,13 @@ viewCircleTensions model =
                                                      , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
                                                      , attribute "draggable" "true"
                                                      , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                                     , onDragStart <| OnMove i t
+                                                     , onDragStart <| OnMove { pos = i, to_receiverid = t.receiver.nameid } t
                                                      , onDragEnd OnEndMove
-                                                     , onDragEnter (OnMoveEnterT t.id)
+                                                     , onDragEnter (OnMoveEnterT { pos = i, tid = t.id, to_receiverid = t.receiver.nameid })
                                                      ]
                                                         ++ (if j_last == j then
                                                                 -- reset hoverT to draw below
-                                                                [ onDragLeave (OnMoveEnterC i True) ]
+                                                                [ onDragLeave (OnMoveEnterC { pos = i, to_receiverid = t.receiver.nameid } True) ]
 
                                                             else
                                                                 []

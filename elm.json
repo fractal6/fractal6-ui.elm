@@ -6,7 +6,8 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
-            "dillonkearns/elm-graphql": "5.0.10",
+            "avh4/elm-fifo": "1.0.4",
+            "dillonkearns/elm-graphql": "5.0.11",
             "dillonkearns/elm-markdown": "7.0.0",
             "dividat/elm-identicon": "1.0.0",
             "elm/browser": "1.0.2",

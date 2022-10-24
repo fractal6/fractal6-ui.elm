@@ -183,7 +183,7 @@ hasData model =
     (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "") == False
 
 
-buildOutResult : Model -> ( String, String, String )
+buildOutResult : Model -> ( String, ( String, String, String ) )
 buildOutResult model =
     if model.encoded_nid /= "" then
         -- Blob here
@@ -194,11 +194,11 @@ buildOutResult model =
             decoded_nid_new =
                 nodeIdCodec model.form.target.nameid model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
         in
-        ( decoded_nid, model.form.target.nameid, decoded_nid_new )
+        ( model.form.tid, ( decoded_nid, model.form.target.nameid, decoded_nid_new ) )
 
     else
         -- simple tension here
-        ( model.target, model.form.target.nameid, "" )
+        ( model.form.tid, ( model.target, model.form.target.nameid, "" ) )
 
 
 
@@ -219,6 +219,7 @@ type Msg
     | OnChangeTarget Node
     | OnSubmit (Time.Posix -> Msg)
     | OnMove Time.Posix
+    | OnMoveRaw String String String
     | OnMoveAck (GqlData TensionId)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -237,7 +238,7 @@ type alias Out =
     --Bool: return True if modal is to be closed
     --Tuple: if it has a blob, and returns (old_nameid, new_receiverid,  new_nameid).
     --        else (simple tension) just (old_receiverid, new_receiverid, "")
-    , result : Maybe ( Bool, Maybe ( String, String, String ) )
+    , result : Maybe ( Bool, Maybe ( String, ( String, String, String ) ) )
     }
 
 
@@ -346,6 +347,19 @@ update_ apis message model =
             ( { model | form = newForm }
             , out0 [ send DoMoveTension ]
             )
+
+        OnMoveRaw tid from_nid to_nid ->
+            let
+                f =
+                    model.form
+
+                n =
+                    f.target
+
+                newForm =
+                    { f | tid = tid, target = { n | nameid = to_nid } }
+            in
+            ( { model | target = from_nid, form = newForm }, out0 [ send (OnSubmit <| OnMove) ] )
 
         OnMoveAck result ->
             let
