@@ -2507,6 +2507,11 @@ tr.mediaBox {
  *
  */
 
+@keyframes growBox {
+    from { height: 0; }
+    to { height: 4rem; }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -3268,5 +3273,10 @@ input[type=search] {
     * {
         pointer-events: none;
     }
+}
+
+.is-growing {
+    animation: growBox 0.15s;
+    animation-fill-mode: forwards;
 }
 

@@ -184,6 +184,7 @@ type alias Model =
     , movingHoverC : Maybe { pos : Int, to_receiverid : String }
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
     , dragCount : Int
+    , draging : Bool
 
     -- Common
     , screen : Screen
@@ -704,6 +705,7 @@ init global flags =
             , movingHoverC = Nothing
             , movingHoverT = Nothing
             , dragCount = 0
+            , draging = False
 
             -- Common
             , helperBar = HelperBar.create
@@ -1180,10 +1182,13 @@ update global message model =
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
         OnMove c t ->
-            ( { model | dragCount = 0, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+            ( { model | draging = True, dragCount = 0, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
 
         OnEndMove ->
             let
+                newModel =
+                    { model | draging = False }
+
                 cmds =
                     [ sendSleep OnCancelHov 300 ]
             in
@@ -1191,22 +1196,22 @@ update global message model =
                 (\t { pos, to_receiverid } ->
                     --if t.id == tid then
                     if t.receiver.nameid == to_receiverid then
-                        ( model, Cmd.batch cmds, Cmd.none )
+                        ( newModel, Cmd.batch cmds, Cmd.none )
 
                     else
                         let
-                            cmd =
-                                Cmd.map MoveTensionMsg (send (MoveTension.OnMoveRaw t.id t.receiver.nameid to_receiverid))
-
                             j =
                                 Maybe.map (\x -> x.pos) model.movingHoverT |> withDefault -1
                         in
-                        ( { model | moveFifo = Fifo.insert ( j, t ) model.moveFifo }, Cmd.batch (cmd :: cmds), Cmd.none )
+                        ( { newModel | moveFifo = Fifo.insert ( j, t ) model.moveFifo }
+                        , Cmd.map MoveTensionMsg (send (MoveTension.OnMoveRaw t.id t.receiver.nameid to_receiverid))
+                        , Cmd.none
+                        )
                 )
                 model.movingTension
                 model.movingHoverC
                 |> withDefault
-                    ( model, Cmd.batch cmds, Cmd.none )
+                    ( newModel, Cmd.batch cmds, Cmd.none )
 
         OnCancelHov ->
             ( { model | movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
@@ -1223,10 +1228,10 @@ update global message model =
                 ( { model | dragCount = 1, movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
         OnMoveLeaveC ->
-            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveC_ 50, Cmd.none )
+            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveC_ 15, Cmd.none )
 
         OnMoveLeaveC_ ->
-            if model.dragCount < 0 then
+            if model.dragCount < 0 && model.draging then
                 ( model, send OnCancelHov, Cmd.none )
 
             else
@@ -1236,10 +1241,6 @@ update global message model =
             ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
 
         OnMoveDrop nameid ->
-            let
-                f =
-                    Debug.log "move drop" nameid
-            in
             ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }
             , Cmd.none
             , Cmd.none
@@ -1450,10 +1451,12 @@ update global message model =
                                             (\ts ( pos, tension ) ->
                                                 let
                                                     r =
-                                                        tension.receiver
+                                                        List.head ts
+                                                            |> Maybe.map .receiver
+                                                            |> withDefault tension.receiver
 
                                                     t =
-                                                        { tension | receiver = { r | nameid = new_nid } }
+                                                        { tension | receiver = r }
                                                 in
                                                 if pos < 0 then
                                                     ts ++ [ t ]
@@ -1474,8 +1477,15 @@ update global message model =
                         (Maybe.map Tuple.second out.result |> withDefault Nothing)
                         |> withDefault ( model.tensions_all, model.moveFifo )
 
-                ( cmds, gcmds ) =
+                ( cmds_, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                cmds =
+                    if List.length (Fifo.toList moveFifo) == 0 then
+                        cmds_ ++ [ send OnCancelHov ]
+
+                    else
+                        cmds_
             in
             ( { model | moveFifo = moveFifo, tensions_all = tensions_all, moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
@@ -1920,7 +1930,7 @@ viewCircleTensions model =
                             , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n.nameid } False)
                             , onDragLeave OnMoveLeaveC
 
-                            -- @DEBUG not working
+                            -- @DEBUG doesn't work
                             --, onDrop (OnMoveDrop n.nameid)
                             , attribute "ondragover" "return false"
 
@@ -1969,9 +1979,10 @@ viewCircleTensions model =
 
                                             draggingDiv =
                                                 div
-                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging"
+                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
                                                     , style "opacity" "0.6"
-                                                    , style "height" "4rem"
+
+                                                    --, style "height" "0rem"
                                                     ]
                                                     []
                                         in
@@ -1985,7 +1996,7 @@ viewCircleTensions model =
                                                      , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
                                                      , onDragStart <| OnMove { pos = i, to_receiverid = t.receiver.nameid } t
                                                      , onDragEnd OnEndMove
-                                                     , onDragEnter (OnMoveEnterT { pos = i, tid = t.id, to_receiverid = t.receiver.nameid })
+                                                     , onDragEnter (OnMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
                                                      ]
                                                         ++ (if j_last == j then
                                                                 -- reset hoverT to draw below
