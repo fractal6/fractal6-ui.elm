@@ -855,7 +855,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
 
                 OkAuth _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( model, Cmd.none, send RefreshNotifCount )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
