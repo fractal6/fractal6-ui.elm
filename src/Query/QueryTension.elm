@@ -244,8 +244,9 @@ eventPayload =
         |> with Fractal.Object.Event.new
         |> with
             (Fractal.Object.Event.mentioned identity <|
-                SelectionSet.map3 (\a b c -> { id = a, title = b, receiverid = c })
+                SelectionSet.map4 MentionedTension
                     (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    Fractal.Object.Tension.status
                     Fractal.Object.Tension.title
                     Fractal.Object.Tension.receiverid
             )

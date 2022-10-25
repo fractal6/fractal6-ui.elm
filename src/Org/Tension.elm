@@ -2302,7 +2302,7 @@ viewEventMoved lang now event =
 viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventMentioned lang now event =
     case event.mentioned of
-        Just { id, title, receiverid } ->
+        Just { id, status, title, receiverid } ->
             let
                 goto =
                     withDefault "" event.new
@@ -2314,12 +2314,18 @@ viewEventMentioned lang now event =
                         [ viewUsernameLink event.createdBy.username
                         , strong [] [ text T.mentioned2 ]
                         , text (formatDate lang now event.createdAt)
-                        , div [ attribute "style" "display: flex; gap:15px;" ]
+                        , div [ attribute "style" "display: flex; gap:15px; align-items: baseline;" ]
                             [ a
                                 [ class "is-strong is-size-6 discrete-link"
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
-                                [ text title ]
+                                [ span
+                                    [ class "tooltip has-tooltip-arrow has-tooltip-top"
+                                    , attribute "data-tooltip" (tensionStatus2String status)
+                                    ]
+                                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
+                                , text title
+                                ]
                             , a
                                 [ class "discrete-link is-discrete"
                                 , href (uriFromNameid OverviewBaseUri receiverid [])
