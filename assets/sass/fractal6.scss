@@ -1452,7 +1452,13 @@ figcaption {
     .message-body {
         padding: 0.75rem 0.75rem !important;
     }
+}
 
+.commentHeader {
+    .level-right {
+        font-size: 15px;
+        font-family: "Times New Roman", Times, serif !important;
+    }
 }
 
 .actionComment {

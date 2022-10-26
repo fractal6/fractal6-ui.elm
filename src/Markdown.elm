@@ -194,8 +194,8 @@ frac6Parser content =
         -- Autolink
         --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~:=]+") autoLink
         --
-        -- Force line break
-        |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  " ++ m.match)
+        -- Force line break (except for Table)
+        |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)
 
 
 autoLink : Regex.Match -> String -> String

@@ -102,6 +102,7 @@ type alias TensionForm =
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message and Node attr...
+    , viewMode : InputViewMode
 
     -- data
     , events : List Ev
@@ -137,6 +138,7 @@ initTensionForm tid user =
     , blob_type = Nothing
     , node = initNodeFragment Nothing
     , md = Nothing
+    , viewMode = Write
     }
 
 

@@ -75,7 +75,6 @@ type alias Model =
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
-    , inputViewMode : InputViewMode
     }
 
 
@@ -102,7 +101,6 @@ initModel rootnameid user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , inputViewMode = Write
     }
 
 
@@ -654,8 +652,11 @@ update_ apis message model =
             )
 
         ChangeInputViewMode viewMode ->
-            -- @codefactor: should write in comment_form, but tension page directly write in tension_head...
-            ( { model | inputViewMode = viewMode }, noOut )
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | viewMode = viewMode } }, noOut )
 
         ChangeUpdateViewMode viewMode ->
             let
@@ -841,7 +842,7 @@ viewContractPage c op model =
                                 , doSubmitComment = SubmitCommentPost
                                 }
                         in
-                        viewContractCommentInput opNew uctx model.comment_form model.comment_result model.inputViewMode
+                        viewContractCommentInput opNew uctx model.comment_form model.comment_result
 
                     else
                         text ""

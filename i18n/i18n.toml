@@ -1618,7 +1618,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No tensions yet."
 	fr="Aucune tensions pour le moment"
 
-
 [rolesHere]
   en="Roles in this circle"
   fr="Roles dans ce cercle"
@@ -1727,6 +1726,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Show {{}} older events"
   fr="Afficher {{}} autres événements"
 
+[markdownSupport]
+  en="Markdown formatting is supported"
+  fr="Le formatage Markdown est pris en charge"
+
+# ADDME ^
+# --
 #
 # Legend
 #

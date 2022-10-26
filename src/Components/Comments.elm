@@ -107,9 +107,6 @@ viewUpdateInput op uctx comment form result =
         message =
             Dict.get "message" form.post |> withDefault comment.message
 
-        viewMode =
-            form.viewMode
-
         isLoading =
             result == LoadingSlowly
 
@@ -117,18 +114,11 @@ viewUpdateInput op uctx comment form result =
             message /= comment.message
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header has-arrow-left" ]
-            [ div [ class "tabs is-boxed is-small" ]
-                [ ul []
-                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
-                    ]
-                ]
-            ]
+        [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ case viewMode of
+                    [ case form.viewMode of
                         Write ->
                             let
                                 line_len =
@@ -176,8 +166,8 @@ viewUpdateInput op uctx comment form result =
         ]
 
 
-viewCommentInput : OpNewComment msg -> UserCtx -> TensionHead -> TensionForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html msg
-viewCommentInput op uctx tension form result viewMode =
+viewCommentInput : OpNewComment msg -> UserCtx -> TensionHead -> TensionForm -> GqlData PatchTensionPayloadID -> Html msg
+viewCommentInput op uctx tension form result =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -211,18 +201,11 @@ viewCommentInput op uctx tension form result viewMode =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ]
-                    [ div [ class "tabs is-boxed is-small" ]
-                        [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
-                            ]
-                        ]
-                    ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ case viewMode of
+                            [ case form.viewMode of
                                 Write ->
                                     let
                                         line_len =
@@ -279,8 +262,8 @@ viewCommentInput op uctx tension form result viewMode =
         ]
 
 
-viewContractCommentInput : OpNewCommentContract msg -> UserCtx -> CommentPatchForm -> GqlData Comment -> InputViewMode -> Html msg
-viewContractCommentInput op uctx form result viewMode =
+viewContractCommentInput : OpNewCommentContract msg -> UserCtx -> CommentPatchForm -> GqlData Comment -> Html msg
+viewContractCommentInput op uctx form result =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -298,18 +281,11 @@ viewContractCommentInput op uctx form result viewMode =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ]
-                    [ div [ class "tabs is-boxed is-small" ]
-                        [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
-                            ]
-                        ]
-                    ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ case viewMode of
+                            [ case form.viewMode of
                                 Write ->
                                     let
                                         line_len =
@@ -356,4 +332,35 @@ viewContractCommentInput op uctx form result viewMode =
                     ]
                 ]
             ]
+        ]
+
+
+
+--
+-- Shared View
+--
+
+
+viewCommentHeader cls_tabs withToolbar op form =
+    div [ class "level commentHeader" ]
+        [ div [ class "level-left" ]
+            [ div [ class ("tabs is-boxed is-small " ++ cls_tabs) ]
+                [ ul []
+                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
+                    ]
+                ]
+            ]
+        , if withToolbar then
+            div [ class "level-right" ]
+                [ --div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add heading text" ] [ text "H" ]
+                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add bold text" ] [ strong [] [ text "B" ] ]
+                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
+                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
+                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+                  div [ class "tooltip has-tooltip-bottom pl-3 ml-2", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
+                ]
+
+          else
+            text ""
         ]

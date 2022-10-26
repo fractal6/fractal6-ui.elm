@@ -256,7 +256,6 @@ type alias Model =
     , isLabelOpen : Bool
 
     -- Common
-    , inputViewMode : InputViewMode
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
@@ -503,7 +502,6 @@ init global flags =
             , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
 
             -- Common
-            , inputViewMode = Write
             , helperBar = HelperBar.create
             , help = Help.init global.session.user global.session.screen
             , tensionForm = NTF.init global.session.user global.session.screen
@@ -1348,7 +1346,11 @@ update global message model =
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
         ChangeInputViewMode viewMode ->
-            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
 
         ChangeUpdateViewMode viewMode ->
             let
@@ -1802,7 +1804,7 @@ viewConversation u t model =
                                 , doSubmitComment = SubmitComment
                                 }
                         in
-                        viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
+                        viewCommentInput opNew uctx t model.tension_form model.tension_patch
 
                     else
                         viewJoinNeeded model.node_focus
@@ -2314,9 +2316,9 @@ viewEventMentioned lang now event =
                         [ viewUsernameLink event.createdBy.username
                         , strong [] [ text T.mentioned2 ]
                         , text (formatDate lang now event.createdAt)
-                        , div [ attribute "style" "display: flex; gap:15px; align-items: baseline;" ]
+                        , div []
                             [ a
-                                [ class "is-strong is-size-6 discrete-link"
+                                [ class "is-strong is-size-6 discrete-link mr-4"
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
                                 [ span

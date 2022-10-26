@@ -3,6 +3,7 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
+import Components.Comments exposing (viewCommentHeader)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension exposing (viewNodeSelect)
@@ -94,7 +95,6 @@ type alias Model =
     , isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , activeTab : TensionTab
-    , viewMode : InputViewMode
     , activeButton : Maybe Int -- 0: creating role, 1: creating tension (no pushing blob)
     , path_data : GqlData LocalGraph
     , action_result : GqlData IdPayload
@@ -182,7 +182,6 @@ initModel user screen =
     , isActive = False
     , isActive2 = False
     , activeTab = NewTensionTab
-    , viewMode = Write
     , activeButton = Nothing
     , nodeDoc = NodeDoc.init "" NodeEdit user
     , path_data = NotAsked
@@ -380,11 +379,6 @@ setActiveButton doClose data =
         { data | activeButton = Just 1 }
 
 
-setViewMode : InputViewMode -> Model -> Model
-setViewMode viewMode data =
-    { data | viewMode = viewMode }
-
-
 setStep : TensionStep -> Model -> Model
 setStep step data =
     { data | step = step }
@@ -462,6 +456,18 @@ post field value data =
 
         newForm =
             { f | post = Dict.insert field value f.post }
+    in
+    { data | nodeDoc = NodeDoc.setForm newForm data.nodeDoc }
+
+
+setViewMode : InputViewMode -> Model -> Model
+setViewMode viewMode data =
+    let
+        f =
+            data.nodeDoc.form
+
+        newForm =
+            { f | viewMode = viewMode }
     in
     { data | nodeDoc = NodeDoc.setForm newForm data.nodeDoc }
 
@@ -1414,21 +1420,11 @@ viewTension op model =
                         , br [] []
                         ]
                     , div [ class "message" ]
-                        [ div [ class "message-header" ]
-                            [ div [ class "tabs is-boxed is-small pl-1" ]
-                                [ ul []
-                                    [ li [ classList [ ( "is-active", model.viewMode == Write ) ] ]
-                                        [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text T.write ] ]
-                                    , li
-                                        [ classList [ ( "is-active", model.viewMode == Preview ) ] ]
-                                        [ a [ onClickPD2 (OnChangeInputViewMode Preview), target "_blank" ] [ text T.preview ] ]
-                                    ]
-                                ]
-                            ]
+                        [ div [ class "message-header" ] [ viewCommentHeader "pl-1" False { doChangeViewMode = OnChangeInputViewMode } form ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case model.viewMode of
+                                    [ case form.viewMode of
                                         Write ->
                                             let
                                                 line_len =
