@@ -143,6 +143,12 @@ port cancelColorFromJs : (() -> msg) -> Sub msg
 port relogErr : (String -> msg) -> Sub msg
 
 
+port updatePost : (String -> msg) -> Sub msg
+
+
+port updatePostEdit : (String -> msg) -> Sub msg
+
+
 
 {-
    Outgoing Ports
@@ -559,6 +565,19 @@ send_if_mobile p =
     outgoing
         { action = "SEND_IF_MOBILE"
         , data = JE.string p
+        }
+
+
+richText : String -> String -> String -> Cmd msg
+richText toMsg targetid command =
+    outgoing
+        { action = "RICH_TEXT"
+        , data =
+            JE.object
+                [ ( "target", JE.string targetid )
+                , ( "command", JE.string command )
+                , ( "toMsg", JE.string toMsg )
+                ]
         }
 
 

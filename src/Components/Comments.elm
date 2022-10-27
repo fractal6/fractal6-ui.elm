@@ -16,6 +16,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionForm)
 import ModelCommon.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCtx)
+import Session exposing (Conf)
 import Text as T
 import Time
 
@@ -27,7 +28,8 @@ type alias OpEditComment msg =
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doEditComment : Time.Posix -> msg
-    , now : Time.Posix
+    , doRichText : String -> String -> msg
+    , conf : Conf
     }
 
 
@@ -36,6 +38,8 @@ type alias OpNewComment msg =
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
+    , doRichText : String -> String -> msg
+    , conf : Conf
     }
 
 
@@ -44,6 +48,8 @@ type alias OpNewCommentContract msg =
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Time.Posix -> msg
+    , doRichText : String -> String -> msg
+    , conf : Conf
     }
 
 
@@ -62,10 +68,10 @@ viewComment op c form result =
                 div [ class "message" ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile" ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
-                        , viewTensionDateAndUserC form.uctx.lang op.now c.createdAt c.createdBy
+                        , viewTensionDateAndUserC op.conf c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
-                                viewUpdated form.uctx.lang op.now updatedAt
+                                viewUpdated op.conf updatedAt
 
                             Nothing ->
                                 text ""
@@ -114,29 +120,11 @@ viewUpdateInput op uctx comment form result =
             message /= comment.message
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
+        [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "updateCommentInput" "" op form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ case form.viewMode of
-                        Write ->
-                            let
-                                line_len =
-                                    List.length <| String.lines message
-                            in
-                            textarea
-                                [ id "updateCommentInput"
-                                , class "textarea"
-                                , rows (min 15 (max line_len 6))
-                                , placeholder T.leaveComment
-                                , value message
-                                , onInput (op.doChangePost "message")
-                                ]
-                                []
-
-                        Preview ->
-                            div [] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
-                    ]
+                    [ viewCommentTextarea "updateCommentInput" False T.leaveComment op form message ]
                 ]
             , case result of
                 Failure err ->
@@ -201,29 +189,11 @@ viewCommentInput op uctx tension form result =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "commentInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ case form.viewMode of
-                                Write ->
-                                    let
-                                        line_len =
-                                            List.length <| String.lines message
-                                    in
-                                    textarea
-                                        [ id "commentInput"
-                                        , class "textarea"
-                                        , rows (min 15 (max line_len 6))
-                                        , placeholder T.leaveComment
-                                        , value message
-                                        , onInput (op.doChangePost "message")
-                                        ]
-                                        []
-
-                                Preview ->
-                                    div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
-                            ]
+                            [ viewCommentTextarea "commentInput" False T.leaveComment op form message ]
                         ]
                     , case result of
                         Failure err ->
@@ -236,7 +206,7 @@ viewCommentInput op uctx tension form result =
                         _ ->
                             text ""
                     , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
+                        [ div [ class "control", style "max-width" "100%" ]
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-success defaultSubmit"
@@ -281,29 +251,11 @@ viewContractCommentInput op uctx form result =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "" True op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "commentContractInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ case form.viewMode of
-                                Write ->
-                                    let
-                                        line_len =
-                                            List.length <| String.lines message
-                                    in
-                                    textarea
-                                        [ id "commentInput"
-                                        , class "textarea"
-                                        , rows (min 10 (max line_len 4))
-                                        , placeholder T.leaveComment
-                                        , value message
-                                        , onInput (op.doChangePost "message")
-                                        ]
-                                        []
-
-                                Preview ->
-                                    div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
-                            ]
+                            [ viewCommentTextarea "commentContractInput" False T.leaveComment op form message ]
                         ]
                     , case result of
                         Failure err ->
@@ -341,7 +293,7 @@ viewContractCommentInput op uctx form result =
 --
 
 
-viewCommentHeader cls_tabs withToolbar op form =
+viewCommentHeader targetid cls_tabs op form =
     div [ class "level commentHeader" ]
         [ div [ class "level-left" ]
             [ div [ class ("tabs is-boxed is-small " ++ cls_tabs) ]
@@ -351,16 +303,53 @@ viewCommentHeader cls_tabs withToolbar op form =
                     ]
                 ]
             ]
-        , if withToolbar then
-            div [ class "level-right" ]
-                [ --div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add heading text" ] [ text "H" ]
-                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add bold text" ] [ strong [] [ text "B" ] ]
-                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Add italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
-                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
-                  --, div [ class "tooltip has-tooltip-bottom px-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
-                  div [ class "tooltip has-tooltip-bottom pl-3 ml-2", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
-                ]
-
-          else
-            text ""
+        , div [ class "level-right is-hidden-mobile" ]
+            [ div [ onClick (op.doRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
+            , div [ onClick (op.doRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
+            , div [ onClick (op.doRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
+            , div [ onClick (op.doRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
+            , div [ onClick (op.doRichText targetid "Quote"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Quote" ] [ span [ style "font-size" "18px" ] [ text "”" ] ]
+            , div [ onClick (op.doRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
+            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom ml-2", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
+            , div [ onClick (op.doRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+            , div [ class "tooltip has-tooltip-bottom is-right", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
+            ]
         ]
+
+
+viewCommentTextarea targetid isModal placeholder_txt op form message =
+    case form.viewMode of
+        Write ->
+            let
+                line_len =
+                    List.length <| String.lines message
+
+                ( max_len, min_len ) =
+                    if op.conf.screen.w < 769 then
+                        if isModal then
+                            ( 4, 2 )
+
+                        else
+                            ( 6, 4 )
+
+                    else if isModal then
+                        ( 10, 4 )
+
+                    else if targetid == "commentContractInput" then
+                        ( 15, 4 )
+
+                    else
+                        ( 15, 6 )
+            in
+            textarea
+                [ id targetid
+                , class "textarea"
+                , rows (min max_len (max line_len min_len))
+                , placeholder placeholder_txt
+                , value message
+                , onInput (op.doChangePost "message")
+                ]
+                []
+
+        Preview ->
+            div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]

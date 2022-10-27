@@ -3,7 +3,7 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
-import Components.Comments exposing (viewCommentHeader)
+import Components.Comments exposing (viewCommentHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension exposing (viewNodeSelect)
@@ -50,7 +50,6 @@ import Loading
         , withDefaultData
         , withMaybeData
         )
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon
     exposing
@@ -77,7 +76,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRoles)
-import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen)
+import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
 
@@ -107,7 +106,7 @@ type alias Model =
     , force_init : Bool
 
     -- Common
-    , screen : Screen
+    , conf : Conf
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
 
@@ -168,13 +167,13 @@ nodeStepToString form step =
             T.invite
 
 
-init : UserState -> Screen -> State
-init user screen =
-    initModel user screen |> State
+init : UserState -> Conf -> State
+init user conf =
+    initModel user conf |> State
 
 
-initModel : UserState -> Screen -> Model
-initModel user screen =
+initModel : UserState -> Conf -> Model
+initModel user conf =
     { user = user
     , result = NotAsked
     , sources = []
@@ -195,7 +194,7 @@ initModel user screen =
     , roles_result = Loading
 
     -- Common
-    , screen = screen
+    , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
@@ -479,7 +478,7 @@ resetPost data =
 
 resetModel : Model -> Model
 resetModel data =
-    initModel data.user data.screen
+    initModel data.user data.conf
 
 
 
@@ -554,6 +553,7 @@ type Msg
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
+    | OnRichText String String String
     | OnTargetClick
     | DoInvite
     | OnInvite Time.Posix
@@ -817,6 +817,9 @@ update_ apis message model =
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )
 
+        OnRichText toMsg targetid command ->
+            ( model, out0 [ Ports.richText toMsg targetid command ] )
+
         OnTargetClick ->
             ( model, out0 [ Ports.requireTreeData ] )
 
@@ -1076,6 +1079,7 @@ subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
+    , Ports.updatePost (OnChangePost "message")
 
     --, Ports.lookupUserFromJs OnChangeUserLookup
     --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
@@ -1241,12 +1245,12 @@ viewTensionTabs isAdmin tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" T.tension ]
                 ]
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" T.circle ]
                     ]
 
@@ -1254,7 +1258,7 @@ viewTensionTabs isAdmin tab targ =
                 text ""
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" T.role ]
                     ]
 
@@ -1420,36 +1424,11 @@ viewTension op model =
                         , br [] []
                         ]
                     , div [ class "message" ]
-                        [ div [ class "message-header" ] [ viewCommentHeader "pl-1" False { doChangeViewMode = OnChangeInputViewMode } form ]
+                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText "updatePost", doChangeViewMode = OnChangeInputViewMode } form ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case form.viewMode of
-                                        Write ->
-                                            let
-                                                line_len =
-                                                    List.length <| String.lines message
-
-                                                ( max_len, min_len ) =
-                                                    if model.screen.w < 769 then
-                                                        ( 5, 2 )
-
-                                                    else
-                                                        ( 10, 4 )
-                                            in
-                                            textarea
-                                                [ id "textAreaModal"
-                                                , class "textarea"
-                                                , rows (min max_len (max line_len min_len))
-                                                , placeholder T.leaveCommentOpt
-                                                , value message
-                                                , onInput (OnChangePost "message")
-                                                ]
-                                                []
-
-                                        Preview ->
-                                            div [ class "mt-4 mx-3" ] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-grey-lighter" ] [] ]
-                                    ]
+                                    [ viewCommentTextarea "textAreaModal" True T.leaveCommentOpt { doChangePost = OnChangePost, conf = model.conf } form message ]
                                 , p [ class "help-label" ] [ text model.txt.message_help ]
                                 , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
                                 , br [ class "is-hidden-mobile" ] []

@@ -193,6 +193,9 @@ init global flags =
         apis =
             global.session.apis
 
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
@@ -214,7 +217,7 @@ init global flags =
 
             -- common
             , refresh_trial = 0
-            , help = Help.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
             , authModal = AuthModal.init global.session.user Nothing
             , empty = {}
             }

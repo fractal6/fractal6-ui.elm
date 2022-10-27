@@ -27,6 +27,7 @@ import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensi
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
+import Session exposing (Conf)
 import String.Extra as SE
 import Text as T
 import Time
@@ -405,9 +406,9 @@ type alias OrgaNodeData =
 
 
 type alias Op msg =
-    { data : NodeDoc
+    { conf : Conf
+    , data : NodeDoc
     , result : GqlData Tension -- result from new tension components
-    , now : Time.Posix
     , publish_result : GqlData TensionBlobFlag
     , blob : Blob
     , isAdmin : Bool
@@ -516,7 +517,7 @@ viewNodeStatus op =
     case op.blob.pushedFlag of
         Just flag ->
             div [ class "has-text-success is-italic" ]
-                [ text (T.published ++ " " ++ formatDate op.data.form.uctx.lang op.now flag) ]
+                [ text (T.published ++ " " ++ formatDate op.conf.lang op.conf.now flag) ]
 
         Nothing ->
             let
@@ -585,7 +586,7 @@ viewBlob data op_m =
                                )
 
                 NodeVersions ->
-                    viewVersions op.data.form.uctx.lang op.now op.tension_blobs
+                    viewVersions op.conf op.tension_blobs
 
                 NoView ->
                     text ""
@@ -1097,13 +1098,13 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : Lang.Lang -> Time.Posix -> GqlData TensionBlobs -> Html msg
-viewVersions lang now blobsData =
-    Lazy.lazy3 viewVersions_ lang now blobsData
+viewVersions : Conf -> GqlData TensionBlobs -> Html msg
+viewVersions conf blobsData =
+    Lazy.lazy2 viewVersions_ conf blobsData
 
 
-viewVersions_ : Lang.Lang -> Time.Posix -> GqlData TensionBlobs -> Html msg
-viewVersions_ lang now blobsData =
+viewVersions_ : Conf -> GqlData TensionBlobs -> Html msg
+viewVersions_ conf blobsData =
     case blobsData of
         Success tblobs ->
             let
@@ -1118,7 +1119,7 @@ viewVersions_ lang now blobsData =
                         ]
                     , tblobs.blobs
                         |> withDefault []
-                        |> List.indexedMap (\i d -> viewVerRow lang now i d)
+                        |> List.indexedMap (\i d -> viewVerRow conf i d)
                         |> List.concat
                         |> tbody []
                     ]
@@ -1134,17 +1135,17 @@ viewVersions_ lang now blobsData =
             text ""
 
 
-viewVerRow : Lang.Lang -> Time.Posix -> Int -> Blob -> List (Html msg)
-viewVerRow lang now i blob =
+viewVerRow : Conf -> Int -> Blob -> List (Html msg)
+viewVerRow conf i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt lang now blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt conf blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate lang now flag)
+                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate conf.lang conf.now flag)
                         ]
                         [ A.icon "icon-flag" ]
 

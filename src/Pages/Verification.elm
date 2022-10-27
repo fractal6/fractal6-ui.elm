@@ -87,6 +87,9 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Query parameters
         query =
             queryParser global.url
@@ -96,7 +99,7 @@ init global flags =
             , result = RemoteData.NotAsked
             , email_token = Dict.get "email_token" query |> Maybe.map List.head |> withDefault Nothing
             , email = Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
-            , help = Help.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
             }
     in
     ( model

@@ -80,7 +80,7 @@ import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
-import Session exposing (GlobalCmd(..), NodesQuickSearch)
+import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch)
 import String
 import String.Extra as SE
 import Task
@@ -187,10 +187,9 @@ type alias Model =
     , legend : Bool
 
     -- common
+    , conf : Conf
     , helperBar : HelperBar
     , refresh_trial : Int
-    , now : Time.Posix
-    , lang : Lang.Lang
     , empty : {}
 
     -- Components
@@ -278,6 +277,9 @@ init global flags =
         apis =
             session.apis
 
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Focus
         newFocus =
             flags
@@ -321,15 +323,14 @@ init global flags =
             , legend = False
 
             -- Common
+            , conf = conf
             , refresh_trial = 0
-            , now = global.now
-            , lang = global.session.lang
             , empty = {}
 
             -- Components
             , helperBar = HelperBar.create
-            , help = Help.init session.user session.screen
-            , tensionForm = NTF.init session.user session.screen
+            , help = Help.init session.user conf
+            , tensionForm = NTF.init session.user conf
             , actionPanel = ActionPanel.init session.user
             , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
             , authModal = AuthModal.init session.user Nothing
@@ -1401,7 +1402,7 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension model.lang model.now model.node_focus x False True "is-size-6" Navigate) tensions
+                                List.map (\x -> mediaTension model.conf model.node_focus x False True "is-size-6" Navigate) tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
@@ -1427,7 +1428,7 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> viewEventNotif model.lang model.now x) events
+                            List.map (\x -> viewEventNotif model.conf x) events
                                 |> div [ id "journalTab" ]
 
                         Failure err ->
@@ -1442,8 +1443,8 @@ viewActivies model =
         ]
 
 
-viewEventNotif : Lang.Lang -> Time.Posix -> EventNotif -> Html Msg
-viewEventNotif lang now e =
+viewEventNotif : Conf -> EventNotif -> Html Msg
+viewEventNotif conf e =
     let
         ue =
             UserEvent "" False []
@@ -1467,7 +1468,7 @@ viewEventNotif lang now e =
         node =
             e.tension.receiver
     in
-    viewEventMedia lang now True ev
+    viewEventMedia conf True ev
 
 
 

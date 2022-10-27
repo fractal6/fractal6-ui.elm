@@ -47,7 +47,7 @@ import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
 import Requests exposing (fetchMembersSub)
-import Session exposing (GlobalCmd(..))
+import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -138,9 +138,9 @@ type alias Model =
     , pending_hover_i : Maybe Int
 
     -- Common
+    , conf : Conf
     , helperBar : HelperBar
     , refresh_trial : Int
-    , now : Time.Posix
     , actionPanel : ActionPanel.State
     , empty : {}
 
@@ -207,6 +207,9 @@ init global flags =
         apis =
             global.session.apis
 
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Focus
         newFocus =
             flags
@@ -229,11 +232,11 @@ init global flags =
             , pending_hover_i = Nothing
 
             -- Common
+            , conf = conf
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user global.session.screen
-            , tensionForm = NTF.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
+            , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
-            , now = global.now
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
@@ -568,9 +571,6 @@ view_ global model =
                 LoggedOut ->
                     False
 
-        lang =
-            global.session.lang
-
         isPanelOpen =
             ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
     in
@@ -587,18 +587,18 @@ view_ global model =
                   else
                     text ""
                 , div [ class "columns mb-6 px-3-mobile" ]
-                    [ Lazy.lazy5 viewMembers lang model.now model.members_sub model.node_focus isPanelOpen ]
+                    [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy5 viewGuest lang model.now model.members_top model.node_focus isPanelOpen ]
-                    , div [ class "column is-3" ] [ viewPending model.now model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
+                    , div [ class "column is-3" ] [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
             ]
         ]
 
 
-viewMembers : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewMembers lang now data focus isPanelOpen =
+viewMembers : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
+viewMembers conf data focus isPanelOpen =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
@@ -629,7 +629,7 @@ viewMembers lang now data focus isPanelOpen =
                             , tbody [] <|
                                 List.map
                                     (\m ->
-                                        Lazy.lazy5 viewMemberRow lang now focus m isPanelOpen
+                                        Lazy.lazy4 viewMemberRow conf focus m isPanelOpen
                                     )
                                     members
                             ]
@@ -646,8 +646,8 @@ viewMembers lang now data focus isPanelOpen =
             text ""
 
 
-viewGuest : Lang.Lang -> Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewGuest lang now members_d focus isPanelOpen =
+viewGuest : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
+viewGuest conf members_d focus isPanelOpen =
     let
         guests =
             members_d
@@ -675,7 +675,7 @@ viewGuest lang now members_d focus isPanelOpen =
                     , tbody [] <|
                         List.indexedMap
                             (\i m ->
-                                Lazy.lazy4 viewGuestRow lang now m isPanelOpen
+                                Lazy.lazy3 viewGuestRow conf m isPanelOpen
                             )
                             guests
                     ]
@@ -686,8 +686,8 @@ viewGuest lang now members_d focus isPanelOpen =
         div [] []
 
 
-viewPending : Time.Posix -> GqlData (List Member) -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
-viewPending now members_d focus pending_hover pending_hover_i tid =
+viewPending : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending _ members_d focus pending_hover pending_hover_i tid =
     let
         guests =
             members_d
@@ -740,8 +740,8 @@ viewPending now members_d focus pending_hover pending_hover_i tid =
         div [] []
 
 
-viewMemberRow : Lang.Lang -> Time.Posix -> NodeFocus -> Member -> Bool -> Html Msg
-viewMemberRow lang now focus m isPanelOpen =
+viewMemberRow : Conf -> NodeFocus -> Member -> Bool -> Html Msg
+viewMemberRow conf focus m isPanelOpen =
     let
         ( roles_, sub_roles_ ) =
             List.foldl
@@ -766,7 +766,7 @@ viewMemberRow lang now focus m isPanelOpen =
                     text "--"
 
                 _ ->
-                    viewMemberRoles lang now OverviewBaseUri roles_ isPanelOpen
+                    viewMemberRoles conf OverviewBaseUri roles_ isPanelOpen
             ]
         , td [ class "pt-3" ]
             [ case sub_roles_ of
@@ -774,27 +774,27 @@ viewMemberRow lang now focus m isPanelOpen =
                     text "--"
 
                 _ ->
-                    viewMemberRoles lang now OverviewBaseUri sub_roles_ isPanelOpen
+                    viewMemberRoles conf OverviewBaseUri sub_roles_ isPanelOpen
             ]
         ]
 
 
-viewGuestRow : Lang.Lang -> Time.Posix -> Member -> Bool -> Html Msg
-viewGuestRow lang now m isPanelOpen =
+viewGuestRow : Conf -> Member -> Bool -> Html Msg
+viewGuestRow conf m isPanelOpen =
     tr []
         [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
         , td [ class "pt-3" ] [ viewUsernameLink m.username ]
         , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ] [ viewMemberRoles lang now OverviewBaseUri m.roles isPanelOpen ]
+        , td [ class "pt-3" ] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
         ]
 
 
-viewMemberRoles : Lang.Lang -> Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
-viewMemberRoles lang now baseUri roles isPanelOpen =
+viewMemberRoles : Conf -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
+viewMemberRoles conf baseUri roles isPanelOpen =
     div [ class "buttons" ] <|
         List.map
             (\r ->
-                viewRole2 (Just ( lang, now, r.createdAt )) (uriFromNameid baseUri r.nameid []) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
+                viewRole2 (Just ( conf, r.createdAt )) (uriFromNameid baseUri r.nameid []) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
             )
             roles
 

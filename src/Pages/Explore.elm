@@ -116,6 +116,9 @@ type Msg
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         apis =
             global.session.apis
 
@@ -123,7 +126,7 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , help = Help.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
             , refresh_trial = 0
             , authModal = AuthModal.init global.session.user Nothing
             }

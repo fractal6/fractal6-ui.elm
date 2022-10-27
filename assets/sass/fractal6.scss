@@ -499,11 +499,23 @@ strong {
             visibility: hidden !important;
         }
     }
+
+    // solve the markown tooltip **tabs**
+    &.is-right::before {
+        left: auto !important;
+        right: 0 !important;
+    }
+    // solve the modal tabs header tooltip (and partially the board status tooltip)
+    &.is-left::before {
+        right: auto !important;
+        left: 100% !important;
+    }
 }
 .tooltip {
     // Tooltip has fadin, and no fadout
     transition: none !important;
     transition-delay: none !important;
+    font-weight: 500;
 
     &.has-tooltip-active,
     &:focus,
@@ -1455,9 +1467,20 @@ figcaption {
 }
 
 .commentHeader {
+    width: 100%;
     .level-right {
         font-size: 15px;
         font-family: "Times New Roman", Times, serif !important;
+        *:not(:last-child) {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        div:last-child {
+            margin-left: 0.5rem;
+            padding-left: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
     }
 }
 

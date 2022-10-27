@@ -264,7 +264,7 @@ export function BulmaDriver(app, target, handlers) {
     const $textareas = $doc.querySelectorAll('.textarea');
     if ($textareas.length > 0) {
         $textareas.forEach( el => {
-            setupHandler("keydown", richText, el, el);
+            setupHandler("keydown", anotherRichText, el, el);
         });
     }
 
@@ -418,15 +418,31 @@ function submitFocus(e, el) {
 // """Rich Text"""
 //
 
-function richText(e, el) {
+function anotherRichText(e, el) {
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
-        // Ignore if Tab occurs at the beginning ot not after a new line or tab
-        console.log(el.selectionStart)
-        if (el.selectionStart == 0 || ! ["\n", "\t"].includes(el.value[el.selectionStart-1])) return
-
-		e.preventDefault();
 		var start = el.selectionStart;
 		var end = el.selectionEnd;
+
+        if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start-1])) return
+
+        //use a loop to look backward until we find the first newline character \n
+        var v = el.value[start];
+        var curPos = start;
+        var prevLinePos = start;
+        var n_line_back = 1;
+        while(n_line_back >= 0 && curPos >= 0) {
+            if (v == '\n' || curPos == 0) {
+                n_line_back -= 1;
+                var line = el.value.substring(curPos+1, prevLinePos);
+                // Ignore if Tab occurs outside a list context
+                if ((n_line_back < 0 || curPos == 0) && line.search(/\s*[0-9]+\.|\s*[\-\*]/) < 0) return
+                prevLinePos = curPos+1;
+            }
+            curPos--;
+            v = el.value.substr(curPos, 1);
+        }
+
+		e.preventDefault();
 
         if (el.value[el.selectionStart-2] == "\n") {
             // 4 space (Tab) for **code** indentation

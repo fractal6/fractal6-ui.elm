@@ -504,4 +504,33 @@ export const actions = {
             }, 500)
         }
     },
+    'RICH_TEXT': (app, session, msg) => {
+        var target = msg.target;
+        var c = msg.command;
+        var $input = document.getElementById(target);
+        if (!$input) return
+        $input.focus();
+
+        var value = $input.value;
+        var start = $input.selectionStart;
+        var end = $input.selectionEnd;
+
+        if (c == "Heading") {
+        } else if (c == "Bold") {
+            var replacer = "****";
+            // set textarea value to: text before caret + tab + text after caret
+            $input.value = value.substring(0, start) +
+                replacer + value.substring(end);
+            value = $input.value;
+
+            // put caret at right position again
+            $input.selectionStart =
+                $input.selectionEnd = start + replacer.length/2;
+        } else {
+            console.warn("Rich text command not found.")
+            return
+        }
+
+        app.ports[msg.toMsg].send(value);
+    },
 }

@@ -37,7 +37,7 @@ import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Requests exposing (createOrga)
-import Session exposing (GlobalCmd(..), Screen)
+import Session exposing (Conf, GlobalCmd(..))
 import Task exposing (Task)
 import Text as T
 import Time
@@ -142,8 +142,8 @@ orgaStepToString form step =
             T.reviewAndValidate
 
 
-initModel : UserState -> Screen -> Maybe OrgaForm -> Model
-initModel user screen form_m =
+initModel : UserState -> Conf -> Maybe OrgaForm -> Model
+initModel user conf form_m =
     { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
@@ -151,7 +151,7 @@ initModel user screen form_m =
     , hasBeenDuplicated = False
     , isWriting = Nothing
     , exist_result = NotAsked
-    , help = Help.init user screen
+    , help = Help.init user conf
     , refresh_trial = 0
     , authModal = AuthModal.init user Nothing
     }
@@ -170,18 +170,21 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         query =
             queryParser global.url
     in
     case global.session.user of
         LoggedOut ->
-            ( initModel global.session.user global.session.screen Nothing
+            ( initModel global.session.user conf Nothing
             , send (Navigate "/")
             , Cmd.none
             )
 
         LoggedIn uctx ->
-            ( initModel global.session.user global.session.screen global.session.newOrgaData
+            ( initModel global.session.user conf global.session.newOrgaData
                 |> (\m ->
                         { m
                             | step =

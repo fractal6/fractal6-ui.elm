@@ -70,7 +70,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
-import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import Task
 import Text as T
 import Time
@@ -187,12 +187,10 @@ type alias Model =
     , draging : Bool
 
     -- Common
-    , screen : Screen
+    , conf : Conf
     , helperBar : HelperBar
     , refresh_trial : Int
     , url : Url
-    , now : Time.Posix
-    , lang : Lang.Lang
     , empty : {}
 
     -- Components
@@ -657,6 +655,9 @@ init global flags =
         apis =
             global.session.apis
 
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Query parameters
         query =
             queryParser global.url
@@ -674,7 +675,6 @@ init global flags =
         -- Model init
         model =
             { node_focus = newFocus
-            , screen = global.session.screen
             , path_data = fromMaybeData global.session.path_data Loading
             , children = fromMaybeWebData global.session.children RemoteData.Loading
             , tensions_int = fromMaybeData global.session.tensions_int Loading
@@ -708,15 +708,14 @@ init global flags =
             , draging = False
 
             -- Common
-            , helperBar = HelperBar.create
-            , help = Help.init global.session.user global.session.screen
-            , tensionForm = NTF.init global.session.user global.session.screen
+            , conf = conf
             , refresh_trial = 0
             , url = global.url
-            , now = global.now
-            , lang = global.session.lang
-            , moveTension = MoveTension.init global.session.user
             , empty = {}
+            , helperBar = HelperBar.create
+            , help = Help.init global.session.user conf
+            , tensionForm = NTF.init global.session.user conf
+            , moveTension = MoveTension.init global.session.user
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
@@ -842,13 +841,16 @@ update global message model =
 
         OnResize w h ->
             let
-                screen =
-                    global.session.screen
+                conf =
+                    model.conf
 
                 newScreen =
-                    { screen | w = w, h = h }
+                    { w = w, h = h }
+
+                newConf =
+                    { conf | screen = newScreen }
             in
-            ( { model | screen = newScreen }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionScreen newScreen) )
+            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionScreen newScreen) )
 
         FitBoard elt ->
             case elt of
@@ -1737,23 +1739,23 @@ viewSearchBar model =
                 , clearFilter
                 ]
             ]
-        , div [ class "tabs no-overflow is-md" ]
+        , div [ class "tabs no-overflow is-md bulma-issue-33" ]
             [ ul []
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ] [ text T.list ] ]
+                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ] [ text T.list ] ]
                     ]
 
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
                 --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
                 --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                --        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ] [ text "Internal/External" ] ]
+                --        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ] [ text "Internal/External" ] ]
                 --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ] [ text T.byCircle ] ]
+                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ] [ text T.byCircle ] ]
                     ]
                 ]
             ]
@@ -1867,7 +1869,7 @@ viewListTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12" ]
             [ viewTensionsListHeader model
-            , viewTensions model.lang model.now model.node_focus model.initPattern tensions_d ListTension
+            , viewTensions model.conf model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
 
@@ -1877,12 +1879,12 @@ viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "Internal tensions" ]
-            , viewTensions model.lang model.now model.node_focus model.initPattern model.tensions_int InternalTension
+            , viewTensions model.conf model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "External tensions" ]
-            , viewTensions model.lang model.now model.node_focus model.initPattern model.tensions_ext ExternalTension
+            , viewTensions model.conf model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
 
@@ -2006,7 +2008,7 @@ viewCircleTensions model =
                                                                 []
                                                            )
                                                     )
-                                                    [ mediaTension model.lang model.now model.node_focus t True False "is-size-6" Navigate ]
+                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" Navigate ]
                                                ]
                                             ++ ternary hasLastColumn
                                                 [ draggingDiv ]
@@ -2053,8 +2055,8 @@ viewCircleTensions model =
             div [ class "spinner" ] []
 
 
-viewTensions : Lang.Lang -> Time.Posix -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
-viewTensions lang now focus pattern tensionsData tensionDir =
+viewTensions : Conf -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
+viewTensions conf focus pattern tensionsData tensionDir =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -2064,7 +2066,7 @@ viewTensions lang now focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension lang now focus t True True "is-size-6 t-o" Navigate)
+                        |> List.map (\t -> mediaTension conf focus t True True "is-size-6 t-o" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

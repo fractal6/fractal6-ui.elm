@@ -32,7 +32,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
-import Session exposing (Apis, GlobalCmd(..), Screen)
+import Session exposing (Apis, Conf, GlobalCmd(..))
 import Text as T
 import Time
 
@@ -51,7 +51,7 @@ type alias Model =
     , formFeedback : NT.Model
 
     -- Common
-    , screen : Screen
+    , conf : Conf
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     }
@@ -82,16 +82,16 @@ labelCodec type_ =
             Label "0xc5f4" "Praise" (Just "#dddddd") []
 
 
-init : UserState -> Screen -> State
-init user screen =
-    initModel user screen |> State
+init : UserState -> Conf -> State
+init user conf =
+    initModel user conf |> State
 
 
-initModel : UserState -> Screen -> Model
-initModel user screen =
+initModel : UserState -> Conf -> Model
+initModel user conf =
     let
         form =
-            NT.initModel user screen
+            NT.initModel user conf
                 |> NT.setSourceShort "f6#feedback#help-bot"
                 |> NT.setTargetShort "f6#feedback"
 
@@ -110,7 +110,7 @@ initModel user screen =
     , formFeedback = formFeedback
 
     -- Common
-    , screen = screen
+    , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -163,7 +163,7 @@ resetForm tab data =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.formAsk.user model.screen
+    initModel model.formAsk.user model.conf
 
 
 setDocResult : WebData QuickDoc -> Model -> Model
@@ -605,7 +605,7 @@ viewAskQuestion op (State model) =
                     List.length <| String.lines message
 
                 ( max_len, min_len ) =
-                    if model.screen.w < 769 then
+                    if model.conf.screen.w < 769 then
                         ( 5, 2 )
 
                     else
@@ -722,7 +722,7 @@ viewFeedback op (State model) =
                     List.length <| String.lines message
 
                 ( max_len, min_len ) =
-                    if model.screen.w < 769 then
+                    if model.conf.screen.w < 769 then
                         ( 5, 2 )
 
                     else

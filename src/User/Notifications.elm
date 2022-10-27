@@ -60,7 +60,7 @@ import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
 import RemoteData exposing (RemoteData)
-import Session exposing (GlobalCmd(..))
+import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -122,9 +122,9 @@ type alias Model =
     , can_referer : Maybe Url
 
     -- Common
+    , conf : Conf
     , help : Help.State
     , refresh_trial : Int
-    , now : Time.Posix
     , empty : {}
     , authModal : AuthModal.State
     }
@@ -232,6 +232,9 @@ init global flags =
                     ( initUserctx, [], [ Global.navigate <| Route.Login ] )
 
         -- Query parameters
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         query =
             queryParser global.url
 
@@ -264,9 +267,9 @@ init global flags =
                     global.session.referer
 
             -- common
-            , help = Help.init global.session.user global.session.screen
+            , conf = conf
+            , help = Help.init global.session.user conf
             , refresh_trial = 0
-            , now = global.now
             , empty = {}
             , authModal = AuthModal.init global.session.user Nothing
             }
@@ -528,7 +531,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noNotificationsYet ]
 
                             else
-                                viewNotifications global.session.lang model.now notifications
+                                viewNotifications model.conf notifications
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -546,7 +549,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noAssignedYet ]
 
                             else
-                                viewAssigned global.session.lang model.now assigned
+                                viewAssigned model.conf assigned
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -578,16 +581,16 @@ viewMenu model =
         ]
 
 
-viewNotifications : Lang.Lang -> Time.Posix -> UserEvents -> Html Msg
-viewNotifications lang now notifications =
+viewNotifications : Conf -> UserEvents -> Html Msg
+viewNotifications conf notifications =
     notifications
         |> List.map
-            (\ue -> Lazy.lazy3 viewUserEvent lang now ue)
+            (\ue -> Lazy.lazy2 viewUserEvent conf ue)
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : Lang.Lang -> Time.Posix -> UserEvent -> Html Msg
-viewUserEvent lang now ue =
+viewUserEvent : Conf -> UserEvent -> Html Msg
+viewUserEvent conf ue =
     let
         firstEvent =
             List.head ue.event
@@ -638,7 +641,7 @@ viewUserEvent lang now ue =
                         , ( "icon", eventToIcon e.event_type )
                         ]
             in
-            viewNotif False ue node (viewEventMedia lang now False ev)
+            viewNotif False ue node (viewEventMedia conf False ev)
 
         Just (ContractEvent c) ->
             let
@@ -659,7 +662,7 @@ viewUserEvent lang now ue =
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
             in
-            viewNotif True ue node (viewContractMedia lang now ev)
+            viewNotif True ue node (viewContractMedia conf ev)
 
         Just (NotifEvent n) ->
             case n.tension of
@@ -698,7 +701,7 @@ viewUserEvent lang now ue =
                                 , ( "icon", "icon-info" )
                                 ]
                     in
-                    viewNotif False ue node (viewNotifMedia lang now ev)
+                    viewNotif False ue node (viewNotifMedia conf ev)
 
                 Nothing ->
                     -- Something has beed removed, contract ?
@@ -747,8 +750,8 @@ editableEvent event =
             True
 
 
-viewAssigned : Lang.Lang -> Time.Posix -> Dict String (List Tension) -> Html Msg
-viewAssigned lang now tensions_d =
+viewAssigned : Conf -> Dict String (List Tension) -> Html Msg
+viewAssigned conf tensions_d =
     Dict.keys tensions_d
         |> List.map
             (\rootid ->
@@ -762,7 +765,7 @@ viewAssigned lang now tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> mediaTension lang now (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o" Navigate)
+                        |> List.map (\t -> mediaTension conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o" Navigate)
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

@@ -47,7 +47,7 @@ import Query.AddContract exposing (deleteOneContract)
 import Query.PatchContract exposing (pushComment, sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, Conf, GlobalCmd(..))
 import Text as T
 import Time
 
@@ -73,6 +73,7 @@ type alias Model =
     , comment_result : GqlData Comment
 
     -- Common
+    , conf : Conf
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
@@ -83,8 +84,8 @@ type ContractsPageView
     | ContractsView
 
 
-initModel : String -> UserState -> Model
-initModel rootnameid user =
+initModel : String -> UserState -> Conf -> Model
+initModel rootnameid user conf =
     { user = user
     , rootnameid = rootnameid
     , contracts_result = NotAsked
@@ -99,6 +100,7 @@ initModel rootnameid user =
     , comment_result = NotAsked
 
     -- Common
+    , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -152,9 +154,9 @@ initVoteForm user =
     }
 
 
-init : String -> UserState -> State
-init rid user =
-    initModel rid user |> State
+init : String -> UserState -> Conf -> State
+init rid user conf =
+    initModel rid user conf |> State
 
 
 
@@ -266,6 +268,7 @@ type Msg
     | SubmitCommentPatch Time.Posix
     | CommentAck (GqlData Comment)
     | CommentPatchAck (GqlData Comment)
+    | OnRichText String String String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -504,7 +507,7 @@ update_ apis message model =
                 form =
                     model.comment_patch_form
             in
-            ( { model | comment_patch_form = { form | id = "" }, comment_result = NotAsked }, out0 [ Ports.bulma_driver "" ] )
+            ( { model | comment_patch_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, out0 [ Ports.bulma_driver "" ] )
 
         ChangeCommentPost field value ->
             let
@@ -610,6 +613,9 @@ update_ apis message model =
                 _ ->
                     ( { model | comment_result = result }, noOut )
 
+        OnRichText toMsg targetid command ->
+            ( model, out0 [ Ports.richText toMsg targetid command ] )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -669,6 +675,8 @@ update_ apis message model =
 subscriptions =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
+    , Ports.updatePost (ChangeCommentPost "message")
+    , Ports.updatePostEdit (ChangeCommentPatch "message")
     ]
 
 
@@ -682,8 +690,6 @@ type alias Op =
     { emitterid : String
     , receiverid : String
     , isAdmin : Bool
-    , now : Time.Posix
-    , lang : Lang.Lang
     }
 
 
@@ -764,7 +770,7 @@ viewRow d op model =
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
-        , td [] [ text (formatDate op.lang op.now d.createdAt) ]
+        , td [] [ text (formatDate model.conf.lang model.conf.now d.createdAt) ]
 
         -- participant
         -- n comments icons
@@ -840,6 +846,8 @@ viewContractPage c op model =
                                 , doChangePost = ChangeCommentPost
                                 , doSubmit = OnSubmit
                                 , doSubmitComment = SubmitCommentPost
+                                , doRichText = OnRichText "updatePost"
+                                , conf = model.conf
                                 }
                         in
                         viewContractCommentInput opNew uctx model.comment_form model.comment_result
@@ -861,7 +869,7 @@ viewContractPage c op model =
         , c.comments
             |> Maybe.map
                 (\comments ->
-                    Lazy.lazy4 viewComments op comments model.comment_patch_form model.comment_result
+                    Lazy.lazy5 viewComments op model.conf comments model.comment_patch_form model.comment_result
                 )
             |> withDefault (text "")
         , hr [ class "has-background-border-light is-2" ] []
@@ -960,7 +968,7 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt op.lang op.now c.createdBy c.createdAt ] ]
+        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ] ]
         , div [ class "" ] <|
             case c.status of
                 ContractStatus.Closed ->
@@ -1060,8 +1068,8 @@ viewVoteBox c op model =
             ]
 
 
-viewComments : Op -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
-viewComments op comments comment_patch_form comment_result =
+viewComments : Op -> Conf -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
+viewComments op conf comments comment_patch_form comment_result =
     let
         opEdit =
             { doUpdate = DoUpdateComment
@@ -1070,7 +1078,8 @@ viewComments op comments comment_patch_form comment_result =
             , doChangePost = ChangeCommentPatch
             , doSubmit = OnSubmit
             , doEditComment = SubmitCommentPatch
-            , now = op.now
+            , doRichText = OnRichText "updatePostEdit"
+            , conf = conf
             }
     in
     comments

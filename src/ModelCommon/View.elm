@@ -59,6 +59,7 @@ import ModelSchema
         , Username
         , shrinkNode
         )
+import Session exposing (Conf)
 import Text as T
 import Time
 
@@ -158,13 +159,13 @@ tensionIcon2 type_ =
     span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2String type_) ]
 
 
-mediaTension : Lang.Lang -> Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension lang now focus tension showStatus showRecip size navigate =
-    Lazy.lazy8 mediaTension_ lang now focus tension showStatus showRecip size navigate
+mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension conf focus tension showStatus showRecip size navigate =
+    Lazy.lazy7 mediaTension_ conf focus tension showStatus showRecip size navigate
 
 
-mediaTension_ : Lang.Lang -> Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension_ lang now focus tension showStatus showRecip size navigate =
+mediaTension_ : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension_ conf focus tension showStatus showRecip size navigate =
     let
         n_comments =
             --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
@@ -181,7 +182,7 @@ mediaTension_ lang now focus tension showStatus showRecip size navigate =
         ]
         [ div [ class "media-left mr-3" ]
             [ div
-                [ class "tooltip has-tooltip-arrow"
+                [ class "tooltip is-left has-tooltip-arrow"
                 , attribute "data-tooltip" (tensionType2String tension.type_)
                 ]
                 [ tensionIcon tension.type_ ]
@@ -212,7 +213,7 @@ mediaTension_ lang now focus tension showStatus showRecip size navigate =
                       else
                         text ""
                     , if showRecip then
-                        viewTensionDateAndUser lang now "has-text-weight-light" tension.createdAt tension.createdBy
+                        viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
 
                       else
                         span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
@@ -516,13 +517,13 @@ viewRole cls_ now_m link_m r =
         [ A.icon1 (role2icon r) r.name ]
 
 
-viewRole2 : Maybe ( Lang.Lang, Time.Posix, String ) -> String -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
+viewRole2 : Maybe ( Conf, String ) -> String -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
 viewRole2 now_m link r msg =
     let
         since =
             case now_m of
-                Just ( lang, createdAt, uri ) ->
-                    T.sinceThe ++ " " ++ formatDate lang createdAt uri
+                Just ( conf, uri ) ->
+                    T.sinceThe ++ " " ++ formatDate conf.lang conf.now uri
 
                 Nothing ->
                     ""
@@ -586,70 +587,60 @@ viewProfileC user =
 -}
 
 
-viewOpenedDate : Lang.Lang -> Time.Posix -> String -> Html msg
-viewOpenedDate lang now date =
+viewOpenedDate : Conf -> String -> Html msg
+viewOpenedDate conf date =
     span [] <|
         List.intersperse (text " ") <|
             [ span [] [ text T.authored ]
-            , text (formatDate lang now date)
+            , text (formatDate conf.lang conf.now date)
             ]
 
 
-viewUpdated : Lang.Lang -> Time.Posix -> String -> Html msg
-viewUpdated lang now date =
+viewUpdated : Conf -> String -> Html msg
+viewUpdated conf date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ text " ·"
             , span [] [ text T.edited ]
-            , text (formatDate lang now date)
+            , text (formatDate conf.lang conf.now date)
             ]
 
 
-viewCommentedDate : Lang.Lang -> Time.Posix -> String -> Html msg
-viewCommentedDate lang now date =
+viewCommentedDate : Conf -> String -> Html msg
+viewCommentedDate conf date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ span [] [ text T.commented ]
-            , text (formatDate lang now date)
+            , text (formatDate conf.lang conf.now date)
             ]
 
 
-viewTensionDateAndUser : Lang.Lang -> Time.Posix -> String -> String -> Username -> Html msg
-viewTensionDateAndUser lang now cls createdAt createdBy =
+viewTensionDateAndUser : Conf -> String -> String -> Username -> Html msg
+viewTensionDateAndUser conf cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
-            [ viewOpenedDate lang now createdAt
+            [ viewOpenedDate conf createdAt
             , text T.by
             , viewUsernameLink createdBy.username
             ]
 
 
-viewTensionDateAndUserC : Lang.Lang -> Time.Posix -> String -> Username -> Html msg
-viewTensionDateAndUserC lang now createdAt createdBy =
+viewTensionDateAndUserC : Conf -> String -> Username -> Html msg
+viewTensionDateAndUserC conf createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
             [ viewUsernameLink createdBy.username
-            , viewCommentedDate lang now createdAt
+            , viewCommentedDate conf createdAt
             ]
 
 
-byAt : Lang.Lang -> Time.Posix -> Username -> String -> Html msg
-byAt lang now createdBy createdAt =
+byAt : Conf -> Username -> String -> Html msg
+byAt conf createdBy createdAt =
     span [] <|
         List.intersperse (text " ") <|
             [ text T.by
             , viewUsernameLink createdBy.username
-            , text (formatDate lang now createdAt)
-            ]
-
-
-atBy : Lang.Lang -> Time.Posix -> String -> String -> Username -> Html msg
-atBy lang now cls createdAt createdBy =
-    span [ class cls ] <|
-        List.intersperse (text " ") <|
-            [ text (formatDate lang now createdAt)
-            , text T.by
-            , viewUsernameLink createdBy.username
+            , text (formatDate conf.lang conf.now createdAt)
             ]
 
 

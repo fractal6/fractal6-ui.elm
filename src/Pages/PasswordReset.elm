@@ -88,6 +88,9 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Query parameters
         query =
             queryParser global.url
@@ -103,7 +106,7 @@ init global flags =
             , reset2_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
-            , help = Help.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
             }
     in
     case model.token_reset of

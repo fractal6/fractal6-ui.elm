@@ -17,6 +17,7 @@ import ModelCommon.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
+import Time
 import Url exposing (Url)
 
 
@@ -37,6 +38,13 @@ type alias Apis =
 
 type alias Screen =
     { w : Int, h : Int }
+
+
+type alias Conf =
+    { screen : Screen
+    , lang : Lang.Lang
+    , now : Time.Posix
+    }
 
 
 type alias SessionFlags =

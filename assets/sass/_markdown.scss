@@ -1,17 +1,24 @@
 
 .markdown-body {
+    overflow: auto;
+
+    // Fixes
     color: var(--text);
+    &.fix-inline > p {
+      display: inline;
+    }
+
+    // Html
+
     pre, code {
         @include defaultFontFace;
         font-size: 14px;
-        max-height: 400px;
-        overflow-y: auto;
+        max-height: 500px;
         border-radius: 5px;
 
         color: currentColor;
         background-color: var(--code-color) !important;
     }
-
     a {
         color: var(--info) !important;
         text-decoration: none !important;
@@ -22,7 +29,6 @@
     a:visited {
         color: var(--info-light);
     }
-
     blockquote {
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
@@ -34,7 +40,6 @@
       border-color: var(--is-discrete);
       //filter: invert(25%);
     }
-
     li input[type="checkbox"] {
       margin-right: 8px;
     }
@@ -46,14 +51,26 @@
         font-weight: 700;
         color: var(--is-highlight);
     }
+    table {
+        width: auto !important;
+        border: 1px solid var(--border-color) !important;
+        max-height: 500px;
 
-    &.fix-inline > p {
-      display: inline;
+        thead tr:last-child {
+            border-bottom-style: double !important;
+        }
+        tr:nth-child(even){
+            background-color: var(--chbc) !important;
+        }
+        th {
+            border: 1px solid var(--border-color) !important;
+
+        }
+        td {
+            border: 1px solid var(--border-color) !important;
+        }
     }
-
 }
-
-
 
 .box {// background of box is equal of $code-color.
     .markdown-body {

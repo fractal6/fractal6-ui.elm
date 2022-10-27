@@ -121,7 +121,7 @@ import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTens
 import Query.QueryUser exposing (getIsSubscribe)
 import RemoteData exposing (RemoteData)
 import Scroll
-import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import String.Format as Format
 import Task
@@ -258,8 +258,7 @@ type alias Model =
     -- Common
     , helperBar : HelperBar
     , refresh_trial : Int
-    , now : Time.Posix
-    , lang : Lang.Lang
+    , conf : Conf
     , empty : {}
 
     -- Components
@@ -318,13 +317,13 @@ type Msg
       -- Page Action
       --
       -- new comment
-    | ChangeTensionPost String String -- {field value}
+    | ChangeCommentPost String String -- {field value}
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | CommentAck (GqlData PatchTensionPayloadID)
       -- edit comment
     | DoUpdateComment Comment
     | CancelCommentPatch
-    | ChangeCommentPost String String
+    | ChangeCommentPatch String String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
       -- edit title
@@ -358,6 +357,7 @@ type Msg
     | Navigate String
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
+    | OnRichText String String String
     | ExpandRoles
     | CollapseRoles
     | ScrollToElement String
@@ -386,6 +386,9 @@ init global flags =
     let
         apis =
             global.session.apis
+
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
 
         -- Query parameters
         query =
@@ -502,16 +505,15 @@ init global flags =
             , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
 
             -- Common
+            , conf = conf
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user global.session.screen
-            , tensionForm = NTF.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
+            , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
-            , contractsPage = ContractsPage.init rootnameid global.session.user
+            , contractsPage = ContractsPage.init rootnameid global.session.user conf
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user
-            , now = global.now
-            , lang = global.session.lang
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
@@ -859,7 +861,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Page Action
-        ChangeTensionPost field value ->
+        ChangeCommentPost field value ->
             let
                 form =
                     model.tension_form
@@ -983,9 +985,9 @@ update global message model =
                 form =
                     model.comment_form
             in
-            ( { model | comment_form = { form | id = "" }, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
-        ChangeCommentPost field value ->
+        ChangeCommentPatch field value ->
             let
                 form =
                     model.comment_form
@@ -1359,6 +1361,9 @@ update global message model =
             in
             ( { model | comment_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
 
+        OnRichText toMsg targetid command ->
+            ( model, Ports.richText toMsg targetid command, Cmd.none )
+
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
 
@@ -1525,6 +1530,8 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
+    , Ports.updatePost (ChangeCommentPost "message")
+    , Ports.updatePostEdit (ChangeCommentPatch "message")
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -1675,7 +1682,7 @@ viewTension u t model =
                                     , placeholder "Title*"
                                     , spellcheck True
                                     , value title
-                                    , onInput (ChangeTensionPost "title")
+                                    , onInput (ChangeCommentPost "title")
                                     ]
                                     []
                                 ]
@@ -1723,7 +1730,7 @@ viewTension u t model =
 
                       else
                         text ""
-                    , viewTensionDateAndUser model.lang model.now "is-discrete" t.createdAt t.createdBy
+                    , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
                     , viewCircleTarget "is-pulled-right" t.receiver
                     ]
                 ]
@@ -1769,7 +1776,9 @@ viewTension u t model =
                     Contracts ->
                         case t.contracts |> withDefault [] of
                             [ c ] ->
-                                ContractsPage.view { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin, now = model.now, lang = model.lang } model.contractsPage
+                                ContractsPage.view
+                                    { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin }
+                                    model.contractsPage
                                     |> Html.map ContractsPageMsg
 
                             _ ->
@@ -1799,9 +1808,11 @@ viewConversation u t model =
                         let
                             opNew =
                                 { doChangeViewMode = ChangeInputViewMode
-                                , doChangePost = ChangeTensionPost
+                                , doChangePost = ChangeCommentPost
                                 , doSubmit = Submit
                                 , doSubmitComment = SubmitComment
+                                , doRichText = OnRichText "updatePost"
+                                , conf = model.conf
                                 }
                         in
                         viewCommentInput opNew uctx t model.tension_form model.tension_patch
@@ -1828,7 +1839,7 @@ viewConversation u t model =
     case model.tension_comments of
         Success comments ->
             div [ class "comments" ]
-                [ Lazy.lazy8 viewComments model.lang model.now t.action t.history comments model.comment_form model.comment_result model.expandedEvents
+                [ Lazy.lazy7 viewComments model.conf t.action t.history comments model.comment_form model.comment_result model.expandedEvents
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -1844,8 +1855,7 @@ viewConversation u t model =
 
 
 viewComments :
-    Lang.Lang
-    -> Time.Posix
+    Conf
     -> Maybe TensionAction.TensionAction
     -> Maybe (List Event)
     -> TensionComments
@@ -1853,7 +1863,7 @@ viewComments :
     -> GqlData Comment
     -> List Int
     -> Html Msg
-viewComments lang now action history_m comments_m comment_form comment_result expandedEvents =
+viewComments conf action history_m comments_m comment_form comment_result expandedEvents =
     let
         comments =
             withDefault [] comments_m.comments
@@ -1873,7 +1883,7 @@ viewComments lang now action history_m comments_m comment_form comment_result ex
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent lang now action event
+                            viewEvent conf action event
 
                         Nothing ->
                             text ""
@@ -1886,10 +1896,11 @@ viewComments lang now action history_m comments_m comment_form comment_result ex
                                     { doUpdate = DoUpdateComment
                                     , doCancelComment = CancelCommentPatch
                                     , doChangeViewMode = ChangeUpdateViewMode
-                                    , doChangePost = ChangeCommentPost
+                                    , doChangePost = ChangeCommentPatch
                                     , doSubmit = Submit
                                     , doEditComment = SubmitCommentPatch
-                                    , now = now
+                                    , doRichText = OnRichText "updatePostEdit"
+                                    , conf = conf
                                     }
                             in
                             viewComment op c comment_form comment_result
@@ -1967,67 +1978,67 @@ viewComments lang now action history_m comments_m comment_form comment_result ex
         |> div []
 
 
-viewEvent : Lang.Lang -> Time.Posix -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent lang now action event =
+viewEvent : Conf -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent conf action event =
     let
         eventView =
             case event.event_type of
                 TensionEvent.Reopened ->
-                    viewEventStatus lang now event TensionStatus.Open
+                    viewEventStatus conf.lang conf.now event TensionStatus.Open
 
                 TensionEvent.Closed ->
-                    viewEventStatus lang now event TensionStatus.Closed
+                    viewEventStatus conf.lang conf.now event TensionStatus.Closed
 
                 TensionEvent.TitleUpdated ->
-                    viewEventTitle lang now event
+                    viewEventTitle conf.lang conf.now event
 
                 TensionEvent.TypeUpdated ->
-                    viewEventType lang now event
+                    viewEventType conf.lang conf.now event
 
                 TensionEvent.Visibility ->
-                    viewEventVisibility lang now event
+                    viewEventVisibility conf.lang conf.now event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority lang now event action
+                    viewEventAuthority conf.lang conf.now event action
 
                 TensionEvent.AssigneeAdded ->
-                    viewEventAssignee lang now event True
+                    viewEventAssignee conf.lang conf.now event True
 
                 TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee lang now event False
+                    viewEventAssignee conf.lang conf.now event False
 
                 TensionEvent.LabelAdded ->
-                    viewEventLabel lang now event True
+                    viewEventLabel conf.lang conf.now event True
 
                 TensionEvent.LabelRemoved ->
-                    viewEventLabel lang now event False
+                    viewEventLabel conf.lang conf.now event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed lang now event action
+                    viewEventPushed conf.lang conf.now event action
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived lang now event action True
+                    viewEventArchived conf.lang conf.now event action True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived lang now event action False
+                    viewEventArchived conf.lang conf.now event action False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked lang now event action
+                    viewEventMemberLinked conf.lang conf.now event action
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked lang now event action
+                    viewEventMemberUnlinked conf.lang conf.now event action
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined lang now event action
+                    viewEventUserJoined conf.lang conf.now event action
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft lang now event action
+                    viewEventUserLeft conf.lang conf.now event action
 
                 TensionEvent.Moved ->
-                    viewEventMoved lang now event
+                    viewEventMoved conf.lang conf.now event
 
                 TensionEvent.Mentioned ->
-                    viewEventMentioned lang now event
+                    viewEventMentioned conf.lang conf.now event
 
                 _ ->
                     []
@@ -2369,9 +2380,9 @@ viewDocument u t b model =
                 }
 
             op =
-                { data = model.nodeDoc
+                { conf = model.conf
+                , data = model.nodeDoc
                 , result = NotAsked
-                , now = model.now
                 , publish_result = model.publish_result
                 , blob = b
                 , isAdmin = model.isTensionAdmin
@@ -2646,10 +2657,10 @@ viewSidePane u t model =
 
                           else
                             let
-                                op2 =
-                                    { data = model.nodeDoc
+                                op =
+                                    { conf = model.conf
+                                    , data = model.nodeDoc
                                     , result = NotAsked
-                                    , now = model.now
                                     , publish_result = model.publish_result
                                     , blob = blob
                                     , isAdmin = model.isTensionAdmin
@@ -2665,7 +2676,7 @@ viewSidePane u t model =
                                     , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            NodeDoc.viewNodeStatus op2
+                            NodeDoc.viewNodeStatus op
                         ]
                     ]
             )

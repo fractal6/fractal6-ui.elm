@@ -34,6 +34,7 @@ import ModelCommon.Codecs
         )
 import ModelCommon.View exposing (byAt, statusColor)
 import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
+import Session exposing (Conf)
 import String.Extra as SE
 import Text as T
 import Time
@@ -80,8 +81,8 @@ contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
 
 
-viewEventMedia : Lang.Lang -> Time.Posix -> Bool -> Dict String String -> Html msg
-viewEventMedia lang now inline ev =
+viewEventMedia : Conf -> Bool -> Dict String String -> Html msg
+viewEventMedia conf inline ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -99,13 +100,13 @@ viewEventMedia lang now inline ev =
                     , text ":"
                     , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewContractMedia : Lang.Lang -> Time.Posix -> Dict String String -> Html msg
-viewContractMedia lang now ev =
+viewContractMedia : Conf -> Dict String String -> Html msg
+viewContractMedia conf ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -125,20 +126,20 @@ viewContractMedia lang now ev =
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help" ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help" ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewNotifMedia : Lang.Lang -> Time.Posix -> Dict String String -> Html msg
-viewNotifMedia lang now ev =
+viewNotifMedia : Conf -> Dict String String -> Html msg
+viewNotifMedia conf ev =
     div [ class "content" ]
         [ a [ class "discrete-link", href (Dict.get "link" ev |> withDefault "#") ] <|
             List.intersperse (text " ") <|
                 [ A.icon (Dict.get "icon" ev |> withDefault "")
                 , Dict.get "title" ev |> withDefault "no input message." |> text
                 ]
-        , small [ class "help" ] [ byAt lang now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+        , small [ class "help" ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
         ]
 
 

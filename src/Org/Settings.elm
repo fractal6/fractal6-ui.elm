@@ -370,6 +370,9 @@ init global flags =
         apis =
             global.session.apis
 
+        conf =
+            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+
         -- Query parameters
         query =
             queryParser global.url
@@ -432,8 +435,8 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , help = Help.init global.session.user global.session.screen
-            , tensionForm = NTF.init global.session.user global.session.screen
+            , help = Help.init global.session.user conf
+            , tensionForm = NTF.init global.session.user conf
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
