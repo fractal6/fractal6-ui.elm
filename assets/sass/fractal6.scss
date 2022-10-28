@@ -1080,6 +1080,14 @@ figcaption {
     background-color: darken($info, 40);
 }
 
+.is-invisible-force {
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 #loginForm, #signupForm {
     @include desktop {
         min-width: 400px;

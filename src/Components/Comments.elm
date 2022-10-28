@@ -318,40 +318,44 @@ viewCommentHeader targetid cls_tabs op form =
 
 
 viewCommentTextarea targetid isModal placeholder_txt op form message =
-    case form.viewMode of
-        Write ->
-            let
-                line_len =
-                    List.length <| String.lines message
+    let
+        line_len =
+            List.length <| String.lines message
 
-                ( max_len, min_len ) =
-                    if op.conf.screen.w < 769 then
-                        if isModal then
-                            ( 4, 2 )
+        ( max_len, min_len ) =
+            if op.conf.screen.w < 769 then
+                if isModal then
+                    ( 4, 2 )
 
-                        else
-                            ( 6, 4 )
+                else
+                    ( 6, 4 )
 
-                    else if isModal then
-                        ( 10, 4 )
+            else if isModal then
+                ( 10, 4 )
 
-                    else if targetid == "commentContractInput" then
-                        ( 15, 4 )
+            else if targetid == "commentContractInput" then
+                ( 15, 4 )
 
-                    else
-                        ( 15, 6 )
-            in
-            textarea
-                [ id targetid
-                , class "textarea"
-                , rows (min max_len (max line_len min_len))
-                , placeholder placeholder_txt
-                , value message
-                , onInput (op.doChangePost "message")
+            else
+                ( 15, 6 )
+    in
+    div []
+        [ textarea
+            [ id targetid
+            , class "textarea"
+            , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
+            , rows (min max_len (max line_len min_len))
+            , placeholder placeholder_txt
+            , value message
+            , onInput (op.doChangePost "message")
 
-                --, contenteditable True
-                ]
-                []
+            --, contenteditable True
+            ]
+            []
+        , if form.viewMode == Preview then
+            div [ class "mt-2 mx-3" ]
+                [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
 
-        Preview ->
-            div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
+          else
+            text ""
+        ]
