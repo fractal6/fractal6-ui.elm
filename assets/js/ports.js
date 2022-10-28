@@ -511,26 +511,173 @@ export const actions = {
         if (!$input) return
         $input.focus();
 
-        var value = $input.value;
-        var start = $input.selectionStart;
-        var end = $input.selectionEnd;
-
         if (c == "Heading") {
+            pushLine($input, "### ")
         } else if (c == "Bold") {
-            var replacer = "****";
-            // set textarea value to: text before caret + tab + text after caret
-            $input.value = value.substring(0, start) +
-                replacer + value.substring(end);
-            value = $input.value;
-
-            // put caret at right position again
-            $input.selectionStart =
-                $input.selectionEnd = start + replacer.length/2;
+            toggleMarkup($input, "**")
+        } else if (c == "Italic") {
+            toggleMarkup($input, "__")
+        } else if (c == "Strikethrough") {
+            toggleMarkup($input, "~~")
+        } else if (c == "Quote" ) {
+            pushLine($input, "> ")
+        } else if (c == "Link") {
+            toggleMarkup($input, "[", " ", "()")
+        } else if (c == "MentionUser") {
+            pushLine($input, "@", true)
+        } else if (c == "MentionTension") {
+            pushLine($input, "0x", true)
         } else {
             console.warn("Rich text command not found.")
             return
         }
 
-        app.ports[msg.toMsg].send(value);
+        //app.ports[msg.toMsg].send($input.value);
+        var e = new Event('input', {
+                bubbles: true,
+                cancelable: true,
+        });
+        $input.dispatchEvent(e);
     },
 }
+
+// Toggle simple markup on the line
+// @TODO: search for markup on the line.
+function toggleMarkup(obj, mark, prefix, suffix) {
+    var value = obj.value;
+    var start = obj.selectionStart;
+    var end = obj.selectionEnd;
+    var selection = value.substring(start, end);
+
+    var mark_r
+    if (mark == "[") {
+        mark_r = "]"
+    } else {
+        mark_r = mark
+    }
+    if (!prefix) prefix = ""
+    if (!suffix) suffix = ""
+    if (value[start-1] == prefix) prefix = ""
+
+    var pad = mark.length;
+    var surrounding = value.substring(start-pad, start) + value.substring(end, end+pad);
+    if (surrounding == mark+mark_r) { // remove
+        var replacement = selection;
+
+        /* Loose undo/redo stack
+        * // Remove the replacer
+        * obj.value = value.substring(0, start-pad) + replacement + value.substring(end+pad);
+        */
+        // Works...
+        obj.setSelectionRange(start-pad, end+pad);
+        obj.setRangeText("");
+        // @deprecated...
+        document.execCommand("insertText", false, replacement);
+
+        // Put caret at right position again
+        obj.selectionStart =
+            obj.selectionEnd = start - pad;
+    } else { // add
+        var replacement = mark + selection + mark_r;
+
+        /* Loose undo/redo stack
+        * // Set textarea value to: text before caret + replacer + text after caret
+        * obj.value = value.substring(0, start) + replacement + value.substring(end);
+        */
+        // Create range (do not suport texarea range + not undo :/
+        //var range = document.createRange();
+        //console.log(start, end)
+        ////range.deleteContents();
+        ////range.selectNodeContents(obj);
+        //range.setStart(obj, start);
+        //range.setEnd(obj, end);
+        //range.insertNode(document.createTextNode(replacement));
+        //// Replace selection
+        //var selection = window.getSelection();
+        //selection.removeAllRanges();
+        //selection.addRange(range);
+        //
+        // Works...
+        obj.setRangeText("");
+        // @deprecated...
+        document.execCommand("insertText", false, prefix + replacement + suffix);
+
+        // Put caret at right position again
+        obj.selectionStart =
+            obj.selectionEnd = end + pad + prefix.length;
+    }
+}
+
+// PushLine add a markup with new lines before and eventually after.
+// isInline: when the line start by the same mark, stay on the line.
+function pushLine(obj, mark, isInline) {
+    var value = obj.value;
+    var start = obj.selectionStart;
+    var end = obj.selectionEnd;
+    var selection = value.substring(start, end);
+
+    // Ignore if cursor already start with mark
+    var startsWith = value.substring(start-mark.length, start) == mark ||
+        value.substring(start, start+mark.length) == mark;
+    if (startsWith) return
+
+    // Ignore if multiple line selected
+    var newline_count = (selection.match(/\n/g) || []).length;
+    if (newline_count > 0) return
+
+    // Get surrounding line break
+    var prefix = "\n\n";
+    var suffix = "\n\n";
+    var prevLine = value.substring(0, start).lastIndexOf("\n");
+    if (prevLine < 0) {
+        prevLine = 0
+    }
+    var nextLine = value.substring(end).search("\n");
+    if (nextLine < 0) {
+        nextLine = value.length;
+        suffix = ""
+    } else {
+        nextLine += end
+    }
+
+    var prev2 = value.substring(start-2, start)
+    var next2 = value.substring(end, end+2)
+    if (prev2.search(/(^$|^\n|\n\n)/) >= 0 && next2.search(/^$|\n$|\n\n/) >= 0) {
+        // Stay on the line if space and full line selected
+        // --
+        var replacement = mark + selection;
+        obj.setRangeText("");
+        // @deprecated...
+        document.execCommand("insertText", false, replacement);
+    } else {
+        // Add new section
+        // --
+        // Adapt prefix andsuffix
+        var x = prevLine == 0 ? 0 : 1
+        if (isInline && value.substring(prevLine+x, prevLine+x+mark.length) == mark) {
+            if (value[start-1] != " ") prefix = " "
+            else prefix = ""
+            suffix = ""
+        } else {
+            prev2 = value.substring(nextLine-2, nextLine)
+            next2 = value.substring(nextLine, nextLine+2)
+            if (prev2 == "\n\n") prefix = ""
+            else if (prev2 == "") prefix = ""
+            else if (prev2[prev2.length-1] == "\n") prefix = "\n"
+            if (next2 == "\n\n") suffix = ""
+            else if (next2 == "") suffix = ""
+            else if (next2[0] == "\n") suffix = "\n"
+        }
+
+        var replacement = mark + selection;
+        obj.setSelectionRange(nextLine, nextLine);
+        obj.setRangeText("");
+        // @deprecated...
+        document.execCommand("insertText", false, prefix+replacement+suffix);
+
+        // Put caret at right position again
+        obj.selectionStart =
+            obj.selectionEnd = nextLine + replacement.length + prefix.length;
+    }
+}
+

@@ -268,7 +268,7 @@ type Msg
     | SubmitCommentPatch Time.Posix
     | CommentAck (GqlData Comment)
     | CommentPatchAck (GqlData Comment)
-    | OnRichText String String String
+    | OnRichText String String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -613,8 +613,8 @@ update_ apis message model =
                 _ ->
                     ( { model | comment_result = result }, noOut )
 
-        OnRichText toMsg targetid command ->
-            ( model, out0 [ Ports.richText toMsg targetid command ] )
+        OnRichText targetid command ->
+            ( model, out0 [ Ports.richText targetid command ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -675,8 +675,6 @@ update_ apis message model =
 subscriptions =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
-    , Ports.updatePost (ChangeCommentPost "message")
-    , Ports.updatePostEdit (ChangeCommentPatch "message")
     ]
 
 
@@ -846,7 +844,7 @@ viewContractPage c op model =
                                 , doChangePost = ChangeCommentPost
                                 , doSubmit = OnSubmit
                                 , doSubmitComment = SubmitCommentPost
-                                , doRichText = OnRichText "updatePost"
+                                , doRichText = OnRichText
                                 , conf = model.conf
                                 }
                         in
@@ -1078,7 +1076,7 @@ viewComments op conf comments comment_patch_form comment_result =
             , doChangePost = ChangeCommentPatch
             , doSubmit = OnSubmit
             , doEditComment = SubmitCommentPatch
-            , doRichText = OnRichText "updatePostEdit"
+            , doRichText = OnRichText
             , conf = conf
             }
     in

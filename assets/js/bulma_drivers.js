@@ -435,7 +435,7 @@ function anotherRichText(e, el) {
                 n_line_back -= 1;
                 var line = el.value.substring(curPos+1, prevLinePos);
                 // Ignore if Tab occurs outside a list context
-                if ((n_line_back < 0 || curPos == 0) && line.search(/\s*[0-9]+\.|\s*[\-\*]/) < 0) return
+                if ((n_line_back < 0 || curPos == 0) && line.search(/\s*[0-9]+\.|\s*[\-\+\*]/) < 0) return
                 prevLinePos = curPos+1;
             }
             curPos--;

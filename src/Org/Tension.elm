@@ -357,7 +357,7 @@ type Msg
     | Navigate String
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
-    | OnRichText String String String
+    | OnRichText String String
     | ExpandRoles
     | CollapseRoles
     | ScrollToElement String
@@ -1361,8 +1361,8 @@ update global message model =
             in
             ( { model | comment_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
 
-        OnRichText toMsg targetid command ->
-            ( model, Ports.richText toMsg targetid command, Cmd.none )
+        OnRichText targetid command ->
+            ( model, Ports.richText targetid command, Cmd.none )
 
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
@@ -1530,8 +1530,6 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
-    , Ports.updatePost (ChangeCommentPost "message")
-    , Ports.updatePostEdit (ChangeCommentPatch "message")
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -1811,7 +1809,7 @@ viewConversation u t model =
                                 , doChangePost = ChangeCommentPost
                                 , doSubmit = Submit
                                 , doSubmitComment = SubmitComment
-                                , doRichText = OnRichText "updatePost"
+                                , doRichText = OnRichText
                                 , conf = model.conf
                                 }
                         in
@@ -1899,7 +1897,7 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                                     , doChangePost = ChangeCommentPatch
                                     , doSubmit = Submit
                                     , doEditComment = SubmitCommentPatch
-                                    , doRichText = OnRichText "updatePostEdit"
+                                    , doRichText = OnRichText
                                     , conf = conf
                                     }
                             in

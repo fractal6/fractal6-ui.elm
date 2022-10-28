@@ -32,7 +32,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -553,7 +553,7 @@ type Msg
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
-    | OnRichText String String String
+    | OnRichText String String
     | OnTargetClick
     | DoInvite
     | OnInvite Time.Posix
@@ -817,8 +817,8 @@ update_ apis message model =
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )
 
-        OnRichText toMsg targetid command ->
-            ( model, out0 [ Ports.richText toMsg targetid command ] )
+        OnRichText targetid command ->
+            ( model, out0 [ Ports.richText targetid command ] )
 
         OnTargetClick ->
             ( model, out0 [ Ports.requireTreeData ] )
@@ -1079,7 +1079,6 @@ subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
-    , Ports.updatePost (OnChangePost "message")
 
     --, Ports.lookupUserFromJs OnChangeUserLookup
     --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
@@ -1424,7 +1423,7 @@ viewTension op model =
                         , br [] []
                         ]
                     , div [ class "message" ]
-                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText "updatePost", doChangeViewMode = OnChangeInputViewMode } form ]
+                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doChangeViewMode = OnChangeInputViewMode } form ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]

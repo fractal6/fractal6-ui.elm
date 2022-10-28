@@ -8,7 +8,7 @@ import Form exposing (isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, contenteditable, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
 import Markdown exposing (renderMarkdown)
@@ -348,6 +348,8 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
                 , placeholder placeholder_txt
                 , value message
                 , onInput (op.doChangePost "message")
+
+                --, contenteditable True
                 ]
                 []
 
