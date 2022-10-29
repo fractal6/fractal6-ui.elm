@@ -69,8 +69,8 @@ Extra :
 
 ## Reporting issues, Questions, Feedback
 
-- Issue on the versioning system platform for bug and low-level issues (technical).
+- Create an issue on the versioning system platform for bug and low-level issues (technical).
 
-- Tension on [Fractale](https://fractale.co/o/f6) for all the rest.
+- Create a tension on [Fractale](https://fractale.co/o/f6) for all the rest.
 
-- Chat on Matrix: https://matrix.to/#/#fractal6:matrix.org
+- Chat on Matrix: https://matrix.to/#/#fractal6:matrix.org for support and talking.

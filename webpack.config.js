@@ -150,7 +150,7 @@ module.exports = (env, argv) => {
                         test: /\.elm$/,
                         exclude: [/elm-stuff/, /node_modules/, /tests/],
                         use: [
-                            { loader: 'elm-hot-webpack-loader' },
+                            { loader: 'elm-reloader' },
                             {
                                 loader: 'elm-webpack-loader',
                                 options: {

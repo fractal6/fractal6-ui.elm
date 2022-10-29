@@ -5,14 +5,7 @@ Single-page application frontend for [Fractale](https://fractale.co).
 
 ## Install
 
-    npm install [--legacy-peer-deps]
-
-
-NOTE: some packake needs `--legacy-peer-deps` options to be installed without npm trowing an error.
-      It seems to be caused by elm-hot-webpack-loader@1.1.8 and webpack@5...
-
-    npm install --save-dev --legacy-peer-deps elm-hot-webpack-loader
-    npm install --save-dev --legacy-peer-deps node-sass
+    npm install
 
 
 ## Launch
