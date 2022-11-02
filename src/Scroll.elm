@@ -1,6 +1,6 @@
 module Scroll exposing
     ( Config(..), createConfig, scrollTo
-    , scrollToBottom, scrollToElement, scrollToTop
+    , scrollToBottom, scrollToElement, scrollToSubElement, scrollToTop
     )
 
 {-| Scrolling to position that always takes the same amount of time.
@@ -10,7 +10,7 @@ module Scroll exposing
 
 -}
 
-import Browser.Dom
+import Browser.Dom exposing (Error(..))
 import Ease exposing (Easing)
 import Task exposing (Task)
 import Time exposing (Posix)
@@ -22,9 +22,18 @@ import Time exposing (Posix)
 -}
 
 
-scrollTo : Float -> Task x ()
+{-| Scroll to an element in the body viewport
+-}
+scrollTo : Float -> Task Browser.Dom.Error ()
 scrollTo =
-    scrollTo_ <| createConfig Ease.inOutCubic 500
+    scrollTo_ Nothing (createConfig Ease.inOutCubic 500)
+
+
+{-| Scroll to an element to the given viewport
+-}
+scrollToOf : String -> Float -> Task Browser.Dom.Error ()
+scrollToOf vpid =
+    scrollTo_ (Just vpid) (createConfig Ease.inOutCubic 500)
 
 
 scrollToTop : msg -> Cmd msg
@@ -45,6 +54,44 @@ scrollToElement : String -> msg -> Cmd msg
 scrollToElement id noop =
     Task.attempt (always noop)
         (Browser.Dom.getElement id |> Task.andThen (scrollTo << (\x -> x.y - 50) << .element))
+
+
+scrollToSubElement : String -> String -> msg -> Cmd msg
+scrollToSubElement viewport_id id noop =
+    Task.attempt (always noop)
+        (getElementOf { viewportId = viewport_id, elementId = id }
+            |> Task.andThen
+                (\e ->
+                    if e.element.y < e.viewport.y || e.element.y > e.viewport.y + e.viewport.height then
+                        scrollToOf viewport_id e.element.y
+
+                    else
+                        Task.fail (NotFound "element visible")
+                )
+        )
+
+
+getElementOf :
+    { viewportId : String, elementId : String }
+    -> Task Browser.Dom.Error Browser.Dom.Element
+getElementOf { viewportId, elementId } =
+    Task.map3
+        (\e v ev ->
+            { scene = v.scene
+            , viewport = v.viewport
+            , element =
+                e.element
+                    |> (\a ->
+                            { a
+                                | x = a.x - ev.element.x
+                                , y = a.y - ev.element.y + v.viewport.y
+                            }
+                       )
+            }
+        )
+        (Browser.Dom.getElement elementId)
+        (Browser.Dom.getViewportOf viewportId)
+        (Browser.Dom.getElement viewportId)
 
 
 {-| Configuration for smooth scrolling.
@@ -73,16 +120,39 @@ createConfig easing duration =
 {-| Scroll to the `y` offset of the browser viewport using the easing function
 and duration specified in the config.
 scrollTo (createConfig Ease.outCubic 100) 500
+
+if nodeId is a Just String, it scrool to to the given viewPort
+otherwise it use the body viewport
+
 -}
-scrollTo_ : Config -> Float -> Task x ()
-scrollTo_ (Config config) y =
+scrollTo_ : Maybe String -> Config -> Float -> Task Browser.Dom.Error ()
+scrollTo_ nodeId (Config config) y =
+    let
+        viewport_ =
+            case nodeId of
+                Just nid ->
+                    Browser.Dom.getViewportOf nid
+
+                Nothing ->
+                    Browser.Dom.getViewport
+    in
     Task.map2
         (\{ viewport } startTime ->
+            let
+                f =
+                    case nodeId of
+                        Just nid ->
+                            Browser.Dom.setViewportOf nid
+
+                        Nothing ->
+                            --Browser.Dom.setViewport viewport.x
+                            Browser.Dom.setViewport
+            in
             Task.andThen
-                (step (Browser.Dom.setViewport viewport.x) config viewport.y y startTime)
+                (step f config viewport.y y startTime)
                 Time.now
         )
-        Browser.Dom.getViewport
+        viewport_
         Time.now
         |> Task.andThen identity
 
@@ -91,23 +161,23 @@ scrollTo_ (Config config) y =
 then do that again and again until the duration is larger than the time elapsed.
 -}
 step :
-    (Float -> Task x ())
+    (Float -> Float -> Task Browser.Dom.Error ())
     -> { duration : Int, easing : Easing }
     -> Float
     -> Float
     -> Posix
     -> Posix
-    -> Task x ()
-step setViewportY config start end startTime now =
+    -> Task Browser.Dom.Error ()
+step f config start end startTime now =
     let
         elapsed : Int
         elapsed =
             Time.posixToMillis now - Time.posixToMillis startTime
     in
-    setViewportY (position config start end elapsed)
+    f 0 (position config start end elapsed)
         |> Task.andThen
             (if elapsed < config.duration then
-                \_ -> Time.now |> Task.andThen (step setViewportY config start end startTime)
+                \_ -> Time.now |> Task.andThen (step f config start end startTime)
 
              else
                 Task.succeed

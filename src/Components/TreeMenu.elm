@@ -2,6 +2,7 @@ module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, ini
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Dom
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
 import Dict.Extra as DE
@@ -26,6 +27,7 @@ import ModelCommon.View exposing (action2icon, viewOrga0)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
+import Scroll
 import Session exposing (Apis, GlobalCmd(..))
 import String
 import Text as T
@@ -41,6 +43,7 @@ type alias Model =
     , isActive : Bool
     , isActive2 : Bool
     , isHover : Bool
+    , scrollTo : Maybe String
     , focus : NodeFocus
     , tree_result : GqlData NodesDict
     , tree : Tree Node
@@ -62,12 +65,18 @@ type Tree n
         }
 
 
+prefixId : String -> String
+prefixId did =
+    "treeMenu_" ++ did
+
+
 initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> Model
 initModel baseUri uriQuery focus isActive tree user =
     { user = user
     , isActive = withDefault False isActive
     , isActive2 = withDefault False isActive
     , isHover = False
+    , scrollTo = Nothing
     , focus = focus
     , tree_result =
         case tree of
@@ -243,6 +252,7 @@ type Msg
     | Navigate String
     | NavigateNode Node
     | Do (List GlobalCmd)
+    | ScrollToElement String
 
 
 type alias Out =
@@ -294,7 +304,7 @@ update_ apis message model =
                 )
 
             else
-                ( model, noOut )
+                ( model, out0 [ sendSleep (ScrollToElement model.focus.nameid) 333 ] )
 
         OnReload uctx ->
             if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
@@ -327,13 +337,13 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnLoad 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( setTree data, Out [] [ DoUpdateTree (Just d) ] (Just ( True, True )) )
+                    ( setTree data, Out [ send (ScrollToElement model.focus.nameid) ] [ DoUpdateTree (Just d) ] (Just ( True, True )) )
 
                 _ ->
                     ( data, noOut )
 
         OnSetTree data ->
-            ( setDataResult (Success data) model |> setTree, ternary model.isActive (out0 [ Ports.openTreeMenu ]) noOut )
+            ( setDataResult (Success data) model |> setTree, ternary model.isActive (out0 [ send (ScrollToElement model.focus.nameid), Ports.openTreeMenu ]) noOut )
 
         OnToggle ->
             if model.isActive then
@@ -498,6 +508,9 @@ update_ apis message model =
         Do gcmds ->
             ( model, out1 gcmds )
 
+        ScrollToElement nid ->
+            ( { model | scrollTo = Just nid }, out0 [ Scroll.scrollToSubElement "tree-menu" (prefixId nid) NoMsg ] )
+
 
 subscriptions : List (Sub Msg)
 subscriptions =
@@ -616,6 +629,7 @@ viewCircleLine : Maybe String -> NodeFocus -> Node -> Html Msg
 viewCircleLine hover focus node =
     a
         [ class "treeMenu"
+        , id (prefixId node.nameid)
         , classList [ ( "is-active", focus.nameid == node.nameid ) ]
         , onMouseEnter (OnOrgHover (Just node.nameid))
         , onClickPD (NavigateNode node)
@@ -648,6 +662,8 @@ viewRoleLine focus roles =
     if List.length roles > 0 then
         div
             [ class "treeMenu"
+
+            --, id "TODO"
             , classList [ ( "is-active", List.member focus.nameid (List.map .nameid roles) ) ]
 
             --, onMouseEnter (OnOrgHover (Just node.nameid))

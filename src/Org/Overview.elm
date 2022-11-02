@@ -384,6 +384,7 @@ init global flags =
             cmds_
                 ++ [ sendSleep PassedSlowLoadTreshold 500
                    , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
+                   , Cmd.map TreeMenuMsg (send (TreeMenu.ScrollToElement newFocus.nameid))
                    ]
     in
     ( model2
