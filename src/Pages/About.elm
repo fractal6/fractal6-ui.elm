@@ -21,11 +21,11 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
-import Requests exposing (login, signup)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
+import Requests exposing (login, signup)
 import Task
 import Text as T
 
@@ -247,7 +247,8 @@ viewHero model =
     div []
         [ div [ class "columns is-centered custom-b-1 m-0" ]
             [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
-                [ h1 [ class "title top-title" ] [ renderMarkdown "is-human" T.heroTitle ]
+                [ h1 [ class "title top-title" ]
+                    [ renderMarkdown "is-human" T.heroTitle ]
 
                 --[ text "Build unstoppable organizations" ]
                 --[ text "Self-organization", br [] [], text "for humans" ]

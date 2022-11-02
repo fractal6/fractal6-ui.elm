@@ -1,7 +1,5 @@
 
 .markdown-body {
-    overflow: auto;
-
     // Fixes
     color: var(--text);
     &.fix-inline > p {
@@ -51,13 +49,16 @@
         font-weight: 700;
         color: var(--is-highlight);
     }
+    .table-container {
+        overflow: auto !important;
+    }
     table {
         width: auto !important;
         border: 1px solid var(--border-color) !important;
         max-height: 500px;
 
         thead tr:last-child {
-            border-bottom-style: double !important;
+            //border-bottom-style: double !important;
         }
         tr:nth-child(even){
             background-color: var(--chbc) !important;

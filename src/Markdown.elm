@@ -105,6 +105,7 @@ frac6Renderer style recursive =
 
                 else
                     text t
+        , table = \x -> div [ class "table-container" ] [ Html.table [] x ]
         , html =
             -- Html tag supported in the text
             Markdown.Html.oneOf
