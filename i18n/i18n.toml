@@ -1730,7 +1730,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Markdown formatting is supported"
   fr="Le formatage Markdown est pris en charge"
 
-# ADDME ^
+
+[lockMenu]
+  en="Lock menu open"
+  fr="Garder ouvert"
+
+# ADDME END ^
 # --
 #
 # Legend

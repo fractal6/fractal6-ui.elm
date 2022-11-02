@@ -40,6 +40,7 @@ type alias Model =
     { user : UserState
     , isActive : Bool
     , isActive2 : Bool
+    , isHover : Bool
     , focus : NodeFocus
     , tree_result : GqlData NodesDict
     , tree : Tree Node
@@ -66,6 +67,7 @@ initModel baseUri uriQuery focus isActive tree user =
     { user = user
     , isActive = withDefault False isActive
     , isActive2 = withDefault False isActive
+    , isHover = False
     , focus = focus
     , tree_result =
         case tree of
@@ -219,6 +221,7 @@ type Msg
     | OnDataAck (GqlData NodesDict)
     | OnSetTree NodesDict
     | OnToggle
+    | OnToggleHover Bool
     | SetIsActive2 Bool
     | OnOrgHover (Maybe String)
       --
@@ -287,7 +290,7 @@ update_ apis message model =
                 ( setDataResult LoadingSlowly model
                   -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane
                   -- when navigating from non orgs pages.
-                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, Ports.openTreeMenu ]
+                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, ternary model.isHover Cmd.none Ports.openTreeMenu ]
                 )
 
             else
@@ -342,6 +345,13 @@ update_ apis message model =
                 ( { model | isActive2 = True }
                 , out0 [ Ports.saveMenuTree True, send OnLoad, sendSleep (SetIsActive2 True) 10 ]
                 )
+
+        OnToggleHover v ->
+            if model.isHover then
+                ( { model | isHover = False }, out0 [ sendSleep (SetIsActive2 False) 500 ] )
+
+            else
+                ( { model | isActive2 = True, isHover = True }, out0 [ send OnLoad ] )
 
         SetIsActive2 v ->
             -- Prevent elm from computing the VDOM
@@ -512,24 +522,35 @@ type alias Op =
 view : Op -> State -> Html Msg
 view op (State model) =
     if model.isActive2 then
+        let
+            isActive =
+                model.isActive || model.isHover
+        in
         div
             [ id "tree-menu"
-            , classList [ ( "off", not model.isActive ) ]
+            , classList [ ( "off", not isActive ) ]
+            , onMouseLeave (ternary model.isHover (OnToggleHover False) NoMsg)
             ]
             [ viewTreeMenu model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             , div
                 [ class "button is-small bottom-button"
-                , classList [ ( "is-invisible", not model.isActive ) ]
+                , classList [ ( "is-invisible", not isActive ) ]
                 , onClick OnToggle
                 ]
-                [ A.icon1 "icon-chevrons-left" T.collapse ]
+                [ if model.isHover then
+                    A.icon1 "icon-chevrons-right" T.lockMenu
+
+                  else
+                    A.icon1 "icon-chevrons-left" T.close
+                ]
             , div [ class "pb-6 is-invisible" ] [ text "nop" ]
             ]
 
     else
-        div [ id "tree-hinter" ]
-            [ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
+        div [ id "tree-hinter", onMouseEnter (OnToggleHover True) ]
+            --[ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
+            [ div [] [] ]
 
 
 viewTreeMenu : Model -> Html Msg
