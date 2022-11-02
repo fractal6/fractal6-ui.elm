@@ -720,35 +720,51 @@ strong {
 }
 
 .table, table.table {
-    border: 1px solid var(--table-border-color);
-    border-radius: 6px !important;
+    //border: 1px solid var(--table-border-color);
+    //border-radius: 6px !important;
+    border-collapse: separate;
 
+    thead tr { background-color: var(--table-background-color); }
     thead th {
         font-weight: 600;
         font-size: 90% !important;
         color: var(--is-discrete);
+        background-color: var(--table-head-background-color);
     }
 
-	th:first-child {
-		border-radius: 6px 0 0 0;
-	}
-	th:last-child {
-		border-radius: 0 6px 0 0;
-	}
+
 	td:first-child, th:first-child {
-		border-left: medium none;
+		//border-left: medium none;
+		border-left: 1px solid var(--table-border-color);
 	}
-	th {
-		border-top: medium none;
-        border: none;
-		padding-top: .5rem;
-		padding-bottom: .5rem;
+	td:last-child, th:last-child {
+		border-right: 1px solid var(--table-border-color);
 	}
-	td {
-		padding-top: 1.1rem;
-		padding-bottom: 1.1rem;
-        border-bottom: 1px solid var(--table-border-color);
+	td, th {
+		padding-top: 0.75rem !important;
+		padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--table-border-color) !important;
 	}
+
+    thead tr:first-child {
+        th {
+            border-top: 1px solid var(--table-border-color);
+        }
+        th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+        th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+    }
+    tbody tr:last-child {
+        td:first-child {
+            border-radius: 0 0 0 6px;
+        }
+        td:last-child {
+            border-radius: 0 0 6px 0;
+        }
+    }
 }
 
 // Card
