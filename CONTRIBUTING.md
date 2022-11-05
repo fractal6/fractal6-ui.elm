@@ -20,6 +20,7 @@ Elm code is structured inside the `src/` folder:
 - `Ports`: Ports bridges. Javascript code is located in `assets/js/`
 - `Main`: Entry point.
 
+Javascript ports are located in `assets/js`
 
 ## Style
 
