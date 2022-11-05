@@ -36,8 +36,8 @@ Bulma + custom Sass files. See `assets/sass/`.
 
 ### Git Branches
 
-- `dev`: The current development branch. Should only be merged via merge requests.
-- `prod`: Tag tracking, production ready branch (see also [CHANGELOG.md](CHANGELOG.md)).
+- `prod`: Tag tracking release, main branch (see also [CHANGELOG.md](CHANGELOG.md)).
+- `dev`: The current development branch.
 - `hotfix/*`: A bug fix for production release.
 - `fix/*`: A fix an identified bug or issue.
 - `feat/*`: A new feature.
