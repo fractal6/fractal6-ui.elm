@@ -1,22 +1,23 @@
 {-
-  Fractale - Self-organisation for humans.
-  Copyright (C) 2022 Fractale Co
+   Fractale - Self-organisation for humans.
+   Copyright (C) 2022 Fractale Co
 
-  This file is part of Fractale.
+   This file is part of Fractale.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Affero General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU Affero General Public License
-  along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU Affero General Public License
+   along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
 -}
+
 
 module Global exposing
     ( Flags
@@ -50,12 +51,12 @@ import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
-import Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
 import Process
 import Query.QueryNotifications exposing (queryNotifCount)
 import RemoteData exposing (RemoteData)
+import Requests exposing (tokenack)
 import Session
     exposing
         ( LabelSearchPanelModel
@@ -292,7 +293,7 @@ update msg model =
         -- Update Session Data
         --
         UpdateSessionFocus data ->
-            -- @here @warning: this Msg has side effect. It reset some session data, in order
+            -- @warning: this Msg has side effect. It reset some session data, in order
             -- to avoid glitch or bad UX (seeing incoherent tensions data) when navigating app.
             -- * reset Tensions and Tension page data.
             -- * reset Panel data.
