@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unrealeased]
+...
+
+## [0.6.9]
+
+### New
+- tensions: Ability to move tension across circle in the "board view" with drag&drop.
+- tension: mentionable tension with new event
+- markdown: rich text edition (toolbar and markdown hints)
+- treeMenu: auto scroll to the focus circle
+
+### Changed
+- treeMenu: Open menu when hovering the left border screen (like in notion.so)
+- package.json: elm hot reload package that cause npm to need a legacy option to work
+
+### Fixed
+- table (+markdown) style
+- notification: tooltip inversed in "mark as read" tag.
+
+
 
 ## [0.6.6]
 
