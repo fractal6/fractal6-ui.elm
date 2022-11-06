@@ -1,7 +1,7 @@
 All contribution, through issues, tensions and merge request are welcome.
 Please read this file before contributing.
 
-## File structure
+### File structure
 
 The frontend is written in [Elm](https://elm-lang.org/).
 Elm is delightful language, purely functional, typed, with great performance, small assets and that compile to Javascript.
@@ -22,18 +22,24 @@ Elm code is structured inside the `src/` folder:
 
 Javascript ports are located in `assets/js`
 
-## Style
+### Style
 
 Bulma + custom Sass files. See `assets/sass/`.
 
 
-## Typo rules and naming conventions
+### Typo rules and naming conventions
 
-### Elm
+- Elm Messages should be prefix with `On` then the verb that characterize the action it convey (i.e. `OnSubmitClick`)
+- Elm Share/Global message should be prefixed by `Do` then the verb that characterize the action it convey (i.e. `DoUpdateSession`)
 
-- Elm Messages should start with a verb that characterize the action it convey.
-- ...
 
+### Updating schema
+
+To propagate a schema update, run (\*):
+
+    make gen
+
+(\*) Assuming that your schema is located in `../fractal6-schema/gen/schema.graphql`
 
 ### Git Branches
 
@@ -68,7 +74,7 @@ Extra :
 
 
 
-## Reporting issues, Questions, Feedback
+### Reporting issues, Questions, Feedback
 
 - Create an issue on the versioning system platform for bug and low-level issues (technical).
 
