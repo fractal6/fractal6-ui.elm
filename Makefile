@@ -27,7 +27,7 @@ prod:
 dev:
 	npm run dev
 
-# Deploy on Netlyfy
+# Deploy on Netlyfy/Fleek
 deploy_netlify: prod
 	$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
 	$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))

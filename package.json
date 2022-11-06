@@ -1,7 +1,16 @@
 {
   "name": "fractal6",
   "version": "1.0.0",
-  "description": "Organisation for Humans",
+  "description": "Self-Organisation for Humans",
+  "author": "Adrien Dulac",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "fractale",
+    "organisation",
+    "kanban",
+    "graphql",
+    "elm"
+  ],
   "main": "public/index.html",
   "scripts": {
     "start": "npm run build && npm run dev",
@@ -22,16 +31,6 @@
     "prod": "webpack --mode production",
     "dev": "webpack --mode development"
   },
-  "keywords": [
-    "graphql",
-    "elm",
-    "fractal",
-    "organisation",
-    "d3",
-    "spa"
-  ],
-  "author": "Adrien Dulac",
-  "license": "GPLv2",
   "dependencies": {
     "@bulvar/bulma": "^0.11.12",
     "@creativebulma/bulma-badge": "^1.0.1",
