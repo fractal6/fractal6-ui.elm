@@ -1,6 +1,15 @@
-# Fractal6-ui.elm
+# fractal6-ui.elm
 
 Single-page application frontend for [Fractale](https://fractale.co).
+
+**Fractale** is a platform for self-organization. It provides a secure space shared by the members of any organisation that features:
+* Tree and Graph-Packing organisation navigation (Circle are branches, Roles are leaves).
+* Circle mandate, governance and visibility.
+* ACL based on member Role.
+* Ticketing management through [Tensions](https://doc.fractale.co/tension/).
+* Journal history of events (including mandate updates).
+* Email notifications.
+* GraphQL API.
 
 
 ## Install
