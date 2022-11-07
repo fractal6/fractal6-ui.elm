@@ -1,22 +1,23 @@
 {-
-  Fractale - Self-organisation for humans.
-  Copyright (C) 2022 Fractale Co
+   Fractale - Self-organisation for humans.
+   Copyright (C) 2022 Fractale Co
 
-  This file is part of Fractale.
+   This file is part of Fractale.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Affero General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU Affero General Public License
-  along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU Affero General Public License
+   along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
 -}
+
 
 module Footbar exposing (view)
 
@@ -39,8 +40,8 @@ view =
             , div [ class "level-item" ]
                 [ div [ class "columns is-mobile is-multiline is-centered contacts" ]
                     [ span [ class "column is-narrow" ] [ a [ href "/about" ] [ text "About" ] ]
-                    , span [ class "column is-narrow" ] [ a [ href "https://doc.fractale.co", target "_blank" ] [ text "Docs" ] ]
-                    , span [ class "column is-narrow" ] [ a [ href "https://gitlab.com/fractal6", target "_blank", title "gitlab.com" ] [ text "Code" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://doc.fractale.co", target "_blank", title "User documentation" ] [ text "Docs" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://github.com/fractal6", target "_blank", title "Github" ] [ text "Code" ] ]
                     , span [ class "column is-narrow" ] [ a [ href "https://matrix.to/#/#fractal6:matrix.org", target "_blank", title "Chat on matrix" ] [ text "Community" ] ]
                     , span [ class "column is-narrow" ] [ a [ href "mailto:contact@fractale.co" ] [ text T.contactUs ] ]
                     ]
