@@ -155,15 +155,15 @@ publicOrgaFilter a =
                     { b
                         | isRoot = Present True
                         , visibility = Present { eq = Present NodeVisibility.Public, in_ = Absent }
-                        , not = Input.buildNodeFilter (\c -> { c | isPersonal = Present True }) |> Present
+
+                        --, not = Input.buildNodeFilter (\c -> { c | isPersonal = Present True }) |> Present
                     }
                 )
                 |> Present
-
-        --, order =
-        --    Input.buildNodeOrder
-        --        (\b -> { b | desc = Present NodeOrderable.CreatedAt })
-        --        |> Present
+        , order =
+            Input.buildNodeOrder
+                (\b -> { b | desc = Present NodeOrderable.CreatedAt })
+                |> Present
     }
 
 

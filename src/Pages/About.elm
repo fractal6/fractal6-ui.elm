@@ -243,23 +243,6 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "welcome", class "top-section" ]
         [ div [ id "welcome-1" ] [ viewHero model ]
-        , div [ id "welcome-2" ] [ viewFeatures model ]
-        , div [ class "columns pt-5 pb-5" ]
-            [ div [ class "hero column is-offset-2" ]
-                [ div [ class "hero-body content" ]
-                    [ div [ class "title is-2" ]
-                        [ text (T.moreToCome ++ "...") ]
-                    , renderMarkdown "pb-6 is-size-5" T.roadmapX
-                    , div [ class "subtitle is-4" ]
-                        [ text (T.keepInTouch1 ++ ",")
-                        , br [ class "mb-1" ] []
-                        , text (T.keepInTouch2 ++ ",")
-                        , br [ class "mb-1" ] []
-                        , a [ class "button is-primary is-size-5 is-text-aligned", href (toHref Route.Signup), style "border-radius" "8px" ] [ text T.joinUs ]
-                        ]
-                    ]
-                ]
-            ]
         ]
 
 
@@ -276,18 +259,6 @@ viewHero model =
                 --[ text "Collective Intelligence", br [] [], text "at Work" ]
                 , div [ class "columns is-vcentered" ]
                     [ div [ class "column is-6" ] [ h2 [ class "subtitle" ] [ renderMarkdown "is-recursive" T.heroSubtitle ] ]
-                    , div [ class "column is-5" ]
-                        [ if model.isHome then
-                            a
-                                [ class "button is-primary"
-                                , href (toHref Route.Signup)
-                                , style "border-radius" "8px"
-                                ]
-                                [ text T.tryNow ]
-
-                          else
-                            text ""
-                        ]
                     ]
                 ]
             , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]
@@ -300,78 +271,12 @@ viewHero model =
                     div [ attribute "style" "margin-left: -50px;" ] [ A.logo_about "#375a7f" ]
                 ]
             ]
-        , br [] []
-        , div [ class "columns is-centered pb-6 mb-5 m-0" ]
-            [ div [ class "column is-11-desktop is-9-fullhd" ]
-                [ div [ class "columns is-5 is-variable content" ]
-                    [ div [ class "column is-4" ] [ h1 [] [ logo, text T.about ], p [] [ renderMarkdown "is-human" T.aboutHero ] ]
-                    , div [ class "column is-4" ] [ h1 [] [ logo, text T.forNpo ], p [] [ renderMarkdown "is-human" T.npoHero ] ]
-                    , div [ class "column is-4" ] [ h1 [] [ logo, text T.forCorp ], p [] [ renderMarkdown "is-human" T.corpHero ] ]
-                    ]
-                ]
-            ]
         ]
 
 
 logo : Html Msg
 logo =
     span [ attribute "style" "position:relative;top:10px;right:10px;" ] [ A.logo1 "white" ]
-
-
-viewFeatures : Model -> Html Msg
-viewFeatures model =
-    div []
-        [ div [ id "feature-1", class "hero is-fullheight is-primary-2 dub-top-section" ]
-            [ div [ class "columns is-vcentered is-centered m-0" ]
-                -- hero-body squeeze the columns !
-                -- , style "align-items" "flex-start"
-                [ div [ class "column is-4 content" ]
-                    [ h1 [ class "title" ] [ text T.govTransp ]
-                    , renderMarkdown "subtitle pt-5 pb-4 is-human" T.govTranspAbout
-                    , dl [ class "is-icon-aligned" ]
-                        [ dt [ class "mb-4" ] [ A.icon1 "icon-share icon-2x" T.govFeat1 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-users icon-2x" T.govFeat2 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-lock icon-2x" T.govFeat3 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-eye icon-2x" T.govFeat4 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-book-open icon-2x" T.govFeat5 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-search icon-2x" T.govFeat6 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-history icon-2x" T.govFeat7 ]
-                        ]
-                    ]
-                , div [ class "column is-7 is-6-fullhd p-0 is-fullvh-desktop" ]
-                    --[ figure [ class "image is-3by2" ]
-                    [ figure [ class "image is-16by9 is-fullwidth shadow", title "Overview page of the Fractale Team." ]
-                        [ img [ src "/data/screenshots/f6-overview.png", alt "Overview page of the Fractale Team." ] [] ]
-                    , figcaption [] [ text "Overview of the organization that builds Fractale. ", a [ href "/o/f6" ] [ text "Explore it" ] ]
-                    ]
-                ]
-            ]
-        , div [ id "feature-2", class "hero is-fullheight is-info-2 dub-top-section" ]
-            [ div [ class "columns is-vcentered is-centered m-0" ]
-                --  pt-6 pb-6
-                -- hero-body squeeze the columns !
-                --, style "align-items" "flex-start"
-                [ div [ class "column is-4 content" ]
-                    [ h1 [ class "title" ] [ text T.asyncCom ]
-                    , renderMarkdown "subtitle pt-5 pb-4 is-human" T.asyncComAbout
-                    , dl [ class "is-icon-aligned" ]
-                        [ dt [ class "mb-4" ] [ A.icon1 "icon-exchange icon-2x" T.asyncFeat1 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-message-square icon-2x" T.asyncFeat2 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-markdown icon-2x" T.asyncFeat3 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-mail icon-2x" T.asyncFeat4 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-tag icon-2x" T.asyncFeat5 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-layout icon-2x" T.asyncFeat6 ]
-                        , dt [ class "mb-4" ] [ A.icon1 "icon-search icon-2x" T.asyncFeat7 ]
-                        ]
-                    ]
-                , div [ class "column is-7 is-6-fullhd p-0 is-fullvh-desktop" ]
-                    [ figure [ class "image is-2by1 is-fullwidth shadow", title "Tensions page of the Fractale organization, arranged by circles." ]
-                        [ img [ src "/data/screenshots/f6-tensions.png", alt "Tensions page of the Fractale organization, arranged by circles." ] [] ]
-                    , figcaption [] [ text "Tensions page of the Fractale organization, arranged by circles. ", a [ href "/t/f6?v=circle" ] [ text "Explore it" ] ]
-                    ]
-                ]
-            ]
-        ]
 
 
 viewSignBox : Model -> Html Msg
