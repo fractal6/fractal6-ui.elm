@@ -24,10 +24,11 @@ module Markdown exposing (renderMarkdown)
 import Assets as A
 import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, div, i, span, text)
-import Html.Attributes exposing (class, href, rel, style, target, title)
+import Html exposing (Html, a, br, div, i, input, li, span, table, text, ul)
+import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
+import Markdown.Block as Block exposing (Block)
 import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
@@ -111,6 +112,46 @@ frac6Renderer style recursive =
 
                     Nothing ->
                         a attrs content
+        , unorderedList =
+            \items ->
+                ul []
+                    (items
+                        |> List.map
+                            (\item ->
+                                case item of
+                                    Block.ListItem task children ->
+                                        let
+                                            checkbox =
+                                                case task of
+                                                    Block.NoTask ->
+                                                        Nothing
+
+                                                    Block.IncompleteTask ->
+                                                        Just <|
+                                                            input
+                                                                [ disabled True
+                                                                , checked False
+                                                                , type_ "checkbox"
+                                                                ]
+                                                                []
+
+                                                    Block.CompletedTask ->
+                                                        Just <|
+                                                            input
+                                                                [ disabled True
+                                                                , checked True
+                                                                , type_ "checkbox"
+                                                                ]
+                                                                []
+                                        in
+                                        case checkbox of
+                                            Just cb ->
+                                                li [ attribute "style" "list-style:none;margin-left:-1rem;" ] (cb :: children)
+
+                                            Nothing ->
+                                                li [] children
+                            )
+                    )
         , text =
             \t ->
                 if recursive then
@@ -126,7 +167,7 @@ frac6Renderer style recursive =
 
                 else
                     text t
-        , table = \x -> div [ class "table-container" ] [ Html.table [] x ]
+        , table = \x -> div [ class "table-container" ] [ table [] x ]
         , html =
             -- Html tag supported in the text
             Markdown.Html.oneOf
