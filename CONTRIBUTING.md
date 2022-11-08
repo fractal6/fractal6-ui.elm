@@ -5,11 +5,14 @@ Please read this file before contributing.
 
 If you need to alter the schema, please refers to https://github.com/fractal6/fractal6.go/blob/master/CONTRIBUTING
 
-To re-generate the GraphQl parser code for Elm:
+To re-generate the GraphQl parser code for Elm, run (\*):
 
     make gen
 
-### File structure
+(\*) Assuming that your schema is located in `../fractal6-schema/gen/schema.graphql`
+
+
+### Elm File structure
 
 The frontend is written in [Elm](https://elm-lang.org/).
 Elm is delightful language, purely functional, typed, with great performance, small assets and that compile to Javascript.
@@ -30,9 +33,10 @@ Elm code is structured inside the `src/` folder:
 
 Javascript ports are located in `assets/js`
 
-### Style
+### Design
 
 Bulma + custom Sass files. See `assets/sass/`.
+
 
 ## Routing
 
@@ -40,6 +44,7 @@ We use [elm-spa](https://www.elm-spa.dev/) as the spa framework. It defines the 
 For exemple: `Pages/o/Dynamiyc.elm` makes the route at `https://[domain_name]/o/my_org`
 
 Note: For the moment we lock the `elm-spa` version to the v4 version as it is working well, and upgrading to v6 will be time consuming while the benefits of it is not guaranteed.
+
 
 ## Creating new components
 
@@ -67,6 +72,7 @@ Finally, when you want to use your component inside a file, let's say in a page 
 
     melm.py push -w Components.MyDropdown Page.Exemple
 
+
 Note: some manually edit can be necessayry anyway, but following the elm compiler should guide you to light.
 
 You can obtain the full script documentation by typing
@@ -74,20 +80,12 @@ You can obtain the full script documentation by typing
     melm.py --help
 
 
-
 ### Typo rules and naming conventions
 
+- Elm code should be formated with `elm-format`.
 - Elm Messages should be prefix with `On` then the verb that characterize the action it convey (i.e. `OnSubmitClick`)
 - Elm Share/Global message should be prefixed by `Do` then the verb that characterize the action it convey (i.e. `DoUpdateSession`)
 
-
-### Updating schema
-
-To propagate a schema update, run (\*):
-
-    make gen
-
-(\*) Assuming that your schema is located in `../fractal6-schema/gen/schema.graphql`
 
 ### Git Branches
 
@@ -119,7 +117,6 @@ Here are some common used for so called semantic commit message:
 Extra : 
 - ui: A code change that affects visual components (size or position of button, with of something etc)
 - ux: A code change that affects interaction, usability or ergonomics. 
-
 
 
 ### Reporting issues, Questions, Feedback

@@ -52,9 +52,10 @@ Note: you will need to edit the API_URL in `webpack.config.js` to match your ser
 
 You can open issues for bugs you've found or features you think are missing. You can also submit pull requests to this repository. To get started, take a look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
-You can follow Fractale organisation and roadmap at [o/f6](https://fractale.co/o/f6).
+You can follow Fractale organisation and roadmap at [o/f6](https://fractale.co/o/f6) and espacially [t/f6/ui-ux](https://fractale.co/t/f6/ui-ux).
 
 IRC channel: #fractal6 on matrix.org
+
 
 ## License
 

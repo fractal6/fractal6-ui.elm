@@ -5,6 +5,9 @@
     &.fix-inline > p {
       display: inline;
     }
+    & > ul {
+        //margin-left: 1rem;
+    }
 
     // Html
 
