@@ -5,6 +5,15 @@ LANGS := en fr
 elm-js := elm.js
 elm-min-js := elm.min.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
+$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
+$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
+$(eval RELEASE_VERSION=$(shell git tag -l --sort=-creatordate | head -n 1))
+NAME := fractal6-ui.elm
+RELEASE_NAME := $(NAME)-v$(RELEASE_VERSION)
+RELEASE_DIR := releases/$(RELEASE_VERSION)
+BUILD_DIRS := $(addprefix public-build/, $(LANGS))
+OP_BUILD_DIRS := $(addprefix releases/, $(LANGS))
+#.PHONY: $(BUILD_DIRS)
 
 
 default: run
@@ -27,52 +36,6 @@ prod:
 dev:
 	npm run dev
 
-# Deploy on Netlyfy/Fleek
-deploy_netlify: prod
-	$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
-	$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
-	cd ../build && \
-		rm static -rf && \
-		cp ../fractal6-ui.elm/dist/* . -r && \
-		cp ../fractal6-ui.elm/netlify.toml . && \
-		git add * && \
-		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
-		git push origin master && \
-		cd -
-
-# Publish builds for all LANGS
-BUILD_DIRS := $(addprefix public/, $(LANGS))
-#.PHONY: $(BUILD_DIRS)
-publish: $(BUILD_DIRS)
-	$(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
-	$(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
-	git rev-parse --short HEAD > ../public-build/client_version && \
-		cd ../public-build/ && \
-		git add * && \
-		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
-		git push origin main && \
-		cd - && \
-		echo "-- $@ done"
-# --
-publish_test: $(BUILD_DIRS)
-	git rev-parse --short HEAD > ../public-build/client_version
-	echo "-- $@ done"
-# --
-$(BUILD_DIRS): public/%:
-	# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
-	# Build frontend and Replace "/static/" link in the index.html entry point
-	./i18n.py gen -w -l $* && \
-		if [ $(MAKECMDGOALS) == publish_test ]; then \
-			npm run prod -- --env lang=$* --env debug=test; \
-		else \
-			npm run prod -- --env lang=$*; \
-		fi && \
-		rm -rf ../public-build/$* && \
-		mkdir ../public-build/$* && \
-		cp -r dist/* ../public-build/$* && \
-		sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html && \
-		echo "buid $* lang to $@"
-
 gen:
 	# Remove all directive due to a bug of elm-graphql who
 	# does not support multiple directive on the same field.
@@ -84,6 +47,96 @@ review:
 	# TODO: try elm-review
 	# INstall:
 	# npx elm-review init --template jfmengels/elm-review-config/application
+
+
+#
+# Publish builds in public folder for all LANGS
+#
+
+# Deploy on Netlyfy/Fleek
+publish_netlify: prod
+	cd ../build && \
+		rm static -rf && \
+		cp ../fractal6-ui.elm/dist/* . -r && \
+		cp ../fractal6-ui.elm/netlify.toml . && \
+		git add * && \
+		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
+		git push origin master && \
+		cd -
+
+publish_test: $(BUILD_DIRS)
+	@git rev-parse --short HEAD > ../public-build/client_version
+	echo "-- $@ done"
+
+publish: $(BUILD_DIRS)
+	@echo $(COMMIT_NAME) > ../public-build/client_version && \
+		cd ../public-build/ && \
+		git add * && \
+		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
+		git push origin main && \
+		cd - && \
+		echo "-- $@ done"
+
+$(BUILD_DIRS): public-build/%:
+	@# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
+	# Build frontend and Replace "/static/" link in the index.html entry point
+	./i18n.py gen -w -l $* && \
+		if [ $(MAKECMDGOALS) == publish_test ]; then \
+			npm run prod -- --env lang=$* --env debug=test; \
+		else \
+			npm run prod -- --env lang=$*; \
+		fi && \
+		rm -rf ../public-build/$* && \
+		mkdir ../public-build/$* && \
+		cp -r dist/* ../public-build/$* && \
+		sed -i "s/\/static\//\/$*\/static\//g" ../public-build/$*/index.html && \
+		echo "buid $* for $@"
+
+#
+# Publish builds in releases
+#
+
+publish_op: op_pre_build $(OP_BUILD_DIRS)
+	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
+		mv $(RELEASE_NAME).zip $(RELEASE_DIR) && \
+		curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) \
+			--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
+			https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
+		echo "-- done"
+
+upload_release:
+	curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) \
+		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
+		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
+
+delete_release:
+	curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) -X DELETE \
+		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
+
+
+op_pre_build:
+	@if [ -d "$(RELEASE_DIR)" ]; then
+		@echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
+		exit 1
+	fi
+	echo "Building (or Re-building) release: $(RELEASE_NAME)"
+	mkdir -p $(RELEASE_DIR)/$(RELEASE_NAME)
+
+$(OP_BUILD_DIRS): releases/%:
+	@# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
+	# Build frontend and Replace "/static/" link in the index.html entry point
+	./i18n.py gen -w -l $* && \
+		if [ $(MAKECMDGOALS) == publish_test ]; then \
+			npm run prod -- --env lang=$* --env debug=test; \
+		else \
+			npm run prod -- --env lang=$*; \
+		fi && \
+		rm -rf $(RELEASE_DIR)/$(RELEASE_NAME)$* && \
+		mkdir $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
+		cp -r dist/* $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
+		sed -i "s/\/static\//\/$*\/static\//g" $(RELEASE_DIR)/$(RELEASE_NAME)/$*/index.html && \
+		echo "buid $@ for $(RELEASE_DIR)/$(RELEASE_NAME))"
 
 
 # =================================

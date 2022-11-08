@@ -95,7 +95,7 @@ module.exports = (env, argv) => {
                 patterns: [{
                     from: 'assets/images',
                     to: 'static/images/' ,
-                    globOptions: { ignore: ['*.swp'] }
+                    globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
                 }],
             }),
         ],

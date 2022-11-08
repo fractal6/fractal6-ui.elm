@@ -1,6 +1,7 @@
 elm-stuff
 node_modules
 dist/
+releases/
 
 # Auto-generated
 src/Text.elm
