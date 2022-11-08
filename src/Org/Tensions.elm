@@ -878,7 +878,12 @@ update global message model =
                 Ok e ->
                     let
                         h =
-                            e.viewport.height - e.element.y
+                            if e.viewport.height - e.element.y < 511 then
+                                -- allow y-scroll here. Substract the header size.
+                                e.viewport.height - 50
+
+                            else
+                                e.viewport.height - e.element.y
                     in
                     ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
 
