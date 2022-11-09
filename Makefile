@@ -12,7 +12,7 @@ NAME := fractal6-ui.elm
 RELEASE_NAME := fractal6-ui
 RELEASE_DIR := releases/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
-OP_BUILD_DIRS := $(addprefix releases/, $(LANGS))
+RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
 #.PHONY: $(BUILD_DIRS)
 default: run
@@ -92,28 +92,17 @@ $(BUILD_DIRS): public-build/%:
 		echo "buid $* for $@"
 
 #
-# Publish builds in op releases
+# Publish builds in prod releases
 #
 
-publish_op: pre_build_op $(OP_BUILD_DIRS)
-	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
-		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
-		mv $(RELEASE_NAME).zip $(RELEASE_DIR) && \
-		curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
-			--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
-			https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
-		echo "-- done"
+publish_prod: pre_build_prod build_release_prod
+	echo "-- Please upload your release to github: $(RELEASE_DIR)/$(RELEASE_NAME)"
 
-upload_release:
-	curl -k -H "Authorization: token $(F6_TOKEN)" \
-		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
-		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
-
-delete_release:
-	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
-		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
-
-pre_build_op:
+pre_build_prod:
+	@if [ "$(BRANCH_NAME)" != "prod" ]; then
+		@echo "You should be on the 'prod' branch to use this rule."
+		exit 1
+	fi
 	@if [ -d "$(RELEASE_DIR)" ]; then
 		@echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
 		exit 1
@@ -121,7 +110,49 @@ pre_build_op:
 	echo "Building (or Re-building) release: $(RELEASE_NAME)"
 	mkdir -p $(RELEASE_DIR)/$(RELEASE_NAME)
 
-$(OP_BUILD_DIRS): releases/%:
+build_release_prod: $(RELEASE_BUILD_DIRS)
+	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
+		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
+
+#
+# Publish builds in op releases
+#
+
+publish_op: pre_build_op build_release_op upload_release_op
+	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
+		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
+
+pre_build_op:
+	@if [ "$(BRANCH_NAME)" != "op" ]; then
+		@echo "You should be on the 'op' branch to use this rule."
+		exit 1
+	fi
+	@if [ -d "$(RELEASE_DIR)" ]; then
+		@echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
+		exit 1
+	fi
+	echo "Building (or Re-building) release: $(RELEASE_NAME)"
+	mkdir -p $(RELEASE_DIR)/$(RELEASE_NAME)
+
+build_release_op: $(RELEASE_BUILD_DIRS)
+
+upload_release_op:
+	@curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
+		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
+		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
+	echo "-- done"
+
+delete_release_op:
+	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
+		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
+
+#
+# Share release build rules
+#
+
+$(RELEASE_BUILD_DIRS): releases/%:
 	@# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
 	# Build frontend and Replace "/static/" link in the index.html entry point
 	./i18n.py gen -w -l $* && \

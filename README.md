@@ -26,7 +26,7 @@ Using Fractale for your organization provides the following capabilities and fea
 
 First, generate the elm i18n langage source code (it will generate the `src/Text.elm` file): 
 
-    ./i18n.py gen -w -l
+    ./i18n.py gen -w -l [LANG]
 
 **Run the test server**
 
