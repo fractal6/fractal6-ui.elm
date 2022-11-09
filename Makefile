@@ -9,13 +9,12 @@ $(eval BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD))
 $(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
 $(eval RELEASE_VERSION=$(shell git tag -l --sort=-creatordate | head -n 1))
 NAME := fractal6-ui.elm
-RELEASE_NAME := $(NAME)-v$(RELEASE_VERSION)
+RELEASE_NAME := fractal6-ui
 RELEASE_DIR := releases/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 OP_BUILD_DIRS := $(addprefix releases/, $(LANGS))
+
 #.PHONY: $(BUILD_DIRS)
-
-
 default: run
 
 run:
@@ -93,29 +92,28 @@ $(BUILD_DIRS): public-build/%:
 		echo "buid $* for $@"
 
 #
-# Publish builds in releases
+# Publish builds in op releases
 #
 
-publish_op: op_pre_build $(OP_BUILD_DIRS)
+publish_op: pre_build_op $(OP_BUILD_DIRS)
 	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
 		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
 		mv $(RELEASE_NAME).zip $(RELEASE_DIR) && \
-		curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) \
+		curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
 			--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
 			https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
 		echo "-- done"
 
 upload_release:
-	curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) \
+	curl -k -H "Authorization: token $(F6_TOKEN)" \
 		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
 		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
 
 delete_release:
-	curl -k --user $(MAINTAINER_NAME):$(MAINTAINER_PASSWORD) -X DELETE \
+	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
 		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
 
-
-op_pre_build:
+pre_build_op:
 	@if [ -d "$(RELEASE_DIR)" ]; then
 		@echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
 		exit 1
@@ -139,7 +137,7 @@ $(OP_BUILD_DIRS): releases/%:
 		echo "buid $@ for $(RELEASE_DIR)/$(RELEASE_NAME))"
 
 
-# =================================
+# =============================================================================
 
 assets: icon css js
 
