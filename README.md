@@ -2,19 +2,19 @@
 
 Single-page application frontend for [Fractale](https://fractale.co).
 
-**Fractale** is a platform for self-organization. It is designed around the concept that an organization can be represented as a tree, and the principles of transparency, governance decentralization and authority distribution. A tree divides in branches and form leaves, likewise an organization divides in **Circles** that can have **Roles**. Both circles and roles have an associated descriptive document, called **Mandate**, intended to define its purpose and operating rules. Finally, the communication inside the organization is done trough **Tensions**, and make the link between users and organizations. You can think of it as an email, but more structured and more powerful.
+**Fractale** is a platform for self-organization. It is designed around the concept that an organization can be represented as a tree and should follow principles of transparency, governance decentralization and authority distribution. A tree divides in branches and form leaves, likewise an organization divides in **Circles** that can have **Roles**. Both, circles and roles have an associated descriptive document, called **Mandate**, intended to define its purpose and operating rules. Finally, the communication inside the organization is done trough **Tensions**, and make the link between users and organizations. You can think of a tension as an email, but more structured and more powerful.
 
-Using Fractale for your organization provides the following capabilities and features:
-* Tree and Graph-Packing organisation map and navigation.
-* Organization visibility define at circles level.
-* ACL based on member role and circle governance rules.
-* Ticketing management through Tensions.
-* Discussion thread and subscription per tension.
-* Journal history of events (including mandate updates).
-* Email notifications and response.
-* Labels system.
-* Role templates system.
-* GraphQL API.
+Using Fractale for your organization offers the following capabilities and feature:
+* Tree and Graph-Packing organisation navigation
+* Organization visibility defined at circles level
+* ACL based on member roles and circle governance rules
+* Ticketing management through Tensions
+* Discussion thread and subscription per tension
+* Journal history of events (including mandate updates!)
+* Email notifications and response
+* Labels system
+* Role templates system
+* GraphQL API
 
 
 ## Install

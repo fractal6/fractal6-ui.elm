@@ -96,7 +96,7 @@ $(BUILD_DIRS): public-build/%:
 #
 
 publish_prod: pre_build_prod build_release_prod
-	git push origin prod
+	@git push origin prod
 	@echo "-- Please upload your release to github: $(RELEASE_DIR)/$(RELEASE_NAME)"
 
 pre_build_prod:
@@ -121,7 +121,7 @@ build_release_prod: $(RELEASE_BUILD_DIRS)
 #
 
 publish_op: pre_build_op build_release_op upload_release_op
-	git push f6 op
+	@git push f6 op
 	@echo "-- op release published"
 
 pre_build_op:
