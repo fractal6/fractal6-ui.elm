@@ -96,15 +96,16 @@ $(BUILD_DIRS): public-build/%:
 #
 
 publish_prod: pre_build_prod build_release_prod
-	echo "-- Please upload your release to github: $(RELEASE_DIR)/$(RELEASE_NAME)"
+	git push origin prod
+	@echo "-- Please upload your release to github: $(RELEASE_DIR)/$(RELEASE_NAME)"
 
 pre_build_prod:
 	@if [ "$(BRANCH_NAME)" != "prod" ]; then
-		@echo "You should be on the 'prod' branch to use this rule."
+		echo "You should be on the 'prod' branch to use this rule."
 		exit 1
 	fi
 	@if [ -d "$(RELEASE_DIR)" ]; then
-		@echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
+		echo "$(RELEASE_DIR) does exist, please remove it manually to rebuild this release."
 		exit 1
 	fi
 	echo "Building (or Re-building) release: $(RELEASE_NAME)"
@@ -120,9 +121,8 @@ build_release_prod: $(RELEASE_BUILD_DIRS)
 #
 
 publish_op: pre_build_op build_release_op upload_release_op
-	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
-		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
-		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
+	git push f6 op
+	@echo "-- op release published"
 
 pre_build_op:
 	@if [ "$(BRANCH_NAME)" != "op" ]; then
@@ -137,12 +137,14 @@ pre_build_op:
 	mkdir -p $(RELEASE_DIR)/$(RELEASE_NAME)
 
 build_release_op: $(RELEASE_BUILD_DIRS)
+	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
+		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
 
 upload_release_op:
 	@curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
 		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
 		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
-	echo "-- done"
 
 delete_release_op:
 	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
@@ -165,7 +167,7 @@ $(RELEASE_BUILD_DIRS): releases/%:
 		mkdir $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
 		cp -r dist/* $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
 		sed -i "s/\/static\//\/$*\/static\//g" $(RELEASE_DIR)/$(RELEASE_NAME)/$*/index.html && \
-		echo "buid $@ for $(RELEASE_DIR)/$(RELEASE_NAME))"
+		echo "buid $@ for $(RELEASE_DIR)/$(RELEASE_NAME)"
 
 
 # =============================================================================
