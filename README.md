@@ -42,8 +42,8 @@ To run webpack with the production code (i.e with optimization)
 ## Build for production
 
 The code will be generated in the `dist` folder:
-Note: you will need to edit the API_URL in `webpack.config.js` to match your server domain and CORS requirements
-      Otherwise, the front will query the api.fractale.co domain.
+
+> you will need to edit the API_URL in `webpack.config.js` to match your server domain and CORS requirements Otherwise, the front will query the api.fractale.co domain.
 
     make prod
 
