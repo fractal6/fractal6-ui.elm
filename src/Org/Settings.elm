@@ -1249,7 +1249,10 @@ view global model =
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
     in
-    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
+    { title =
+        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
+            ++ " · "
+            ++ T.settings
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData
