@@ -1,7 +1,9 @@
-elm-stuff
-node_modules
+# Elm
+elm-stuff/
+node_modules/
 dist/
 releases/
+review/
 
 # Auto-generated
 src/Text.elm

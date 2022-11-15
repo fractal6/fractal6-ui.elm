@@ -724,8 +724,7 @@ membersDecoder data =
                 else
                     d
                         |> List.filterMap identity
-                        |> List.map (\x -> x.first_link)
-                        |> List.filterMap identity
+                        |> List.filterMap (\x -> x.first_link)
                         |> Just
             )
         |> withDefault Nothing
@@ -1017,8 +1016,7 @@ rolesDecoder data =
                 else
                     d
                         |> List.filterMap identity
-                        |> List.map (\x -> x.roles |> withDefault [])
-                        |> List.concat
+                        |> List.concatMap (\x -> withDefault [] x.roles)
                         |> Just
             )
         |> withDefault Nothing
@@ -1056,8 +1054,7 @@ labelsDecoder data =
                 else
                     d
                         |> List.filterMap identity
-                        |> List.map (\x -> x.labels |> withDefault [])
-                        |> List.concat
+                        |> List.concatMap (\x -> withDefault [] x.labels)
                         |> Just
             )
         |> withDefault Nothing

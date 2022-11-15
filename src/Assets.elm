@@ -50,10 +50,12 @@ image filename =
     "/assets/images/" ++ filename
 
 
+error : String
 error =
     image "error.jpg"
 
 
+loading : String
 loading =
     image "loading.svg"
 

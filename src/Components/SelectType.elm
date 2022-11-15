@@ -223,7 +223,7 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+            ( close model, out2 (Ports.close_modal :: cmds) gcmds )
 
         OnReset ->
             ( reset model, noOut )
@@ -423,12 +423,11 @@ viewModalContent op (State model) =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class "button is-light is-success"
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not (isSendable model) || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit <| OnPatchData) ]
-                        )
+                        [ class "button is-light is-success"
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not (isSendable model) || isLoading)
+                        , onClick (OnSubmit <| OnPatchData)
+                        ]
                         [ text T.updateType ]
                     ]
                 ]

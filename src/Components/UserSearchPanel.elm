@@ -399,13 +399,12 @@ view op (State model) =
         [ if model.isOpen then
             let
                 selectedAssignees =
-                    List.map
+                    List.concatMap
                         -- name is not passed from url
                         (\l ->
                             List.filter (\u -> l.username == u.username) (withMaybeData model.assignees_data |> withDefault [])
                         )
                         op.selectedAssignees
-                        |> List.concat
             in
             view_ { op | selectedAssignees = selectedAssignees } model
 

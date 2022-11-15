@@ -32,24 +32,24 @@ import Text as T
 
 showMsg : String -> String -> String -> String -> String -> Html msg
 showMsg id_ cls icon header message =
-    let
-        did =
-            "acc" ++ id_
-
-        mkdCls =
-            if String.contains "is-light" cls then
-                "is-light"
-
-            else if String.contains "is-dark" cls then
-                "is-dark"
-
-            else
-                ""
-    in
     if message == "" then
         div [ class ("notification p-4 m-0 mb-2 is-size-7 " ++ cls) ] [ A.icon1 icon (upH header) ]
 
     else
+        let
+            did =
+                "acc" ++ id_
+
+            mkdCls =
+                if String.contains "is-light" cls then
+                    "is-light"
+
+                else if String.contains "is-dark" cls then
+                    "is-dark"
+
+                else
+                    ""
+        in
         div [ class "accordion arrows-right" ]
             [ input [ id did, name "accordion", type_ "radio" ] []
             , section [ class ("acc message is-small " ++ cls) ]

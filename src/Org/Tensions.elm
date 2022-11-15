@@ -1283,7 +1283,7 @@ update global message model =
                 authors =
                     Maybe.map
                         (\r ->
-                            if Tuple.first r == True then
+                            if Tuple.first r then
                                 model.authors ++ [ Tuple.second r ]
 
                             else
@@ -1317,7 +1317,7 @@ update global message model =
                 labels =
                     Maybe.map
                         (\r ->
-                            if Tuple.first r == True then
+                            if Tuple.first r then
                                 model.labels ++ [ Tuple.second r ]
 
                             else
@@ -1412,7 +1412,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString model.url) ]
 
                                 else
@@ -2037,7 +2037,7 @@ viewCircleTensions model =
                                                                 []
                                                            )
                                                     )
-                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" Navigate ]
+                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" ]
                                                ]
                                             ++ ternary hasLastColumn
                                                 [ draggingDiv ]
@@ -2095,7 +2095,7 @@ viewTensions conf focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension conf focus t True True "is-size-6 t-o" Navigate)
+                        |> List.map (\t -> mediaTension conf focus t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

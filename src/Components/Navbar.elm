@@ -67,7 +67,7 @@ view user notif url replaceUrl =
                  ]
                     ++ (if orgUrl then
                             case user of
-                                LoggedIn uctx ->
+                                LoggedIn _ ->
                                     [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu icon-bg" ]
                                     , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
                                     ]
@@ -78,8 +78,9 @@ view user notif url replaceUrl =
                         else
                             []
                        )
-                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" user notif url ] ]
-                    ++ [ A.burger "userMenu" ]
+                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" user notif url ]
+                       , A.burger "userMenu"
+                       ]
                 )
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
@@ -227,7 +228,7 @@ userButtons user url replaceUrl =
             ]
 
         LoggedOut ->
-            [ div [ class "navbar-item has-dropdown is-hoverable" ]
+            div [ class "navbar-item has-dropdown is-hoverable" ]
                 [ div
                     [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"
@@ -240,8 +241,7 @@ userButtons user url replaceUrl =
                         )
                         Lang.list
                 ]
-            ]
-                ++ (if List.member (fromUrl url) [ Just Login, Just Signup ] then
+                :: (if List.member (fromUrl url) [ Just Login, Just Signup ] then
                         []
 
                     else

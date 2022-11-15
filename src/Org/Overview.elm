@@ -537,8 +537,7 @@ update global message model =
                                     let
                                         newLookup =
                                             path.focus.children
-                                                |> List.map (\n -> Dict.get n.nameid data)
-                                                |> List.filterMap identity
+                                                |> List.filterMap (\n -> Dict.get n.nameid data)
                                                 |> Array.fromList
                                     in
                                     ( { model | node_quickSearch = { qs | lookup = newLookup, visible = True, idx = 0 } }, Cmd.none, Cmd.none )
@@ -611,7 +610,7 @@ update global message model =
 
                 27 ->
                     --ESC
-                    ( model, Cmd.batch [ send LookupBlur ], Cmd.none )
+                    ( model, send LookupBlur, Cmd.none )
 
                 40 ->
                     --DOWN
@@ -696,7 +695,7 @@ update global message model =
                             ]
                     in
                     ( { model | path_data = Just path, depth = Just maxdepth }
-                    , Cmd.batch ([ Ports.drawButtonsGraphPack ] ++ cmds)
+                    , Cmd.batch (Ports.drawButtonsGraphPack :: cmds)
                     , send (UpdateSessionPath (Just path))
                     )
 
@@ -779,7 +778,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else
@@ -1161,7 +1160,7 @@ viewSearchList _ model =
                                     (if i == 0 && n.type_ == NodeType.Circle then
                                         [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.circle ] ]
 
-                                     else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
+                                     else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) then
                                         [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.role ] ]
 
                                      else
@@ -1427,7 +1426,7 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension model.conf model.node_focus x False True "is-size-6" Navigate) tensions
+                                List.map (\x -> mediaTension model.conf model.node_focus x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
@@ -1505,8 +1504,7 @@ nodeFragmentFromOrga node_m nodeData children_eo ndata =
     let
         children =
             children_eo
-                |> List.map (\n -> Dict.get n.nameid ndata)
-                |> List.filterMap identity
+                |> List.filterMap (\n -> Dict.get n.nameid ndata)
                 |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
                 |> List.map node2SubNodeFragment
                 |> Just

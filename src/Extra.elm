@@ -33,13 +33,14 @@ import String.Extra as SE
 -- Utils
 
 
-ternary test positive negative =
+ternary : Bool -> a -> a -> a
+ternary test pos neg =
     -- Save som lines ;)
     if test then
-        positive
+        pos
 
     else
-        negative
+        neg
 
 
 toMapOfList : List ( String, a ) -> Dict String (List a)

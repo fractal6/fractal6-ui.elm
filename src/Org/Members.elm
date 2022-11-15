@@ -358,7 +358,7 @@ update global message model =
                 Success mbs ->
                     ( { model
                         | members_sub =
-                            List.map
+                            List.filterMap
                                 (\m ->
                                     case memberRolesFilter m.roles of
                                         [] ->
@@ -368,7 +368,6 @@ update global message model =
                                             Just { m | roles = roles }
                                 )
                                 mbs
-                                |> List.filterMap identity
                                 |> Success
                       }
                     , Cmd.none
@@ -479,7 +478,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else
@@ -818,7 +817,7 @@ viewMemberRoles conf baseUri roles isPanelOpen =
     div [ class "buttons" ] <|
         List.map
             (\r ->
-                viewRole2 (Just ( conf, r.createdAt )) (uriFromNameid baseUri r.nameid []) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
+                viewRole2 (Just ( conf, r.createdAt )) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
             )
             roles
 
@@ -833,7 +832,7 @@ viewMemberRoles conf baseUri roles isPanelOpen =
 memberRolesFilter : List UserRoleExtended -> List UserRoleExtended
 memberRolesFilter roles =
     roles
-        |> List.map
+        |> List.concatMap
             (\r ->
                 if List.member r.role_type [ RoleType.Guest, RoleType.Pending ] then
                     -- Filter Special roles
@@ -846,4 +845,3 @@ memberRolesFilter roles =
                 else
                     [ r ]
             )
-        |> List.concat

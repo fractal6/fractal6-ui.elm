@@ -160,12 +160,11 @@ getRoleType data =
 
 getNodeNameid : String -> NodeFragment -> String
 getNodeNameid receiverid node =
-    let
-        type_ =
-            withDefault NodeType.Role node.type_
-    in
     node.nameid
-        |> Maybe.map (\nid -> nodeIdCodec receiverid nid type_)
+        |> Maybe.map
+            (\nid ->
+                nodeIdCodec receiverid nid (withDefault NodeType.Role node.type_)
+            )
         |> withDefault ""
 
 
@@ -458,7 +457,7 @@ view data op_m =
 view_ : OrgaNodeData -> Maybe (Op msg) -> Html msg
 view_ data op_m =
     case data.tid_r of
-        Success tid ->
+        Success _ ->
             div []
                 [ if not data.hasInnerToolbar then
                     case op_m of
@@ -541,14 +540,14 @@ viewNodeStatus op =
                 [ text (T.published ++ " " ++ formatDate op.conf.lang op.conf.now flag) ]
 
         Nothing ->
-            let
-                isLoading =
-                    op.publish_result == LoadingSlowly
-            in
             div [ class "field has-addons" ]
                 [ div [ class "has-text-warning is-italic mr-3" ]
                     [ text T.revisionNotPublished ]
                 , if op.isAdmin then
+                    let
+                        isLoading =
+                            op.publish_result == LoadingSlowly
+                    in
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
                         , onClick (op.onSubmit isLoading <| op.onPushBlob op.blob.id)
@@ -580,7 +579,7 @@ viewBlob data op_m =
                                     data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
 
                                 isLoading =
-                                    op.data.result == LoadingSlowly && op.data.editMode == Just EditAbout
+                                    op.data.result == LoadingSlowly
                             in
                             [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
                             , viewBlobButtons BlobType.OnAbout isSendable isLoading op
@@ -596,7 +595,7 @@ viewBlob data op_m =
                                             data.node.mandate /= op.data.form.node.mandate
 
                                         isLoading =
-                                            op.data.result == LoadingSlowly && op.data.editMode == Just EditMandate
+                                            op.data.result == LoadingSlowly
                                     in
                                     [ viewMandateInput txt op.data.form.node.mandate op
                                     , viewBlobButtons BlobType.OnMandate isSendable isLoading op

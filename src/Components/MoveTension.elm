@@ -448,7 +448,7 @@ update_ apis message model =
                     out.result
                         |> Maybe.map
                             (\( terminate, _ ) ->
-                                if terminate == True then
+                                if terminate then
                                     [ send (OnClose { reset = True, link = "" }) ]
 
                                 else
@@ -459,6 +459,7 @@ update_ apis message model =
             ( { model | confirmContract = data }, out2 (out.cmds |> List.map (\m -> Cmd.map ConfirmContractMsg m) |> List.append cmds) out.gcmds )
 
 
+subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
@@ -653,12 +654,11 @@ viewModalContent op model =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class ("button defaultSubmit is-light is-" ++ color)
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not isSendable || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit <| OnMove) ]
-                        )
+                        [ class ("button defaultSubmit is-light is-" ++ color)
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not isSendable || isLoading)
+                        , onClick (OnSubmit <| OnMove)
+                        ]
                         [ text T.move ]
                     ]
                 ]

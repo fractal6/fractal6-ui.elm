@@ -665,10 +665,10 @@ update_ apis message model =
                                             |> withDefault ( "", "" )
                                         )
                         in
-                        ( { model | pos = pos, targetid = nameid, role_type = node.role_type }, out0 ([ send (OnOpen_ domid tid bid node) ] ++ cmds) )
+                        ( { model | pos = pos, targetid = nameid, role_type = node.role_type }, out0 (send (OnOpen_ domid tid bid node) :: cmds) )
 
                     Nothing ->
-                        ( { model | pos = pos, targetid = nameid, domid = domid }, out0 ([ fetchNode2 apis nameid OnGetNode ] ++ cmds) )
+                        ( { model | pos = pos, targetid = nameid, domid = domid }, out0 (fetchNode2 apis nameid OnGetNode :: cmds) )
 
             else
                 ( close model, noOut )
@@ -689,7 +689,7 @@ update_ apis message model =
                                     )
                     in
                     case model.pos of
-                        Just pos ->
+                        Just _ ->
                             ( { model | role_type = node.role_type }, out0 [ send (OnOpen_ model.domid tid bid node) ] )
 
                         Nothing ->
@@ -740,7 +740,7 @@ update_ apis message model =
                         _ ->
                             []
             in
-            ( newModel, out0 ([ Ports.open_modal ("actionPanelModal" ++ model.domid) ] ++ cmds) )
+            ( newModel, out0 (Ports.open_modal ("actionPanelModal" ++ model.domid) :: cmds) )
 
         OnCloseModal data ->
             let
@@ -1128,7 +1128,7 @@ viewPanel op model =
                                 text ""
                         ]
                             ++ -- ARCHIVE ACTION
-                               (if not (isRoot && isBaseMember_) then
+                               (if not isRoot then
                                     [ case op.tc.action_type of
                                         EDIT ->
                                             div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
@@ -1333,12 +1333,11 @@ viewStep1 op model =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class ("button defaultSubmit is-light is-" ++ color)
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not (isSendable model) || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit OnActionSubmit) ]
-                        )
+                        [ class ("button defaultSubmit is-light is-" ++ color)
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not (isSendable model) || isLoading)
+                        , onClick (OnSubmit OnActionSubmit)
+                        ]
                         [ action2submitstr model.state (isSelfContract model.form.uctx model.form.users) |> text ]
                     ]
                 ]

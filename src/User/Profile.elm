@@ -280,7 +280,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else

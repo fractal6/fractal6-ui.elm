@@ -15,6 +15,8 @@ BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
 #.PHONY: $(BUILD_DIRS)
+.PHONY: review
+
 default: run
 
 run:
@@ -43,9 +45,8 @@ gen:
 	rm schema.gql
 
 review:
-	# TODO: try elm-review
-	# INstall:
-	# npx elm-review init --template jfmengels/elm-review-config/application
+	# Setup: elm-review init --template jfmengels/elm-review-config/application
+	elm-review --ignore-dirs src/Fractal/ --compiler node_modules/.bin/elm > review/reviews.json
 
 
 #

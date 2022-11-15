@@ -397,7 +397,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else
@@ -465,7 +465,7 @@ viewSettingsMenu model =
     nav [ id "menuSettings", class "menu" ]
         [ ul [ class "menu-list" ] <|
             (menuList
-                |> List.map
+                |> List.concatMap
                     (\x ->
                         [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
@@ -473,7 +473,6 @@ viewSettingsMenu model =
                             ]
                         ]
                     )
-                |> List.concat
             )
         ]
 
@@ -618,7 +617,7 @@ viewEmailSettings user result switch_index menuFocus =
                 in
                 div [ class "media" ]
                     [ div [ class "field" ]
-                        [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user == True) ] []
+                        [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user) ] []
                         , label [ for ref_name ]
                             [ text space_
                             , text x.title

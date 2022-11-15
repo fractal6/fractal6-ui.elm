@@ -487,7 +487,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else
@@ -589,7 +589,7 @@ viewMenu model =
     nav [ id "menuSettings", class "menu mt-desktop" ]
         [ ul [ class "menu-list" ] <|
             (menuList
-                |> List.map
+                |> List.concatMap
                     (\x ->
                         [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
@@ -597,7 +597,6 @@ viewMenu model =
                             ]
                         ]
                     )
-                |> List.concat
             )
         ]
 
@@ -624,7 +623,7 @@ viewUserEvent conf ue =
                 -- I guess it's because the timestamp are equal which messed up the orders (@dgraph) ?
                 e =
                     ue.event
-                        |> List.map
+                        |> List.filterMap
                             (\uee ->
                                 case uee of
                                     TensionEvent ee ->
@@ -637,7 +636,6 @@ viewUserEvent conf ue =
                                     _ ->
                                         Nothing
                             )
-                        |> List.filterMap identity
                         |> List.head
                         |> withDefault e_
 
@@ -786,7 +784,7 @@ viewAssigned conf tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> mediaTension conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o" Navigate)
+                        |> List.map (\t -> mediaTension conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

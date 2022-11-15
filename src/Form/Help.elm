@@ -546,7 +546,7 @@ viewQuickHelp op (State model) =
     case model.doc of
         RemoteData.Success docs ->
             docs
-                |> List.map
+                |> List.concatMap
                     (\doc ->
                         [ header [ class "acc" ] [ label [ class "acc-title" ] [ textT doc.name ] ] ]
                             ++ (doc.tasks
@@ -567,7 +567,6 @@ viewQuickHelp op (State model) =
                                     |> List.concat
                                )
                     )
-                |> List.concat
                 |> List.append [ input [ id "acc-close", name "accordion", type_ "radio" ] [] ]
                 |> nav [ class "accordion arrows-left quickHelp" ]
 

@@ -755,7 +755,7 @@ hotTensionPush tension tsData =
     -- Push a new tension in the model if data is success
     case tsData of
         Success data ->
-            [ tension ] ++ data
+            tension :: data
 
         _ ->
             []
@@ -768,7 +768,7 @@ hotTensionPush2 tension tsData =
         Success data ->
             let
                 ts =
-                    [ tension ] ++ (Dict.get tension.receiver.nameid data |> withDefault [])
+                    tension :: (Dict.get tension.receiver.nameid data |> withDefault [])
             in
             Dict.insert tension.receiver.nameid ts data
 
@@ -796,8 +796,7 @@ orgaToUsersData : NodesDict -> UsersDict
 orgaToUsersData nd =
     nd
         |> Dict.toList
-        |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
-        |> List.filterMap identity
+        |> List.filterMap (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
         |> toMapOfList
 
 
@@ -807,8 +806,7 @@ orgaToUsers : NodesDict -> List User
 orgaToUsers nd =
     nd
         |> Dict.toList
-        |> List.map (\( k, n ) -> n.first_link)
-        |> List.filterMap identity
+        |> List.filterMap (\( k, n ) -> n.first_link)
         |> LE.uniqueBy .username
 
 

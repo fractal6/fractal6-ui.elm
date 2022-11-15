@@ -342,17 +342,13 @@ viewInput op model =
         selectedUsers =
             List.indexedMap
                 (\i x ->
-                    let
-                        user =
-                            User x.username x.name
-                    in
                     div [ class "tagsinput tags has-addons m-0 mr-2", classList [ ( "singleSelection", not model.multiSelect ) ] ]
                         [ span [ class "tag is-rounded" ]
                             [ if x.email /= "" then
                                 viewEmail x.email
 
                               else
-                                viewUserFull 0 False False user
+                                viewUserFull 0 False False (User x.username x.name)
                             ]
                         , span [ class "tag is-delete is-rounded", onClick (OnUnselect i) ] []
                         ]
@@ -365,11 +361,7 @@ viewInput op model =
                 |> (\l ->
                         case l of
                             [ a, b ] ->
-                                if a /= "" && b /= "" then
-                                    True
-
-                                else
-                                    False
+                                a /= "" && b /= ""
 
                             _ ->
                                 False

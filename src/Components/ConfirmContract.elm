@@ -257,7 +257,7 @@ update_ apis message model =
                 res =
                     withMaybeDataMap (\r -> ( True, r )) model.data_result
             in
-            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds res )
+            ( close model, Out (Ports.close_modal :: cmds) gcmds res )
 
         OnReset ->
             ( reset model, noOut )
@@ -329,6 +329,7 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
+subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
@@ -445,12 +446,11 @@ viewModalContent op (State model) =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class "button defaultSubmit is-light is-success"
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not isSendable || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit <| OnDataQuery) ]
-                        )
+                        [ class "button defaultSubmit is-light is-success"
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not isSendable || isLoading)
+                        , onClick (OnSubmit <| OnDataQuery)
+                        ]
                         [ text T.createContract ]
                     ]
                 ]

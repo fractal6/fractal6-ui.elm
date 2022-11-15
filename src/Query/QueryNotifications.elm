@@ -116,7 +116,7 @@ userNotificationsDecoder data =
                     |> Maybe.map
                         (\q ->
                             q
-                                |> List.map
+                                |> List.filterMap
                                     (\x ->
                                         case x.event of
                                             Just e ->
@@ -125,7 +125,6 @@ userNotificationsDecoder data =
                                             Nothing ->
                                                 Nothing
                                     )
-                                |> List.filterMap identity
                         )
             )
         |> withDefault Nothing

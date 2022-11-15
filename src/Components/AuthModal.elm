@@ -19,7 +19,7 @@
 -}
 
 
-module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, signupModal, subscriptions, update, view)
+module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -346,18 +346,18 @@ view op (State model) =
     div []
         [ case model.modalType of
             SigninModal ->
-                Lazy.lazy2 signinModal op model
+                Lazy.lazy2 viewSigninModal op model
 
             SignupModal puid ->
-                Lazy.lazy2 signupModal op model
+                Lazy.lazy2 viewSignupModal op model
 
             RefreshModal ->
-                Lazy.lazy2 refreshModal op model
+                Lazy.lazy2 viewRefreshModal op model
         ]
 
 
-refreshModal : Op -> Model -> Html Msg
-refreshModal op model =
+viewRefreshModal : Op -> Model -> Html Msg
+viewRefreshModal op model =
     div
         [ id "authModal"
         , class "modal modal-pos-top modal-fx-fadeIn"
@@ -437,8 +437,8 @@ refreshModal op model =
         ]
 
 
-signupModal : Op -> Model -> Html Msg
-signupModal op model =
+viewSignupModal : Op -> Model -> Html Msg
+viewSignupModal op model =
     div
         [ id "authModal"
         , class "modal modal-pos-top modal-fx-fadeIn"
@@ -530,8 +530,8 @@ signupModal op model =
         ]
 
 
-signinModal : Op -> Model -> Html Msg
-signinModal op model =
+viewSigninModal : Op -> Model -> Html Msg
+viewSigninModal op model =
     div
         [ id "authModal"
         , class "modal modal-pos-top modal-fx-fadeIn"

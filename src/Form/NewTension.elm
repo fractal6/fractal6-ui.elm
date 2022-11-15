@@ -824,7 +824,7 @@ update_ apis message model =
                         _ ->
                             []
             in
-            ( switchTab tab model, out0 ([ Ports.bulma_driver "tensionModal" ] ++ cmds) )
+            ( switchTab tab model, out0 (Ports.bulma_driver "tensionModal" :: cmds) )
 
         OnGotRoles result ->
             ( { model | roles_result = result }, noOut )
@@ -948,14 +948,14 @@ update_ apis message model =
                             [ Ev TensionEvent.Created "" "" ]
 
                         NewRoleTab ->
-                            if doClose == True then
+                            if doClose then
                                 [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
 
                             else
                                 [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
 
                         NewCircleTab ->
-                            if doClose == True then
+                            if doClose then
                                 [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
 
                             else
@@ -964,7 +964,7 @@ update_ apis message model =
             ( newModel
                 |> post "createdAt" (fromTime time)
                 |> setEvents events
-                |> setStatus (ternary (doClose == True) TensionStatus.Closed TensionStatus.Open)
+                |> setStatus (ternary doClose TensionStatus.Closed TensionStatus.Open)
                 |> setActiveButton doClose
                 |> setResult LoadingSlowly
             , out0 [ send (PushTension OnTensionAck) ]
@@ -1041,7 +1041,7 @@ update_ apis message model =
                 newModel =
                     Maybe.map
                         (\r ->
-                            if Tuple.first r == True then
+                            if Tuple.first r then
                                 addLabel (Tuple.second r) model
 
                             else
@@ -1129,8 +1129,7 @@ view op (State model) =
             ]
 
          else
-            []
-                ++ [ viewButton op model ]
+            [ viewButton op model ]
         )
 
 

@@ -180,13 +180,13 @@ tensionIcon2 type_ =
     span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2String type_) ]
 
 
-mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension conf focus tension showStatus showRecip size navigate =
-    Lazy.lazy7 mediaTension_ conf focus tension showStatus showRecip size navigate
+mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension conf focus tension showStatus showRecip size =
+    Lazy.lazy6 mediaTension_ conf focus tension showStatus showRecip size
 
 
-mediaTension_ : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension_ conf focus tension showStatus showRecip size navigate =
+mediaTension_ : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension_ conf focus tension showStatus showRecip size =
     let
         n_comments =
             --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
@@ -196,11 +196,7 @@ mediaTension_ conf focus tension showStatus showRecip size navigate =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div
-        [ class ("media mediaBox is-hoverable " ++ size)
-
-        --, onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
-        --, href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
-        ]
+        [ class ("media mediaBox is-hoverable " ++ size) ]
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
@@ -538,8 +534,8 @@ viewRole cls_ now_m link_m r =
         [ A.icon1 (role2icon r) r.name ]
 
 
-viewRole2 : Maybe ( Conf, String ) -> String -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
-viewRole2 now_m link r msg =
+viewRole2 : Maybe ( Conf, String ) -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
+viewRole2 now_m r msg =
     let
         since =
             case now_m of

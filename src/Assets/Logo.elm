@@ -75,8 +75,8 @@ type alias LogoInput =
     { color : String, h : String, w : String }
 
 
-logo : LogoInput -> Html msg
-logo s =
+logo : Html msg
+logo =
     svg
         [ id "logo"
         , viewBox "0 0 100 100"

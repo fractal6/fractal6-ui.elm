@@ -207,18 +207,16 @@ next_ nameid_m (Tree { node, children }) =
                 nameid_m
     in
     ternary (dive == Nothing) [ node.nameid ] []
-        ++ (List.map
-                (\(Tree c) ->
-                    case children of
-                        [] ->
-                            []
+        ++ List.concatMap
+            (\(Tree c) ->
+                case children of
+                    [] ->
+                        []
 
-                        _ ->
-                            next_ dive (Tree c)
-                )
-                children
-                |> List.concat
-           )
+                    _ ->
+                        next_ dive (Tree c)
+            )
+            children
 
 
 
@@ -626,8 +624,8 @@ viewSubTree : Int -> Maybe String -> NodeFocus -> Tree Node -> Html Msg
 viewSubTree depth hover focus (Tree { node, children }) =
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnOrgHover Nothing) ] [])
         [ li []
-            ([ Lazy.lazy3 viewCircleLine hover focus node ]
-                ++ List.map
+            (Lazy.lazy3 viewCircleLine hover focus node
+                :: List.map
                     (\(Tree c) ->
                         if c.node.role_type == Nothing then
                             viewSubTree (depth + 1) hover focus (Tree c)

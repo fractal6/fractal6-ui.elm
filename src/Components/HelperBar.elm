@@ -54,12 +54,12 @@ create =
 
 
 expand : HelperBar -> HelperBar
-expand hb =
+expand _ =
     Expanded
 
 
 collapse : HelperBar -> HelperBar
-collapse hb =
+collapse _ =
     Collapsed
 
 
@@ -288,15 +288,16 @@ memberButtons roles_ op =
                 Collapsed ->
                     List.take numberRolesCollapsed roles_
 
-        roleMoreLen =
-            List.length roles_ - List.length roles
-
         lastButton =
             case op.data of
                 Expanded ->
                     div [ class "button is-small", onClick op.onCollapse ] [ A.icon "icon-chevrons-left" ]
 
                 Collapsed ->
+                    let
+                        roleMoreLen =
+                            List.length roles_ - List.length roles
+                    in
                     if roleMoreLen > 0 then
                         div [ class "button has-font-weight-semibold is-small", onClick op.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
@@ -307,15 +308,14 @@ memberButtons roles_ op =
                         div [] []
     in
     roles
-        |> List.indexedMap
-            (\i r ->
+        |> List.concatMap
+            (\r ->
                 if r.role_type == RoleType.Member then
                     []
 
                 else
-                    [ viewRole2 Nothing (uriFromNameid op.baseUri r.nameid []) r op.onOpenPanel ]
+                    [ viewRole2 Nothing r op.onOpenPanel ]
             )
-        |> List.concat
         |> List.reverse
         |> List.append [ lastButton ]
         |> List.reverse

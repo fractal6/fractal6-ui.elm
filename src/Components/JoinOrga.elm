@@ -323,7 +323,7 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+            ( close model, out2 (Ports.close_modal :: cmds) gcmds )
 
         OnReset ->
             ( reset model, noOut )
@@ -579,11 +579,11 @@ viewModal op (State model) =
 
 viewSuccess : IdPayload -> Op -> Model -> Html Msg
 viewSuccess data op model =
-    let
-        link =
-            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
-    in
     if List.member model.step [ JoinOne, InviteOne ] then
+        let
+            link =
+                Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+        in
         div [ class "notification is-success-light", onClick (OnClose { reset = True, link = "" }) ]
             [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
             , A.icon1 "icon-check icon-2x has-text-success" " "

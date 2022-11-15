@@ -1276,7 +1276,7 @@ update global message model =
                                 (\x ->
                                     let
                                         assignees =
-                                            if Tuple.first r == True then
+                                            if Tuple.first r then
                                                 withDefault [] x.assignees ++ [ Tuple.second r ]
 
                                             else
@@ -1320,7 +1320,7 @@ update global message model =
                                 (\x ->
                                     let
                                         labels =
-                                            if Tuple.first r == True then
+                                            if Tuple.first r then
                                                 withDefault [] x.labels ++ [ Tuple.second r ]
 
                                             else
@@ -1516,7 +1516,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     -- reload silently the page if needed
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 

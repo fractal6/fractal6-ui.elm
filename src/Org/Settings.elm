@@ -628,7 +628,7 @@ update global message model =
             else
                 -- Toggle Add Label Box
                 ( { model
-                    | label_add = ternary (model.label_add == True) False True
+                    | label_add = ternary model.label_add False True
                     , label_edit = Nothing
                     , colorPicker = ColorPicker.setColor Nothing model.colorPicker
                   }
@@ -808,7 +808,7 @@ update global message model =
             else
                 -- Toggle Add Role Box
                 ( { model
-                    | role_add = ternary (model.role_add == True) False True
+                    | role_add = ternary model.role_add False True
                     , role_edit = Nothing
                     , colorPicker = ColorPicker.setColor Nothing model.colorPicker
                   }
@@ -1165,7 +1165,7 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True then
+                                if Tuple.first o then
                                     [ Nav.replaceUrl global.key (Url.toString model.url) ]
 
                                 else
@@ -1289,7 +1289,7 @@ viewSettingsMenu model =
     nav [ id "menuSettings", class "menu" ]
         [ ul [ class "menu-list" ] <|
             (model.menuList
-                |> List.map
+                |> List.concatMap
                     (\x ->
                         [ case x of
                             GlobalMenu ->
@@ -1303,7 +1303,6 @@ viewSettingsMenu model =
                             ]
                         ]
                     )
-                |> List.concat
             )
         ]
 
@@ -1482,7 +1481,7 @@ viewLabels model =
                                     ]
                                 ]
                             , labels
-                                |> List.map
+                                |> List.concatMap
                                     (\d ->
                                         [ tr [] <|
                                             if model.label_edit == Just d then
@@ -1528,7 +1527,6 @@ viewLabels model =
                                                         []
                                                )
                                     )
-                                |> List.concat
                                 |> tbody []
                             ]
                         ]
@@ -1753,7 +1751,7 @@ viewRoles model =
                                     ]
                                 ]
                             , roles
-                                |> List.map
+                                |> List.concatMap
                                     (\d ->
                                         [ tr [] <|
                                             if model.role_edit == Just d then
@@ -1806,7 +1804,6 @@ viewRoles model =
                                                         []
                                                )
                                     )
-                                |> List.concat
                                 |> tbody []
                             ]
                         ]

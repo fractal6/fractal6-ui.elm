@@ -351,7 +351,7 @@ circleTensionDecoder data =
                         node.tensions_out |> withDefault []
 
                     tchild =
-                        node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
+                        node.children |> withDefault [] |> List.concatMap subCircleTensionDecoder
                 in
                 (tin ++ tout ++ tchild)
                     |> uniqueBy .id

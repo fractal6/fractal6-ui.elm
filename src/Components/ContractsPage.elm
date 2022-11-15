@@ -19,7 +19,7 @@
 -}
 
 
-module Components.ContractsPage exposing (Msg(..), State, hasCid, hasLoadFailure, init, subscriptions, update, view)
+module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -269,7 +269,7 @@ type Msg
     | SetRootnameid String
     | DoClickContract String
     | DoQueryContracts
-    | DoQueryContract String
+    | DoQueryContract
     | DoDeleteContract String
     | DoPopContract String
     | DoVote Int Time.Posix
@@ -354,7 +354,7 @@ update_ apis message model =
                     ( { model | form = f, activeView = ContractsView }, out0 [ send DoQueryContracts ] )
 
                 _ ->
-                    ( { model | form = f, activeView = ContractView }, out0 [ send (DoQueryContract cid) ] )
+                    ( { model | form = f, activeView = ContractView }, out0 [ send DoQueryContract ] )
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )
@@ -367,18 +367,17 @@ update_ apis message model =
                 form =
                     model.form
 
-                f =
-                    { form | cid = cid }
-
                 url =
                     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = cid } |> toHref
             in
-            ( { model | form = f, activeView = ContractView }, out1 [ DoNavigate url ] )
+            ( { model | form = { form | cid = cid }, activeView = ContractView }
+            , out1 [ DoNavigate url ]
+            )
 
         DoQueryContracts ->
             ( { model | contracts_result = LoadingSlowly }, out0 [ getContracts apis model.form OnContractsAck ] )
 
-        DoQueryContract cid ->
+        DoQueryContract ->
             ( { model | contract_result = LoadingSlowly }, out0 [ getContract apis model.form OnContractAck ] )
 
         DoDeleteContract cid ->
@@ -430,7 +429,7 @@ update_ apis message model =
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep (DoQueryContract model.form.cid) 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryContract 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, [ { id = d.id } ] )) )
@@ -693,6 +692,7 @@ update_ apis message model =
             ( { model | comment_patch_form = { form | viewMode = viewMode } }, noOut )
 
 
+subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
@@ -760,8 +760,7 @@ viewContractsTable data op model =
             [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ text x ]))
             ]
         , data
-            |> List.map (\d -> viewRow d op model)
-            |> List.concat
+            |> List.concatMap (\d -> viewRow d op model)
             |> tbody []
         ]
 
@@ -769,16 +768,13 @@ viewContractsTable data op model =
 viewRow : Contract -> Op -> Model -> List (Html Msg)
 viewRow d op model =
     let
-        deleteLoading =
-            (model.contract_result_del == LoadingSlowly) && d.id == model.form.cid
-
         isDeleted =
             (withMaybeData model.contract_result_del /= Nothing) && model.form.cid == d.id
 
         isAuthor =
             d.createdBy.username == model.form.uctx.username
     in
-    [ tr
+    tr
         [ class "mediaBox is-hoverable"
         , classList [ ( "do-clear", isDeleted ) ]
         ]
@@ -795,6 +791,10 @@ viewRow d op model =
         -- n comments icons
         , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
             [ if isAuthor || op.isAdmin then
+                let
+                    deleteLoading =
+                        (model.contract_result_del == LoadingSlowly) && d.id == model.form.cid
+                in
                 span
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
@@ -805,22 +805,20 @@ viewRow d op model =
                 text ""
             ]
         ]
-    ]
-        ++ (if model.form.cid == d.id then
+        :: (if model.form.cid == d.id then
                 [ case model.contract_result of
                     Failure err ->
                         td [ colspan (List.length headers) ] [ viewGqlErrors err ]
 
                     _ ->
                         text ""
-                ]
-                    ++ [ case model.contract_result_del of
-                            Failure err ->
-                                td [ colspan (List.length headers) ] [ viewGqlErrors err ]
+                , case model.contract_result_del of
+                    Failure err ->
+                        td [ colspan (List.length headers) ] [ viewGqlErrors err ]
 
-                            _ ->
-                                text ""
-                       ]
+                    _ ->
+                        text ""
+                ]
 
             else
                 []
