@@ -404,7 +404,7 @@ viewModalContent op (State model) =
                                 [ A.icon1 (tensionTypeIcon tensionType) (tensionType2String tensionType) ]
                             ]
                     )
-                    TensionType.list
+                    [ TensionType.Operational, TensionType.Governance, TensionType.Help ]
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
             [ case model.data_result of

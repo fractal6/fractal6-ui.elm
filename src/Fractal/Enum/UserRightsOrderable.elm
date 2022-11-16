@@ -9,11 +9,12 @@ import Json.Decode as Decode exposing (Decoder)
 
 type UserRightsOrderable
     = MaxPublicOrga
+    | MaxPrivateOrga
 
 
 list : List UserRightsOrderable
 list =
-    [ MaxPublicOrga ]
+    [ MaxPublicOrga, MaxPrivateOrga ]
 
 
 decoder : Decoder UserRightsOrderable
@@ -24,6 +25,9 @@ decoder =
                 case string of
                     "maxPublicOrga" ->
                         Decode.succeed MaxPublicOrga
+
+                    "maxPrivateOrga" ->
+                        Decode.succeed MaxPrivateOrga
 
                     _ ->
                         Decode.fail ("Invalid UserRightsOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +41,9 @@ toString enum____ =
     case enum____ of
         MaxPublicOrga ->
             "maxPublicOrga"
+
+        MaxPrivateOrga ->
+            "maxPrivateOrga"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +62,9 @@ fromString enumString____ =
     case enumString____ of
         "maxPublicOrga" ->
             Just MaxPublicOrga
+
+        "maxPrivateOrga" ->
+            Just MaxPrivateOrga
 
         _ ->
             Nothing

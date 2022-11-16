@@ -81,7 +81,7 @@ import Loading
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionStatus2String, tensionType2String, tensionTypeColor)
+import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2String, tensionType2String)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -1693,9 +1693,9 @@ viewSearchBar model =
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
                                     [ ternary (model.statusFilter == AllStatus) checked unchecked, text (statusFilter2Text AllStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, text (statusFilter2Text OpenStatus) ]
+                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, text (statusFilter2Text ClosedStatus) ]
+                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
                                 ]
                             ]
                         ]
@@ -1714,7 +1714,7 @@ viewSearchBar model =
                                     ++ List.map
                                         (\t ->
                                             div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
-                                                [ ternary (model.typeFilter == OneType t) checked unchecked, span [ class (tensionTypeColor "text" t) ] [ text (typeFilter2Text (OneType t)) ] ]
+                                                [ ternary (model.typeFilter == OneType t) checked unchecked, tensionIcon2 t ]
                                         )
                                         TensionType.list
                                 )

@@ -12,12 +12,13 @@ type UserRightsHasFilter
     | CanLogin
     | CanCreateRoot
     | MaxPublicOrga
+    | MaxPrivateOrga
     | HasEmailNotifications
 
 
 list : List UserRightsHasFilter
 list =
-    [ Type_, CanLogin, CanCreateRoot, MaxPublicOrga, HasEmailNotifications ]
+    [ Type_, CanLogin, CanCreateRoot, MaxPublicOrga, MaxPrivateOrga, HasEmailNotifications ]
 
 
 decoder : Decoder UserRightsHasFilter
@@ -37,6 +38,9 @@ decoder =
 
                     "maxPublicOrga" ->
                         Decode.succeed MaxPublicOrga
+
+                    "maxPrivateOrga" ->
+                        Decode.succeed MaxPrivateOrga
 
                     "hasEmailNotifications" ->
                         Decode.succeed HasEmailNotifications
@@ -62,6 +66,9 @@ toString enum____ =
 
         MaxPublicOrga ->
             "maxPublicOrga"
+
+        MaxPrivateOrga ->
+            "maxPrivateOrga"
 
         HasEmailNotifications ->
             "hasEmailNotifications"
@@ -92,6 +99,9 @@ fromString enumString____ =
 
         "maxPublicOrga" ->
             Just MaxPublicOrga
+
+        "maxPrivateOrga" ->
+            Just MaxPrivateOrga
 
         "hasEmailNotifications" ->
             Just HasEmailNotifications

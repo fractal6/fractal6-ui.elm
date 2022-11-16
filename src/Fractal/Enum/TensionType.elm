@@ -12,11 +12,12 @@ type TensionType
     | Governance
     | Help
     | Alert
+    | Announcement
 
 
 list : List TensionType
 list =
-    [ Operational, Governance, Help, Alert ]
+    [ Operational, Governance, Help, Alert, Announcement ]
 
 
 decoder : Decoder TensionType
@@ -36,6 +37,9 @@ decoder =
 
                     "Alert" ->
                         Decode.succeed Alert
+
+                    "Announcement" ->
+                        Decode.succeed Announcement
 
                     _ ->
                         Decode.fail ("Invalid TensionType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -58,6 +62,9 @@ toString enum____ =
 
         Alert ->
             "Alert"
+
+        Announcement ->
+            "Announcement"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -85,6 +92,9 @@ fromString enumString____ =
 
         "Alert" ->
             Just Alert
+
+        "Announcement" ->
+            Just Announcement
 
         _ ->
             Nothing

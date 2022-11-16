@@ -37,7 +37,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Identicon
@@ -119,6 +119,9 @@ tensionType2String s =
         TensionType.Alert ->
             T.alert
 
+        TensionType.Announcement ->
+            T.announcement
+
 
 statusColor : TensionStatus.TensionStatus -> String
 statusColor s =
@@ -145,6 +148,9 @@ tensionTypeColor elt tt =
         TensionType.Alert ->
             "has-" ++ elt ++ "-danger"
 
+        TensionType.Announcement ->
+            "has-" ++ elt ++ "-primary"
+
 
 tensionTypeIcon : TensionType.TensionType -> String
 tensionTypeIcon tt =
@@ -160,6 +166,9 @@ tensionTypeIcon tt =
 
         TensionType.Alert ->
             "icon-radio"
+
+        TensionType.Announcement ->
+            "icon-announce"
 
 
 tensionIcon : TensionType.TensionType -> Html msg
@@ -201,6 +210,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
                 , attribute "data-tooltip" (tensionType2String tension.type_)
+                , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
             ]

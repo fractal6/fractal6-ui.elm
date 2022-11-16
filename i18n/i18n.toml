@@ -622,6 +622,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Alert"
   fr="Alerte"
 
+[announcement]
+  en="Announcement"
+  fr="Annonce"
+
 [theVisibility]
   en="the visibility"
   fr="la visibilité"
@@ -2155,20 +2159,22 @@ Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque
 
 [tensionTypeDoc]
   en="""
-There are three main categories of tension:
+You can change a tension type to the following categories:
 
 - **Operational**: A general category, it can be task, an issue or whatever that need to be shared or tracked in the organization.
 - **Governance**: Concerning the structure of the organization, the mandates etc.
 - **Help**: For help requests, questions or clarifications.
-- **Alert**: For alerts, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
+
+Alert and Annoucement tension can only be set when you create a new tension.
 """
   fr="""
-Il existe trois grandes catégories de tensions :
+Vous pouvez modifier un type de tension dans les catégories suivantes  :
 
 - **Opérationnel** : Une catégorie générale, il peut s’agir d’une tâche, d’un problème ou de tout ce qui doit être partagé ou suivie dans l’organisation.
 - **Gouvernance** : Concernant la structure de l’organisation, les mandats, etc.
 - **Aide** : Pour les demandes d’aides, les questions ou les clarifications.
-- **Alerte** : Pour les alertes, ceci est utilisé pour une annonce globale. Tous les membres derrière le cercle alerté seront notifiés (niveau coordinateur à déclencher).
+
+Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous créez une nouvelle tension.
 """
 
 [visibilityInfoHeader]

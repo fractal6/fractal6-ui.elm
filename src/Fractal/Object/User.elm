@@ -114,6 +114,30 @@ subscriptions fillInOptionals____ object____ =
     Object.selectionForCompositeField "subscriptions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias WatchingOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter
+    , order : OptionalArgument Fractal.InputObject.NodeOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+watching :
+    (WatchingOptionalArguments -> WatchingOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+watching fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "watching" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias RightsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
 
@@ -321,6 +345,26 @@ subscriptionsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "subscriptionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias WatchingAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+watchingAggregate :
+    (WatchingAggregateOptionalArguments -> WatchingAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+watchingAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "watchingAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias RolesAggregateOptionalArguments =

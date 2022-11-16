@@ -42,3 +42,23 @@ maxPublicOrgaSum =
 maxPublicOrgaAvg : SelectionSet (Maybe Float) Fractal.Object.UserRightsAggregateResult
 maxPublicOrgaAvg =
     Object.selectionForField "(Maybe Float)" "maxPublicOrgaAvg" [] (Decode.float |> Decode.nullable)
+
+
+maxPrivateOrgaMin : SelectionSet (Maybe Int) Fractal.Object.UserRightsAggregateResult
+maxPrivateOrgaMin =
+    Object.selectionForField "(Maybe Int)" "maxPrivateOrgaMin" [] (Decode.int |> Decode.nullable)
+
+
+maxPrivateOrgaMax : SelectionSet (Maybe Int) Fractal.Object.UserRightsAggregateResult
+maxPrivateOrgaMax =
+    Object.selectionForField "(Maybe Int)" "maxPrivateOrgaMax" [] (Decode.int |> Decode.nullable)
+
+
+maxPrivateOrgaSum : SelectionSet (Maybe Int) Fractal.Object.UserRightsAggregateResult
+maxPrivateOrgaSum =
+    Object.selectionForField "(Maybe Int)" "maxPrivateOrgaSum" [] (Decode.int |> Decode.nullable)
+
+
+maxPrivateOrgaAvg : SelectionSet (Maybe Float) Fractal.Object.UserRightsAggregateResult
+maxPrivateOrgaAvg =
+    Object.selectionForField "(Maybe Float)" "maxPrivateOrgaAvg" [] (Decode.float |> Decode.nullable)

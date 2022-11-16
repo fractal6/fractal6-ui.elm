@@ -40,13 +40,14 @@ type NodeHasFilter
     | Second_link
     | Skills
     | Contracts
+    | Watchers
     | Orga_agg
     | Events_history
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Watchers, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -150,6 +151,9 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
+
+                    "watchers" ->
+                        Decode.succeed Watchers
 
                     "orga_agg" ->
                         Decode.succeed Orga_agg
@@ -262,6 +266,9 @@ toString enum____ =
 
         Contracts ->
             "contracts"
+
+        Watchers ->
+            "watchers"
 
         Orga_agg ->
             "orga_agg"
@@ -379,6 +386,9 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
+
+        "watchers" ->
+            Just Watchers
 
         "orga_agg" ->
             Just Orga_agg

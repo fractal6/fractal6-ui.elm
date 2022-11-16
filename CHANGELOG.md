@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unrealeased]
 
 ### New
-- Schema: new Annoucement tension type
+- Schema: new Announcement tension type
 
 
 ### Fixed

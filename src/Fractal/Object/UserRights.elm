@@ -40,6 +40,11 @@ maxPublicOrga =
     Object.selectionForField "Int" "maxPublicOrga" [] Decode.int
 
 
+maxPrivateOrga : SelectionSet Int Fractal.Object.UserRights
+maxPrivateOrga =
+    Object.selectionForField "Int" "maxPrivateOrga" [] Decode.int
+
+
 hasEmailNotifications : SelectionSet Bool Fractal.Object.UserRights
 hasEmailNotifications =
     Object.selectionForField "Bool" "hasEmailNotifications" [] Decode.bool

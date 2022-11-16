@@ -9,11 +9,15 @@ import Json.Decode as Decode exposing (Decoder)
 
 type ErrorBla
     = ContactCoordo
+    | OrgaLimitReached
+    | MemberLimitReached
+    | EmailLimitReached
+    | StorageLimitReached
 
 
 list : List ErrorBla
 list =
-    [ ContactCoordo ]
+    [ ContactCoordo, OrgaLimitReached, MemberLimitReached, EmailLimitReached, StorageLimitReached ]
 
 
 decoder : Decoder ErrorBla
@@ -24,6 +28,18 @@ decoder =
                 case string of
                     "ContactCoordo" ->
                         Decode.succeed ContactCoordo
+
+                    "OrgaLimitReached" ->
+                        Decode.succeed OrgaLimitReached
+
+                    "MemberLimitReached" ->
+                        Decode.succeed MemberLimitReached
+
+                    "EmailLimitReached" ->
+                        Decode.succeed EmailLimitReached
+
+                    "StorageLimitReached" ->
+                        Decode.succeed StorageLimitReached
 
                     _ ->
                         Decode.fail ("Invalid ErrorBla type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +53,18 @@ toString enum____ =
     case enum____ of
         ContactCoordo ->
             "ContactCoordo"
+
+        OrgaLimitReached ->
+            "OrgaLimitReached"
+
+        MemberLimitReached ->
+            "MemberLimitReached"
+
+        EmailLimitReached ->
+            "EmailLimitReached"
+
+        StorageLimitReached ->
+            "StorageLimitReached"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +83,18 @@ fromString enumString____ =
     case enumString____ of
         "ContactCoordo" ->
             Just ContactCoordo
+
+        "OrgaLimitReached" ->
+            Just OrgaLimitReached
+
+        "MemberLimitReached" ->
+            Just MemberLimitReached
+
+        "EmailLimitReached" ->
+            Just EmailLimitReached
+
+        "StorageLimitReached" ->
+            Just StorageLimitReached
 
         _ ->
             Nothing
