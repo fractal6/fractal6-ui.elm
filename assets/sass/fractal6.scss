@@ -2009,6 +2009,9 @@ tr.mediaBox {
         @include tablet {
             max-width: $modal-width !important;
         }
+        @include mobile {
+            max-width: 98vw;
+        }
     }
     .dropdown-item:hover {
         background-color: initial !important;

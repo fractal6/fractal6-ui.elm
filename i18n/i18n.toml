@@ -2186,32 +2186,33 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
 """
 
 [operationalHint]
-  en="Task, issue, item, etc."
-  fr="Tâche, ticket, article, etc."
-
-[operationalNotif]
-  en="Notifies roles in the targeted circle."
-  fr="Notifie les rôles dans le cercle cible."
+  en="For everyday work. Tasks, issues, items, etc."
+  fr="Pour le travail quotidien. Tâches, problèmes, articles, etc."
 
 [governanceHint]
-  en="Concerning the structure of the organization, the mandates etc."
-  fr="Concernant la structure de l’organisation, les mandats, etc."
-
-[governanceNotif]
-  en="Notifies roles in the targeted circle."
-  fr="Notifie les rôles dans le cercle cible."
+  en="For topics related to governance, organizational structure, mandates, etc."
+  fr="Pour les sujets relatifs à la gouvernance, la structure de l'organisation, les mandats, etc."
 
 [helpHint]
   en="For help request, question or clarification."
   fr="Pour les demandes d’aides, questions ou les clarifications."
 
-[helpNotif]
-  en="Notifies roles in the targeted circle."
-  fr="Notifie les rôles dans le cercle cible."
-
 [alertHint]
   en="For alert, internal communication."
   fr="Pour les alertes, communication interne."
+
+
+[operationalNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
+
+[governanceNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
+
+[helpNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
 
 [alertNotif]
   en="Notifies all the member behind the targeted circle recursively."
