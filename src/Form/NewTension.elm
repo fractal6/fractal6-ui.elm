@@ -90,7 +90,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
-import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2String, tensionTypeColor, viewRoleExt)
+import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -1244,11 +1244,11 @@ viewHeader : Op -> Model -> Html Msg
 viewHeader op model =
     div [ class "panel-heading pt-2 pb-2", style "border-radius" "0" ]
         [ div [ class "level modal-card-title is-size-6" ]
-            [ div [ class "level-left is-hidden" ]
-                [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ] ]
-            , div [ class "level-item" ]
+            [ -- div [ class "level-left is-hidden" ]
+              --   [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ] ]
+              div [ class "level-left" ]
                 [ viewTensionType model ]
-            , div [ class "level-item" ]
+            , div [ class "level-right" ]
                 [ viewRecipients op model ]
             ]
         ]
@@ -1299,7 +1299,7 @@ viewTensionType model =
     div []
         [ span [ class "has-text-grey-light" ] [ text ("Type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
-            span [ class "dropdown", style "vertical-align" "unset" ]
+            span [ class "dropdown tension-modal-dropdown", style "vertical-align" "unset" ]
                 [ span [ class "dropdown-trigger button-light" ]
                     [ span [ attribute "aria-controls" "type-menu" ]
                         [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
@@ -1307,17 +1307,51 @@ viewTensionType model =
                         , span [ class "ml-2 arrow down" ] []
                         ]
                     ]
-                , div [ id "type-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
-                    [ div [ class "dropdown-content" ] <|
-                        List.map
-                            (\t ->
-                                div
-                                    [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
-                                    , onClick (OnChangeTensionType t)
-                                    ]
-                                    [ tensionIcon2 t ]
-                            )
-                            TensionType.list
+                , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
+                    [ div [ class "dropdown-content has-border-light", style "max-height" "420px" ]
+                        [ div [ class "dropdown-item" ]
+                            [ [ TensionType.Operational, TensionType.Governance, TensionType.Help ]
+                                |> List.map
+                                    (\x ->
+                                        let
+                                            isActive =
+                                                x == tension_type
+                                        in
+                                        div
+                                            [ class "card has-border column is-paddingless m-3 is-h"
+                                            , classList [ ( "is-selected", isActive ) ]
+                                            , onClick (OnChangeTensionType x)
+                                            ]
+                                            [ div [ class "card-content p-3" ]
+                                                [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
+                                                , div [ class "content is-small" ]
+                                                    [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                                ]
+                                            ]
+                                    )
+                                |> div [ class "columns" ]
+                            , [ TensionType.Alert, TensionType.Announcement ]
+                                |> List.map
+                                    (\x ->
+                                        let
+                                            isActive =
+                                                x == tension_type
+                                        in
+                                        div
+                                            [ class "card has-border column is-paddingless m-3 is-h"
+                                            , classList [ ( "is-selected", isActive ) ]
+                                            , onClick (OnChangeTensionType x)
+                                            ]
+                                            [ div [ class "card-content p-3" ]
+                                                [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
+                                                , div [ class "content is-small" ]
+                                                    [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                                ]
+                                            ]
+                                    )
+                                |> div [ class "columns mt-mobile" ]
+                            ]
+                        ]
                     ]
                 ]
 
@@ -1365,7 +1399,8 @@ viewRecipients op model =
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]
-            , div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
+            , div [ id "target-menu", class "dropdown-menu is-right is-left-mobile", attribute "role" "menu" ]
+                --, div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
                 [ div [ class "dropdown-content has-border", style "max-height" "420px" ] <|
                     case op.tree_data of
                         Success data ->

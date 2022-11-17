@@ -39,7 +39,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
-import ModelCommon.View exposing (tensionType2String, tensionTypeColor, tensionTypeIcon)
+import ModelCommon.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
@@ -401,7 +401,7 @@ viewModalContent op (State model) =
                                 , classList [ ( "is-active", isActive ), ( "is-selected", isActive ) ]
                                 , onClick (OnSetType tensionType)
                                 ]
-                                [ A.icon1 (tensionTypeIcon tensionType) (tensionType2String tensionType) ]
+                                [ A.icon1 (tensionTypeIcon tensionType) (tensionType2str tensionType) ]
                             ]
                     )
                     [ TensionType.Operational, TensionType.Governance, TensionType.Help ]

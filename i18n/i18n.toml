@@ -1010,6 +1010,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Notifications"
   fr="Notifications"
 
+[watch]
+  en="Watch"
+  fr="Suivre"
+
+[unwatch]
+  en="Unwatch"
+  fr="Ne plus suivre"
+
 [assigned]
   en="Assigned"
   fr="Assignés"
@@ -2176,6 +2184,46 @@ Vous pouvez modifier un type de tension dans les catégories suivantes  :
 
 Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous créez une nouvelle tension.
 """
+
+[operationalHint]
+  en="Task, issue, item, etc."
+  fr="Tâche, ticket, article, etc."
+
+[operationalNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
+
+[governanceHint]
+  en="Concerning the structure of the organization, the mandates etc."
+  fr="Concernant la structure de l’organisation, les mandats, etc."
+
+[governanceNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
+
+[helpHint]
+  en="For help request, question or clarification."
+  fr="Pour les demandes d’aides, questions ou les clarifications."
+
+[helpNotif]
+  en="Notifies roles in the targeted circle."
+  fr="Notifie les rôles dans le cercle cible."
+
+[alertHint]
+  en="For alert, internal communication."
+  fr="Pour les alertes, communication interne."
+
+[alertNotif]
+  en="Notifies all the member behind the targeted circle recursively."
+  fr="Notifie tous les membres derrière le cercle ciblé recursivement."
+
+[announcementHint]
+  en="For announcement, external communication."
+  fr="Pour les annonces, communication externe."
+
+[announcementNotif]
+  en="Notifies all users watching this organization."
+  fr="Notifie tous les utilisateurs qui suivent cette organisation"
 
 [visibilityInfoHeader]
   en="The change will apply on the current circle and its roles, but not recursively to the sub-circles."

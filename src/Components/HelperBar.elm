@@ -37,7 +37,7 @@ import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
-import ModelCommon.View exposing (action2icon, viewRole2)
+import ModelCommon.View exposing (action2icon, counter, viewRole2)
 import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
 import Ports
 import Text as T
@@ -65,7 +65,7 @@ collapse _ =
 
 numberRolesCollapsed : Int
 numberRolesCollapsed =
-    5
+    4
 
 
 type alias Op msg =
@@ -110,8 +110,8 @@ viewPathLevel op =
     nav [ class "level is-mobile" ]
         [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data op.onToggleTreeMenu ]
         , div [ class "level-right mt-0" ]
-            [ --A.burger "rolesMenu"
-              div [ id "rolesMenu", class "navbar-menu is-hidden-mobile" ]
+            [ div [ class "tag has-border mr-3 py-4 px-3 is-w is-h" ] [ A.icon1 "icon-eye" T.watch, counter 0 ]
+            , div [ id "rolesMenu", class "is-hidden-mobile" ]
                 [ case op.user of
                     LoggedIn uctx ->
                         case op.path_data of

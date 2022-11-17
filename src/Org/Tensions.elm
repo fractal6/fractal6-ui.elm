@@ -81,7 +81,7 @@ import Loading
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2String, tensionType2String)
+import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -386,10 +386,10 @@ statusFilter2Text x =
             T.all
 
         OpenStatus ->
-            tensionStatus2String TensionStatus.Open
+            tensionStatus2str TensionStatus.Open
 
         ClosedStatus ->
-            tensionStatus2String TensionStatus.Closed
+            tensionStatus2str TensionStatus.Closed
 
 
 type TypeFilter
@@ -433,7 +433,7 @@ typeFilter2Text x =
             T.all
 
         OneType t ->
-            tensionType2String t
+            tensionType2str t
 
 
 type SortFilter

@@ -114,6 +114,13 @@ html.has-modal-active, html.has-modal-active2 {
     margin: 0.1rem 0;
 }
 
+.is-left-mobile {
+    @include mobile {
+        left: 0 !important;
+        right: 0 !important;
+    }
+}
+
 hr {
     height: 1px !important;
     &.is-2 {
@@ -168,6 +175,12 @@ hr {
 .mt-desktop {
     @include desktop {
         margin-top: 2rem;
+    }
+}
+
+.mt-mobile {
+    @include mobile {
+        margin-top: $size-small;
     }
 }
 
@@ -993,6 +1006,10 @@ figcaption {
             // prevent user roles overflow
             max-width: 75%;
         }
+    }
+
+    .tag.is-h:hover {
+        background-color: var(--background-evidence);
     }
 }
 
@@ -1979,6 +1996,28 @@ tr.mediaBox {
 //
 // Modal (Form)
 //
+
+.tension-modal-dropdown {
+    .dropdown-content {
+        //max-height: 90vh !important;
+    }
+    .dropdown-menu {
+        margin-top: 5px;
+        padding-right: 30px;
+        left: -60px;
+		width: $modal-width !important;
+        @include tablet {
+            max-width: $modal-width !important;
+        }
+    }
+    .dropdown-item:hover {
+        background-color: initial !important;
+    }
+
+    .content {
+        font-weight: 500;
+    }
+}
 
 .modal:not(#authModal) {
     display: flex;

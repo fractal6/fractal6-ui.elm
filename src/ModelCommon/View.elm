@@ -94,101 +94,6 @@ import Time
 -}
 
 
-tensionStatus2String : TensionStatus.TensionStatus -> String
-tensionStatus2String s =
-    case s of
-        TensionStatus.Open ->
-            T.openTension
-
-        TensionStatus.Closed ->
-            T.closedTension
-
-
-tensionType2String : TensionType.TensionType -> String
-tensionType2String s =
-    case s of
-        TensionType.Operational ->
-            T.operational
-
-        TensionType.Governance ->
-            T.governance
-
-        TensionType.Help ->
-            T.help
-
-        TensionType.Alert ->
-            T.alert
-
-        TensionType.Announcement ->
-            T.announcement
-
-
-statusColor : TensionStatus.TensionStatus -> String
-statusColor s =
-    case s of
-        TensionStatus.Open ->
-            "success"
-
-        TensionStatus.Closed ->
-            "danger"
-
-
-tensionTypeColor : String -> TensionType.TensionType -> String
-tensionTypeColor elt tt =
-    case tt of
-        TensionType.Operational ->
-            "has-" ++ elt ++ "-success"
-
-        TensionType.Governance ->
-            "has-" ++ elt ++ "-info"
-
-        TensionType.Help ->
-            "has-" ++ elt ++ "-warning"
-
-        TensionType.Alert ->
-            "has-" ++ elt ++ "-danger"
-
-        TensionType.Announcement ->
-            "has-" ++ elt ++ "-primary"
-
-
-tensionTypeIcon : TensionType.TensionType -> String
-tensionTypeIcon tt =
-    case tt of
-        TensionType.Operational ->
-            "icon-circle1 icon-xs"
-
-        TensionType.Governance ->
-            "icon-circle1 icon-xs"
-
-        TensionType.Help ->
-            "icon-question"
-
-        TensionType.Alert ->
-            "icon-radio"
-
-        TensionType.Announcement ->
-            "icon-announce"
-
-
-tensionIcon : TensionType.TensionType -> Html msg
-tensionIcon type_ =
-    let
-        cls =
-            ""
-    in
-    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
-
-
-tensionIcon2 : TensionType.TensionType -> Html msg
-tensionIcon2 type_ =
-    let
-        cls =
-            ""
-    in
-    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2String type_) ]
-
-
 mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
 mediaTension conf focus tension showStatus showRecip size =
     Lazy.lazy6 mediaTension_ conf focus tension showStatus showRecip size
@@ -209,7 +114,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2String tension.type_)
+                , attribute "data-tooltip" (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -233,7 +138,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
                     [ if showStatus then
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                            , attribute "data-tooltip" (tensionStatus2String tension.status)
+                            , attribute "data-tooltip" (tensionStatus2str tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
@@ -363,6 +268,139 @@ viewLabel cls link_m label =
             ++ color
         )
         [ text label.name ]
+
+
+tensionStatus2str : TensionStatus.TensionStatus -> String
+tensionStatus2str s =
+    case s of
+        TensionStatus.Open ->
+            T.openTension
+
+        TensionStatus.Closed ->
+            T.closedTension
+
+
+tensionType2str : TensionType.TensionType -> String
+tensionType2str s =
+    case s of
+        TensionType.Operational ->
+            T.operational
+
+        TensionType.Governance ->
+            T.governance
+
+        TensionType.Help ->
+            T.help
+
+        TensionType.Alert ->
+            T.alert
+
+        TensionType.Announcement ->
+            T.announcement
+
+
+tensionType2descr : TensionType.TensionType -> String
+tensionType2descr s =
+    case s of
+        TensionType.Operational ->
+            T.operationalHint
+
+        TensionType.Governance ->
+            T.governanceHint
+
+        TensionType.Help ->
+            T.helpHint
+
+        TensionType.Alert ->
+            T.alertHint
+
+        TensionType.Announcement ->
+            T.announcementHint
+
+
+tensionType2notif : TensionType.TensionType -> String
+tensionType2notif s =
+    case s of
+        TensionType.Operational ->
+            T.operationalNotif
+
+        TensionType.Governance ->
+            T.governanceNotif
+
+        TensionType.Help ->
+            T.helpNotif
+
+        TensionType.Alert ->
+            T.alertNotif
+
+        TensionType.Announcement ->
+            T.announcementNotif
+
+
+statusColor : TensionStatus.TensionStatus -> String
+statusColor s =
+    case s of
+        TensionStatus.Open ->
+            "success"
+
+        TensionStatus.Closed ->
+            "danger"
+
+
+tensionTypeColor : String -> TensionType.TensionType -> String
+tensionTypeColor elt tt =
+    case tt of
+        TensionType.Operational ->
+            "has-" ++ elt ++ "-success"
+
+        TensionType.Governance ->
+            "has-" ++ elt ++ "-info"
+
+        TensionType.Help ->
+            "has-" ++ elt ++ "-warning"
+
+        TensionType.Alert ->
+            "has-" ++ elt ++ "-danger"
+
+        TensionType.Announcement ->
+            "has-" ++ elt ++ "-primary"
+
+
+tensionTypeIcon : TensionType.TensionType -> String
+tensionTypeIcon tt =
+    case tt of
+        TensionType.Operational ->
+            "icon-circle1 icon-xs"
+
+        TensionType.Governance ->
+            "icon-circle1 icon-xs"
+
+        TensionType.Help ->
+            "icon-question"
+
+        TensionType.Alert ->
+            "icon-radio"
+
+        TensionType.Announcement ->
+            "icon-announce"
+
+
+tensionIcon : TensionType.TensionType -> Html msg
+tensionIcon type_ =
+    let
+        cls =
+            ""
+    in
+    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
+
+
+tensionIcon2 : TensionType.TensionType -> Html msg
+tensionIcon2 type_ =
+    let
+        cls =
+            ""
+    in
+    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2str type_) ]
 
 
 
@@ -669,6 +707,11 @@ byAt conf createdBy createdAt =
             , viewUsernameLink createdBy.username
             , text (formatDate conf.lang conf.now createdAt)
             ]
+
+
+counter : Int -> Html msg
+counter c =
+    span [ class "tag is-normal is-rounded has-background-border-light ml-1" ] [ text (String.fromInt c) ]
 
 
 

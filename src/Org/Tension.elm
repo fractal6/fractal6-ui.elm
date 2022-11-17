@@ -113,7 +113,7 @@ import ModelCommon.View
         , auth2val
         , statusColor
         , tensionIcon2
-        , tensionStatus2String
+        , tensionStatus2str
         , tensionTypeColor
         , viewCircleTarget
         , viewJoinNeeded
@@ -1745,7 +1745,7 @@ viewTension u t model =
                         -- As Governance tension get automatically closed when there are created,
                         -- there status is not relevant, I can cause confusion to user as the object exists.
                         span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                            [ t.status |> tensionStatus2String |> text ]
+                            [ t.status |> tensionStatus2str |> text ]
 
                       else
                         text ""
@@ -2353,7 +2353,7 @@ viewEventMentioned lang now event =
                                 ]
                                 [ span
                                     [ class "tooltip has-tooltip-arrow has-tooltip-top"
-                                    , attribute "data-tooltip" (tensionStatus2String status)
+                                    , attribute "data-tooltip" (tensionStatus2str status)
                                     ]
                                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
                                 , text title
