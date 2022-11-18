@@ -73,10 +73,12 @@ eventPos : JD.Decoder (Maybe ( Int, Int ))
 eventPos =
     JD.maybe <|
         JD.map2 Tuple.pair
-            --(JD.at [ "target", "offsetTop" ] JD.int)
             --(JD.at [ "target", "offsetLeft" ] JD.int)
-            (JD.field "clientX" JD.int)
-            (JD.field "clientY" JD.int)
+            --(JD.at [ "target", "offsetTop" ] JD.int)
+            --(JD.field "clientX" JD.int)
+            --(JD.field "clientY" JD.int)
+            (JD.field "pageX" JD.int)
+            (JD.field "pageY" JD.int)
 
 
 

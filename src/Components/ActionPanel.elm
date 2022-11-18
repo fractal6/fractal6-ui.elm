@@ -688,12 +688,7 @@ update_ apis message model =
                                         |> withDefault ( "", "" )
                                     )
                     in
-                    case model.pos of
-                        Just _ ->
-                            ( { model | role_type = node.role_type }, out0 [ send (OnOpen_ model.domid tid bid node) ] )
-
-                        Nothing ->
-                            ( { model | role_type = node.role_type }, noOut )
+                    ( { model | role_type = node.role_type }, out0 [ send (OnOpen_ model.domid tid bid node) ] )
 
                 _ ->
                     ( model, noOut )
