@@ -136,12 +136,21 @@ const computeDepth = (obj, depth, neigbor) => {
     obj.depth = currentdepth;
     obj.neigbor = neigbor;
 
-    if (obj.children) {
-        if (obj.children.length == 1) {
+    if (obj.children && obj.type_ == NodeType.Circle) {
+        // Add hidden node to have a consistent visual circle packing
+        var n_bots = obj.children.filter(x => x.role_type == RoleType.Bot).length
+        var n_roles = obj.children.filter(x => x.type_ == NodeType.Role && x.role_type != RoleType.Bot).length
+        var n_circles = obj.children.filter(x => x.type_ == NodeType.Circle).length
+        var bot_to_add = 6 - n_bots - n_roles * 3 - n_circles*3;
+        for (var i=0; i < bot_to_add; i++) {
             obj.children.push({
                 type_: "Hidden",
+                role_type: RoleType.Bot,
+                name:"",
             })
         }
+
+        // Compute cumchild and maxdepth
         obj.children.forEach((d, i) =>  {
             var d = computeDepth(d, currentdepth+1, obj.children.length-1);
             var tmpDepth = d.maxdepth;
@@ -150,7 +159,6 @@ const computeDepth = (obj, depth, neigbor) => {
                 maxdepth = tmpDepth;
             }
         });
-
     }
     maxdepth = maxdepth + 1;
     cumchild = cumchild + 1;
@@ -416,7 +424,6 @@ export const GraphPack = {
         // Then draw the zoomedNode/focusedNode and descendends
         this.drawInside(boundary, false, this.ctx2d, 100);
     },
-
 
     drawOutside(b, isHidden, ctx, max_draw) {
         // list of nodes to draw.
@@ -926,7 +933,11 @@ export const GraphPack = {
 
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
-    nodeSizeTopDown3(n, stats) {
+    nodeSizeTopDown_orig(n, stats) {
+        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
+        return 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
+    },
+    nodeSizeTopDown2(n, stats) {
         var t = 0;
         var rt = 0;
         if (n.type_ == "Circle") {
@@ -942,27 +953,32 @@ export const GraphPack = {
         return Math.log(1/n.depth**v+1) / dvd
     },
     nodeSizeTopDown(n, stats) {
-        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        var t = 0;
-        if (n.type_ == "Circle") {
-            t = 4;
-        } else if (n.type_ == "Role") {
-            t = 2;
-        } else {
-            t = 1;
+        //var dvd = 1;
+        //if (n.role_type == RoleType.Guest) {
+        //    dvd = this.guestSizeDivider;
+        //} else if (n.role_type == RoleType.Bot) {
+        //     dvd = 1;
+        //}
+
+        // Circle has a default capacity of 2 roles
+        // and 6 collectors
+        var v = 2000;
+        if (n.type_ == "Role" || n.type_ == "Hidden") {
+            if (n.role_type == RoleType.Bot) {
+                v = v / 12;
+            } else {
+                v = v / 4;
+            }
         }
-        var v = t;
-        return v*100000 / (n.depth+1)**(3) / dvd
-    },
-    nodeSizeTopDown_orig(n, stats) {
-        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        return 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
+
+        return v / (n.depth+1)**3
     },
 
     nodeSizeBottomUp(n, stats) {
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
         return 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
+        //return v ** (n.depth+1)
     },
 
     // Mapping function from a node depth to color.
@@ -1256,20 +1272,20 @@ export const GraphPack = {
 
         centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
         centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
-        if (node.data.type_ === NodeType.Role) {
-            if (node.data.role_type === RoleType.Guest) {
-                rayon = node.r * this.rayonFactorGuest;
-            } else if (node.data.role_type === RoleType.Bot) {
-                rayon = node.r * this.rayonFactorBot;
-            } else {
-                rayon = node.r * this.rayonFactorRole;
-            }
-        } else {
-            // Circle
-            rayon = node.r;
-        }
-        rayon *= (zoomCtx.scale);
-        //rayon *= (zoomCtx.scale + node.depth*0.1);
+        //if (node.data.type_ === NodeType.Role) {
+        //    if (node.data.role_type === RoleType.Guest) {
+        //        rayon = node.r * this.rayonFactorGuest;
+        //    } else if (node.data.role_type === RoleType.Bot) {
+        //        rayon = node.r * this.rayonFactorBot;
+        //    } else {
+        //        rayon = node.r * this.rayonFactorRole;
+        //    }
+        //} else {
+        //    // Circle
+        //    rayon = node.r;
+        //}
+        //rayon *= (zoomCtx.scale);
+        rayon = node.r * (zoomCtx.scale);
         node.ctx = {centerX, centerY, rayon};
         return
     },
