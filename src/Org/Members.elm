@@ -91,6 +91,10 @@ mapGlobalOutcmds gcmds =
         |> List.map
             (\m ->
                 case m of
+                    -- Global
+                    DoFocus nameid ->
+                        ( [], send (NavigateNode nameid) )
+
                     DoNavigate link ->
                         ( [], send (NavigateRaw link) )
 
@@ -103,21 +107,30 @@ mapGlobalOutcmds gcmds =
                     DoUpdateUserSession uctx ->
                         ( [], send (UpdateUserSession uctx) )
 
-                    DoUpdateOrgs orgs ->
-                        ( [], send (UpdateSessionOrgs orgs) )
-
-                    DoCreateTension nameid ->
-                        ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)) ], Cmd.none )
-
-                    -- Tree Data
-                    DoUpdateTree tree ->
-                        ( [], send (UpdateSessionTree tree) )
-
                     DoUpdatePath path ->
                         ( [], send (UpdateSessionPath path) )
 
-                    DoFocus nameid ->
-                        ( [], send (NavigateNode nameid) )
+                    DoUpdateTree tree ->
+                        ( [], send (UpdateSessionTree tree) )
+
+                    DoUpdateOrgs orgs ->
+                        ( [], send (UpdateSessionOrgs orgs) )
+
+                    DoToggleWatchOrga a ->
+                        ( [], send (ToggleWatchOrga a) )
+
+                    -- Component
+                    DoCreateTension a ->
+                        ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)) ], Cmd.none )
+
+                    DoJoinOrga a ->
+                        ( [ Cmd.map JoinOrgaMsg <| send (JoinOrga.OnOpen a JoinOrga.JoinOne) ], Cmd.none )
+
+                    DoOpenActionPanel a b c ->
+                        ( [ send <| OpenActionPanel a b c ], Cmd.none )
+
+                    DoToggleTreeMenu ->
+                        ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
 
                     DoFetchNode nameid ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False) ], Cmd.none )
@@ -125,14 +138,17 @@ mapGlobalOutcmds gcmds =
                     DoAddNodes nodes ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes) ], Cmd.none )
 
-                    DoUpdateNode nameid fun ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send OnReload ], Cmd.none )
-
+                    --DoUpdateNode nameid fun ->
+                    --    ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
                     DoDelNodes nameids ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids) ], Cmd.none )
 
                     DoMoveNode a b c ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
+
+                    -- App
+                    DoUpdateNode nameid fun ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send OnReload ], Cmd.none )
 
                     _ ->
                         ( [], Cmd.none )

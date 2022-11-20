@@ -176,7 +176,7 @@ update_ apis message model =
             ( model, out1 [ DoOpenActionPanel domid nameid pos ] )
 
         OnToggleWatch ->
-            ( model, noOut )
+            ( model, out1 [ DoToggleWatchOrga model.focus.rootnameid ] )
 
         -- Common
         NoMsg ->

@@ -108,6 +108,7 @@ type alias Session =
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
+    , isWatching : Maybe Bool
     }
 
 
@@ -125,6 +126,7 @@ type
     | DoUpdatePath (Maybe LocalGraph)
     | DoUpdateTree (Maybe NodesDict)
     | DoUpdateOrgs (Maybe (List OrgaNode))
+    | DoToggleWatchOrga String
       -- Components Msg
     | DoCreateTension String
     | DoJoinOrga String
@@ -178,6 +180,7 @@ resetSession session flags =
     , authorsPanel = Nothing
     , labelsPanel = Nothing
     , newOrgaData = Nothing
+    , isWatching = Nothing
     }
 
 
@@ -251,6 +254,7 @@ fromLocalSession flags =
       , authorsPanel = Nothing
       , labelsPanel = Nothing
       , newOrgaData = Nothing
+      , isWatching = Nothing
       }
     , [ cmd1, cmd2, cmd3 ]
     )

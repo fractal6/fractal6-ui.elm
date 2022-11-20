@@ -124,6 +124,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoToggleWatchOrga a ->
+                        ( Cmd.none, send (ToggleWatchOrga a) )
+
                     -- Component
                     DoCreateTension a ->
                         ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
