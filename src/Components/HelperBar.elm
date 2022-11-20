@@ -19,7 +19,7 @@
 -}
 
 
-module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
+module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Array
 import Assets as A
@@ -29,6 +29,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
+import Global
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, title, type_)
 import Html.Events exposing (onClick)
@@ -38,29 +39,65 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (action2icon, counter, viewRole2)
-import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
+import ModelSchema exposing (LocalGraph, UserCtx, UserRole, getSourceTid)
 import Ports
+import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 
 
-type HelperBar
+
+-- ------------------------------
+-- M O D E L
+-- ------------------------------
+
+
+type State
+    = State Model
+
+
+type alias Model =
+    { user : UserState
+    , rolesState : RolesState
+    , focus : NodeFocus
+
+    -- Common
+    , refresh_trial : Int -- use to refresh user token
+    , baseUri : FractalBaseRoute
+    , uriQuery : Maybe String
+    }
+
+
+type RolesState
     = Expanded
     | Collapsed
 
 
-create : HelperBar
-create =
-    Collapsed
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Model
+initModel baseUri uriQuery focus user =
+    { user = user
+    , rolesState = Collapsed
+    , focus = focus
+
+    -- Common
+    , refresh_trial = 0
+    , baseUri = baseUri
+    , uriQuery = uriQuery
+    }
 
 
-expand : HelperBar -> HelperBar
-expand _ =
-    Expanded
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> State
+init baseUri uriQuery focus user =
+    initModel baseUri uriQuery focus user |> State
 
 
-collapse : HelperBar -> HelperBar
-collapse _ =
-    Collapsed
+expand : Model -> Model
+expand model =
+    { model | rolesState = Expanded }
+
+
+collapse : Model -> Model
+collapse model =
+    { model | rolesState = Collapsed }
 
 
 numberRolesCollapsed : Int
@@ -68,34 +105,121 @@ numberRolesCollapsed =
     4
 
 
-type alias Op msg =
-    { baseUri : FractalBaseRoute
-    , uriQuery : Maybe String
-    , user : UserState
-    , path_data : Maybe LocalGraph
-    , focus : NodeFocus
-    , data : HelperBar
-    , onExpand : msg
-    , onCollapse : msg
-    , onToggleTreeMenu : msg
-    , onJoin : msg
-    , onOpenPanel : String -> String -> Maybe ( Int, Int ) -> msg
+
+-- ------------------------------
+-- U P D A T E
+-- ------------------------------
+
+
+type Msg
+    = OnExpand
+    | OnCollapse
+    | OnToggleTreeMenu
+    | OnJoin
+    | OnOpenPanel String String (Maybe ( Int, Int ))
+    | OnToggleWatch
+      -- Common
+    | NoMsg
+    | LogErr String
+    | UpdateUctx UserCtx
+
+
+type alias Out =
+    { cmds : List (Cmd Msg)
+    , gcmds : List GlobalCmd
+    , result : Maybe Bool
     }
 
 
-view : Op msg -> Html msg
-view op =
-    -- @debug: padding-top overflow column.with is-paddingless
+noOut : Out
+noOut =
+    Out [] [] Nothing
+
+
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
+    Out cmds [] Nothing
+
+
+out1 : List GlobalCmd -> Out
+out1 cmds =
+    Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
+
+
+update : Apis -> Msg -> State -> ( State, Out )
+update apis message (State model) =
+    update_ apis message model
+        |> Tuple.mapFirst State
+
+
+update_ : Apis -> Msg -> Model -> ( Model, Out )
+update_ apis message model =
+    case message of
+        OnExpand ->
+            ( expand model, noOut )
+
+        OnCollapse ->
+            ( collapse model, noOut )
+
+        OnJoin ->
+            ( model, out1 [ DoJoinOrga model.focus.rootnameid ] )
+
+        OnToggleTreeMenu ->
+            ( model, out1 [ DoToggleTreeMenu ] )
+
+        OnOpenPanel domid nameid pos ->
+            ( model, out1 [ DoOpenActionPanel domid nameid pos ] )
+
+        OnToggleWatch ->
+            ( model, noOut )
+
+        -- Common
+        NoMsg ->
+            ( model, noOut )
+
+        LogErr err ->
+            ( model, out0 [ Ports.logErr err ] )
+
+        UpdateUctx uctx ->
+            ( { model | user = LoggedIn uctx }, noOut )
+
+
+subscriptions : List (Sub Msg)
+subscriptions =
+    [ Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
+    ]
+
+
+
+-- ------------------------------
+-- V I E W
+-- ------------------------------
+
+
+type alias Op =
+    { path_data : Maybe LocalGraph
+    , isPanelOpen : Bool
+    }
+
+
+view : Op -> State -> Html Msg
+view op (State model) =
+    -- @debug: padding-top overflow column.width is-paddingless
     div [ id "helperBar", class "columns is-centered is-marginless" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
-            [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op ]
-            , viewNavLevel op
+            [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op model ]
+            , viewNavLevel op model
             ]
         ]
 
 
-viewPathLevel : Op msg -> Html msg
-viewPathLevel op =
+viewPathLevel : Op -> Model -> Html Msg
+viewPathLevel op model =
     let
         ( rootnameid, userCanJoin ) =
             case op.path_data of
@@ -108,11 +232,16 @@ viewPathLevel op =
                     ( "", False )
     in
     nav [ class "level is-mobile" ]
-        [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data op.onToggleTreeMenu ]
+        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
         , div [ class "level-right mt-0" ]
-            [ div [ class "tag has-border mr-3 py-4 px-3 is-w is-h", title T.watchThisOrganization ] [ A.icon1 "icon-eye" T.watch, counter 0 ]
+            [ div
+                [ class "tag has-border mr-3 py-4 px-3 is-w is-h"
+                , title T.watchThisOrganization
+                , onClick OnToggleWatch
+                ]
+                [ A.icon1 "icon-eye" T.watch, counter 0 ]
             , div [ id "rolesMenu", class "is-hidden-mobile" ]
-                [ case op.user of
+                [ case model.user of
                     LoggedIn uctx ->
                         case op.path_data of
                             Just path ->
@@ -129,7 +258,7 @@ viewPathLevel op =
                                     joinButton op
 
                                 else
-                                    memberButtons roles { op | baseUri = OverviewBaseUri }
+                                    memberButtons roles op model
 
                             Nothing ->
                                 div [ class "ph-button-1" ] []
@@ -145,18 +274,18 @@ viewPathLevel op =
         ]
 
 
-viewNavLevel : Op msg -> Html msg
-viewNavLevel op =
+viewNavLevel : Op -> Model -> Html Msg
+viewNavLevel op model =
     let
         focusid =
             Maybe.map (\x -> x.focus.nameid) op.path_data
-                |> withDefault op.focus.nameid
+                |> withDefault model.focus.nameid
     in
     nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]
-            ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
+            ([ li [ classList [ ( "is-active", model.baseUri == OverviewBaseUri ) ] ]
                 [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
-             , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri || isTensionBaseUri op.baseUri ) ] ]
+             , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
                 [ a [ href (uriFromNameid TensionsBaseUri focusid []) ] [ A.icon1 "icon-exchange" T.tensions ] ]
 
              --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
@@ -174,7 +303,7 @@ viewNavLevel op =
                 ++ (Maybe.map
                         (\path ->
                             if path.focus.type_ /= NodeType.Role then
-                                [ li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
+                                [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
                                     [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" T.members ] ]
                                 ]
 
@@ -186,10 +315,10 @@ viewNavLevel op =
                    )
                 ++ (Maybe.map
                         (\path ->
-                            if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                            if model.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "vbar" ] []
                                 , li
-                                    [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
+                                    [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
 
@@ -217,8 +346,8 @@ viewNavLevel op =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> msg -> Html msg
-viewPath baseUri uriQuery maybePath onToggleTreeMenu =
+viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html Msg
+viewPath baseUri uriQuery maybePath =
     div
         [ class "breadcrumb wrapped-container"
         , attribute "aria-label" "breadcrumbs"
@@ -232,8 +361,8 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
 
                     icon =
-                        --span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
-                        --span [ class "button-light", onClick onToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
+                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                        --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
                         A.icon0 "icon-layers icon-lg"
                 in
                 [ g.path
@@ -271,17 +400,17 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                 [ div [ class "ph-line is-1" ] [] ]
 
 
-joinButton : Op msg -> Html msg
+joinButton : Op -> Html Msg
 joinButton op =
-    div [ id "join", class "button is-small has-text-weight-semibold is-primary", onClick op.onJoin ]
+    div [ id "join", class "button is-small has-text-weight-semibold is-primary", onClick OnJoin ]
         [ text T.joinOrga ]
 
 
-memberButtons : List UserRole -> Op msg -> Html msg
-memberButtons roles_ op =
+memberButtons : List UserRole -> Op -> Model -> Html Msg
+memberButtons roles_ op model =
     let
         roles =
-            case op.data of
+            case model.rolesState of
                 Expanded ->
                     roles_
 
@@ -289,9 +418,9 @@ memberButtons roles_ op =
                     List.take numberRolesCollapsed roles_
 
         lastButton =
-            case op.data of
+            case model.rolesState of
                 Expanded ->
-                    div [ class "button is-small", onClick op.onCollapse ] [ A.icon "icon-chevrons-left" ]
+                    div [ class "button is-small", onClick OnCollapse ] [ A.icon "icon-chevrons-left" ]
 
                 Collapsed ->
                     let
@@ -299,7 +428,7 @@ memberButtons roles_ op =
                             List.length roles_ - List.length roles
                     in
                     if roleMoreLen > 0 then
-                        div [ class "button has-font-weight-semibold is-small", onClick op.onExpand ]
+                        div [ class "button has-font-weight-semibold is-small", onClick OnExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
                             , A.icon "icon-chevrons-right icon-padding-left"
                             ]
@@ -314,7 +443,7 @@ memberButtons roles_ op =
                     []
 
                 else
-                    [ viewRole2 Nothing r op.onOpenPanel ]
+                    [ viewRole2 Nothing r (ternary op.isPanelOpen (\_ _ _ -> NoMsg) OnOpenPanel) ]
             )
         |> List.reverse
         |> List.append [ lastButton ]

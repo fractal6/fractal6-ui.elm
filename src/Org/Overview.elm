@@ -30,7 +30,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.NodeDoc as NodeDoc
 import Components.OrgaMenu as OrgaMenu
@@ -134,17 +134,15 @@ mapGlobalOutcmds gcmds =
         |> List.map
             (\m ->
                 case m of
+                    -- Global
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
                     DoNavigate link ->
                         ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
-
-                    DoPushTension tension ->
-                        ( send (PushTension tension), Cmd.none )
-
-                    DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
@@ -152,18 +150,27 @@ mapGlobalOutcmds gcmds =
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
 
-                    DoUpdateOrgs orgs ->
-                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
-
-                    -- Tree Data
-                    DoUpdateTree tree ->
-                        ( send (OnUpdateTree tree), Cmd.none )
-
                     DoUpdatePath path ->
                         ( Cmd.none, send (UpdateSessionPath path) )
 
-                    DoFocus nameid ->
-                        ( Cmd.none, send (NavigateNode nameid) )
+                    --DoUpdateTree tree ->
+                    --    ( Cmd.none, send (UpdateSessionTree tree) )
+                    --
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
+
+                    -- Component
+                    DoCreateTension a ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+
+                    DoJoinOrga a ->
+                        ( Cmd.map JoinOrgaMsg <| send (JoinOrga.OnOpen a JoinOrga.JoinOne), Cmd.none )
+
+                    DoOpenActionPanel a b c ->
+                        ( send <| OpenActionPanel a b c, Cmd.none )
+
+                    DoToggleTreeMenu ->
+                        ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
@@ -179,6 +186,13 @@ mapGlobalOutcmds gcmds =
 
                     DoMoveNode a b c ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
+
+                    -- App
+                    DoPushTension tension ->
+                        ( send (PushTension tension), Cmd.none )
+
+                    DoUpdateTree tree ->
+                        ( send (OnUpdateTree tree), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -209,11 +223,11 @@ type alias Model =
 
     -- common
     , conf : Conf
-    , helperBar : HelperBar
     , refresh_trial : Int
     , empty : {}
 
     -- Components
+    , helperBar : HelperBar.State
     , help : Help.State
     , tensionForm : NTF.State
     , actionPanel : ActionPanel.State
@@ -272,10 +286,8 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | Navigate String
-    | ExpandRoles
-    | CollapseRoles
       -- Components
+    | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | ActionPanelMsg ActionPanel.Msg
@@ -349,7 +361,7 @@ init global flags =
             , empty = {}
 
             -- Components
-            , helperBar = HelperBar.create
+            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus global.session.user
             , help = Help.init session.user conf
             , tensionForm = NTF.init session.user conf
             , actionPanel = ActionPanel.init session.user
@@ -715,35 +727,36 @@ update global message model =
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
-        ExpandRoles ->
-            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
-
-        CollapseRoles ->
-            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
-
         -- Components
+        HelperBarMsg msg ->
+            let
+                ( data, out ) =
+                    HelperBar.update apis msg model.helperBar
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | helperBar = data }, out.cmds |> List.map (\m -> Cmd.map HelperBarMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         HelpMsg msg ->
             let
-                ( help, out ) =
+                ( data, out ) =
                     Help.update apis msg model.help
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | help = data }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         NewTensionMsg msg ->
             let
-                ( tf, out ) =
+                ( data, out ) =
                     NTF.update apis msg model.tensionForm
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | tensionForm = data }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         ActionPanelMsg msg ->
             let
@@ -840,6 +853,7 @@ subscriptions _ model =
     , nodeFocusedFromJs NodeFocused
     , Ports.lookupNodeFromJs ChangeNodeLookup
     ]
+        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
@@ -883,25 +897,19 @@ port sendToggleGraphReverse : () -> Cmd msg
 view : Global.Model -> Model -> Document Msg
 view global model =
     let
+        path_data =
+            Maybe.map (\x -> Success x) model.path_data |> withDefault Loading
+
         helperData =
-            { user = global.session.user
-            , uriQuery = global.url.query
-            , path_data = model.path_data
-            , focus = model.node_focus
-            , baseUri = OverviewBaseUri
-            , data = model.helperBar
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
-            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
-            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            { path_data = model.path_data
+            , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             }
 
         panelData =
             { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
             , isRight = True
             , domid = "actionPanelHelper"
-            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
+            , tree_data = model.tree_data
             }
     in
     { title =
@@ -910,11 +918,11 @@ view global model =
             ++ T.overview
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = model.tree_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { tree_data = model.tree_data, path_data = path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg

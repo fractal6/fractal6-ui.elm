@@ -82,7 +82,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -200,8 +200,8 @@ init global flags =
     case global.session.user of
         LoggedOut ->
             ( initModel global.session.user conf Nothing
-            , send (Navigate "/")
             , Cmd.none
+            , send (NavigateRaw "/")
             )
 
         LoggedIn uctx ->
@@ -235,7 +235,6 @@ type Msg
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
       -- Common
-    | Navigate String
     | NoMsg
       -- Help
     | HelpMsg Help.Msg
@@ -274,8 +273,13 @@ update global message model =
 
                 OkAuth n ->
                     ( { model | result = result, isDuplicate = False }
-                    , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid [])) 500
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrgs Nothing), send (UpdateSessionNewOrgaData Nothing) ]
+                    , Cmd.none
+                    , Cmd.batch
+                        [ send UpdateUserToken
+                        , send (UpdateSessionOrgs Nothing)
+                        , send (UpdateSessionNewOrgaData Nothing)
+                        , sendSleep (NavigateRaw (uriFromNameid OverviewBaseUri n.nameid [])) 500
+                        ]
                     )
 
                 DuplicateErr ->
@@ -296,8 +300,8 @@ update global message model =
                     toHref Route.New_Orga ++ "?" ++ queryBuilder [ ( "step", stepEncoder step ) ]
             in
             ( { model | step = step }
-            , Cmd.batch [ send SaveData, sendSleep (Navigate url) 333 ]
-            , Cmd.none
+            , send SaveData
+            , sendSleep (NavigateRaw url) 333
             )
 
         OnSelectVisibility visibility ->
@@ -368,9 +372,6 @@ update global message model =
                     ( { model | isDuplicate = False }, Cmd.none, Cmd.none )
 
         -- Common
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 

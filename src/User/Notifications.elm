@@ -113,7 +113,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -220,7 +220,6 @@ type Msg
     | NoMsg
     | PassedSlowLoadTreshold -- timer
     | LogErr String
-    | Navigate String
     | DoOpenModal
     | DoCloseModal ModalData
     | GoBack
@@ -443,9 +442,6 @@ update global message model =
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
         DoOpenModal ->
             ( model, Ports.open_modal "actionModal", Cmd.none )
 
@@ -453,12 +449,12 @@ update global message model =
             let
                 gcmd =
                     if data.link /= "" then
-                        send (Navigate data.link)
+                        send (NavigateRaw data.link)
 
                     else
                         Cmd.none
             in
-            ( model, gcmd, Ports.close_modal )
+            ( model, Cmd.none, Cmd.batch [ gcmd, Ports.close_modal ] )
 
         GoBack ->
             ( model, Cmd.none, send <| NavigateRaw <| withDefault "" <| Maybe.map .path <| model.can_referer )

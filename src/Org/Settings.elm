@@ -29,7 +29,7 @@ import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
-import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
@@ -99,8 +99,12 @@ mapGlobalOutcmds gcmds =
         |> List.map
             (\m ->
                 case m of
+                    -- Global
+                    DoFocus nameid ->
+                        ( Cmd.none, send (NavigateNode nameid) )
+
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -111,21 +115,27 @@ mapGlobalOutcmds gcmds =
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
 
-                    DoUpdateOrgs orgs ->
-                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
-
-                    DoCreateTension nameid ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
-
-                    -- Tree Data
-                    DoUpdateTree tree ->
-                        ( Cmd.none, send (UpdateSessionTree tree) )
-
                     DoUpdatePath path ->
                         ( Cmd.none, send (UpdateSessionPath path) )
 
-                    DoFocus nameid ->
-                        ( Cmd.none, send (NavigateNode nameid) )
+                    DoUpdateTree tree ->
+                        ( Cmd.none, send (UpdateSessionTree tree) )
+
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
+
+                    -- Component
+                    DoCreateTension a ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+
+                    DoJoinOrga a ->
+                        ( Cmd.map JoinOrgaMsg <| send (JoinOrga.OnOpen a JoinOrga.JoinOne), Cmd.none )
+
+                    DoOpenActionPanel a b c ->
+                        ( send <| OpenActionPanel a b c, Cmd.none )
+
+                    DoToggleTreeMenu ->
+                        ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
@@ -192,14 +202,14 @@ type alias Model =
     , switch_index : Int
 
     -- Common
-    , helperBar : HelperBar
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
-    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
+    , helperBar : HelperBar.State
+    , actionPanel : ActionPanel.State
     , help : Help.State
     , tensionForm : NTF.State
     , joinOrga : JoinOrga.State
@@ -356,9 +366,6 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | Navigate String
-    | ExpandRoles
-    | CollapseRoles
     | OnGoRoot
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Confirm Modal
@@ -366,6 +373,7 @@ type Msg
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Components
+    | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | JoinOrgaMsg JoinOrga.Msg
@@ -452,10 +460,10 @@ init global flags =
             , switch_index = -1
 
             -- Common
-            , helperBar = HelperBar.create
             , refresh_trial = 0
             , url = global.url
             , empty = {}
+            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
             , modal_confirm = ModalConfirm.init NoMsg
@@ -557,7 +565,7 @@ update global message model =
                 EditMenu ->
                     case model.path_data of
                         Success lg ->
-                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }))), Cmd.none )
+                            ( model, Cmd.none, send (NavigateRaw (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }))) )
 
                         _ ->
                             ( model, Cmd.none, Cmd.none )
@@ -1092,21 +1100,12 @@ update global message model =
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
-        ExpandRoles ->
-            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
-
-        CollapseRoles ->
-            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
-
         OnGoRoot ->
             let
                 query =
                     model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, send (Navigate (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
+            ( model, Cmd.none, send (NavigateRaw (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -1122,6 +1121,16 @@ update global message model =
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
 
         -- Components
+        HelperBarMsg msg ->
+            let
+                ( data, out ) =
+                    HelperBar.update apis msg model.helperBar
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | helperBar = data }, out.cmds |> List.map (\m -> Cmd.map HelperBarMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         NewTensionMsg msg ->
             let
                 ( tf, out ) =
@@ -1211,6 +1220,7 @@ subscriptions _ model =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.cancelColorFromJs (always CloseColor)
     ]
+        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
@@ -1229,17 +1239,8 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     let
         helperData =
-            { user = global.session.user
-            , uriQuery = model.url.query
-            , path_data = withMaybeData model.path_data
-            , focus = model.node_focus
-            , baseUri = SettingsBaseUri
-            , data = model.helperBar
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
-            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
-            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            { path_data = withMaybeData model.path_data
+            , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             }
 
         panelData =
@@ -1255,7 +1256,7 @@ view global model =
             ++ T.settings
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg

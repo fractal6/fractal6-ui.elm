@@ -47,7 +47,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserProfileForm)
 import ModelSchema exposing (..)
-import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload, userProfilePayload)
+import Query.QueryUser exposing (IsSubscribe, IsWatching, isSubscribePayload, isWatchingPayload, userFullPayload, userProfilePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 
@@ -119,7 +119,76 @@ userProfileInputEncoder form =
 
 
 {-
-   Toggle tension subscriptions
+   Toggle watching orga
+-}
+
+
+type alias UserIsWatching =
+    { user : Maybe (List (Maybe IsWatching)) }
+
+
+isWatchingDecoder : Maybe UserIsWatching -> Maybe Bool
+isWatchingDecoder data =
+    case data of
+        Just d ->
+            d.user
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+                |> Maybe.map (\x -> x.watching /= Nothing && x.watching /= Just [])
+
+        Nothing ->
+            Nothing
+
+
+toggleTensionWatching url username nameid doSet msg =
+    makeGQLMutation url
+        (Mutation.updateUser
+            (toggleWatchingInput username nameid doSet)
+            (SelectionSet.map UserIsWatching <|
+                Fractal.Object.UpdateUserPayload.user identity (isWatchingPayload nameid)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse isWatchingDecoder >> msg)
+
+
+toggleWatchingInput : String -> String -> Bool -> Mutation.UpdateUserRequiredArguments
+toggleWatchingInput username nameid doSet =
+    let
+        inputReq =
+            { filter =
+                Input.buildUserFilter
+                    (\ft ->
+                        { ft | username = { eq = Present username, regexp = Absent, in_ = Absent } |> Present }
+                    )
+            }
+
+        patch =
+            Input.buildUserPatch
+                (\s ->
+                    { s
+                        | watching =
+                            Present
+                                [ Input.buildNodeRef (\n -> { n | nameid = Present nameid }) ]
+                    }
+                )
+                |> Present
+
+        inputOpt =
+            \_ ->
+                { set = ternary doSet patch Absent
+                , remove = ternary doSet Absent patch
+                }
+    in
+    { input = Input.buildUpdateUserInput inputReq inputOpt }
+
+
+
+{-
+   Toggle tension subscription
 -}
 
 

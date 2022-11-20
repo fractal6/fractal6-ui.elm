@@ -43,6 +43,10 @@ import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
 
+-- ------------------------------
+-- M O D E L
+-- ------------------------------
+
 type State
     = State Model
 

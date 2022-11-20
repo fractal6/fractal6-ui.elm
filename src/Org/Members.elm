@@ -28,7 +28,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
@@ -160,15 +160,15 @@ type alias Model =
 
     -- Common
     , conf : Conf
-    , helperBar : HelperBar
     , refresh_trial : Int
-    , actionPanel : ActionPanel.State
     , empty : {}
 
     -- Components
+    , helperBar : HelperBar.State
+    , actionPanel : ActionPanel.State
     , help : Help.State
-    , tensionForm : NTF.State
     , joinOrga : JoinOrga.State
+    , tensionForm : NTF.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
@@ -197,12 +197,10 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | Navigate String
-    | ExpandRoles
-    | CollapseRoles
     | OnGoRoot
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
+    | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | JoinOrgaMsg JoinOrga.Msg
@@ -254,11 +252,11 @@ init global flags =
 
             -- Common
             , conf = conf
-            , helperBar = HelperBar.create
-            , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
             , empty = {}
+            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus global.session.user
+            , help = Help.init global.session.user conf
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
@@ -403,7 +401,7 @@ update global message model =
                         link =
                             toHref <| Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.node_focus.rootnameid, param2 = tid, param3 = c.id }
                     in
-                    ( model, send (Navigate link), Cmd.none )
+                    ( model, Cmd.none, send (NavigateRaw link) )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -415,26 +413,27 @@ update global message model =
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
-        ExpandRoles ->
-            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
-
-        CollapseRoles ->
-            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
-
         OnGoRoot ->
             let
                 query =
                     global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
+            ( model, Cmd.none, send (NavigateRaw (uriFromNameid MembersBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
         -- Components
+        HelperBarMsg msg ->
+            let
+                ( data, out ) =
+                    HelperBar.update apis msg model.helperBar
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | helperBar = data }, out.cmds |> List.map (\m -> Cmd.map HelperBarMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         NewTensionMsg msg ->
             let
                 ( tf, out ) =
@@ -522,6 +521,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     []
+        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
@@ -540,17 +540,8 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     let
         helperData =
-            { user = global.session.user
-            , uriQuery = global.url.query
-            , path_data = withMaybeData model.path_data
-            , focus = model.node_focus
-            , baseUri = MembersBaseUri
-            , data = model.helperBar
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
-            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
-            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            { path_data = withMaybeData model.path_data
+            , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             }
 
         panelData =
@@ -566,7 +557,7 @@ view global model =
             ++ T.members
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg

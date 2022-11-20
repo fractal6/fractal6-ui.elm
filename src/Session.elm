@@ -111,30 +111,33 @@ type alias Session =
     }
 
 
-type GlobalCmd
-    = -- Session Auth
-      DoUpdateToken
-    | DoUpdateUserSession UserCtx
-      -- Navigation
-    | DoNavigate String -- @FIX: replace by Global.NavigateRaw in the mapping function
+type
+    GlobalCmd
+    -- @FIX: Make this in Global to define the mapGlobalOutcmds only once ?!
+    -- Or: use only Ports, and add Subscription in Global to trigger update from JS ! (bad for data copy)
+    -- Or: use a type to return directly Global.Cmd !
+    = -- Global Msg
+      DoFocus String
+    | DoNavigate String
     | DoReplaceUrl String
-      -- Safe close modal
-    | DoModalAsk String String
-      -- Menu Left
-    | DoUpdateOrgs (Maybe (List OrgaNode))
-    | DoUpdateTree (Maybe NodesDict)
+    | DoUpdateToken
+    | DoUpdateUserSession UserCtx
     | DoUpdatePath (Maybe LocalGraph)
-      -- @FIX: Make this in Global to define the mapGlobalOutcms only once ?!
-      -- Or: User only Ports, and add Subscription in Global to trigger update from JS !
-      -- Or: use a type to return directly Global.Cmd !
+    | DoUpdateTree (Maybe NodesDict)
+    | DoUpdateOrgs (Maybe (List OrgaNode))
+      -- Components Msg
+    | DoCreateTension String
+    | DoJoinOrga String
+    | DoOpenActionPanel String String (Maybe ( Int, Int ))
+    | DoToggleTreeMenu
     | DoFetchNode String
-    | DoPushTension Tension
     | DoAddNodes (List Node)
     | DoUpdateNode String (Node -> Node)
     | DoDelNodes (List String)
     | DoMoveNode String String String
-    | DoFocus String
-    | DoCreateTension String
+      -- App Msg
+    | DoPushTension Tension
+    | DoModalAsk String String -- Safe close modal
 
 
 type alias NodesQuickSearch =

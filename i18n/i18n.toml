@@ -1018,6 +1018,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Unwatch"
   fr="Ne plus suivre"
 
+[watchThisOrganization]
+  en="Watch this organization"
+  fr="Suivre cette organisation"
+
 [assigned]
   en="Assigned"
   fr="Assignés"

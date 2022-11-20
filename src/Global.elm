@@ -73,15 +73,11 @@ import Url exposing (Url)
 
 
 
--- INIT
+-- Model
 
 
 type alias Flags =
     SessionFlags
-
-
-
--- Model
 
 
 type alias Model =
@@ -91,6 +87,10 @@ type alias Model =
     , session : Session
     , now : Time.Posix
     }
+
+
+
+-- INIT
 
 
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -151,6 +151,9 @@ type Msg
     | UpdateSessionNotif NotifCount
     | RefreshNotifCount
     | AckNotifCount (GqlData NotifCount)
+    | ToggleWatchOrga String
+    | GotIsWatching (GqlData Bool)
+      -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
@@ -494,6 +497,12 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        ToggleWatchOrga nameid ->
+            ( model, Cmd.none )
+
+        GotIsWatching result ->
+            ( model, Cmd.none )
 
         UpdateSessionAuthorsPanel data ->
             let

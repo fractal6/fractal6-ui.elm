@@ -19,7 +19,10 @@
 -}
 
 
-module Query.QueryNotifications exposing (queryNotifCount, queryNotifications)
+module Query.QueryNotifications exposing
+    ( queryNotifCount
+    , queryNotifications
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -71,7 +74,6 @@ import RemoteData exposing (RemoteData)
    Query event count
 
 -}
---notifCountDecoder : Maybe IsSubscribe -> Maybe Bool
 
 
 notifCountDecoder : Maybe { event_count : Maybe NotifCount } -> Maybe NotifCount

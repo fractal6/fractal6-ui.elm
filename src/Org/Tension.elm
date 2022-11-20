@@ -29,7 +29,7 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Comments exposing (viewComment, viewCommentInput)
 import Components.ContractsPage as ContractsPage
-import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
@@ -180,7 +180,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -277,12 +277,12 @@ type alias Model =
     , isLabelOpen : Bool
 
     -- Common
-    , helperBar : HelperBar
     , refresh_trial : Int
     , conf : Conf
     , empty : {}
 
     -- Components
+    , helperBar : HelperBar.State
     , help : Help.State
     , tensionForm : NTF.State
     , assigneesPanel : UserSearchPanel.State
@@ -375,15 +375,13 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | Navigate String
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
-    | ExpandRoles
-    | CollapseRoles
     | ScrollToElement String
     | UpdateUctx UserCtx
       -- Components
+    | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
@@ -527,7 +525,7 @@ init global flags =
 
             -- Common
             , conf = conf
-            , helperBar = HelperBar.create
+            , helperBar = HelperBar.init baseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
@@ -1348,25 +1346,12 @@ update global message model =
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
-        NewTensionMsg msg ->
-            let
-                ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
-
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
 
         ChangeInputViewMode viewMode ->
             let
@@ -1385,12 +1370,6 @@ update global message model =
         OnRichText targetid command ->
             ( model, Ports.richText targetid command, Cmd.none )
 
-        ExpandRoles ->
-            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
-
-        CollapseRoles ->
-            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
-
         ScrollToElement did ->
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
@@ -1404,6 +1383,26 @@ update global message model =
             )
 
         -- Components
+        HelperBarMsg msg ->
+            let
+                ( data, out ) =
+                    HelperBar.update apis msg model.helperBar
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | helperBar = data }, out.cmds |> List.map (\m -> Cmd.map HelperBarMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -1552,6 +1551,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
+        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
@@ -1575,17 +1575,8 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     let
         helperData =
-            { user = global.session.user
-            , uriQuery = global.url.query
-            , path_data = withMaybeData model.path_data
-            , focus = model.node_focus
-            , baseUri = model.baseUri
-            , data = model.helperBar
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
-            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
-            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            { path_data = withMaybeData model.path_data
+            , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             }
 
         panelData =
@@ -1604,7 +1595,7 @@ view global model =
                 "Loading..."
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg

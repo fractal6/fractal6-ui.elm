@@ -21,8 +21,11 @@
 
 module Query.QueryUser exposing
     ( IsSubscribe
+    , IsWatching
     , getIsSubscribe
+    , getIsWatching
     , isSubscribePayload
+    , isWatchingPayload
     , queryUser
     , queryUserFull
     , queryUserProfile
@@ -244,5 +247,46 @@ isSubscribePayload tid =
     SelectionSet.map2 IsSubscribe
         (Fractal.Object.User.subscriptions (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | id = Present [ encodeId tid ] }) })
             (SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId))
+        )
+        Fractal.Object.User.username
+
+
+
+{-
+   Check if user is watching to the given orga
+-}
+
+
+isWatchingDecoder : Maybe IsWatching -> Maybe Bool
+isWatchingDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d.watching /= Nothing && d.watching /= Just []
+            )
+
+
+getIsWatching url username nameid msg =
+    makeGQLQuery url
+        (Query.getUser
+            (usernameFilter username)
+            (isWatchingPayload nameid)
+        )
+        (RemoteData.fromResult >> decodeResponse isWatchingDecoder >> msg)
+
+
+type alias IsWatching =
+    { watching : Maybe (List NameidPayload)
+
+    -- @debug; needs of @isPrivate
+    , username : String
+    }
+
+
+isWatchingPayload : String -> SelectionSet IsWatching Fractal.Object.User
+isWatchingPayload nameid =
+    SelectionSet.map2 IsWatching
+        (Fractal.Object.User.watching (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | nameid = Present { eq = Present nameid, in_ = Absent, regexp = Absent } }) })
+            (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
         )
         Fractal.Object.User.username

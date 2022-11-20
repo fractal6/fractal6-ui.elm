@@ -30,7 +30,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
@@ -119,7 +119,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -209,12 +209,12 @@ type alias Model =
 
     -- Common
     , conf : Conf
-    , helperBar : HelperBar
     , refresh_trial : Int
     , url : Url
     , empty : {}
 
     -- Components
+    , helperBar : HelperBar.State
     , help : Help.State
     , tensionForm : NTF.State
     , authorsPanel : UserSearchPanel.State
@@ -644,12 +644,10 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | Navigate String
-    | ExpandRoles
-    | CollapseRoles
     | OnGoRoot
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
+    | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
@@ -733,7 +731,7 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , helperBar = HelperBar.create
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
             , moveTension = MoveTension.init global.session.user
@@ -1349,15 +1347,6 @@ update global message model =
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
-
-        ExpandRoles ->
-            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
-
-        CollapseRoles ->
-            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
-
         OnGoRoot ->
             let
                 node_focus =
@@ -1369,6 +1358,16 @@ update global message model =
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
         -- Components
+        HelperBarMsg msg ->
+            let
+                ( data, out ) =
+                    HelperBar.update apis msg model.helperBar
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | helperBar = data }, out.cmds |> List.map (\m -> Cmd.map HelperBarMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         NewTensionMsg msg ->
             let
                 ( tf, out ) =
@@ -1522,6 +1521,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Events.onResize (\w h -> OnResize w h)
     ]
+        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (UserSearchPanel.subscriptions model.authorsPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
@@ -1543,17 +1543,8 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     let
         helperData =
-            { user = global.session.user
-            , uriQuery = model.url.query
-            , path_data = withMaybeData model.path_data
-            , focus = model.node_focus
-            , baseUri = TensionsBaseUri
-            , data = model.helperBar
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
-            , onJoin = JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.JoinOne)
-            , onOpenPanel = ternary (ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel) (\_ _ _ -> NoMsg) OpenActionPanel
+            { path_data = withMaybeData model.path_data
+            , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             }
 
         panelData =
@@ -1569,7 +1560,7 @@ view global model =
             ++ T.tensions
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ]
                 [ view_ global model
                 , if model.viewMode == CircleView then
