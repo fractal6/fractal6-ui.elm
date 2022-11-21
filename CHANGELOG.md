@@ -3,13 +3,23 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unrealeased]
 
+
+## [0.7]
+
 ### New
-- Schema: new Announcement tension type
+- Schema: new Announcement tension type.
+- Helperbar: organisation watch/unwatch button.
+- HelperBar: organisation count hints (total number of tensons, members and watching users)
+- TreeMenu: circle tension count hints.
+- NewTension: improved tension type dropdown menu with hints.
 
+### Changed
+- ui: icon for secret visibility.
+- ui: color code for collector/bot role type.
 
-### Fixed
 
 ## [0.6.9]
 
@@ -29,7 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Tensions: minimum height for the board view
 - Markdown: remove list-style for checkbox + better left margin.
 - Notifications: tooltip inversed in "mark as read" tag.
-
 
 
 ## [0.6.6]
@@ -161,6 +170,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Tensions added when in the tensions tab view are now rendered in the list (circles view only).
 - Change the url according the chosen view in the tensions page.
 - Markdown support autolinks (external and internal), user tag (@someone)
+
 
 ## v0.4
 

@@ -990,24 +990,31 @@ update_ apis message model =
                     let
                         data =
                             { model | nodeDoc = NodeDoc.setId tension.id model.nodeDoc }
+
+                        gcmds =
+                            if tension.status == TensionStatus.Open then
+                                [ DoPushTension tension ]
+
+                            else
+                                []
                     in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result data, out1 [ DoPushTension tension ] )
+                            ( setResult result data, out1 gcmds )
 
                         NewRoleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
-                            ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result data, out1 (DoFetchNode newNameid :: gcmds) )
 
                         NewCircleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
-                            ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result data, out1 (DoFetchNode newNameid :: gcmds) )
 
                 DuplicateErr ->
                     ( setResult (Failure [ "Duplicate Error: " ++ T.thisNameUrlIsTaken ]) model, noOut )

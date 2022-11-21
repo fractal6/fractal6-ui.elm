@@ -23,7 +23,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 
 import Array
 import Assets as A
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -39,7 +39,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (action2icon, counter, viewRole2)
-import ModelSchema exposing (LocalGraph, UserCtx, UserRole, getSourceTid)
+import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
 import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
@@ -204,6 +204,7 @@ subscriptions =
 type alias Op =
     { path_data : Maybe LocalGraph
     , isPanelOpen : Bool
+    , orgaInfo : Maybe OrgaInfo
     }
 
 
@@ -230,16 +231,36 @@ viewPathLevel op model =
 
                 Nothing ->
                     ( "", False )
+
+        ( watch_icon, watch_txt, watch_title ) =
+            if unwrap2 False .isWatching op.orgaInfo then
+                ( "icon-eye", T.unwatch, T.unwatchThisOrganization )
+
+            else
+                ( "icon-eye", T.watch, T.watchThisOrganization )
     in
     nav [ class "level is-mobile" ]
         [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
         , div [ class "level-right mt-0" ]
-            [ div
-                [ class "tag has-border mr-3 py-4 px-3 is-w is-h"
-                , title T.watchThisOrganization
-                , onClick OnToggleWatch
-                ]
-                [ A.icon1 "icon-eye" T.watch, counter 0 ]
+            [ case op.path_data of
+                Just _ ->
+                    div
+                        [ class "tag has-border mr-3 is-w is-h"
+                        , attribute "style" "padding: 14px 15px;"
+                        , title watch_title
+                        , onClick OnToggleWatch
+                        ]
+                        [ A.icon1 watch_icon watch_txt
+                        , case unwrap 0 .n_watchers op.orgaInfo of
+                            0 ->
+                                text ""
+
+                            i ->
+                                counter i
+                        ]
+
+                Nothing ->
+                    text ""
             , div [ id "rolesMenu", class "is-hidden-mobile" ]
                 [ case model.user of
                     LoggedIn uctx ->
@@ -286,7 +307,16 @@ viewNavLevel op model =
             ([ li [ classList [ ( "is-active", model.baseUri == OverviewBaseUri ) ] ]
                 [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
-                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ] [ A.icon1 "icon-exchange" T.tensions ] ]
+                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ]
+                    [ A.icon1 "icon-exchange" T.tensions
+                    , case unwrap 0 .n_tensions op.orgaInfo of
+                        0 ->
+                            text ""
+
+                        i ->
+                            counter i
+                    ]
+                ]
 
              --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
              --    [ div [ class "dropdown is-hoverable" ]
@@ -304,7 +334,16 @@ viewNavLevel op model =
                         (\path ->
                             if path.focus.type_ /= NodeType.Role then
                                 [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
-                                    [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" T.members ] ]
+                                    [ a [ href (uriFromNameid MembersBaseUri focusid []) ]
+                                        [ A.icon1 "icon-user" T.members
+                                        , case unwrap 0 .n_members op.orgaInfo of
+                                            0 ->
+                                                text ""
+
+                                            i ->
+                                                counter i
+                                        ]
+                                    ]
                                 ]
 
                             else

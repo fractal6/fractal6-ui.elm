@@ -108,7 +108,7 @@ type alias Session =
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
-    , isWatching : Maybe Bool
+    , orgaInfo : Maybe OrgaInfo
     }
 
 
@@ -116,7 +116,7 @@ type
     GlobalCmd
     -- @FIX: Make this in Global to define the mapGlobalOutcmds only once ?!
     -- Or: use only Ports, and add Subscription in Global to trigger update from JS ! (bad for data copy)
-    -- Or: use a type to return directly Global.Cmd !
+    -- Or: use a type to return directly Global.Cmd (unsafe ! keep session update in top components...)
     = -- Global Msg
       DoFocus String
     | DoNavigate String
@@ -180,7 +180,7 @@ resetSession session flags =
     , authorsPanel = Nothing
     , labelsPanel = Nothing
     , newOrgaData = Nothing
-    , isWatching = Nothing
+    , orgaInfo = Nothing
     }
 
 
@@ -254,7 +254,7 @@ fromLocalSession flags =
       , authorsPanel = Nothing
       , labelsPanel = Nothing
       , newOrgaData = Nothing
-      , isWatching = Nothing
+      , orgaInfo = Nothing
       }
     , [ cmd1, cmd2, cmd3 ]
     )

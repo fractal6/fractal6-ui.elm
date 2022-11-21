@@ -597,11 +597,14 @@ export const GraphPack = {
         ctx2d.fillStyle = this.nameColor + opac;
         if (node.data.visibility !== this.getParent(node).data.visibility) {
             if (node.data.visibility == NodeVisibility.Public) {
+                // icon-globe
                 text = "\ue960 " + text;
             } else if (node.data.visibility == NodeVisibility.Private) {
+                // icon-lock
                 text = "\ue930 " + text;
             } else if (node.data.visibility == NodeVisibility.Secret) {
-                text = "\ue91a " + text;
+                // icon-key
+                text = "\ue95f " + text;
             }
         }
         ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);

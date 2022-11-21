@@ -93,6 +93,9 @@ type alias Node =
 
     -- Only here to build LocalGraph from OrgaData
     , userCanJoin : Maybe Bool
+
+    -- Aggregate
+    , n_tensions : Int
     }
 
 
@@ -200,6 +203,18 @@ type alias OrgaNode =
     }
 
 
+type alias OrgaInfo =
+    { -- total numbers of open tensions
+      n_tensions : Int
+    , -- total numbers of members
+      n_members : Int
+    , -- total numbers of watching users
+      n_watchers : Int
+    , -- is logged user watching the orga
+      isWatching : Maybe Bool
+    }
+
+
 
 --
 -- Tension
@@ -219,7 +234,6 @@ type alias Tension =
     , status : TensionStatus.TensionStatus
 
     -- aggregate
-    --, comments_agg : Maybe Count
     , n_comments : Maybe Int
     }
 
@@ -574,6 +588,7 @@ initNode =
     , mode = NodeMode.Coordinated
     , source = Nothing
     , userCanJoin = Nothing
+    , n_tensions = 0
     }
 
 

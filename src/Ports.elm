@@ -201,6 +201,14 @@ initGraphPack data focus =
         }
 
 
+focusGraphPack : String -> Cmd msg
+focusGraphPack focusid =
+    outgoing
+        { action = "FOCUS_GRAPHPACK"
+        , data = JE.string focusid
+        }
+
+
 redrawGraphPack : NodesDict -> Cmd msg
 redrawGraphPack data =
     outgoing
@@ -222,14 +230,6 @@ drawButtonsGraphPack =
     outgoing
         { action = "DRAW_BUTTONS_GRAPHPACK"
         , data = JE.string ""
-        }
-
-
-focusGraphPack : String -> Cmd msg
-focusGraphPack focusid =
-    outgoing
-        { action = "FOCUS_GRAPHPACK"
-        , data = JE.string focusid
         }
 
 

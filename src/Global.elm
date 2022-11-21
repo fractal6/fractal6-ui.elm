@@ -34,12 +34,13 @@ module Global exposing
     , view
     )
 
-import Auth exposing (parseErr2)
+import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (WindowPos)
 import Components.Navbar as Navbar
 import Dict
+import Extra exposing (ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -49,11 +50,14 @@ import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
+import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
 import ModelSchema exposing (..)
 import Ports
 import Process
+import Query.PatchUser exposing (toggleOrgaWatch)
+import Query.QueryNode exposing (getOrgaInfo)
 import Query.QueryNotifications exposing (queryNotifCount)
 import RemoteData exposing (RemoteData)
 import Requests exposing (tokenack)
@@ -153,6 +157,7 @@ type Msg
     | AckNotifCount (GqlData NotifCount)
     | ToggleWatchOrga String
     | GotIsWatching (GqlData Bool)
+    | GotOrgaInfo (GqlData OrgaInfo)
       -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -303,6 +308,19 @@ update msg model =
             let
                 session =
                     model.session
+
+                cmd =
+                    case data of
+                        Just n ->
+                            -- If new orga context
+                            if session.orgaInfo == Nothing || Just n.rootnameid /= Maybe.map .rootnameid model.session.node_focus then
+                                getOrgaInfo apis (uctxFromUser model.session.user).username n.rootnameid GotOrgaInfo
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
             in
             ( { model
                 | session =
@@ -317,7 +335,7 @@ update msg model =
                         , labelsPanel = Nothing
                     }
               }
-            , Cmd.none
+            , cmd
             )
 
         UpdateSessionFocusOnly data ->
@@ -352,7 +370,7 @@ update msg model =
                     Maybe.map
                         (\path_data ->
                             -- @optimize: only of node_focus.nameid == path_data.focus.nameid
-                            case getNode path_data.focus.nameid (Maybe.map (\d -> Success d) data |> Maybe.withDefault NotAsked) of
+                            case getNode path_data.focus.nameid (Maybe.map (\d -> Success d) data |> withDefault NotAsked) of
                                 Just n ->
                                     let
                                         f focus =
@@ -364,8 +382,17 @@ update msg model =
                                     path_data
                         )
                         model.session.path_data
+
+                -- Eventually update orga_info
+                orgaInfo =
+                    Maybe.map2
+                        (\oi nodes ->
+                            { oi | n_tensions = Dict.foldl (\_ n count -> n.n_tensions + count) 0 nodes }
+                        )
+                        session.orgaInfo
+                        data
             in
-            ( { model | session = { session | tree_data = data, path_data = pdata } }, Cmd.none )
+            ( { model | session = { session | tree_data = data, path_data = pdata, orgaInfo = orgaInfo } }, Cmd.none )
 
         UpdateSessionData data ->
             let
@@ -499,10 +526,58 @@ update msg model =
                     ( model, Cmd.none )
 
         ToggleWatchOrga nameid ->
-            ( model, Cmd.none )
+            case model.session.user of
+                LoggedIn uctx ->
+                    let
+                        isWatching =
+                            unwrap2 False .isWatching model.session.orgaInfo
+                    in
+                    ( model, toggleOrgaWatch apis uctx.username nameid (not isWatching) GotIsWatching )
+
+                LoggedOut ->
+                    ( model, Cmd.none )
 
         GotIsWatching result ->
-            ( model, Cmd.none )
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser model.session.user) )
+
+                OkAuth d ->
+                    let
+                        session =
+                            model.session
+
+                        orgaInfo =
+                            Maybe.map
+                                (\oi ->
+                                    { oi | isWatching = Just d, n_watchers = ternary d (oi.n_watchers + 1) (max 0 (oi.n_watchers - 1)) }
+                                )
+                                session.orgaInfo
+                    in
+                    ( { model | session = { session | orgaInfo = orgaInfo } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        GotOrgaInfo result ->
+            case result of
+                Success data ->
+                    let
+                        session =
+                            model.session
+
+                        oi =
+                            Maybe.map
+                                (\nodes ->
+                                    { data | n_tensions = Dict.foldl (\_ n count -> n.n_tensions + count) 0 nodes }
+                                )
+                                session.tree_data
+                                |> withDefault data
+                    in
+                    ( { model | session = { session | orgaInfo = Just oi } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         UpdateSessionAuthorsPanel data ->
             let

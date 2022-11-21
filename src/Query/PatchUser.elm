@@ -23,6 +23,7 @@ module Query.PatchUser exposing
     ( markAllAsRead
     , markAsRead
     , patchUser
+    , toggleOrgaWatch
     , toggleTensionSubscription
     )
 
@@ -47,7 +48,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserProfileForm)
 import ModelSchema exposing (..)
-import Query.QueryUser exposing (IsSubscribe, IsWatching, isSubscribePayload, isWatchingPayload, userFullPayload, userProfilePayload)
+import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload, userProfilePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 
@@ -123,6 +124,14 @@ userProfileInputEncoder form =
 -}
 
 
+type alias IsWatching =
+    { watching : Maybe (List NameidPayload)
+
+    -- @debug; needs of @isPrivate
+    , username : String
+    }
+
+
 type alias UserIsWatching =
     { user : Maybe (List (Maybe IsWatching)) }
 
@@ -144,7 +153,7 @@ isWatchingDecoder data =
             Nothing
 
 
-toggleTensionWatching url username nameid doSet msg =
+toggleOrgaWatch url username nameid doSet msg =
     makeGQLMutation url
         (Mutation.updateUser
             (toggleWatchingInput username nameid doSet)
@@ -184,6 +193,15 @@ toggleWatchingInput username nameid doSet =
                 }
     in
     { input = Input.buildUpdateUserInput inputReq inputOpt }
+
+
+isWatchingPayload : String -> SelectionSet IsWatching Fractal.Object.User
+isWatchingPayload nameid =
+    SelectionSet.map2 IsWatching
+        (Fractal.Object.User.watching (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | nameid = Present { eq = Present nameid, in_ = Absent, regexp = Absent } }) })
+            (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
+        )
+        Fractal.Object.User.username
 
 
 

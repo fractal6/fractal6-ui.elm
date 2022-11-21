@@ -214,6 +214,8 @@ $info-hover: lighten($info, 10);
 $turquoise-hover: lighten($turquoise, 10);
 $purple-hover: lighten($purple, 10);
 $blue-grey-hover: lighten($blue-grey, 10);
+$white-ter-hover: lighten($white-ter, 10);
+$white-dimmed-hover: lighten($white-dimmed, 10);
 
 // Background colors
 $nbc: $primary;
@@ -367,6 +369,8 @@ $button-vote-danger-background: $danger;
   --turquoise-hover: #{$turquoise-hover};
   --purple-hover: #{$purple-hover};
   --blue-grey-hover: #{$blue-grey-hover};
+  --white-ter-hover: #{$white-ter-hover};
+  --white-dimmed-hover: #{$white-dimmed-hover};
 
   // Background colors
   --nbc: #{$nbc};
@@ -538,6 +542,8 @@ $info-hover: darken($info, 5);
 $turquoise-hover: darken($turquoise, 5);
 $purple-hover: darken($purple, 5);
 $blue-grey-hover: darken($blue-grey, 5);
+$white-ter-hover: darken($white-ter, 5);
+$white-dimmed-hover: darken($white-dimmed, 5);
 
 // Background colors
 $nbc: #172335;
@@ -696,10 +702,11 @@ $button-vote-danger-background: $danger-light;
   --turquoise-hover: #{$turquoise-hover};
   --purple-hover: #{$purple-hover};
   --blue-grey-hover: #{$blue-grey-hover};
+  --white-ter-hover: #{$white-ter-hover};
+  --white-dimmed-hover: #{$white-dimmed-hover};
 
   // Background colors
   --nbc: #{$nbc};
-  //--nbc: #{$nbc};
   --nbbc: #{$nbbc};
   --hbc: #{$hbc};
   --bbc: #{$bbc};

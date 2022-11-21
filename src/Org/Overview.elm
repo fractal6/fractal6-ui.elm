@@ -68,6 +68,7 @@ import Loading
         , WebData
         , fromMaybeData
         , isFailure
+        , isSuccess
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
@@ -700,18 +701,28 @@ update global message model =
                         nameids =
                             path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
-                        cmds =
-                            [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-                            , if not (isFailure model.node_data) && (getNode model.node_focus.nameid model.tree_data == Nothing) then
-                                Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid True)
-
-                              else
-                                Cmd.none
-                            ]
+                        isPathNew =
+                            Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
                     in
                     ( { model | path_data = Just path, depth = Just maxdepth }
-                    , Cmd.batch (Ports.drawButtonsGraphPack :: cmds)
-                    , send (UpdateSessionPath (Just path))
+                    , Cmd.batch
+                        [ Ports.drawButtonsGraphPack
+                        , if isPathNew || model.init_tensions then
+                            queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+
+                          else
+                            Cmd.none
+                        , if not (isFailure model.node_data) && (getNode model.node_focus.nameid model.tree_data == Nothing) then
+                            Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid True)
+
+                          else
+                            Cmd.none
+                        ]
+                    , if isPathNew then
+                        send (UpdateSessionPath (Just path))
+
+                      else
+                        Cmd.none
                     )
 
                 Nothing ->
@@ -906,6 +917,7 @@ view global model =
         helperData =
             { path_data = model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
+            , orgaInfo = global.session.orgaInfo
             }
 
         panelData =
@@ -1232,7 +1244,7 @@ viewCanvas us model =
                 , br [ class "mb-2" ] []
                 , A.icon1 "icon-lock icon-lg" T.visibilityPrivateLegend
                 , br [ class "mb-2" ] []
-                , A.icon1 "icon-eye-off icon-lg" T.visibilitySecretLegend
+                , A.icon1 "icon-key icon-lg" T.visibilitySecretLegend
                 , br [ class "mb-5" ] []
                 , span
                     [ class "button-light has-text-info is-size-7 is-pulled-right"

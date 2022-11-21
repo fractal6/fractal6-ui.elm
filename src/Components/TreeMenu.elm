@@ -44,7 +44,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuc
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
-import ModelCommon.View exposing (action2icon, viewOrga0)
+import ModelCommon.View exposing (action2icon, counter, viewOrga0)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
@@ -638,7 +638,8 @@ viewSubTree depth hover focus (Tree { node, children }) =
         , ul [ class "menu-list pl-0" ]
             [ li []
                 -- @TODO : add tag (3 roles) that is clickable and will open the roles list.
-                [ viewRoleLine focus (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children |> List.map (\(Tree c) -> c.node))
+                [ viewRoleLine "roles" focus (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children |> List.map (\(Tree c) -> c.node))
+                , viewRoleLine "collectors" focus (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Bot ]) children |> List.map (\(Tree c) -> c.node))
                 ]
             ]
         ]
@@ -656,15 +657,13 @@ viewCircleLine hover focus node =
         ]
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left", attribute "style" "width:82%;" ]
-                [ case node.role_type of
-                    Just RoleType.Bot ->
-                        A.icon1 "icon-radio" node.name
+                [ text node.name
+                , case node.n_tensions of
+                    0 ->
+                        text ""
 
-                    Just _ ->
-                        A.icon1 (action2icon { doc_type = NODE node.type_ }) node.name
-
-                    Nothing ->
-                        text node.name
+                    i ->
+                        counter i
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
@@ -676,8 +675,8 @@ viewCircleLine hover focus node =
         ]
 
 
-viewRoleLine : NodeFocus -> List Node -> Html Msg
-viewRoleLine focus roles =
+viewRoleLine : String -> NodeFocus -> List Node -> Html Msg
+viewRoleLine type_txt focus roles =
     if List.length roles > 0 then
         div
             [ class "treeMenu"
@@ -692,7 +691,13 @@ viewRoleLine focus roles =
             [ div [ class "level is-mobile" ]
                 [ div [ class "level-left", attribute "style" "width:82%;" ]
                     [ span [ class "tag is-small has-background-border-light" ]
-                        [ text "+", text (String.fromInt (List.length roles)), text " roles" ]
+                        [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
+                    , case List.sum <| List.map .n_tensions roles of
+                        0 ->
+                            text ""
+
+                        i ->
+                            counter i
                     ]
                 ]
             ]

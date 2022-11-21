@@ -60,7 +60,6 @@ import Query.QueryNode
         ( contractEventPayload
         , nidFilter
         , nodeDecoder
-        , nodeOrgaPayload
         , notifEventPayload
         , pNodePayload
         , tensionEventPayload

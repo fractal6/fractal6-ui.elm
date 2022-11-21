@@ -103,7 +103,6 @@ mediaTension_ : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html m
 mediaTension_ conf focus tension showStatus showRecip size =
     let
         n_comments =
-            --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
             withDefault 0 tension.n_comments
 
         labels_m =
@@ -711,7 +710,11 @@ byAt conf createdBy createdAt =
 
 counter : Int -> Html msg
 counter c =
-    span [ class "tag is-normal is-rounded has-background-border-light ml-1" ] [ text (String.fromInt c) ]
+    span
+        [ class "tag is-normal is-rounded has-background-border-light ml-2"
+        , attribute "style" "height: 1.25rem;"
+        ]
+        [ text (String.fromInt c) ]
 
 
 
@@ -835,7 +838,7 @@ roleColor rt =
             "primary"
 
         RoleType.Bot ->
-            "link"
+            "white-dimmed"
 
         RoleType.Guest ->
             "blue-grey"
@@ -863,7 +866,7 @@ colorFromRole r =
             "var(--primary)"
 
         RoleType.Bot ->
-            "var(--link)"
+            "var(--white-dimmed)"
 
         RoleType.Guest ->
             "var(--primary)"
@@ -957,7 +960,7 @@ visibility2icon visibility =
             "icon-lock"
 
         NodeVisibility.Secret ->
-            "icon-eye-off"
+            "icon-key"
 
 
 visibility2descr : NodeVisibility.NodeVisibility -> String

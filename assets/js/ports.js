@@ -237,13 +237,6 @@ export const actions = {
             gp.zoomToNode(focusid);
         }
     },
-    'CLEAR_TOOLTIP': (app, session, message) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            var gp = session.gp;
-            gp.clearNodeTooltip();
-        }
-    },
     'DRAW_GRAPHPACK' : (app, session, data) => {
         var $canvas = document.getElementById("canvasOrga");
         if ($canvas) {
@@ -281,6 +274,13 @@ export const actions = {
             var gp = session.gp;
             setTimeout( () => {
                 gp.drawButtons()}, 333);
+        }
+    },
+    'CLEAR_TOOLTIP': (app, session, message) => {
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.clearNodeTooltip();
         }
     },
     //

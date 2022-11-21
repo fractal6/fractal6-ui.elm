@@ -227,10 +227,8 @@ hr {
 }
 
 .panel-tabs {
-    a {
-        &.is-active {
-            border-bottom-color: var(--link-active);
-        }
+    a.is-active {
+        border-bottom-color: var(--link-active);
     }
 }
 
@@ -602,9 +600,6 @@ strong {
     ul {
         border-bottom-color: var(--border-color-light) !important;
     }
-    li.is-active a {
-        border-color: var(--border-color-light);
-    }
     li:not(.is-active) a:hover {
         background-color: inherit;
         border-bottom-color: initial !important;
@@ -614,20 +609,18 @@ strong {
 .tabs.is-boxed {
     a {
         border-radius: 8px 8px 0 0 !important;
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
     }
 }
 
 .tabs:not(.is-boxed) {
     li a {
         border-bottom-color: transparent !important;
-        border-bottom-width: 2px !important;
+        border-bottom-width: 1px !important;
     }
     li.is-active a {
         //font-weight: 600 !important;
         border-bottom-color: var(--link) !important;
-        border-bottom-width: 2px !important;
+        border-bottom-width: 1px !important;
     }
 }
 
@@ -1242,6 +1235,9 @@ figcaption {
           //padding: 0.5em 0 0.5em 0.25em ;
           padding: 0 0 0 1em ;
           margin: 0;
+          a {
+            padding-left: 0 !important;
+          }
       }
   }
 
@@ -1897,8 +1893,7 @@ tr.mediaBox {
     background-color: rgba($node-tooltip-background, 0.9);
 
     // Box style
-    padding: 0px 0px 0px 8px;
-    border: 2px solid black;
+    border: 1px solid black;
     border-style: solid;
     border-radius: 8px;
 
@@ -1958,14 +1953,26 @@ tr.mediaBox {
         top: 1px;
     }
 
+    #doTension {
+        padding-left: 8px;
+        //padding-top: 2px;
+        //padding-bottom: 2px;
+        //border-radius: 8px 0 0 8px;
+        //&:hover {
+        //    background-color: darken($node-tooltip-background, 10) !important;
+        //}
+    }
+
     #doAction > span > span > .button {
         // Vertical separator
         border-left-color: var(--grey) !important;
         border-left-width: 1px !important;
         border-left-style: solid;
         max-height: 1.5rem;
+        border-radius: 0 8px 8px 0;
         &:hover {
             background-color: darken($node-tooltip-background, 10) !important;
+            border-radius: 0 8px 8px 0;
         }
     }
 }

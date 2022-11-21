@@ -1590,6 +1590,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
+            , orgaInfo = global.session.orgaInfo
             }
 
         panelData =
@@ -2151,7 +2152,7 @@ viewEventAuthority lang now event action =
         ( icon, eventText ) =
             case tensionAction2NodeType action of
                 Just NodeType.Circle ->
-                    ( A.icon "icon-key", T.theGovernance )
+                    ( A.icon "icon-shield", T.theGovernance )
 
                 Just NodeType.Role ->
                     ( A.icon "icon-key", T.theAuthority )

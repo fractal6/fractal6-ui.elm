@@ -205,11 +205,12 @@ nodeEncoder node =
                 node.source
       )
     , ( "userCanJoin", JEE.maybe JE.bool node.userCanJoin )
+    , ( "n_tensions", JE.int node.n_tensions )
     ]
 
 
 
--- Node decoder --When receiving data from Javascript
+-- Node decoder: When receiving data from Javascript
 
 
 nodeDecoder : JD.Decoder Node
@@ -226,6 +227,7 @@ nodeDecoder =
         |> JDE.andMap (JD.field "mode" NodeMode.decoder)
         |> JDE.andMap (JD.maybe (JD.field "source" blobIdDecoder))
         |> JDE.andMap (JD.maybe (JD.field "userCanJoin" JD.bool))
+        |> JDE.andMap (JD.field "n_tensions" JD.int)
 
 
 idDecoder : JD.Decoder IdPayload

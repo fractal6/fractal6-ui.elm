@@ -724,4 +724,5 @@ nodeFromFragment parentid f =
     , source = Nothing
     , userCanJoin = Nothing
     , first_link = Maybe.map (\fs -> { username = fs, name = Nothing }) f.first_link
+    , n_tensions = 0
     }

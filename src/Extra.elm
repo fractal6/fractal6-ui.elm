@@ -155,6 +155,30 @@ mor ma mb =
             ma
 
 
+{-| Like using `Maybe.map f a |> withDefault default`
+-}
+unwrap : b -> (a -> b) -> Maybe a -> b
+unwrap default f m =
+    case m of
+        Nothing ->
+            default
+
+        Just a ->
+            f a
+
+
+{-| Like using `Maybe.map f a |> withDefault Nothing |> withDefault default`
+-}
+unwrap2 : b -> (a -> Maybe b) -> Maybe a -> b
+unwrap2 default f m =
+    case m of
+        Nothing ->
+            default
+
+        Just a ->
+            f a |> Maybe.withDefault default
+
+
 
 -- Colors
 
@@ -174,7 +198,7 @@ colorAttr color =
             else
                 "var(--" ++ color ++ ")"
 
-        ch =
+        c_h =
             if String.startsWith "#" color then
                 color ++ "cc"
 
@@ -185,10 +209,10 @@ colorAttr color =
         ("background-color:"
             ++ c
             ++ "; color:"
-            ++ colorToTextColor c
+            ++ colorToTextColor color
             ++ ";"
             ++ "--hover-color:"
-            ++ ch
+            ++ c_h
             ++ ";"
         )
 
@@ -210,6 +234,9 @@ colorToTextColor color =
             , "#DDDDDD"
             ]
     then
+        "#000"
+
+    else if String.startsWith "white" color then
         "#000"
 
     else

@@ -31,6 +31,7 @@ module Query.QueryNode exposing
     , getCircleRights
     , getLabels
     , getNodeId
+    , getOrgaInfo
     , getRoles
     , labelFullPayload
     , labelPayload
@@ -69,6 +70,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
@@ -85,6 +87,7 @@ import Fractal.Object.RoleExt
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
 import Fractal.Object.User
+import Fractal.Object.UserAggregateResult
 import Fractal.Query as Query
 import Fractal.Scalar
 import GqlClient exposing (..)
@@ -378,8 +381,15 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.mode
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with Fractal.Object.Node.userCanJoin
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+                Fractal.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
+                    SelectionSet.map Count Fractal.Object.TensionAggregateResult.count
+            )
 
 
+{-| With blob id
+-}
 nodeOrgaPayload2 : SelectionSet Node Fractal.Object.Node
 nodeOrgaPayload2 =
     SelectionSet.succeed Node
@@ -394,6 +404,7 @@ nodeOrgaPayload2 =
         |> with Fractal.Object.Node.mode
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with Fractal.Object.Node.userCanJoin
+        |> hardcoded 0
 
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
@@ -1217,3 +1228,40 @@ notifEventPayload =
             )
         |> with (Fractal.Object.Notif.contract identity (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id)))
         |> with Fractal.Object.Notif.link
+
+
+
+{-
+   Get an organization info/stats
+-}
+
+
+getOrgaInfo url username nameid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nameid)
+            (orgaInfoPayload username)
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+orgaInfoPayload : String -> SelectionSet OrgaInfo Fractal.Object.Node
+orgaInfoPayload username =
+    SelectionSet.succeed OrgaInfo
+        |> hardcoded 0
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| [ RoleType.Owner, RoleType.Member, RoleType.Guest ], eq = Absent } }) }) <|
+                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            )
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+                Fractal.Object.Node.watchersAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+            )
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> List.length y > 0) x)
+                (Fractal.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
+                    (SelectionSet.map NameidPayload Fractal.Object.User.username)
+                )
+            )
