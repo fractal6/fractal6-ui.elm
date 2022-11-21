@@ -245,7 +245,7 @@ viewPathLevel op model =
             [ case op.path_data of
                 Just _ ->
                     div
-                        [ class "tag has-border mr-3 is-w is-h"
+                        [ class "tag has-border is-rounded-light mr-3 is-w is-h"
                         , attribute "style" "padding: 14px 15px;"
                         , title watch_title
                         , onClick OnToggleWatch

@@ -852,6 +852,10 @@ figcaption {
     box-shadow:         2px 2px 5px 5px lighten($primary, 5);
 }
 
+.is-rounded-light {
+    border-radius: 6px !important;
+}
+
 
 // END FIX BULMA
 
@@ -1223,20 +1227,24 @@ figcaption {
   }
 
   padding-top: 25px;
+  // First level child
+  & .menu > .menu-list > li > ul,
+  & .menu > .menu-list > ul {
+      margin-left: 0.5em;
+      border-left: none;
+  }
   & .menu-list {
       font-size: 0.95em;
       border-left: 1px solid var(--bbc);
-      &:first-child {
-          border-left: 0;
-          margin-right: 2px;
-          margin-left: 2px;
-      }
       & li ul {
           //padding: 0.5em 0 0.5em 0.25em ;
-          padding: 0 0 0 1em ;
+          padding: 0 0 0 0em;
           margin: 0;
+          margin-left: 1em;
           a {
-            padding-left: 0 !important;
+              padding-left: 1em !important;
+              padding-top: 5px !important;
+              padding-bottom: 5px !important;
           }
       }
   }
@@ -1319,7 +1327,6 @@ figcaption {
   }
 }
 
-
 //
 // Overview and Doc
 //
@@ -1345,6 +1352,7 @@ figcaption {
 }
 
 .buttonRole {
+    height: 2.4em;
     font-weight: 500;
     border-radius: 10px !important;
     &.is-orange {

@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.7]
 
 ### New
-- Schema: new Announcement tension type.
+- schema: new Announcement tension type.
 - Helperbar: organisation watch/unwatch button.
 - HelperBar: organisation count hints (total number of tensons, members and watching users)
 - TreeMenu: circle tension count hints.
