@@ -1685,7 +1685,7 @@ viewRoleAddBox model =
             ]
         , div [ class "field mt-2 mb-3" ]
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
-            , viewRoleExt "" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
+            , viewRoleExt "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
         , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
             (Just form.mandate)
@@ -1767,7 +1767,7 @@ viewRoles model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt "button-light" Nothing d ]
+                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt "button-light is-small" Nothing d ]
                                                 , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
@@ -1853,7 +1853,7 @@ viewRolesExt url txt_yes list_d list_ext_d =
                                                     uriFromNameid SettingsBaseUri n.nameid [] ++ q
                                                 )
                                 in
-                                viewRoleExt "ml-2" link_m d
+                                viewRoleExt "ml-2 is-small" link_m d
                             )
                         |> span []
                     ]

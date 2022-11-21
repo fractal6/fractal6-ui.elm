@@ -600,6 +600,9 @@ strong {
     ul {
         border-bottom-color: var(--border-color-light) !important;
     }
+    li.is-active a {
+        border-color: var(--border-color-light);
+    }
     li:not(.is-active) a:hover {
         background-color: inherit;
         border-bottom-color: initial !important;
@@ -770,6 +773,14 @@ strong {
         td:last-child {
             border-radius: 0 0 6px 0;
         }
+    }
+
+    // Fix border in case there is no thead
+    thead tr:last-child th {
+        border-bottom: none !important;
+    }
+    tbody tr:first-child td {
+        border-top: 1px solid var(--table-border-color) !important;
     }
 }
 
