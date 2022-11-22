@@ -50,7 +50,6 @@ import Loading
         , ModalData
         , RequestResult(..)
         , WebData
-        , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
         , withMapData

@@ -952,16 +952,16 @@ viewContractBox c op model =
                             baseUri =
                                 uriFromNameid MandateBaseUri role.nameid [ c.tension.id ]
                         in
-                        div [ class "subtitle", attribute "style" "line-height: 2.5; " ] <|
-                            List.intersperse (text " ") <|
-                                [ viewUserFull 1 True True { username = user, name = Nothing }
-                                , if isYou then
-                                    text T.youHaveBeenInvitedRole
+                        div [ class "subtitle" ]
+                            ([ viewUserFull 1 True True { username = user, name = Nothing } ]
+                                ++ (if isYou then
+                                        [ text ",", br [] [], br [] [], text T.youHaveBeenInvitedRole, text " " ]
 
-                                  else
-                                    text T.userHasBeenInvitedRole
-                                , span [ class "is-text-aligned" ] [ viewRole "is-small" Nothing (Just baseUri) role ]
-                                ]
+                                    else
+                                        [ text " ", text T.userHasBeenInvitedRole, text " " ]
+                                   )
+                                ++ [ span [ class "is-text-aligned" ] [ viewRole "is-small" Nothing (Just baseUri) role ] ]
+                            )
 
                     TensionEvent.UserJoined ->
                         let
@@ -971,15 +971,15 @@ viewContractBox c op model =
                             isYou =
                                 user == model.form.uctx.username
                         in
-                        span [] <|
-                            List.intersperse (text " ") <|
-                                [ viewUserFull 1 True True { username = user, name = Nothing }
-                                , if isYou then
-                                    text T.youHaveBeenInvitedOrga
+                        span []
+                            ([ viewUserFull 1 True True { username = user, name = Nothing } ]
+                                ++ (if isYou then
+                                        [ text ",", br [] [], br [] [], text T.youHaveBeenInvitedOrga ]
 
-                                  else
-                                    text T.userHasBeenInvitedOrga
-                                ]
+                                    else
+                                        [ text " ", text T.userHasBeenInvitedOrga ]
+                                   )
+                            )
 
                     _ ->
                         text T.notImplemented

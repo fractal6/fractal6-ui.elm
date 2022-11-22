@@ -240,7 +240,7 @@ export const GraphPack = {
     // rayon size of the node in the canvas
     rayonFactorRole: 0.95,
     rayonFactorGuest: 0.75,
-    rayonFactorBot: 0.5,
+    rayonFactorBot: 1,
     guestSizeDivider: 1,
     // y-axis offset for the top node
     nodeOffsetY: 0,
@@ -1275,20 +1275,20 @@ export const GraphPack = {
 
         centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
         centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
-        //if (node.data.type_ === NodeType.Role) {
-        //    if (node.data.role_type === RoleType.Guest) {
-        //        rayon = node.r * this.rayonFactorGuest;
-        //    } else if (node.data.role_type === RoleType.Bot) {
-        //        rayon = node.r * this.rayonFactorBot;
-        //    } else {
-        //        rayon = node.r * this.rayonFactorRole;
-        //    }
-        //} else {
-        //    // Circle
-        //    rayon = node.r;
-        //}
-        //rayon *= (zoomCtx.scale);
-        rayon = node.r * (zoomCtx.scale);
+        if (node.data.type_ === NodeType.Role) {
+            if (node.data.role_type === RoleType.Guest) {
+                rayon = node.r * this.rayonFactorGuest;
+            } else if (node.data.role_type === RoleType.Bot) {
+                rayon = node.r * this.rayonFactorBot;
+            } else {
+                rayon = node.r * this.rayonFactorRole;
+            }
+        } else {
+            // Circle
+            rayon = node.r;
+        }
+        rayon *= (zoomCtx.scale);
+        //rayon = node.r * (zoomCtx.scale);
         node.ctx = {centerX, centerY, rayon};
         return
     },

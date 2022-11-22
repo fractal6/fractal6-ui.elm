@@ -112,6 +112,9 @@ port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
 port openAuthModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
+port openAuthNeededFromJs : (() -> msg) -> Sub msg
+
+
 port closeModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
@@ -312,6 +315,14 @@ raiseAuthModal uctx =
     outgoing
         { action = "RAISE_AUTH_MODAL"
         , data = userCtxEncoder uctx
+        }
+
+
+raiseAuthNeeded : Cmd msg
+raiseAuthNeeded =
+    outgoing
+        { action = "RAISE_AUTH_NEEDED"
+        , data = JE.string ""
         }
 
 

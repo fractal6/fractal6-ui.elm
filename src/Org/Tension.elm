@@ -73,7 +73,6 @@ import Loading
         , isFailure
         , isSuccess
         , loadingSpin
-        , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
         , viewMaybeErrors
@@ -136,7 +135,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
-import Query.PatchUser exposing (markAsRead, toggleTensionSubscription)
+import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubscription)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
@@ -263,9 +262,11 @@ type alias Model =
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
     , expandedEvents : List Int
-    , subscribe_result : GqlData Bool
     , eid : String
     , unsubscribe : String
+    , subscribe_result : GqlData Bool
+    , unwatch : String
+    , unwatch_result : GqlData Bool
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -342,11 +343,14 @@ type Msg
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
     | ExpandEvent Int
+    | MarkAsRead String
+    | GotMarkAsRead (GqlData IdPayload)
     | ToggleSubscription String
     | DoUnsubscribe String
     | OnCloseUnsubscribe
-    | MarkAsRead String
-    | GotMarkAsRead (GqlData IdPayload)
+    | DoUnwatch String
+    | GotUnwatch (GqlData Bool)
+    | OnCloseUnwatch
       --
       -- Page Action
       --
@@ -491,9 +495,11 @@ init global flags =
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
-            , subscribe_result = NotAsked
             , eid = ""
             , unsubscribe = ""
+            , subscribe_result = NotAsked
+            , unwatch = ""
+            , unwatch_result = NotAsked
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionForm tid global.session.user
@@ -614,6 +620,12 @@ refresh_cmds refresh global model =
     , case Dict.get "unsubscribe" query |> Maybe.map List.head |> withDefault Nothing of
         Just "email" ->
             send (DoUnsubscribe "email")
+
+        _ ->
+            Cmd.none
+    , case Dict.get "unwatch" query |> Maybe.map List.head |> withDefault Nothing of
+        Just "email" ->
+            send (DoUnwatch "email")
 
         _ ->
             Cmd.none
@@ -850,31 +862,6 @@ update global message model =
             -- @fix/bulma: dropdown clidk handler lost during the operation
             ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Ports.bulma_driver "" )
 
-        ToggleSubscription username ->
-            case model.tension_head of
-                Success th ->
-                    ( { model | subscribe_result = LoadingSlowly }
-                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSubscribe
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        DoUnsubscribe name ->
-            case global.session.user of
-                LoggedIn uctx ->
-                    ( { model | unsubscribe = name }
-                    , toggleTensionSubscription apis uctx.username model.tensionid False GotIsSubscribe
-                    , Cmd.none
-                    )
-
-                LoggedOut ->
-                    ( model, Cmd.none, Cmd.none )
-
-        OnCloseUnsubscribe ->
-            ( { model | unsubscribe = "" }, Cmd.none, Cmd.none )
-
         MarkAsRead eid ->
             ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
 
@@ -891,6 +878,61 @@ update global message model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        ToggleSubscription username ->
+            case model.tension_head of
+                Success th ->
+                    ( { model | subscribe_result = LoadingSlowly, unsubscribe = "" }
+                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSubscribe
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        DoUnsubscribe name ->
+            case global.session.user of
+                LoggedIn uctx ->
+                    ( { model | unsubscribe = name }
+                    , toggleTensionSubscription apis uctx.username model.tensionid False GotIsSubscribe
+                    , Cmd.none
+                    )
+
+                LoggedOut ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+        OnCloseUnsubscribe ->
+            ( { model | unsubscribe = "" }, Cmd.none, Cmd.none )
+
+        DoUnwatch name ->
+            case global.session.user of
+                LoggedIn uctx ->
+                    ( { model | unwatch = name }
+                    , toggleOrgaWatch apis uctx.username model.node_focus.rootnameid False GotUnwatch
+                    , Cmd.none
+                    )
+
+                LoggedOut ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+        OnCloseUnwatch ->
+            ( { model | unwatch = "" }, Cmd.none, Cmd.none )
+
+        GotUnwatch result ->
+            -- @DEBUG/FIX: remove this, and use the global message ToggleWatchOrga instead:
+            -- * NEED: push user notifications to inform the success of the operation. (do this for tension unsubscribe also.)
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (DoUnsubscribe model.unwatch) 500, send UpdateUserToken )
+
+                OkAuth d ->
+                    ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
 
         -- Page Action
         ChangeCommentPost field value ->
@@ -1652,6 +1694,14 @@ view_ global model =
                 div [ class "f6-notification notification is-success-light" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
                     , text T.beenUnsubscribe
+                    ]
+
+              else
+                text ""
+            , if isSuccess model.unwatch_result && model.unwatch /= "" then
+                div [ class "f6-notification notification is-success-light" ]
+                    [ button [ class "delete", onClick OnCloseUnwatch ] []
+                    , text T.beenUnwatch
                     ]
 
               else

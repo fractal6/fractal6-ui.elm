@@ -36,7 +36,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, viewGqlErrors, viewHttpErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
@@ -84,6 +84,7 @@ type ModalType
     = RefreshModal
     | SigninModal
     | SignupModal String -- puid
+    | AuthNeeded
 
 
 type alias UserAuthForm =
@@ -118,6 +119,7 @@ type Msg
       OnStart
     | DoOpenAuthModal Bool UserCtx
     | DoOpenSignupModal String
+    | DoOpenSigninModal
     | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
@@ -126,6 +128,8 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | OnOpenAuthNeeded
+    | OnClose ModalData
 
 
 type alias Out =
@@ -204,12 +208,21 @@ update_ apis message model =
                             ( model, out0 [ send (DoOpenSignupModal puid) ] )
 
                         _ ->
-                            ( { model | modalType = SigninModal, modalAuth = Active { post = Dict.empty } RemoteData.NotAsked }, out0 [ Ports.open_auth_modal ] )
+                            ( model, out0 [ send DoOpenSigninModal ] )
 
         DoOpenSignupModal puid ->
             ( { model
                 | modalType = SignupModal puid
                 , modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked
+                , refreshAfter = True
+              }
+            , out0 [ Ports.open_auth_modal ]
+            )
+
+        DoOpenSigninModal ->
+            ( { model
+                | modalType = SigninModal
+                , modalAuth = Active { post = Dict.empty } RemoteData.NotAsked
                 , refreshAfter = True
               }
             , out0 [ Ports.open_auth_modal ]
@@ -257,6 +270,9 @@ update_ apis message model =
                 RefreshModal ->
                     ( model, out0 [ login apis form.post GotSignin ] )
 
+                AuthNeeded ->
+                    ( model, noOut )
+
         GotSignin result ->
             case model.modalAuth of
                 Active form _ ->
@@ -277,6 +293,9 @@ update_ apis message model =
                                     ( { model | modalAuth = Inactive }
                                     , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
+
+                                AuthNeeded ->
+                                    ( model, noOut )
 
                         _ ->
                             ( { model | modalAuth = Active form result }, noOut )
@@ -306,6 +325,9 @@ update_ apis message model =
 
                                 RefreshModal ->
                                     isPostSendable [ "username", "password" ] form.post
+
+                                AuthNeeded ->
+                                    False
                     in
                     --ENTER
                     if isSendable then
@@ -324,10 +346,24 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        OnOpenAuthNeeded ->
+            ( { model | modalType = AuthNeeded }
+            , out0 [ Ports.open_modal "authNeededModal" ]
+            )
+
+        OnClose data ->
+            let
+                gcmds =
+                    ternary (data.link /= "") [ DoNavigate data.link ] []
+            in
+            ( initModel model.user Nothing, out2 [ Ports.close_modal ] gcmds )
+
 
 subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.uctxPD2 Ports.openAuthModalFromJs LogErr DoOpenAuthModal
+    , Ports.openAuthNeededFromJs (always OnOpenAuthNeeded)
+    , Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     ]
 
 
@@ -343,6 +379,7 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
+    -- @DEUBG: implement isActive2 to get Fadin working...
     div []
         [ case model.modalType of
             SigninModal ->
@@ -353,6 +390,27 @@ view op (State model) =
 
             RefreshModal ->
                 Lazy.lazy2 viewRefreshModal op model
+
+            AuthNeeded ->
+                viewAuthNeededModal model
+        ]
+
+
+viewAuthNeededModal : Model -> Html Msg
+viewAuthNeededModal model =
+    div
+        [ id "authNeededModal"
+        , class "modal is-light modal-fx-fadIn"
+        , classList [ ( "is-active", model.modalType == AuthNeeded ) ]
+        , attribute "data-modal-close" "closeModalFromJs"
+        ]
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "authNeededModal"
+            , onClick (OnClose { reset = True, link = "" })
+            ]
+            []
+        , div [ class "modal-content" ] [ viewAuthNeeded OnClose ]
         ]
 
 

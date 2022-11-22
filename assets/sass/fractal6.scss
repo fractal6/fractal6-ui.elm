@@ -826,7 +826,7 @@ strong {
     left: 50%;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
-    width: 25%;
+    max-width: 50%;
     min-width: 250px;
 }
 
@@ -2351,6 +2351,10 @@ tr.mediaBox {
 }
 .has-background-orange {
     background: var(--orange-frac6) !important;
+}
+
+i.is-liked {
+   color: var(--orange-frac6);
 }
 
 #confirmModal {

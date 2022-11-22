@@ -129,11 +129,13 @@ export const actions = {
         InitBulma(app, session, "")
     },
     'OPEN_AUTH_MODAL': (app, session, message) => {
-        setTimeout(() => {
-            // @DEBUG: the class does not persist without the setTimeout. Why ?
-            document.documentElement.classList.add('has-modal-active2');
-            document.getElementById("navbarTop").classList.add('has-modal-active2');
-        }, 333);
+        document.documentElement.classList.add('has-modal-active2');
+        document.getElementById("navbarTop").classList.add('has-modal-active2');
+        //setTimeout(() => {
+        //    // @DEBUG: the class does not persist without the setTimeout. Why ?
+        //    document.documentElement.classList.add('has-modal-active2');
+        //    document.getElementById("navbarTop").classList.add('has-modal-active2');
+        //}, 50);
     },
     'CLOSE_AUTH_MODAL': (app, session, message) => {
         document.documentElement.classList.remove('has-modal-active2');
@@ -144,6 +146,11 @@ export const actions = {
     'RAISE_AUTH_MODAL': (app, session, uctx) => {
         app.ports.openAuthModalFromJs.send({uctx:uctx});
     },
+
+    'RAISE_AUTH_NEEDED': (app, session, _) => {
+        app.ports.openAuthNeededFromJs.send(null);
+    },
+
     //
     // Quick Search
     //

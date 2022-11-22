@@ -220,7 +220,15 @@ update msg model =
             in
             ( { model | session = { session | user = LoggedIn uctx } }
               -- Update Components when Uctx change !
-            , [ Ports.saveUserCtx uctx, sendSleep RefreshNotifCount 1000 ]
+            , [ Ports.saveUserCtx uctx
+              , case session.node_focus of
+                    Just n ->
+                        getOrgaInfo apis uctx.username n.rootnameid GotOrgaInfo
+
+                    Nothing ->
+                        Cmd.none
+              , sendSleep RefreshNotifCount 1000
+              ]
                 ++ (case model.session.tree_data of
                         Just ndata ->
                             [ Ports.redrawGraphPack ndata ]
@@ -535,7 +543,7 @@ update msg model =
                     ( model, toggleOrgaWatch apis uctx.username nameid (not isWatching) GotIsWatching )
 
                 LoggedOut ->
-                    ( model, Cmd.none )
+                    ( model, Ports.raiseAuthNeeded )
 
         GotIsWatching result ->
             case parseErr result 2 of

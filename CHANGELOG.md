@@ -13,12 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - schema: new Announcement tension type.
 - Helperbar: organisation watch/unwatch button.
 - HelperBar: organisation count hints (total number of tensons, members and watching users)
+- subscription: handle organisation unsubscribe (unwatch) from email link.
 - TreeMenu: circle tension count hints.
 - NewTension: improved tension type dropdown menu with hints.
+- AuthModal: integrate the viewAuthNeeded modal in the this component. 
 
 ### Changed
 - ui: icon for secret visibility.
 - ui: color code for collector/bot role type.
+
+### Fixed
+- authentification modal behaviour when unsubscribing while logged out.
 
 
 ## [0.6.9]

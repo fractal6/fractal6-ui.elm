@@ -931,8 +931,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Nouveau contrat"
 
 [contractType]
-  en="Contract type"
-  fr="Type de contrat"
+  en="Contract"
+  fr="Contrat"
 
 [contractEvent]
   en="Event"
@@ -1910,8 +1910,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 	fr="Activer les notifications par e-mail."
 
 [beenUnsubscribe]
-  en="You’ve been unsubscribed from this tension"
+  en="You’ve been unsubscribed from this tension."
 	fr="Vous avez été désabonné de cette tension."
+
+[beenUnwatch]
+  en="You’ve been unsubscribed from this organization."
+	fr="Vous avez été désabonné de cette organization."
 
 [markAsRead]
 	en="Mark as read."
@@ -2279,16 +2283,16 @@ Mais d'abord, vous devez **configurer votre compte** :
 	"""
 
 [youHaveBeenInvitedRole]
-  en=", You have been invited to play the role"
-  fr=", Vous avez été invité à jouer le rôle"
+  en="You have been invited to play the following role:"
+  fr="Vous avez été invité à jouer le rôle suivant:"
 
 [userHasBeenInvitedRole]
-  en="has been invited to play the role"
-  fr="a été invité à jouer le rôle"
+  en="has been invited to play the following role:"
+  fr="a été invité à jouer le rôle suivant:"
 
 [youHaveBeenInvitedOrga]
-  en=", You have been invited to this organization."
-  fr=", Vous avez été invité à cette organisation."
+  en="You have been invited to this organization."
+  fr="Vous avez été invité dans cette organisation."
 
 [userHasBeenInvitedOrga]
   en="has been invited to this organization."

@@ -69,7 +69,6 @@ import Loading
         , fromMaybeData
         , isFailure
         , isSuccess
-        , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
         , withDefaultData

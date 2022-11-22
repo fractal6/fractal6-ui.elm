@@ -234,7 +234,7 @@ viewPathLevel op model =
 
         ( watch_icon, watch_txt, watch_title ) =
             if unwrap2 False .isWatching op.orgaInfo then
-                ( "icon-eye", T.unwatch, T.unwatchThisOrganization )
+                ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganization )
 
             else
                 ( "icon-eye", T.watch, T.watchThisOrganization )
