@@ -118,6 +118,7 @@ import ModelCommon.View
         , viewJoinNeeded
         , viewLabel
         , viewLabels
+        , viewNodeDescr
         , viewNodeRefShort
         , viewRole
         , viewRoleExt
@@ -2460,7 +2461,9 @@ viewDocument u t b model =
             nodeData =
                 { focus = model.node_focus
                 , tid_r = Success t.id
-                , node = b.node |> withDefault (initNodeFragment Nothing)
+                , node = b.node |> Maybe.map (nodeFromFragment t.receiver.nameid)
+                , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault (NodeData Nothing Nothing)
+                , leads = []
                 , isLazy = False
                 , source = model.baseUri
                 , hasBeenPushed = model.hasBeenPushed
@@ -2702,35 +2705,27 @@ viewSidePane u t model =
                                 LoggedOut ->
                                     [ h2 [ class "subtitle" ] [ text T.document ] ]
                             )
-                                ++ [ div [] <|
-                                        case tc.doc_type of
-                                            NODE NodeType.Circle ->
-                                                [ div [ class "level is-mobile mb-3" ] <|
-                                                    [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                                    , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
-                                                    ]
-                                                , viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
-                                                ]
+                                ++ [ viewNodeDescr True node tc ]
+                                ++ [ -- Node Artefact
+                                     case node.type_ of
+                                        NodeType.Circle ->
+                                            viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
 
-                                            NODE NodeType.Role ->
-                                                [ div [ class "level is-mobile mb-3" ] <|
-                                                    [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                                    ]
-                                                , if model.hasBeenPushed then
-                                                    viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
+                                        NodeType.Role ->
+                                            case node.role_type of
+                                                Just rt ->
+                                                    if model.hasBeenPushed then
+                                                        viewRole "is-small mb-2" Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
 
-                                                  else
-                                                    viewRoleExt "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = withDefault RoleType.Pending node.role_type }
-                                                ]
+                                                    else
+                                                        viewRoleExt "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
 
-                                            MD ->
-                                                [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
+                                                Nothing ->
+                                                    text ""
                                    ]
                                 ++ [ Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-highlight" ] [ text T.firstLink, text ": " ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-highlight" ] [ A.icon1 "icon-user" T.firstLink, text ": " ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")

@@ -38,7 +38,7 @@ import Components.TreeMenu as TreeMenu
 import Debug
 import Dict exposing (Dict)
 import Dom
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary, textH, unwrap, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -91,6 +91,7 @@ import ModelCommon.Codecs
         , nameidFromFlags
         , nearestCircleid
         , nid2rootid
+        , tensionCharacFromNode
         , uriFromNameid
         )
 import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
@@ -955,40 +956,28 @@ view_ global model =
         tid =
             focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\b -> b.tension.id)) |> withDefault Nothing |> withDefault ""
 
-        roletype =
-            focus_m |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
+        leads =
+            model.path_data
+                |> Maybe.map (.focus >> .children)
+                |> withDefault []
+                |> List.map (\x -> getNode x.nameid model.tree_data)
+                |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)
+                |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
+                |> LE.uniqueBy .username
+                |> List.sortBy .username
 
-        nodeData_ =
+        nodeData =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
-            , node = initNodeFragment Nothing
+            , node = getNode model.node_focus.nameid model.tree_data
+            , node_data = withMaybeData model.node_data |> withDefault (NodeData Nothing Nothing)
+            , leads = leads
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
             , receiver = nearestCircleid model.node_focus.nameid
             , hasInnerToolbar = True
             }
-
-        nodeData =
-            case model.tree_data of
-                Success d ->
-                    let
-                        node =
-                            Dict.get model.node_focus.nameid d
-                    in
-                    case model.path_data of
-                        Just path ->
-                            if List.length path.path > 0 then
-                                { nodeData_ | node = nodeFragmentFromOrga node model.node_data path.focus.children d }
-
-                            else
-                                { nodeData_ | tid_r = Failure [ T.nodeNotExist ] }
-
-                        Nothing ->
-                            nodeData_
-
-                _ ->
-                    nodeData_
 
         viewFromPos : String -> Html Msg
         viewFromPos pos =
@@ -1088,16 +1077,7 @@ viewActionPanel domid us node o actionPanel =
             if hasConfig then
                 let
                     panelData =
-                        -- @DEBUG/@FIX: archive circle can be query now...
-                        -- Action type should be queried with queryNodesSub !
-                        -- @TODO: special color/sape for archive circle.
-                        { tc =
-                            case node.type_ of
-                                NodeType.Circle ->
-                                    { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
-
-                                NodeType.Role ->
-                                    { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+                        { tc = tensionCharacFromNode node
                         , isRight = True
                         , domid = domid
                         , tree_data = o

@@ -307,8 +307,7 @@ nodeOrgaDecoder data =
 
                 else
                     d
-                        |> List.filterMap identity
-                        |> List.map (\n -> ( n.nameid, n ))
+                        |> List.filterMap (Maybe.map (\n -> ( n.nameid, n )))
                         |> Dict.fromList
                         |> Just
             )

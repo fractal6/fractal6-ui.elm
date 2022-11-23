@@ -23,7 +23,7 @@ module Components.NodeDoc exposing (..)
 
 import Assets as A
 import Dict
-import Extra exposing (space_, ternary, textH, upH)
+import Extra exposing (space_, ternary, textH, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.Lang as Lang
@@ -45,8 +45,8 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
+import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewNodeDescr, viewUser, viewUsers)
 import ModelSchema exposing (..)
 import Session exposing (Conf)
 import String.Extra as SE
@@ -65,7 +65,7 @@ import Time
 
 
 type alias NodeDoc =
-    { node : NodeFragment --redundant with data.node (use with reset function
+    { node : NodeFragment --redundant with data.node ? Use to create tension / blob
     , form : TensionForm
     , result : GqlData PatchTensionPayloadID
     , mode : NodeView
@@ -416,7 +416,13 @@ type alias OrgaNodeData =
     -- should be merge with Op in the @future Model Components
     { focus : NodeFocus
     , tid_r : GqlData String
-    , node : NodeFragment
+
+    -- The Node get from another components...
+    , node : Maybe Node
+    , node_data : NodeData
+    , leads : List User
+
+    --
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
@@ -566,17 +572,18 @@ viewBlob : OrgaNodeData -> Maybe (Op msg) -> Html msg
 viewBlob data op_m =
     case op_m of
         Just op ->
+            -- Tension view
             case op.data.mode of
                 NodeEdit ->
                     let
                         txt =
-                            getNodeTextFromNodeType (withDefault NodeType.Role data.node.type_)
+                            getNodeTextFromNodeType (unwrap NodeType.Role .type_ data.node)
                     in
                     div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ] <|
                         (if op.data.editMode == Just EditAbout then
                             let
                                 isSendable =
-                                    data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
+                                    Maybe.map .name data.node /= op.data.form.node.name || data.node_data.about /= op.data.form.node.about
 
                                 isLoading =
                                     op.data.result == LoadingSlowly
@@ -592,7 +599,7 @@ viewBlob data op_m =
                             ++ (if op.data.editMode == Just EditMandate then
                                     let
                                         isSendable =
-                                            data.node.mandate /= op.data.form.node.mandate
+                                            data.node_data.mandate /= op.data.form.node.mandate
 
                                         isLoading =
                                             op.data.result == LoadingSlowly
@@ -602,7 +609,7 @@ viewBlob data op_m =
                                     ]
 
                                 else
-                                    [ viewMandateSection data.node.role_type data.node.mandate (Just op.onChangeEdit) ]
+                                    [ viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
                                )
 
                 NodeVersions ->
@@ -612,10 +619,46 @@ viewBlob data op_m =
                     text ""
 
         Nothing ->
+            -- Overview view
             div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ]
                 [ viewAboutSection data Nothing
+                , case data.node of
+                    Just node ->
+                        div [ class "mt-4" ]
+                            [ -- Node Hints
+                              div [ class "columns mb-0" ]
+                                [ div [ class "column is-6 pb-0", class "is-hint" ]
+                                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
+                                ]
+                            , -- Circle lead
+                              if List.length data.leads > 0 then
+                                let
+                                    i =
+                                        List.length data.leads
+
+                                    txt =
+                                        if i == 1 then
+                                            String.toLower T.firstLink
+
+                                        else
+                                            String.toLower T.firstLinks
+                                in
+                                div [ class "is-hint" ] [ A.icon1 "icon-users" "", span [ class "is-hint-2" ] [ text (String.fromInt i) ], text (" " ++ txt ++ "  " ++ space_), viewUsers data.leads ]
+
+                              else
+                                -- Role Lead link Maybe.map
+                                Maybe.map
+                                    (\fs ->
+                                        div [ class "is-hint" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
+                                    )
+                                    node.first_link
+                                    |> withDefault (text "")
+                            ]
+
+                    Nothing ->
+                        text ""
                 , hr [ class "has-background-border-light" ] []
-                , viewMandateSection data.node.role_type data.node.mandate Nothing
+                , viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
 
 
@@ -625,10 +668,6 @@ viewBlob data op_m =
 
 viewAboutSection : OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
 viewAboutSection data op_m =
-    let
-        nameid =
-            getNodeNameid data.receiver data.node
-    in
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left", style "max-width" "90%" ]
@@ -636,6 +675,10 @@ viewAboutSection data op_m =
                 , span [ class "nowrap" ] [ text T.about ]
                 , text space_
                 , --if isTensionBaseUri data.source && data.hasBeenPushed then
+                  --  let
+                  --      nameid =
+                  --          getNodeNameid data.receiver data.node
+                  --  in
                   --  a
                   --      [ href <| uriFromNameid OverviewBaseUri nameid []
                   --      , title T.viewOnMap
@@ -652,9 +695,9 @@ viewAboutSection data op_m =
                   --      ]
                   --      [ text <| withDefault "" data.node.name ]
                   --else
-                  span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
+                  span [ class "is-name" ] [ unwrap "" .name data.node |> text ]
                 ]
-            , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member data.node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
+            , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member (unwrap Nothing .role_type data.node) (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
                 div [ class "level-right is-marginless is-small is-hidden-mobile" ] [ viewToolbar NoView data ]
 
               else
@@ -669,7 +712,7 @@ viewAboutSection data op_m =
                     op_m
                     |> withDefault (text "")
             ]
-        , case data.node.about of
+        , case data.node_data.about of
             Just ab ->
                 renderMarkdown "is-human" ab
 

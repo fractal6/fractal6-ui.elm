@@ -37,7 +37,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, title)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Identicon
@@ -81,6 +81,7 @@ import ModelSchema
         , shrinkNode
         )
 import Session exposing (Conf)
+import String.Extra as SE
 import Text as T
 import Time
 
@@ -420,7 +421,7 @@ viewUsers users =
 
 viewUser0 : String -> Html msg
 viewUser0 username =
-    span [ class "mr-2" ]
+    span [ class "mr-2", title username ]
         [ a [ href (uriFromUsername UsersBaseUri username) ]
             [ getAvatar0 username ]
         ]
@@ -429,18 +430,18 @@ viewUser0 username =
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
     if isLinked then
-        span [ class "mr-2" ]
+        span [ class "mr-2", title username ]
             [ a [ href (uriFromUsername UsersBaseUri username) ]
                 [ getAvatar1 username ]
             ]
 
     else
-        span [ class "mr-2" ] [ getAvatar1 username ]
+        span [ class "mr-2", title username ] [ getAvatar1 username ]
 
 
 viewUser2 : String -> Html msg
 viewUser2 username =
-    span [ class "mr-2" ]
+    span [ class "mr-2", title username ]
         [ a [ href (uriFromUsername UsersBaseUri username) ]
             [ getAvatar2 username ]
         ]
@@ -473,7 +474,7 @@ viewUserFull size isLinked isBoxed user =
             else
                 ( span, [] )
     in
-    ob (ternary isBoxed ([ class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk) ([] ++ lk))
+    ob (ternary isBoxed ([ title user.username, class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk) ([] ++ lk))
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
             [ avatar user.username ]
         , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
@@ -721,6 +722,37 @@ counter c =
 {-
    Node
 -}
+
+
+viewNodeDescr : Bool -> Node -> TensionCharac -> Html msg
+viewNodeDescr inPanel node tc =
+    let
+        cls =
+            if inPanel then
+                "level"
+
+            else
+                "is-flex"
+    in
+    div [] <|
+        case tc.doc_type of
+            NODE NodeType.Circle ->
+                [ div [ class "is-mobile mb-3", classList [ ( cls, True ) ] ] <|
+                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                    , span [ class "level-item mr-4" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                    , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
+                    ]
+                ]
+
+            NODE NodeType.Role ->
+                [ div [ class "is-mobile mb-3 is-flex" ] <|
+                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                    ]
+                ]
+
+            MD ->
+                [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
 
 
 viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg

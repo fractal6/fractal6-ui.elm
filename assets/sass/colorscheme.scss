@@ -200,6 +200,8 @@ $is-discrete: $grey;
 $is-highlight: $dark;
 $is-highlight2: lighten($is-highlight, 5);
 $is-highlight3: $grey;
+$is-hint: $grey-light;
+$is-hint2: $grey;
 
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
@@ -357,6 +359,8 @@ $button-vote-danger-background: $danger;
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
   --is-highlight3: #{$is-highlight3};
+  --is-hint: #{$is-hint};
+  --is-hint2: #{$is-hint2};
   --success-light: #{$success-light};
 
   // Hover case
@@ -528,6 +532,8 @@ $is-discrete: $grey-light;
 $is-highlight: $white-ter;
 $is-highlight2: darken($is-highlight, 5);
 $is-highlight3: $grey-lighter;
+$is-hint: $grey-light;
+$is-hint2: $grey-light2;
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
@@ -690,6 +696,8 @@ $button-vote-danger-background: $danger-light;
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
   --is-highlight3: #{$is-highlight3};
+  --is-hint: #{$is-hint};
+  --is-hint2: #{$is-hint2};
   --success-light: #{$success-light};
 
   // Hover case

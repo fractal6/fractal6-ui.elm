@@ -233,15 +233,20 @@ hr {
 }
 
 .help-label {
-  color: var(--grey) !important;
-  //display: block !important;
-  font-size: $size-small !important;
-  margin-top: 0.25rem !important;
+    color: var(--grey) !important;
+    //display: block !important;
+    font-size: $size-small !important;
+    margin-top: 0.25rem !important;
 }
 .help {
-  color: var(--grey-light) !important;
+    color: var(--grey-light) !important;
 }
-
+.is-hint {
+    color: var(--is-hint) !important;
+}
+.is-hint-2 {
+    color: var(--is-hint2) !important;
+}
 .is-link2 {
     color: var(--white) !important;
     background-color: var(--link2) !important;

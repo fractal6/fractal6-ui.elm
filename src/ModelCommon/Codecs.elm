@@ -681,6 +681,25 @@ getTensionCharac action =
             { action = action, action_type = ARCHIVE, doc_type = MD }
 
 
+type alias Node_ a =
+    { a
+        | type_ : NodeType.NodeType
+    }
+
+
+tensionCharacFromNode : Node_ a -> TensionCharac
+tensionCharacFromNode node =
+    -- @DEBUG/@FIX: archive circle can be query now...
+    -- Action type should be queried with queryNodesSub !
+    -- @TODO: special color/shape for archive circle.
+    case node.type_ of
+        NodeType.Circle ->
+            { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
+
+        NodeType.Role ->
+            { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+
+
 tensionAction2NodeType : Maybe TensionAction.TensionAction -> Maybe NodeType.NodeType
 tensionAction2NodeType action_m =
     action_m

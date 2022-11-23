@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### New
 - schema: new Announcement tension type.
+- Overview: add circle/role hints information in the description page.
 - Helperbar: organisation watch/unwatch button.
 - HelperBar: organisation count hints (total number of tensons, members and watching users)
 - subscription: handle organisation unsubscribe (unwatch) from email link.
