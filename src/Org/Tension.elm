@@ -263,8 +263,9 @@ type alias Model =
     , tension_blobs : GqlData TensionBlobs
     , expandedEvents : List Int
     , eid : String
+    , subscribe_result : GqlData Bool -- init a GotTensionHead
     , unsubscribe : String
-    , subscribe_result : GqlData Bool
+    , unsubscribe_result : GqlData Bool
     , unwatch : String
     , unwatch_result : GqlData Bool
 
@@ -337,16 +338,17 @@ type Msg
     | Submit Bool (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
-      -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotIsSubscribe (GqlData Bool)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
-    | ExpandEvent Int
     | MarkAsRead String
     | GotMarkAsRead (GqlData IdPayload)
     | ToggleSubscription String
+      -- Unsubscribe from url
+      -- @TODO: move this to global (e.g ToggleWatchOrga)
     | DoUnsubscribe String
+    | GotUnsubscribe (GqlData Bool)
     | OnCloseUnsubscribe
     | DoUnwatch String
     | GotUnwatch (GqlData Bool)
@@ -354,22 +356,23 @@ type Msg
       --
       -- Page Action
       --
-      -- new comment
+    | ExpandEvent Int
+      -- Edit title
+    | DoChangeTitle
+    | CancelTitle
+    | SubmitTitle Time.Posix
+    | TitleAck (GqlData IdPayload)
+      -- New comment
     | ChangeCommentPost String String -- {field value}
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | CommentAck (GqlData PatchTensionPayloadID)
-      -- edit comment
+      -- Edit comment
     | DoUpdateComment Comment
     | CancelCommentPatch
     | ChangeCommentPatch String String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
-      -- edit title
-    | DoChangeTitle
-    | CancelTitle
-    | SubmitTitle Time.Posix
-    | TitleAck (GqlData IdPayload)
-      -- Blob doc edit
+      -- Blob edit
     | ChangeBlobEdit NodeEdit
     | ChangeBlobPost String String
     | AddDomains
@@ -496,8 +499,9 @@ init global flags =
             , tension_blobs = Loading
             , expandedEvents = []
             , eid = ""
-            , unsubscribe = ""
             , subscribe_result = NotAsked
+            , unsubscribe = ""
+            , unsubscribe_result = NotAsked
             , unwatch = ""
             , unwatch_result = NotAsked
 
@@ -805,12 +809,9 @@ update global message model =
                     ( { model
                         | tension_head = result
                         , hasBeenPushed = hasBeenPushed
-                        , subscribe_result = fromMaybeData th.isSubscribed NotAsked
+                        , subscribe_result = fromMaybeData th.isSubscribed model.subscribe_result
                         , nodeDoc = nodeDoc
-                        , isTensionAdmin =
-                            ternary hasLocalGraph
-                                isAdmin
-                                model.isTensionAdmin
+                        , isTensionAdmin = ternary hasLocalGraph isAdmin model.isTensionAdmin
                       }
                     , Cmd.batch
                         [ ternary hasLocalGraph
@@ -894,7 +895,7 @@ update global message model =
             case global.session.user of
                 LoggedIn uctx ->
                     ( { model | unsubscribe = name }
-                    , toggleTensionSubscription apis uctx.username model.tensionid False GotIsSubscribe
+                    , toggleTensionSubscription apis uctx.username model.tensionid False GotUnsubscribe
                     , Cmd.none
                     )
 
@@ -903,6 +904,20 @@ update global message model =
 
         OnCloseUnsubscribe ->
             ( { model | unsubscribe = "" }, Cmd.none, Cmd.none )
+
+        GotUnsubscribe result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (DoUnsubscribe model.unwatch) 500, send UpdateUserToken )
+
+                OkAuth d ->
+                    ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
 
         DoUnwatch name ->
             case global.session.user of
@@ -920,16 +935,16 @@ update global message model =
 
         GotUnwatch result ->
             -- @DEBUG/FIX: remove this, and use the global message ToggleWatchOrga instead:
-            -- * NEED: push user notifications to inform the success of the operation. (do this for tension unsubscribe also.)
+            -- * NEED: push user notifications to inform the success of the operation (do this for tension unsubscribe also).
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (DoUnsubscribe model.unwatch) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (DoUnwatch model.unwatch) 500, send UpdateUserToken )
 
                 OkAuth d ->
-                    ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
+                    ( { model | unwatch_result = result }, Cmd.none, send (GotIsWatching result) )
 
                 _ ->
                     ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
@@ -1690,7 +1705,7 @@ view_ global model =
                     text ""
 
             -- User notification
-            , if isSuccess model.subscribe_result && model.unsubscribe /= "" then
+            , if isSuccess model.unsubscribe_result && model.unsubscribe /= "" then
                 div [ class "f6-notification notification is-success-light" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
                     , text T.beenUnsubscribe

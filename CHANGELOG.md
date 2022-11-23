@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - ui: icon for secret visibility.
 - ui: color code for collector/bot role type.
+- ui: tooltip and graphpack visual improvmen.
+- ui: fix table border.
 
 ### Fixed
 - authentification modal behaviour when unsubscribing while logged out.
