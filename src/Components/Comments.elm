@@ -37,7 +37,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionForm)
 import ModelCommon.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCtx)
-import Session exposing (Conf)
+import Session exposing (Conf, isMobile)
 import Text as T
 import Time
 
@@ -344,7 +344,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if op.conf.screen.w < 769 then
+            if isMobile op.conf.screen then
                 if isModal then
                     ( 4, 2 )
 

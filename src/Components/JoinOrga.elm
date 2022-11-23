@@ -47,7 +47,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..), Screen)
+import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
 import Text as T
 import Time
 
@@ -715,7 +715,7 @@ viewComment isOpt model =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if model.screen.w < 769 then
+            if isMobile model.screen then
                 ( 5, 2 )
 
             else

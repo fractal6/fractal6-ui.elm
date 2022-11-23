@@ -61,6 +61,11 @@ type alias Screen =
     { w : Int, h : Int }
 
 
+isMobile : Screen -> Bool
+isMobile screen =
+    screen.w < 769
+
+
 type alias Conf =
     { screen : Screen
     , lang : Lang.Lang

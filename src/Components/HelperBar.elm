@@ -239,9 +239,9 @@ viewPathLevel op model =
             else
                 ( "icon-eye", T.watch, T.watchThisOrganization )
     in
-    nav [ class "level is-mobile" ]
+    nav [ class "level" ]
         [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
-        , div [ class "level-right mt-0" ]
+        , div [ class "level-right" ]
             [ case op.path_data of
                 Just _ ->
                     div

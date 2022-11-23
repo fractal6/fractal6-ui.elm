@@ -102,7 +102,7 @@ import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
-import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch)
+import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
 import String
 import String.Extra as SE
 import Task
@@ -353,6 +353,13 @@ init global flags =
             , window_pos =
                 session.window_pos
                     |> withDefault { topRight = "doc", bottomLeft = "activities" }
+                    |> (\x ->
+                            if isMobile global.session.screen then
+                                { x | topRight = x.bottomLeft, bottomLeft = x.topRight }
+
+                            else
+                                x
+                       )
             , node_hovered = Nothing
             , next_focus = Nothing
             , activity_tab = TensionTab

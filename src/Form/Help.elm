@@ -53,7 +53,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
-import Session exposing (Apis, Conf, GlobalCmd(..))
+import Session exposing (Apis, Conf, GlobalCmd(..), isMobile)
 import Text as T
 import Time
 
@@ -631,7 +631,7 @@ viewAskQuestion op (State model) =
                     List.length <| String.lines message
 
                 ( max_len, min_len ) =
-                    if model.conf.screen.w < 769 then
+                    if isMobile model.conf.screen then
                         ( 5, 2 )
 
                     else
@@ -748,7 +748,7 @@ viewFeedback op (State model) =
                     List.length <| String.lines message
 
                 ( max_len, min_len ) =
-                    if model.conf.screen.w < 769 then
+                    if isMobile model.conf.screen then
                         ( 5, 2 )
 
                     else
