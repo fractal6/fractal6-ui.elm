@@ -47,10 +47,11 @@ import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import Json.Encode as JE
-import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
+import ModelCommon.Error exposing (viewHttpErrors)
 import ModelCommon.View exposing (visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -284,7 +285,7 @@ update global message model =
 
                 DuplicateErr ->
                     ( { model
-                        | result = RemoteData.Failure (BadBody "Duplicate error: this name (URL) is already taken.")
+                        | result = RemoteData.Failure (BadBody T.duplicateNameError)
                         , isDuplicate = True
                       }
                     , Cmd.none
