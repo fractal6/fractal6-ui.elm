@@ -73,7 +73,7 @@ messageToErrState message_ trial =
     else if contains "already exists for field" message then
         DuplicateErr
 
-    else if startsWith "access denied" message || contains "refresh token" message then
+    else if startsWith "access denied" message || contains "refresh token" message || contains "authorization failed" message then
         if trial == 0 then
             RefreshToken (trial + 1)
 
