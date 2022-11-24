@@ -278,7 +278,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
-            , actionPanel = ActionPanel.init global.session.user
+            , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
 
         cmds =

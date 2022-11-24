@@ -751,7 +751,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
-            , actionPanel = ActionPanel.init global.session.user
+            , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of

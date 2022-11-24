@@ -63,7 +63,7 @@ import ModelCommon
         , makeCandidateContractForm
         , uctxFromUser
         )
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, userFromBaseMember)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
 import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
@@ -72,7 +72,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -96,6 +96,7 @@ type alias Model =
     , pos : Maybe ( Int, Int )
 
     -- Common
+    , screen : Screen
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -121,8 +122,8 @@ type ActionStep
     | StepAck IdPayload
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> Screen -> Model
+initModel user screen =
     { user = user
     , action_result = NotAsked
     , isOpen = False
@@ -136,6 +137,7 @@ initModel user =
     , pos = Nothing
 
     -- Common
+    , screen = screen
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , moveTension = MoveTension.init user
@@ -143,9 +145,9 @@ initModel user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> Screen -> State
+init user screen =
+    initModel user screen |> State
 
 
 panelAction2str : PanelState -> String
@@ -362,7 +364,7 @@ closeModal data =
 
 reset : Model -> Model
 reset data =
-    initModel data.user
+    initModel data.user data.screen
 
 
 setStep : ActionStep -> Model -> Model
@@ -1064,15 +1066,19 @@ viewPanel op model =
     div [ class "actionPanelStyle", pos ]
         [ div
             [ class "dropdown-content"
-
-            --, onClick OnClose
             , classList [ ( "is-right", op.isRight ) ]
             ]
           <|
-            (-- EDIT ACTION
+            (-- SHORTCUT ACTION
              if not (List.member model.form.node.role_type [ Just RoleType.Guest, Just RoleType.Owner ]) then
-                [ div
-                    -- Edit
+                [ -- View Action
+                  div
+                    [ class "dropdown-item button-light"
+                    , onClick (Navigate (uriFromNameid OverviewBaseUri model.form.node.nameid []))
+                    ]
+                    [ A.icon1 "" T.view ]
+                , -- Edit Action
+                  div
                     [ class "dropdown-item button-light"
                     , onClick
                         (Navigate
@@ -1085,7 +1091,7 @@ viewPanel op model =
              else
                 []
             )
-                ++ (-- New ACTION
+                ++ (-- ADD ACTION
                     if model.form.node.role_type /= Just RoleType.Guest then
                         [ div
                             [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid ]) ]
@@ -1238,7 +1244,7 @@ viewModalContent op model =
                         , onClickPD (OnCloseModal { reset = True, link = link })
                         , target "_blank"
                         ]
-                        [ text T.view ]
+                        [ text T.consult ]
 
                   else
                     text ""
@@ -1343,13 +1349,27 @@ viewStep1 op model =
 
 viewComment : Model -> Html Msg
 viewComment model =
+    let
+        message =
+            Dict.get "message" model.form.post |> withDefault ""
+
+        line_len =
+            List.length <| String.lines message
+
+        ( max_len, min_len ) =
+            if isMobile model.screen then
+                ( 5, 2 )
+
+            else
+                ( 10, 3 )
+    in
     div [ class "field" ]
         [ div [ class "control submitFocus" ]
             [ textarea
                 [ class "textarea"
-                , rows 3
+                , rows (min max_len (max line_len min_len))
                 , placeholder T.leaveCommentOpt
-                , value (Dict.get "message" model.form.post |> withDefault "")
+                , value message
                 , onInput <| OnChangePost "message"
                 ]
                 []

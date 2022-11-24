@@ -956,12 +956,12 @@ viewContractBox c op model =
                         div [ class "subtitle" ]
                             ([ viewUserFull 1 True True { username = user, name = Nothing } ]
                                 ++ (if isYou then
-                                        [ text ",", br [] [], br [] [], text T.youHaveBeenInvitedRole, text " " ]
+                                        [ text ",", br [] [], text T.youHaveBeenInvitedRole, text " " ]
 
                                     else
                                         [ text " ", text T.userHasBeenInvitedRole, text " " ]
                                    )
-                                ++ [ span [ class "is-text-aligned" ] [ viewRole "is-small" Nothing (Just baseUri) role ] ]
+                                ++ [ span [ class "is-text-aligned" ] [ viewRole "is-small mt-4" Nothing (Just baseUri) role ] ]
                             )
 
                     TensionEvent.UserJoined ->

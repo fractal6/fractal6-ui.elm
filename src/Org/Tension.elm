@@ -554,7 +554,7 @@ init global flags =
             , moveTension = MoveTension.init global.session.user
             , contractsPage = ContractsPage.init rootnameid global.session.user conf
             , selectType = SelectType.init tid global.session.user
-            , actionPanel = ActionPanel.init global.session.user
+            , actionPanel = ActionPanel.init global.session.user global.session.screen
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
