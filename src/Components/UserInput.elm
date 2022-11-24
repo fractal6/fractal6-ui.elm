@@ -36,9 +36,10 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (viewUserFull)
 import ModelSchema exposing (..)
 import Ports

@@ -55,10 +55,11 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
+import ModelCommon.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import ModelCommon.View exposing (getNodeTextFromNodeType, viewLabel, viewRoleExt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

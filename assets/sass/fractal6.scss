@@ -3036,6 +3036,20 @@ i.is-liked {
     }
 }
 
+.error-f6 {
+    color: var(--is-danger);
+    .markdown-body {
+        color: var(--is-danger);
+
+        blockquote * {
+            font-style: normal;
+            font-size: $size-small;
+            color: var(--is-hint);
+        }
+
+    }
+}
+
 /*
  *
  * Placeholder Loading

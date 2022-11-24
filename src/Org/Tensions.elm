@@ -69,8 +69,6 @@ import Loading
         , fromMaybeData
         , fromMaybeWebData
         , isSuccess
-        , viewGqlErrors
-        , viewHttpErrors
         , withDefaultData
         , withDefaultWebData
         , withMapData
@@ -80,6 +78,7 @@ import Loading
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import ModelCommon.Error exposing (viewGqlErrors, viewHttpErrors)
 import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

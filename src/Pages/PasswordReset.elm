@@ -39,9 +39,10 @@ import Http
 import Image exposing (Image)
 import Json.Decode as JD
 import Json.Encode as JE
-import Loading exposing (WebData, loadingSpin, viewHttpErrors)
+import Loading exposing (WebData, loadingSpin)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)

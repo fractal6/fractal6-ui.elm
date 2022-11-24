@@ -39,11 +39,12 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (viewOrgaMedia, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

@@ -37,10 +37,11 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
-import Loading exposing (WebData, viewHttpErrors)
+import Loading exposing (WebData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
+import ModelCommon.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process

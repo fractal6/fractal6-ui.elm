@@ -42,11 +42,12 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, withMapData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
+import ModelCommon.Error exposing (viewGqlErrors, viewHttpErrors)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports

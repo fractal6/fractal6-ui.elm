@@ -36,10 +36,11 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports

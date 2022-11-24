@@ -22,7 +22,7 @@ module ${module_name} exposing (Msg(..), State, init, subscriptions, update, vie
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, isFailure, isSuccess)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, isFailure, isSuccess)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -35,6 +35,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddData exposing (getData)

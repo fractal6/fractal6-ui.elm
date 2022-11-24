@@ -40,10 +40,11 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter, on
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (action2icon, counter, viewOrga0)
 import ModelSchema exposing (..)
 import Ports

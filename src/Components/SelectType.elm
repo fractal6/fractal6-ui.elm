@@ -36,9 +36,10 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import ModelSchema exposing (..)
 import Ports

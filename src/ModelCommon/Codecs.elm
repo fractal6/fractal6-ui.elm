@@ -30,7 +30,6 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing

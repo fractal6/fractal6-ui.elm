@@ -46,7 +46,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess)
 import Maybe exposing (withDefault)
 import ModelCommon
     exposing
@@ -64,6 +64,7 @@ import ModelCommon
         , uctxFromUser
         )
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, userFromBaseMember)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Ports

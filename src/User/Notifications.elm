@@ -44,21 +44,11 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , viewGqlErrors
-        , viewHttpErrors
-        , withMapData
-        , withMaybeData
-        , withMaybeSlowly
-        )
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMapData, withMaybeSlowly)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.Event
     exposing
         ( contractEventToText

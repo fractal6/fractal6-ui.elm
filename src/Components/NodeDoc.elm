@@ -41,11 +41,12 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, withDefaultData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewNodeDescr, viewUser, viewUsers)
 import ModelSchema exposing (..)
 import Session exposing (Conf)

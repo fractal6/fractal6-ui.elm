@@ -38,10 +38,11 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ContractForm, UserState(..), initContractForm)
 import ModelCommon.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
 import ModelCommon.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)

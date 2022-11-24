@@ -35,10 +35,11 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter, on
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelCommon.Codecs exposing (NodeFocus, getRootids)
+import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.View exposing (viewOrga0)
 import ModelSchema exposing (..)
 import Ports

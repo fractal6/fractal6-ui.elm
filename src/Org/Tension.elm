@@ -73,9 +73,6 @@ import Loading
         , isFailure
         , isSuccess
         , loadingSpin
-        , viewGqlErrors
-        , viewHttpErrors
-        , viewMaybeErrors
         , withDefaultData
         , withMapData
         , withMaybeData
@@ -103,6 +100,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
+import ModelCommon.Error exposing (viewGqlErrors, viewMaybeErrors)
 import ModelCommon.View
     exposing
         ( action2icon
