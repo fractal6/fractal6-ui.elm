@@ -583,13 +583,19 @@ viewBlob data op_m =
                     div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ] <|
                         (if op.data.editMode == Just EditAbout then
                             let
+                                nameid_ =
+                                    Maybe.map (.nameid >> String.split "#" >> LE.last) data.node
+                                        |> withDefault Nothing
+
                                 isSendable =
-                                    Maybe.map .name data.node /= op.data.form.node.name || data.node_data.about /= op.data.form.node.about
+                                    (data.node_data.about /= op.data.form.node.about)
+                                        || (Maybe.map .name data.node /= op.data.form.node.name)
+                                        || (nameid_ /= op.data.form.node.nameid)
 
                                 isLoading =
                                     op.data.result == LoadingSlowly
                             in
-                            [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
+                            [ viewAboutInput data.hasBeenPushed txt op.data.form.node op
                             , viewBlobButtons BlobType.OnAbout isSendable isLoading op
                             ]
 
@@ -786,7 +792,9 @@ viewMandateSubSection name maybePara =
 --- Input view
 
 
-viewAboutInput hasBeenPushed source txt node op =
+{-| About View for the Tension Blob input
+-}
+viewAboutInput hasBeenPushed txt node op =
     div []
         [ div [ class "field" ]
             [ label [ class "label" ] [ text T.name ]
@@ -801,13 +809,14 @@ viewAboutInput hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
-                , if (isTensionBaseUri source && not hasBeenPushed) || (OverviewBaseUri == source && isFailure op.result) then
-                    viewUrlForm node.nameid (op.onChangePost "nameid") False
-
-                  else
-                    text ""
                 ]
             , p [ class "help-label" ] [ text txt.name_help ]
+            , if not hasBeenPushed || isFailure op.result then
+                div [ class "mt-3" ]
+                    [ viewUrlForm node.nameid (op.onChangePost "nameid") False ]
+
+              else
+                text ""
             ]
         , div [ class "field" ]
             [ label [ class "label" ] [ text T.about ]
@@ -830,7 +839,9 @@ viewAboutInput hasBeenPushed source txt node op =
         ]
 
 
-viewAboutInput2 hasBeenPushed source txt node op =
+{-| About View for the NewTension input
+-}
+viewAboutInput2 txt node op =
     div []
         [ div [ class "field is-grouped" ]
             [ div [ class "control is-expanded" ]
@@ -845,12 +856,13 @@ viewAboutInput2 hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
-                , if (isTensionBaseUri source && not hasBeenPushed) || (OverviewBaseUri == source && isFailure op.result) then
-                    viewUrlForm node.nameid (op.onChangePost "nameid") False
+                , p [ class "help-label" ] [ text txt.name_help ]
+                , if isFailure op.result then
+                    div [ class "mt-3" ]
+                        [ viewUrlForm node.nameid (op.onChangePost "nameid") True ]
 
                   else
                     text ""
-                , p [ class "help-label" ] [ text txt.name_help ]
                 ]
             , case node.type_ of
                 Just NodeType.Role ->
@@ -895,19 +907,19 @@ viewAboutInput2 hasBeenPushed source txt node op =
 
 
 -- @TODO
--- viewAboutInput3 (the view use in Org.Settings
+-- viewAboutInput3 (the view use in Org.Settings)
 
 
 viewUrlForm nameid_m onChangePost hasBorderDanger =
     div [ class "urlForm" ]
         [ div [ class "field is-horizontal" ]
             [ div [ class "field-body control" ]
-                [ div [] [ text "URL" ]
+                [ div [] [ text "DOMAIN" ]
                 , input
                     [ class "input px-0"
                     , disabled True
-                    , value " https://fractale.co/*/"
-                    , attribute "style" "width: 11.1em"
+                    , value "  fractale.co/o/"
+                    , attribute "style" "width: 8em"
                     ]
                     []
                 , input

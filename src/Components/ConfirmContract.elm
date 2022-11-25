@@ -307,7 +307,7 @@ update_ apis message model =
                     ( data, Out [] [] (Just ( False, d )) )
 
                 DuplicateErr ->
-                    ( setDataResult (Failure [ "Duplicate Error: A similar contract already exists, please check it out." ]) model, noOut )
+                    ( setDataResult (Failure [ T.duplicateContractError ]) model, noOut )
 
                 _ ->
                     ( data, noOut )

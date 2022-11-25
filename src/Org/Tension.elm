@@ -1286,6 +1286,9 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PublishBlob 500, send UpdateUserToken )
 
+                DuplicateErr ->
+                    ( { model | publish_result = Failure [ T.duplicateNameError ] }, Cmd.none, Cmd.none )
+
                 OkAuth r ->
                     case model.tension_head of
                         Success th ->

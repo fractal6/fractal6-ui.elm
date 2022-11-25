@@ -1023,11 +1023,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Ne plus suivre"
 
 [watchThisOrganization]
-  en="Watch this organization"
+  en="Watch this organization to receive\nannouncements from this organization."
   fr="Suivre cette organisation"
 
 [unwatchThisOrganization]
-  en="Unwatch this organization"
+  en="Unwatch this organization to stop receiving\nannouncements from this organization."
   fr="Ne plus suivre cette organisation"
 
 [assigned]
@@ -1258,19 +1258,21 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Define the role policies"
   fr="Définir les politiques du rôle"
 
-[thisNameUrlIsTaken]
-  en="This name (URL) is already taken, please choose another one."
-  fr="Ce nom (URL) est déjà utilisé, veuillez en choisir un autre."
-
 [duplicateNameError]
-  en="""Error: this name (URL) already exists.
+  en="⚠️ This name (DOMAIN) already exists, please choose another one."
+  fr="⚠️ Ce nom (DOMAIN) existe déja, veuillez en choisir un autre."
 
-  > **Tips**: You can use your own username if you want to experiment Fractale features or as your own personal organization.
+[duplicateOrgHint]
+  en="""
+**Tips**: You can use your own username as DOMAIN  if you want to experiment Fractale features or as your own personal organization.
   """
-  fr="""Erreur: ce nom (URL) existe déja.
+  fr="""
+**Tips** : Vous pouvez utiliser votre propre nom d'utilisateur comme DOMAIN si vous souhaitez expérimenter les fonctionnalités de Fractale ou en tant qu'organisation personnelle.
+  """
 
-  > **Tips** : Vous pouvez utiliser votre propre nom d'utilisateur si vous souhaitez expérimenter les fonctionnalités de Fractale ou en tant qu'organisation personnelle.
-	"""
+[duplicateContractError]
+  en="⚠️ A similar contract already exists, please check it out."
+  fr="⚠️ Un contrat similaire existe déjà, veuillez le consulter."
 
 [sinceThe]
   en="since the"
@@ -2245,7 +2247,7 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   fr="Notifie les rôles dans le cercle cible."
 
 [alertNotif]
-  en="Notifies all the member behind the targeted circle recursively."
+  en="Notifies all the members behind the targeted circle recursively."
   fr="Notifie tous les membres derrière le cercle ciblé recursivement."
 
 [announcementHint]

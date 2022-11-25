@@ -48,6 +48,7 @@ import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
@@ -111,7 +112,7 @@ type alias Model =
     , step : OrgaStep
     , result : WebData NodeId
     , isDuplicate : Bool
-    , hasBeenDuplicated : Bool
+    , hasDuplicate : Bool
     , isWriting : Maybe Bool
     , exist_result : GqlData IdPayload
 
@@ -170,7 +171,7 @@ initModel user conf form_m =
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
     , isDuplicate = False
-    , hasBeenDuplicated = False
+    , hasDuplicate = False
     , isWriting = Nothing
     , exist_result = NotAsked
     , help = Help.init user conf
@@ -287,6 +288,7 @@ update global message model =
                     ( { model
                         | result = RemoteData.Failure (BadBody T.duplicateNameError)
                         , isDuplicate = True
+                        , hasDuplicate = True
                       }
                     , Cmd.none
                     , Cmd.none
@@ -367,10 +369,10 @@ update global message model =
         CheckExistAck result ->
             case result of
                 Success _ ->
-                    ( { model | isDuplicate = True, hasBeenDuplicated = True }, Cmd.none, Cmd.none )
+                    ( { model | hasDuplicate = True }, Cmd.none, Cmd.none )
 
                 _ ->
-                    ( { model | isDuplicate = False }, Cmd.none, Cmd.none )
+                    ( { model | hasDuplicate = False }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -536,15 +538,21 @@ viewOrgaValidate model =
                     , required True
                     ]
                     []
-                , if model.hasBeenDuplicated then
-                    viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.isDuplicate
-
-                  else
-                    text ""
+                , p [ class "help" ] [ text T.orgaNameHelp ]
                 ]
-            , p [ class "help" ] [ text T.orgaNameHelp ]
-            , if model.isDuplicate then
-                div [ class "has-text-danger" ] [ text T.thisNameUrlIsTaken ]
+            , if model.hasDuplicate || model.isDuplicate then
+                div [ class "mt-3" ]
+                    [ viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.isDuplicate ]
+
+              else
+                text ""
+            , if model.hasDuplicate then
+                div [ class "f6-error message is-danger is-light is-small mt-1" ]
+                    [ p [ class "message-body" ]
+                        [ text T.duplicateNameError
+                        , p [ class "is-hint mt-2" ] [ renderMarkdown "" T.duplicateOrgHint ]
+                        ]
+                    ]
 
               else
                 text ""
@@ -584,6 +592,12 @@ viewOrgaValidate model =
                 ]
             , p [ class "help" ] [ text T.purposeHelpOrga ]
             ]
+        , case model.result of
+            RemoteData.Failure err ->
+                viewHttpErrors err
+
+            _ ->
+                text ""
         , div [ class "field pt-3 level is-mobile" ]
             [ div [ class "level-left" ]
                 [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
@@ -602,10 +616,4 @@ viewOrgaValidate model =
                     ]
                 ]
             ]
-        , case model.result of
-            RemoteData.Failure err ->
-                viewHttpErrors err
-
-            _ ->
-                text ""
         ]

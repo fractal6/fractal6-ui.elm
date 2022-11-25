@@ -867,7 +867,7 @@ update_ apis message model =
                     ( model |> setActionResult result, noOut )
 
                 DuplicateErr ->
-                    ( setActionResult (Failure [ "Duplicate Error: A similar contract already exists, please check it out." ]) model, noOut )
+                    ( setActionResult (Failure [ T.duplicateContractError ]) model, noOut )
 
                 _ ->
                     -- Update the token on failure (e.g. secret circle leave will raise an error while operation processed.

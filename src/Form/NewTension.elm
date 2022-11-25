@@ -891,7 +891,7 @@ update_ apis message model =
                     )
 
                 DuplicateErr ->
-                    ( { model | action_result = Failure [ "Duplicate Error: A similar contract already exists, please check it out." ] }, noOut )
+                    ( { model | action_result = Failure [ T.duplicateContractError ] }, noOut )
 
                 _ ->
                     ( { model | action_result = result }, noOut )
@@ -1006,7 +1006,7 @@ update_ apis message model =
                             ( setResult result data, out1 (DoFetchNode newNameid :: gcmds) )
 
                 DuplicateErr ->
-                    ( setResult (Failure [ "Duplicate Error: " ++ T.thisNameUrlIsTaken ]) model, noOut )
+                    ( setResult (Failure [ T.duplicateNameError ]) model, noOut )
 
                 _ ->
                     ( setResult result model, noOut )
@@ -1676,7 +1676,7 @@ viewNodeValidate model =
     in
     div [ class "modal-card-body" ]
         [ viewNodeBreadcrumb form model.nodeStep
-        , viewAboutInput2 False OverviewBaseUri model.txt form.node op
+        , viewAboutInput2 model.txt form.node op
         , viewMandateInput model.txt form.node.mandate op
 
         --, br [] []

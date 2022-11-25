@@ -100,7 +100,7 @@ viewGqlErrors errMsg =
                 in
                 p [ class "message-body" ] [ renderMarkdown "" err ]
             )
-        |> div [ class "message is-danger is-light mt-2 error-f6" ]
+        |> div [ class "f6-error message is-danger is-light mt-2" ]
 
 
 viewAuthNeeded : (ModalData -> msg) -> Html msg

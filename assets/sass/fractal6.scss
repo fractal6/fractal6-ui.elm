@@ -2325,7 +2325,7 @@ tr.mediaBox {
     .field-body {
         div:nth-child(1) {
             background: var(--input-disabled-background-color2);
-            padding: 0.35rem 1.5rem 0 1.5rem;
+            padding: 0.35rem 1.25rem 0 1.25rem;
             font-size: 0.8rem;
             font-weight: 600;
         }
@@ -3036,12 +3036,12 @@ i.is-liked {
     }
 }
 
-.error-f6 {
+.f6-error {
     color: var(--is-danger);
     .markdown-body {
         color: var(--is-danger);
 
-        blockquote * {
+        blockquote *, strong {
             font-style: normal;
             font-size: $size-small;
             color: var(--is-hint);
