@@ -226,6 +226,10 @@ hr {
     }
 }
 
+input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+
 .panel-tabs {
     a.is-active {
         border-bottom-color: var(--link-active);

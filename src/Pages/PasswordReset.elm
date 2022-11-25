@@ -37,8 +37,6 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput)
 import Http
 import Image exposing (Image)
-import Json.Decode as JD
-import Json.Encode as JE
 import Loading exposing (WebData, loadingSpin)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)

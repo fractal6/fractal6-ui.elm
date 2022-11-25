@@ -47,6 +47,10 @@
   en="Try it now"
   fr="Essayez maintenant"
 
+[tryFree]
+  en="Join"
+  fr="Rejoindre"
+
 #
 # [I am an NPO]
 # [Je suis une Nonprofit]"

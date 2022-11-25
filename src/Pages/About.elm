@@ -35,7 +35,6 @@ import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, 
 import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (WebData)
 import Markdown exposing (renderMarkdown)

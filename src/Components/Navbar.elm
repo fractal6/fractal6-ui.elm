@@ -248,7 +248,7 @@ userButtons user url replaceUrl =
                         [ div [ class "navbar-item" ] [ a [ href (toHref Login) ] [ text T.signin ] ]
                         , div [ class "navbar-item notMe" ]
                             [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
-                                [ text T.join ]
+                                [ text T.tryFree ]
                             ]
                         ]
                    )

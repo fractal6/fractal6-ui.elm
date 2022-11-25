@@ -35,8 +35,6 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li,
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as JD
-import Json.Encode as JE
 import Loading exposing (WebData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)

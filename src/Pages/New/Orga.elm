@@ -45,8 +45,6 @@ import Html.Attributes exposing (attribute, autocomplete, class, classList, disa
 import Html.Events exposing (onBlur, onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
-import Json.Decode as JD
-import Json.Encode as JE
 import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -592,12 +590,6 @@ viewOrgaValidate model =
                 ]
             , p [ class "help" ] [ text T.purposeHelpOrga ]
             ]
-        , case model.result of
-            RemoteData.Failure err ->
-                viewHttpErrors err
-
-            _ ->
-                text ""
         , div [ class "field pt-3 level is-mobile" ]
             [ div [ class "level-left" ]
                 [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
@@ -616,4 +608,10 @@ viewOrgaValidate model =
                     ]
                 ]
             ]
+        , case model.result of
+            RemoteData.Failure err ->
+                viewHttpErrors err
+
+            _ ->
+                text ""
         ]
