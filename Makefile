@@ -10,7 +10,7 @@ $(eval COMMIT_NAME=$(shell git rev-parse --short HEAD))
 $(eval RELEASE_VERSION=$(shell git tag -l --sort=-creatordate | head -n 1))
 NAME := fractal6-ui.elm
 RELEASE_NAME := fractal6-ui
-RELEASE_DIR := releases/$(RELEASE_VERSION)
+RELEASE_DIR := releases/$(BRANCH_NAME)/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
@@ -145,7 +145,7 @@ build_release_op: $(RELEASE_BUILD_DIRS)
 upload_release_op:
 	@curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
 		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
-		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip && \
+		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
 
 delete_release_op:
 	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
