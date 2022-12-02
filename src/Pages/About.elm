@@ -250,7 +250,7 @@ viewHero : Model -> Html Msg
 viewHero model =
     div []
         [ div [ class "columns is-centered custom-b-1 m-0" ]
-            [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
+            [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd", style "min-width" "300px" ]
                 [ h1 [ class "title top-title" ]
                     [ renderMarkdown "is-human" T.heroTitle ]
 
@@ -258,17 +258,18 @@ viewHero model =
                 --[ text "Self-organization", br [] [], text "for humans" ]
                 --[ text "Collective Intelligence", br [] [], text "at Work" ]
                 , div [ class "columns is-vcentered" ]
-                    [ div [ class "column is-6" ] [ h2 [ class "subtitle" ] [ renderMarkdown "is-recursive" T.heroSubtitle ] ]
+                    [ div [ class "column is-7", style "min-width" "300px" ]
+                        [ h2 [ class "subtitle" ] [ renderMarkdown "is-recursive" T.heroSubtitle ] ]
                     ]
                 ]
-            , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]
+            , div [ class "column is-5-desktop is-4-widescreen is-3-fullhd is-hidden-mobile" ]
                 [ if model.isHome then
                     viewSignBox model
 
                   else
                     --div [ class "has-text-centered" ] [ A.logo_about "#34663d" ]
                     --div [ class "has-text-centered" ] [ A.logo_about "#7888ae" ]
-                    div [ attribute "style" "margin-left: -50px;" ] [ A.logo_about "#375a7f" ]
+                    div [ class "logo" ] [ A.logo_about "#375a7f" ]
                 ]
             ]
         ]

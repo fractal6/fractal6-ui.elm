@@ -1060,8 +1060,27 @@ figcaption {
 }
 
 #welcome {
-    @include desktop {
-        margin-top: 5rem;
+        //margin-top: 5rem;
+    @include fullhd {
+        .logo svg {
+            width: 550px;
+        }
+    }
+    @include widescreen-only {
+        .logo svg {
+            width: 450px !important;
+        }
+    }
+    @include desktop-only {
+        .logo svg {
+            margin-top: 50px;
+            width: 350px !important;
+        }
+    }
+    @include touch {
+        .logo svg {
+            width: 350px !important;
+        }
     }
     @include mobile {
         .hero-body {
