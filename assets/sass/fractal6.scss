@@ -3099,13 +3099,10 @@ i.is-liked {
     animation-timing-function: linear;
     //background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
     background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
-    display: inline-block;
-    height: 1.5rem;
     overflow: hidden;
-	border-radius: 20px;
-    position: relative;
-    top: 5px;
+    height: 1.5rem;
     width: 100px;
+	border-radius: 20px;
 
     &.is-0 {
         width: 225px;
@@ -3140,13 +3137,10 @@ i.is-liked {
     animation-name: placeHolderButton;
     animation-timing-function: linear;
     background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
-    display: inline-block;
-    height: 2.2rem;
     overflow: hidden;
-	border-radius: 5px;
+    height: 2.4em;
     width: 120px;
-    position: relative;
-    top: 5px;
+	border-radius: 10px;
 }
 
 /*

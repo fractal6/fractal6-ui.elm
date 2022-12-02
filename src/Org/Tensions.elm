@@ -1928,6 +1928,13 @@ viewCircleTensions model =
         -- Should alway be loaded here !
         children =
             withDefaultWebData [] model.children
+
+        query =
+            --model.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+            Dict.toList model.query
+                |> List.map (\( k, v ) -> ( k, List.head v |> withDefault "" ))
+                |> queryBuilder
+                |> (\q -> ternary (q == "") "" ("?" ++ q))
     in
     case model.tensions_all of
         Success data ->
@@ -1972,7 +1979,17 @@ viewCircleTensions model =
                             --, onMouseEnter (OnColumnHover (Just n.nameid)
                             ]
                             [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
-                                [ rcv_name_m |> withDefault "Loading..." |> text
+                                [ rcv_name_m
+                                    |> Maybe.map
+                                        (\x ->
+                                            if n.nameid == model.node_focus.nameid then
+                                                text x
+
+                                            else
+                                                a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri n.nameid [] ++ query) ]
+                                                    [ text x ]
+                                        )
+                                    |> withDefault (text "Loading...")
                                 , span
                                     [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
 

@@ -1535,8 +1535,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 	fr="Sélectionner un modèle de rôle"
 
 [selectCircleVisibility]
-	en="Choose the circle visibility"
-	fr="Selectionner la visibilité du cercle"
+	en="Choose the sub-circle visibility"
+	fr="Selectionnez la visibilité du sous-cercle"
 
 [noTemplateRole]
 	en="No template role yet."

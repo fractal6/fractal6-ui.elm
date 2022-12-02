@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+## [0.7]
+
+### New
+- ui: column headers in circle view clickable to filter for only those
+
+
+### Fixed
+- About page layout overflow.
+
 
 ## [0.7]
 

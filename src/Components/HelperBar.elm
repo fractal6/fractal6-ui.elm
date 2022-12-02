@@ -282,14 +282,14 @@ viewPathLevel op model =
                                     memberButtons roles op model
 
                             Nothing ->
-                                div [ class "ph-button-1" ] []
+                                div [ class "buttons" ] [ div [ class "ph-button-1" ] [] ]
 
                     LoggedOut ->
                         if userCanJoin then
                             joinButton op
 
                         else
-                            text ""
+                            div [ class "buttons" ] [ div [ class "ph-button-1" ] [] ]
                 ]
             ]
         ]
