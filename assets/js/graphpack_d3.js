@@ -18,12 +18,12 @@
  * along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { select, selectAll } from 'd3-selection'
-import { scaleOrdinal } from 'd3-scale'
+import { select } from 'd3-selection'
 import { timer } from 'd3-timer'
 import { interpolateZoom } from 'd3-interpolate'
-import { easePolyOut, easePolyInOut } from 'd3-ease'
+import { easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
+//import { scaleOrdinal } from 'd3-scale'
 import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
 
 /*
@@ -41,12 +41,12 @@ import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
 const d3 = Object.assign(
 	{},
 	{
-		select, selectAll,
-		scaleOrdinal,
+		select,
 		timer,
 		interpolateZoom,
-		easePolyOut, easePolyInOut,
+		easePolyInOut,
 		hierarchy, pack
+		//scaleOrdinal,
 	},
 )
 
