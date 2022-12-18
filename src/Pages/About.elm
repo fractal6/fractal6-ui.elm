@@ -234,7 +234,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = T.welcome
+    { title = T.welcome ++ " - " ++ T.welcome2
     , body = [ view_ global model ]
     }
 

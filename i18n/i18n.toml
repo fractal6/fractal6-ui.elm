@@ -13,12 +13,12 @@
 [heroSubtitle]
   en="""Design your organization,
       Invite your collaborators,
-      Collect and identify [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
+      Identify and collect [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
       Share, discuss and solve them,
       Evolve organically."""
   fr="""Dessinez votre organisation,
         Invitez vos collaborateurs,
-        Collectez et identifiez les [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
+        Identifiez et collectez les [tensions](https://doc.fractale.co/tension/ "Tâches, tickets, Q&A, annonces, etc"),
         Partagez, échangez et résolvez-les,
         Evoluez organiquement."""
 
@@ -61,6 +61,10 @@
 [welcome]
   en="Welcome to Fractale"
   fr="Bienvenue sur Fractale"
+
+[welcome2]
+  en="Self-organization platform for Humans"
+  fr="Plateforme d'auto-organisation pour les Humains"
 
 [welcomeSub]
   en="a collective intelligence platform"
@@ -1696,7 +1700,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [authorizationNeeded]
   en="Authorization required"
-  fr="Authorization requise"
+  fr="Autorisation requise"
 
 [authenticationNeeded]
   en="Authentication required"
