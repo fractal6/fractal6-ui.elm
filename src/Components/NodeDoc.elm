@@ -913,7 +913,7 @@ viewAboutInput2 txt node op =
 viewUrlForm nameid_m onChangePost hasBorderDanger =
     div [ class "urlForm" ]
         [ div [ class "field is-horizontal" ]
-            [ div [ class "field-body control" ]
+            [ div [ class "field-body control has-icons-right" ]
                 [ div [] [ text "DOMAIN" ]
                 , input
                     [ class "input px-0"
@@ -930,6 +930,11 @@ viewUrlForm nameid_m onChangePost hasBorderDanger =
                     , onInput <| onChangePost
                     ]
                     []
+                , if not hasBorderDanger then
+                    span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
+
+                  else
+                    text ""
                 ]
             ]
         ]

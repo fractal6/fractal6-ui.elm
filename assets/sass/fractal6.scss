@@ -2366,6 +2366,9 @@ tr.mediaBox {
 
 .has-border-danger {
     border-color: var(--danger) !important;
+    &:focus, &:focus:hover {
+        border-color: var(--danger) !important;
+    }
 }
 
 .select.is-orange, .select.is-orange::after,
@@ -3063,13 +3066,6 @@ i.is-liked {
     color: var(--is-danger);
     .markdown-body {
         color: var(--is-danger);
-
-        blockquote *, strong {
-            font-style: normal;
-            font-size: $size-small;
-            color: var(--is-hint);
-        }
-
     }
 }
 

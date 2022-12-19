@@ -59,6 +59,7 @@ import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Requests exposing (createOrga)
 import Session exposing (Conf, GlobalCmd(..))
+import String.Format as Format
 import Task exposing (Task)
 import Text as T
 import Time
@@ -109,8 +110,8 @@ type alias Model =
     { form : OrgaForm
     , step : OrgaStep
     , result : WebData NodeId
-    , isDuplicate : Bool
     , hasDuplicate : Bool
+    , hasBeenDuplicate : Bool
     , isWriting : Maybe Bool
     , exist_result : GqlData IdPayload
 
@@ -168,8 +169,8 @@ initModel user conf form_m =
     { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
-    , isDuplicate = False
     , hasDuplicate = False
+    , hasBeenDuplicate = False
     , isWriting = Nothing
     , exist_result = NotAsked
     , help = Help.init user conf
@@ -272,7 +273,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (PushOrga model.form) 500, send UpdateUserToken )
 
                 OkAuth n ->
-                    ( { model | result = result, isDuplicate = False }
+                    ( { model | result = result }
                     , Cmd.none
                     , Cmd.batch
                         [ send UpdateUserToken
@@ -285,15 +286,15 @@ update global message model =
                 DuplicateErr ->
                     ( { model
                         | result = RemoteData.Failure (BadBody T.duplicateNameError)
-                        , isDuplicate = True
                         , hasDuplicate = True
+                        , hasBeenDuplicate = True
                       }
                     , Cmd.none
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | result = result, isDuplicate = False }, Cmd.none, Cmd.none )
+                    ( { model | result = result }, Cmd.none, Cmd.none )
 
         OnChangeStep step ->
             let
@@ -367,7 +368,7 @@ update global message model =
         CheckExistAck result ->
             case result of
                 Success _ ->
-                    ( { model | hasDuplicate = True }, Cmd.none, Cmd.none )
+                    ( { model | hasDuplicate = True, hasBeenDuplicate = True }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( { model | hasDuplicate = False }, Cmd.none, Cmd.none )
@@ -538,17 +539,24 @@ viewOrgaValidate model =
                     []
                 , p [ class "help" ] [ text T.orgaNameHelp ]
                 ]
-            , if model.hasDuplicate || model.isDuplicate then
+            , if model.hasDuplicate || model.hasBeenDuplicate then
                 div [ class "mt-3" ]
-                    [ viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.isDuplicate ]
+                    [ viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.hasDuplicate ]
 
               else
                 text ""
             , if model.hasDuplicate then
+                let
+                    nid =
+                        Dict.get "nameid" post |> withDefault ""
+
+                    username =
+                        model.form.uctx.username
+                in
                 div [ class "f6-error message is-danger is-light is-small mt-1" ]
                     [ p [ class "message-body" ]
                         [ text T.duplicateNameError
-                        , p [ class "is-hint mt-2" ] [ renderMarkdown "" T.duplicateOrgHint ]
+                        , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                         ]
                     ]
 

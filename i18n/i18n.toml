@@ -1272,10 +1272,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [duplicateOrgHint]
   en="""
-**Tips**: You can use your own username as DOMAIN  if you want to experiment Fractale features or as your own personal organization.
+**Tips**: To experiment with Fractale's features or as a personal organization, you can use your own username as a suffix, for example `{{}}-{{}}`.
   """
   fr="""
-**Tips** : Vous pouvez utiliser votre propre nom d'utilisateur comme DOMAIN si vous souhaitez expérimenter les fonctionnalités de Fractale ou en tant qu'organisation personnelle.
+**Tips** : Pour expérimenter les fonctionnalités de Fractale ou en tant qu'organisation personnelle, vous pouvez utiliser votre propre nom d'utilisateur comme suffix, par exemple `{{}}-{{}}`.
   """
 
 [duplicateContractError]
