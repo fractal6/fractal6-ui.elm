@@ -714,10 +714,6 @@ update global message model =
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if isPathNew || model.init_tensions then
-                            let
-                                f =
-                                    Debug.log "nameids" nameids
-                            in
                             queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
 
                           else
