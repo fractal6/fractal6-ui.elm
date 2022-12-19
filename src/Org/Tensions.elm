@@ -637,6 +637,7 @@ type Msg
     | ChangeLabel
     | SearchKeyDown Int
     | ResetData
+    | ResetDataSoft
     | OnClearFilter
     | SubmitTextSearch
     | SubmitSearchReset
@@ -777,22 +778,20 @@ init global flags =
                 CircleView ->
                     model.tensions_all == Loading
 
-        refresh =
-            (fs.refresh || dataNeedLoad)
-                || (case global.session.referer of
-                        Just referer ->
-                            let
-                                oldQuery =
-                                    queryParser referer
-                            in
-                            (Dict.remove "v" oldQuery |> Dict.remove "load")
-                                /= (Dict.remove "v" query |> Dict.remove "load")
+        refresh2 =
+            case global.session.referer of
+                Just referer ->
+                    let
+                        oldQuery =
+                            queryParser referer
+                    in
+                    (Dict.remove "v" oldQuery |> Dict.remove "load")
+                        /= (Dict.remove "v" query |> Dict.remove "load")
 
-                        --|| Dict.get "v" oldQuery
-                        --== Dict.get "v" query
-                        Nothing ->
-                            True
-                   )
+                --|| Dict.get "v" oldQuery
+                --== Dict.get "v" query
+                Nothing ->
+                    True
 
         cmds =
             [ if fs.focusChange || model.path_data == Loading then
@@ -802,8 +801,11 @@ init global flags =
                 -- path of children has not been loaded
                 [ send DoLoadInit ]
 
-              else if refresh then
+              else if fs.refresh || dataNeedLoad then
                 [ send (DoLoad False) ]
+
+              else if refresh2 then
+                [ send (DoLoad False), send ResetDataSoft ]
 
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
@@ -1137,6 +1139,17 @@ update global message model =
 
         ResetData ->
             ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading, path_data = Loading }
+            , Cmd.none
+            , Cmd.batch
+                [ send (UpdateSessionTensionsInt Nothing)
+                , send (UpdateSessionTensionsExt Nothing)
+                , send (UpdateSessionTensionsAll Nothing)
+                ]
+            )
+
+        ResetDataSoft ->
+            -- Do not reset path_data
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading }
             , Cmd.none
             , Cmd.batch
                 [ send (UpdateSessionTensionsInt Nothing)
