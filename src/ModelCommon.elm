@@ -912,7 +912,8 @@ getTensionRights uctx th_d path_d =
                             List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
                         circleRoles =
-                            getCircleRoles [ th.receiver.nameid, th.emitter.nameid ] orgaRoles
+                            --getCircleRoles [ th.receiver.nameid, th.emitter.nameid ] orgaRoles
+                            getCircleRoles [ th.receiver.nameid ] orgaRoles
 
                         coordoRoles =
                             getCoordoRoles circleRoles

@@ -39,7 +39,7 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (decap, ternary, textD, textH, upH)
+import Extra exposing (decap, ternary, textD, textH, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -1868,7 +1868,7 @@ viewTension u t model =
                         case t.contracts |> withDefault [] of
                             [ c ] ->
                                 ContractsPage.view
-                                    { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin }
+                                    { receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin }
                                     model.contractsPage
                                     |> Html.map ContractsPageMsg
 
@@ -1893,7 +1893,7 @@ viewConversation u t model =
                         uctx.username
                             == t.createdBy.username
                             || -- is Member
-                               getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
+                               getOrgaRoles [ t.receiver.nameid ] uctx.roles
                             /= []
                     then
                         let
@@ -2558,7 +2558,7 @@ viewSidePane u t model =
             nid2rootid t.receiver.nameid
 
         isRoot =
-            t.emitter.nameid == rid && t.receiver.nameid == rid
+            t.receiver.nameid == rid && (unwrap Nothing .node blob_m |> unwrap Nothing .nameid) == Just ""
     in
     div [ class "tensionSidePane" ] <|
         [ -- Assignees/User select

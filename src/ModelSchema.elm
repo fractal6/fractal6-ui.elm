@@ -228,7 +228,8 @@ type alias Tension =
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
-    , emitter : EmitterOrReceiver
+
+    --, emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus
@@ -304,7 +305,8 @@ type alias TensionHead =
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
     , assignees : Maybe (List User)
-    , emitter : EmitterOrReceiver
+
+    --, emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus

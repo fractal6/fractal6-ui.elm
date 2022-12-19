@@ -292,7 +292,7 @@ tensionDecoder =
         |> JDE.andMap (JD.field "title" JD.string)
         |> JDE.andMap (JD.field "type_" TensionType.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "labels" (JD.list <| labelDecoder))
-        |> JDE.andMap (JD.field "emitter" emitterOrReceiverDecoder)
+        --|> JDE.andMap (JD.field "emitter" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)

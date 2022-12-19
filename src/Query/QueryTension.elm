@@ -125,7 +125,7 @@ tensionHeadPayload uctx =
         |> with Fractal.Object.Tension.type_
         |> with (Fractal.Object.Tension.labels identity labelPayload)
         |> with (Fractal.Object.Tension.assignees identity userPayload)
-        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
@@ -419,7 +419,7 @@ tensionPayload =
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
         |> with (Fractal.Object.Tension.labels identity labelPayload)
-        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
@@ -439,7 +439,7 @@ tensionPayloadFiltered authors labels =
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
         |> with (Fractal.Object.Tension.labels identity labelPayload)
-        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status

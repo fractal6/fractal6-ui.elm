@@ -707,8 +707,7 @@ subscriptions =
 
 
 type alias Op =
-    { emitterid : String
-    , receiverid : String
+    { receiverid : String
     , isAdmin : Bool
     }
 
