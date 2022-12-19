@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { BulmaDriver, InitBulma, catchEsc, updateLang } from './bulma_drivers'
+import { InitBulma, catchEsc, updateLang } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -242,6 +242,14 @@ export const actions = {
         if ($canvas) {
             var gp = session.gp;
             gp.zoomToNode(focusid);
+        }
+    },
+    'FLUSH_GRAPHPACK': (app, session, focusid) => {
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.computeCircleColorRange()
+            gp.drawCanvas();
         }
     },
     'DRAW_GRAPHPACK' : (app, session, data) => {

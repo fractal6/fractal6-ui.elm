@@ -26,6 +26,7 @@ import { hierarchy, pack } from 'd3-hierarchy'
 //import { scaleOrdinal } from 'd3-scale'
 import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
 
+
 /*
  *
  * Graph Packing for Fractale Organization
@@ -166,7 +167,6 @@ const computeDepth = (obj, depth, neigbor) => {
     return {maxdepth, cumchild}
 }
 
-
 export const GraphPack = {
 
     // Background Colors
@@ -180,17 +180,7 @@ export const GraphPack = {
     // Graph Colors
     //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     //colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
-    colorCircleRange: [
-        '#e0e0e0',
-        '#b0b0b0',
-        '#808080',
-        '#505050',
-        '#404040',
-        '#303030',
-        '#202020',
-        '#101010',
-        '#000000',
-    ],
+    colorCircleRange: [],
     roleColors: {
         [RoleType.Coordinator]: "#ffdaa1",
         [RoleType.Guest]: "#f4fdf5",
@@ -984,6 +974,20 @@ export const GraphPack = {
         //return v ** (n.depth+1)
     },
 
+    computeCircleColorRange() {
+        var styles = getComputedStyle(document.documentElement);
+        this.colorCircleRange = [
+            styles.getPropertyValue('--gp-lvl-0-bg'),
+            styles.getPropertyValue('--gp-lvl-1-bg'),
+            styles.getPropertyValue('--gp-lvl-2-bg'),
+            styles.getPropertyValue('--gp-lvl-3-bg'),
+            styles.getPropertyValue('--gp-lvl-4-bg'),
+            styles.getPropertyValue('--gp-lvl-5-bg'),
+            styles.getPropertyValue('--gp-lvl-6-bg'),
+            styles.getPropertyValue('--gp-lvl-7-bg'),
+        ]
+    },
+
     // Mapping function from a node depth to color.
     colorCircle(k) {
         //d3.scaleOrdinal()
@@ -1052,6 +1056,7 @@ export const GraphPack = {
 
     // Init and create the GraphPack data structure
     resetGraphPack(dataNodes, doFormat, focusid) {
+        this.computeCircleColorRange();
         var graph;
         if (doFormat) {
             if (dataNodes.length == 0) {

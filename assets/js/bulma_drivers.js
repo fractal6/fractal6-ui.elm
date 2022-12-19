@@ -27,7 +27,6 @@
 // The container where the burgers should close when a clicl "anywhere" occurs
 const closeOnClickBurger = ['userMenu']; // data-target of burger
 
-
 export function InitBulma(app, session, eltId) {
     var handlers = session.bulmaHandlers;
     if (!eltId) console.log(`Activate Bulma driver (%d)...`, handlers.length);
@@ -656,6 +655,7 @@ function triggerTheme(e, el, app) {
     }
     document.documentElement.className = theme;
     localStorage.setItem('theme', theme);
+    app.ports.flushGraphPackFromJs.send(null)
 }
 
 function triggerLang(e, el, app) {

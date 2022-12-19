@@ -212,6 +212,14 @@ focusGraphPack focusid =
         }
 
 
+flushGraphPack : Cmd msg
+flushGraphPack =
+    outgoing
+        { action = "FLUSH_GRAPHPACK"
+        , data = JE.string ""
+        }
+
+
 redrawGraphPack : NodesDict -> Cmd msg
 redrawGraphPack data =
     outgoing

@@ -281,6 +281,7 @@ type Msg
       -- Node Action
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- GP JS Interop
+    | FlushGraphpack
     | NodeClicked String
     | NodeHovered String
     | NodeFocused ( String, Int )
@@ -683,6 +684,9 @@ update global message model =
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
 
         -- JS interop
+        FlushGraphpack ->
+            ( model, Ports.flushGraphPack, Cmd.none )
+
         NodeClicked nameid ->
             ( model, Cmd.none, send (NavigateNode nameid) )
 
@@ -844,7 +848,8 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    [ nodeClickedFromJs NodeClicked
+    [ flushGraphPackFromJs (always FlushGraphpack)
+    , nodeClickedFromJs NodeClicked
 
     -- @CODEFACTOR: since node_hovered is know, leftClick and rightClick could be replace by a JS .click() function on #doTension and #doAction...
     -- what would be the advantage of using .click instead of ports ?
@@ -886,6 +891,9 @@ subscriptions _ model =
 
 
 -- Receive from Javascript
+
+
+port flushGraphPackFromJs : (() -> msg) -> Sub msg
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg

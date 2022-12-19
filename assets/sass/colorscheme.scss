@@ -27,9 +27,13 @@ $grey-darkest: hsl(0, 0%, 2%);
 $dark-default: #18191a;
 
 // Dimmed
-$dark-dimmed: #22272e;
+//$dark-dimmed: #22272e;
+//$dark-dimmed-top: #2d333b;
+$dark-dimmed: #202328;
+$dark-dimmed-top: #2A2F35;
+//$dark-dimmed: #222722;
+//$dark-dimmed-top: #2b2b2b;
 $darker-dimmed: #1c2128;
-$dark-dimmed-top: #2d333b;
 $white-dimmed: #c1cdd9;
 
 $blue: #3498db;
@@ -232,6 +236,15 @@ $user-emoticon-bg: #eeeeff;
 //$orga-emoticon-bg: #4596c1;
 $orga-emoticon-bg: #71beee;
 
+// Graph-packing
+$gp-lvl-0-bg: $white;
+$gp-lvl-1-bg: #D9DCDE;
+$gp-lvl-2-bg: #B9BFC3;
+$gp-lvl-3-bg: #97A0A6;
+$gp-lvl-4-bg: #7C868E;
+$gp-lvl-5-bg: #646E75;
+$gp-lvl-6-bg: #51595F;
+$gp-lvl-7-bg: #454B50;
 
 // Alias background
 $header-background-color: $hbc;
@@ -390,6 +403,16 @@ $button-vote-danger-background: $danger;
   --ph-background: #{$ph-background};
   --user-emoticon-bg: #{$user-emoticon-bg};
   --orga-emoticon-bg: #{$orga-emoticon-bg};
+
+  // Graph-packing
+  --gp-lvl-0-bg: #{$gp-lvl-0-bg};
+  --gp-lvl-1-bg: #{$gp-lvl-1-bg};
+  --gp-lvl-2-bg: #{$gp-lvl-2-bg};
+  --gp-lvl-3-bg: #{$gp-lvl-3-bg};
+  --gp-lvl-4-bg: #{$gp-lvl-4-bg};
+  --gp-lvl-5-bg: #{$gp-lvl-5-bg};
+  --gp-lvl-6-bg: #{$gp-lvl-6-bg};
+  --gp-lvl-7-bg: #{$gp-lvl-7-bg};
 
   // Alias background
   --header-background-color: #{$header-background-color};
@@ -570,6 +593,16 @@ $ph-background: $grey-dark;
 $user-emoticon-bg: #00000052;
 $orga-emoticon-bg: #285a86;
 
+// Graph-packing
+$gp-lvl-0-bg: #e0e0e0;
+$gp-lvl-1-bg: #b0b0b0;
+$gp-lvl-2-bg: #808080;
+$gp-lvl-3-bg: #505050;
+$gp-lvl-4-bg: #404040;
+$gp-lvl-5-bg: #303030;
+$gp-lvl-6-bg: #202020;
+$gp-lvl-7-bg: #101010;
+
 // Alias background
 $header-background-color: $hbc;
 $body-background-color: $bbc;
@@ -732,6 +765,16 @@ $button-vote-danger-background: $danger-light;
   --ph-background: #{$ph-background};
   --user-emoticon-bg: #{$user-emoticon-bg};
   --orga-emoticon-bg: #{$orga-emoticon-bg};
+
+  // Graph-packing
+  --gp-lvl-0-bg: #{$gp-lvl-0-bg};
+  --gp-lvl-1-bg: #{$gp-lvl-1-bg};
+  --gp-lvl-2-bg: #{$gp-lvl-2-bg};
+  --gp-lvl-3-bg: #{$gp-lvl-3-bg};
+  --gp-lvl-4-bg: #{$gp-lvl-4-bg};
+  --gp-lvl-5-bg: #{$gp-lvl-5-bg};
+  --gp-lvl-6-bg: #{$gp-lvl-6-bg};
+  --gp-lvl-7-bg: #{$gp-lvl-7-bg};
 
   // Alias background
   --header-background-color: #{$header-background-color};
