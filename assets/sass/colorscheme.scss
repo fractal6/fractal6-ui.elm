@@ -228,6 +228,10 @@ $chbc: $hbc;
 $background-evidence: darken($bbc, 5); // hover
 $ph-background: $grey-lighter;
 // $background = kind of grey-lighter
+$user-emoticon-bg: #eeeeff;
+//$orga-emoticon-bg: #4596c1;
+$orga-emoticon-bg: #71beee;
+
 
 // Alias background
 $header-background-color: $hbc;
@@ -384,6 +388,8 @@ $button-vote-danger-background: $danger;
   --chbc: #{$chbc};
   --background-evidence: #{$background-evidence};
   --ph-background: #{$ph-background};
+  --user-emoticon-bg: #{$user-emoticon-bg};
+  --orga-emoticon-bg: #{$orga-emoticon-bg};
 
   // Alias background
   --header-background-color: #{$header-background-color};
@@ -561,6 +567,8 @@ $chbc: $hbc;
 $background-evidence: lighten($bbc, 8); //hover
 $background: $grey-darker; // where it's use ?
 $ph-background: $grey-dark;
+$user-emoticon-bg: #00000052;
+$orga-emoticon-bg: #285a86;
 
 // Alias background
 $header-background-color: $hbc;
@@ -722,6 +730,8 @@ $button-vote-danger-background: $danger-light;
   --background-evidence: #{$background-evidence};
   --background: #{$background};
   --ph-background: #{$ph-background};
+  --user-emoticon-bg: #{$user-emoticon-bg};
+  --orga-emoticon-bg: #{$orga-emoticon-bg};
 
   // Alias background
   --header-background-color: #{$header-background-color};

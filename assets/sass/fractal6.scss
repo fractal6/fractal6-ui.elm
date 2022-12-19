@@ -2890,15 +2890,14 @@ i.is-liked {
 }
 
 .circleBase {
-    border: 1px solid #000;
+    color: var(--text) !important;
+    border: 0px solid #000;
     border-radius: 50%;
-    color: white !important;
     text-align: center;
 }
 
 .circleBaseInline {
-    //background: #2e3641;
-    border: 1px solid #000;
+    border: 0px solid #000;
     border-radius: 50%;
     color: white !important;
     text-align: center;
@@ -2906,7 +2905,7 @@ i.is-liked {
 }
 
 .circle00 {
-    background: #00000052;
+    background: var(--user-emoticon-bg);
     width: 28px;
     height: 28px;
     padding-top: 8px;
@@ -2914,7 +2913,7 @@ i.is-liked {
 }
 
 .circle0 {
-    background: #00000052;
+    background: var(--user-emoticon-bg);
     width: 38px;
     height: 38px;
     padding-top: 10px;
@@ -2922,6 +2921,7 @@ i.is-liked {
 }
 
 .circle01 {
+    background: var(--user-emoticon-bg);
     width: 40px;
     height: 40px;
     text-align: center;
@@ -2930,7 +2930,7 @@ i.is-liked {
 }
 
 .circle1 {
-    background: #00000052;
+    background: var(--user-emoticon-bg);
     width: 45px;
     height: 45px;
     text-align: center;
@@ -2945,7 +2945,7 @@ i.is-liked {
 }
 
 .circle3 {
-    background: #00000052;
+    background: var(--user-emoticon-bg);
     width: 200px;
     height: 200px;
     padding-top: 50px;
@@ -2953,7 +2953,7 @@ i.is-liked {
 }
 
 .is-orga {
-    background: #285a86;
+    background: var(--orga-emoticon-bg);
 }
 
 /*
