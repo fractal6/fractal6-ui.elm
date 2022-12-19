@@ -57,6 +57,7 @@ import ModelCommon.Codecs
         , getTensionCharac
         , nid2rootid
         , nid2type
+        , toLink
         , uriFromNameid
         , uriFromUsername
         )
@@ -128,7 +129,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
                     [ text tension.title ]
                 , case labels_m of
                     Just labels ->
-                        viewLabels labels
+                        viewLabels (Just focus.nameid) labels
 
                     Nothing ->
                         text ""
@@ -203,7 +204,7 @@ viewCircleTarget : String -> EmitterOrReceiver -> Html msg
 viewCircleTarget cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag has-border-light tag-circl is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
@@ -237,9 +238,30 @@ viewTensionArrowB cls emitter receiver =
 -}
 
 
-viewLabels : List Label -> Html msg
-viewLabels labels =
-    span [ class "labelsList" ] (List.map (\label -> viewLabel "" Nothing label) labels)
+{-| 1st parameter String is the current nameid
+used to make labels clickable.
+-}
+viewLabels : Maybe String -> List Label -> Html msg
+viewLabels nid_m labels =
+    let
+        to_link_m =
+            case nid_m of
+                Just nid ->
+                    \l ->
+                        toLink TensionsBaseUri nid []
+                            ++ ("?l=" ++ l)
+                            |> Just
+
+                Nothing ->
+                    \_ -> Nothing
+    in
+    span [ class "labelsList" ]
+        (List.map
+            (\label ->
+                viewLabel "" (to_link_m label.name) label
+            )
+            labels
+        )
 
 
 viewLabel : String -> Maybe String -> Label -> Html msg

@@ -94,8 +94,8 @@ type alias FocusState =
     }
 
 
-toString : FractalBaseRoute -> String -> List String -> String
-toString route param params =
+toLink : FractalBaseRoute -> String -> List String -> String
+toLink route param params =
     case route of
         -- User  url
         UsersBaseUri ->
@@ -256,7 +256,7 @@ basePathChanged : FractalBaseRoute -> Maybe Url -> Bool
 basePathChanged loc url =
     let
         baseRef =
-            toString loc "" [] |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
+            toLink loc "" [] |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
 
         base =
             url |> Maybe.map (\u -> u.path) |> withDefault "/" |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
@@ -272,20 +272,22 @@ basePathChanged loc url =
 
 uriFromNameid : FractalBaseRoute -> String -> List String -> String
 uriFromNameid loc nameid params =
+    -- @deprecated: use toLink instead ?
     if nameid == "" then
         "#"
 
     else
-        toString loc nameid params
+        toLink loc nameid params
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
 uriFromUsername loc username =
+    -- @deprecated: use toLink instead ?
     if username == "" then
         "#"
 
     else
-        toString loc username []
+        toLink loc username []
 
 
 nameidFromFlags : Flags_ -> String

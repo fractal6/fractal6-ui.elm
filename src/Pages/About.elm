@@ -40,7 +40,7 @@ import Loading exposing (WebData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), toLink)
 import ModelCommon.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -114,7 +114,7 @@ init global flags =
             case global.session.user of
                 LoggedIn uctx ->
                     if isHome then
-                        Nav.replaceUrl global.key <| toString UsersBaseUri uctx.username []
+                        Nav.replaceUrl global.key <| toLink UsersBaseUri uctx.username []
 
                     else
                         Cmd.none

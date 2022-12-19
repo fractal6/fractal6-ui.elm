@@ -52,7 +52,7 @@ import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString, uriFromNameid, urlToFractalRoute)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
 import ModelSchema exposing (..)
 import Ports
 import Process
@@ -277,7 +277,7 @@ update msg model =
                         LoggedIn uctx ->
                             let
                                 home =
-                                    toString UsersBaseUri uctx.username []
+                                    toLink UsersBaseUri uctx.username []
                             in
                             case model.session.referer of
                                 Just referer ->

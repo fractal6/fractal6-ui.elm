@@ -592,7 +592,7 @@ viewNew op (State model) =
             ]
             [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
         , if List.length op.selectedLabels > 0 then
-            viewLabels op.selectedLabels
+            viewLabels Nothing op.selectedLabels
 
           else
             text ""

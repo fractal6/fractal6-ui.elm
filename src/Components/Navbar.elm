@@ -31,7 +31,7 @@ import Html.Attributes as Attr exposing (attribute, class, classList, href, id, 
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toString)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toLink)
 import ModelCommon.View exposing (lang2str)
 import ModelSchema exposing (NotifCount)
 import Text as T
@@ -101,7 +101,7 @@ view user notif url replaceUrl =
                                                 False
                                       )
                                     ]
-                                , href (toString UsersBaseUri uctx.username [])
+                                , href (toLink UsersBaseUri uctx.username [])
                                 ]
                                 [ text T.home ]
                             ]
@@ -209,7 +209,7 @@ userButtons user url replaceUrl =
                     ]
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ a [ class "navbar-item", href (toString UsersBaseUri uctx.username []) ]
+                    [ a [ class "navbar-item", href (toLink UsersBaseUri uctx.username []) ]
                         [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]

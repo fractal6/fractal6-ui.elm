@@ -281,7 +281,7 @@ menuToString menu =
             T.organisation
 
         EditMenu ->
-            T.editThisCircle
+            T.editThisCircle ++ " 🡕"
 
 
 menuToIcon : MenuSettings -> String

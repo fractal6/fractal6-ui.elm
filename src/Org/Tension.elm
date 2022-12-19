@@ -2638,7 +2638,7 @@ viewSidePane u t model =
                 )
                     ++ [ div [ class "tension-labelsList" ]
                             [ if List.length labels > 0 then
-                                viewLabels labels
+                                viewLabels Nothing labels
 
                               else
                                 div [ class "help is-italic" ] [ text T.noneYet ]

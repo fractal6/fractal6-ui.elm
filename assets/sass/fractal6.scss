@@ -839,9 +839,6 @@ strong {
     min-width: 250px;
 }
 
-a.tag {
-    text-decoration: none !important;
-}
 
 .ml--1 {
     margin-left: -6px;
@@ -1805,6 +1802,10 @@ tr.mediaBox {
 .labelsList {
     .tag {
         margin-right: 8px !important;
+        border: 1px solid transparent;
+        &:hover {
+           border-color: var(--link2);
+        }
     }
 }
 .tension-labelsList {
@@ -1861,6 +1862,15 @@ tr.mediaBox {
         &:hover {
             opacity: 1;
         }
+    }
+}
+
+a.tag {
+    text-decoration: none !important;
+}
+a.tag.has-border, a.tag.has-border-light, .tag-circle {
+    &:hover {
+        border-color: var(--link2);
     }
 }
 
