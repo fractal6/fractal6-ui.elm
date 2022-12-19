@@ -180,11 +180,16 @@ i {
 	-ms-transform: rotate(-45deg);
 }
 
+.icon-rotate:before {
+    display: inline-block;
+    transform: rotate(90deg);
+}
+
 .stackPen {
-		&.icon-stack > i.icon-pen {
-				top: -5px;
-				left: 5px;
-		}
+    &.icon-stack > i.icon-pen {
+        top: -5px;
+        left: 5px;
+    }
 }
 
 
