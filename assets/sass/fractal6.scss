@@ -329,6 +329,9 @@ a.is-link {
 .has-border-light {
     border: 1px solid var(--border-color-light);
 }
+.has-border-light2 {
+    border: 1px solid var(--grey-lighter);
+}
 .has-border-color {
     border-color: var(--border-color) !important;
 }
@@ -1923,7 +1926,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
 #canvasOrga {
     border-radius: 7px 7px 7px 7px !important;
-    box-shadow: 0 0px 1px 1px #22101087;
+    //box-shadow: 0 0px 1px 1px #22101087;
     //background-image: linear-gradient(white, black) ;
 }
 
@@ -2571,14 +2574,14 @@ i.is-liked {
 .filterBar.has-addons {
     .control {
         .button {
-            border: 1px solid var(--grey) !important;
+            border: 1px solid var(--border-color) !important;
             &:hover {
                 background-color: var(--filter-hover-background) !important;
             }
         }
 
         &:first-child .button {
-            border: 1px solid var(--grey) !important;
+            border: 1px solid var(--border-color) !important;
             border-top-left-radius: 15px !important;
             border-bottom-left-radius: 15px !important;
         }
@@ -2705,6 +2708,20 @@ i.is-liked {
 
 .is-h:hover {
     cursor: pointer;
+}
+
+.is-event-badge {
+    color: var(--green);
+    &.badge {
+        background-color: var(--green);
+    }
+}
+
+.is-contract-badge {
+    color: var(--info);
+    &.badge {
+        background-color: var(--info);
+    }
 }
 
 .button-light {

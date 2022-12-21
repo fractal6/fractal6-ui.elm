@@ -1676,7 +1676,7 @@ viewSearchBar model =
         [ div [ class "columns mt-0 mb-0" ]
             [ div [ class "column is-5" ]
                 [ div [ class "field has-addons" ]
-                    [ div [ class "control  is-expanded" ]
+                    [ div [ class "control is-expanded" ]
                         [ input
                             [ class "is-rounded input is-small pr-6"
                             , type_ "search"

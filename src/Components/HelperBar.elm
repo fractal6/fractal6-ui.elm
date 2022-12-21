@@ -245,7 +245,7 @@ viewPathLevel op model =
             [ case op.path_data of
                 Just _ ->
                     div
-                        [ class "tag has-border is-rounded-light mr-3 is-w is-h"
+                        [ class "tag has-border-light is-rounded-light mr-3 is-w is-h"
                         , attribute "style" "padding: 14px 15px;"
                         , title watch_title
                         , onClick OnToggleWatch
@@ -419,7 +419,7 @@ viewPath baseUri uriQuery maybePath =
                                     [ ternary (i == 0) icon (text "")
                                     , a [ class "is-block is-wrapped has-text-weight-semibold", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                     , a
-                                        [ class "stealth-link tag is-rounded ml-1 has-border"
+                                        [ class "stealth-link tag is-rounded ml-1 has-border-light"
                                         , attribute "style" "weight: 500 !important;padding: 10px 10px;"
                                         , case nid2type p.nameid of
                                             NodeType.Circle ->

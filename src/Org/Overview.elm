@@ -1248,7 +1248,7 @@ viewCanvas us model =
 
           else
             text ""
-        , canvas [ id "canvasOrga", class "is-invisible" ] []
+        , canvas [ id "canvasOrga", class "has-border-light is-invisible" ] []
 
         {- Hidden classes use in graphpack_d3.js -}
         --
@@ -1367,7 +1367,7 @@ viewCanvas us model =
                         []
                    )
                 ++ [ div
-                        [ class "tag is-rounded has-border is-light is-info is-small tooltip has-tooltip-arrow has-tooltip-top"
+                        [ class "tag is-rounded has-border-light2 is-light is-info is-small tooltip has-tooltip-arrow has-tooltip-top"
 
                         -- Pushed to bottom in flex/column parent.
                         , attribute "style" "margin-top:auto; user-select:none;"
