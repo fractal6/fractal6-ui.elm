@@ -446,7 +446,14 @@ update global message model =
             ( model, Cmd.none, Cmd.batch [ gcmd, Ports.close_modal ] )
 
         GoBack ->
-            ( model, Cmd.none, send <| NavigateRaw <| withDefault "" <| Maybe.map .path <| model.can_referer )
+            ( model
+            , Cmd.none
+            , send <|
+                NavigateRaw <|
+                    withDefault "" <|
+                        Maybe.map (\r -> r.path ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")) <|
+                            model.can_referer
+            )
 
         -- Help
         HelpMsg msg ->
