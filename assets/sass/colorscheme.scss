@@ -202,8 +202,7 @@ $link-focus-border: $grey-light;
 $link-discrete: $blue-grey;
 $is-discrete: $grey;
 $is-highlight: $dark;
-$is-highlight2: lighten($is-highlight, 5);
-$is-highlight3: $grey;
+$is-highlight2: $grey;
 $is-hint: $grey-light;
 $is-hint2: $grey;
 
@@ -224,9 +223,9 @@ $white-ter-hover: lighten($white-ter, 10);
 $white-dimmed-hover: lighten($white-dimmed, 10);
 
 // Background colors
-$nbc: $primary;
+$nbc: #173a60;
 $nbbc: $nbc;
-$hbc: #f5f7f9;
+$hbc: #f6f8fa;
 $bbc: white; // $white
 $chbc: $hbc;
 $background-evidence: darken($bbc, 5); // hover
@@ -261,8 +260,8 @@ $text-light: lighten($text, 10);
 $text-light2: lighten($text, 20);
 $text-strong: darken($text, 5);
 
-$title-color: $is-highlight3;
-$subtitle-color: $is-highlight3;
+$title-color: $is-highlight2;
+$subtitle-color: $is-highlight2;
 $subtitle-strong-color: $is-highlight;
 
 // Border
@@ -375,7 +374,6 @@ $button-vote-danger-background: $danger;
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
-  --is-highlight3: #{$is-highlight3};
   --is-hint: #{$is-hint};
   --is-hint2: #{$is-hint2};
   --success-light: #{$success-light};
@@ -559,8 +557,7 @@ $link-focus-border: $grey-light;
 $link-discrete: $blue-light;
 $is-discrete: $grey-light;
 $is-highlight: $white-ter;
-$is-highlight2: darken($is-highlight, 5);
-$is-highlight3: $grey-lighter;
+$is-highlight2: $grey-lighter;
 $is-hint: $grey-light;
 $is-hint2: $grey-light2;
 
@@ -617,8 +614,8 @@ $text-light: darken($text, 5);
 $text-light2: darken($text, 10);
 $text-strong: lighten($text, 5);
 
-$title-color: $is-highlight3;
-$subtitle-color: $is-highlight3;
+$title-color: $is-highlight2;
+$subtitle-color: $is-highlight2;
 $subtitle-strong-color: $is-highlight;
 
 // Border
@@ -736,7 +733,6 @@ $button-vote-danger-background: $danger-light;
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
-  --is-highlight3: #{$is-highlight3};
   --is-hint: #{$is-hint};
   --is-hint2: #{$is-hint2};
   --success-light: #{$success-light};

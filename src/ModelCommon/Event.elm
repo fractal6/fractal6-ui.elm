@@ -119,7 +119,7 @@ viewEventMedia conf inline ev =
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     , text ":"
-                    , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
+                    , span [] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
             , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]

@@ -129,7 +129,7 @@ viewNotFound =
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 is-highlight-3" ] [ text T.welcome ]
+        [ h2 [ class "mb-0 is-highlight-2" ] [ text T.welcome ]
         , p [ class "has-text-grey-light" ] [ text T.welcomeSub ]
         ]
 
