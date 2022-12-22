@@ -779,9 +779,9 @@ buildAddPendingUserInput fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent }
+                { updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent, subscribe = Absent }
     in
-    AddPendingUserInput { updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts }
+    AddPendingUserInput { updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts, subscribe = optionals____.subscribe }
 
 
 type alias AddPendingUserInputOptionalFields =
@@ -792,6 +792,7 @@ type alias AddPendingUserInputOptionalFields =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -808,6 +809,7 @@ type alias AddPendingUserInputRaw =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -822,7 +824,7 @@ type AddPendingUserInput
 encodeAddPendingUserInput : AddPendingUserInput -> Value
 encodeAddPendingUserInput (AddPendingUserInput input____) =
     Encode.maybeObject
-        [ ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ) ]
+        [ ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "subscribe", Encode.bool |> Encode.optional input____.subscribe ) ]
 
 
 buildAddRoleExtInput :
@@ -4758,9 +4760,9 @@ buildPendingUserPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent }
+                { updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent, subscribe = Absent }
     in
-    PendingUserPatch { updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts }
+    PendingUserPatch { updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts, subscribe = optionals____.subscribe }
 
 
 type alias PendingUserPatchOptionalFields =
@@ -4771,6 +4773,7 @@ type alias PendingUserPatchOptionalFields =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -4787,6 +4790,7 @@ type alias PendingUserPatchRaw =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -4801,7 +4805,7 @@ type PendingUserPatch
 encodePendingUserPatch : PendingUserPatch -> Value
 encodePendingUserPatch (PendingUserPatch input____) =
     Encode.maybeObject
-        [ ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ) ]
+        [ ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "subscribe", Encode.bool |> Encode.optional input____.subscribe ) ]
 
 
 buildPendingUserRef :
@@ -4811,9 +4815,9 @@ buildPendingUserRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent }
+                { id = Absent, updatedAt = Absent, username = Absent, password = Absent, email = Absent, email_token = Absent, token = Absent, contracts = Absent, subscribe = Absent }
     in
-    PendingUserRef { id = optionals____.id, updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts }
+    PendingUserRef { id = optionals____.id, updatedAt = optionals____.updatedAt, username = optionals____.username, password = optionals____.password, email = optionals____.email, email_token = optionals____.email_token, token = optionals____.token, contracts = optionals____.contracts, subscribe = optionals____.subscribe }
 
 
 type alias PendingUserRefOptionalFields =
@@ -4825,6 +4829,7 @@ type alias PendingUserRefOptionalFields =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -4842,6 +4847,7 @@ type alias PendingUserRefRaw =
     , email_token : OptionalArgument String
     , token : OptionalArgument String
     , contracts : OptionalArgument (List ContractRef)
+    , subscribe : OptionalArgument Bool
     }
 
 
@@ -4856,7 +4862,7 @@ type PendingUserRef
 encodePendingUserRef : PendingUserRef -> Value
 encodePendingUserRef (PendingUserRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "subscribe", Encode.bool |> Encode.optional input____.subscribe ) ]
 
 
 buildPointGeoFilter :

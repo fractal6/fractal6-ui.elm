@@ -39,6 +39,7 @@ import Fractal.Enum.UserType as UserType
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
+import Json.Encode as JE
 import Loading exposing (RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
@@ -213,6 +214,27 @@ type alias OrgaInfo =
     , -- is logged user watching the orga
       isWatching : Maybe Bool
     }
+
+
+type alias NotifCount =
+    { unread_events : Int
+    , pending_contracts : Int
+    , assigned_tensions : Int
+    }
+
+
+initNotifCount : NotifCount
+initNotifCount =
+    { unread_events = 0, pending_contracts = 0, assigned_tensions = 0 }
+
+
+notifCountEncoder : NotifCount -> JE.Value
+notifCountEncoder notif =
+    JE.object
+        [ ( "unread_events", JE.int notif.unread_events )
+        , ( "pending_contracts", JE.int notif.pending_contracts )
+        , ( "assigned_tensions", JE.int notif.assigned_tensions )
+        ]
 
 
 
@@ -810,17 +832,6 @@ type alias UserRoleCommon a =
         , role_type : RoleType.RoleType
         , color : Maybe String
     }
-
-
-type alias NotifCount =
-    { unread_events : Int
-    , pending_contracts : Int
-    }
-
-
-initNotifCount : NotifCount
-initNotifCount =
-    { unread_events = 0, pending_contracts = 0 }
 
 
 initUserRights : UserRights

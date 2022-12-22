@@ -281,8 +281,8 @@ a.is-link {
 .is-highlight {
     color: var(--is-highlight) !important;
 }
-.is-highlight-3 {
-    color: var(--is-highlight3) !important;
+.is-highlight-2 {
+    color: var(--is-highlight2) !important;
 }
 .has-text-turquoise {
     color: var(--turquoise) !important;
@@ -1461,7 +1461,7 @@ figcaption {
     //padding-right: 1.5rem;
     //padding-left: 1.5rem;
     .label {
-        color: var(--is-highlight3);
+        color: var(--is-highlight2);
         //border-bottom: 1px solid var(--border-color-light);
     }
 
@@ -2288,7 +2288,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         cursor: initial;
     }
     li.is-active a {
-        color: var(--is-highlight3);
+        color: var(--is-highlight2);
         font-weight: 600;
     }
 }
@@ -2721,6 +2721,25 @@ i.is-liked {
     color: var(--info);
     &.badge {
         background-color: var(--info);
+    }
+}
+
+.is-event-badge-bg {
+    .tag {
+        background-color: var(--green) !important;
+    }
+}
+
+.is-contract-badge-bg {
+    .tag {
+        background-color: var(--info) !important;
+    }
+}
+
+// @fix bulma
+.is-active {
+    .tag, [data-tooltip] {
+        font-weight: 500;
     }
 }
 

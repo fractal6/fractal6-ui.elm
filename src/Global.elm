@@ -227,7 +227,6 @@ update msg model =
 
                     Nothing ->
                         Cmd.none
-              , sendSleep RefreshNotifCount 1000
               ]
                 ++ (case model.session.tree_data of
                         Just ndata ->
@@ -528,7 +527,7 @@ update msg model =
         AckNotifCount result ->
             case result of
                 Success data ->
-                    ( model, send (UpdateSessionNotif data) )
+                    ( model, Cmd.batch [ send (UpdateSessionNotif data), Ports.updateNotif data ] )
 
                 _ ->
                     ( model, Cmd.none )
@@ -620,7 +619,7 @@ subscriptions _ =
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
         , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
-        , Ports.updateNotifFromJs (always RefreshNotifCount)
+        , Ports.reloadNotifFromJs (always RefreshNotifCount)
         ]
 
 

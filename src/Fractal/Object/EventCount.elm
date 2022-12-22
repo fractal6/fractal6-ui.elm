@@ -27,3 +27,8 @@ unread_events =
 pending_contracts : SelectionSet (Maybe Int) Fractal.Object.EventCount
 pending_contracts =
     Object.selectionForField "(Maybe Int)" "pending_contracts" [] (Decode.int |> Decode.nullable)
+
+
+assigned_tensions : SelectionSet (Maybe Int) Fractal.Object.EventCount
+assigned_tensions =
+    Object.selectionForField "(Maybe Int)" "assigned_tensions" [] (Decode.int |> Decode.nullable)

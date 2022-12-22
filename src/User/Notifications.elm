@@ -62,7 +62,7 @@ import ModelCommon.Event
         , viewEventMedia
         , viewNotifMedia
         )
-import ModelCommon.View exposing (byAt, mediaTension, viewOrga)
+import ModelCommon.View exposing (byAt, counter, mediaTension, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -125,6 +125,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { uctx : UserCtx
+    , notif : NotifCount
     , notifications_data : GqlData UserEvents
     , assigned_data : GqlData (Dict String (List Tension))
     , eid : String
@@ -174,7 +175,7 @@ menuToString : MenuNotif -> ( String, String )
 menuToString menu =
     case menu of
         NotificationsMenu ->
-            ( T.notifications, T.notifications )
+            ( T.inbox, T.notifications )
 
         AssignedMenu ->
             ( T.assigned, T.assignedTensions )
@@ -188,6 +189,49 @@ menuToIcon menu =
 
         AssignedMenu ->
             "icon-exchange"
+
+
+menuToCount : MenuNotif -> NotifCount -> Html Msg
+menuToCount menu notif =
+    case menu of
+        NotificationsMenu ->
+            let
+                c_event =
+                    case notif.unread_events of
+                        0 ->
+                            text ""
+
+                        i ->
+                            counter i
+
+                c_contract =
+                    case notif.pending_contracts of
+                        0 ->
+                            text ""
+
+                        i ->
+                            counter i
+            in
+            span []
+                [ span
+                    [ class "tooltip"
+                    , attribute "data-tooltip" T.unreadNotif
+                    ]
+                    [ c_event ]
+                , span
+                    [ class "is-contract-badge-bg tootltip"
+                    , attribute "data-tooltip" T.pendingContract
+                    ]
+                    [ c_contract ]
+                ]
+
+        AssignedMenu ->
+            case notif.assigned_tensions of
+                0 ->
+                    text ""
+
+                i ->
+                    counter i
 
 
 
@@ -205,6 +249,7 @@ type Msg
     | MarkAllAsRead
     | GotMarkAllAsRead (GqlData IdPayload)
     | ChangeMenuFocus MenuNotif
+    | UpdateNotif NotifCount
       -- Common
     | NoMsg
     | PassedSlowLoadTreshold -- timer
@@ -252,6 +297,7 @@ init global flags =
 
         model =
             { uctx = uctx
+            , notif = global.session.notif
             , notifications_data = Loading
             , assigned_data = Loading
             , eid = ""
@@ -307,7 +353,10 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         LoadNotifications ->
-            ( model, queryNotifications apis { first = 50, uctx = model.uctx } GotNotifications, Cmd.none )
+            ( model
+            , queryNotifications apis { first = 50, uctx = model.uctx } GotNotifications
+            , send RefreshNotifCount
+            )
 
         LoadAssigned ->
             ( model, queryAssignedTensions apis { first = 50, uctx = model.uctx } GotAssigned, Cmd.none )
@@ -321,29 +370,27 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadNotifications 500, send UpdateUserToken )
 
                 OkAuth data ->
-                    let
-                        ( i, j ) =
-                            List.filter (\x -> not x.isRead) data
-                                |> List.foldr
-                                    (\a ( ne, nc ) ->
-                                        case List.head a.event of
-                                            Just (TensionEvent _) ->
-                                                ( ne + 1, nc )
-
-                                            Just (NotifEvent n) ->
-                                                ( ne + 1, nc )
-
-                                            Just (ContractEvent c) ->
-                                                ( ne, nc + 1 )
-
-                                            Nothing ->
-                                                ( ne, nc )
-                                    )
-                                    ( 0, 0 )
-                    in
+                    --let
+                    -- Exemple of computation (unread_events, unread_contracts with foldr.
+                    --    ( i, j ) =
+                    --        List.filter (\x -> not x.isRead) data
+                    --            |> List.foldr
+                    --                (\a ( ne, nc ) ->
+                    --                    case List.head a.event of
+                    --                        Just (TensionEvent _) ->
+                    --                            ( ne + 1, nc )
+                    --                        Just (NotifEvent n) ->
+                    --                            ( ne + 1, nc )
+                    --                        Just (ContractEvent c) ->
+                    --                            ( ne, nc + 1 )
+                    --                        Nothing ->
+                    --                            ( ne, nc )
+                    --                )
+                    --                ( 0, 0 )
+                    --in
                     ( { model | notifications_data = result }
                     , Cmd.none
-                    , send (UpdateSessionNotif { unread_events = i, pending_contracts = j })
+                    , Cmd.none
                     )
 
                 _ ->
@@ -392,17 +439,6 @@ update global message model =
         MarkAllAsRead ->
             ( model, markAllAsRead apis model.uctx.username GotMarkAllAsRead, Cmd.none )
 
-        ChangeMenuFocus menu ->
-            let
-                url =
-                    toHref Route.Notifications
-
-                query =
-                    queryBuilder
-                        [ ( "m", menuEncoder menu ) ]
-            in
-            ( model, Cmd.none, Nav.pushUrl global.key (url ++ "?" ++ query) )
-
         GotMarkAllAsRead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
@@ -423,6 +459,20 @@ update global message model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        ChangeMenuFocus menu ->
+            let
+                url =
+                    toHref Route.Notifications
+
+                query =
+                    queryBuilder
+                        [ ( "m", menuEncoder menu ) ]
+            in
+            ( model, Cmd.none, Nav.pushUrl global.key (url ++ "?" ++ query) )
+
+        UpdateNotif notif ->
+            ( { model | notif = notif }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -493,6 +543,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.updateNotifFromJs UpdateNotif
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
@@ -585,7 +636,7 @@ viewMenu model =
                     (\x ->
                         [ li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
-                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first) ]
+                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first), menuToCount x model.notif ]
                             ]
                         ]
                     )

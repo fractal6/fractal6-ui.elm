@@ -52,6 +52,7 @@ import ModelSchema
         , NotifCount
         , User
         , UserCtx
+        , notifCountEncoder
         )
 
 
@@ -80,14 +81,14 @@ port triggerMenuOrgaFromJs : (() -> msg) -> Sub msg
 port triggerMenuTreeFromJs : (() -> msg) -> Sub msg
 
 
-port triggerNotifFromJs : (() -> msg) -> Sub msg
-
-
 
 -- User
 
 
 port loggedOutOkFromJs : (() -> msg) -> Sub msg
+
+
+port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port updateMenuOrgaFromJs : (Maybe Bool -> msg) -> Sub msg
@@ -99,10 +100,10 @@ port updateMenuTreeFromJs : (Maybe Bool -> msg) -> Sub msg
 port updateLangFromJs : (String -> msg) -> Sub msg
 
 
-port updateNotifFromJs : (() -> msg) -> Sub msg
+port updateNotifFromJs : (NotifCount -> msg) -> Sub msg
 
 
-port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
+port reloadNotifFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -311,6 +312,16 @@ saveMenuTree x =
                 [ ( "key", JE.string "tree_menu" )
                 , ( "val", JE.bool x )
                 ]
+        }
+
+
+{-| Used to propage change in components
+-}
+updateNotif : NotifCount -> Cmd msg
+updateNotif notif =
+    outgoing
+        { action = "UPDATE_NOTIF"
+        , data = notifCountEncoder notif
         }
 
 

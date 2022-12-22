@@ -78,6 +78,11 @@ contracts fillInOptionals____ object____ =
     Object.selectionForCompositeField "contracts" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+subscribe : SelectionSet (Maybe Bool) Fractal.Object.PendingUser
+subscribe =
+    Object.selectionForField "(Maybe Bool)" "subscribe" [] (Decode.bool |> Decode.nullable)
+
+
 type alias ContractsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ContractFilter }
 

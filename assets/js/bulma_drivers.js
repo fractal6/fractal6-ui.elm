@@ -188,13 +188,6 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    const $notifTrigger = $doc.querySelectorAll('.notifTrigger');
-    if ($notifTrigger.length > 0) {
-        $notifTrigger.forEach( el => {
-            setupHandler("click", triggerNotif, el, el, app);
-        });
-    }
-
     const $helpTrigger = $doc.querySelectorAll('.helpTrigger');
     if ($helpTrigger.length > 0) {
         $helpTrigger.forEach( el => {
@@ -628,10 +621,6 @@ function triggerJoin2(e, el, app) {
 
 function triggerInvite(e, el, app) {
     app.ports.triggerInviteFromJs.send(null)
-}
-
-function triggerNotif(e, el, app) {
-    //app.ports.triggerNotifFromJs.send(null)
 }
 
 function triggerMenuOrga(e, el, app) {

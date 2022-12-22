@@ -1022,6 +1022,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Notifications"
   fr="Notifications"
 
+[inbox]
+  en="Inbox"
+  fr="Inbox"
+
 [watch]
   en="Watch"
   fr="Suivre"

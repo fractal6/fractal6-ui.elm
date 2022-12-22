@@ -15,11 +15,12 @@ type PendingUserHasFilter
     | Email_token
     | Token
     | Contracts
+    | Subscribe
 
 
 list : List PendingUserHasFilter
 list =
-    [ UpdatedAt, Username, Password, Email, Email_token, Token, Contracts ]
+    [ UpdatedAt, Username, Password, Email, Email_token, Token, Contracts, Subscribe ]
 
 
 decoder : Decoder PendingUserHasFilter
@@ -48,6 +49,9 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
+
+                    "subscribe" ->
+                        Decode.succeed Subscribe
 
                     _ ->
                         Decode.fail ("Invalid PendingUserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -79,6 +83,9 @@ toString enum____ =
 
         Contracts ->
             "contracts"
+
+        Subscribe ->
+            "subscribe"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -115,6 +122,9 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
+
+        "subscribe" ->
+            Just Subscribe
 
         _ ->
             Nothing

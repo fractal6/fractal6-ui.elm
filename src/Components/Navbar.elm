@@ -139,7 +139,7 @@ notificationButton cls user notif url =
                 , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 ]
                 [ div
-                    [ class "navbar-link is-arrowless notifTrigger"
+                    [ class "navbar-link is-arrowless"
                     , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                     ]
                     [ A.icon "icon-bg icon-bell"

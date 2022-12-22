@@ -316,7 +316,7 @@ export const actions = {
 
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
-        app.ports.updateNotifFromJs.send(null);
+        app.ports.reloadNotifFromJs.send(null);
     },
     'SAVE_SESSION_ITEM' : (app, session, data) => {
         localStorage.setItem(data.key, JSON.stringify(data.val));
@@ -346,6 +346,9 @@ export const actions = {
         // Won't work for httpOnly cookie
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
         app.ports.loggedOutOkFromJs.send(null);
+    },
+    'UPDATE_NOTIF' : (app, session, notif) => {
+        app.ports.updateNotifFromJs.send(notif);
     },
     //
     // Popups

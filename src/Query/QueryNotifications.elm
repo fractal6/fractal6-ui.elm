@@ -91,9 +91,10 @@ queryNotifCount url f msg =
             (SelectionSet.map2 (\_ x -> { event_count = x })
                 Fractal.Object.User.username
                 (Fractal.Object.User.event_count identity
-                    (SelectionSet.map2 NotifCount
+                    (SelectionSet.map3 NotifCount
                         (Fractal.Object.EventCount.unread_events |> SelectionSet.map (\a -> withDefault 0 a))
                         (Fractal.Object.EventCount.pending_contracts |> SelectionSet.map (\a -> withDefault 0 a))
+                        (Fractal.Object.EventCount.assigned_tensions |> SelectionSet.map (\a -> withDefault 0 a))
                     )
                 )
             )
