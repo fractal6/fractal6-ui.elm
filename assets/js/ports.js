@@ -560,7 +560,7 @@ export const actions = {
         } else if (c == "Bold") {
             toggleMarkup($input, "**")
         } else if (c == "Italic") {
-            toggleMarkup($input, "__")
+            toggleMarkup($input, "_")
         } else if (c == "Strikethrough") {
             toggleMarkup($input, "~~")
         } else if (c == "Quote" ) {
