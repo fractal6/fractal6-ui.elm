@@ -911,8 +911,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
 
 [confirmLeaveOrga]
-  en="Are you sure you want to leave this organization ?"
-  fr="Etes vous sûr de vouloir quitter cette organisation ?"
+  en="""Are you sure you want to leave this organization ?
+- You will be unassigned to any tensions in this organization.
+- You will be able to join again by invitation only.
+  """
+  fr="""Etes vous sûr de vouloir quitter cette organisation ?
+- Vous serez desassigné de toutes tensions dans cette organisation.
+- Vous pourrez la rejoindre a nouveau sur invitation seulement.
+  """
 
 [askAnotherQuestion]
   en="Ask another question."

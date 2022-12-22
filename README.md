@@ -1,4 +1,4 @@
-# Fractale - self-organization for Humans
+# Fractale - self-organization for humans
 
 Elm frontend frontend for [Fractale](https://fractale.co).
 
