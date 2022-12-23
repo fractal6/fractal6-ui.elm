@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?km1pv2');
-  src:  url('fonts/fractaleicon.eot?km1pv2#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?km1pv2') format('truetype'),
-    url('fonts/fractaleicon.woff?km1pv2') format('woff'),
-    url('fonts/fractaleicon.svg?km1pv2#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?pz6l08');
+  src:  url('fonts/fractaleicon.eot?pz6l08#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?pz6l08') format('truetype'),
+    url('fonts/fractaleicon.woff?pz6l08') format('woff'),
+    url('fonts/fractaleicon.svg?pz6l08#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -376,11 +376,20 @@
 .icon-announce:before {
   content: "\f0a1";
 }
+.icon-list-ul:before {
+  content: "\f0ca";
+}
+.icon-list-ol:before {
+  content: "\f0cb";
+}
 .icon-sort:before {
   content: "\f0dc";
 }
 .icon-unsorted:before {
   content: "\f0dc";
+}
+.icon-quote-right:before {
+  content: "\f10e";
 }
 .icon-circle1:before {
   content: "\f111";

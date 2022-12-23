@@ -1606,15 +1606,6 @@ viewCircle op model =
                                         , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
                                                 [ button
-                                                    ([ class "button is-success defaultSubmit"
-                                                     , classList
-                                                        [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
-                                                     , disabled (not isSendable || isLoading)
-                                                     ]
-                                                        ++ submitCloseTension
-                                                    )
-                                                    [ text model.txt.close_submit ]
-                                                , button
                                                     ([ class "button is-warning"
                                                      , classList
                                                         [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
@@ -1623,6 +1614,15 @@ viewCircle op model =
                                                         ++ submitTension
                                                     )
                                                     [ text model.txt.submit ]
+                                                , button
+                                                    ([ class "button is-success defaultSubmit"
+                                                     , classList
+                                                        [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
+                                                     , disabled (not isSendable || isLoading)
+                                                     ]
+                                                        ++ submitCloseTension
+                                                    )
+                                                    [ text model.txt.close_submit ]
                                                 ]
                                             ]
                                         ]

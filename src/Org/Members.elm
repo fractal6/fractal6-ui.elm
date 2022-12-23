@@ -618,7 +618,7 @@ view_ global model =
 
                   else
                     text ""
-                , div [ class "columns mb-6 px-3-mobile" ]
+                , div [ class "columns mb-6 px-3" ]
                     [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
                 , div [ class "columns mb-6 px-3" ]
                     [ div [ class "column is-5 is-4-fullhd pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]

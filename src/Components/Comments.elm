@@ -158,17 +158,17 @@ viewUpdateInput op uctx comment form result =
                 [ div [ class "control" ]
                     [ div [ class "buttons" ]
                         [ button
+                            [ class "button"
+                            , onClick op.doCancelComment
+                            ]
+                            [ text T.cancel ]
+                        , button
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (op.doSubmit isLoading op.doEditComment)
                             ]
                             [ text T.update ]
-                        , button
-                            [ class "button"
-                            , onClick op.doCancelComment
-                            ]
-                            [ text T.cancel ]
                         ]
                     ]
                 ]
@@ -231,6 +231,13 @@ viewCommentInput op uctx tension form result =
                         [ div [ class "control", style "max-width" "100%" ]
                             [ div [ class "buttons" ]
                                 [ button
+                                    ([ class "button"
+                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                     ]
+                                        ++ submitCloseOpenTension
+                                    )
+                                    [ text closeOpenText ]
+                                , button
                                     ([ class "button is-success defaultSubmit"
                                      , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
@@ -238,13 +245,6 @@ viewCommentInput op uctx tension form result =
                                         ++ doSubmit
                                     )
                                     [ text T.comment ]
-                                , button
-                                    ([ class "button"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
-                                     ]
-                                        ++ submitCloseOpenTension
-                                    )
-                                    [ text closeOpenText ]
                                 ]
                             ]
                         ]
@@ -330,11 +330,13 @@ viewCommentHeader targetid cls_tabs op form =
             , div [ onClick (op.doRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
             , div [ onClick (op.doRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
             , div [ onClick (op.doRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
-            , div [ onClick (op.doRichText targetid "Quote"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Quote" ] [ span [ style "font-size" "18px" ] [ text "”" ] ]
+            , div [ onClick (op.doRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
             , div [ onClick (op.doRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom ml-2", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
-            , div [ onClick (op.doRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
-            , div [ class "tooltip has-tooltip-bottom is-right", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
+            , div [ onClick (op.doRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
+            , div [ onClick (op.doRichText targetid "List-ol"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
+            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
+            , div [ onClick (op.doRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+            , div [ class "tooltip has-tooltip-bottom is-right is-h is-w", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
             ]
         ]
 

@@ -165,12 +165,6 @@ hr {
         margin-right: 25px !important;
     }
 }
-.px-3-mobile {
-    @include mobile {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
-    }
-}
 
 .mt-desktop {
     @include desktop {
@@ -522,6 +516,9 @@ strong {
             visibility: hidden !important;
         }
     }
+
+    // span[data-tooltip] border-bottom is dashed !
+    border-bottom-style: none !important;
 
     // solve the markown tooltip **tabs**
     &.is-right::before {
@@ -1559,12 +1556,12 @@ figcaption {
             padding-left: 0.75rem;
             padding-right: 0.75rem;
         }
-        div:last-child {
-            margin-left: 0.5rem;
-            padding-left: 0.75rem;
-            display: flex;
-            align-items: center;
-        }
+        //div:last-child {
+        //    margin-left: 0.5rem;
+        //    padding-left: 0.75rem;
+        //    display: flex;
+        //    align-items: center;
+        //}
     }
 }
 
