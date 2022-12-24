@@ -24,7 +24,7 @@ module Markdown exposing (renderMarkdown)
 import Assets as A
 import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, div, i, input, li, span, table, text, ul)
+import Html exposing (Html, a, br, div, i, input, label, li, span, table, text, ul)
 import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -128,21 +128,29 @@ frac6Renderer style recursive =
 
                                                     Block.IncompleteTask ->
                                                         Just <|
-                                                            input
-                                                                [ disabled True
-                                                                , checked False
-                                                                , type_ "checkbox"
+                                                            label []
+                                                                [ input
+                                                                    [ type_ "checkbox"
+                                                                    , checked False
+                                                                    , class "checkbox_readonly"
+
+                                                                    --, disabled True
+                                                                    ]
+                                                                    []
                                                                 ]
-                                                                []
 
                                                     Block.CompletedTask ->
                                                         Just <|
-                                                            input
-                                                                [ disabled True
-                                                                , checked True
-                                                                , type_ "checkbox"
+                                                            label []
+                                                                [ input
+                                                                    [ type_ "checkbox"
+                                                                    , checked True
+                                                                    , class "checkbox_readonly"
+
+                                                                    --, disabled True
+                                                                    ]
+                                                                    []
                                                                 ]
-                                                                []
                                         in
                                         case checkbox of
                                             Just cb ->

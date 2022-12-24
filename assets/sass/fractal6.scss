@@ -1553,8 +1553,13 @@ figcaption {
         font-size: 15px;
         font-family: "Times New Roman", Times, serif !important;
         *:not(:last-child) {
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
+            font-weight: 600;
+            color: var(--is-discrete);
+            &:hover {
+                background: var(--background-evidence);
+            }
         }
         //div:last-child {
         //    margin-left: 0.5rem;

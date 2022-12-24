@@ -1,86 +1,92 @@
 
 .markdown-body {
-    // Fixes
-    color: var(--text);
-    &.fix-inline > p {
-      display: inline;
-    }
-    & > ul {
-        //margin-left: 1rem;
-    }
+	// Fixes
+	color: var(--text);
+	&.fix-inline > p {
+		display: inline;
+	}
+	& > ul {
+		//margin-left: 1rem;
+	}
 
-    // Html
+	// Html
 
-    pre, code {
-        @include defaultFontFace;
-        font-size: 14px;
-        max-height: 500px;
-        border-radius: 5px;
+	pre, code {
+		@include defaultFontFace;
+		font-size: 14px;
+		max-height: 500px;
+		border-radius: 5px;
 
-        color: currentColor;
-        background-color: var(--code-color) !important;
-    }
-    a {
-        color: var(--info) !important;
-        text-decoration: none !important;
-    }
-    a:hover {
-        text-decoration: underline !important;
-    }
-    a:visited {
-        color: var(--info-light);
-    }
-    blockquote {
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
-      padding-left: 15px;
-      padding-right: 0;
-      background: inherit;
-      font-weight: 600;
-      font-style: italic;
-      border-color: var(--is-discrete);
-      //filter: invert(25%);
-    }
-    li input[type="checkbox"] {
-      margin-right: 8px;
-    }
-    li p {
-      // checkbox are defined before <p> (dillonkeans,)
-      display: inline;
-    }
-    strong {
-        font-weight: 700;
-        color: var(--is-highlight);
-    }
-    .table-container {
-        overflow: auto !important;
-    }
-    table {
-        width: auto !important;
-        border: 1px solid var(--border-color) !important;
-        max-height: 500px;
+		color: currentColor;
+		background-color: var(--code-color) !important;
+	}
+	a {
+		color: var(--info) !important;
+		text-decoration: none !important;
+	}
+	a:hover {
+		text-decoration: underline !important;
+	}
+	a:visited {
+		color: var(--info-light);
+	}
+	blockquote {
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+		padding-left: 15px;
+		padding-right: 0;
+		background: inherit;
+		font-weight: 600;
+		font-style: italic;
+		border-color: var(--is-discrete);
+		//filter: invert(25%);
+	}
+	li input[type="checkbox"] {
+		margin-right: 8px;
+		//accent-color: #00eaff; very recent version !
 
-        thead tr:last-child {
-            //border-bottom-style: double !important;
-        }
-        tr:nth-child(even){
-            background-color: var(--chbc) !important;
-        }
-        th {
-            border: 1px solid var(--border-color) !important;
+		// Pseudo ing element
+		width: 15px;
+		height: 15px;
+		//cursor: pointer;
+	}
+	li p {
+		// checkbox are defined before <p> (dillonkeans,)
+		display: inline;
+	}
+	strong {
+		font-weight: 700;
+		color: var(--is-highlight);
+	}
+	.table-container {
+		overflow: auto !important;
+	}
+	table {
+		width: auto !important;
+		border: 1px solid var(--border-color) !important;
+		max-height: 500px;
 
-        }
-        td {
-            border: 1px solid var(--border-color) !important;
-        }
-    }
+		thead tr:last-child {
+			//border-bottom-style: double !important;
+		}
+		tr:nth-child(even){
+			background-color: var(--chbc) !important;
+		}
+		th {
+			border: 1px solid var(--border-color) !important;
+
+		}
+		td {
+			border: 1px solid var(--border-color) !important;
+		}
+	}
 }
 
 .box {// background of box is equal of $code-color.
-    .markdown-body {
-        pre, code {
-            background-color: var(--code-color-light) !important;
-        }
-    }
+	.markdown-body {
+		pre, code {
+			background-color: var(--code-color-light) !important;
+		}
+	}
 }
 

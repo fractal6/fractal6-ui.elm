@@ -269,6 +269,17 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     //
+    // "Rich Text" make checkbox readonly
+    //
+    //
+    const $checkboxes = $doc.querySelectorAll('.checkbox_readonly');
+    if ($checkboxes.length > 0) {
+        $checkboxes.forEach( el => {
+            setupHandler("click", (a,b) => {a.preventDefault(); return false} , el, el);
+        });
+    }
+
+    //
     // "Rich Text" on textarea
     //
     // * Capture TAB to insert space
@@ -431,46 +442,71 @@ function submitFocus(e, el) {
 //
 
 function markupRichText(e, el) {
-    // Allow indentions (useful to enter list level)
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
-		var start = el.selectionStart;
-		var end = el.selectionEnd;
+        // Allow indentions (as space) - usefull to enter list level
+        // or indent for code - after two line break
+        var start = el.selectionStart;
+        var end = el.selectionEnd;
+        var replacer;
 
         if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start-1])) return
 
-        //use a loop to look backward until we find the first newline character \n
-        var v = el.value[start];
-        var curPos = start;
-        var prevLinePos = start;
-        var n_line_back = 1;
-        while(n_line_back >= 0 && curPos >= 0) {
-            if (v == '\n' || curPos == 0) {
-                n_line_back -= 1;
-                var line = el.value.substring(curPos+1, prevLinePos);
-                // Ignore if Tab occurs outside a list context
-                if ((n_line_back < 0 || curPos == 0) && line.search(/\s*[0-9]+\.|\s*[\-\+\*]/) < 0) return
-                prevLinePos = curPos+1;
-            }
-            curPos--;
-            v = el.value.substr(curPos, 1);
+        // /[^\S\r\n]/ -> all whitespace but without newline
+        var isLastLineList = (el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0)
+
+        if (isLastLineList) {
+            // Assumes we are in a **list content**
+            // 2 space for sublist indentation
+            replacer = "  ";
+        //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+        //    // Tab (4 space) for **code** indentation
+        //    replacer = "\t";
+        } else {
+            return
         }
 
 		e.preventDefault();
 
-        if (el.value[el.selectionStart-2] == "\n") {
-            // 4 space (Tab) for **code** indentation
-            var replacer = "\t";
+		// set textarea value to: text before caret + tab + text after caret
+		el.value = el.value.substring(0, start) +
+			replacer + el.value.substring(end);
 
+		// put caret at right position again
+		el.selectionStart =
+			el.selectionEnd = start + replacer.length;
+    } else if (e.key == "Enter" && !e.ctrlKey && !e.shiftKey) {
+        // Insert list if inside list
+        var start = el.selectionStart;
+        var end = el.selectionEnd;
+
+        if (el.value.length < 3 || start == 0) return
+
+        // /[^\S\r\n]/ -> all whitespace but without newline
+        var currentLineList = el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
+        var replacer;
+
+        if (currentLineList >= 0) {
+            var s = el.value.slice(currentLineList, currentLineList+10).trimLeft().slice(0, 3)
+            if (s == "- [") {
+                replacer = "\n" + "- [ ] ";
+            } else if (parseInt(s)) {
+                var i = parseInt(s)
+                replacer = "\n" + (i+1) + ". ";
+            } else {
+                replacer = "\n" + s[0] + " ";
+            }
+        //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+        //    // Tab (4 space) for **code** indentation
+        //    var replacer = "\t";
         } else {
-            // Assumes we are in a **list content**
-            // 2 space for sublist indentation
-            var replacer = "  ";
+            return
         }
+
+		e.preventDefault();
 
 		// set textarea value to: text before caret + tab + text after caret
 		el.value = el.value.substring(0, start) +
-			replacer + el.value.substring(end);   // Insert double space
-			//"\t" + el.value.substring(end); // Insert Tab
+			replacer + el.value.substring(end);
 
 		// put caret at right position again
 		el.selectionStart =

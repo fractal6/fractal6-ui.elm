@@ -571,6 +571,8 @@ export const actions = {
             pushLine($input, "- ")
         } else if (c == "List-ol") {
             pushLine($input, "1. ")
+        } else if (c == "List-check") {
+            pushLine($input, "- [ ] ")
         } else if (c == "MentionUser") {
             pushLine($input, "@", true)
         } else if (c == "MentionTension") {
