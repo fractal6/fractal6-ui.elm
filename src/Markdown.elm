@@ -133,8 +133,7 @@ frac6Renderer style recursive =
                                                                     [ type_ "checkbox"
                                                                     , checked False
                                                                     , class "checkbox_readonly"
-
-                                                                    --, disabled True
+                                                                    , disabled True
                                                                     ]
                                                                     []
                                                                 ]

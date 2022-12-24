@@ -127,32 +127,32 @@
   fr="Mot de passe oublié ?"
 
 [checkYourEmail]
-	en="Please check your email ({{}}) {{}}."
-	fr="Veuillez vérifier vos e-mails ({{}}) {{}}."
+  en="Please check your email ({{}}) {{}}."
+  fr="Veuillez vérifier vos e-mails ({{}}) {{}}."
 
 [checkConfirmationEmail]
-	en="No confirmation email received? Check your Spam folder"
-	fr="Vous n'avez pas reçu de courriel de confirmation ? Vérifiez votre dossier Spam"
+  en="No confirmation email received? Check your Spam folder"
+  fr="Vous n'avez pas reçu de courriel de confirmation ? Vérifiez votre dossier Spam"
 
 [requestNewEmail]
-	en="send a new confirmation email."
-	fr="envoyer un nouvel e-mail de confirmation."
+  en="send a new confirmation email."
+  fr="envoyer un nouvel e-mail de confirmation."
 
 [toConfirmYourAccount]
-	en="to confirm your account"
-	fr="pour valider votre compte"
+  en="to confirm your account"
+  fr="pour valider votre compte"
 
 [toResetYourPassword]
-	en="to reset your password"
-	fr="pour réinitialiser votre mot de passe"
+  en="to reset your password"
+  fr="pour réinitialiser votre mot de passe"
 
 [gotItCreateOrga]
-	en="Got it, let's create my first organization."
-	fr="Compris, je veux créer ma première organisation"
+  en="Got it, let's create my first organization."
+  fr="Compris, je veux créer ma première organisation"
 
 [explorePublicOrga]
-	en="Explore public organizations."
-	fr="Explorer les organisations publiques."
+  en="Explore public organizations."
+  fr="Explorer les organisations publiques."
 
 
 # Features
@@ -260,24 +260,24 @@
 
 
 [gotIt]
-	en="Got it"
-	fr="J'ai compris"
+  en="Got it"
+  fr="J'ai compris"
 
 [nothingToShow]
-	en="Nothing to show yet."
-	fr="Rien à afficher pour le moment."
+  en="Nothing to show yet."
+  fr="Rien à afficher pour le moment."
 
 [welcomeNoOrga]
-	en="""Welcome,
+  en="""Welcome,
 You can [Explore](/explore) public organizations or create your [First Organization](/new/orga).
-	"""
-	fr="""Bienvenue,
+  """
+  fr="""Bienvenue,
 Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Première Organisation](/new/orga).
-	"""
+  """
 
 [selectColor]
-	en="Select a color"
-	fr="Selectionnez une couleur"
+  en="Select a color"
+  fr="Selectionnez une couleur"
 
 [recentActivities]
   en="Recent activities"
@@ -659,24 +659,24 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Détacher l’utilisateur du rôle"
 
 [inviteOrLink]
-	en="Invite someone to this role (or link yourself)"
-	fr="Invitez une personne à jouer ce rôle (ou reliez-vous vous-même)"
+  en="Invite someone to this role (or link yourself)"
+  fr="Invitez une personne à jouer ce rôle (ou reliez-vous vous-même)"
 
 [inviteSomeone]
-	en="Invite Someone"
-	fr="Inviter une personne"
+  en="Invite Someone"
+  fr="Inviter une personne"
 
 [inviteSomeoneElse]
-	en="Invite someone else"
-	fr="Inviter une autre personne"
+  en="Invite someone else"
+  fr="Inviter une autre personne"
 
 [usernameOrEmail]
-	en="Username or email address"
-	fr="Nom d'utilisateur ou adresse email"
+  en="Username or email address"
+  fr="Nom d'utilisateur ou adresse email"
 
 [addRole]
-	en="Add a Role"
-	fr="Ajouter un Rôle"
+  en="Add a Role"
+  fr="Ajouter un Rôle"
 
 [invite]
   en="Invite"
@@ -716,7 +716,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [saveChanges]
   en="Save changes"
-	fr="Enregistrer"
+  fr="Enregistrer"
 
 [leaveComment]
   en="Leave a comment"
@@ -993,8 +993,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Message vide"
 
 [selectADestination]
-	en="select a destination"
-	fr="Selectionner une destination"
+  en="select a destination"
+  fr="Selectionner une destination"
 
 [question]
   en="Question"
@@ -1313,8 +1313,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="de cette organization"
 
 [enterValidUserOrEmail]
-	en="Please, enter a valid email address or username"
-	fr="Veuillez entrer une adresse e-mail ou un nom d'utilisateur valide."
+  en="Please, enter a valid email address or username"
+  fr="Veuillez entrer une adresse e-mail ou un nom d'utilisateur valide."
 
 [color]
   en="Color"
@@ -1545,52 +1545,52 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Ajouter des politiques"
 
 [selectRoleTemplate]
-	en="Select a role template"
-	fr="Sélectionner un modèle de rôle"
+  en="Select a role template"
+  fr="Sélectionner un modèle de rôle"
 
 [selectCircleVisibility]
-	en="Choose the sub-circle visibility"
-	fr="Selectionnez la visibilité du sous-cercle"
+  en="Choose the sub-circle visibility"
+  fr="Selectionnez la visibilité du sous-cercle"
 
 [noTemplateRole]
-	en="No template role yet."
-	fr="Aucun modèle de rôle pour le moment."
+  en="No template role yet."
+  fr="Aucun modèle de rôle pour le moment."
 
 [templateRoleHint]
-	en="A template role is a generic role that you can reuse in your organisation."
-	fr="Un rôle modèle est un rôle générique que vous pouvez réutiliser dans votre organisation."
+  en="A template role is a generic role that you can reuse in your organisation."
+  fr="Un rôle modèle est un rôle générique que vous pouvez réutiliser dans votre organisation."
 
 [adhocRoleHint]
-	en="An ad-hoc role is a role that you create from scratch."
-	fr="Un rôle ad-hoc est un rôle que vous créez de zéro, pour un besoin particulier."
+  en="An ad-hoc role is a role that you create from scratch."
+  fr="Un rôle ad-hoc est un rôle que vous créez de zéro, pour un besoin particulier."
 
 [youCanMake]
-	en="You can make a"
-	fr="Vous pouvez créer un"
+  en="You can make a"
+  fr="Vous pouvez créer un"
 
 [orCreate]
-	en="or make an"
-	fr="ou créer un"
+  en="or make an"
+  fr="ou créer un"
 
 [orAdd]
-	en="or add an"
-	fr="ou ajouter un"
+  en="or add an"
+  fr="ou ajouter un"
 
 [needNewRole]
-	en="Need a new role? Make a"
-	fr="Besoin d'un nouveau rôle ? Créer un"
+  en="Need a new role? Make a"
+  fr="Besoin d'un nouveau rôle ? Créer un"
 
 [templateRole]
-	en="Role template"
-	fr="Modèle de Rôle"
+  en="Role template"
+  fr="Modèle de Rôle"
 
 [templateRoles]
-	en="Role templates"
-	fr="Modèles de Rôles"
+  en="Role templates"
+  fr="Modèles de Rôles"
 
 [adhocRole]
-	en="Ad-hoc Role"
-	fr="Rôle ad-hoc"
+  en="Ad-hoc Role"
+  fr="Rôle ad-hoc"
 
 [unknown]
   en="unknown"
@@ -1625,8 +1625,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Désolé, ce cercle n’existe pas."
 
 [confirmToUnlinkUser]
-	en="Confirm to unlink user"
-	fr="Confirmer pour détacher l'utilisateur"
+  en="Confirm to unlink user"
+  fr="Confirmer pour détacher l'utilisateur"
 
 [goHome]
   en="Go to home page."
@@ -1674,7 +1674,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [noTensionsYet]
   en="No tensions yet."
-	fr="Aucune tensions pour le moment"
+  fr="Aucune tensions pour le moment"
 
 [rolesHere]
   en="Roles in this circle"
@@ -1725,40 +1725,40 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="afin d’effectuer cette action."
 
 [refresh]
-	en="Refresh"
-	fr="Rafraîchir"
+  en="Refresh"
+  fr="Rafraîchir"
 
 [sessionExpired]
-	en="Your session has expired. Please, confirm your password"
-	fr="Votre session a expiré. Veuillez confirmer votre mot de passe"
+  en="Your session has expired. Please, confirm your password"
+  fr="Votre session a expiré. Veuillez confirmer votre mot de passe"
 
 [sessionExpired2]
-	en="The session has expired, please try again."
-	fr="Votre session a expiré. Veuillez réessayer."
+  en="The session has expired, please try again."
+  fr="Votre session a expiré. Veuillez réessayer."
 
 [passwordUpdated]
-	en="Your password has been updated."
-	fr="Votre mot de passe a été mis à jour."
+  en="Your password has been updated."
+  fr="Votre mot de passe a été mis à jour."
 
 [enterYourEmail]
-	en="Enter your email"
-	fr="Saisisser votre e-mail"
+  en="Enter your email"
+  fr="Saisisser votre e-mail"
 
 [enterTheCode]
-	en="Enter the code below"
-	fr="Entrez le code ci-dessous"
+  en="Enter the code below"
+  fr="Entrez le code ci-dessous"
 
 [newPassword]
-	en="New password"
-	fr="Nouveau mot de passe"
+  en="New password"
+  fr="Nouveau mot de passe"
 
 [confirmYourPassword]
-	en="Confirm your password"
-	fr="Confirmez votre mot de passe"
+  en="Confirm your password"
+  fr="Confirmez votre mot de passe"
 
 [resetPassword]
-	en="Reset Password"
-	fr="Réinitialiser le mot de passe"
+  en="Reset Password"
+  fr="Réinitialiser le mot de passe"
 
 [reverseTooltip]
   en="Reverse the organization graph."
@@ -1778,7 +1778,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [explainJoin]
   en="Explain your motivations for joining this organisation ?"
-	fr="Expliquez vos motivations pour rejoindre cette organisation ?"
+  fr="Expliquez vos motivations pour rejoindre cette organisation ?"
 
 [showOlderEvents]
   en="Show {{}} older events"
@@ -1840,36 +1840,36 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 #
 
 [visibility_header]
-	en="Change Visibility of"
-	fr="Modifier la visibilié de"
+  en="Change Visibility of"
+  fr="Modifier la visibilié de"
 
 [authority_role_header]
-	en="Change Authority of"
-	fr="Modifier l'authorité de"
+  en="Change Authority of"
+  fr="Modifier l'authorité de"
 
 [authority_circle_header]
-	en="Change Governance process of"
-	fr="Modifier la gouvernance de"
+  en="Change Governance process of"
+  fr="Modifier la gouvernance de"
 
 [link_header]
-	en="New lead for role"
-	fr="Nouveau lead pour le role"
+  en="New lead for role"
+  fr="Nouveau lead pour le role"
 
 [unlink_header]
-	en="Unlink lead for role"
-	fr="Détacher le lead pour le role"
+  en="Unlink lead for role"
+  fr="Détacher le lead pour le role"
 
 [archive_header]
-	en="Archive {{type}}"
-	fr="Archiver le {{type}}"
+  en="Archive {{type}}"
+  fr="Archiver le {{type}}"
 
 [unarchive_header]
-	en="Unarchive {{type}}"
-	fr="Désarchiver le {{type}}"
+  en="Unarchive {{type}}"
+  fr="Désarchiver le {{type}}"
 
 [leave_header]
-	en="Leave {{type}}"
-	fr="Quitter le {{type}}"
+  en="Leave {{type}}"
+  fr="Quitter le {{type}}"
 
 -- Success
 
@@ -1910,16 +1910,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="L’authorité a été modifié"
 
 [link_action_success]
-	en="User has been invited"
-	fr="L’utilisateur a été invité"
+  en="User has been invited"
+  fr="L’utilisateur a été invité"
 
 [self_link_action_success]
-	en="Welcome to your new role"
-	fr="Bienvenue dans votre nouveau rôle"
+  en="Welcome to your new role"
+  fr="Bienvenue dans votre nouveau rôle"
 
 [unlink_action_success]
-	en="User unlinked"
-	fr="Utilisateur détaché"
+  en="User unlinked"
+  fr="Utilisateur détaché"
 
 
 #
@@ -1929,39 +1929,39 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [orgaUserInvitation]
   en="Users can join this organisation"
-	fr="Les utilisateurs peuvent rejoindre cette organisation"
+  fr="Les utilisateurs peuvent rejoindre cette organisation"
 
 [orgaUserInvitationHelp]
   en="User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
-	fr="L’utilisateur pourra ouvrir un contrat pour rejoindre cette organisation. L’utilisateur ne pourra rejoindre l’organisation en tant qu’invité qu’après qu’un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
+  fr="L’utilisateur pourra ouvrir un contrat pour rejoindre cette organisation. L’utilisateur ne pourra rejoindre l’organisation en tant qu’invité qu’après qu’un coordinateur ait validé le contrat. Pour les organisations publiques uniquement"
 
 [guestCanCreateTension]
   en="Guests can create tension"
-	fr="Les invités peuvent créer des tensions"
+  fr="Les invités peuvent créer des tensions"
 
 [guestCanCreateTensionHelp]
   en="Guests are users that has been invited but do not play any role in the organisation."
-	fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans cette organisation."
+  fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans cette organisation."
 
 [notifyByEmail]
   en="Enable email notifications."
-	fr="Activer les notifications par e-mail."
+  fr="Activer les notifications par e-mail."
 
 [beenUnsubscribe]
   en="You’ve been unsubscribed from this tension."
-	fr="Vous avez été désabonné de cette tension."
+  fr="Vous avez été désabonné de cette tension."
 
 [beenUnwatch]
   en="You’ve been unsubscribed from this organization."
-	fr="Vous avez été désabonné de cette organization."
+  fr="Vous avez été désabonné de cette organization."
 
 [markAsRead]
-	en="Mark as read."
-	fr="Marquer comme lu."
+  en="Mark as read."
+  fr="Marquer comme lu."
 
 [markAllAsRead]
-	en="Mark all as read"
-	fr="Tout marquer comme lu"
+  en="Mark all as read"
+  fr="Tout marquer comme lu"
 
 [voteWaited]
   en="A vote is waited from you."
@@ -1973,24 +1973,24 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 
 [onNode_blob]
-	en="Document created"
-	fr="Document créé"
+  en="Document created"
+  fr="Document créé"
 
 [onAbout_blob]
-	en="Description edited"
-	fr="Description edité"
+  en="Description edited"
+  fr="Description edité"
 
 [onMandate_blob]
-	en="Mandate edited"
-	fr="Mandat édité"
+  en="Mandate edited"
+  fr="Mandat édité"
 
 [onAboutAndMandate_blob]
-	en="Mandate and description edited"
-	fr="Mandat et description édité"
+  en="Mandate and description edited"
+  fr="Mandat et description édité"
 
 [onDoc_blob]
-	en="File edited"
-	fr="Fichier édité"
+  en="File edited"
+  fr="Fichier édité"
 
 
 #
@@ -1999,84 +1999,84 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 
 [created_event]
-	en="New tension"
-	fr="Nouvelle tension"
+  en="New tension"
+  fr="Nouvelle tension"
 
 [closed_event]
-	en="Tension closed"
-	fr="Tension fermé"
+  en="Tension closed"
+  fr="Tension fermé"
 
 [reopened_event]
-	en="Tension reopened"
-	fr="Tension réouverte"
+  en="Tension reopened"
+  fr="Tension réouverte"
 
 [commentPushed_event]
-	en="New comment"
-	fr="Nouveau commentaire"
+  en="New comment"
+  fr="Nouveau commentaire"
 
 [moved_event]
-	en="Tension moved"
-	fr="Tension déplacé"
+  en="Tension moved"
+  fr="Tension déplacé"
 
 [titleUpdated_event]
-	en="Title updated"
-	fr="Sujet mis à jour"
+  en="Title updated"
+  fr="Sujet mis à jour"
 
 [typeUpdated_event]
-	en="Type updated"
-	fr="Type modifié"
+  en="Type updated"
+  fr="Type modifié"
 
 [authority_event]
-	en="Authority updated"
-	fr="Authorité modifié"
+  en="Authority updated"
+  fr="Authorité modifié"
 
 [visibility_event]
-	en="Visibility updated"
-	fr="Visibilité modifié"
+  en="Visibility updated"
+  fr="Visibilité modifié"
 
 [labelAdded_event]
-	en="Label added"
-	fr="Etiquette ajouté"
+  en="Label added"
+  fr="Etiquette ajouté"
 
 [labelRemoved_event]
-	en="Label removed"
-	fr="Etiquette retiré"
+  en="Label removed"
+  fr="Etiquette retiré"
 
 [assigneeAdded_event]
-	en="Assignee added"
-	fr="Assigné ajouté"
+  en="Assignee added"
+  fr="Assigné ajouté"
 
 [assigneeRemoved_event]
-	en="Assignee removed"
-	fr="Assigné retiré"
+  en="Assignee removed"
+  fr="Assigné retiré"
 
 [blobCommitted_event]
-	en="Mandate committed"
-	fr="Mandat modifié (draft)"
+  en="Mandate committed"
+  fr="Mandat modifié (draft)"
 
 [blobPushed_event]
-	en="Mandate updated"
-	fr="Mandat modifié"
+  en="Mandate updated"
+  fr="Mandat modifié"
 
 [memberLinked_event]
-	en="A role has been linked"
-	fr="Un rôle a été lié"
+  en="A role has been linked"
+  fr="Un rôle a été lié"
 
 [memberUnlinked_event]
-	en="Member unlinked"
-	fr="Membre détaché"
+  en="Member unlinked"
+  fr="Membre détaché"
 
 [userJoined_event]
-	en="An user joined us"
-	fr="Un utilisateur nous a rejoint"
+  en="An user joined us"
+  fr="Un utilisateur nous a rejoint"
 
 [userLeft_event]
-	en="An user left his role"
-	fr="Un utilisateur à quitté son rôle"
+  en="An user left his role"
+  fr="Un utilisateur à quitté son rôle"
 
 [userLeft_orga_event]
-	en="An user left us"
-	fr="Un utilisateur nous a quitté"
+  en="An user left us"
+  fr="Un utilisateur nous a quitté"
 
 
 #
@@ -2086,46 +2086,46 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 -- Open contract
 
 [moved_contract]
-	en="Move tension"
-	fr="Deplacer la tension"
+  en="Move tension"
+  fr="Deplacer la tension"
 
 [memberLinked_contract]
-	en="New lead link"
-	fr="Nouveau lead link"
+  en="New lead link"
+  fr="Nouveau lead link"
 
 [memberUnlinked_contract]
-	en="Retired lead link"
-	fr="Lead link retiré"
+  en="Retired lead link"
+  fr="Lead link retiré"
 
 [userJoined_contract]
-	en="New member"
-	fr="Nouveau membre"
+  en="New member"
+  fr="Nouveau membre"
 
 -- Completed Success
 
 [moved_contract_success]
-	en="Congratulations, tension has been moved."
-	fr="Félicitations, la tension a été déplacée."
+  en="Congratulations, tension has been moved."
+  fr="Félicitations, la tension a été déplacée."
 
 [memberLinked_contract_success]
-	en="Congratulations, you have been link to this role."
-	fr="Félicitations, vous avez été lié à ce rôle."
+  en="Congratulations, you have been link to this role."
+  fr="Félicitations, vous avez été lié à ce rôle."
 
 [memberUnlinked_contract_success]
-	en="Congratulations, you have been unlink to this role."
-	fr="Félicitations, vous avez été détaché de ce rôle."
+  en="Congratulations, you have been unlink to this role."
+  fr="Félicitations, vous avez été détaché de ce rôle."
 
 [userJoined_contract_success]
-	en="Congratulations, you've joined this organization."
-	fr="Félicitations, vous avez rejoint cette organisation."
+  en="Congratulations, you've joined this organization."
+  fr="Félicitations, vous avez rejoint cette organisation."
 
 [memberLinked_contract_success_ext]
-	en="Congratulations, an user has been linked."
-	fr="Félicitations, un utilisateur a été lié."
+  en="Congratulations, an user has been linked."
+  fr="Félicitations, un utilisateur a été lié."
 
 [userJoined_contract_success_ext]
-	en="Congratulations, an user has joined the organization."
-	fr="Félicitations, un utilisateur a rejoint l'organisation."
+  en="Congratulations, an user has joined the organization."
+  fr="Félicitations, un utilisateur a rejoint l'organisation."
 
 
 #
@@ -2157,7 +2157,7 @@ Note : Pour éditer des mandats, vous devez publier les modifications effectuée
 
 [labelsInfoHeader]
   en="Creating new labels help you to sort out your tensions"
-	fr="La création de nouvelles étiquettes vous aide à trier vos tensions."
+  fr="La création de nouvelles étiquettes vous aide à trier vos tensions."
 
 [labelsInfoDoc]
   en="""
@@ -2165,7 +2165,7 @@ When you create labels here, you can then attach them to your tensions. You will
 
 **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
 """
-	fr="""
+  fr="""
 Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
 
 **Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l’un des parents du cercle récepteur.
@@ -2173,7 +2173,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 
 [rolesInfoHeader]
   en="Creating new roles template help you to manage your organization"
-	fr="La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
+  fr="La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
 
 [rolesInfoDoc]
   en="""
@@ -2181,7 +2181,7 @@ When you create a role here, you can use it as a template when you add a new rol
 
 **Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents circles.
 """
-	fr="""
+  fr="""
 Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous ajoutez un nouveau rôle dans votre organisation.
 
 **Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
@@ -2189,18 +2189,18 @@ Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque
 
 [peerRoleInfo]
   en="Default Role with restricted authorization."
-	fr="Rôle par défaut avec une autorisation restreinte."
+  fr="Rôle par défaut avec une autorisation restreinte."
 
 [coordinatorRoleInfo]
   en="Role with administration rights at the circle level."
-	fr="Rôle avec des droits d’administration au niveau du cercle."
+  fr="Rôle avec des droits d’administration au niveau du cercle."
 
 [labelDeleteInfoHeader]
   en="Label present in other circles and those used in labeled tensions won’t be deleted."
   fr="Les étiquettes présentes dans d’autres cercles et utilisés dans les tensions étiquetées ne seront pas supprimées."
 
 [roleDeleteInfoHeader]
-	en="Roles in other circles and those created in your organization won’t be deleted."
+  en="Roles in other circles and those created in your organization won’t be deleted."
   fr="Les rôles présents dans d’autres cercles et ceux créés dans votre organisation ne seront pas supprimés."
 
 [contractInfoHeader]
@@ -2302,23 +2302,23 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
 
 [authCoordinated]
   en="Where Coordinator roles have the governance authority."
-	fr="Où seul les rôles de coordinateur ont l’autorité de gouvernance."
+  fr="Où seul les rôles de coordinateur ont l’autorité de gouvernance."
 
 [authAgile]
   en="Where all roles have equal governance authority."
   fr="Où tous les rôles ont une autorité égale en matière de gouvernance."
 
 [signinNeeded]
-	en="You need to sign-in to access this page"
-	fr="Vous devez vous connecter pour accéder à cette page"
+  en="You need to sign-in to access this page"
+  fr="Vous devez vous connecter pour accéder à cette page"
 
 [signinOnInvite]
-	en="""You have been invited to join an organisation on **Fractale**.
+  en="""You have been invited to join an organisation on **Fractale**.
 But first, you need to **setup your account**:
-	"""
-	fr="""Vous avez été invité à rejoindre une organisation sur **Fractale**.
+  """
+  fr="""Vous avez été invité à rejoindre une organisation sur **Fractale**.
 Mais d'abord, vous devez **configurer votre compte** :
-	"""
+  """
 
 [youHaveBeenInvitedRole]
   en="You have been invited to play the following role:"
@@ -2344,6 +2344,54 @@ Mais d'abord, vous devez **configurer votre compte** :
   en="You've already voted, but you can still change your vote."
   fr="Vous avez déjà voté, mais vous pouvez encore changer votre vote."
 
+[markdownHelp]
+  en="""
+Header: ### My Header
+Bold: **text**
+Italic: _text_
+Strikethrough: ~text~
+Link: [My link](http://example.com)
+Quote: > quoted text
+List:
+ * Item 1
+ * Item 2
+Numbered list:
+ 1. Item 1
+ 2. Item 2
+Checkbox list:
+- [ ] Item unchecked
+- [x] Item checked
+Inline code: `text`
+Code block:
+```
+text
+```
+"""
+  fr="""
+Titre/Section : ### Ma section
+Gras : **text**
+Italique : _text_
+Barré : ~text~
+Lien : [Mon lien](http://example.com)
+Citation : > texte cité
+Liste :
+ * Point 1
+ * Point 2
+Liste numérotée :
+ 1. Point 1
+ 2. Point 2
+Liste de cases à cocher :
+- [ ] Élément non coché
+- [x] Élément coché
+Code inline : `text`
+Bloc de code :
+```
+texte
+```
+
+
+"""
+
 [welcomeLetter]
   en="""
 Welcome @{{username}},
@@ -2359,7 +2407,7 @@ In order to help your navigation, you will find some shortcuts in the top right 
 - the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us <i class="icon-send"></i>.
 - the **user button** to access your profile and other shortcuts.
 """
-	fr="""
+  fr="""
 Bienvenue @{{username}},
 
 **Votre compte a été activé avec succès.**
@@ -2373,4 +2421,3 @@ Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le c
 - le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter <i class="icon-send"></i>.
 - le bouton **d’utilisateur** pour accéder à votre profil et d'autre raccourcis.
 """
-
