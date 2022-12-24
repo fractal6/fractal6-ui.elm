@@ -593,6 +593,15 @@ function toggleMarkup(obj, mark, prefix, suffix) {
     var end = obj.selectionEnd;
     var selection = value.substring(start, end);
 
+	// Count leading spaces
+    var space_left = selection.match(/^\s*/)[0].length
+	// Count trailing spaces
+    var space_right = selection.match(/\s*$/)[0].length
+    // re-compute space
+    start = obj.selectionStart + space_left;
+    end = obj.selectionEnd - space_right;
+    selection = value.substring(start, end);
+
     var mark_r
     if (mark == "[") {
         mark_r = "]"
@@ -622,7 +631,7 @@ function toggleMarkup(obj, mark, prefix, suffix) {
         obj.selectionStart =
             obj.selectionEnd = start - pad;
     } else { // add
-        var replacement = mark + selection + mark_r;
+        var replacement = " ".repeat(space_left) + mark + selection + mark_r + " ".repeat(space_right);
 
         /* Loose undo/redo stack
         * // Set textarea value to: text before caret + replacer + text after caret
