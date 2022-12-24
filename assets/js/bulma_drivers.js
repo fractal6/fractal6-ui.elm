@@ -276,7 +276,7 @@ export function BulmaDriver(app, target, handlers) {
     const $textareas = $doc.querySelectorAll('.textarea');
     if ($textareas.length > 0) {
         $textareas.forEach( el => {
-            setupHandler("keydown", anotherRichText, el, el);
+            setupHandler("keydown", markupRichText, el, el);
         });
     }
 
@@ -427,10 +427,11 @@ function submitFocus(e, el) {
 }
 
 //
-// """Rich Text"""
+// """ Markup Rich Text"""
 //
 
-function anotherRichText(e, el) {
+function markupRichText(e, el) {
+    // Allow indentions (useful to enter list level)
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
 		var start = el.selectionStart;
 		var end = el.selectionEnd;

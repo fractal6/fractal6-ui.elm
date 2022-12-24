@@ -567,6 +567,10 @@ export const actions = {
             pushLine($input, "> ")
         } else if (c == "Link") {
             toggleMarkup($input, "[", " ", "()")
+        } else if (c == "List-ul") {
+            pushLine($input, "- ")
+        } else if (c == "List-ol") {
+            pushLine($input, "1. ")
         } else if (c == "MentionUser") {
             pushLine($input, "@", true)
         } else if (c == "MentionTension") {
@@ -586,7 +590,6 @@ export const actions = {
 }
 
 // Toggle simple markup on the line
-// @TODO: search for markup on the line.
 function toggleMarkup(obj, mark, prefix, suffix) {
     var value = obj.value;
     var start = obj.selectionStart;
@@ -662,7 +665,7 @@ function toggleMarkup(obj, mark, prefix, suffix) {
 }
 
 // PushLine add a markup with new lines before and eventually after.
-// isInline: when the line start by the same mark, stay on the line.
+// isInline: stay on the line when the line start by the same mark.
 function pushLine(obj, mark, isInline) {
     var value = obj.value;
     var start = obj.selectionStart;
