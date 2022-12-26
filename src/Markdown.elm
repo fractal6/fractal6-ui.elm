@@ -24,7 +24,7 @@ module Markdown exposing (renderMarkdown)
 import Assets as A
 import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, div, i, input, label, li, span, table, text, ul)
+import Html exposing (Html, a, br, div, i, input, label, li, span, table, text, u, ul)
 import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -183,8 +183,16 @@ frac6Renderer style recursive =
                         span [] ([ i [ class cls ] [] ] ++ content)
                     )
                     |> Markdown.Html.withAttribute "class"
+
+                -- @DEBUG p/inline issue
+                --https://github.com/dillonkearns/elm-markdown/issues/50
+                --
+                , Markdown.Html.tag "u"
+                    (\cls content ->
+                        u [ class (withDefault "" cls) ] content
+                    )
+                    |> Markdown.Html.withOptionalAttribute "class"
                 , Markdown.Html.tag "span"
-                    -- @DEBUG: span does not work because p tag are inserted and break lines
                     (\cls content ->
                         span [ class (withDefault "" cls) ] content
                     )

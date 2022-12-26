@@ -2348,9 +2348,9 @@ Mais d'abord, vous devez **configurer votre compte** :
   en="""
 Header: `### Text`
 
-**Bold**: `**text**`
+**Bold**: `**text**` or `__text__`
 
-*Italic*: `*text*`
+*Italic*: `*text*` or `_text_`
 
 ~~Strikethrough~~: `~~text~~`
 
@@ -2386,9 +2386,9 @@ texte
   fr="""
 Titre : `### Texte`
 
-**Gras** : `**texte**`
+**Gras** : `**texte**` ou `__texte__`
 
-*Italique* : `*texte*`
+*Italique* : `*texte*` ou `_texte_`
 
 ~~Barré~~ : `~~text~~`
 
