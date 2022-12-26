@@ -291,6 +291,7 @@ type Msg
     | CommentAck (GqlData Comment)
     | CommentPatchAck (GqlData Comment)
     | OnRichText String String
+    | OnToggleMdHelp String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -637,6 +638,43 @@ update_ apis message model =
         OnRichText targetid command ->
             ( model, out0 [ Ports.richText targetid command ] )
 
+        OnToggleMdHelp targetid ->
+            case targetid of
+                "commentContractInput" ->
+                    let
+                        form =
+                            model.comment_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+                "updateCommentInput" ->
+                    let
+                        form =
+                            model.comment_patch_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -864,6 +902,7 @@ viewContractPage c op model =
                                 , doSubmit = OnSubmit
                                 , doSubmitComment = SubmitCommentPost
                                 , doRichText = OnRichText
+                                , doToggleMdHelp = OnToggleMdHelp
                                 , conf = model.conf
                                 }
                         in
@@ -1096,6 +1135,7 @@ viewComments op conf comments comment_patch_form comment_result =
             , doSubmit = OnSubmit
             , doEditComment = SubmitCommentPatch
             , doRichText = OnRichText
+            , doToggleMdHelp = OnToggleMdHelp
             , conf = conf
             }
     in

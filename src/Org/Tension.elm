@@ -397,6 +397,7 @@ type Msg
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
+    | OnToggleMdHelp String
     | ScrollToElement String
     | UpdateUctx UserCtx
       -- Components
@@ -1442,6 +1443,43 @@ update global message model =
         OnRichText targetid command ->
             ( model, Ports.richText targetid command, Cmd.none )
 
+        OnToggleMdHelp targetid ->
+            case targetid of
+                "commentInput" ->
+                    let
+                        form =
+                            model.tension_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | tension_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
+
+                "updateCommentInput" ->
+                    let
+                        form =
+                            model.comment_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
         ScrollToElement did ->
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
@@ -1903,6 +1941,7 @@ viewConversation u t model =
                                 , doSubmit = Submit
                                 , doSubmitComment = SubmitComment
                                 , doRichText = OnRichText
+                                , doToggleMdHelp = OnToggleMdHelp
                                 , conf = model.conf
                                 }
                         in
@@ -1991,6 +2030,7 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                                     , doSubmit = Submit
                                     , doEditComment = SubmitCommentPatch
                                     , doRichText = OnRichText
+                                    , doToggleMdHelp = OnToggleMdHelp
                                     , conf = conf
                                     }
                             in

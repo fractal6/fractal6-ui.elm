@@ -51,6 +51,7 @@ type alias OpEditComment msg =
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doEditComment : Time.Posix -> msg
     , doRichText : String -> String -> msg
+    , doToggleMdHelp : String -> msg
     , conf : Conf
     }
 
@@ -61,6 +62,7 @@ type alias OpNewComment msg =
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
     , doRichText : String -> String -> msg
+    , doToggleMdHelp : String -> msg
     , conf : Conf
     }
 
@@ -71,6 +73,7 @@ type alias OpNewCommentContract msg =
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
     , doSubmitComment : Time.Posix -> msg
     , doRichText : String -> String -> msg
+    , doToggleMdHelp : String -> msg
     , conf : Conf
     }
 
@@ -316,6 +319,10 @@ viewContractCommentInput op uctx form result =
 
 
 viewCommentHeader targetid cls_tabs op form =
+    let
+        isMdHelpOpen =
+            Dict.get ("isMdHelpOpen" ++ targetid) form.post == Just "true"
+    in
     div [ class "level commentHeader" ]
         [ div [ class "level-left" ]
             [ div [ class ("tabs is-boxed is-small " ++ cls_tabs) ]
@@ -335,10 +342,24 @@ viewCommentHeader targetid cls_tabs op form =
             , div [ onClick (op.doRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
             , div [ onClick (op.doRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
             , div [ onClick (op.doRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ text "@" ]
+            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
             , div [ onClick (op.doRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
-            , div [ class "tooltip has-tooltip-bottom is-right is-h is-w", attribute "data-tooltip" T.markdownSupport ] [ A.icon "icon-markdown" ]
+            , div
+                [ onClick (op.doToggleMdHelp targetid)
+                , class "tooltip has-tooltip-bottom is-right is-h is-w"
+                , classList [ ( "is-highlight", isMdHelpOpen ) ]
+                , attribute "data-tooltip" T.markdownSupport
+                ]
+                [ A.icon "icon-markdown" ]
             ]
+        , if isMdHelpOpen then
+            div [ id "mdLegend", class "box" ]
+                [ button [ class "delete is-pulled-right", onClick (op.doToggleMdHelp targetid) ] []
+                , renderMarkdown "" T.markdownHelp
+                ]
+
+          else
+            text ""
         ]
 
 

@@ -570,6 +570,7 @@ type Msg
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
     | OnRichText String String
+    | OnToggleMdHelp String
     | OnTargetClick
     | DoInvite
     | OnInvite Time.Posix
@@ -835,6 +836,23 @@ update_ apis message model =
 
         OnRichText targetid command ->
             ( model, out0 [ Ports.richText targetid command ] )
+
+        OnToggleMdHelp targetid ->
+            -- nodeDoc.form
+            let
+                form =
+                    model.nodeDoc.form
+
+                field =
+                    "isMdHelpOpen" ++ targetid
+
+                v =
+                    Dict.get field form.post |> withDefault "false"
+
+                value =
+                    ternary (v == "true") "false" "true"
+            in
+            ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
 
         OnTargetClick ->
             ( model, out0 [ Ports.requireTreeData ] )
@@ -1480,7 +1498,7 @@ viewTension op model =
                         , br [] []
                         ]
                     , div [ class "message" ]
-                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doChangeViewMode = OnChangeInputViewMode } form ]
+                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doToggleMdHelp = OnToggleMdHelp, doChangeViewMode = OnChangeInputViewMode } form ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]

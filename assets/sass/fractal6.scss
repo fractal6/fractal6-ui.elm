@@ -517,8 +517,7 @@ strong {
         }
     }
 
-    // span[data-tooltip] border-bottom is dashed !
-    border-bottom-style: none !important;
+    //border-bottom-style: none !important; // NO, will remove border on non span tooltip
 
     // solve the markown tooltip **tabs**
     &.is-right::before {
@@ -530,6 +529,9 @@ strong {
         right: auto !important;
         left: 100% !important;
     }
+}
+span[data-tooltip] {
+    border-bottom-style: none !important;
 }
 .tooltip {
     // Tooltip has fadin, and no fadout
@@ -952,8 +954,9 @@ figcaption {
 }
 
 #footBar {
-    z-index: 20;
+    z-index: -1;
     position: relative;
+    //position: absolute;
     box-shadow: 0 0 1px 0 var(--is-highlight);
     margin-top: 3rem;
     padding: 2rem 1.5rem 2rem;
@@ -1559,6 +1562,7 @@ figcaption {
             color: var(--is-discrete);
             &:hover {
                 background: var(--background-evidence);
+                color: var(--is-highlight);
             }
         }
         //div:last-child {
@@ -1935,10 +1939,25 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 #canvasLegend {
     position: absolute;
     //margin: 10px;
+    //padding: 0.75rem !important;
     svg {
         margin-right: 4px;
     }
     z-index: 2;
+}
+
+#mdLegend {
+    position: absolute;
+    right: 0;
+    top:40px;
+    overflow: hidden;
+
+    z-index: 2;
+
+    //.content {
+    //    //max-height: 275px;
+    //    overflow: auto;
+    //}
 }
 
 // Tooltip: http://www.cssarrowplease.com/

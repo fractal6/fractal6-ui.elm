@@ -2346,50 +2346,80 @@ Mais d'abord, vous devez **configurer votre compte** :
 
 [markdownHelp]
   en="""
-Header: ### My Header
-Bold: **text**
-Italic: _text_
-Strikethrough: ~text~
-Link: [My link](http://example.com)
-Quote: > quoted text
+Header: `### Text`
+
+**Bold**: `**text**`
+
+*Italic*: `*text*`
+
+~~Strikethrough~~: `~~text~~`
+
+[Link](): `[My text](http://example.com)`
+
+`Code`: \\`text`
+
+> Quote: `> Qoted text`
+
 List:
- * Item 1
- * Item 2
+```
+* Item 1
+* Item 2
+```
+
 Numbered list:
- 1. Item 1
- 2. Item 2
+```
+1. Item 1
+2. Item 2
+```
+
 Checkbox list:
+```
 - [ ] Item unchecked
 - [x] Item checked
-Inline code: `text`
+```
+
 Code block:
-```
-text
-```
+\\```
+texte
+\\```
 """
   fr="""
-Titre/Section : ### Ma section
-Gras : **text**
-Italique : _text_
-Barré : ~text~
-Lien : [Mon lien](http://example.com)
-Citation : > texte cité
+Titre : `### Texte`
+
+**Gras** : `**texte**`
+
+*Italique* : `*texte*`
+
+~~Barré~~ : `~~text~~`
+
+[Lien]() : `[texte](http://example.com)`
+
+`Code`: \\`text`
+
+> Citation : `> texte cité`
+
 Liste :
- * Point 1
- * Point 2
+```
+* Point 1
+* Point 2
+```
+
 Liste numérotée :
- 1. Point 1
- 2. Point 2
+```
+1. Point 1
+2. Point 2
+```
+
 Liste de cases à cocher :
+```
 - [ ] Élément non coché
 - [x] Élément coché
-Code inline : `text`
+```
+
 Bloc de code :
-```
+\\```
 texte
-```
-
-
+\\```
 """
 
 [welcomeLetter]

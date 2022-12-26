@@ -865,7 +865,14 @@ viewOrgaMedia_ user_m root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map (\r -> viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) r)
+                                    |> List.map
+                                        (\r ->
+                                            if r.role_type == RoleType.Guest then
+                                                viewRole "is-small" Nothing (Just <| uriFromNameid MembersBaseUri r.nameid []) r
+
+                                            else
+                                                viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) r
+                                        )
                                 )
                             ]
 
