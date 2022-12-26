@@ -184,8 +184,9 @@ frac6Renderer style recursive =
                     )
                     |> Markdown.Html.withAttribute "class"
 
-                -- @DEBUG p/inline issue
-                --https://github.com/dillonkearns/elm-markdown/issues/50
+                -- @DEBUG p/inline issue, see https://github.com/dillonkearns/elm-markdown/issues/50
+                -- Add Tag: primary, success, info, link, warning, danger.
+                -- Add tag: sub, sup, tiny, small, medium, large, huge
                 --
                 , Markdown.Html.tag "u"
                     (\cls content ->

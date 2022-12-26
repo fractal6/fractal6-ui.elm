@@ -82,11 +82,17 @@
 	}
 }
 
-.box {// background of box is equal of $code-color.
-	.markdown-body {
-		pre, code {
-			background-color: var(--code-color-light) !important;
-		}
-	}
+// Fix colors,
+// -  background of box is equal of $code-color.
+.box {
+    .markdown-body {
+        pre, code {
+            background-color: var(--code-color-light) !important;
+        }
+
+        hr {
+            background-color: var(--code-color-light) !important;
+        }
+    }
 }
 

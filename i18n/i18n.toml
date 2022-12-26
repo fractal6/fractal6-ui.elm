@@ -2382,6 +2382,14 @@ Code block:
 \\```
 texte
 \\```
+
+Horizontal line:
+
+---
+
+```
+---
+```
 """
   fr="""
 Titre : `### Texte`
@@ -2420,6 +2428,14 @@ Bloc de code :
 \\```
 texte
 \\```
+
+Ligne horizontale:
+
+---
+
+```
+---
+```
 """
 
 [welcomeLetter]
