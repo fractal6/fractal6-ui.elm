@@ -135,13 +135,6 @@ type alias LocalGraph =
     }
 
 
-type alias RNode =
-    { name : String
-    , nameid : String
-    , userCanJoin : Maybe Bool
-    }
-
-
 type alias FocusNode =
     { name : String
     , nameid : String
@@ -150,6 +143,13 @@ type alias FocusNode =
     , mode : NodeMode.NodeMode
     , children : List EmitterOrReceiver
     , source : Maybe BlobId
+    }
+
+
+type alias RNode =
+    { name : String
+    , nameid : String
+    , userCanJoin : Maybe Bool
     }
 
 

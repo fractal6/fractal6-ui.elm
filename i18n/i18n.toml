@@ -690,10 +690,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Join"
   fr="Rejoignez"
 
-[thisOrgaToParticipate]
-  en="this organization to participate to this conversation."
-  fr="cette organisation afin de participer à cette conversation."
-
 [archive]
   en="Archive"
   fr="Archiver"
@@ -1600,25 +1596,26 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="not implemented"
   fr="non implémenté"
 
-[notOrgMember]
-  en="You are not a member of this organization."
-  fr="Vous n’êtes pas membre de cette organisation."
 
 [askCoordo]
   en="Please, ask a coordinator of this circle to perform this action."
   fr="Veuillez demander à un coordinateur de ce cercle d’effectuer cette action."
 
+[onlyMemberCanCreate]
+  en="Only member of this organisation can create"
+  fr="Seuls les membres de cette organisation peuvent créer des"
+
+[onlyMemberCanParticipate]
+  en="Only member of this organisation can participate to this conversation."
+  fr="Seuls les membres de cette organisation peuvent participer à cette conversation."
+
 [joinForTension]
-  en="Please, Join this organization to be able to create a tension (or retry)."
-  fr="Veuillez rejoindre cette organisation pour pouvoir créer une tension (ou réessayer)."
+  en="this organization to be able to create"
+  fr="cette organization pour pouvoir créer des"
 
-[joinForComment]
-  en="Please, Join this organization to participate to this conversation."
-  fr="Veuillez rejoindre cette organisation pour participer à cette conversation (ou réessayer)."
-
-[joinForCircle]
-  en="Please, Join this organization to be able to create a circle (or retry)."
-  fr="Veuillez rejoindre cette organisation pour pouvoir créer une cercle (ou réessayer)."
+[thisOrgaToParticipate]
+  en="this organization to participate to this conversation."
+  fr="cette organisation pour participer à cette conversation."
 
 [nodeNotExist]
   en="Sorry, this circle doesn’t exist."
@@ -2380,7 +2377,7 @@ Checkbox list:
 
 Code block:
 \\```
-texte
+text
 \\```
 
 Horizontal line:

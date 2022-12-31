@@ -100,7 +100,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.Error exposing (viewGqlErrors, viewMaybeErrors)
+import ModelCommon.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import ModelCommon.View
     exposing
         ( action2icon
@@ -113,7 +113,6 @@ import ModelCommon.View
         , tensionStatus2str
         , tensionTypeColor
         , viewCircleTarget
-        , viewJoinNeeded
         , viewLabel
         , viewLabels
         , viewNodeDescr
@@ -1922,6 +1921,14 @@ viewTension u t model =
 viewConversation : UserState -> TensionHead -> Model -> Html Msg
 viewConversation u t model =
     let
+        userCanJoin =
+            withMaybeData model.path_data
+                |> Maybe.map
+                    (\path ->
+                        path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
+                    )
+                |> withDefault False
+
         userInput =
             case u of
                 LoggedIn uctx ->
@@ -1948,20 +1955,11 @@ viewConversation u t model =
                         viewCommentInput opNew uctx t model.tension_form model.tension_patch
 
                     else
-                        viewJoinNeeded model.node_focus
+                        viewJoinForCommentNeeded userCanJoin
 
                 LoggedOut ->
-                    let
-                        userCanJoin =
-                            withMaybeData model.path_data
-                                |> Maybe.map
-                                    (\path ->
-                                        path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
-                                    )
-                                |> withDefault False
-                    in
                     if userCanJoin then
-                        viewJoinNeeded model.node_focus
+                        viewJoinForCommentNeeded userCanJoin
 
                     else
                         text ""

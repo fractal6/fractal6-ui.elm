@@ -190,16 +190,6 @@ mediaTension_ conf focus tension showStatus showRecip size =
         ]
 
 
-viewJoinNeeded : NodeFocus -> Html msg
-viewJoinNeeded focus =
-    div [ class "box has-background-primary has-text-light" ]
-        [ p []
-            [ button [ class "button is-small mx-2 joinTrigger" ] [ text T.join2 ]
-            , text T.thisOrgaToParticipate
-            ]
-        ]
-
-
 viewCircleTarget : String -> EmitterOrReceiver -> Html msg
 viewCircleTarget cls er =
     case nid2type er.nameid of

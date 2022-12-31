@@ -37,7 +37,7 @@ import Components.NodeDoc as NodeDoc
         )
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (space_, ternary, textH, textT, upH)
+import Extra exposing (space_, ternary, textH, textT, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
@@ -78,7 +78,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
-import ModelCommon.Error exposing (viewAuthNeeded, viewGqlErrors, viewRoleNeeded)
+import ModelCommon.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
@@ -141,7 +141,7 @@ type TensionTab
 type TensionStep
     = TensionSource
     | TensionFinal
-    | TensionNotAuthorized ErrorData
+    | TensionNotAuthorized
     | AuthNeeded
 
 
@@ -729,7 +729,7 @@ update_ apis message model =
                                 ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p)) 500 ] [ DoUpdateToken ] Nothing )
 
                             else if data.sources == [] then
-                                ( { data | isActive2 = True } |> setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ])
+                                ( { data | isActive2 = True } |> setStep TensionNotAuthorized
                                 , out0 [ sendSleep (SetIsActive2 True) 10 ]
                                 )
 
@@ -1198,8 +1198,17 @@ viewStep op (State model) =
                 NewCircleTab ->
                     viewCircle op model
 
-        TensionNotAuthorized errMsg ->
-            viewRoleNeeded errMsg OnClose
+        TensionNotAuthorized ->
+            let
+                userCanJoin =
+                    withMaybeData model.path_data
+                        |> Maybe.map
+                            (\p ->
+                                unwrap2 False .userCanJoin p.root
+                            )
+                        |> withDefault False
+            in
+            viewJoinForTensionNeeded userCanJoin OnClose
 
         AuthNeeded ->
             viewAuthNeeded OnClose

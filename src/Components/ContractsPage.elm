@@ -53,7 +53,6 @@ import ModelCommon.Event exposing (cev2c, cev2p, contractEventToText, contractTy
 import ModelCommon.View
     exposing
         ( byAt
-        , viewJoinNeeded
         , viewRole
         , viewTensionArrow
         , viewTensionDateAndUserC
@@ -912,7 +911,6 @@ viewContractPage c op model =
                         text ""
 
                 LoggedOut ->
-                    --viewJoinNeeded DoJoinOrga model.node_focus
                     text ""
     in
     div [ class "comments" ]

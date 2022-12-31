@@ -26,7 +26,7 @@ import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, img, p, span, text)
-import Html.Attributes exposing (alt, attribute, class, height, href, src, width)
+import Html.Attributes exposing (alt, attribute, class, height, href, src, target, width)
 import Json.Decode as JD
 import Loading
     exposing
@@ -42,6 +42,7 @@ import Loading
         )
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
+import ModelCommon.Codecs exposing (NodeFocus)
 import RemoteData exposing (RemoteData)
 import Text as T
 
@@ -128,8 +129,8 @@ viewAuthNeeded onClose =
         ]
 
 
-viewRoleNeeded : ErrorData -> (ModalData -> msg) -> Html msg
-viewRoleNeeded errMsg onClose =
+viewJoinForTensionNeeded : Bool -> (ModalData -> msg) -> Html msg
+viewJoinForTensionNeeded userCanJoin onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
@@ -137,10 +138,38 @@ viewRoleNeeded errMsg onClose =
                 , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
                 ]
             ]
-        , div [ class "modal-card-body" ] <|
-            List.map
-                (\e ->
-                    p [] [ text e ]
-                )
-                errMsg
+        , div [ class "modal-card-body" ]
+            [ if userCanJoin then
+                p []
+                    [ button [ class "button is-small mx-2 joinTrigger" ] [ text T.join2 ]
+                    , text T.joinForTension
+                    , text " "
+                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text T.tensions ]
+                    , text "."
+                    ]
+
+              else
+                p []
+                    [ text T.onlyMemberCanCreate
+                    , text " "
+                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text T.tensions ]
+                    , text "."
+                    ]
+            ]
+        ]
+
+
+viewJoinForCommentNeeded : Bool -> Html msg
+viewJoinForCommentNeeded userCanJoin =
+    div [ class "box has-background-primary has-text-light" ]
+        [ if userCanJoin then
+            p []
+                [ button [ class "button is-small mx-2 joinTrigger" ] [ text T.join2 ]
+                , text T.thisOrgaToParticipate
+                ]
+
+          else
+            p []
+                [ text T.onlyMemberCanParticipate
+                ]
         ]
