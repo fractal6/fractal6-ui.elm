@@ -6,12 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
-### New
-- ui: column headers in circle view (Tensions page) clickable to filter for only those
+## [0.7.2]
 
+### New
+- ux: column headers in circle view (Tensions page) clickable to filter for only those
+- ux: label are clickable to see a filtered list of tension with this label.
+- notificatoin: add count hint for new tension, contract and assigned tensions.
+- markdown: add new formating entry for lists.
+- markdown: a help button that displays an overview of the markdown syntax
+
+### Changed
+- improve error message for non authorized tensions creation.
+- improve error message for duplicate name for new organization.
+- improve dark theme for emoticon and graph packing (organization circles colors).
+- improve message when leaving an organization.
+- inverse close and comment button position.
 
 ### Fixed
 - About page layout overflow.
+- notification back button
+- markdown "rich syntax" to better handler selection.
 
 
 ## [0.7]
