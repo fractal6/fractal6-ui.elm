@@ -279,6 +279,9 @@ module.exports = (env, argv) => {
                     }),
 
                     new CssMinimizerPlugin({
+                        // Default is CssMinimizerPlugin.cssnanoMinify
+                        //minify: CssMinimizerPlugin.cleanCssMinify,
+
                         // @debug: Causes errors.
                         //minimizerOptions: {
                         //    processorOptions: {
