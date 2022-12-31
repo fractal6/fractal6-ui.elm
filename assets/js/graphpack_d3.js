@@ -1432,6 +1432,7 @@ export const GraphPack = {
     },
 
     init_canvas() {
+        this.computeCircleColorRange();
         this.$canvas = document.getElementById(this.canvasId);
         this.$canvasParent = document.getElementById(this.canvasParentId);
         this.$nextToChart = document.getElementById('nextToChart')

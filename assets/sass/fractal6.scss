@@ -954,7 +954,7 @@ figcaption {
 }
 
 #footBar {
-    z-index: -1;
+    z-index: 0;
     position: relative;
     //position: absolute;
     box-shadow: 0 0 1px 0 var(--is-highlight);
@@ -1853,6 +1853,7 @@ tr.mediaBox {
     bottom: 0;
     right: 0;
     margin: 50px;
+    z-index: 1;
     @include touch {
         margin: 15px;
     }
