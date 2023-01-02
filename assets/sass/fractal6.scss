@@ -1548,6 +1548,9 @@ figcaption {
     .message-body {
         padding: 0.75rem 0.75rem !important;
     }
+    .textarea {
+        resize: both;
+    }
 }
 
 .commentHeader {
@@ -2328,7 +2331,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         overflow: auto !important;
         height: 10%;
         @include desktop {
-            max-height: calc(72vh);
+            max-height: calc(76vh);
         }
     }
 }
@@ -2336,6 +2339,14 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 #tensionModal {
     .panel-heading {
         border-bottom: 1px var(--border-color-light) solid;
+    }
+
+    .modal-content, .modal-card {
+        width: auto;
+        .textarea {
+            with: 640px;
+            resize: both;
+        }
     }
 
     // Input Message

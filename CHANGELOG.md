@@ -6,14 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+
 ## [0.7.2]
 
 ### New
-- ux: column headers in circle view (Tensions page) clickable to filter for only those
+- ux: column headers in circle view (Tensions page) clickable to filter for only those.
 - ux: label are clickable to see a filtered list of tension with this label.
-- notificatoin: add count hint for new tension, contract and assigned tensions.
+- notification: add count hint for new tension, contract and assigned tensions.
 - markdown: add new formating entry for lists.
-- markdown: a help button that displays an overview of the markdown syntax
+- markdown: a help button that displays an overview of the markdown syntax.
 
 ### Changed
 - improve error message for non authorized tensions creation.
@@ -24,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - About page layout overflow.
-- notification back button
+- notification back button.
 - markdown "rich syntax" to better handler selection.
 
 
