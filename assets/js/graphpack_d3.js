@@ -979,14 +979,14 @@ export const GraphPack = {
         // @DEBUG: CSS color maybe be changed to string by webpack minimizer (I suppose)
         // which breaks the opacity logics in getNodeColor().
         this.colorCircleRange = [
-            styles.getPropertyValue('--gp-lvl-0-bg'),
-            styles.getPropertyValue('--gp-lvl-1-bg'),
-            styles.getPropertyValue('--gp-lvl-2-bg'),
-            styles.getPropertyValue('--gp-lvl-3-bg'),
-            styles.getPropertyValue('--gp-lvl-4-bg'),
-            styles.getPropertyValue('--gp-lvl-5-bg'),
-            styles.getPropertyValue('--gp-lvl-6-bg'),
-            styles.getPropertyValue('--gp-lvl-7-bg'),
+            styles.getPropertyValue('--gp-lvl-0-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-1-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-2-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-3-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-4-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-5-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-6-bg').trim(),
+            styles.getPropertyValue('--gp-lvl-7-bg').trim(),
         ]
     },
 
@@ -1482,32 +1482,6 @@ export const GraphPack = {
         ctx.arc(x, y, r, 0, 2*Math.PI, false);
         //ctx.stroke();
         ctx.fill();
-
-        //// Second
-        //var x = canvas.width / 2;
-        //var y = canvas.height / 2;
-        //var r = canvas.height/2.1 - canvas.height/2.1/20 * radius  ;
-
-        //ctx.lineWidth = 10;
-        //ctx.strokeStyle = this.hoverCircleColor;
-        //ctx.shadowOffsetX = 0;
-        //ctx.shadowOffsetY = 0;
-        //ctx.shadowBlur = 3;
-        //ctx.shadowColor = '#656565';
-        //ctx.fillStyle = this.colorCircle(1);
-
-        //ctx.beginPath();
-        //ctx.arc(x, y, r, 0, 2*Math.PI, false);
-        //ctx.stroke();
-        //ctx.fill();
-
-        // Make it blink (consumes CPU for nothing really valuable)
-        //sleep(333).then(() => {
-        //    if (this.isLoading) {
-        //        this.clearCanvas(ctx);
-        //        this.drawStargate(radius+down, down);
-        //    }
-        //});
     },
 
     loading() {
