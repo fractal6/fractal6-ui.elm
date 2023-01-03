@@ -25,7 +25,8 @@
         }
 
         // Tree Menu adjustments
-        &.has-tree-menu .orgPane {
+        &.has-tree-menu .orgPane,
+        &.has-tree-menu + #footBar {
             margin-left: $tree-menu-width !important;
         }
         &.has-tree-menu.has-orga-menu .orgPane {
