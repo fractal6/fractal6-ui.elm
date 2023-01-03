@@ -976,6 +976,8 @@ export const GraphPack = {
 
     computeCircleColorRange() {
         var styles = getComputedStyle(document.documentElement);
+        // @DEBUG: CSS color maybe be changed to string by webpack minimizer (I suppose)
+        // which breaks the opacity logics in getNodeColor().
         this.colorCircleRange = [
             styles.getPropertyValue('--gp-lvl-0-bg'),
             styles.getPropertyValue('--gp-lvl-1-bg'),
@@ -1439,8 +1441,6 @@ export const GraphPack = {
         if (!this.$canvas) return
 
         this.$canvas.classList.remove("is-invisible");
-        this.ctx2d = this.$canvas.getContext("2d");
-
         this.$nextToChart.style.display = "flex";
         this.$nextToChart.style.flexDirection = "column";
         //this.$nextToChart.style.overflowY = "auto";
@@ -1453,15 +1453,16 @@ export const GraphPack = {
     },
 
     drawStargate(radius, down) {
-        this.clearCanvas(this.ctx2d);
+        var canvas = this.$canvas;
+        var ctx = canvas.getContext("2d");
+
+        this.clearCanvas(ctx);
         if (radius > 33) {
             down = -1
         } else if (radius <= 0) {
             down = 1
         }
 
-        var ctx = this.ctx2d;
-        var canvas = this.$canvas;
 
         // First
         var x = canvas.width / 2;
@@ -1503,7 +1504,7 @@ export const GraphPack = {
         // Make it blink (consumes CPU for nothing really valuable)
         //sleep(333).then(() => {
         //    if (this.isLoading) {
-        //        this.clearCanvas(this.ctx2d);
+        //        this.clearCanvas(ctx);
         //        this.drawStargate(radius+down, down);
         //    }
         //});
@@ -1580,7 +1581,8 @@ export const GraphPack = {
             .attr("height", this.height)
             .style("display","none");
         this.$hiddenCanvas = hiddenCanvas.node();
-        this.hiddenCtx2d = this.$hiddenCanvas.getContext("2d");
+        this.hiddenCtx2d = this.$hiddenCanvas.getContext("2d", {willReadFrequently: true});
+
         //this.hiddenCtx2d.clearRect(0, 0,this.width, this.height);
 
         //
