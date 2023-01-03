@@ -1510,19 +1510,15 @@ figcaption {
             a {
                 text-decoration: none !important;
                 font-weight: 600 !important;
+                &:hover { text-decoration: underline !important; }
             }
             li a {
                 font-weight: 500 !important;
             }
 
             .dropdown-trigger {
-                position: relative;
-                bottom: $size-small2;
-                left: $size-small;
-                padding: $size-small2 $size-small$size-small2 $size-small;
-                border-left: 1px solid var(--border-color-light);
-                &:hover { cursor: pointer !important; }
-                &:active { color: var(--grey); }
+                padding-top: 3px;
+                padding-bottom: $size-small;
             }
             .dropdown-menu {
                 margin-top: -$size-small;
@@ -1531,6 +1527,7 @@ figcaption {
 
             .ellipsis {
                 opacity: 0.75 !important;
+                &:hover { opacity: 1 !important; }
             }
         }
 
@@ -2041,12 +2038,6 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
     #doTension {
         padding-left: 8px;
-        //padding-top: 2px;
-        //padding-bottom: 2px;
-        //border-radius: 8px 0 0 8px;
-        //&:hover {
-        //    background-color: darken($node-tooltip-background, 10) !important;
-        //}
     }
 
     #doAction > span > span > .button {
@@ -2056,6 +2047,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         border-left-style: solid;
         max-height: 1.5rem;
         border-radius: 0 8px 8px 0;
+        padding: 0 6px 1px 6px;
         &:hover {
             background-color: darken($node-tooltip-background, 10) !important;
             border-radius: 0 8px 8px 0;
@@ -2348,6 +2340,10 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
             with: 640px;
             resize: both;
         }
+    }
+    // Don't let columns set their width automatically
+    .modal-content .columns, .modal-card .columns {
+        max-width: 640px;
     }
 
     // Input Message
