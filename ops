@@ -1,1 +1,1 @@
-{"author":{"id":"92757f8b589f861a2cac6c05e43ad1ea20892fee0b162d5142163bfff37d5adb"},"ops":[{"type":2,"timestamp":1672751497,"nonce":"wGq4WWSDIOYO8knPl+a318hjUpc=","title":"Potential breaks and known issues !","was":"Potential breaks and known issues !"}]}
+{"author":{"id":"92757f8b589f861a2cac6c05e43ad1ea20892fee0b162d5142163bfff37d5adb"},"ops":[{"type":3,"timestamp":1672751535,"nonce":"beG4GvupccieV/5d4CfuCNNMZJU=","message":"In chrome, the width of an textarea cannot be resized down.\n\nhttps://bugs.chromium.org/p/chromium/issues/detail?id=94583","files":null}]}
