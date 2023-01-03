@@ -1,1 +1,1 @@
-{"author":{"id":"92757f8b589f861a2cac6c05e43ad1ea20892fee0b162d5142163bfff37d5adb"},"ops":[{"type":8,"timestamp":1658170059,"nonce":"4v7HLnLTgdAuYUbWOAZmiG1bTZE=","target":"ca593fc3e39e08857627a6e22f23ae83196cd83938da5717e9aa94e46902545b","new_metadata":{"gitlab-id":"9","gitlab-url":""}}]}
+{"author":{"id":"92757f8b589f861a2cac6c05e43ad1ea20892fee0b162d5142163bfff37d5adb"},"ops":[{"type":2,"timestamp":1672751494,"nonce":"CJSLQ7wVz6Mx+zHF41bsK45s9Ng=","title":"Potential breaks and known issues !","was":"Potential breaks that could be introduced..."}]}
