@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?pp4blq');
-  src:  url('fonts/fractaleicon.eot?pp4blq#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?pp4blq') format('truetype'),
-    url('fonts/fractaleicon.woff?pp4blq') format('woff'),
-    url('fonts/fractaleicon.svg?pp4blq#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?wxwn22');
+  src:  url('fonts/fractaleicon.eot?wxwn22#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?wxwn22') format('truetype'),
+    url('fonts/fractaleicon.woff?wxwn22') format('woff'),
+    url('fonts/fractaleicon.svg?wxwn22#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -247,6 +247,12 @@
 .icon-moon:before {
   content: "\e961";
 }
+.icon-more-horizontal:before {
+  content: "\e96b";
+}
+.icon-more-vertical:before {
+  content: "\e96c";
+}
 .icon-paperclip:before {
   content: "\e93c";
 }
@@ -285,6 +291,9 @@
 }
 .icon-sliders:before {
   content: "\e947";
+}
+.icon-smile:before {
+  content: "\e96d";
 }
 .icon-square:before {
   content: "\e949";
@@ -396,12 +405,6 @@
 }
 .icon-circle1:before {
   content: "\f111";
-}
-.icon-ellipsis-h:before {
-  content: "\f141";
-}
-.icon-ellipsis-v:before {
-  content: "\f142";
 }
 .icon-sort-amount-asc:before {
   content: "\f160";

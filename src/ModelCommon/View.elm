@@ -174,10 +174,10 @@ mediaTension_ conf focus tension showStatus showRecip size =
                             [ A.icon0 (action2icon tc ++ " icon-sm") ]
 
                     Nothing ->
-                        text ""
+                        div [ class "level-item" ] []
                 , if n_comments > 1 then
                     a
-                        [ class "level-item discrete-link tooltip has-tooltip-arrow"
+                        [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
                         , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]

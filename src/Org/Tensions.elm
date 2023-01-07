@@ -222,7 +222,6 @@ type alias Model =
     -- Common
     , conf : Conf
     , refresh_trial : Int
-    , url : Url
     , empty : {}
 
     -- Components
@@ -688,7 +687,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         -- Query parameters
         query =
@@ -742,7 +741,6 @@ init global flags =
             -- Common
             , conf = conf
             , refresh_trial = 0
-            , url = global.url
             , empty = {}
             , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
@@ -1437,7 +1435,7 @@ update global message model =
                         |> Maybe.map
                             (\o ->
                                 if Tuple.first o then
-                                    [ Nav.replaceUrl global.key (Url.toString model.url) ]
+                                    [ Nav.replaceUrl global.key (Url.toString model.conf.url) ]
 
                                 else
                                     []

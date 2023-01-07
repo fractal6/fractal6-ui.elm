@@ -178,12 +178,12 @@ type alias CommentPatchForm =
     }
 
 
-initCommentPatchForm : UserState -> CommentPatchForm
-initCommentPatchForm user =
+initCommentPatchForm : String -> UserState -> CommentPatchForm
+initCommentPatchForm reflink user =
     { uctx = uctxFromUser user
     , id = ""
     , pid = ""
-    , post = Dict.empty
+    , post = Dict.fromList [ ( "reflink", reflink ) ]
     , viewMode = Write
     }
 
@@ -975,3 +975,43 @@ sortNode a b =
 
     else
         GT
+
+
+{-| Nested Remote Data Helpers (take too much space on main program, elm I still love you!
+-}
+pushCommentReaction : String -> ReactionResponse -> List Comment -> List Comment
+pushCommentReaction username r comments =
+    LE.updateIf (\x -> x.id == r.cid)
+        (\comment ->
+            case LE.findIndex (\c -> c.type_ == r.type_) comment.reactions of
+                Just i ->
+                    { comment
+                        | reactions =
+                            LE.updateAt i
+                                (\reaction -> { reaction | users = reaction.users ++ [ username ] })
+                                comment.reactions
+                    }
+
+                Nothing ->
+                    { comment | reactions = { type_ = r.type_, users = [ username ] } :: comment.reactions |> List.sortBy .type_ }
+        )
+        comments
+
+
+removeCommentReaction : String -> ReactionResponse -> List Comment -> List Comment
+removeCommentReaction username r comments =
+    LE.updateIf (\x -> x.id == r.cid)
+        (\comment ->
+            case LE.findIndex (\c -> c.type_ == r.type_) comment.reactions of
+                Just i ->
+                    { comment
+                        | reactions =
+                            LE.updateAt i
+                                (\reaction -> { reaction | users = LE.remove username reaction.users })
+                                comment.reactions
+                    }
+
+                Nothing ->
+                    comment
+        )
+        comments

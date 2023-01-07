@@ -52,13 +52,3 @@ messageMin =
 messageMax : SelectionSet (Maybe String) Fractal.Object.CommentAggregateResult
 messageMax =
     Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
-
-
-vOIDMin_ : SelectionSet (Maybe String) Fractal.Object.CommentAggregateResult
-vOIDMin_ =
-    Object.selectionForField "(Maybe String)" "_VOIDMin" [] (Decode.string |> Decode.nullable)
-
-
-vOIDMax_ : SelectionSet (Maybe String) Fractal.Object.CommentAggregateResult
-vOIDMax_ =
-    Object.selectionForField "(Maybe String)" "_VOIDMax" [] (Decode.string |> Decode.nullable)

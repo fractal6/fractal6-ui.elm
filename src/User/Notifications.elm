@@ -287,7 +287,7 @@ init global flags =
 
         -- Query parameters
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         query =
             queryParser global.url

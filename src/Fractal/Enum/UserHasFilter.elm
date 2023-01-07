@@ -29,6 +29,7 @@ type UserHasFilter
     | Tensions_created
     | Tensions_assigned
     | Contracts
+    | Reactions
     | Events
     | MarkAllAsRead
     | Event_count
@@ -36,7 +37,7 @@ type UserHasFilter
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead, Event_count ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Reactions, Events, MarkAllAsRead, Event_count ]
 
 
 decoder : Decoder UserHasFilter
@@ -107,6 +108,9 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
+
+                    "reactions" ->
+                        Decode.succeed Reactions
 
                     "events" ->
                         Decode.succeed Events
@@ -189,6 +193,9 @@ toString enum____ =
 
         Contracts ->
             "contracts"
+
+        Reactions ->
+            "reactions"
 
         Events ->
             "events"
@@ -276,6 +283,9 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
+
+        "reactions" ->
+            Just Reactions
 
         "events" ->
             Just Events

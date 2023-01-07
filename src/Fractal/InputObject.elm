@@ -42,6 +42,8 @@ import Fractal.Enum.PendingUserHasFilter
 import Fractal.Enum.PendingUserOrderable
 import Fractal.Enum.PostHasFilter
 import Fractal.Enum.PostOrderable
+import Fractal.Enum.ReactionHasFilter
+import Fractal.Enum.ReactionOrderable
 import Fractal.Enum.RoleExtHasFilter
 import Fractal.Enum.RoleExtOrderable
 import Fractal.Enum.RoleType
@@ -145,9 +147,9 @@ buildAddCommentInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, message = Absent, void_ = Absent }
+                { updatedAt = Absent, message = Absent, reactions = Absent }
     in
-    AddCommentInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, void_ = optionals____.void_ }
+    AddCommentInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions }
 
 
 type alias AddCommentInputRequiredFields =
@@ -159,7 +161,7 @@ type alias AddCommentInputRequiredFields =
 type alias AddCommentInputOptionalFields =
     { updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -173,7 +175,7 @@ type alias AddCommentInputRaw =
     , createdAt : Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -188,7 +190,7 @@ type AddCommentInput
 encodeAddCommentInput : AddCommentInput -> Value
 encodeAddCommentInput (AddCommentInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "_VOID", Encode.string |> Encode.optional input____.void_ ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ) ]
 
 
 buildAddContractInput :
@@ -272,14 +274,15 @@ buildAddEventCountInput fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { unread_events = Absent, pending_contracts = Absent }
+                { unread_events = Absent, pending_contracts = Absent, assigned_tensions = Absent }
     in
-    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts, assigned_tensions = optionals____.assigned_tensions }
 
 
 type alias AddEventCountInputOptionalFields =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -288,6 +291,7 @@ type alias AddEventCountInputOptionalFields =
 type alias AddEventCountInput =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -296,7 +300,7 @@ type alias AddEventCountInput =
 encodeAddEventCountInput : AddEventCountInput -> Value
 encodeAddEventCountInput input____ =
     Encode.maybeObject
-        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ), ( "assigned_tensions", Encode.int |> Encode.optional input____.assigned_tensions ) ]
 
 
 buildAddEventFragmentInput :
@@ -827,6 +831,57 @@ encodeAddPendingUserInput (AddPendingUserInput input____) =
         [ ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "username", Encode.string |> Encode.optional input____.username ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "email_token", Encode.string |> Encode.optional input____.email_token ), ( "token", Encode.string |> Encode.optional input____.token ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "subscribe", Encode.bool |> Encode.optional input____.subscribe ) ]
 
 
+buildAddReactionInput :
+    AddReactionInputRequiredFields
+    -> (AddReactionInputOptionalFields -> AddReactionInputOptionalFields)
+    -> AddReactionInput
+buildAddReactionInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { reactionid = Absent }
+    in
+    AddReactionInput { reactionid = optionals____.reactionid, user = required____.user, comment = required____.comment, type_ = required____.type_ }
+
+
+type alias AddReactionInputRequiredFields =
+    { user : UserRef
+    , comment : CommentRef
+    , type_ : Int
+    }
+
+
+type alias AddReactionInputOptionalFields =
+    { reactionid : OptionalArgument String }
+
+
+{-| Type alias for the `AddReactionInput` attributes. Note that this type
+needs to use the `AddReactionInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddReactionInputRaw =
+    { reactionid : OptionalArgument String
+    , user : UserRef
+    , comment : CommentRef
+    , type_ : Int
+    }
+
+
+{-| Type for the AddReactionInput input object.
+-}
+type AddReactionInput
+    = AddReactionInput AddReactionInputRaw
+
+
+{-| Encode a AddReactionInput into a value that can be used as an argument.
+-}
+encodeAddReactionInput : AddReactionInput -> Value
+encodeAddReactionInput (AddReactionInput input____) =
+    Encode.maybeObject
+        [ ( "reactionid", Encode.string |> Encode.optional input____.reactionid ), ( "user", encodeUserRef input____.user |> Just ), ( "comment", encodeCommentRef input____.comment |> Just ), ( "type_", Encode.int input____.type_ |> Just ) ]
+
+
 buildAddRoleExtInput :
     AddRoleExtInputRequiredFields
     -> (AddRoleExtInputOptionalFields -> AddRoleExtInputOptionalFields)
@@ -1034,9 +1089,9 @@ buildAddUserInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { name = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, subscriptions = Absent, watching = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
+                { name = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, subscriptions = Absent, watching = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, reactions = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, email = required____.email, password = required____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = required____.notifyByEmail, lang = required____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
+    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, email = required____.email, password = required____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = required____.notifyByEmail, lang = required____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, reactions = optionals____.reactions, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias AddUserInputRequiredFields =
@@ -1065,6 +1120,7 @@ type alias AddUserInputOptionalFields =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -1098,6 +1154,7 @@ type alias AddUserInputRaw =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -1115,7 +1172,7 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string input____.email |> Just ), ( "password", Encode.string input____.password |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool input____.notifyByEmail |> Just ), ( "lang", Encode.enum Fractal.Enum.Lang.toString input____.lang |> Just ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string input____.email |> Just ), ( "password", Encode.string input____.password |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool input____.notifyByEmail |> Just ), ( "lang", Encode.enum Fractal.Enum.Lang.toString input____.lang |> Just ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildAddUserRightsInput :
@@ -1625,9 +1682,9 @@ buildCommentPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, void_ = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent }
     in
-    CommentPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, void_ = optionals____.void_ }
+    CommentPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions }
 
 
 type alias CommentPatchOptionalFields =
@@ -1635,7 +1692,7 @@ type alias CommentPatchOptionalFields =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -1649,7 +1706,7 @@ type alias CommentPatchRaw =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -1664,7 +1721,7 @@ type CommentPatch
 encodeCommentPatch : CommentPatch -> Value
 encodeCommentPatch (CommentPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "_VOID", Encode.string |> Encode.optional input____.void_ ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ) ]
 
 
 buildCommentRef :
@@ -1674,9 +1731,9 @@ buildCommentRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, void_ = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, reactions = Absent }
     in
-    CommentRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, void_ = optionals____.void_ }
+    CommentRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, reactions = optionals____.reactions }
 
 
 type alias CommentRefOptionalFields =
@@ -1685,7 +1742,7 @@ type alias CommentRefOptionalFields =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -1700,7 +1757,7 @@ type alias CommentRefRaw =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
-    , void_ : OptionalArgument String
+    , reactions : OptionalArgument (List ReactionRef)
     }
 
 
@@ -1715,7 +1772,7 @@ type CommentRef
 encodeCommentRef : CommentRef -> Value
 encodeCommentRef (CommentRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "_VOID", Encode.string |> Encode.optional input____.void_ ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ) ]
 
 
 buildContainsFilter :
@@ -2321,14 +2378,15 @@ buildEventCountPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { unread_events = Absent, pending_contracts = Absent }
+                { unread_events = Absent, pending_contracts = Absent, assigned_tensions = Absent }
     in
-    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts, assigned_tensions = optionals____.assigned_tensions }
 
 
 type alias EventCountPatchOptionalFields =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -2337,6 +2395,7 @@ type alias EventCountPatchOptionalFields =
 type alias EventCountPatch =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -2345,7 +2404,7 @@ type alias EventCountPatch =
 encodeEventCountPatch : EventCountPatch -> Value
 encodeEventCountPatch input____ =
     Encode.maybeObject
-        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ), ( "assigned_tensions", Encode.int |> Encode.optional input____.assigned_tensions ) ]
 
 
 buildEventCountRef :
@@ -2355,14 +2414,15 @@ buildEventCountRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { unread_events = Absent, pending_contracts = Absent }
+                { unread_events = Absent, pending_contracts = Absent, assigned_tensions = Absent }
     in
-    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts }
+    { unread_events = optionals____.unread_events, pending_contracts = optionals____.pending_contracts, assigned_tensions = optionals____.assigned_tensions }
 
 
 type alias EventCountRefOptionalFields =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -2371,6 +2431,7 @@ type alias EventCountRefOptionalFields =
 type alias EventCountRef =
     { unread_events : OptionalArgument Int
     , pending_contracts : OptionalArgument Int
+    , assigned_tensions : OptionalArgument Int
     }
 
 
@@ -2379,7 +2440,7 @@ type alias EventCountRef =
 encodeEventCountRef : EventCountRef -> Value
 encodeEventCountRef input____ =
     Encode.maybeObject
-        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ) ]
+        [ ( "unread_events", Encode.int |> Encode.optional input____.unread_events ), ( "pending_contracts", Encode.int |> Encode.optional input____.pending_contracts ), ( "assigned_tensions", Encode.int |> Encode.optional input____.assigned_tensions ) ]
 
 
 buildEventFilter :
@@ -5186,6 +5247,198 @@ encodePostRef input____ =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) input____.id |> Just ) ]
 
 
+buildReactionFilter :
+    (ReactionFilterOptionalFields -> ReactionFilterOptionalFields)
+    -> ReactionFilter
+buildReactionFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { id = Absent, reactionid = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    ReactionFilter { id = optionals____.id, reactionid = optionals____.reactionid, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias ReactionFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , reactionid : OptionalArgument StringHashFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.ReactionHasFilter.ReactionHasFilter))
+    , and : OptionalArgument (List (Maybe ReactionFilter))
+    , or : OptionalArgument (List (Maybe ReactionFilter))
+    , not : OptionalArgument ReactionFilter
+    }
+
+
+{-| Type alias for the `ReactionFilter` attributes. Note that this type
+needs to use the `ReactionFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ReactionFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , reactionid : OptionalArgument StringHashFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.ReactionHasFilter.ReactionHasFilter))
+    , and : OptionalArgument (List (Maybe ReactionFilter))
+    , or : OptionalArgument (List (Maybe ReactionFilter))
+    , not : OptionalArgument ReactionFilter
+    }
+
+
+{-| Type for the ReactionFilter input object.
+-}
+type ReactionFilter
+    = ReactionFilter ReactionFilterRaw
+
+
+{-| Encode a ReactionFilter into a value that can be used as an argument.
+-}
+encodeReactionFilter : ReactionFilter -> Value
+encodeReactionFilter (ReactionFilter input____) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "reactionid", encodeStringHashFilter |> Encode.optional input____.reactionid ), ( "has", (Encode.enum Fractal.Enum.ReactionHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeReactionFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeReactionFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeReactionFilter |> Encode.optional input____.not ) ]
+
+
+buildReactionOrder :
+    (ReactionOrderOptionalFields -> ReactionOrderOptionalFields)
+    -> ReactionOrder
+buildReactionOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    ReactionOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias ReactionOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.ReactionOrderable.ReactionOrderable
+    , desc : OptionalArgument Fractal.Enum.ReactionOrderable.ReactionOrderable
+    , then_ : OptionalArgument ReactionOrder
+    }
+
+
+{-| Type alias for the `ReactionOrder` attributes. Note that this type
+needs to use the `ReactionOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ReactionOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.ReactionOrderable.ReactionOrderable
+    , desc : OptionalArgument Fractal.Enum.ReactionOrderable.ReactionOrderable
+    , then_ : OptionalArgument ReactionOrder
+    }
+
+
+{-| Type for the ReactionOrder input object.
+-}
+type ReactionOrder
+    = ReactionOrder ReactionOrderRaw
+
+
+{-| Encode a ReactionOrder into a value that can be used as an argument.
+-}
+encodeReactionOrder : ReactionOrder -> Value
+encodeReactionOrder (ReactionOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.ReactionOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.ReactionOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeReactionOrder |> Encode.optional input____.then_ ) ]
+
+
+buildReactionPatch :
+    (ReactionPatchOptionalFields -> ReactionPatchOptionalFields)
+    -> ReactionPatch
+buildReactionPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { reactionid = Absent, user = Absent, comment = Absent, type_ = Absent }
+    in
+    ReactionPatch { reactionid = optionals____.reactionid, user = optionals____.user, comment = optionals____.comment, type_ = optionals____.type_ }
+
+
+type alias ReactionPatchOptionalFields =
+    { reactionid : OptionalArgument String
+    , user : OptionalArgument UserRef
+    , comment : OptionalArgument CommentRef
+    , type_ : OptionalArgument Int
+    }
+
+
+{-| Type alias for the `ReactionPatch` attributes. Note that this type
+needs to use the `ReactionPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ReactionPatchRaw =
+    { reactionid : OptionalArgument String
+    , user : OptionalArgument UserRef
+    , comment : OptionalArgument CommentRef
+    , type_ : OptionalArgument Int
+    }
+
+
+{-| Type for the ReactionPatch input object.
+-}
+type ReactionPatch
+    = ReactionPatch ReactionPatchRaw
+
+
+{-| Encode a ReactionPatch into a value that can be used as an argument.
+-}
+encodeReactionPatch : ReactionPatch -> Value
+encodeReactionPatch (ReactionPatch input____) =
+    Encode.maybeObject
+        [ ( "reactionid", Encode.string |> Encode.optional input____.reactionid ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "comment", encodeCommentRef |> Encode.optional input____.comment ), ( "type_", Encode.int |> Encode.optional input____.type_ ) ]
+
+
+buildReactionRef :
+    (ReactionRefOptionalFields -> ReactionRefOptionalFields)
+    -> ReactionRef
+buildReactionRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { id = Absent, reactionid = Absent, user = Absent, comment = Absent, type_ = Absent }
+    in
+    ReactionRef { id = optionals____.id, reactionid = optionals____.reactionid, user = optionals____.user, comment = optionals____.comment, type_ = optionals____.type_ }
+
+
+type alias ReactionRefOptionalFields =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , reactionid : OptionalArgument String
+    , user : OptionalArgument UserRef
+    , comment : OptionalArgument CommentRef
+    , type_ : OptionalArgument Int
+    }
+
+
+{-| Type alias for the `ReactionRef` attributes. Note that this type
+needs to use the `ReactionRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ReactionRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , reactionid : OptionalArgument String
+    , user : OptionalArgument UserRef
+    , comment : OptionalArgument CommentRef
+    , type_ : OptionalArgument Int
+    }
+
+
+{-| Type for the ReactionRef input object.
+-}
+type ReactionRef
+    = ReactionRef ReactionRefRaw
+
+
+{-| Encode a ReactionRef into a value that can be used as an argument.
+-}
+encodeReactionRef : ReactionRef -> Value
+encodeReactionRef (ReactionRef input____) =
+    Encode.maybeObject
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "reactionid", Encode.string |> Encode.optional input____.reactionid ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "comment", encodeCommentRef |> Encode.optional input____.comment ), ( "type_", Encode.int |> Encode.optional input____.type_ ) ]
+
+
 buildRoleExtFilter :
     (RoleExtFilterOptionalFields -> RoleExtFilterOptionalFields)
     -> RoleExtFilter
@@ -6773,6 +7026,55 @@ encodeUpdatePostInput (UpdatePostInput input____) =
         [ ( "filter", encodePostFilter input____.filter |> Just ), ( "set", encodePostPatch |> Encode.optional input____.set ), ( "remove", encodePostPatch |> Encode.optional input____.remove ) ]
 
 
+buildUpdateReactionInput :
+    UpdateReactionInputRequiredFields
+    -> (UpdateReactionInputOptionalFields -> UpdateReactionInputOptionalFields)
+    -> UpdateReactionInput
+buildUpdateReactionInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateReactionInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateReactionInputRequiredFields =
+    { filter : ReactionFilter }
+
+
+type alias UpdateReactionInputOptionalFields =
+    { set : OptionalArgument ReactionPatch
+    , remove : OptionalArgument ReactionPatch
+    }
+
+
+{-| Type alias for the `UpdateReactionInput` attributes. Note that this type
+needs to use the `UpdateReactionInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateReactionInputRaw =
+    { filter : ReactionFilter
+    , set : OptionalArgument ReactionPatch
+    , remove : OptionalArgument ReactionPatch
+    }
+
+
+{-| Type for the UpdateReactionInput input object.
+-}
+type UpdateReactionInput
+    = UpdateReactionInput UpdateReactionInputRaw
+
+
+{-| Encode a UpdateReactionInput into a value that can be used as an argument.
+-}
+encodeUpdateReactionInput : UpdateReactionInput -> Value
+encodeUpdateReactionInput (UpdateReactionInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeReactionFilter input____.filter |> Just ), ( "set", encodeReactionPatch |> Encode.optional input____.set ), ( "remove", encodeReactionPatch |> Encode.optional input____.remove ) ]
+
+
 buildUpdateRoleExtInput :
     UpdateRoleExtInputRequiredFields
     -> (UpdateRoleExtInputOptionalFields -> UpdateRoleExtInputOptionalFields)
@@ -7368,9 +7670,9 @@ buildUserPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, watching = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
+                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, watching = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, reactions = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
+    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, reactions = optionals____.reactions, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias UserPatchOptionalFields =
@@ -7395,6 +7697,7 @@ type alias UserPatchOptionalFields =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -7428,6 +7731,7 @@ type alias UserPatchRaw =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -7445,7 +7749,7 @@ type UserPatch
 encodeUserPatch : UserPatch -> Value
 encodeUserPatch (UserPatch input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildUserRef :
@@ -7455,9 +7759,9 @@ buildUserRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, watching = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
+                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, email = Absent, password = Absent, bio = Absent, location = Absent, utc = Absent, links = Absent, skills = Absent, notifyByEmail = Absent, lang = Absent, subscriptions = Absent, watching = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, reactions = Absent, events = Absent, markAllAsRead = Absent, event_count = Absent }
     in
-    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
+    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, email = optionals____.email, password = optionals____.password, bio = optionals____.bio, location = optionals____.location, utc = optionals____.utc, links = optionals____.links, skills = optionals____.skills, notifyByEmail = optionals____.notifyByEmail, lang = optionals____.lang, subscriptions = optionals____.subscriptions, watching = optionals____.watching, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, reactions = optionals____.reactions, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead, event_count = optionals____.event_count }
 
 
 type alias UserRefOptionalFields =
@@ -7483,6 +7787,7 @@ type alias UserRefOptionalFields =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -7517,6 +7822,7 @@ type alias UserRefRaw =
     , tensions_created : OptionalArgument (List TensionRef)
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
+    , reactions : OptionalArgument (List ReactionRef)
     , events : OptionalArgument (List UserEventRef)
     , markAllAsRead : OptionalArgument String
     , event_count : OptionalArgument EventCountRef
@@ -7534,7 +7840,7 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "email", Encode.string |> Encode.optional input____.email ), ( "password", Encode.string |> Encode.optional input____.password ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "location", Encode.string |> Encode.optional input____.location ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "links", (Encode.string |> Encode.list) |> Encode.optional input____.links ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "lang", Encode.enum Fractal.Enum.Lang.toString |> Encode.optional input____.lang ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "watching", (encodeNodeRef |> Encode.list) |> Encode.optional input____.watching ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "reactions", (encodeReactionRef |> Encode.list) |> Encode.optional input____.reactions ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ), ( "event_count", encodeEventCountRef |> Encode.optional input____.event_count ) ]
 
 
 buildUserRightsFilter :

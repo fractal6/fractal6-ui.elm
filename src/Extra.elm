@@ -24,6 +24,7 @@ module Extra exposing (..)
 import Dict exposing (Dict)
 import Html exposing (Html, span, text)
 import Html.Attributes exposing (attribute)
+import List.Extra as LE
 import Regex exposing (Regex)
 import String
 import String.Extra as SE
@@ -127,6 +128,43 @@ cleanDup : String -> String -> String
 cleanDup c s =
     -- Remove any repetition of the character c in string s
     s |> Regex.replace (regexFromString (c ++ c ++ "+")) (always c)
+
+
+emojis : List ( Int, String, String )
+emojis =
+    [ ( 1, String.fromChar '👍', "thumbsup" )
+    , ( 2, String.fromChar '👎', "thumbsdown" )
+    , ( 3, String.fromChar '🙂', "happy" )
+    , ( 4, String.fromChar '🎉', " hooray" )
+    , ( 5, String.fromChar '😕', "confused" )
+    , ( 6, "❤️", "heart" )
+    , ( 7, String.fromChar '🙏', "clap" )
+
+    --, String.fromChar '❓'
+    , ( 8, String.fromChar '👀', "eyes" )
+
+    --, String.fromChar '🚜'
+    ]
+
+
+getEmoji : Int -> String
+getEmoji type_ =
+    case LE.getAt (type_ - 1) emojis of
+        Just ( _, b, _ ) ->
+            b
+
+        Nothing ->
+            ""
+
+
+getEmojiName : Int -> String
+getEmojiName type_ =
+    case LE.getAt (type_ - 1) emojis of
+        Just ( _, _, c ) ->
+            c
+
+        Nothing ->
+            ""
 
 
 

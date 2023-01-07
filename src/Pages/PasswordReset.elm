@@ -109,7 +109,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         -- Query parameters
         query =

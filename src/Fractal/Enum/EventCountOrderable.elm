@@ -10,11 +10,12 @@ import Json.Decode as Decode exposing (Decoder)
 type EventCountOrderable
     = Unread_events
     | Pending_contracts
+    | Assigned_tensions
 
 
 list : List EventCountOrderable
 list =
-    [ Unread_events, Pending_contracts ]
+    [ Unread_events, Pending_contracts, Assigned_tensions ]
 
 
 decoder : Decoder EventCountOrderable
@@ -28,6 +29,9 @@ decoder =
 
                     "pending_contracts" ->
                         Decode.succeed Pending_contracts
+
+                    "assigned_tensions" ->
+                        Decode.succeed Assigned_tensions
 
                     _ ->
                         Decode.fail ("Invalid EventCountOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -44,6 +48,9 @@ toString enum____ =
 
         Pending_contracts ->
             "pending_contracts"
+
+        Assigned_tensions ->
+            "assigned_tensions"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -65,6 +72,9 @@ fromString enumString____ =
 
         "pending_contracts" ->
             Just Pending_contracts
+
+        "assigned_tensions" ->
+            Just Assigned_tensions
 
         _ ->
             Nothing

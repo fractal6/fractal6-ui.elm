@@ -344,6 +344,55 @@ deleteComment requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteComment" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeCommentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddReactionOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
+type alias AddReactionRequiredArguments =
+    { input : List Fractal.InputObject.AddReactionInput }
+
+
+addReaction :
+    (AddReactionOptionalArguments -> AddReactionOptionalArguments)
+    -> AddReactionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddReactionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addReaction fillInOptionals____ requiredArgs____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "addReaction" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddReactionInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateReactionRequiredArguments =
+    { input : Fractal.InputObject.UpdateReactionInput }
+
+
+updateReaction :
+    UpdateReactionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateReactionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateReaction requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateReaction" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateReactionInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteReactionRequiredArguments =
+    { filter : Fractal.InputObject.ReactionFilter }
+
+
+deleteReaction :
+    DeleteReactionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteReactionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteReaction requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteReaction" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeReactionFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddBlobRequiredArguments =
     { input : List Fractal.InputObject.AddBlobInput }
 

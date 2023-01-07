@@ -362,6 +362,21 @@ type alias Comment =
     , updatedAt : Maybe String
     , createdBy : Username
     , message : String
+
+    -- Reaction Results are agglomerated in the query decoder
+    , reactions : List Reaction
+    }
+
+
+type alias Reaction =
+    { type_ : Int
+    , users : List String
+    }
+
+
+type alias ReactionResponse =
+    { cid : String
+    , type_ : Int
     }
 
 

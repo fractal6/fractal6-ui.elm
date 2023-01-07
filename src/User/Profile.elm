@@ -149,7 +149,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""

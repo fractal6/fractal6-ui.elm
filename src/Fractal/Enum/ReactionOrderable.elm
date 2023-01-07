@@ -2,55 +2,48 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.CommentOrderable exposing (..)
+module Fractal.Enum.ReactionOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type CommentOrderable
-    = CreatedAt
-    | UpdatedAt
-    | Message
+type ReactionOrderable
+    = Reactionid
+    | Type_
 
 
-list : List CommentOrderable
+list : List ReactionOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message ]
+    [ Reactionid, Type_ ]
 
 
-decoder : Decoder CommentOrderable
+decoder : Decoder ReactionOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "createdAt" ->
-                        Decode.succeed CreatedAt
+                    "reactionid" ->
+                        Decode.succeed Reactionid
 
-                    "updatedAt" ->
-                        Decode.succeed UpdatedAt
-
-                    "message" ->
-                        Decode.succeed Message
+                    "type_" ->
+                        Decode.succeed Type_
 
                     _ ->
-                        Decode.fail ("Invalid CommentOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ReactionOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : CommentOrderable -> String
+toString : ReactionOrderable -> String
 toString enum____ =
     case enum____ of
-        CreatedAt ->
-            "createdAt"
+        Reactionid ->
+            "reactionid"
 
-        UpdatedAt ->
-            "updatedAt"
-
-        Message ->
-            "message"
+        Type_ ->
+            "type_"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +57,14 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe CommentOrderable
+fromString : String -> Maybe ReactionOrderable
 fromString enumString____ =
     case enumString____ of
-        "createdAt" ->
-            Just CreatedAt
+        "reactionid" ->
+            Just Reactionid
 
-        "updatedAt" ->
-            Just UpdatedAt
-
-        "message" ->
-            Just Message
+        "type_" ->
+            Just Type_
 
         _ ->
             Nothing

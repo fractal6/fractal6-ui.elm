@@ -80,7 +80,7 @@ $tooltip-transition-duration: 0.1s;
 $modal-background-background-color: rgba(black, 0.6);
 $modal-in-duration: 0.25s;
 $modal-out-duration: 0.25s;
-$modal-width: 640px;
+$modal-width: 650px;
 $modal-width-large: 790px;
 
 // divider
@@ -205,6 +205,8 @@ $is-highlight: $dark;
 $is-highlight2: $grey;
 $is-hint: $grey-light;
 $is-hint2: $grey;
+$tag-hint: lighten($white-ter, 5);
+$tag-hint-active: rgba($primary, 0.1);
 
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
@@ -376,6 +378,8 @@ $button-vote-danger-background: $danger;
   --is-highlight2: #{$is-highlight2};
   --is-hint: #{$is-hint};
   --is-hint2: #{$is-hint2};
+  --tag-hint: #{$tag-hint};
+  --tag-hint-active: #{$tag-hint-active};
   --success-light: #{$success-light};
 
   // Hover case
@@ -560,6 +564,8 @@ $is-highlight: $white-ter;
 $is-highlight2: $grey-lighter;
 $is-hint: $grey-light;
 $is-hint2: $grey-light2;
+$tag-hint: $grey-darker;
+$tag-hint-active: rgba($primary, 0.3);
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
@@ -735,6 +741,8 @@ $button-vote-danger-background: $danger-light;
   --is-highlight2: #{$is-highlight2};
   --is-hint: #{$is-hint};
   --is-hint2: #{$is-hint2};
+  --tag-hint: #{$tag-hint};
+  --tag-hint-active: #{$tag-hint-active};
   --success-light: #{$success-light};
 
   // Hover case

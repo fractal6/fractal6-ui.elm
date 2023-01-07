@@ -58,6 +58,7 @@ import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeFragment
+import Fractal.Object.Reaction
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -69,7 +70,30 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (nid2rootid)
-import ModelSchema exposing (..)
+import ModelSchema
+    exposing
+        ( Blob
+        , Comment
+        , Count
+        , Event
+        , IdPayload
+        , Label
+        , MentionedTension
+        , NodeFragment
+        , Reaction
+        , SubNodeFragment
+        , Tension
+        , TensionBlobs
+        , TensionComments
+        , TensionHead
+        , User
+        , UserCtx
+        , Username
+        , decodeResponse
+        , decodedId
+        , decodedTime
+        , encodeId
+        )
 import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -238,8 +262,33 @@ commentPayload =
         |> with (Fractal.Object.Comment.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Comment.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
-        |> with (Fractal.Object.Comment.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Comment.createdBy identity (SelectionSet.map Username Fractal.Object.User.username))
         |> with Fractal.Object.Comment.message
+        |> with
+            -- Aggregate Reactions
+            (Fractal.Object.Comment.reactions identity
+                (SelectionSet.map2 (\x y -> { type_ = x, user = y.username })
+                    Fractal.Object.Reaction.type_
+                    (Fractal.Object.Reaction.user identity (SelectionSet.map Username Fractal.Object.User.username))
+                )
+                |> SelectionSet.map
+                    (\x ->
+                        let
+                            addParam : { type_ : Int, user : String } -> Maybe Reaction -> Maybe Reaction
+                            addParam { type_, user } maybeValue =
+                                case maybeValue of
+                                    Just value ->
+                                        Just { value | users = user :: value.users }
+
+                                    Nothing ->
+                                        Just { type_ = type_, users = [ user ] }
+                        in
+                        withDefault [] x
+                            |> List.foldr (\r dict -> Dict.update r.type_ (addParam r) dict)
+                                Dict.empty
+                            |> Dict.values
+                    )
+            )
 
 
 blobPayload : SelectionSet Blob Fractal.Object.Blob

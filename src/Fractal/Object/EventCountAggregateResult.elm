@@ -62,3 +62,23 @@ pending_contractsSum =
 pending_contractsAvg : SelectionSet (Maybe Float) Fractal.Object.EventCountAggregateResult
 pending_contractsAvg =
     Object.selectionForField "(Maybe Float)" "pending_contractsAvg" [] (Decode.float |> Decode.nullable)
+
+
+assigned_tensionsMin : SelectionSet (Maybe Int) Fractal.Object.EventCountAggregateResult
+assigned_tensionsMin =
+    Object.selectionForField "(Maybe Int)" "assigned_tensionsMin" [] (Decode.int |> Decode.nullable)
+
+
+assigned_tensionsMax : SelectionSet (Maybe Int) Fractal.Object.EventCountAggregateResult
+assigned_tensionsMax =
+    Object.selectionForField "(Maybe Int)" "assigned_tensionsMax" [] (Decode.int |> Decode.nullable)
+
+
+assigned_tensionsSum : SelectionSet (Maybe Int) Fractal.Object.EventCountAggregateResult
+assigned_tensionsSum =
+    Object.selectionForField "(Maybe Int)" "assigned_tensionsSum" [] (Decode.int |> Decode.nullable)
+
+
+assigned_tensionsAvg : SelectionSet (Maybe Float) Fractal.Object.EventCountAggregateResult
+assigned_tensionsAvg =
+    Object.selectionForField "(Maybe Float)" "assigned_tensionsAvg" [] (Decode.float |> Decode.nullable)

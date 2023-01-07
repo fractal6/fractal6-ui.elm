@@ -33,6 +33,7 @@ import Loading
         ( GqlData
         , WebData
         )
+import Maybe exposing (withDefault)
 import ModelCommon exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
@@ -66,10 +67,16 @@ isMobile screen =
     screen.w < 769
 
 
+toReflink : Url -> String
+toReflink url =
+    Url.toString url |> String.split "?" |> List.head |> withDefault ""
+
+
 type alias Conf =
     { screen : Screen
     , lang : Lang.Lang
     , now : Time.Posix
+    , url : Url.Url
     }
 
 
@@ -234,7 +241,7 @@ fromLocalSession flags =
     ( { referer = Nothing
       , can_referer = Nothing
       , user = user
-      , lang = Maybe.withDefault Lang.En lang
+      , lang = withDefault Lang.En lang
       , notif = initNotifCount
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing

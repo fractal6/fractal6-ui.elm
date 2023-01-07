@@ -31,6 +31,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, contenteditable, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
+import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..))
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -52,6 +53,8 @@ type alias OpEditComment msg =
     , doEditComment : Time.Posix -> msg
     , doRichText : String -> String -> msg
     , doToggleMdHelp : String -> msg
+    , doAddReaction : String -> Int -> msg
+    , doDeleteReaction : String -> Int -> msg
     , conf : Conf
     }
 
@@ -80,6 +83,18 @@ type alias OpNewCommentContract msg =
 
 viewComment : OpEditComment msg -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
 viewComment op c form result =
+    let
+        isAuthor =
+            c.createdBy.username == form.uctx.username
+
+        reflink =
+            case Dict.get "reflink" form.post of
+                Just ref ->
+                    ref ++ "?goto=" ++ c.createdAt
+
+                Nothing ->
+                    "#"
+    in
     div [ id c.createdAt, class "media section is-paddingless" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
         , div
@@ -91,7 +106,7 @@ viewComment op c form result =
 
               else
                 div [ class "message" ]
-                    [ div [ class "message-header has-arrow-left pl-1-mobile" ]
+                    [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "has-background-tag", isAuthor && False ) ] ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
                         , viewTensionDateAndUserC op.conf c.createdAt c.createdBy
                         , case c.updatedAt of
@@ -100,24 +115,45 @@ viewComment op c form result =
 
                             Nothing ->
                                 text ""
-                        , if c.createdBy.username == form.uctx.username then
-                            div [ class "dropdown is-right is-pulled-right " ]
-                                [ div [ class "dropdown-trigger" ]
+                        , div [ class "is-pulled-right" ]
+                            [ div [ class "dropdown is-right mr-2" ]
+                                [ div [ class "dropdown-trigger is-w is-h" ]
                                     [ div
                                         [ class "ellipsis"
-                                        , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
+                                        , attribute "aria-controls" ("emoticon-" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ A.icon "icon-ellipsis-v" ]
+                                        [ A.icon "icon-smile icon-bg" ]
                                     ]
-                                , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content p-0" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (op.doUpdate c) ] [ text T.edit ] ] ]
+                                , div [ id ("emoticon-" ++ c.id), class "dropdown-menu emojis", attribute "role" "menu" ]
+                                    [ Extra.emojis
+                                        |> List.map (\( i, x, _ ) -> span [ onClick (op.doAddReaction c.id i) ] [ text x ])
+                                        |> div [ class "dropdown-content" ]
                                     ]
                                 ]
+                            , div [ class "dropdown is-right" ]
+                                [ div [ class "dropdown-trigger is-w is-h" ]
+                                    [ div
+                                        [ class "ellipsis"
+                                        , attribute "aria-controls" ("edit-ellipsis-" ++ c.id)
+                                        , attribute "aria-haspopup" "true"
+                                        ]
+                                        [ A.icon "icon-more-horizontal icon-lg" ]
+                                    ]
+                                , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
+                                    [ div [ class "dropdown-content p-0" ] <|
+                                        [ div [ class "dropdown-item button-light", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
+                                            ++ (if isAuthor then
+                                                    [ hr [ class "dropdown-divider" ] []
+                                                    , div [ class "dropdown-item button-light", onClick (op.doUpdate c) ] [ text T.edit ]
+                                                    ]
 
-                          else
-                            text ""
+                                                else
+                                                    []
+                                               )
+                                    ]
+                                ]
+                            ]
                         ]
                     , div [ class "message-body" ]
                         [ case c.message of
@@ -126,6 +162,53 @@ viewComment op c form result =
 
                             message ->
                                 renderMarkdown "is-human" message
+                        , div [ class "emoji-reactions" ] <|
+                            List.map
+                                (\r ->
+                                    case List.length r.users of
+                                        0 ->
+                                            text ""
+
+                                        count ->
+                                            let
+                                                isSelected =
+                                                    List.member form.uctx.username r.users
+
+                                                elmId =
+                                                    "emoji-" ++ c.id ++ String.fromInt r.type_
+                                            in
+                                            span
+                                                [ class "tag mr-2 dropdown is-up"
+                                                , classList [ ( "is-selected", isSelected ) ]
+                                                ]
+                                                [ div
+                                                    [ class "dropdown-trigger"
+                                                    , attribute "aria-controls" elmId
+                                                    , attribute "aria-haspopup" "true"
+                                                    , if isSelected then
+                                                        onClick (op.doDeleteReaction c.id r.type_)
+
+                                                      else
+                                                        onClick (op.doAddReaction c.id r.type_)
+                                                    ]
+                                                    [ text (Extra.getEmoji r.type_), span [ class "px-1" ] [], text (String.fromInt count) ]
+                                                , div [ id elmId, class "dropdown-menu", attribute "role" "menu" ]
+                                                    [ div [ class "dropdown-content p-3" ]
+                                                        [ span [ class "is-larger4 pr-2" ] [ text (Extra.getEmoji r.type_) ]
+                                                        , case LE.unconsLast r.users of
+                                                            Just ( u, [] ) ->
+                                                                text (u ++ " " ++ T.reactedWith ++ " " ++ Extra.getEmojiName r.type_ ++ " emoji")
+
+                                                            Just ( u, us ) ->
+                                                                text (String.join ", " us ++ " " ++ T.and ++ " " ++ u ++ " " ++ T.reactedWith ++ " " ++ Extra.getEmojiName r.type_ ++ " emoji")
+
+                                                            Nothing ->
+                                                                text ""
+                                                        ]
+                                                    ]
+                                                ]
+                                )
+                                c.reactions
                         ]
                     ]
             ]
@@ -145,7 +228,7 @@ viewUpdateInput op uctx comment form result =
             message /= comment.message
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "updateCommentInput" "" op form ]
+        [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "updateCommentInput" "" op form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
@@ -214,7 +297,7 @@ viewCommentInput op uctx tension form result =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "commentInput" "" op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -276,7 +359,7 @@ viewContractCommentInput op uctx form result =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentHeader "commentContractInput" "" op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentContractInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -318,7 +401,7 @@ viewContractCommentInput op uctx form result =
 --
 
 
-viewCommentHeader targetid cls_tabs op form =
+viewCommentInputHeader targetid cls_tabs op form =
     let
         isMdHelpOpen =
             Dict.get ("isMdHelpOpen" ++ targetid) form.post == Just "true"
@@ -400,7 +483,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]
-                [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
+                [ renderMarkdown "is-human hidden-textarea" message, hr [ class "has-background-border-light" ] [] ]
 
           else
             text ""

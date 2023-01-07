@@ -164,7 +164,7 @@ frac6Renderer style recursive =
                 if recursive then
                     mardownRoutine
                         style
-                        ( "(^|[^\\w\\[\\`])https?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
+                        ( "(^|[^\\w\\[\\`])https?://[\\w\\-\\+\\.\\?\\#/@~&=:]+", autoLink )
                         [ ( "(^|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
                         , ( "(^|[^\\w\\[\\`])0x[0-9a-f]+", tensionLink )
 
@@ -271,7 +271,7 @@ frac6Parser content =
         -- Tension format
         --|> Regex.replace (regexFromString "\\b0x[0-9a-f]+") tensionLink
         -- Autolink
-        --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~:=]+") autoLink
+        --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=:]+") autoLink
         --
         -- Force line break (except for Table)
         |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)

@@ -57,6 +57,10 @@ type AddPendingUserPayload
     = AddPendingUserPayload
 
 
+type AddReactionPayload
+    = AddReactionPayload
+
+
 type AddRoleExtPayload
     = AddRoleExtPayload
 
@@ -159,6 +163,10 @@ type DeletePendingUserPayload
 
 type DeletePostPayload
     = DeletePostPayload
+
+
+type DeleteReactionPayload
+    = DeleteReactionPayload
 
 
 type DeleteRoleExtPayload
@@ -289,6 +297,14 @@ type PostAggregateResult
     = PostAggregateResult
 
 
+type Reaction
+    = Reaction
+
+
+type ReactionAggregateResult
+    = ReactionAggregateResult
+
+
 type RoleExt
     = RoleExt
 
@@ -359,6 +375,10 @@ type UpdatePendingUserPayload
 
 type UpdatePostPayload
     = UpdatePostPayload
+
+
+type UpdateReactionPayload
+    = UpdateReactionPayload
 
 
 type UpdateRoleExtPayload

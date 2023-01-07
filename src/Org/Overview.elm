@@ -315,7 +315,7 @@ init global flags =
             session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         -- Focus
         newFocus =
@@ -1100,11 +1100,11 @@ viewActionPanel domid us node o actionPanel =
                 span []
                     [ span [ id domid ]
                         [ span
-                            [ class "button is-small is-link2 clickMe"
+                            [ class "button is-small clickMe"
                             , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
                             , onClick (OpenActionPanel domid node.nameid Nothing)
                             ]
-                            [ i [ class "icon-ellipsis-v" ] [] ]
+                            [ i [ class "icon-more-vertical" ] [] ]
                         ]
                     , ActionPanel.view panelData actionPanel |> Html.map ActionPanelMsg
                     ]

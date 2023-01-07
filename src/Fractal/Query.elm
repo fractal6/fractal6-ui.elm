@@ -521,6 +521,72 @@ aggregateComment fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateComment" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetReactionOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , reactionid : OptionalArgument String
+    }
+
+
+getReaction :
+    (GetReactionOptionalArguments -> GetReactionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Reaction
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getReaction fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { id = Absent, reactionid = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "id" filledInOptionals____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "reactionid" filledInOptionals____.reactionid Encode.string ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "getReaction" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryReactionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter
+    , order : OptionalArgument Fractal.InputObject.ReactionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryReaction :
+    (QueryReactionOptionalArguments -> QueryReactionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Reaction
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryReaction fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeReactionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryReaction" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateReactionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter }
+
+
+aggregateReaction :
+    (AggregateReactionOptionalArguments -> AggregateReactionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ReactionAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateReaction fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateReaction" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetBlobRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 

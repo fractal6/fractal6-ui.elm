@@ -24,6 +24,30 @@ message =
     Object.selectionForField "String" "message" [] Decode.string
 
 
+type alias ReactionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter
+    , order : OptionalArgument Fractal.InputObject.ReactionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+reactions :
+    (ReactionsOptionalArguments -> ReactionsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Reaction
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Comment
+reactions fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeReactionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "reactions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Comment
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
@@ -57,3 +81,23 @@ createdAt =
 updatedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Comment
 updatedAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+type alias ReactionsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter }
+
+
+reactionsAggregate :
+    (ReactionsAggregateOptionalArguments -> ReactionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ReactionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Comment
+reactionsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "reactionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

@@ -278,6 +278,30 @@ contracts fillInOptionals____ object____ =
     Object.selectionForCompositeField "contracts" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias ReactionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter
+    , order : OptionalArgument Fractal.InputObject.ReactionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+reactions :
+    (ReactionsOptionalArguments -> ReactionsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Reaction
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+reactions fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeReactionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "reactions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias EventsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserEventFilter
     , order : OptionalArgument Fractal.InputObject.UserEventOrder
@@ -465,6 +489,26 @@ contractsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "contractsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias ReactionsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ReactionFilter }
+
+
+reactionsAggregate :
+    (ReactionsAggregateOptionalArguments -> ReactionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ReactionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+reactionsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeReactionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "reactionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias EventsAggregateOptionalArguments =

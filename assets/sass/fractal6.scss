@@ -108,10 +108,10 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .navbar-divider {
-    background-color: var(--border-color);
+    background-color: var(--border-color-light);
 }
 .dropdown-divider {
-    background-color: var(--border-color);
+    background-color: var(--border-color-light);
     margin: 0.1rem 0;
 }
 
@@ -302,6 +302,9 @@ a.is-link {
 }
 .has-background-border-light {
     background-color: var(--border-color-light) !important;
+}
+.has-background-tag {
+    background-color: var(--tag-hint) !important;
 }
 .has-background-header {
     background-color: var(--hbc);
@@ -495,6 +498,15 @@ strong {
 }
 .is-larger {
     font-size: 120% !important;
+}
+.is-larger2 {
+    font-size: 150% !important;
+}
+.is-larger3 {
+    font-size: 200% !important;
+}
+.is-larger4 {
+    font-size: 300% !important;
 }
 
 .is-selectable {
@@ -2337,13 +2349,17 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     .modal-content, .modal-card {
         width: auto;
         .textarea {
-            with: 640px;
+            //width: $modal-width;
+            resize: both;
+        }
+        .hidden-textarea {
+            max-width: calc(#{$modal-width} - 80px);
             resize: both;
         }
     }
     // Don't let columns set their width automatically
     .modal-content .columns, .modal-card .columns {
-        max-width: 640px;
+        max-width: calc(#{$modal-width} - 40px);
     }
 
     // Input Message
@@ -3021,6 +3037,75 @@ i.is-liked {
     background: var(--orga-emoticon-bg);
 }
 
+.emojis {
+    max-width: 400px !important;
+    .dropdown-content {
+        border-radius: 5px;
+        border: 1px solid var(--border-color-light);
+        padding: 10px;
+        & > span {
+            border-radius: 5px;
+            padding: 5px 11px 6px;
+            &:hover, &.is-active {
+                background: var(--background-evidence);
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.emoji-reactions {
+
+    margin-bottom: -0.15rem;
+
+    .tag {
+        margin-top: $size-small;
+        padding: 5px 8px;
+        height: 1.8em;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        background-color: var(--tag-hint);
+        border: 1px solid var(--tag-hint);
+        &:hover {
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        &.is-selected {
+            border: 1px solid var(--border-color);
+            background: var(--tag-hint-active);
+
+        }
+    }
+
+    .tag.dropdown > .dropdown-menu {
+        display: block;
+        visibility: hidden !important;
+    }
+    .tag.dropdown:hover > .dropdown-menu {
+        display: block;
+        transition-delay: 0.5s;
+        visibility: visible !important;
+        .dropdown-content {
+            border-radius: 8px;
+            display: flex;
+            white-space: pre-wrap;
+            align-items: center;
+            margin-bottom: -12px; // Fixed caret margin introduced...
+        }
+		&:after  {
+			content: '';
+			border: 8px solid transparent;
+			//border-top: 4px solid white;
+			border-top: 8px solid var(--dropdown-content-background-color);
+            margin-left: 15px;
+			display: inline-block;
+			vertical-align: top;
+            position: relative;
+            bottom: -12px;
+        }
+    }
+}
+
 /*
  * CSS arrow please
  */
@@ -3137,10 +3222,10 @@ i.is-liked {
     }
 }
 
-.f6-error {
-    color: var(--is-danger);
+.f6-error, .f6-error:hover {
+    color: var(--is-danger) !important;
     .markdown-body {
-        color: var(--is-danger);
+        color: var(--is-danger) !important;
     }
 }
 

@@ -46,7 +46,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
+import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.Error exposing (viewGqlErrors)
 import ModelCommon.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
@@ -68,7 +68,8 @@ import Query.AddContract exposing (deleteOneContract)
 import Query.PatchContract exposing (pushComment, sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
-import Session exposing (Apis, Conf, GlobalCmd(..))
+import Query.Reaction exposing (addReaction, deleteReaction)
+import Session exposing (Apis, Conf, GlobalCmd(..), toReflink)
 import Text as T
 import Time
 
@@ -116,8 +117,8 @@ initModel rootnameid user conf =
     , form = initContractForm user
     , voteForm = initVoteForm user
     , activeView = ContractsView
-    , comment_form = initCommentPatchForm user
-    , comment_patch_form = initCommentPatchForm user
+    , comment_form = initCommentPatchForm (toReflink conf.url) user
+    , comment_patch_form = initCommentPatchForm (toReflink conf.url) user
     , comment_result = NotAsked
 
     -- Common
@@ -291,6 +292,10 @@ type Msg
     | CommentPatchAck (GqlData Comment)
     | OnRichText String String
     | OnToggleMdHelp String
+    | OnAddReaction String Int
+    | OnAddReactionAck (GqlData ReactionResponse)
+    | OnDeleteReaction String Int
+    | OnDeleteReactionAck (GqlData ReactionResponse)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -588,7 +593,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm model.user
+                            initCommentPatchForm (toReflink model.conf.url) model.user
                     in
                     ( { model | contract_result = contract, comment_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver "" ]
@@ -625,7 +630,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm model.user
+                            initCommentPatchForm (toReflink model.conf.url) model.user
                     in
                     ( { model | contract_result = contract, comment_patch_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver "" ]
@@ -670,6 +675,62 @@ update_ apis message model =
                             ternary (v == "true") "false" "true"
                     in
                     ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
+        OnAddReaction cid type_ ->
+            case model.user of
+                LoggedIn uctx ->
+                    ( model, out0 [ addReaction apis uctx.username cid type_ OnAddReactionAck ] )
+
+                LoggedOut ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+
+        OnAddReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser model.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
+
+                OkAuth r ->
+                    let
+                        contract_result =
+                            model.contract_result
+                                |> withMapData (\tc -> { tc | comments = Maybe.map (pushCommentReaction uctx.username r) tc.comments })
+                    in
+                    ( { model | contract_result = contract_result }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
+        OnDeleteReaction cid type_ ->
+            case model.user of
+                LoggedIn uctx ->
+                    ( model, out0 [ deleteReaction apis uctx.username cid type_ OnDeleteReactionAck ] )
+
+                LoggedOut ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+
+        OnDeleteReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser model.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
+
+                OkAuth r ->
+                    let
+                        contract_result =
+                            model.contract_result
+                                |> withMapData (\tc -> { tc | comments = Maybe.map (removeCommentReaction uctx.username r) tc.comments })
+                    in
+                    ( { model | contract_result = contract_result }, noOut )
 
                 _ ->
                     ( model, noOut )
@@ -1134,6 +1195,8 @@ viewComments op conf comments comment_patch_form comment_result =
             , doEditComment = SubmitCommentPatch
             , doRichText = OnRichText
             , doToggleMdHelp = OnToggleMdHelp
+            , doAddReaction = OnAddReaction
+            , doDeleteReaction = OnDeleteReaction
             , conf = conf
             }
     in

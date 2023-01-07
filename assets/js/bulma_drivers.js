@@ -269,6 +269,18 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     //
+    // Copy to clipboard
+    //
+    // * Copy data to clibpard
+    //
+    const $clips = $doc.querySelectorAll('[data-clipboard]');
+    if ($clips.length > 0) {
+        $clips.forEach( el => {
+            setupHandler("click", copyToClipboard, el, el);
+        });
+    }
+
+    //
     // "Rich Text" make checkbox readonly
     //
     //
@@ -420,6 +432,15 @@ function moveFocus(e, el) {
             return true
         }
     }
+}
+
+//
+// Copy to clipboard
+//
+
+function copyToClipboard(e, el) {
+    var text = el.dataset.clipboard;
+    navigator.clipboard.writeText(text);
 }
 
 //

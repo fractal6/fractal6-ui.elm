@@ -24,7 +24,7 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
-import Components.Comments exposing (viewCommentHeader, viewCommentTextarea)
+import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension exposing (viewNodeSelect)
@@ -1175,7 +1175,8 @@ viewModal op (State model) =
             , onClick (OnCloseSafe "" "")
             ]
             []
-        , div [ class "modal-content" ] [ viewStep op (State model) ]
+        , div [ class "modal-content" ]
+            [ viewStep op (State model) ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
@@ -1507,7 +1508,7 @@ viewTension op model =
                         , br [] []
                         ]
                     , div [ class "message" ]
-                        [ div [ class "message-header" ] [ viewCommentHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doToggleMdHelp = OnToggleMdHelp, doChangeViewMode = OnChangeInputViewMode } form ]
+                        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doToggleMdHelp = OnToggleMdHelp, doChangeViewMode = OnChangeInputViewMode } form ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]

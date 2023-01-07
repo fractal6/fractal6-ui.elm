@@ -137,9 +137,10 @@ import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubsc
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
+import Query.Reaction exposing (addReaction, deleteReaction)
 import RemoteData exposing (RemoteData)
 import Scroll
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..), toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Task
@@ -397,6 +398,10 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
     | OnToggleMdHelp String
+    | OnAddReaction String Int
+    | OnAddReactionAck (GqlData ReactionResponse)
+    | OnDeleteReaction String Int
+    | OnDeleteReactionAck (GqlData ReactionResponse)
     | ScrollToElement String
     | UpdateUctx UserCtx
       -- Components
@@ -426,7 +431,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang }
+            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
         -- Query parameters
         query =
@@ -515,7 +520,7 @@ init global flags =
             , title_result = NotAsked
 
             -- Comment Edit
-            , comment_form = initCommentPatchForm global.session.user
+            , comment_form = initCommentPatchForm (toReflink conf.url) global.session.user
             , comment_result = NotAsked
 
             -- Blob Edit
@@ -1117,7 +1122,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm global.session.user
+                            initCommentPatchForm (toReflink model.conf.url) global.session.user
                     in
                     ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
@@ -1475,6 +1480,62 @@ update global message model =
                             ternary (v == "true") "false" "true"
                     in
                     ( { model | comment_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnAddReaction cid type_ ->
+            case global.session.user of
+                LoggedIn uctx ->
+                    ( model, addReaction apis uctx.username cid type_ OnAddReactionAck, Cmd.none )
+
+                LoggedOut ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+        OnAddReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser global.session.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal uctx, Cmd.none )
+
+                OkAuth r ->
+                    let
+                        tension_comments =
+                            model.tension_comments
+                                |> withMapData (\tc -> { tc | comments = Maybe.map (pushCommentReaction uctx.username r) tc.comments })
+                    in
+                    ( { model | tension_comments = tension_comments }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnDeleteReaction cid type_ ->
+            case global.session.user of
+                LoggedIn uctx ->
+                    ( model, deleteReaction apis uctx.username cid type_ OnDeleteReactionAck, Cmd.none )
+
+                LoggedOut ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+        OnDeleteReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser global.session.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal uctx, Cmd.none )
+
+                OkAuth r ->
+                    let
+                        tension_comments =
+                            model.tension_comments
+                                |> withMapData (\tc -> { tc | comments = Maybe.map (removeCommentReaction uctx.username r) tc.comments })
+                    in
+                    ( { model | tension_comments = tension_comments }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -2029,6 +2090,8 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                                     , doEditComment = SubmitCommentPatch
                                     , doRichText = OnRichText
                                     , doToggleMdHelp = OnToggleMdHelp
+                                    , doAddReaction = OnAddReaction
+                                    , doDeleteReaction = OnDeleteReaction
                                     , conf = conf
                                     }
                             in
