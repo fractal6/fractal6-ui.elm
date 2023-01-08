@@ -38,6 +38,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
+import Dict.Extra as DE
 import Extra exposing (space_, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
@@ -79,7 +80,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.Error exposing (viewGqlErrors, viewHttpErrors)
-import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str)
+import ModelCommon.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str, viewUserFull)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -268,6 +269,7 @@ type TensionsView
     = ListView
     | IntExtView
     | CircleView
+    | AssigneeView
 
 
 viewModeEncoder : TensionsView -> String
@@ -282,6 +284,9 @@ viewModeEncoder x =
         CircleView ->
             "circle"
 
+        AssigneeView ->
+            "assignee"
+
 
 viewModeDecoder : String -> TensionsView
 viewModeDecoder x =
@@ -291,6 +296,9 @@ viewModeDecoder x =
 
         "circle" ->
             CircleView
+
+        "assignee" ->
+            AssigneeView
 
         _ ->
             ListView
@@ -533,7 +541,7 @@ nfirstL =
 nfirstC : Int
 nfirstC =
     -- @debug message/warning if thera are more than nfirstC tensions
-    1000
+    200
 
 
 loadEncoder : Int -> String
@@ -776,6 +784,9 @@ init global flags =
                 CircleView ->
                     model.tensions_all == Loading
 
+                AssigneeView ->
+                    model.tensions_all == Loading
+
         refresh2 =
             case global.session.referer of
                 Just referer ->
@@ -807,6 +818,9 @@ init global flags =
 
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
+
+              else if model.viewMode == AssigneeView then
+                [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsAssignee") ]
 
               else if not dataNeedLoad && model.offset == 0 then
                 -- Assume data are already loaded, actualise offset.
@@ -880,8 +894,19 @@ update global message model =
 
                 newConf =
                     { conf | screen = newScreen }
+
+                elmId =
+                    case model.viewMode of
+                        CircleView ->
+                            "tensionsCircle"
+
+                        AssigneeView ->
+                            "tensionsAssignee"
+
+                        _ ->
+                            ""
             in
-            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionScreen newScreen) )
+            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
 
         FitBoard elt ->
             case elt of
@@ -992,31 +1017,24 @@ update global message model =
                 newResult =
                     withMapData
                         (\data ->
-                            --
-                            -- Convert a list of tension into a Dict of tension by Receiverid
-                            --
-                            let
-                                addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
-                                addParam value maybeValues =
-                                    case maybeValues of
-                                        Just values ->
-                                            Just (values ++ [ value ])
-
-                                        Nothing ->
-                                            Just [ value ]
-
-                                toDict2 : List ( String, Tension ) -> Dict String (List Tension)
-                                toDict2 parameters =
-                                    List.foldl
-                                        (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                                        Dict.empty
-                                        parameters
-                            in
-                            List.map (\x -> ( x.receiver.nameid, x )) data |> toDict2
+                            -- Build a dict of (nameid, tensions)
+                            List.map (\x -> ( x.receiver.nameid, [ x ] )) data
+                                |> DE.fromListDedupe (\a b -> a ++ b)
                         )
                         result
+
+                elmId =
+                    case model.viewMode of
+                        CircleView ->
+                            "tensionsCircle"
+
+                        AssigneeView ->
+                            "tensionsAssignee"
+
+                        _ ->
+                            ""
             in
-            ( { model | tensions_all = newResult }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData newResult)) )
+            ( { model | tensions_all = newResult }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionTensionsAll (withMaybeData newResult)) )
 
         GotTensionsCount result ->
             ( { model | tensions_count = result }, Cmd.none, send (UpdateSessionTensionsCount (withMaybeData result)) )
@@ -1064,7 +1082,7 @@ update global message model =
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
 
-            else if model.viewMode == CircleView then
+            else if List.member model.viewMode [ CircleView, AssigneeView ] then
                 ( { model | tensions_all = LoadingSlowly }
                 , fetchTensionAll apis nameids nfirstC 0 model.pattern status model.authors model.labels type_ sort_ GotTensionsAll
                 , Ports.hide "footBar"
@@ -1222,6 +1240,9 @@ update global message model =
 
                         CircleView ->
                             ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
+
+                        AssigneeView ->
+                            ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsAssignee") ] )
             in
             ( { model | viewMode = viewMode }
             , Cmd.batch (ternary needLoad [ send (DoLoad False) ] [] ++ cmds)
@@ -1594,6 +1615,9 @@ view global model =
                 , if model.viewMode == CircleView then
                     viewCircleTensions model
 
+                  else if model.viewMode == AssigneeView then
+                    viewAssigneeTensions model
+
                   else
                     text ""
                 ]
@@ -1613,7 +1637,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         isFullwidth =
-            model.viewMode == CircleView
+            List.member model.viewMode [ CircleView, AssigneeView ]
     in
     div [ id "tensions", class "columns is-centered is-marginless" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
@@ -1634,14 +1658,17 @@ view_ global model =
 
                 CircleView ->
                     text ""
-            , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\x -> (Dict.values x |> List.concat |> List.length) == 1000) |> withDefault False) then
+
+                AssigneeView ->
+                    text ""
+            , if isFullwidth && (withMaybeData model.tensions_all |> Maybe.map (\x -> (Dict.values x |> List.concat |> List.length) >= 200) |> withDefault False) then
                 div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small" ]
                         -- @TODO: load more for CircleView
-                        [ text "Viewing only the 1000 more recent tensions" ]
+                        [ text "Viewing only the 200 more recent tensions" ]
                     ]
 
-              else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
+              else if isFullwidth && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
                 div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small", onClick (DoLoad False) ]
                         [ text T.showMore ]
@@ -1810,6 +1837,13 @@ viewSearchBar model =
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
                         ]
                     ]
+                , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
+                    [ a [ onClickPD (ChangeViewFilter AssigneeView), target "_blank" ]
+                        --[ a [ onClickPD (GoView CircleView), target "_blank" ]
+                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsAssigneeTooltip ]
+                            [ A.icon1 "icon-users" T.byAssignee ]
+                        ]
+                    ]
                 ]
             ]
         ]
@@ -1945,9 +1979,9 @@ viewIntExtTensions model =
 viewCircleTensions : Model -> Html Msg
 viewCircleTensions model =
     let
-        -- Should alway be loaded here !
+        -- Should always be loaded here !
         children =
-            withDefaultWebData [] model.children
+            withDefaultWebData [] model.children |> List.map .nameid
 
         query =
             --model.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
@@ -1962,7 +1996,7 @@ viewCircleTensions model =
                 |> List.filter
                     (\n ->
                         -- Ignore circle with no tensions
-                        case Dict.get n.nameid data of
+                        case Dict.get n data of
                             Nothing ->
                                 False
 
@@ -1976,7 +2010,7 @@ viewCircleTensions model =
                     (\i n ->
                         let
                             tensions =
-                                Dict.get n.nameid data |> withDefault []
+                                Dict.get n data |> withDefault []
 
                             j_last =
                                 List.length tensions - 1
@@ -1984,40 +2018,47 @@ viewCircleTensions model =
                             t_m =
                                 List.head tensions
 
-                            rcv_name_m =
-                                Maybe.map (.receiver >> .name) t_m
+                            header : String -> Maybe Tension -> Html Msg
+                            header nn t_mm =
+                                let
+                                    title_name =
+                                        Maybe.map (.receiver >> .name) t_m
+                                in
+                                span []
+                                    [ title_name
+                                        |> Maybe.map
+                                            (\x ->
+                                                if nn == model.node_focus.nameid then
+                                                    text x
+
+                                                else
+                                                    a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri nn []) ]
+                                                        [ text x ]
+                                            )
+                                        |> withDefault (text "Loading...")
+                                    , span
+                                        [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
+
+                                        --  It's distracting for for the eyes (works with onMouseEnter below)
+                                        --, classList [ ( "is-invisible", model.hover_column /= Just nn ) ]
+                                        , onClick (NewTensionMsg (NTF.OnOpen (FromNameid nn)))
+                                        ]
+                                        [ A.icon "icon-plus" ]
+                                    ]
                         in
                         [ div
                             [ class "column is-3"
-                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n.nameid } False)
+                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n } False)
                             , onDragLeave OnMoveLeaveC
 
                             -- @DEBUG doesn't work
-                            --, onDrop (OnMoveDrop n.nameid)
+                            --, onDrop (OnMoveDrop n)
                             , attribute "ondragover" "return false"
 
-                            --, onMouseEnter (OnColumnHover (Just n.nameid)
+                            --, onMouseEnter (OnColumnHover (Just n))
                             ]
                             [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
-                                [ rcv_name_m
-                                    |> Maybe.map
-                                        (\x ->
-                                            if n.nameid == model.node_focus.nameid then
-                                                text x
-
-                                            else
-                                                a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri n.nameid [] ++ query) ]
-                                                    [ text x ]
-                                        )
-                                    |> withDefault (text "Loading...")
-                                , span
-                                    [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
-
-                                    --, classList [ ( "is-invisible", model.hover_column /= Just n.nameid ) ]
-                                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid n.nameid)))
-                                    ]
-                                    [ A.icon "icon-plus" ]
-                                ]
+                                [ header n t_m ]
                             , tensions
                                 --|> List.sortBy .createdAt
                                 |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -2123,6 +2164,169 @@ viewCircleTensions model =
 
         _ ->
             div [ class "spinner" ] []
+
+
+viewAssigneeTensions : Model -> Html Msg
+viewAssigneeTensions model =
+    case model.tensions_all of
+        Success data_ ->
+            let
+                -- Build a dict of (assignee, tensions)
+                data =
+                    Dict.values data_
+                        |> List.concat
+                        |> List.map (\t -> withDefault [] t.assignees |> List.map (\x -> ( x.username, [ t ] )))
+                        |> List.concat
+                        |> DE.fromListDedupe (\a b -> a ++ b)
+            in
+            Dict.keys data
+                |> List.indexedMap
+                    (\i n ->
+                        let
+                            tensions =
+                                Dict.get n data |> withDefault []
+
+                            j_last =
+                                List.length tensions - 1
+
+                            t_m =
+                                List.head tensions
+
+                            header : String -> Maybe Tension -> Html Msg
+                            header nn t_mm =
+                                let
+                                    user =
+                                        Maybe.map (.assignees >> withDefault [] >> LE.find (\t -> t.username == nn)) t_mm
+                                            |> withDefault Nothing
+                                in
+                                span []
+                                    [ user
+                                        |> Maybe.map (\u -> viewUserFull 1 True False u)
+                                        |> withDefault (text "Loading...")
+                                    ]
+                        in
+                        [ div
+                            [ class "column is-3"
+                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n } False)
+                            , onDragLeave OnMoveLeaveC
+
+                            -- @DEBUG doesn't work
+                            --, onDrop (OnMoveDrop n)
+                            , attribute "ondragover" "return false"
+
+                            --, onMouseEnter (OnColumnHover (Just n)
+                            ]
+                            [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
+                                [ header n t_m ]
+                            , tensions
+                                --|> List.sortBy .createdAt
+                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
+                                |> List.indexedMap
+                                    (\j t ->
+                                        let
+                                            draggedTid =
+                                                Maybe.map .id model.movingTension
+
+                                            itemDragged =
+                                                draggedTid == Just t.id
+
+                                            upperTid =
+                                                LE.getAt (j - 1) tensions |> Maybe.map .id
+
+                                            isHoveredUp =
+                                                -- exclude the dragged item
+                                                not itemDragged
+                                                    -- hovered tension
+                                                    && (Maybe.map .tid model.movingHoverT == Just t.id)
+                                                    -- exclude if the dragged item is next
+                                                    && (draggedTid /= upperTid)
+
+                                            hasLastColumn =
+                                                -- exclude the dragged item
+                                                not itemDragged
+                                                    -- nothing to drag
+                                                    && (model.movingHoverT == Nothing)
+                                                    -- last item
+                                                    && (j_last == j && Maybe.map .pos model.movingHoverC == Just i)
+
+                                            draggingDiv =
+                                                div
+                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
+                                                    , style "opacity" "0.6"
+
+                                                    --, style "height" "0rem"
+                                                    ]
+                                                    []
+                                        in
+                                        ternary isHoveredUp
+                                            [ draggingDiv ]
+                                            []
+                                            ++ [ div
+                                                    ([ class "box is-shrinked2 mb-2 mx-2"
+                                                     , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
+                                                     , attribute "draggable" "true"
+                                                     , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
+                                                     , onDragStart <| OnMove { pos = i, to_receiverid = t.receiver.nameid } t
+                                                     , onDragEnd OnEndMove
+                                                     , onDragEnter (OnMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
+                                                     ]
+                                                        ++ (if j_last == j then
+                                                                -- reset hoverT to draw below
+                                                                [ onDragLeave (OnMoveEnterC { pos = i, to_receiverid = t.receiver.nameid } True) ]
+
+                                                            else
+                                                                []
+                                                           )
+                                                    )
+                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" ]
+                                               ]
+                                            ++ ternary hasLastColumn
+                                                [ draggingDiv ]
+                                                []
+                                    )
+                                |> List.concat
+                                |> div [ class "content scrollbar-thin" ]
+                            ]
+                        , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
+                        ]
+                    )
+                |> List.concat
+                |> (\x ->
+                        if List.length x == 0 then
+                            [ div [ class "ml-6 p-6" ]
+                                [ text T.noTensionsAssigneesYet
+                                , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
+                                    (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
+                                    (text "")
+                                ]
+                            ]
+
+                        else
+                            x
+                   )
+                |> div
+                    [ id "tensionsCircle"
+                    , class "columns is-fullwidth is-marginless is-mobile kb-board"
+
+                    --, onMouseLeave (OnColumnHover Nothing)
+                    , attribute "style" <|
+                        case model.boardHeight of
+                            Just h ->
+                                "overflow-y: hidden; overflow-x: auto; height:" ++ String.fromFloat h ++ "px;"
+
+                            Nothing ->
+                                "overflow-y: hidden; overflow-x: auto;"
+                    ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        _ ->
+            div [ class "spinner" ] []
+
+
+
+-- viewBoard elmId data move?
 
 
 viewTensions : Conf -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg

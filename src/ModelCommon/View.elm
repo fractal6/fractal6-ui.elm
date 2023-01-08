@@ -486,17 +486,22 @@ viewUserFull size isLinked isBoxed user =
             else
                 ( span, [] )
     in
-    ob (ternary isBoxed ([ title user.username, class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk) ([] ++ lk))
+    ob
+        (ternary isBoxed
+            ([ title user.username, class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
+            ([] ++ lk)
+        )
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
             [ avatar user.username ]
-        , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
-            [ case user.name of
+        , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ] <|
+            case user.name of
                 Just name ->
-                    span [] [ span [ class "is-name" ] [ text name ], span [ class "is-username ml-2" ] [ text user.username ] ]
+                    [ span [ class "is-name" ] [ text name ]
+                    , span [ class "is-username ml-2" ] [ text user.username ]
+                    ]
 
                 Nothing ->
-                    span [ class "is-username" ] [ text user.username ]
-            ]
+                    [ span [ class "is-username" ] [ text user.username ] ]
         ]
 
 

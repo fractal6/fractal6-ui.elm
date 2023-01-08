@@ -477,6 +477,7 @@ tensionPayload =
                 Fractal.Object.Tension.commentsAggregate identity <|
                     SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
             )
+        |> hardcoded Nothing
 
 
 tensionPayloadFiltered : List User -> List Label -> SelectionSet Tension Fractal.Object.Tension
@@ -497,6 +498,7 @@ tensionPayloadFiltered authors labels =
                 Fractal.Object.Tension.commentsAggregate identity <|
                     SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
             )
+        |> hardcoded Nothing
 
 
 

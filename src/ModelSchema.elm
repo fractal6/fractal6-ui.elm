@@ -258,6 +258,9 @@ type alias Tension =
 
     -- aggregate
     , n_comments : Maybe Int
+
+    -- Extra / Might be hardocded / use with TensionsAll
+    , assignees : Maybe (List User)
     }
 
 

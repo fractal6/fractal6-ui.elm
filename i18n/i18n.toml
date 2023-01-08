@@ -403,6 +403,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="See by circles"
   fr="Voir par cercles"
 
+[seeByAssignee]
+  en="See by assignees"
+  fr="Voir par assignés"
+
 [organisation]
   en="Organization"
   fr="Organisation"
@@ -569,6 +573,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [byCircle]
   en="By circles"
   fr="Par cercles"
+
+[byAssignee]
+  en="By assignees"
+  fr="Par assignés"
 
 [by]
   en="by"
@@ -1673,6 +1681,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No tensions yet."
   fr="Aucune tensions pour le moment"
 
+[noTensionsAssigneesYet]
+  en="No tensions assigned yet."
+  fr="Aucune tensions assignés pour le moment"
+
 [rolesHere]
   en="Roles in this circle"
   fr="Roles dans ce cercle"
@@ -1772,6 +1784,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [tensionsCircleTooltip]
   en="Display tensions by (targeted) circles."
   fr="Afficher les tensions par cercles (ciblés)."
+
+[tensionsAssigneeTooltip]
+  en="Display tensions by assigned members."
+  fr="Afficher les tensions par membres assignés."
 
 [explainJoin]
   en="Explain your motivations for joining this organisation ?"

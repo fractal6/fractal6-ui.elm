@@ -68,8 +68,11 @@ import Set
 
 {-
 
-   ModelCommon are a collections of modesl forms share accros components
+   Bulk are a collections of model forms share accros components
    and utiliy function for data manipulations.
+
+   Bulk/ folder contains extra view and utility share accros
+   components to manipulate and visualize data.
 
 -}
 --

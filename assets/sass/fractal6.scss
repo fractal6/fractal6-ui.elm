@@ -294,6 +294,10 @@ a.is-link {
     color: var(--text-light2);
     font-size: $size-7;
 }
+a.is-name:hover, a.is-username:hover,
+a:hover .is-name, a:hover .is-username {
+    color: var(--is-highlight);
+}
 .has-background-evidence {
     background-color: var(--background-evidence) !important;
 }

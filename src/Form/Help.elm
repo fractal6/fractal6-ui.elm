@@ -340,12 +340,8 @@ update_ apis message model =
         OnCloseSafe link onCloseTxt ->
             let
                 doClose =
-                    NT.hasData model.formFeedback
-                        && withMaybeData model.formFeedback.result
-                        == Nothing
-                        || NT.hasData model.formAsk
-                        && withMaybeData model.formFeedback.result
-                        == Nothing
+                    (NT.hasData model.formFeedback && withMaybeData model.formFeedback.result == Nothing)
+                        || (NT.hasData model.formAsk && withMaybeData model.formFeedback.result == Nothing)
             in
             if doClose then
                 ( model
