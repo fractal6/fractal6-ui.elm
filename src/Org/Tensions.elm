@@ -27,6 +27,11 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Board exposing (viewBoard)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str, viewUserFull)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -77,10 +82,6 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str, viewUserFull)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -1640,9 +1641,9 @@ view_ global model =
             List.member model.viewMode [ CircleView, AssigneeView ]
     in
     div [ id "tensions", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd pt-1", classList [ ( "pb-0", isFullwidth ) ] ]
             [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                [ div [ class "column is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
+                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ] [ viewSearchBar model ] ]
             , case model.children of
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -1668,7 +1669,7 @@ view_ global model =
                         [ text "Viewing only the 200 more recent tensions" ]
                     ]
 
-              else if isFullwidth && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
+              else if not isFullwidth && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
                 div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small", onClick (DoLoad False) ]
                         [ text T.showMore ]
@@ -1978,186 +1979,84 @@ viewIntExtTensions model =
 
 viewCircleTensions : Model -> Html Msg
 viewCircleTensions model =
-    let
-        -- Should always be loaded here !
-        children =
-            withDefaultWebData [] model.children |> List.map .nameid
-
-        query =
-            --model.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
-            Dict.toList model.query
-                |> List.map (\( k, v ) -> ( k, List.head v |> withDefault "" ))
-                |> queryBuilder
-                |> (\q -> ternary (q == "") "" ("?" ++ q))
-    in
     case model.tensions_all of
         Success data ->
-            children
-                |> List.filter
-                    (\n ->
-                        -- Ignore circle with no tensions
-                        case Dict.get n data of
-                            Nothing ->
-                                False
+            let
+                keys =
+                    withDefaultWebData [] model.children
+                        |> List.map .nameid
+                        |> List.filter
+                            (\n ->
+                                -- Ignore circle with no tensions
+                                case Dict.get n data of
+                                    Nothing ->
+                                        False
 
-                            Just [] ->
-                                False
+                                    Just [] ->
+                                        False
 
-                            _ ->
-                                True
-                    )
-                |> List.indexedMap
-                    (\i n ->
-                        let
-                            tensions =
-                                Dict.get n data |> withDefault []
+                                    _ ->
+                                        True
+                            )
 
-                            j_last =
-                                List.length tensions - 1
+                query =
+                    --model.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+                    Dict.toList model.query
+                        |> List.map (\( k, v ) -> ( k, List.head v |> withDefault "" ))
+                        |> queryBuilder
+                        |> (\q -> ternary (q == "") "" ("?" ++ q))
 
-                            t_m =
-                                List.head tensions
+                header : String -> Maybe Tension -> Html Msg
+                header n t_m =
+                    let
+                        title_name =
+                            Maybe.map (.receiver >> .name) t_m
+                    in
+                    span []
+                        [ title_name
+                            |> Maybe.map
+                                (\x ->
+                                    if n == model.node_focus.nameid then
+                                        text x
 
-                            header : String -> Maybe Tension -> Html Msg
-                            header nn t_mm =
-                                let
-                                    title_name =
-                                        Maybe.map (.receiver >> .name) t_m
-                                in
-                                span []
-                                    [ title_name
-                                        |> Maybe.map
-                                            (\x ->
-                                                if nn == model.node_focus.nameid then
-                                                    text x
+                                    else
+                                        a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri n [] ++ query) ]
+                                            [ text x ]
+                                )
+                            |> withDefault (text "Loading...")
+                        , span
+                            [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
 
-                                                else
-                                                    a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri nn []) ]
-                                                        [ text x ]
-                                            )
-                                        |> withDefault (text "Loading...")
-                                    , span
-                                        [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
-
-                                        --  It's distracting for for the eyes (works with onMouseEnter below)
-                                        --, classList [ ( "is-invisible", model.hover_column /= Just nn ) ]
-                                        , onClick (NewTensionMsg (NTF.OnOpen (FromNameid nn)))
-                                        ]
-                                        [ A.icon "icon-plus" ]
-                                    ]
-                        in
-                        [ div
-                            [ class "column is-3"
-                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n } False)
-                            , onDragLeave OnMoveLeaveC
-
-                            -- @DEBUG doesn't work
-                            --, onDrop (OnMoveDrop n)
-                            , attribute "ondragover" "return false"
-
-                            --, onMouseEnter (OnColumnHover (Just n))
+                            --  It's distracting for for the eyes (works with onMouseEnter below)
+                            --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]
+                            , onClick (NewTensionMsg (NTF.OnOpen (FromNameid n)))
                             ]
-                            [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
-                                [ header n t_m ]
-                            , tensions
-                                --|> List.sortBy .createdAt
-                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
-                                |> List.indexedMap
-                                    (\j t ->
-                                        let
-                                            draggedTid =
-                                                Maybe.map .id model.movingTension
-
-                                            itemDragged =
-                                                draggedTid == Just t.id
-
-                                            upperTid =
-                                                LE.getAt (j - 1) tensions |> Maybe.map .id
-
-                                            isHoveredUp =
-                                                -- exclude the dragged item
-                                                not itemDragged
-                                                    -- hovered tension
-                                                    && (Maybe.map .tid model.movingHoverT == Just t.id)
-                                                    -- exclude if the dragged item is next
-                                                    && (draggedTid /= upperTid)
-
-                                            hasLastColumn =
-                                                -- exclude the dragged item
-                                                not itemDragged
-                                                    -- nothing to drag
-                                                    && (model.movingHoverT == Nothing)
-                                                    -- last item
-                                                    && (j_last == j && Maybe.map .pos model.movingHoverC == Just i)
-
-                                            draggingDiv =
-                                                div
-                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
-                                                    , style "opacity" "0.6"
-
-                                                    --, style "height" "0rem"
-                                                    ]
-                                                    []
-                                        in
-                                        ternary isHoveredUp
-                                            [ draggingDiv ]
-                                            []
-                                            ++ [ div
-                                                    ([ class "box is-shrinked2 mb-2 mx-2"
-                                                     , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
-                                                     , attribute "draggable" "true"
-                                                     , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                                     , onDragStart <| OnMove { pos = i, to_receiverid = t.receiver.nameid } t
-                                                     , onDragEnd OnEndMove
-                                                     , onDragEnter (OnMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
-                                                     ]
-                                                        ++ (if j_last == j then
-                                                                -- reset hoverT to draw below
-                                                                [ onDragLeave (OnMoveEnterC { pos = i, to_receiverid = t.receiver.nameid } True) ]
-
-                                                            else
-                                                                []
-                                                           )
-                                                    )
-                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" ]
-                                               ]
-                                            ++ ternary hasLastColumn
-                                                [ draggingDiv ]
-                                                []
-                                    )
-                                |> List.concat
-                                |> div [ class "content scrollbar-thin" ]
-                            ]
-                        , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
+                            [ A.icon "icon-plus" ]
                         ]
-                    )
-                |> List.concat
-                |> (\x ->
-                        if List.length x == 0 then
-                            [ div [ class "ml-6 p-6" ]
-                                [ text T.noTensionsYet
-                                , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                                    (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                                    (text "")
-                                ]
-                            ]
 
-                        else
-                            x
-                   )
-                |> div
-                    [ id "tensionsCircle"
-                    , class "columns is-fullwidth is-marginless is-mobile kb-board"
+                op =
+                    { hasTaskMove = True
+                    , conf = model.conf
+                    , node_focus = model.node_focus
+                    , boardId = "tensionsCircle"
+                    , boardHeight = model.boardHeight
+                    , movingTension = model.movingTension
+                    , movingHoverC = model.movingHoverC
+                    , movingHoverT = model.movingHoverT
 
-                    --, onMouseLeave (OnColumnHover Nothing)
-                    , attribute "style" <|
-                        case model.boardHeight of
-                            Just h ->
-                                "overflow-y: hidden; overflow-x: auto; height:" ++ String.fromFloat h ++ "px;"
-
-                            Nothing ->
-                                "overflow-y: hidden; overflow-x: auto;"
-                    ]
+                    -- Board Msg
+                    , onColumnHover = OnColumnHover
+                    , onMove = OnMove
+                    , onCancelHov = OnCancelHov
+                    , onEndMove = OnEndMove
+                    , onMoveEnterC = OnMoveEnterC
+                    , onMoveLeaveC = OnMoveLeaveC
+                    , onMoveEnterT = OnMoveEnterT
+                    , onMoveDrop = OnMoveDrop
+                    , onNoTask = OnGoRoot
+                    }
+            in
+            viewBoard op header keys data
 
         Failure err ->
             viewGqlErrors err
@@ -2178,145 +2077,46 @@ viewAssigneeTensions model =
                         |> List.map (\t -> withDefault [] t.assignees |> List.map (\x -> ( x.username, [ t ] )))
                         |> List.concat
                         |> DE.fromListDedupe (\a b -> a ++ b)
-            in
-            Dict.keys data
-                |> List.indexedMap
-                    (\i n ->
-                        let
-                            tensions =
-                                Dict.get n data |> withDefault []
 
-                            j_last =
-                                List.length tensions - 1
+                keys =
+                    Dict.keys data
 
-                            t_m =
-                                List.head tensions
-
-                            header : String -> Maybe Tension -> Html Msg
-                            header nn t_mm =
-                                let
-                                    user =
-                                        Maybe.map (.assignees >> withDefault [] >> LE.find (\t -> t.username == nn)) t_mm
-                                            |> withDefault Nothing
-                                in
-                                span []
-                                    [ user
-                                        |> Maybe.map (\u -> viewUserFull 1 True False u)
-                                        |> withDefault (text "Loading...")
-                                    ]
-                        in
-                        [ div
-                            [ class "column is-3"
-                            , onDragEnter (OnMoveEnterC { pos = i, to_receiverid = n } False)
-                            , onDragLeave OnMoveLeaveC
-
-                            -- @DEBUG doesn't work
-                            --, onDrop (OnMoveDrop n)
-                            , attribute "ondragover" "return false"
-
-                            --, onMouseEnter (OnColumnHover (Just n)
-                            ]
-                            [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
-                                [ header n t_m ]
-                            , tensions
-                                --|> List.sortBy .createdAt
-                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
-                                |> List.indexedMap
-                                    (\j t ->
-                                        let
-                                            draggedTid =
-                                                Maybe.map .id model.movingTension
-
-                                            itemDragged =
-                                                draggedTid == Just t.id
-
-                                            upperTid =
-                                                LE.getAt (j - 1) tensions |> Maybe.map .id
-
-                                            isHoveredUp =
-                                                -- exclude the dragged item
-                                                not itemDragged
-                                                    -- hovered tension
-                                                    && (Maybe.map .tid model.movingHoverT == Just t.id)
-                                                    -- exclude if the dragged item is next
-                                                    && (draggedTid /= upperTid)
-
-                                            hasLastColumn =
-                                                -- exclude the dragged item
-                                                not itemDragged
-                                                    -- nothing to drag
-                                                    && (model.movingHoverT == Nothing)
-                                                    -- last item
-                                                    && (j_last == j && Maybe.map .pos model.movingHoverC == Just i)
-
-                                            draggingDiv =
-                                                div
-                                                    [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
-                                                    , style "opacity" "0.6"
-
-                                                    --, style "height" "0rem"
-                                                    ]
-                                                    []
-                                        in
-                                        ternary isHoveredUp
-                                            [ draggingDiv ]
-                                            []
-                                            ++ [ div
-                                                    ([ class "box is-shrinked2 mb-2 mx-2"
-                                                     , classList [ ( "is-dragging", model.movingHoverT /= Nothing ) ]
-                                                     , attribute "draggable" "true"
-                                                     , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                                     , onDragStart <| OnMove { pos = i, to_receiverid = t.receiver.nameid } t
-                                                     , onDragEnd OnEndMove
-                                                     , onDragEnter (OnMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
-                                                     ]
-                                                        ++ (if j_last == j then
-                                                                -- reset hoverT to draw below
-                                                                [ onDragLeave (OnMoveEnterC { pos = i, to_receiverid = t.receiver.nameid } True) ]
-
-                                                            else
-                                                                []
-                                                           )
-                                                    )
-                                                    [ mediaTension model.conf model.node_focus t True False "is-size-6" ]
-                                               ]
-                                            ++ ternary hasLastColumn
-                                                [ draggingDiv ]
-                                                []
-                                    )
-                                |> List.concat
-                                |> div [ class "content scrollbar-thin" ]
-                            ]
-                        , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
+                header : String -> Maybe Tension -> Html Msg
+                header n t_m =
+                    let
+                        user =
+                            Maybe.map (.assignees >> withDefault [] >> LE.find (\t -> t.username == n)) t_m
+                                |> withDefault Nothing
+                    in
+                    span []
+                        [ user
+                            |> Maybe.map (\u -> viewUserFull 1 True False u)
+                            |> withDefault (text "Loading...")
                         ]
-                    )
-                |> List.concat
-                |> (\x ->
-                        if List.length x == 0 then
-                            [ div [ class "ml-6 p-6" ]
-                                [ text T.noTensionsAssigneesYet
-                                , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                                    (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                                    (text "")
-                                ]
-                            ]
 
-                        else
-                            x
-                   )
-                |> div
-                    [ id "tensionsCircle"
-                    , class "columns is-fullwidth is-marginless is-mobile kb-board"
+                op =
+                    { hasTaskMove = False
+                    , conf = model.conf
+                    , node_focus = model.node_focus
+                    , boardId = "tensionsAssignee"
+                    , boardHeight = model.boardHeight
+                    , movingTension = model.movingTension
+                    , movingHoverC = model.movingHoverC
+                    , movingHoverT = model.movingHoverT
 
-                    --, onMouseLeave (OnColumnHover Nothing)
-                    , attribute "style" <|
-                        case model.boardHeight of
-                            Just h ->
-                                "overflow-y: hidden; overflow-x: auto; height:" ++ String.fromFloat h ++ "px;"
-
-                            Nothing ->
-                                "overflow-y: hidden; overflow-x: auto;"
-                    ]
+                    -- Board Msg
+                    , onColumnHover = OnColumnHover
+                    , onMove = OnMove
+                    , onCancelHov = OnCancelHov
+                    , onEndMove = OnEndMove
+                    , onMoveEnterC = OnMoveEnterC
+                    , onMoveLeaveC = OnMoveLeaveC
+                    , onMoveEnterT = OnMoveEnterT
+                    , onMoveDrop = OnMoveDrop
+                    , onNoTask = OnGoRoot
+                    }
+            in
+            viewBoard op header keys data
 
         Failure err ->
             viewGqlErrors err

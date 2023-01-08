@@ -2610,14 +2610,11 @@ i.is-liked {
 
 #searchBarTensions {
     & > .field {
-        margin-bottom: 0.25rem !important;
+        margin-bottom: 0.25rem;
     }
 
     .tabs {
-        margin-bottom: 0.75rem !important;
-        li.is-active a {
-            font-weight: 600 !important;
-        }
+        margin-bottom: 0;
     }
 }
 
