@@ -19,7 +19,7 @@
 -}
 
 
-module ModelCommon.Error exposing (..)
+module Bulk.Error exposing (..)
 
 import Assets as A
 import Extra exposing (ternary, textH, upH)
@@ -42,7 +42,7 @@ import Loading
         )
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (NodeFocus)
+import Bulk.Codecs exposing (NodeFocus)
 import RemoteData exposing (RemoteData)
 import Text as T
 

@@ -79,8 +79,8 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Codecs
+import Bulk exposing (..)
+import Bulk.Codecs
     exposing
         ( ActionType(..)
         , DocType(..)
@@ -100,8 +100,8 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import ModelCommon.View
+import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Bulk.View
     exposing
         ( action2icon
         , action2str

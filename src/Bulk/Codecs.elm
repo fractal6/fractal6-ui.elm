@@ -19,7 +19,7 @@
 -}
 
 
-module ModelCommon.Codecs exposing (..)
+module Bulk.Codecs exposing (..)
 
 import Array exposing (Array)
 import Extra exposing (cleanDup, ternary)

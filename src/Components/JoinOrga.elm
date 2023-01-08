@@ -39,9 +39,9 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
-import ModelCommon.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
-import ModelCommon.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
+import Bulk.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

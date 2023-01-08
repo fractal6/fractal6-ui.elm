@@ -34,8 +34,8 @@ import Loading
         , WebData
         )
 import Maybe exposing (withDefault)
-import ModelCommon exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
-import ModelCommon.Codecs exposing (NodeFocus)
+import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
+import Bulk.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData

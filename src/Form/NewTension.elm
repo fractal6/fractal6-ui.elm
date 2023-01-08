@@ -60,7 +60,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelCommon
+import Bulk
     exposing
         ( Ev
         , InputViewMode(..)
@@ -77,9 +77,9 @@ import ModelCommon
         , sortNode
         , tensionToActionForm
         )
-import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
-import ModelCommon.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
+import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

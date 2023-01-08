@@ -36,10 +36,10 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
-import ModelCommon.Error exposing (viewGqlErrors)
-import ModelCommon.View exposing (viewUser)
+import Bulk exposing (ActionForm, UserState(..), initActionForm)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format
 import Text as T

@@ -33,7 +33,7 @@ import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
+import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
 import Regex
 import String exposing (startsWith, toLower)
 

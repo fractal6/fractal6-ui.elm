@@ -19,7 +19,7 @@
 -}
 
 
-module ModelCommon.View exposing (..)
+module Bulk.View exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
@@ -44,8 +44,8 @@ import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs
+import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk.Codecs
     exposing
         ( ActionType(..)
         , DocType(..)

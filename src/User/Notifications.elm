@@ -46,10 +46,10 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMapData, withMaybeSlowly)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
-import ModelCommon.Error exposing (viewGqlErrors)
-import ModelCommon.Event
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event
     exposing
         ( contractEventToText
         , contractToJonction
@@ -62,7 +62,7 @@ import ModelCommon.Event
         , viewEventMedia
         , viewNotifMedia
         )
-import ModelCommon.View exposing (byAt, counter, mediaTension, viewOrga)
+import Bulk.View exposing (byAt, counter, mediaTension, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

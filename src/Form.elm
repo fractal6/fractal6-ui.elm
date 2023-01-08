@@ -22,7 +22,7 @@
 module Form exposing (..)
 
 import Dict
-import ModelCommon exposing (UserForm)
+import Bulk exposing (UserForm)
 import ModelSchema exposing (Post)
 
 

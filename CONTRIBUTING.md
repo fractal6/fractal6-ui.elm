@@ -22,7 +22,7 @@ Elm code is structured inside the `src/` folder:
 
 - `Form/`: Components used to create new tensions.
 - `Components/`: All other reusable elm components with their own state.
-- `ModelCommon/`: Common data structure, functions, views, and helpers.
+- `Bulk/`: Common data structure, functions, views, and helpers.
 - `Query/`: GQL queries.
 - `ModelSchema`: GQL client.
 - `Request`: REST queries.

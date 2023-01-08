@@ -51,8 +51,8 @@ import Http
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
 import ModelSchema exposing (..)
 import Ports
 import Process

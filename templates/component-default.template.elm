@@ -34,8 +34,8 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), uctxFromUser)
-import ModelCommon.Error exposing (viewGqlErrors)
+import Bulk exposing (UserState(..), uctxFromUser)
+import Bulk.Error exposing (viewGqlErrors)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddData exposing (getData)

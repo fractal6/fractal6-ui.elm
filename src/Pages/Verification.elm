@@ -39,8 +39,8 @@ import Http
 import Loading exposing (WebData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Error exposing (viewHttpErrors)
+import Bulk exposing (..)
+import Bulk.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process

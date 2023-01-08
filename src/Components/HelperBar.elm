@@ -36,9 +36,9 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
-import ModelCommon.View exposing (action2icon, counter, viewRole2)
+import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
+import Bulk.View exposing (action2icon, counter, viewRole2)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
 import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))

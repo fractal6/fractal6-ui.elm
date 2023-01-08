@@ -69,7 +69,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (nid2rootid)
+import Bulk.Codecs exposing (nid2rootid)
 import ModelSchema
     exposing
         ( Blob

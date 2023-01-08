@@ -46,11 +46,11 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
-import ModelCommon.Error exposing (viewGqlErrors)
-import ModelCommon.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
-import ModelCommon.View
+import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
+import Bulk.View
     exposing
         ( byAt
         , viewRole

@@ -19,7 +19,7 @@
 -}
 
 
-module ModelCommon.Event exposing (..)
+module Bulk.Event exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
@@ -42,8 +42,8 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Identicon
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs
+import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk.Codecs
     exposing
         ( ActionType(..)
         , FractalBaseRoute(..)
@@ -53,7 +53,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.View exposing (byAt, statusColor)
+import Bulk.View exposing (byAt, statusColor)
 import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
 import Session exposing (Conf)
 import String.Extra as SE

@@ -39,9 +39,9 @@ import Json.Encode as JE
 import Loading exposing (WebData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), toLink)
-import ModelCommon.Error exposing (viewHttpErrors)
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
+import Bulk.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

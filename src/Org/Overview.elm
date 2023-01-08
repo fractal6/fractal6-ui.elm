@@ -75,8 +75,8 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
-import ModelCommon.Codecs
+import Bulk exposing (..)
+import Bulk.Codecs
     exposing
         ( ActionType(..)
         , DocType(..)
@@ -92,9 +92,9 @@ import ModelCommon.Codecs
         , tensionCharacFromNode
         , uriFromNameid
         )
-import ModelCommon.Error exposing (viewGqlErrors)
-import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
-import ModelCommon.View exposing (mediaTension, viewUsernameLink)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
+import Bulk.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

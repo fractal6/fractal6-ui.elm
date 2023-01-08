@@ -48,7 +48,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess)
 import Maybe exposing (withDefault)
-import ModelCommon
+import Bulk
     exposing
         ( ActionForm
         , Ev
@@ -63,9 +63,9 @@ import ModelCommon
         , makeCandidateContractForm
         , uctxFromUser
         )
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
-import ModelCommon.Error exposing (viewGqlErrors)
-import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

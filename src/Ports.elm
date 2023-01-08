@@ -43,7 +43,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (ModalData)
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (nearestCircleid)
+import Bulk.Codecs exposing (nearestCircleid)
 import ModelSchema
     exposing
         ( Label

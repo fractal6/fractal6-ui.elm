@@ -19,7 +19,7 @@
 -}
 
 
-module ModelCommon exposing (..)
+module Bulk exposing (..)
 
 import Array exposing (Array)
 import Dict exposing (Dict)
@@ -46,7 +46,7 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs
+import Bulk.Codecs
     exposing
         ( FractalBaseRoute(..)
         , contractIdCodec
@@ -417,7 +417,7 @@ makeCandidateContractForm form =
             (\( u, e ) ->
                 let
                     -- @codefactor: put it in Codec.contractIdCodec.
-                    -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+                    -- (pobleme with circular import due to TensionEvent defined in Bulk)
                     ( et, old, new ) =
                         ( TensionEvent.toString e.event_type, e.old, e.new )
 
@@ -458,7 +458,7 @@ form2cid : ActionForm -> String
 form2cid form =
     let
         -- @codefactor: put it in Codec.contractIdCodec.
-        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+        -- (pobleme with circular import due to TensionEvent defined in Bulk)
         ( et, old, new ) =
             List.head form.events
                 |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
