@@ -22,6 +22,10 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
+import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
+import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
 import Extra exposing (space_, ternary, textH, unwrap, upH)
 import Extra.Date exposing (formatDate)
@@ -44,10 +48,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, withDefaultData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewNodeDescr, viewUser, viewUsers)
 import ModelSchema exposing (..)
 import Session exposing (Conf)
 import String.Extra as SE

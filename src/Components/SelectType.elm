@@ -23,6 +23,9 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -38,9 +41,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)

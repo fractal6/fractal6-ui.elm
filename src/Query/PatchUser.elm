@@ -27,6 +27,7 @@ module Query.PatchUser exposing
     , toggleTensionSubscription
     )
 
+import Bulk exposing (UserProfileForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
@@ -46,7 +47,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
-import Bulk exposing (UserProfileForm)
 import ModelSchema exposing (..)
 import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload, userProfilePayload)
 import RemoteData exposing (RemoteData)

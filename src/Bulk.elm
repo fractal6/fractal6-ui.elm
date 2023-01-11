@@ -22,6 +22,21 @@
 module Bulk exposing (..)
 
 import Array exposing (Array)
+import Bulk.Codecs
+    exposing
+        ( FractalBaseRoute(..)
+        , contractIdCodec
+        , getCircleRoles
+        , getCoordoRoles
+        , getOrgaRoles
+        , isCircle
+        , isOwner
+        , memberIdCodec
+        , nearestCircleid
+        , nid2rootid
+        , nodeFromFragment
+        , voteIdCodec
+        )
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
@@ -46,21 +61,6 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import Bulk.Codecs
-    exposing
-        ( FractalBaseRoute(..)
-        , contractIdCodec
-        , getCircleRoles
-        , getCoordoRoles
-        , getOrgaRoles
-        , isCircle
-        , isOwner
-        , memberIdCodec
-        , nearestCircleid
-        , nid2rootid
-        , nodeFromFragment
-        , voteIdCodec
-        )
 import ModelSchema exposing (..)
 import Set
 

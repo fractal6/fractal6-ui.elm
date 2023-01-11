@@ -21,11 +21,11 @@
 
 module Pages.Logout exposing (Flags, Model, Msg, page)
 
+import Bulk exposing (UserState(..))
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html
 import Http
-import Bulk exposing (UserState(..))
 import Page exposing (Document, Page)
 import Requests exposing (logout)
 

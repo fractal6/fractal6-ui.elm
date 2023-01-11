@@ -23,6 +23,9 @@ module Pages.About exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
+import Bulk.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -39,9 +42,6 @@ import Json.Encode as JE
 import Loading exposing (WebData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Bulk.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

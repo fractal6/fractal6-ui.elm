@@ -21,6 +21,7 @@
 
 port module Ports exposing (..)
 
+import Bulk.Codecs exposing (nearestCircleid)
 import Codecs
     exposing
         ( LookupResult
@@ -43,7 +44,6 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (ModalData)
 import Maybe exposing (withDefault)
-import Bulk.Codecs exposing (nearestCircleid)
 import ModelSchema
     exposing
         ( Label

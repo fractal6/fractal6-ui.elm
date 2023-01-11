@@ -24,6 +24,10 @@ module Components.LabelSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
+import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
+import Bulk.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewLabel, viewLabels)
 import Codecs exposing (LookupResult)
 import Dict exposing (Dict)
 import Dom
@@ -38,10 +42,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)

@@ -22,6 +22,9 @@
 module Components.Comments exposing (..)
 
 import Assets as A
+import Bulk exposing (CommentPatchForm, InputViewMode(..), TensionForm)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Dict
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD2)
@@ -35,9 +38,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..))
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (CommentPatchForm, InputViewMode(..), TensionForm)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCtx)
 import Session exposing (Conf, isMobile)
 import Text as T

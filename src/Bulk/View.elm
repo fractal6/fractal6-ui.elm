@@ -22,6 +22,23 @@
 module Bulk.View exposing (..)
 
 import Assets as A
+import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk.Codecs
+    exposing
+        ( ActionType(..)
+        , DocType(..)
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , TensionCharac
+        , eor2ur
+        , getOrgaRoles
+        , getTensionCharac
+        , nid2rootid
+        , nid2type
+        , toLink
+        , uriFromNameid
+        , uriFromUsername
+        )
 import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
@@ -44,23 +61,6 @@ import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , TensionCharac
-        , eor2ur
-        , getOrgaRoles
-        , getTensionCharac
-        , nid2rootid
-        , nid2type
-        , toLink
-        , uriFromNameid
-        , uriFromUsername
-        )
 import ModelSchema
     exposing
         ( EmitterOrReceiver

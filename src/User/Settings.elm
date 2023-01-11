@@ -25,6 +25,10 @@ import Assets as A
 import Assets.Logo as Logo
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (lang2str, viewProfileC)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
@@ -45,10 +49,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (lang2str, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

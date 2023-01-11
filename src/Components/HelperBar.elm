@@ -23,6 +23,9 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 
 import Array
 import Assets as A
+import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
+import Bulk.View exposing (action2icon, counter, viewRole2)
 import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
@@ -36,9 +39,6 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
-import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
-import Bulk.View exposing (action2icon, counter, viewRole2)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
 import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))

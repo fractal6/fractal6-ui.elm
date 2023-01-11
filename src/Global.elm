@@ -37,6 +37,8 @@ module Global exposing
 import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
 import Codecs exposing (WindowPos)
 import Components.Navbar as Navbar
 import Dict
@@ -51,8 +53,6 @@ import Http
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), WebData)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
 import ModelSchema exposing (..)
 import Ports
 import Process

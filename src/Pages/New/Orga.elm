@@ -24,6 +24,10 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
+import Bulk.Error exposing (viewHttpErrors)
+import Bulk.View exposing (visibility2descr, visibility2icon)
 import Components.AuthModal as AuthModal
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
@@ -48,10 +52,6 @@ import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
-import Bulk.Error exposing (viewHttpErrors)
-import Bulk.View exposing (visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

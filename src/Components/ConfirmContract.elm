@@ -23,6 +23,11 @@ module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions,
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (ContractForm, UserState(..), initContractForm)
+import Bulk.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event exposing (contractEventToText, contractTypeToText)
+import Bulk.View exposing (viewTensionArrow)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -40,11 +45,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import Bulk exposing (ContractForm, UserState(..), initContractForm)
-import Bulk.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (contractEventToText, contractTypeToText)
-import Bulk.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

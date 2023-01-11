@@ -23,6 +23,8 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscr
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (UserState(..), uctxFromUser)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -39,8 +41,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)

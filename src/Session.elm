@@ -22,6 +22,8 @@
 module Session exposing (..)
 
 import Array exposing (Array)
+import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
+import Bulk.Codecs exposing (NodeFocus)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
@@ -34,8 +36,6 @@ import Loading
         , WebData
         )
 import Maybe exposing (withDefault)
-import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
-import Bulk.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData

@@ -24,6 +24,10 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Bulk.View exposing (viewOrgaMedia)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -39,10 +43,6 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

@@ -23,6 +23,9 @@ module Components.UserInput exposing (Msg(..), State, init, subscriptions, updat
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewUserFull)
 import Codecs exposing (LookupResult)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -38,9 +41,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUserFull)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryUser exposing (queryUser)

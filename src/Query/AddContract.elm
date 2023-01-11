@@ -21,6 +21,7 @@
 
 module Query.AddContract exposing (addOneContract, deleteOneContract)
 
+import Bulk exposing (ContractForm)
 import Dict exposing (Dict)
 import Extra exposing (listToMaybe, ternary)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -39,7 +40,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import Bulk exposing (ContractForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
 import Query.QueryContract exposing (cidPayload, contractPayload)

@@ -22,6 +22,10 @@
 module Components.ModalConfirm exposing (..)
 
 import Assets as A
+import Bulk exposing (ActionForm, UserState(..), initActionForm)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewUser)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Views exposing (showMsg)
@@ -36,10 +40,6 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk exposing (ActionForm, UserState(..), initActionForm)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format
 import Text as T

@@ -24,6 +24,23 @@ module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event
+    exposing
+        ( contractEventToText
+        , contractToJonction
+        , contractToLink
+        , contractTypeToText
+        , eventToIcon
+        , eventToLink
+        , eventTypeToText
+        , viewContractMedia
+        , viewEventMedia
+        , viewNotifMedia
+        )
+import Bulk.View exposing (byAt, counter, mediaTension, viewOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
@@ -46,23 +63,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMapData, withMaybeSlowly)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event
-    exposing
-        ( contractEventToText
-        , contractToJonction
-        , contractToLink
-        , contractTypeToText
-        , eventToIcon
-        , eventToLink
-        , eventTypeToText
-        , viewContractMedia
-        , viewEventMedia
-        , viewNotifMedia
-        )
-import Bulk.View exposing (byAt, counter, mediaTension, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

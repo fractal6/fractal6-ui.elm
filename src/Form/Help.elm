@@ -23,6 +23,10 @@ module Form.Help exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (Ev, UserState(..))
+import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
+import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
+import Bulk.View exposing (viewUser)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -45,10 +49,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, withMapData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, UserState(..))
-import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)

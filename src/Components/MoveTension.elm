@@ -23,6 +23,10 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (Ev, UserState(..), sortNode)
+import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (action2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -40,10 +44,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, UserState(..), sortNode)
-import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)

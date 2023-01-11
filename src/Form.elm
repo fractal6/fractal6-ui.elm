@@ -21,8 +21,8 @@
 
 module Form exposing (..)
 
-import Dict
 import Bulk exposing (UserForm)
+import Dict
 import ModelSchema exposing (Post)
 
 

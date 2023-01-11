@@ -22,6 +22,7 @@
 module Bulk.Error exposing (..)
 
 import Assets as A
+import Bulk.Codecs exposing (NodeFocus)
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route, toHref)
@@ -42,7 +43,6 @@ import Loading
         )
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk.Codecs exposing (NodeFocus)
 import RemoteData exposing (RemoteData)
 import Text as T
 

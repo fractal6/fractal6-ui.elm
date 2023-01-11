@@ -21,6 +21,8 @@
 
 module Query.PatchContract exposing (pushComment, sendVote)
 
+import Bulk exposing (CommentPatchForm)
+import Bulk.Codecs exposing (memberIdCodec)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -40,8 +42,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import Bulk exposing (CommentPatchForm)
-import Bulk.Codecs exposing (memberIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
 import Query.PatchTension exposing (pushCommentFilter)

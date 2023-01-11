@@ -23,6 +23,8 @@ module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
 import Assets as A exposing (almostThere)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -39,8 +41,6 @@ import Http
 import Image exposing (Image)
 import Loading exposing (WebData, loadingSpin)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Error exposing (viewHttpErrors)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)

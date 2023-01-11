@@ -23,6 +23,22 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
+import Bulk.View
+    exposing
+        ( byAt
+        , viewRole
+        , viewTensionArrow
+        , viewTensionDateAndUserC
+        , viewUpdated
+        , viewUser0
+        , viewUser2
+        , viewUserFull
+        , viewUsernameLink
+        )
 import Components.Comments exposing (viewComment, viewContractCommentInput)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -46,22 +62,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
-import Bulk.View
-    exposing
-        ( byAt
-        , viewRole
-        , viewTensionArrow
-        , viewTensionDateAndUserC
-        , viewUpdated
-        , viewUser0
-        , viewUser2
-        , viewUserFull
-        , viewUsernameLink
-        )
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)

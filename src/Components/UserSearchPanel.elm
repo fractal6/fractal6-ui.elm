@@ -24,6 +24,10 @@ module Components.UserSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
+import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
+import Bulk.Codecs exposing (nearestCircleid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewUserFull)
 import Codecs exposing (LookupResult)
 import Dict exposing (Dict)
 import Dom
@@ -37,10 +41,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
-import Bulk.Codecs exposing (nearestCircleid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUserFull)
 import ModelSchema exposing (..)
 import Ports
 import Process

@@ -23,6 +23,26 @@ module Form.NewTension exposing (..)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk
+    exposing
+        ( Ev
+        , InputViewMode(..)
+        , TensionForm
+        , UserState(..)
+        , getChildren
+        , getCircles
+        , getNode
+        , getParentFragmentFromRole
+        , initTensionForm
+        , isSelfContract
+        , localGraphFromOrga
+        , makeCandidateContractForm
+        , sortNode
+        , tensionToActionForm
+        )
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
+import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
 import Codecs exposing (LookupResult)
 import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -60,26 +80,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk
-    exposing
-        ( Ev
-        , InputViewMode(..)
-        , TensionForm
-        , UserState(..)
-        , getChildren
-        , getCircles
-        , getNode
-        , getParentFragmentFromRole
-        , initTensionForm
-        , isSelfContract
-        , localGraphFromOrga
-        , makeCandidateContractForm
-        , sortNode
-        , tensionToActionForm
-        )
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

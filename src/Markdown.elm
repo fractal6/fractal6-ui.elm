@@ -22,6 +22,7 @@
 module Markdown exposing (renderMarkdown)
 
 import Assets as A
+import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
 import Extra exposing (regexFromString, space_, ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, div, i, input, label, li, span, table, text, u, ul)
@@ -33,7 +34,6 @@ import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Maybe exposing (withDefault)
-import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
 import Regex
 import String exposing (startsWith, toLower)
 

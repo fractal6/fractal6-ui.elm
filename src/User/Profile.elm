@@ -24,6 +24,10 @@ module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewOrgaMedia, viewProfileC)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
@@ -42,10 +46,6 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewOrgaMedia, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

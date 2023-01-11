@@ -28,6 +28,8 @@ module Query.PatchNode exposing
     , updateOneRole
     )
 
+import Bulk exposing (ArtefactNodeForm)
+import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
@@ -47,8 +49,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
-import Bulk exposing (ArtefactNodeForm)
-import Bulk.Codecs exposing (nid2rootid)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate)
 import Query.QueryNode exposing (labelFullPayload, roleFullPayload)
