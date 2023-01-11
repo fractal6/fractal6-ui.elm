@@ -35,6 +35,7 @@ module Query.QueryTension exposing
     , tensionPayload
     )
 
+import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
@@ -69,7 +70,6 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import Bulk.Codecs exposing (nid2rootid)
 import ModelSchema
     exposing
         ( Blob
@@ -81,7 +81,6 @@ import ModelSchema
         , MentionedTension
         , NodeFragment
         , Reaction
-        , SubNodeFragment
         , Tension
         , TensionBlobs
         , TensionComments
@@ -341,20 +340,6 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.about
         |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
         |> with (Fractal.Object.NodeFragment.first_link |> SelectionSet.map (Maybe.map (\x -> ternary (x == "") Nothing (Just x)) >> withDefault Nothing))
-        |> with
-            (Fractal.Object.NodeFragment.children identity
-                (SelectionSet.succeed SubNodeFragment
-                    |> with Fractal.Object.NodeFragment.name
-                    |> with Fractal.Object.NodeFragment.nameid
-                    |> with Fractal.Object.NodeFragment.type_
-                    |> with Fractal.Object.NodeFragment.role_type
-                    |> with Fractal.Object.NodeFragment.visibility
-                    |> with Fractal.Object.NodeFragment.mode
-                    |> with Fractal.Object.NodeFragment.about
-                    |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-                    |> with Fractal.Object.NodeFragment.first_link
-                )
-            )
 
 
 

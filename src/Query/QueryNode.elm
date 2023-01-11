@@ -62,7 +62,9 @@ module Query.QueryNode exposing
     , userPayload
     )
 
+import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
+import Extra exposing (unwrap)
 import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeOrderable as NodeOrderable
@@ -81,6 +83,7 @@ import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
+import Fractal.Object.NodeFragment
 import Fractal.Object.Notif
 import Fractal.Object.OrgaAgg
 import Fractal.Object.RoleExt
@@ -95,7 +98,6 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import Bulk.Codecs exposing (nid2rootid)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -424,8 +426,7 @@ blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
 blobIdPayload =
     SelectionSet.succeed BlobId
         |> with (Fractal.Object.Blob.id |> SelectionSet.map decodedId)
-        |> with
-            (Fractal.Object.Blob.tension identity tidPayload)
+        |> with (Fractal.Object.Blob.tension identity tidPayload)
 
 
 userPayload : SelectionSet User Fractal.Object.User
@@ -461,21 +462,40 @@ cidPayload =
 -}
 
 
+type alias NodeDataSource =
+    { source : Maybe { node : Maybe NodeData } }
+
+
+nodeDataSourceDecoder : Maybe NodeDataSource -> Maybe NodeData
+nodeDataSourceDecoder data =
+    data
+        |> unwrap Nothing .source
+        |> unwrap Nothing .node
+
+
 fetchNodeData url nameid msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nameid)
             nodeDataPayload
         )
-        (RemoteData.fromResult >> decodeResponse identity >> msg)
+        (RemoteData.fromResult >> decodeResponse nodeDataSourceDecoder >> msg)
 
 
-nodeDataPayload : SelectionSet NodeData Fractal.Object.Node
+nodeDataPayload : SelectionSet NodeDataSource Fractal.Object.Node
 nodeDataPayload =
-    SelectionSet.succeed NodeData
-        |> with Fractal.Object.Node.about
+    SelectionSet.succeed NodeDataSource
         |> with
-            (Fractal.Object.Node.mandate identity mandatePayload)
+            (Fractal.Object.Node.source identity
+                (SelectionSet.map (\x -> { node = x })
+                    (Fractal.Object.Blob.node identity
+                        (SelectionSet.map2 NodeData
+                            Fractal.Object.NodeFragment.about
+                            (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+                        )
+                    )
+                )
+            )
 
 
 mandatePayload : SelectionSet Mandate Fractal.Object.Mandate

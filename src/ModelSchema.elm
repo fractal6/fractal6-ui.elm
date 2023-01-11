@@ -508,26 +508,11 @@ type alias NodeFragment =
     , about : Maybe String
     , mandate : Maybe Mandate
     , first_link : Maybe String
-    , children : Maybe (List SubNodeFragment)
     }
 
 
-type alias SubNodeFragment =
-    -- @deprecated ?
-    { name : Maybe String
-    , nameid : Maybe String
-    , type_ : Maybe NodeType.NodeType
-    , role_type : Maybe RoleType.RoleType
-    , visibility : Maybe NodeVisibility.NodeVisibility
-    , mode : Maybe NodeMode.NodeMode
-    , about : Maybe String
-    , mandate : Maybe Mandate
-    , first_link : Maybe String
-    }
-
-
-node2NodeFragment : Maybe Node -> Maybe (List SubNodeFragment) -> Maybe NodeData -> NodeFragment
-node2NodeFragment node_m children nData =
+node2NodeFragment : Maybe Node -> Maybe NodeData -> NodeFragment
+node2NodeFragment node_m nData =
     { name = Maybe.map .name node_m
     , nameid = Maybe.map .nameid node_m
     , type_ = Maybe.map .type_ node_m
@@ -539,21 +524,6 @@ node2NodeFragment node_m children nData =
     , about = Maybe.map .about nData |> withDefault Nothing
     , mandate = Maybe.map .mandate nData |> withDefault Nothing
     , first_link = Maybe.map (\n -> Maybe.map .username n.first_link) node_m |> withDefault Nothing
-    , children = children
-    }
-
-
-node2SubNodeFragment : Node -> SubNodeFragment
-node2SubNodeFragment n =
-    { name = Just n.name
-    , nameid = Just n.nameid
-    , type_ = Just n.type_
-    , visibility = Just n.visibility
-    , mode = Just n.mode
-    , role_type = n.role_type
-    , about = Nothing
-    , mandate = Nothing
-    , first_link = n.first_link |> Maybe.map (\u -> u.username)
     }
 
 
@@ -572,7 +542,6 @@ nodeFragmentUpdate n_m n =
             , about = mor n.about nf.about
             , mandate = mor n.mandate nf.mandate
             , first_link = mor n.first_link nf.first_link
-            , children = mor n.children nf.children
             }
         )
         n_m
@@ -654,7 +623,7 @@ initMandate =
 
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
 initNodeFragment nt =
-    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 initEventFragment : EventFragment

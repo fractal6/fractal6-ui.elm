@@ -24,6 +24,56 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs
+    exposing
+        ( ActionType(..)
+        , DocType(..)
+        , FocusState
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , eor2ur
+        , focusFromNameid
+        , focusFromPath
+        , focusState
+        , getOrgaRoles
+        , getTensionCharac
+        , isOwner
+        , nid2rootid
+        , nodeFromFragment
+        , tensionAction2NodeType
+        , uriFromNameid
+        , uriFromUsername
+        )
+import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Bulk.View
+    exposing
+        ( action2icon
+        , action2str
+        , archiveActionToggle
+        , auth2icon
+        , auth2val
+        , statusColor
+        , tensionIcon2
+        , tensionStatus2str
+        , tensionTypeColor
+        , viewCircleTarget
+        , viewLabel
+        , viewLabels
+        , viewNodeDescr
+        , viewNodeRefShort
+        , viewRole
+        , viewRoleExt
+        , viewTensionDateAndUser
+        , viewTensionDateAndUserC
+        , viewUpdated
+        , viewUser0
+        , viewUser2
+        , viewUserFull
+        , viewUsernameLink
+        , viewUsers
+        , visibility2icon
+        )
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -79,56 +129,6 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , FocusState
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , eor2ur
-        , focusFromNameid
-        , focusFromPath
-        , focusState
-        , getOrgaRoles
-        , getTensionCharac
-        , isOwner
-        , nid2rootid
-        , nodeFromFragment
-        , tensionAction2NodeType
-        , uriFromNameid
-        , uriFromUsername
-        )
-import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View
-    exposing
-        ( action2icon
-        , action2str
-        , archiveActionToggle
-        , auth2icon
-        , auth2val
-        , statusColor
-        , tensionIcon2
-        , tensionStatus2str
-        , tensionTypeColor
-        , viewCircleTarget
-        , viewLabel
-        , viewLabels
-        , viewNodeDescr
-        , viewNodeRefShort
-        , viewRole
-        , viewRoleExt
-        , viewTensionDateAndUser
-        , viewTensionDateAndUserC
-        , viewUpdated
-        , viewUser0
-        , viewUser2
-        , viewUserFull
-        , viewUsernameLink
-        , viewUsers
-        , visibility2icon
-        )
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

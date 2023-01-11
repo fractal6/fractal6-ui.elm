@@ -13,7 +13,6 @@ type NodeFragmentHasFilter
     | About
     | Mandate
     | Skills
-    | Children
     | Visibility
     | Mode
     | Type_
@@ -26,7 +25,7 @@ type NodeFragmentHasFilter
 
 list : List NodeFragmentHasFilter
 list =
-    [ Nameid, Name, About, Mandate, Skills, Children, Visibility, Mode, Type_, First_link, Second_link, Role_ext, Role_type, Color ]
+    [ Nameid, Name, About, Mandate, Skills, Visibility, Mode, Type_, First_link, Second_link, Role_ext, Role_type, Color ]
 
 
 decoder : Decoder NodeFragmentHasFilter
@@ -49,9 +48,6 @@ decoder =
 
                     "skills" ->
                         Decode.succeed Skills
-
-                    "children" ->
-                        Decode.succeed Children
 
                     "visibility" ->
                         Decode.succeed Visibility
@@ -101,9 +97,6 @@ toString enum____ =
 
         Skills ->
             "skills"
-
-        Children ->
-            "children"
 
         Visibility ->
             "visibility"
@@ -158,9 +151,6 @@ fromString enumString____ =
 
         "skills" ->
             Just Skills
-
-        "children" ->
-            Just Children
 
         "visibility" ->
             Just Visibility

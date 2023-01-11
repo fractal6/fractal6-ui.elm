@@ -15,7 +15,7 @@
     @include desktop {
         // Orga Menu adjustments
         @include until-fullhd {
-            &.has-orga-menu .orgPane {
+            &.has-orga-menu > .orgPane {
                 margin-left: 40px;
 
                 .kb-board {
@@ -25,11 +25,11 @@
         }
 
         // Tree Menu adjustments
-        &.has-tree-menu .orgPane,
-        &.has-tree-menu + #footBar {
+        &.has-tree-menu > .orgPane,
+        &.has-tree-menu ~ #footBar {
             margin-left: $tree-menu-width !important;
         }
-        &.has-tree-menu.has-orga-menu .orgPane {
+        &.has-tree-menu.has-orga-menu > .orgPane {
             margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
         }
 

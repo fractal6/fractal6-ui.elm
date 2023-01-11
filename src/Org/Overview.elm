@@ -27,6 +27,26 @@ import Assets.Logo as Logo
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
+import Bulk exposing (..)
+import Bulk.Codecs
+    exposing
+        ( ActionType(..)
+        , DocType(..)
+        , Flags_
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , focusFromNameid
+        , focusState
+        , hasLazyAdminRole
+        , nameidFromFlags
+        , nearestCircleid
+        , nid2rootid
+        , tensionCharacFromNode
+        , uriFromNameid
+        )
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
+import Bulk.View exposing (mediaTension, viewUsernameLink)
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -75,26 +95,6 @@ import Loading
         , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
-import Bulk exposing (..)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , Flags_
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , focusFromNameid
-        , focusState
-        , hasLazyAdminRole
-        , nameidFromFlags
-        , nearestCircleid
-        , nid2rootid
-        , tensionCharacFromNode
-        , uriFromNameid
-        )
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
-import Bulk.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -1517,12 +1517,4 @@ viewEventNotif conf e =
 
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
 nodeFragmentFromOrga node_m nodeData children_eo ndata =
-    let
-        children =
-            children_eo
-                |> List.filterMap (\n -> Dict.get n.nameid ndata)
-                |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
-                |> List.map node2SubNodeFragment
-                |> Just
-    in
-    node2NodeFragment node_m children (withMaybeData nodeData)
+    node2NodeFragment node_m (withMaybeData nodeData)

@@ -24,6 +24,24 @@ module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscript
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
+import Bulk
+    exposing
+        ( ActionForm
+        , Ev
+        , UserForm
+        , UserState(..)
+        , blobFromTensionHead
+        , getNode
+        , getNodeRights
+        , getOwners
+        , initActionForm
+        , isSelfContract
+        , makeCandidateContractForm
+        , uctxFromUser
+        )
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
@@ -48,24 +66,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess)
 import Maybe exposing (withDefault)
-import Bulk
-    exposing
-        ( ActionForm
-        , Ev
-        , UserForm
-        , UserState(..)
-        , blobFromTensionHead
-        , getNode
-        , getNodeRights
-        , getOwners
-        , initActionForm
-        , isSelfContract
-        , makeCandidateContractForm
-        , uctxFromUser
-        )
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -439,8 +439,8 @@ setActionForm data =
                         (data.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
                     ]
 
-        -- (1) for membership node, as their is no blob, role_type need to pass to the backend
-        -- to avoid extra database request (not that this only work is the membersip node is not presen in the tree (ie. not for Owner node...)
+        -- (1) for membership node, as their is no blob, role_type need to be passed to the backend to avoid extra database request
+        -- Note: This only work if the membersip node is not present in the tree (ie. not for Owner node...)
         -- (see QueryNode.nodeOrgaFilter)
     in
     data |> setEvents events
@@ -847,9 +847,12 @@ update_ apis message model =
             let
                 data =
                     model
-                        |> updatePost "createdAt" (fromTime time)
+                        -- This is where the tension event and old/new data is set
+                        -- which will actually propagate mutation to the node if
+                        -- user pass the @auth process.
                         |> setActionForm
                         |> setActionResult LoadingSlowly
+                        |> updatePost "createdAt" (fromTime time)
             in
             ( data, out0 [ send (PushAction data.form data.state) ] )
 

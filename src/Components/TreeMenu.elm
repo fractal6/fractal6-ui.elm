@@ -24,6 +24,10 @@ module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, ini
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Dom
+import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (action2icon, counter, viewOrga0)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
 import Dict.Extra as DE
@@ -42,10 +46,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
-import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon, counter, viewOrga0)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
@@ -317,6 +317,10 @@ update_ apis message model =
                 ( model, noOut )
 
             else if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeDataMap (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
+                let
+                    f =
+                        Debug.log "Get there"
+                in
                 ( setDataResult LoadingSlowly model
                   -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane
                   -- when navigating from non orgs pages.

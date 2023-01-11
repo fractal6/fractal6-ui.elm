@@ -23,6 +23,9 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscri
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
+import Bulk.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
+import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
@@ -39,9 +42,6 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData)
 import Maybe exposing (withDefault)
-import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

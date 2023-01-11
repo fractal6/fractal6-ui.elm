@@ -1119,7 +1119,7 @@ update global message model =
             ( { model | statusFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeTypeFilter value ->
-            if List.member value [ OneType TensionType.Alert, OneType TensionType.Announcement, OneType TensionType.Governance ] then
+            if List.member value [ OneType TensionType.Announcement, OneType TensionType.Governance ] then
                 ( { model | typeFilter = value, statusFilter = AllStatus }, send SubmitSearchReset, Cmd.none )
 
             else

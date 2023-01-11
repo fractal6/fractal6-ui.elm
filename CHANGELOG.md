@@ -14,10 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### New
 - Tension editor (new tension and comment) are resizable, horizontally and vertically.
 - User reactions (emojis) in tension/comments with a vital set of emojis proposed.
-- Tension board view by assignees.
+- Tension board view by assigned user.
 
 ### Changed
-- When filtering tension to see either Annouce, Alert or Governance types, use all status (open and close) by default instead of just open tensions as the the open/close status make less significance for those types.
+- When filtering tension to see either Announce, Alert or Governance types, use all status (open and close) by default instead of just open tensions as the the open/close status make less significance for those types.
 
 ### Fixed
 - resize footer page when the left menu is open.

@@ -11,17 +11,17 @@ type NodeHasFilter
     = CreatedBy
     | CreatedAt
     | UpdatedAt
-    | Name
     | Nameid
     | Rootnameid
+    | Source
+    | Name
+    | About
+    | Skills
     | IsRoot
     | Parent
     | Type_
     | Tensions_out
     | Tensions_in
-    | About
-    | Mandate
-    | Source
     | Visibility
     | Mode
     | Rights
@@ -30,7 +30,6 @@ type NodeHasFilter
     | UserCanJoin
     | GuestCanCreateTension
     | Children
-    | Docs
     | Labels
     | Roles
     | Role_ext
@@ -38,7 +37,6 @@ type NodeHasFilter
     | Color
     | First_link
     | Second_link
-    | Skills
     | Contracts
     | Watchers
     | Orga_agg
@@ -47,7 +45,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Watchers, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Watchers, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -65,14 +63,23 @@ decoder =
                     "updatedAt" ->
                         Decode.succeed UpdatedAt
 
-                    "name" ->
-                        Decode.succeed Name
-
                     "nameid" ->
                         Decode.succeed Nameid
 
                     "rootnameid" ->
                         Decode.succeed Rootnameid
+
+                    "source" ->
+                        Decode.succeed Source
+
+                    "name" ->
+                        Decode.succeed Name
+
+                    "about" ->
+                        Decode.succeed About
+
+                    "skills" ->
+                        Decode.succeed Skills
 
                     "isRoot" ->
                         Decode.succeed IsRoot
@@ -88,15 +95,6 @@ decoder =
 
                     "tensions_in" ->
                         Decode.succeed Tensions_in
-
-                    "about" ->
-                        Decode.succeed About
-
-                    "mandate" ->
-                        Decode.succeed Mandate
-
-                    "source" ->
-                        Decode.succeed Source
 
                     "visibility" ->
                         Decode.succeed Visibility
@@ -122,9 +120,6 @@ decoder =
                     "children" ->
                         Decode.succeed Children
 
-                    "docs" ->
-                        Decode.succeed Docs
-
                     "labels" ->
                         Decode.succeed Labels
 
@@ -145,9 +140,6 @@ decoder =
 
                     "second_link" ->
                         Decode.succeed Second_link
-
-                    "skills" ->
-                        Decode.succeed Skills
 
                     "contracts" ->
                         Decode.succeed Contracts
@@ -180,14 +172,23 @@ toString enum____ =
         UpdatedAt ->
             "updatedAt"
 
-        Name ->
-            "name"
-
         Nameid ->
             "nameid"
 
         Rootnameid ->
             "rootnameid"
+
+        Source ->
+            "source"
+
+        Name ->
+            "name"
+
+        About ->
+            "about"
+
+        Skills ->
+            "skills"
 
         IsRoot ->
             "isRoot"
@@ -203,15 +204,6 @@ toString enum____ =
 
         Tensions_in ->
             "tensions_in"
-
-        About ->
-            "about"
-
-        Mandate ->
-            "mandate"
-
-        Source ->
-            "source"
 
         Visibility ->
             "visibility"
@@ -237,9 +229,6 @@ toString enum____ =
         Children ->
             "children"
 
-        Docs ->
-            "docs"
-
         Labels ->
             "labels"
 
@@ -260,9 +249,6 @@ toString enum____ =
 
         Second_link ->
             "second_link"
-
-        Skills ->
-            "skills"
 
         Contracts ->
             "contracts"
@@ -300,14 +286,23 @@ fromString enumString____ =
         "updatedAt" ->
             Just UpdatedAt
 
-        "name" ->
-            Just Name
-
         "nameid" ->
             Just Nameid
 
         "rootnameid" ->
             Just Rootnameid
+
+        "source" ->
+            Just Source
+
+        "name" ->
+            Just Name
+
+        "about" ->
+            Just About
+
+        "skills" ->
+            Just Skills
 
         "isRoot" ->
             Just IsRoot
@@ -323,15 +318,6 @@ fromString enumString____ =
 
         "tensions_in" ->
             Just Tensions_in
-
-        "about" ->
-            Just About
-
-        "mandate" ->
-            Just Mandate
-
-        "source" ->
-            Just Source
 
         "visibility" ->
             Just Visibility
@@ -357,9 +343,6 @@ fromString enumString____ =
         "children" ->
             Just Children
 
-        "docs" ->
-            Just Docs
-
         "labels" ->
             Just Labels
 
@@ -380,9 +363,6 @@ fromString enumString____ =
 
         "second_link" ->
             Just Second_link
-
-        "skills" ->
-            Just Skills
 
         "contracts" ->
             Just Contracts

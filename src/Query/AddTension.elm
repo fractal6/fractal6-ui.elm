@@ -27,6 +27,7 @@ module Query.AddTension exposing
     , buildMandate
     )
 
+import Bulk exposing (Ev, TensionForm, UserForm, encodeLabel)
 import Dict exposing (Dict)
 import Extra exposing (listToMaybe, ternary)
 import Fractal.Enum.BlobType as BlobType
@@ -49,7 +50,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import Bulk exposing (Ev, TensionForm, UserForm, encodeLabel)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -259,21 +259,7 @@ buildNodeFragmentRef users nf =
 
                 NodeType.Circle ->
                     -- Circle
-                    { commonFields | children = Absent }
-         -- Children not implemented for now
-         --        users
-         --            |> List.map
-         --                (\us ->
-         --                    Input.buildNodeFragmentRef
-         --                        (\c ->
-         --                            { c
-         --                                | first_link = ternary (us.username /= "") (Present us.username) Absent
-         --                                , role_type = Present us.role_type
-         --                            }
-         --                        )
-         --                )
-         --            |> Present
-         --}
+                    commonFields
         )
         |> Present
 
