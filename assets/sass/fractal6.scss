@@ -732,6 +732,10 @@ span[data-tooltip] {
         color: var(--text-light) !important;
         background-color: var(--comment-header-background-color);
     }
+
+    .message-body {
+        overflow-wrap: break-word;
+    }
 }
 .acc {
     .message-header {
