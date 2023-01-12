@@ -317,18 +317,14 @@ update_ apis message model =
                 ( model, noOut )
 
             else if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeDataMap (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
-                let
-                    f =
-                        Debug.log "Get there"
-                in
                 ( setDataResult LoadingSlowly model
-                  -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane
-                  -- when navigating from non orgs pages.
+                  -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane when navigating from non orgs pages.
                 , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, ternary model.isHover Cmd.none Ports.openTreeMenu ]
                 )
 
             else
-                ( model, out0 [ sendSleep (ScrollToElement model.focus.nameid) 333 ] )
+                -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane when navigating from non orgs pages.
+                ( model, out0 [ sendSleep (ScrollToElement model.focus.nameid) 333, ternary (model.isActive2 && not model.isHover) Ports.openTreeMenu Cmd.none ] )
 
         OnReload uctx ->
             if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then

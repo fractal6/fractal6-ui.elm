@@ -25,13 +25,18 @@
         }
 
         // Tree Menu adjustments
-        &.has-tree-menu > .orgPane,
-        &.has-tree-menu ~ #footBar {
+        &.has-tree-menu > .orgPane {
             margin-left: $tree-menu-width !important;
         }
         &.has-tree-menu.has-orga-menu > .orgPane {
             margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
         }
+
+        // @DEBUG: :has selector is not well supported yet, especially by firefox...
+        // &.has-tree-menu:has(.orgPane) ~ #footBar {
+         &.has-tree-menu ~ #footBar {
+             padding-left: calc(#{$tree-menu-width} + #{$size-small}) !important;
+         }
 
         #helperBar.has-tree-menu,
         #mainPane.has-tree-menu > *:not(.kb-board) {
