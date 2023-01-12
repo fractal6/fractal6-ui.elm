@@ -375,7 +375,7 @@ tensionTypeColor elt tt =
             "has-" ++ elt ++ "-danger"
 
         TensionType.Announcement ->
-            "has-" ++ elt ++ "-primary"
+            "has-" ++ elt ++ "-announce"
 
 
 tensionTypeIcon : TensionType.TensionType -> String

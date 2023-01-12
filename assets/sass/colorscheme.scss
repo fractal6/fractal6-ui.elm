@@ -211,6 +211,8 @@ $tag-hint-active: rgba($primary, 0.1);
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
 
+$is-announce: #bfb40c;
+
 // Hover case
 $primary-hover: lighten($primary, 10);
 $link-hover: lighten($link, 10);
@@ -381,6 +383,7 @@ $button-vote-danger-background: $danger;
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
   --success-light: #{$success-light};
+  --is-announce: #{$is-announce};
 
   // Hover case
   --primary-hover: #{$primary-hover};
@@ -550,6 +553,7 @@ $link: $green-frac6;
 $link2: $green;
 $info:    hsl(204, 86%, 53%);
 $success: hsl(141, 71%, 38%);
+$is-announce: #eedb44;
 //$warning: hsl(48, 100%, 47%);
 $warning: $orange;
 $danger:  hsl(368, 100%, 61%);
@@ -744,6 +748,7 @@ $button-vote-danger-background: $danger-light;
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
   --success-light: #{$success-light};
+  --is-announce: #{$is-announce};
 
   // Hover case
   --primary-hover: #{$primary-hover};

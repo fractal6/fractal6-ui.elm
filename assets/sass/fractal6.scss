@@ -292,6 +292,12 @@ a.is-link {
         color: var(--link-discrete);
     }
 }
+.has-text-announce {
+    color: var(--is-announce);
+}
+.has-background-announce {
+    background-color: var(--is-announce);
+}
 .is-name{
     color: var(--text-strong);
 }
