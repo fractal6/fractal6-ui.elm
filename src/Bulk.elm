@@ -174,19 +174,17 @@ type alias UserForm =
 
 type alias CommentPatchForm =
     { id : String -- comment id (for edit/patch)
-    , pid : String -- parent id (e.g. tid of cid) (for creating)
     , uctx : UserCtx
     , post : Post
     , viewMode : InputViewMode
     }
 
 
-initCommentPatchForm : String -> UserState -> CommentPatchForm
-initCommentPatchForm reflink user =
+initCommentPatchForm : UserState -> List ( String, String ) -> CommentPatchForm
+initCommentPatchForm user data =
     { uctx = uctxFromUser user
     , id = ""
-    , pid = ""
-    , post = Dict.fromList [ ( "reflink", reflink ) ]
+    , post = Dict.fromList data
     , viewMode = Write
     }
 

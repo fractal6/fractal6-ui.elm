@@ -189,10 +189,13 @@ commentInputDecoder f =
         message =
             Dict.get "message" f.post
 
+        contractid =
+            Dict.get "contractid" f.post |> withDefault ""
+
         inputReq =
             { filter =
                 Input.buildContractFilter
-                    (\ft -> { ft | id = Present [ encodeId f.pid ] })
+                    (\ft -> { ft | id = Present [ encodeId contractid ] })
             }
 
         inputOpt =

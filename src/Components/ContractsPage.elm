@@ -117,8 +117,8 @@ initModel rootnameid user conf =
     , form = initContractForm user
     , voteForm = initVoteForm user
     , activeView = ContractsView
-    , comment_form = initCommentPatchForm (toReflink conf.url) user
-    , comment_patch_form = initCommentPatchForm (toReflink conf.url) user
+    , comment_form = initCommentPatchForm user [ ( "reflink", toReflink conf.url ) ]
+    , comment_patch_form = initCommentPatchForm user [ ( "reflink", toReflink conf.url ) ]
     , comment_result = NotAsked
 
     -- Common
@@ -557,8 +557,10 @@ update_ apis message model =
             ( { model
                 | comment_form =
                     { form
-                        | pid = withMaybeDataMap .id model.contract_result |> withDefault ""
-                        , post = Dict.insert "createdAt" (fromTime time) form.post
+                        | post =
+                            form.post
+                                |> Dict.insert "createdAt" (fromTime time)
+                                |> Dict.insert "contractid" (withMaybeDataMap .id model.contract_result |> withDefault "")
                     }
                 , comment_result = LoadingSlowly
               }
@@ -593,7 +595,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm (toReflink model.conf.url) model.user
+                            initCommentPatchForm model.user [ ( "reflink", toReflink model.conf.url ) ]
                     in
                     ( { model | contract_result = contract, comment_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver "" ]
@@ -630,7 +632,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm (toReflink model.conf.url) model.user
+                            initCommentPatchForm model.user [ ( "reflink", toReflink model.conf.url ) ]
                     in
                     ( { model | contract_result = contract, comment_patch_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver "" ]
@@ -878,8 +880,10 @@ viewRow d op model =
         ]
         [ td [ onClick (DoClickContract d.id) ]
             [ a
-                [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
-                [ text (contractEventToText d.event.event_type), Maybe.map (\x -> " | " ++ x) d.event.new |> withDefault "" |> text ]
+                [ class "discrete-link"
+                , href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref)
+                ]
+                [ text (contractEventToText d.event.event_type), Maybe.map (\x -> " ・ " ++ x) d.event.new |> withDefault "" |> text ]
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
@@ -897,7 +901,7 @@ viewRow d op model =
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
-                    [ span [ class "tag is-danger is-light is-smaller2" ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
+                    [ span [ class "tag is-danger is-light is-smaller2 tooltip has-tooltip-arrow", attribute "data-tooltip" T.deleteThisContract ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
 
               else
                 text ""

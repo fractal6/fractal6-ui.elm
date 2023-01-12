@@ -1841,18 +1841,20 @@ tr.mediaBox {
 }
 
 .labelsList {
+    .tag + .tag {
+        margin-left: 8px !important;
+    }
+
     .tag {
-        margin-right: 8px !important;
         border: 1px solid transparent;
-        &:hover {
-           border-color: var(--link2);
-        }
+        &:hover { border-color: var(--link2); }
     }
 }
 .tension-labelsList {
     margin-top: -8px;
     .labelsList .tag {
         margin-top: 8px;
+        &:hover { border-color: transparent; }
     }
     .help {
         margin-top: 22px !important;

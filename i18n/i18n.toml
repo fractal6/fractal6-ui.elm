@@ -924,6 +924,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 - Vous pourrez la rejoindre a nouveau sur invitation seulement.
   """
 
+[deleteThisContract]
+  en="Delete this contract"
+  fr="Supprimer ce contrat"
+
 [askAnotherQuestion]
   en="Ask another question."
   fr="Poser une autre question."
@@ -2064,8 +2068,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Etiquette retiré"
 
 [assigneeAdded_event]
-  en="Assignee added"
-  fr="Assigné ajouté"
+  en="New assignment"
+  fr="Nouvelle assignation"
 
 [assigneeRemoved_event]
   en="Assignee removed"

@@ -234,16 +234,12 @@ used to make labels clickable.
 viewLabels : Maybe String -> List Label -> Html msg
 viewLabels nid_m labels =
     let
-        to_link_m =
-            case nid_m of
-                Just nid ->
-                    \l ->
-                        toLink TensionsBaseUri nid []
-                            ++ ("?l=" ++ l)
-                            |> Just
-
-                Nothing ->
-                    \_ -> Nothing
+        to_link_m name =
+            Maybe.map
+                (\nid ->
+                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ name)
+                )
+                nid_m
     in
     span [ class "labelsList" ]
         (List.map

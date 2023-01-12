@@ -42,6 +42,7 @@ import Bulk.Codecs
         , nid2rootid
         , nodeFromFragment
         , tensionAction2NodeType
+        , toLink
         , uriFromNameid
         , uriFromUsername
         )
@@ -487,6 +488,14 @@ init global flags =
         nodeView =
             Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
 
+        path_data =
+            ternary fs.orgChange Loading (fromMaybeData global.session.path_data Loading)
+
+        focusid =
+            withMaybeData path_data
+                |> Maybe.map (\p -> p.focus.nameid)
+                |> withDefault newFocus.nameid
+
         model =
             { node_focus = newFocus
             , lookup_users = []
@@ -496,7 +505,7 @@ init global flags =
             , activeTab = tab
             , nodeView = nodeView
             , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
-            , path_data = ternary fs.orgChange Loading (fromMaybeData global.session.path_data Loading)
+            , path_data = path_data
             , tension_head = ternary fs.orgChange Loading (fromMaybeData global.session.tension_head Loading)
             , focusState = fs
             , tension_comments = Loading
@@ -520,7 +529,7 @@ init global flags =
             , title_result = NotAsked
 
             -- Comment Edit
-            , comment_form = initCommentPatchForm (toReflink conf.url) global.session.user
+            , comment_form = initCommentPatchForm global.session.user [ ( "reflink", toReflink conf.url ), ( "focusid", focusid ) ]
             , comment_result = NotAsked
 
             -- Blob Edit
@@ -1121,8 +1130,11 @@ update global message model =
                                 other ->
                                     other
 
+                        focusid =
+                            withMaybeData model.path_data |> Maybe.map (\p -> p.focus.nameid) |> withDefault model.node_focus.nameid
+
                         resetForm =
-                            initCommentPatchForm (toReflink model.conf.url) global.session.user
+                            initCommentPatchForm global.session.user [ ( "reflink", toReflink model.conf.url ), ( "focusid", focusid ) ]
                     in
                     ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
@@ -2072,7 +2084,7 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent conf action event
+                            viewEvent conf (Dict.get "focusid" comment_form.post) action event
 
                         Nothing ->
                             text ""
@@ -2170,8 +2182,8 @@ viewComments conf action history_m comments_m comment_form comment_result expand
         |> div []
 
 
-viewEvent : Conf -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent conf action event =
+viewEvent : Conf -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent conf focusid_m action event =
     let
         eventView =
             case event.event_type of
@@ -2200,10 +2212,10 @@ viewEvent conf action event =
                     viewEventAssignee conf.lang conf.now event False
 
                 TensionEvent.LabelAdded ->
-                    viewEventLabel conf.lang conf.now event True
+                    viewEventLabel focusid_m conf.lang conf.now event True
 
                 TensionEvent.LabelRemoved ->
-                    viewEventLabel conf.lang conf.now event False
+                    viewEventLabel focusid_m conf.lang conf.now event False
 
                 TensionEvent.BlobPushed ->
                     viewEventPushed conf.lang conf.now event action
@@ -2362,8 +2374,8 @@ viewEventAssignee lang now event isNew =
     ]
 
 
-viewEventLabel : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventLabel lang now event isNew =
+viewEventLabel : Maybe String -> Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
+viewEventLabel focusid_m lang now event isNew =
     let
         icon =
             A.icon "icon-tag"
@@ -2377,12 +2389,19 @@ viewEventLabel lang now event isNew =
 
         label =
             Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
+
+        link =
+            Maybe.map
+                (\nid ->
+                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ label.name)
+                )
+                focusid_m
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <|
+        [ span [ class "labelsList" ] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" Nothing label, text (formatDate lang now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" link label, text (formatDate lang now event.createdAt) ]
         ]
     ]
 
