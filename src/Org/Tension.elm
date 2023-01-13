@@ -1918,7 +1918,7 @@ viewTension u t model =
                         ]
                 , div [ class "tensionSubtitle" ]
                     [ span
-                        [ class "tag is-rounded is-light"
+                        [ class "tag is-rounded has-background-tag"
                         , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
                         , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                         ]
@@ -2283,7 +2283,7 @@ viewEventTitle lang now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right" ] []
+            , span [ class "arrow-right mx-1" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
@@ -2301,7 +2301,7 @@ viewEventType lang now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            , span [ class "arrow-right" ] []
+            , span [ class "arrow-right mx-1" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             ]
         ]
@@ -2319,7 +2319,7 @@ viewEventVisibility lang now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right" ] []
+            , span [ class "arrow-right mx-1" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
@@ -2345,7 +2345,7 @@ viewEventAuthority lang now event action =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate lang now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right" ] []
+            , span [ class "arrow-right mx-1" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
