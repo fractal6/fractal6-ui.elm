@@ -556,7 +556,7 @@ viewOrgaValidate model =
                 div [ class "f6-error message is-danger is-light is-small mt-1" ]
                     [ p [ class "message-body" ]
                         [ text T.duplicateNameError
-                        , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                        , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                         ]
                     ]
 

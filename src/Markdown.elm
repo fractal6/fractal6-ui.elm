@@ -52,7 +52,11 @@ renderMarkdown_ style content =
             |> Result.mapError deadEndsToString
             |> Result.andThen
                 (\ast ->
-                    Markdown.Renderer.render (frac6Renderer style True) ast
+                    if style |> String.split " " |> List.member "f6-error" then
+                        Markdown.Renderer.render (frac6Renderer style False) ast
+
+                    else
+                        Markdown.Renderer.render (frac6Renderer style True) ast
                 )
     of
         Ok rendered ->
