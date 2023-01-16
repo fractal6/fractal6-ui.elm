@@ -1729,24 +1729,6 @@ viewSearchBar model =
             , div [ class "column is-7 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
-                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , text T.status
-                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
-                            ]
-                        , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
-                            [ div
-                                [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, text (statusFilter2Text AllStatus) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
-                                ]
-                            ]
-                        ]
-                    , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.type_
@@ -1765,6 +1747,24 @@ viewSearchBar model =
                                         )
                                         TensionType.list
                                 )
+                            ]
+                        ]
+                    , div [ class "control dropdown" ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
+                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
+                            , text T.status
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
+                            ]
+                        , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
+                            [ div
+                                [ class "dropdown-content" ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
+                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, text (statusFilter2Text AllStatus) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
+                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
+                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
+                                ]
                             ]
                         ]
                     , div [ class "control", onClick ChangeLabel ]
