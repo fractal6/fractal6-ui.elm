@@ -635,8 +635,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Opérationnel"
 
 [help]
-  en="Help"
-  fr="Aide"
+  en="Question & help"
+  fr="Question / Aide"
 
 [alert]
   en="Alert"
@@ -645,6 +645,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [announcement]
   en="Announcement"
   fr="Annonce"
+
+[showAllCat]
+  en="Show all categories"
+  fr="Voir toutes les catégories"
 
 [theVisibility]
   en="the visibility"

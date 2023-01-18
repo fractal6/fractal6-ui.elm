@@ -1388,14 +1388,22 @@ figcaption {
       li {
           padding-bottom: $size-small;
       }
-      a {
-          &.is-active {
-              font-weight: 600;
-              //background-color: var(--background);
-              //color: var(--link);
-          }
+      a.is-active {
+          font-weight: 600;
       }
   }
+}
+
+.list-settings {
+    .menu-list {
+        font-size: 0.85rem;
+        li {
+            padding-bottom: 0.25rem;
+        }
+      a.is-active {
+          font-weight: 600;
+      }
+    }
 }
 
 //

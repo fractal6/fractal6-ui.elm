@@ -54,7 +54,7 @@ review:
 #
 
 # Deploy on Netlyfy/Fleek
-publish_netlify: prod
+publish_build: prod
 	cd ../build && \
 		rm static -rf && \
 		cp ../fractal6-ui.elm/dist/* . -r && \
@@ -143,11 +143,13 @@ build_release_op: $(RELEASE_BUILD_DIRS)
 		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
 
 upload_release_op:
+	@echo "Uploading to " "https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip"
 	@curl -f -k -H "Authorization: token $(F6_TOKEN)" --progress-bar \
 		--upload-file $(RELEASE_DIR)/$(RELEASE_NAME).zip \
 		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
 
 delete_release_op:
+	@echo "Deleteing " "https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip"
 	curl -k -H "Authorization: token $(F6_TOKEN)" -X DELETE \
 		https://code.fractale.co/api/packages/fractale/generic/$(NAME)/$(RELEASE_VERSION)/$(RELEASE_NAME).zip
 

@@ -9,6 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ...
 
 
+## [0.7.4]
+
+### Fixed
+- ui: make labels clickable in tension view.
+- ui: fix theme/color background color for tension type tag.
+- ui: fix theme/color for Announcement.
+- ui: fix break-word overflow in message box
+- ui: fix left menu padding when navigating out and in organisation page + footer margin.
+- ui: do not parse error mardown message with the f6 md parser.
+- schema: remove obsolete Node.mandate and NodeFragment.children fields
+
+
 ## [0.7.3]
 
 ### New
