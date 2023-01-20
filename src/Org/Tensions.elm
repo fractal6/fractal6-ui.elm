@@ -31,7 +31,7 @@ import Bulk exposing (..)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon2, tensionStatus2str, tensionType2str, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewUserFull)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -1119,11 +1119,11 @@ update global message model =
             ( { model | statusFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeTypeFilter value ->
-            if List.member value [ OneType TensionType.Announcement, OneType TensionType.Governance ] then
+            if List.member value [ OneType TensionType.Announcement, OneType TensionType.Governance, OneType TensionType.Help ] then
                 ( { model | typeFilter = value, statusFilter = AllStatus }, send SubmitSearchReset, Cmd.none )
 
             else
-                ( { model | typeFilter = value }, send SubmitSearchReset, Cmd.none )
+                ( { model | typeFilter = value, statusFilter = OpenStatus }, send SubmitSearchReset, Cmd.none )
 
         ChangeDepthFilter value ->
             ( { model | depthFilter = value }, send SubmitSearchReset, Cmd.none )
@@ -1641,9 +1641,11 @@ view_ global model =
             List.member model.viewMode [ CircleView, AssigneeView ]
     in
     div [ id "tensions", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd pt-1", classList [ ( "pb-0", isFullwidth ) ] ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd pt-1", classList [ ( "pb-0", isFullwidth ) ] ]
             [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ] [ viewSearchBar model ] ]
+                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
+                    [ viewSearchBar model ]
+                ]
             , case model.children of
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -1678,6 +1680,27 @@ view_ global model =
               else
                 text ""
             ]
+        ]
+
+
+viewCatMenu : TypeFilter -> Html Msg
+viewCatMenu typeFilter =
+    div [ class "list-settings menu mt-1 is-hidden-mobile" ]
+        [ TensionType.list
+            |> List.map
+                (\x ->
+                    li []
+                        [ a [ onClickPD (ChangeTypeFilter (OneType x)), target "_blank", classList [ ( "is-active", OneType x == typeFilter ) ] ]
+                            [ tensionIcon3 x ]
+                        ]
+                )
+            |> List.append
+                [ li []
+                    [ a [ onClickPD (ChangeTypeFilter AllTypes), target "_blank", classList [ ( "is-active", AllTypes == typeFilter ) ] ]
+                        [ text T.showAllCat ]
+                    ]
+                ]
+            |> ul [ class "menu-list" ]
         ]
 
 
@@ -1743,7 +1766,7 @@ viewSearchBar model =
                                     ++ List.map
                                         (\t ->
                                             div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
-                                                [ ternary (model.typeFilter == OneType t) checked unchecked, tensionIcon2 t ]
+                                                [ ternary (model.typeFilter == OneType t) checked unchecked, tensionIcon3 t ]
                                         )
                                         TensionType.list
                                 )
@@ -1954,8 +1977,9 @@ viewListTensions model =
                     --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
                     other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
     in
-    div [ class "columns is-centered" ]
-        [ div [ class "column is-12" ]
+    div [ class "columns" ]
+        [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
+        , div [ class "column is-10" ]
             [ viewTensionsListHeader model
             , viewTensions model.conf model.node_focus model.initPattern tensions_d ListTension
             ]

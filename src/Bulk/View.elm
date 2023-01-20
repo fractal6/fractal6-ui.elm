@@ -411,6 +411,15 @@ tensionIcon2 type_ =
     span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2str type_) ]
 
 
+tensionIcon3 : TensionType.TensionType -> Html msg
+tensionIcon3 type_ =
+    let
+        cls =
+            ""
+    in
+    span [ class <| String.join " " <| [ cls ] ] [ A.icon1 (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
+
+
 
 {-
    Users
