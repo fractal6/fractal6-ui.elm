@@ -340,7 +340,7 @@ update_ apis message model =
                 )
 
             else
-                ( model, Out [] [] (Just ( True, True )) )
+                ( model, Out [] [] (Just ( True, False )) )
 
         OnDataAck result ->
             let

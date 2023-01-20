@@ -626,7 +626,7 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
-    | GotChildren (WebData (List NodeId)) -- HTTP/Json
+    | GotChildren (WebData (List NodeId)) -- HTTP/Json @deprecated
     | GotChildren2 (List String) -- use TreeMenu to get children
     | GotTensionsInt Int (GqlData (List Tension)) -- GraphQL
     | GotTensionsExt (GqlData (List Tension)) -- GraphQL
