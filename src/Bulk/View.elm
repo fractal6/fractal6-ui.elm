@@ -816,7 +816,7 @@ viewOrgaMedia_ user_m root =
         n_guests =
             root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_guests) |> withDefault 0
     in
-    div [ class "media mediaBox box" ]
+    div [ class "media mediaBox box pb-3" ]
         [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
@@ -862,8 +862,10 @@ viewOrgaMedia_ user_m root =
                                 roles =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
-                            [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
-                            , div [ class "buttons" ] <|
+                            [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
+
+                            --, span [ class "is-hint" ] [ text "Your roles: " ]
+                            , div [ class "buttons is-inline" ] <|
                                 (roles
                                     |> List.map
                                         (\r ->

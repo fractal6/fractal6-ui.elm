@@ -581,7 +581,7 @@ view op (State model) =
             ]
 
     else
-        div [ id "tree-hinter", onMouseEnter (OnToggleHover True) ]
+        div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
             --[ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
             [ div [] [] ]
 

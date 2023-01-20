@@ -1886,9 +1886,7 @@ viewTensionsListHeader model =
         [ class "pt-3 pb-3 has-border-light has-background-header"
         , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
         ]
-        [ div
-            [ class "level is-marginless is-mobile"
-            ]
+        [ div [ class "level is-marginless is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount model
                 , if model.node_focus.nameid /= model.node_focus.rootnameid then
@@ -1934,7 +1932,7 @@ viewTensionsCount model =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons has-addons m-0" ]
+            div [ class "buttons has-addons" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, model.statusFilter == OpenStatus ), ( inactiveCls, model.statusFilter /= OpenStatus ) ]
