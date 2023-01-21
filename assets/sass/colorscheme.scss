@@ -207,6 +207,7 @@ $is-hint: $grey-light;
 $is-hint2: $grey;
 $tag-hint: lighten($white-ter, 5);
 $tag-hint-active: rgba($primary, 0.1);
+$tag-author: lighten($link, 47);
 
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
@@ -382,6 +383,7 @@ $button-vote-danger-background: $danger;
   --is-hint2: #{$is-hint2};
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
+  --tag-author: #{$tag-author};
   --success-light: #{$success-light};
   --is-announce: #{$is-announce};
 
@@ -570,6 +572,7 @@ $is-hint: $grey-light;
 $is-hint2: $grey-light2;
 $tag-hint: $grey-darker;
 $tag-hint-active: rgba($primary, 0.3);
+$tag-author: darken($blue-grey, 25);
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
@@ -747,6 +750,7 @@ $button-vote-danger-background: $danger-light;
   --is-hint2: #{$is-hint2};
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
+  --tag-author: #{$tag-author};
   --success-light: #{$success-light};
   --is-announce: #{$is-announce};
 

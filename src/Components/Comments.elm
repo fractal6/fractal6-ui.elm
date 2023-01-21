@@ -106,7 +106,7 @@ viewComment op c form result =
 
               else
                 div [ class "message" ]
-                    [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "has-background-tag", isAuthor && False ) ] ]
+                    [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
                         , viewTensionDateAndUserC op.conf c.createdAt c.createdBy
                         , case c.updatedAt of

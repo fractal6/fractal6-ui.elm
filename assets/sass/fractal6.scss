@@ -32,12 +32,6 @@
             margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
         }
 
-        // @DEBUG: :has selector is not well supported yet, especially by firefox...
-        // &.has-tree-menu:has(.orgPane) ~ #footBar {
-         &.has-tree-menu ~ #footBar {
-             padding-left: calc(#{$tree-menu-width} + #{$size-small}) !important;
-         }
-
         #helperBar.has-tree-menu,
         #mainPane.has-tree-menu > *:not(.kb-board) {
             padding-left: 2%;
@@ -62,9 +56,23 @@
         &.has-orga-menu #tree-menu {
             margin-left: $orga-menu-width !important;
         }
+
+        // Footbar adjustment with menus
+        // @DEBUG: :has selector is not well supported yet, especially by firefox...
+        // &.has-tree-menu:has(.orgPane) ~ #footBar {
+         &.has-tree-menu ~ #footBar {
+             padding-left: calc(#{$tree-menu-width} + #{$size-medium}) !important;
+         }
+         &.has-orga-menu ~ #footBar {
+             padding-left: calc(#{$orga-menu-width} + #{$size-medium}) !important;
+         }
+         &.has-tree-menu.has-orga-menu ~ #footBar {
+             padding-left: calc(#{$tree-menu-width} + #{$orga-menu-width} + #{$size-medium}) !important;
+         }
+
     }
 
-    // KB board adjustmenty with menus
+    // KB board adjustments with menus
     @include fullhd {
         &.has-orga-menu:not(.has-tree-menu) .kb-board {
             margin-left: $orga-menu-width !important;
@@ -320,6 +328,9 @@ a:hover .is-name, a:hover .is-username {
 }
 .has-background-tag {
     background-color: var(--tag-hint) !important;
+}
+.has-background-author {
+    background-color: var(--tag-author) !important;
 }
 .has-background-header {
     background-color: var(--hbc);
@@ -742,6 +753,9 @@ span[data-tooltip] {
     .message-header {
         color: var(--text-light) !important;
         background-color: var(--comment-header-background-color);
+        &.is-author {
+            background-color: var(--tag-author) !important;
+        }
     }
 
     .message-body {
@@ -3147,14 +3161,17 @@ i.is-liked {
     pointer-events: none;
 }
 .has-arrow-left:after {
-    border-right-color: var(--comment-header-background-color) !important;
     border-width: 8px;
     margin-top: -8px;
+    border-right-color: var(--comment-header-background-color) !important;
+}
+.has-arrow-left.is-author:after {
+    border-right-color: var(--tag-author) !important;
 }
 .has-arrow-left:before {
-    border-right-color: var(--border-color-light);
     border-width: 9px;
     margin-top: -9px;
+    border-right-color: var(--border-color-light);
 }
 
 /*
