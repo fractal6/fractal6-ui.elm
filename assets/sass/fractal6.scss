@@ -605,20 +605,20 @@ span[data-tooltip] {
 	display: inline-block;
 	padding: 3px;
 	&.right {
-		transform: rotate(-45deg);
 		-webkit-transform: rotate(-45deg);
+		transform: rotate(-45deg);
 	}
 	&.left {
-		transform: rotate(135deg);
 		-webkit-transform: rotate(135deg);
+		transform: rotate(135deg);
 	}
 	&.up {
-		transform: rotate(-135deg);
 		-webkit-transform: rotate(-135deg);
+		transform: rotate(-135deg);
 	}
 	&.down {
-		transform: rotate(45deg);
 		-webkit-transform: rotate(45deg);
+		transform: rotate(45deg);
 		margin-bottom: 2px;
 	}
 }
@@ -866,6 +866,7 @@ span[data-tooltip] {
     // Dropdown menu centering
     left: 50% !important;
     right: auto !important;
+    -webkit-transform: translate(-50%, 0) !important;
     transform: translate(-50%, 0) !important;
 }
 
@@ -2191,12 +2192,14 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
         &-slideTop {
             .modal-content {
+                -webkit-transform: translateY(-50%);
                 transform: translateY(-50%);
                 opacity: 0;
                 transition: all $modal-out-duration;
             }
 
             &.is-active .modal-content {
+                -webkit-transform: translateY(0);
                 transform: translateY(0);
                 opacity: 1;
             }
@@ -3182,13 +3185,13 @@ i.is-liked {
     @include tablet {
         transition: transform .5s ease, opacity .5s ease;
         &.is-slide-left {
-            transform: translateX(-100%);
             -webkit-transform: translateX(-100%);
+            transform: translateX(-100%);
             //opacity: 0;
         }
         &.is-slide-right {
-            transform: translateX(100%);
             -webkit-transform: translateX(100%);
+            transform: translateX(100%);
             //opacity: 0;
         }
     }
@@ -3217,6 +3220,7 @@ i.is-liked {
 		opacity: inherit;
 		position: absolute;
 		top: 50%;
+		-webkit-transform: translate3d(-50%, -50%, 0);
 		transform: translate3d(-50%, -50%, 0);
 		transform-origin: center;
 		width: 40px;
@@ -3245,6 +3249,7 @@ i.is-liked {
 		opacity: inherit;
 		position: absolute;
 		//top: 50%;
+		-webkit-transform: translate3d(-50%, -50%, 0);
 		transform: translate3d(-50%, -50%, 0);
 		transform-origin: center;
 		width: 40px;
@@ -3258,9 +3263,11 @@ i.is-liked {
 
 @keyframes spinner {
     0% {
+        -webkit-transform: translate3d(-50%, -50%, 0) rotate(0deg);
         transform: translate3d(-50%, -50%, 0) rotate(0deg);
     }
     100% {
+        -webkit-transform: translate3d(-50%, -50%, 0) rotate(360deg);
         transform: translate3d(-50%, -50%, 0) rotate(360deg);
     }
 }
@@ -3347,8 +3354,8 @@ i.is-liked {
 */
 
 .ph.pulse div{
-  animation: pulse 1s infinite ease-in-out;
   -webkit-animation:pulse 1s infinite ease-in-out;
+  animation: pulse 1s infinite ease-in-out;
 }
 
 @keyframes pulse
@@ -3385,8 +3392,8 @@ i.is-liked {
 */
 
 .ph.wave div{
-    animation: wave 1s infinite linear forwards;
     -webkit-animation:wave 1s infinite linear forwards;
+    animation: wave 1s infinite linear forwards;
     background: #f6f7f8;
     background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
     background-size: 800px 104px;
@@ -3418,7 +3425,6 @@ i.is-liked {
 // don't work, but cool to rotate an element xD
 .rotate-spinner {
 	-webkit-animation:busyIcon 2s linear infinite;
-	-moz-animation:busyIcon 2s linear infinite;
 	animation:busyIcon 2s linear infinite;
 }
 @-moz-keyframes busyIcon { 100% { -moz-transform: rotate(360deg); } }
@@ -3528,6 +3534,7 @@ input:checked + .acc .acc-content {
 	opacity: 0.5;
 }
 input:checked + section.acc .acc-title:before {
+	-webkit-transform: rotate(90deg);
 	transform: rotate(90deg);
 }
 .arrows-right .acc-title {

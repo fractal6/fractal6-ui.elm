@@ -20,9 +20,9 @@ type TensionHasFilter
     | Type_
     | Status
     | Action
-    | Comments
     | Assignees
     | Labels
+    | Comments
     | Blobs
     | History
     | Mentions
@@ -34,7 +34,7 @@ type TensionHasFilter
 
 list : List TensionHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Comments, Assignees, Labels, Blobs, History, Mentions, Contracts, Subscribers, N_comments, N_open_contracts ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Assignees, Labels, Comments, Blobs, History, Mentions, Contracts, Subscribers, N_comments, N_open_contracts ]
 
 
 decoder : Decoder TensionHasFilter
@@ -79,14 +79,14 @@ decoder =
                     "action" ->
                         Decode.succeed Action
 
-                    "comments" ->
-                        Decode.succeed Comments
-
                     "assignees" ->
                         Decode.succeed Assignees
 
                     "labels" ->
                         Decode.succeed Labels
+
+                    "comments" ->
+                        Decode.succeed Comments
 
                     "blobs" ->
                         Decode.succeed Blobs
@@ -155,14 +155,14 @@ toString enum____ =
         Action ->
             "action"
 
-        Comments ->
-            "comments"
-
         Assignees ->
             "assignees"
 
         Labels ->
             "labels"
+
+        Comments ->
+            "comments"
 
         Blobs ->
             "blobs"
@@ -236,14 +236,14 @@ fromString enumString____ =
         "action" ->
             Just Action
 
-        "comments" ->
-            Just Comments
-
         "assignees" ->
             Just Assignees
 
         "labels" ->
             Just Labels
+
+        "comments" ->
+            Just Comments
 
         "blobs" ->
             Just Blobs

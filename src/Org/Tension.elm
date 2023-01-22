@@ -346,13 +346,17 @@ type Msg
     | GotMarkAsRead (GqlData IdPayload)
     | ToggleSubscription String
       -- Unsubscribe from url
-      -- @TODO: move this to global (e.g ToggleWatchOrga)
     | DoUnsubscribe String
     | GotUnsubscribe (GqlData Bool)
     | OnCloseUnsubscribe
+      -- @TODO: move this to global (e.g ToggleWatchOrga)
     | DoUnwatch String
     | GotUnwatch (GqlData Bool)
     | OnCloseUnwatch
+      -- Pin/Unpin
+    | PinTension Time.Posix
+    | UnpinTension Time.Posix
+    | PinAck (GqlData IdPayload)
       --
       -- Page Action
       --
@@ -578,7 +582,7 @@ init global flags =
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
     in
-    ( { model | subscribe_result = withMapData (\x -> withDefault False x.isSubscribed) model.tension_head }
+    ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }
     , Cmd.batch (refresh_cmds refresh global model)
     , if fs.menuChange || refresh then
         -- No refresh here because all the focus is not encoded in the tension URL.
@@ -822,7 +826,7 @@ update global message model =
                     ( { model
                         | tension_head = result
                         , hasBeenPushed = hasBeenPushed
-                        , subscribe_result = fromMaybeData th.isSubscribed model.subscribe_result
+                        , subscribe_result = fromMaybeData (Just th.isSubscribed) model.subscribe_result
                         , nodeDoc = nodeDoc
                         , isTensionAdmin = ternary hasLocalGraph isAdmin model.isTensionAdmin
                       }
@@ -859,7 +863,7 @@ update global message model =
                 OkAuth d ->
                     let
                         th =
-                            withMapData (\x -> { x | isSubscribed = Just d }) model.tension_head
+                            withMapData (\x -> { x | isSubscribed = d }) model.tension_head
                     in
                     ( { model | subscribe_result = result, tension_head = th }, Cmd.none, send (UpdateSessionTensionHead (withMaybeData th)) )
 
@@ -897,7 +901,7 @@ update global message model =
             case model.tension_head of
                 Success th ->
                     ( { model | subscribe_result = LoadingSlowly, unsubscribe = "" }
-                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSubscribe
+                    , toggleTensionSubscription apis username model.tensionid (not th.isSubscribed) GotIsSubscribe
                     , Cmd.none
                     )
 
@@ -961,6 +965,60 @@ update global message model =
 
                 _ ->
                     ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
+
+        -- Pin/Unpin
+        PinTension time ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , events = [ Ev TensionEvent.Pinned "" "" ]
+                    }
+            in
+            ( { model | tension_form = newForm }
+            , patchLiteral apis newForm PinAck
+            , Cmd.none
+            )
+
+        UnpinTension time ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , events = [ Ev TensionEvent.Unpinned "" "" ]
+                    }
+            in
+            ( { model | tension_form = newForm }
+            , patchLiteral apis newForm PinAck
+            , Cmd.none
+            )
+
+        PinAck result ->
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+
+                OkAuth d ->
+                    let
+                        v =
+                            model.tension_form.events |> List.any (\x -> x.event_type == TensionEvent.Pinned)
+
+                        th =
+                            withMapData (\x -> { x | isPinned = v }) model.tension_head
+                    in
+                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid global.session.user }
+                    , Cmd.none
+                    , send (UpdateSessionTensionHead (withMaybeData th))
+                    )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- Page Action
         ChangeCommentPost field value ->
@@ -1872,7 +1930,7 @@ viewTension u t model =
                                 title /= t.title
 
                             doSubmit =
-                                ternary isSendable [ onClick (Submit isLoading <| SubmitTitle) ] []
+                                ternary isSendable [ onClick (Submit isLoading SubmitTitle) ] []
                         in
                         [ div [ class "field is-grouped" ]
                             [ p [ class "control is-expanded" ]
@@ -2893,7 +2951,7 @@ viewSidePane u t model =
             LoggedIn uctx ->
                 let
                     ( iconElt, subscribe_txt ) =
-                        case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) |> withDefault Nothing of
+                        case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) of
                             Just True ->
                                 ( A.icon1 "icon-bell-off icon-1x" T.unsubscribe, T.tensionSubscribeText )
 
@@ -2941,6 +2999,17 @@ viewSidePane u t model =
                                    )
                     in
                     [ hr [ class "has-background-border-light" ] [] ]
+                        ++ (if isAdmin then
+                                [ div
+                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    , onClick (Submit False <| ternary t.isPinned UnpinTension PinTension)
+                                    ]
+                                    [ A.icon "icon-pin mr-1", ternary t.isPinned (text T.unpinTension) (text T.pinTension) ]
+                                ]
+
+                            else
+                                []
+                           )
                         ++ (if not hasNode then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
@@ -2964,7 +3033,7 @@ viewSidePane u t model =
                                 []
                            )
                         ++ (if isAdmin then
-                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
+                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock conversation" ]
                                 ]
 
                             else

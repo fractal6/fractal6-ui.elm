@@ -923,9 +923,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 - You will be unassigned to any tensions in this organization.
 - You will be able to join again by invitation only.
   """
-  fr="""Etes vous sûr de vouloir quitter cette organisation ?
+  fr="""Etes-vous sûr de vouloir quitter cette organisation ?
 - Vous serez desassigné de toutes tensions dans cette organisation.
-- Vous pourrez la rejoindre a nouveau sur invitation seulement.
+- Vous pourrez la rejoindre à nouveau sur invitation seulement.
   """
 
 [deleteThisContract]
@@ -947,6 +947,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [moveTension]
   en="Move tension"
   fr="Déplacer la tension"
+
+[pinTension]
+  en="Pin tension"
+  fr="Epingler la tension"
+
+[unpinTension]
+  en="Unpin tension"
+  fr="Désépingler la tension"
 
 [moveCircle]
   en="Move circle"

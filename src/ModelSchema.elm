@@ -191,6 +191,12 @@ type alias EmitterOrReceiver =
     }
 
 
+type alias NodeWithPin a =
+    { a
+        | pinned : Maybe (List IdPayload)
+    }
+
+
 type alias NodeRights =
     { visibility : NodeVisibility.NodeVisibility
     , userCanJoin : Maybe Bool
@@ -336,13 +342,16 @@ type alias TensionHead =
     , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus
 
-    --
-    , isSubscribed : Maybe Bool
+    -- Computed
+    , isSubscribed : Bool
+    , isPinned : Bool
 
-    --
+    -- List and Head
     , blobs : Maybe (List Blob) -- head / len() == 1
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : Maybe (List Event)
+
+    -- Count @debug: filter Open contract
     , n_open_contracts : Maybe Int
     }
 

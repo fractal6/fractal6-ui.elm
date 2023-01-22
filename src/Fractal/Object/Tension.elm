@@ -92,30 +92,6 @@ action =
     Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
 
 
-type alias CommentsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.CommentFilter
-    , order : OptionalArgument Fractal.InputObject.CommentOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-comments :
-    (CommentsOptionalArguments -> CommentsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Comment
-    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
-comments fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeCommentFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeCommentOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "comments" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
-
-
 type alias AssigneesOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter
     , order : OptionalArgument Fractal.InputObject.UserOrder
@@ -162,6 +138,30 @@ labels fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "labels" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+type alias CommentsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter
+    , order : OptionalArgument Fractal.InputObject.CommentOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+comments :
+    (CommentsOptionalArguments -> CommentsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+comments fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeCommentFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeCommentOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "comments" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 type alias BlobsOptionalArguments =
@@ -334,26 +334,6 @@ message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
 
 
-type alias CommentsAggregateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.CommentFilter }
-
-
-commentsAggregate :
-    (CommentsAggregateOptionalArguments -> CommentsAggregateOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.CommentAggregateResult
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
-commentsAggregate fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeCommentFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "commentsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
 type alias AssigneesAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
@@ -392,6 +372,26 @@ labelsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "labelsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias CommentsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter }
+
+
+commentsAggregate :
+    (CommentsAggregateOptionalArguments -> CommentsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.CommentAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
+commentsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeCommentFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "commentsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias BlobsAggregateOptionalArguments =

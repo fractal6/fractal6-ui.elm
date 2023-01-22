@@ -29,23 +29,24 @@ type NodeHasFilter
     | IsPersonal
     | UserCanJoin
     | GuestCanCreateTension
+    | Watchers
     | Children
     | Labels
     | Roles
+    | Pinned
     | Role_ext
     | Role_type
     | Color
     | First_link
     | Second_link
     | Contracts
-    | Watchers
     | Orga_agg
     | Events_history
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Watchers, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -117,6 +118,9 @@ decoder =
                     "guestCanCreateTension" ->
                         Decode.succeed GuestCanCreateTension
 
+                    "watchers" ->
+                        Decode.succeed Watchers
+
                     "children" ->
                         Decode.succeed Children
 
@@ -125,6 +129,9 @@ decoder =
 
                     "roles" ->
                         Decode.succeed Roles
+
+                    "pinned" ->
+                        Decode.succeed Pinned
 
                     "role_ext" ->
                         Decode.succeed Role_ext
@@ -143,9 +150,6 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
-
-                    "watchers" ->
-                        Decode.succeed Watchers
 
                     "orga_agg" ->
                         Decode.succeed Orga_agg
@@ -226,6 +230,9 @@ toString enum____ =
         GuestCanCreateTension ->
             "guestCanCreateTension"
 
+        Watchers ->
+            "watchers"
+
         Children ->
             "children"
 
@@ -234,6 +241,9 @@ toString enum____ =
 
         Roles ->
             "roles"
+
+        Pinned ->
+            "pinned"
 
         Role_ext ->
             "role_ext"
@@ -252,9 +262,6 @@ toString enum____ =
 
         Contracts ->
             "contracts"
-
-        Watchers ->
-            "watchers"
 
         Orga_agg ->
             "orga_agg"
@@ -340,6 +347,9 @@ fromString enumString____ =
         "guestCanCreateTension" ->
             Just GuestCanCreateTension
 
+        "watchers" ->
+            Just Watchers
+
         "children" ->
             Just Children
 
@@ -348,6 +358,9 @@ fromString enumString____ =
 
         "roles" ->
             Just Roles
+
+        "pinned" ->
+            Just Pinned
 
         "role_ext" ->
             Just Role_ext
@@ -366,9 +379,6 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
-
-        "watchers" ->
-            Just Watchers
 
         "orga_agg" ->
             Just Orga_agg

@@ -75,6 +75,7 @@ import ModelSchema
         ( Blob
         , Comment
         , Count
+        , EmitterOrReceiver
         , Event
         , IdPayload
         , Label
@@ -93,7 +94,7 @@ import ModelSchema
         , decodedTime
         , encodeId
         )
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 
@@ -117,7 +118,7 @@ nBlobPerTension =
 getTensionHead url uctx tensionid msg =
     makeGQLQuery url
         (Query.getTension { id = encodeId tensionid }
-            (tensionHeadPayload uctx)
+            (tensionHeadPayload tensionid uctx)
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -138,9 +139,19 @@ getTensionBlobs url tensionid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-tensionHeadPayload : UserCtx -> SelectionSet TensionHead Fractal.Object.Tension
-tensionHeadPayload uctx =
-    SelectionSet.succeed TensionHead
+tensionHeadPayload : String -> UserCtx -> SelectionSet TensionHead Fractal.Object.Tension
+tensionHeadPayload tid uctx =
+    SelectionSet.succeed
+        (\a b c d e f g h i j k l m n o p ->
+            let
+                eor =
+                    EmitterOrReceiver h.name h.nameid h.role_type h.color
+
+                isPinned =
+                    h.pinned == Just [ { id = tid } ]
+            in
+            TensionHead a b c d e f g eor i j k isPinned m n o p
+        )
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
@@ -149,13 +160,13 @@ tensionHeadPayload uctx =
         |> with (Fractal.Object.Tension.labels identity labelPayload)
         |> with (Fractal.Object.Tension.assignees identity userPayload)
         --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
-        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity (emiterOrReceiverWithPinPayload tid))
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> (\x ->
                 case uctx.username of
                     "" ->
-                        hardcoded Nothing x
+                        hardcoded False x
 
                     username ->
                         with
@@ -171,10 +182,11 @@ tensionHeadPayload uctx =
                                     }
                                 )
                                 (SelectionSet.map identity Fractal.Object.User.username)
-                                |> SelectionSet.map (Maybe.map (\y -> List.length y > 0))
+                                |> SelectionSet.map (Maybe.map (\y -> List.length y > 0) >> withDefault False)
                             )
                             x
            )
+        |> hardcoded False
         |> with
             (Fractal.Object.Tension.blobs
                 (\args ->

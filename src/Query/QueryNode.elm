@@ -25,6 +25,7 @@ module Query.QueryNode exposing
     , cidPayload
     , contractEventPayload
     , emiterOrReceiverPayload
+    , emiterOrReceiverWithPinPayload
     , fetchNode
     , fetchNode2
     , fetchNodeData
@@ -617,6 +618,28 @@ emiterOrReceiverPayload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
         |> with Fractal.Object.Node.color
+
+
+emiterOrReceiverWithPinPayload : String -> SelectionSet (NodeWithPin EmitterOrReceiver) Fractal.Object.Node
+emiterOrReceiverWithPinPayload tid =
+    SelectionSet.succeed (\a b c d e -> { name = a, nameid = b, role_type = c, color = d, pinned = e })
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
+        |> with
+            (Fractal.Object.Node.pinned
+                (\a ->
+                    { a
+                        | first = Present 1
+                        , filter =
+                            Input.buildTensionFilter
+                                (\b -> { b | id = Present [ encodeId tid ] })
+                                |> Present
+                    }
+                )
+                tidPayload
+            )
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
