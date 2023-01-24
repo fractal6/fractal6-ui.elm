@@ -100,7 +100,7 @@ init user =
 --isOpen_ (State model) =
 --    model.isOpen
 
---- State Controls
+-- State Controls
 
 
 reset : Model -> Model

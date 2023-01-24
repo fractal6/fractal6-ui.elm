@@ -282,7 +282,7 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
+            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
             , send OnReload
             , sendSleep PassedSlowLoadTreshold 500
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
@@ -356,7 +356,7 @@ update global message model =
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( { model | path_data = Success newPath }, queryLocalGraph apis nameid (GotPath False), Cmd.none )
+                            ( { model | path_data = Success newPath }, queryLocalGraph apis nameid False (GotPath False), Cmd.none )
 
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )

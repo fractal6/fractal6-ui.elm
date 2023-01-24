@@ -45,9 +45,9 @@ import RemoteData exposing (RemoteData)
 
 
 
-{-
-   Add reaction
--}
+--
+-- Add reaction
+--
 
 
 type alias ReactionPayload =
@@ -106,9 +106,9 @@ reactionPayload =
 
 
 
-{-
-   Delete reaction
--}
+--
+-- Delete reaction
+--
 
 
 deleteReaction url username cid type_ msg =

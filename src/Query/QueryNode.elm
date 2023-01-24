@@ -44,7 +44,7 @@ module Query.QueryNode exposing
     , nodeOrgaPayload
     , notifEventPayload
     , pNodePayload
-    , queryFocusNode
+    , pinPayload
     , queryJournal
     , queryLabels
     , queryLabelsDown
@@ -98,6 +98,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra as LE
+import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
@@ -105,10 +106,9 @@ import String.Extra as SE
 
 
 
-{-
-   Query Public Orga / Explore
--}
---- Response decoder
+--
+-- Query Public Orga / Explore
+--
 
 
 nodeDecoder : Maybe (List (Maybe node)) -> Maybe node
@@ -215,10 +215,8 @@ nodeOrgaExtPayload =
 
 
 
-{-
-   Query Node Ext / Profile
--}
---- Response decoder
+--
+-- Query Node Ext / Profile
 --
 
 
@@ -261,9 +259,9 @@ nodeExtFilter nameids a =
 
 
 
-{-
-   Query Node and Sub Nodes / FetchNodes
--}
+--
+-- Query Node and Sub Nodes / FetchNodes
+--
 
 
 queryNodesSub url nameid msg =
@@ -294,10 +292,9 @@ nodesSubFilter nameid a =
 
 
 
-{-
-   Query Organisation Nodes / GraphPack
--}
---- Response decoder
+--
+-- Query Organisation Nodes / GraphPack
+--
 
 
 nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Maybe (Dict String Node)
@@ -458,9 +455,9 @@ cidPayload =
 
 
 
-{-
-   Get the node data /about, mandate, etc)
--}
+--
+-- Get the node data /about, mandate, etc)
+--
 
 
 type alias NodeDataSource =
@@ -509,9 +506,9 @@ mandatePayload =
 
 
 
-{-
-   Get Node
--}
+--
+-- Get Node
+--
 
 
 fetchNode url nid msg =
@@ -547,46 +544,9 @@ nidFilter nid a =
 
 
 
--- Usage with Query.queryNode
---nidFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
---nidFilter nid a =
---    { a
---        | filter =
---            Input.buildNodeFilter
---                (\b ->
---                    { b | nameid = Present { eq = Present nid, regexp = Absent } }
---                )
---                |> Present
---    }
-{-
-   Query FocusNode
--}
-
-
-focusDecoder : Maybe LocalNode -> Maybe FocusNode
-focusDecoder data =
-    data |> Maybe.map ln2fn
-
-
-ln2fn : LocalNode -> FocusNode
-ln2fn n =
-    FocusNode n.name n.nameid n.type_ n.visibility n.mode (withDefault [] n.children) n.source
-
-
-queryFocusNode url nid msg =
-    makeGQLQuery url
-        (Query.getNode
-            (nidFilter nid)
-            lgPayload
-        )
-        (RemoteData.fromResult >> decodeResponse focusDecoder >> msg)
-
-
-
-{-
-   Query Local Graph / Path Data
--}
---- Response decoder
+--
+-- Query Local Graph / Path Data
+--
 
 
 type alias LocalNode =
@@ -596,9 +556,10 @@ type alias LocalNode =
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
     , userCanJoin : Maybe Bool
-    , children : Maybe (List EmitterOrReceiver)
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
+    , children : Maybe (List EmitterOrReceiver)
+    , pinned : Maybe (List PinTension)
     }
 
 
@@ -611,35 +572,9 @@ type alias LocalRootNode =
     }
 
 
-emiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
-emiterOrReceiverPayload =
-    SelectionSet.succeed EmitterOrReceiver
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-
-
-emiterOrReceiverWithPinPayload : String -> SelectionSet (NodeWithPin EmitterOrReceiver) Fractal.Object.Node
-emiterOrReceiverWithPinPayload tid =
-    SelectionSet.succeed (\a b c d e -> { name = a, nameid = b, role_type = c, color = d, pinned = e })
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-        |> with
-            (Fractal.Object.Node.pinned
-                (\a ->
-                    { a
-                        | first = Present 1
-                        , filter =
-                            Input.buildTensionFilter
-                                (\b -> { b | id = Present [ encodeId tid ] })
-                                |> Present
-                    }
-                )
-                tidPayload
-            )
+ln2fn : LocalNode -> FocusNode
+ln2fn n =
+    FocusNode n.name n.nameid n.type_ n.visibility n.mode n.source (withDefault [] n.children) (Success n.pinned)
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
@@ -671,17 +606,17 @@ lgDecoder data =
             )
 
 
-queryLocalGraph url nid msg =
+queryLocalGraph url nid isInit msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
-            lgPayload
+            (lgPayload isInit)
         )
         (RemoteData.fromResult >> decodeResponse lgDecoder >> msg)
 
 
-lgPayload : SelectionSet LocalNode Fractal.Object.Node
-lgPayload =
+lgPayload : Bool -> SelectionSet LocalNode Fractal.Object.Node
+lgPayload isInit =
     SelectionSet.succeed LocalNode
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
@@ -689,9 +624,19 @@ lgPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.userCanJoin
-        |> with (Fractal.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
+        |> (\x ->
+                if isInit then
+                    x
+                        |> with (Fractal.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
+                        |> with (Fractal.Object.Node.pinned identity pinPayload)
+
+                else
+                    x
+                        |> hardcoded Nothing
+                        |> hardcoded Nothing
+           )
 
 
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
@@ -732,10 +677,52 @@ lgChildrenFilter a =
     }
 
 
+emiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
+emiterOrReceiverPayload =
+    SelectionSet.succeed EmitterOrReceiver
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
 
-{-
-   Query  Orga rights
--}
+
+emiterOrReceiverWithPinPayload : String -> SelectionSet (NodeWithPin EmitterOrReceiver) Fractal.Object.Node
+emiterOrReceiverWithPinPayload tid =
+    SelectionSet.succeed (\a b c d e -> { name = a, nameid = b, role_type = c, color = d, pinned = e })
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
+        |> with
+            (Fractal.Object.Node.pinned
+                (\a ->
+                    { a
+                        | first = Present 1
+                        , filter =
+                            Input.buildTensionFilter
+                                (\b -> { b | id = Present [ encodeId tid ] })
+                                |> Present
+                    }
+                )
+                tidPayload
+            )
+
+
+pinPayload : SelectionSet PinTension Fractal.Object.Tension
+pinPayload =
+    SelectionSet.succeed PinTension
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Tension.title
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Tension.type_
+        |> with Fractal.Object.Tension.status
+
+
+
+--
+-- Query  Orga rights
+--
 
 
 getCircleRights url nameid msg =
@@ -756,10 +743,9 @@ nodeRightsPayload =
 
 
 
-{-
-   Query  Members
--}
---- Response decoder
+--
+-- Query  Members
+--
 
 
 type alias NodeMembers =
@@ -820,10 +806,9 @@ membersPayload =
 
 
 
-{-
-   Query Local Members
--}
---- Response decoder
+--
+-- Query Local Members
+--
 
 
 type alias LocalMemberNode =
@@ -941,9 +926,9 @@ membersLocalPayload =
 
 
 
-{-
-   Query RoleExt (Full)
--}
+--
+-- Query RoleExt (Full)
+--
 
 
 type alias NodeRolesFull =
@@ -1000,9 +985,9 @@ roleFullPayload =
 
 
 
-{-
-   Query Labels (Full)
--}
+--
+-- Query Labels (Full)
+--
 
 
 type alias NodeLabelsFull =
@@ -1053,9 +1038,9 @@ labelFullPayload =
 
 
 
-{-
-   Query Roles
--}
+--
+-- Query Roles
+--
 
 
 rolesDecoder : Maybe (List (Maybe NodeRolesFull)) -> Maybe (List RoleExtFull)
@@ -1087,9 +1072,9 @@ queryRoles url nids msg =
 
 
 
-{-
-   Query Labels
--}
+--
+-- Query Labels
+--
 
 
 type alias NodeLabels =
@@ -1191,9 +1176,9 @@ labelPayload =
 
 
 
-{-
-   Query journal
--}
+--
+-- Query journal
+--
 
 
 type alias JournalNode =
@@ -1273,9 +1258,9 @@ notifEventPayload =
 
 
 
-{-
-   Get an organization info/stats
--}
+--
+-- Get an organization info/stats
+--
 
 
 getOrgaInfo url username nameid msg =

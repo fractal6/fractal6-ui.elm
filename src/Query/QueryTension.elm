@@ -32,6 +32,7 @@ module Query.QueryTension exposing
     , queryCircleTension
     , queryExtTension
     , queryIntTension
+    , queryPinnedTensions
     , tensionPayload
     )
 
@@ -81,6 +82,7 @@ import ModelSchema
         , Label
         , MentionedTension
         , NodeFragment
+        , PinTension
         , Reaction
         , Tension
         , TensionBlobs
@@ -94,15 +96,15 @@ import ModelSchema
         , decodedTime
         , encodeId
         )
-import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, pinPayload, tidPayload, userPayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 
 
 
-{-
-   Get one tension Head/Comments/Blobs/History
--}
+--
+-- Get one tension Head/Comments/Blobs/History
+--
 
 
 nCommentPerTension : Int
@@ -355,9 +357,9 @@ nodeFragmentPayload =
 
 
 
-{-
-   Query Circle Tension (all tension at depth 0 or 1 of a given node)
--}
+--
+-- Query Circle Tension (all tension at depth 0 or 1 of a given node)
+--
 
 
 nCircleTensionPpg : Int
@@ -377,10 +379,6 @@ type alias SubNodeTensions =
     { tensions_in : Maybe (List Tension)
     , tensions_out : Maybe (List Tension)
     }
-
-
-
--- Response Decoder
 
 
 circleTensionDecoder : Maybe NodeTensions -> Maybe (List Tension)
@@ -534,9 +532,9 @@ matchAllUsers alls =
 
 
 
-{-
-   Query Regexp Tension
--}
+--
+-- Query Regexp Tension
+--
 
 
 type alias SubNodeTensions2 =
@@ -544,10 +542,6 @@ type alias SubNodeTensions2 =
     , tensions_out : Maybe (List Tension)
     , children : Maybe (List NodeTensions)
     }
-
-
-
--- Response decoder
 
 
 subTensionDecoder : Maybe (List (Maybe Tension)) -> Maybe (List Tension)
@@ -749,19 +743,15 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
 
 
 
-{-
-   Query assigned to user tension
--}
+--
+-- Query tension assigned to user
+--
 
 
 type alias AssignedTensions =
     { username : String
     , tensions_assigned : Maybe (List Tension)
     }
-
-
-
--- Response Decoder
 
 
 assignedTensionDecoder : Maybe AssignedTensions -> Maybe (Dict String (List Tension))
@@ -824,3 +814,35 @@ assignedTensionsPayload first =
                 )
                 tensionPayload
             )
+
+
+
+--
+-- Query tension pinned
+--
+
+
+type alias PinnedTensions =
+    { pinned : Maybe (List PinTension)
+    }
+
+
+pinnedTensionDecoder : Maybe PinnedTensions -> Maybe (Maybe (List PinTension))
+pinnedTensionDecoder data =
+    data
+        |> Maybe.map .pinned
+
+
+queryPinnedTensions url nameid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (\a -> { a | nameid = Present nameid })
+            pinnedTensionsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse pinnedTensionDecoder >> msg)
+
+
+pinnedTensionsPayload : SelectionSet PinnedTensions Fractal.Object.Node
+pinnedTensionsPayload =
+    SelectionSet.map PinnedTensions
+        (Fractal.Object.Node.pinned identity pinPayload)

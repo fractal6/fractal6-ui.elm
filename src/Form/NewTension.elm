@@ -286,7 +286,7 @@ initCircleTab type_ model =
 
 -- Global methods
 --  nothing here
---- State Controls
+-- State Controls
 
 
 setPath : LocalGraph -> Model -> Model
@@ -696,7 +696,7 @@ update_ apis message model =
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( { model | path_data = Success newPath }, out0 [ queryLocalGraph apis nameid (GotPath False) ] )
+                            ( { model | path_data = Success newPath }, out0 [ queryLocalGraph apis nameid False (GotPath False) ] )
 
                 Failure err ->
                     ( { model | path_data = result }, out0 [ Ports.logErr (String.join " | " err) ] )
@@ -718,7 +718,7 @@ update_ apis message model =
                 LoggedIn uctx ->
                     case t of
                         FromNameid nameid ->
-                            ( model, out0 [ queryLocalGraph apis nameid (GotPath True) ] )
+                            ( model, out0 [ queryLocalGraph apis nameid True (GotPath True) ] )
 
                         FromPath p ->
                             let

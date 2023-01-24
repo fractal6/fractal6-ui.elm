@@ -64,6 +64,12 @@ nCommentPerContract =
     250
 
 
+
+--
+-- Query contract(s)
+--
+
+
 type alias TensionContracts =
     { --id : String
       contracts : Maybe (List Contract)

@@ -40,7 +40,7 @@ import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
 import Json.Encode as JE
-import Loading exposing (RequestResult(..), errorGraphQLHttpToString)
+import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
 import Text as T
@@ -141,8 +141,9 @@ type alias FocusNode =
     , type_ : NodeType.NodeType
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
-    , children : List EmitterOrReceiver
     , source : Maybe BlobId
+    , children : List EmitterOrReceiver
+    , pinned : GqlData (Maybe (List PinTension))
     }
 
 
@@ -180,6 +181,16 @@ getSourceTid n =
 
         Nothing ->
             ""
+
+
+type alias PinTension =
+    { id : String
+    , title : String
+    , createdAt : String
+    , createdBy : Username
+    , type_ : TensionType.TensionType
+    , status : TensionStatus.TensionStatus
+    }
 
 
 type alias EmitterOrReceiver =
@@ -580,8 +591,6 @@ type alias Mandate =
     , responsabilities : Maybe String
     , domains : Maybe String
     , policies : Maybe String
-
-    --, tensions : List { id : String, title : String }
     }
 
 

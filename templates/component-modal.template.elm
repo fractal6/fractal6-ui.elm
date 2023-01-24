@@ -103,7 +103,7 @@ isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
 
---- State Controls
+-- State Controls
 
 open : Model -> Model
 open model =

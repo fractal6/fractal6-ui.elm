@@ -2193,7 +2193,7 @@ Note : Pour éditer des mandats, vous devez publier les modifications effectuée
 """
 
 [labelsInfoHeader]
-  en="Creating new labels help you to sort out your tensions"
+  en="Creating new labels helps you sort out your tensions"
   fr="La création de nouvelles étiquettes vous aide à trier vos tensions."
 
 [labelsInfoDoc]

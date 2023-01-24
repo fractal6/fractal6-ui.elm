@@ -31,7 +31,7 @@ import Bulk exposing (..)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -44,7 +44,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (space_, ternary, textH, upH)
+import Extra exposing (space_, ternary, textH, unwrap, upH)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -75,6 +75,7 @@ import Loading
         , fromMaybeData
         , fromMaybeWebData
         , isSuccess
+        , isWebSuccess
         , withDefaultData
         , withDefaultWebData
         , withMapData
@@ -770,24 +771,6 @@ init global flags =
                                 { m | children = RemoteData.Success (List.map (\x -> NodeId x Nothing) nameids) }
                    )
 
-        --
-        -- Refresh tensions when data are in a Loading state or if
-        -- the query just changed (ie referer), regardless the "v" a "load" parameters.
-        --
-        dataNeedLoad =
-            case model.viewMode of
-                ListView ->
-                    model.tensions_int == Loading
-
-                IntExtView ->
-                    model.tensions_int == Loading
-
-                CircleView ->
-                    model.tensions_all == Loading
-
-                AssigneeView ->
-                    model.tensions_all == Loading
-
         refresh2 =
             case global.session.referer of
                 Just referer ->
@@ -805,13 +788,13 @@ init global flags =
 
         cmds =
             [ if fs.focusChange || model.path_data == Loading then
-                [ queryLocalGraph apis newFocus.nameid (GotPath True), send ResetData ]
+                [ queryLocalGraph apis newFocus.nameid True (GotPath True), send ResetData ]
 
               else if getTargetsHere model == [] then
                 -- path of children has not been loaded
                 [ send DoLoadInit ]
 
-              else if fs.refresh || dataNeedLoad then
+              else if fs.refresh || dataNeedLoad model then
                 [ send (DoLoad False) ]
 
               else if refresh2 then
@@ -823,7 +806,7 @@ init global flags =
               else if model.viewMode == AssigneeView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsAssignee") ]
 
-              else if not dataNeedLoad && model.offset == 0 then
+              else if not (dataNeedLoad model) && model.offset == 0 then
                 -- Assume data are already loaded, actualise offset.
                 [ send (SetOffset 1) ]
 
@@ -843,6 +826,26 @@ init global flags =
       else
         Cmd.none
     )
+
+
+dataNeedLoad : Model -> Bool
+dataNeedLoad model =
+    --
+    -- Refresh tensions when data are in a Loading state or if
+    -- the query just changed (ie referer), regardless the "v" a "load" parameters.
+    --
+    case model.viewMode of
+        ListView ->
+            model.tensions_int == Loading
+
+        IntExtView ->
+            model.tensions_int == Loading
+
+        CircleView ->
+            model.tensions_all == Loading
+
+        AssigneeView ->
+            model.tensions_all == Loading
 
 
 
@@ -961,7 +964,7 @@ update global message model =
                                     List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }
-                            , queryLocalGraph apis nameid (GotPath False)
+                            , queryLocalGraph apis nameid False (GotPath False)
                             , Cmd.none
                             )
 
@@ -1489,7 +1492,10 @@ update global message model =
                     mapGlobalOutcmds out.gcmds
 
                 extra_cmd =
-                    if out.result == Just ( True, True ) then
+                    if
+                        (out.result == Just ( True, True ))
+                            || (out.result == Just ( True, False ) && dataNeedLoad model)
+                    then
                         send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
 
                     else
@@ -1642,7 +1648,16 @@ view_ global model =
     in
     div [ id "tensions", class "columns is-centered is-marginless" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pt-1", classList [ ( "pb-0", isFullwidth ) ] ]
-            [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
+            [ if model.viewMode == ListView then
+                withMaybeData model.path_data
+                    |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
+                    |> withDefault Nothing
+                    |> Maybe.map (viewPinnedTensions model.conf model.node_focus)
+                    |> withDefault (text "")
+
+              else
+                text ""
+            , div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
                 [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
                     [ viewSearchBar model ]
                 ]

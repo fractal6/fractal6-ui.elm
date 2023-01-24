@@ -69,10 +69,9 @@ import RemoteData exposing (RemoteData)
 
 
 
-{-
-   Query event count
-
--}
+--
+-- Query event count
+--
 
 
 notifCountDecoder : Maybe { event_count : Maybe NotifCount } -> Maybe NotifCount
@@ -103,9 +102,9 @@ queryNotifCount url f msg =
 
 
 
-{-
-   Query UserEvent
--}
+--
+-- Query UserEvent
+--
 
 
 userNotificationsDecoder : Maybe UserNotifications -> Maybe UserEvents

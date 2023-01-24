@@ -68,6 +68,7 @@ import ModelSchema
         , Node
         , NodeExt
         , PNode
+        , PinTension
         , Post
         , RoleExt
         , RoleExtCommon
@@ -91,9 +92,9 @@ import Time
 {-
    @DEBUG: Factor this file to appropriate places in Component.{Tension, Node, User ,Color...}
 -}
-{-
-   Tension
--}
+--
+-- Tension
+--
 
 
 mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
@@ -151,8 +152,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
                       else
                         span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
                     ]
-                , div [ class "level-right" ]
-                    []
+                , div [ class "level-right" ] []
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
@@ -222,10 +222,50 @@ viewTensionArrowB cls emitter receiver =
         ]
 
 
+viewPinnedTensions : Conf -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions conf focus pins =
+    List.map
+        (\tension ->
+            div [ class "box media mediaBox p-4" ]
+                --, style "max-width" "40%" ]
+                [ div [ class "media-left mr-3" ]
+                    [ div
+                        [ class "tooltip is-left has-tooltip-arrow"
+                        , attribute "data-tooltip" (tensionType2str tension.type_)
+                        , style "width" "10px"
+                        ]
+                        [ tensionIcon tension.type_ ]
+                    ]
+                , div [ class "media-content" ]
+                    [ a
+                        [ class "has-text-weight-semibold is-human discrete-link "
+                        , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                        ]
+                        [ text tension.title ]
+                    , span [ class "level is-smaller2 is-mobile mt-2" ]
+                        [ div [ class "level-left" ]
+                            [ span
+                                [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                                , attribute "data-tooltip" (tensionStatus2str tension.status)
+                                ]
+                                [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                            , viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
+                            ]
 
-{-
-   Labels
--}
+                        --, div [ class "level-right" ] []
+                        ]
+                    ]
+                ]
+        )
+        pins
+        |> List.map (\x -> div [ class "column is-4 is-inline-block" ] [ x ])
+        |> div [ attribute "style" "margin-bottom:-1rem !important;" ]
+
+
+
+--
+-- Labels
+--
 
 
 {-| 1st parameter String is the current nameid
@@ -421,9 +461,9 @@ tensionIcon3 type_ =
 
 
 
-{-
-   Users
--}
+--
+-- Users
+--
 
 
 viewUsernameLink : String -> Html msg
@@ -669,9 +709,9 @@ viewProfileC user =
 
 
 
-{-
-   Date and authors
--}
+--
+-- Date and authors
+--
 
 
 viewOpenedDate : Conf -> String -> Html msg
@@ -741,9 +781,9 @@ counter c =
 
 
 
-{-
-   Node
--}
+--
+-- Node
+--
 
 
 viewNodeDescr : Bool -> Node -> TensionCharac -> Html msg
@@ -965,9 +1005,9 @@ lang2str lang =
 
 
 
-{-
-   Avatar
--}
+--
+-- Avatar
+--
 
 
 getAvatar0 : String -> Html msg
@@ -1008,9 +1048,9 @@ getAvatarOrga name =
 
 
 
-{-
-   Action
--}
+--
+-- Action
+--
 
 
 visibility2icon : NodeVisibility.NodeVisibility -> String
@@ -1167,9 +1207,9 @@ archiveActionToggle action_m =
 
 
 
-{-
-   Blob
--}
+--
+-- Blob
+--
 
 
 blobTypeStr : BlobType.BlobType -> String

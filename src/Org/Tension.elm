@@ -775,7 +775,7 @@ update global message model =
                                     List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }
-                            , queryLocalGraph apis nameid (GotPath False)
+                            , queryLocalGraph apis nameid False (GotPath False)
                             , Cmd.none
                             )
 
@@ -834,7 +834,7 @@ update global message model =
                         [ ternary hasLocalGraph
                             -- Do not change the context of the user anonymously, its confusing
                             (Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none)
-                            (queryLocalGraph apis (nid2rootid targetid) (GotPath True))
+                            (queryLocalGraph apis (nid2rootid targetid) True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
                         ]

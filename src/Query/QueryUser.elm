@@ -52,10 +52,9 @@ import String.Extra as SE
 
 
 
-{-
-
-   Query User
--}
+--
+-- Query User
+--
 
 
 usernameFilter : String -> Query.GetUserOptionalArguments -> Query.GetUserOptionalArguments
@@ -145,9 +144,9 @@ userFullPayload =
 
 
 
-{-
-   Query Users
--}
+--
+-- Query Users
+--
 
 
 usersDecoder : Maybe (List (Maybe user)) -> Maybe (List user)
@@ -208,9 +207,9 @@ userPayload =
 
 
 
-{-
-   Check if user is subscribe to the given tension
--}
+--
+-- Check if user is subscribe to the given tension
+--
 
 
 isSubscribeDecoder : Maybe IsSubscribe -> Maybe Bool

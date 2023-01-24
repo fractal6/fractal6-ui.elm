@@ -51,7 +51,7 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
-import Loading exposing (GqlData, RequestResult(..), WebData)
+import Loading exposing (GqlData, RequestResult(..), WebData, isFailure)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -59,6 +59,7 @@ import Process
 import Query.PatchUser exposing (toggleOrgaWatch)
 import Query.QueryNode exposing (getOrgaInfo)
 import Query.QueryNotifications exposing (queryNotifCount)
+import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData exposing (RemoteData)
 import Requests exposing (tokenack)
 import Session
@@ -153,11 +154,13 @@ type Msg
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
     | UpdateSessionNotif NotifCount
+    | GotOrgaInfo (GqlData OrgaInfo)
     | RefreshNotifCount
     | AckNotifCount (GqlData NotifCount)
     | ToggleWatchOrga String
     | GotIsWatching (GqlData Bool)
-    | GotOrgaInfo (GqlData OrgaInfo)
+    | RefreshPinTension String
+    | AckPinTension (GqlData (Maybe (List PinTension)))
       -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -353,12 +356,22 @@ update msg model =
             ( { model | session = { session | node_focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
-            -- Update also children. Children are used to manage tensions depth search option.
+            -- * Update also children. Children are used to manage tensions depth search option.
+            -- * Fetch Pin tension if needed.
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.none )
+            case data of
+                Just path ->
+                    if path.focus.pinned == NotAsked || isFailure path.focus.pinned then
+                        ( { model | session = { session | path_data = data, children = Nothing } }, send (RefreshPinTension path.focus.nameid) )
+
+                    else
+                        ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.none )
+
+                Nothing ->
+                    ( { model | session = { session | path_data = Nothing, children = Nothing } }, Cmd.none )
 
         UpdateSessionChildren data ->
             let
@@ -585,6 +598,27 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        RefreshPinTension nameid ->
+            ( model, queryPinnedTensions apis nameid AckPinTension )
+
+        AckPinTension result ->
+            let
+                session =
+                    model.session
+
+                new_path =
+                    Maybe.map
+                        (\p ->
+                            let
+                                focus =
+                                    p.focus
+                            in
+                            { p | focus = { focus | pinned = result } }
+                        )
+                        session.path_data
+            in
+            ( { model | session = { session | path_data = new_path } }, Cmd.none )
 
         UpdateSessionAuthorsPanel data ->
             let

@@ -674,6 +674,7 @@ localGraphFromOrga nameid orga_d =
                                         )
                                         orga
                                         |> Dict.values
+                                , pinned = NotAsked
                                 }
                             )
 
