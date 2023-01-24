@@ -670,7 +670,7 @@ update msg model =
                         )
                         session.path_data
             in
-            ( { model | session = { session | path_data = new_path } }, Cmd.none )
+            ( { model | session = { session | path_data = new_path } }, Ports.pathChanged )
 
         UpdateSessionAuthorsPanel data ->
             let

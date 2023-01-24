@@ -46,7 +46,7 @@ import Bulk.Codecs
         )
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
-import Bulk.View exposing (mediaTension, viewUsernameLink)
+import Bulk.View exposing (mediaTension, viewPinnedTensions, viewUsernameLink)
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -268,6 +268,7 @@ type Msg
       -- Page
     | SwitchWindow
     | SetLegend Bool
+    | UpdatePath
       -- Quick search
     | LookupFocus String
     | ToggleLookup
@@ -500,6 +501,9 @@ update global message model =
         SetLegend val ->
             ( { model | legend = val }, Cmd.none, Cmd.none )
 
+        UpdatePath ->
+            ( { model | path_data = global.session.path_data }, Cmd.none, Cmd.none )
+
         -- Data queries
         GotOrga result ->
             case parseErr result model.refresh_trial of
@@ -713,8 +717,14 @@ update global message model =
 
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
+
+                        f =
+                            path.focus
+
+                        p =
+                            global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
                     in
-                    ( { model | path_data = Just path, depth = Just maxdepth }
+                    ( { model | path_data = Just { path | focus = { f | pinned = p } }, depth = Just maxdepth }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if isPathNew || model.init_tensions then
@@ -877,6 +887,7 @@ subscriptions _ model =
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
     , Ports.lookupNodeFromJs ChangeNodeLookup
+    , Ports.reloadPathFromJs (always UpdatePath)
     ]
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
@@ -1000,7 +1011,18 @@ view_ global model =
                     NodeDoc.view nodeData Nothing
 
                 "activities" ->
-                    viewActivies model
+                    div []
+                        [ model.path_data
+                            |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
+                            |> withDefault Nothing
+                            |> Maybe.map
+                                (\x ->
+                                    div [ class "clear-c-gap mb-2" ]
+                                        [ viewPinnedTensions "is-6" model.conf model.node_focus x ]
+                                )
+                            |> withDefault (text "")
+                        , viewActivies model
+                        ]
 
                 _ ->
                     text "wrong position"

@@ -169,6 +169,10 @@ hr {
     }
 }
 
+.clear-c-gap {
+   margin: -$column-gap;
+}
+
 .clearfix {
     display: flow-root;
 }

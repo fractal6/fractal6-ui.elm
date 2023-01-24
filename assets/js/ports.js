@@ -350,6 +350,9 @@ export const actions = {
     'UPDATE_NOTIF' : (app, session, notif) => {
         app.ports.updateNotifFromJs.send(notif);
     },
+    'PATH_CHANGED' : (app, session, _) => {
+        app.ports.reloadPathFromJs.send(null);
+    },
     //
     // Popups
     //

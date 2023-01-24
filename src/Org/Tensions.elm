@@ -1652,7 +1652,11 @@ view_ global model =
                 withMaybeData model.path_data
                     |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
                     |> withDefault Nothing
-                    |> Maybe.map (viewPinnedTensions model.conf model.node_focus)
+                    |> Maybe.map
+                        (\x ->
+                            div [ class "clear-c-gap", attribute "style" "margin-bottom:-1rem !important;margin-top:0.5rem;" ]
+                                [ viewPinnedTensions "is-4" model.conf model.node_focus x ]
+                        )
                     |> withDefault (text "")
 
               else

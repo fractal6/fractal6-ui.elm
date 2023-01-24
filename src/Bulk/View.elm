@@ -222,8 +222,8 @@ viewTensionArrowB cls emitter receiver =
         ]
 
 
-viewPinnedTensions : Conf -> NodeFocus -> List PinTension -> Html msg
-viewPinnedTensions conf focus pins =
+viewPinnedTensions : String -> Conf -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions cls conf focus pins =
     List.map
         (\tension ->
             div [ class "box media mediaBox p-4" ]
@@ -258,8 +258,8 @@ viewPinnedTensions conf focus pins =
                 ]
         )
         pins
-        |> List.map (\x -> div [ class "column is-4 is-inline-block" ] [ x ])
-        |> div [ attribute "style" "margin-bottom:-1rem !important;" ]
+        |> List.map (\x -> div [ class ("column is-inline-block  " ++ cls) ] [ x ])
+        |> div [ class "colums-inline-gap" ]
 
 
 

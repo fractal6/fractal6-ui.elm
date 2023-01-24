@@ -24,7 +24,7 @@ module Form.Help exposing (Msg(..), State, init, subscriptions, update, view)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (Ev, UserState(..))
-import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), nid2rootid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (viewUser)
 import Codecs exposing (QuickDoc)

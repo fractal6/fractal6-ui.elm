@@ -106,6 +106,9 @@ port updateNotifFromJs : (NotifCount -> msg) -> Sub msg
 port reloadNotifFromJs : (() -> msg) -> Sub msg
 
 
+port reloadPathFromJs : (() -> msg) -> Sub msg
+
+
 
 -- Modal
 
@@ -322,6 +325,14 @@ updateNotif notif =
     outgoing
         { action = "UPDATE_NOTIF"
         , data = notifCountEncoder notif
+        }
+
+
+pathChanged : Cmd msg
+pathChanged =
+    outgoing
+        { action = "PATH_CHANGED"
+        , data = JE.string ""
         }
 
 

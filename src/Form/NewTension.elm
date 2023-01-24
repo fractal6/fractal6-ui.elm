@@ -29,13 +29,8 @@ import Bulk
         , InputViewMode(..)
         , TensionForm
         , UserState(..)
-        , getChildren
         , getCircles
-        , getNode
-        , getParentFragmentFromRole
-        , initTensionForm
         , isSelfContract
-        , localGraphFromOrga
         , makeCandidateContractForm
         , sortNode
         , tensionToActionForm
