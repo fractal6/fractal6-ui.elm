@@ -193,6 +193,17 @@ type alias PinTension =
     }
 
 
+tensionHead2Pin : TensionHead -> PinTension
+tensionHead2Pin th =
+    { id = th.id
+    , title = th.title
+    , createdAt = th.createdAt
+    , createdBy = th.createdBy
+    , type_ = th.type_
+    , status = th.status
+    }
+
+
 type alias EmitterOrReceiver =
     -- similar to UserRole
     { name : String

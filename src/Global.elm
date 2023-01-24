@@ -51,7 +51,8 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
-import Loading exposing (GqlData, RequestResult(..), WebData, isFailure)
+import List.Extra as LE
+import Loading exposing (GqlData, RequestResult(..), WebData, isFailure, withMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -425,8 +426,59 @@ update msg model =
             let
                 session =
                     model.session
+
+                -- Eventually Update pinned tensions
+                pdata =
+                    Maybe.map2
+                        (\path th ->
+                            let
+                                focus =
+                                    path.focus
+
+                                newPinned =
+                                    withMapData
+                                        (Maybe.map
+                                            (\pins ->
+                                                case LE.findIndex (\p -> p.id == th.id) pins of
+                                                    Just i ->
+                                                        if th.isPinned then
+                                                            LE.updateAt i
+                                                                (\p ->
+                                                                    { p
+                                                                        | title = th.title
+                                                                        , status = th.status
+                                                                        , type_ = th.type_
+                                                                    }
+                                                                )
+                                                                pins
+
+                                                        else
+                                                            LE.removeAt i pins
+
+                                                    Nothing ->
+                                                        if th.isPinned then
+                                                            tensionHead2Pin th :: pins
+
+                                                        else
+                                                            pins
+                                            )
+                                        )
+                                        focus.pinned
+                            in
+                            { path | focus = { focus | pinned = newPinned } }
+                        )
+                        session.path_data
+                        data
+                        |> (\x ->
+                                case x of
+                                    Just a ->
+                                        Just a
+
+                                    Nothing ->
+                                        session.path_data
+                           )
             in
-            ( { model | session = { session | tension_head = data } }, Cmd.none )
+            ( { model | session = { session | tension_head = data, path_data = pdata } }, Cmd.none )
 
         UpdateSessionOrgs data ->
             let
