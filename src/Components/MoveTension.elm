@@ -605,7 +605,12 @@ viewModalContent op model =
                                     Success data ->
                                         let
                                             decoded_nid =
-                                                nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
+                                                case model.decoded_type_m of
+                                                    Just t ->
+                                                        nodeIdCodec model.target model.encoded_nid t
+
+                                                    Nothing ->
+                                                        ""
                                         in
                                         List.map
                                             (\n -> Lazy.lazy2 viewNodeSelect n OnChangeTarget)
@@ -613,7 +618,6 @@ viewModalContent op model =
                                                 |> List.filter
                                                     (\n ->
                                                         not (List.member n.nameid [ model.form.target.nameid, model.target, decoded_nid ])
-                                                     --&& (decoded_nid /= (Maybe.map .nameid n.parent |> withDefault ""))
                                                     )
                                                 |> List.sortWith sortNode
                                             )
