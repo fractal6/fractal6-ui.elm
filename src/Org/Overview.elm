@@ -1017,8 +1017,8 @@ view_ global model =
                             |> withDefault Nothing
                             |> Maybe.map
                                 (\x ->
-                                    div [ class "clear-c-gap mb-2" ]
-                                        [ viewPinnedTensions "is-6" model.conf model.node_focus x ]
+                                    div [ class "mb-4 pb-1" ]
+                                        [ viewPinnedTensions 2 model.conf model.node_focus x ]
                                 )
                             |> withDefault (text "")
                         , viewActivies model
@@ -1427,9 +1427,8 @@ viewActivies : Model -> Html Msg
 viewActivies model =
     div
         [ id "activities", class "box is-shrinked2 is-flex-grow" ]
-        [ div [ class "title" ]
-            [ div
-                [ class "level" ]
+        [ div [ class "title ml-4 mt-2 mb-3" ]
+            [ div [ class "level" ]
                 [ div [ class "level-left" ]
                     [ div
                         [ class "tooltip has-tooltip-arrow"

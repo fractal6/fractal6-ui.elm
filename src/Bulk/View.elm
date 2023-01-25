@@ -222,44 +222,58 @@ viewTensionArrowB cls emitter receiver =
         ]
 
 
-viewPinnedTensions : String -> Conf -> NodeFocus -> List PinTension -> Html msg
-viewPinnedTensions cls conf focus pins =
-    List.map
-        (\tension ->
-            div [ class "box media mediaBox p-4" ]
-                --, style "max-width" "40%" ]
-                [ div [ class "media-left mr-3" ]
-                    [ div
-                        [ class "tooltip is-left has-tooltip-arrow"
-                        , attribute "data-tooltip" (tensionType2str tension.type_)
-                        , style "width" "10px"
-                        ]
-                        [ tensionIcon tension.type_ ]
-                    ]
-                , div [ class "media-content" ]
-                    [ a
-                        [ class "has-text-weight-semibold is-human discrete-link "
-                        , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
-                        ]
-                        [ text tension.title ]
-                    , span [ class "level is-smaller2 is-mobile mt-2" ]
-                        [ div [ class "level-left" ]
-                            [ span
-                                [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                                , attribute "data-tooltip" (tensionStatus2str tension.status)
-                                ]
-                                [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                            , viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
-                            ]
-
-                        --, div [ class "level-right" ] []
-                        ]
-                    ]
-                ]
+viewPinnedTensions : Int -> Conf -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions size conf focus pins =
+    List.foldl
+        (\a b ->
+            let
+                pad =
+                    pins |> List.drop (a * size) |> List.take size |> List.map Just
+            in
+            b ++ [ pad ++ List.repeat (size - List.length pad) Nothing ]
         )
-        pins
-        |> List.map (\x -> div [ class ("column is-inline-block  " ++ cls) ] [ x ])
-        |> div [ class "colums-inline-gap" ]
+        []
+        (List.range 0 (List.length pins - 1))
+        |> LE.transpose
+        |> List.map
+            (\x ->
+                div [ class "tile is-parent is-vertical", classList [ ( "is-" ++ String.fromInt (12 // size), True ) ] ] <|
+                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin conf focus y ]) (List.filterMap identity x)
+            )
+        |> div [ class "tile is-ancestor pinnedTile" ]
+
+
+viewPin : Conf -> NodeFocus -> PinTension -> Html msg
+viewPin conf focus tension =
+    div [ class "box media mediaBox p-4", style "width" "100%" ]
+        [ div [ class "media-left mr-3" ]
+            [ div
+                [ class "tooltip is-left has-tooltip-arrow"
+                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , style "width" "10px"
+                ]
+                [ tensionIcon tension.type_ ]
+            ]
+        , div [ class "media-content" ]
+            [ a
+                [ class "has-text-weight-semibold is-human discrete-link "
+                , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                ]
+                [ text tension.title ]
+            , span [ class "level is-smaller2 is-mobile mt-2" ]
+                [ div [ class "level-left" ]
+                    [ span
+                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                        , attribute "data-tooltip" (tensionStatus2str tension.status)
+                        ]
+                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                    , viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
+                    ]
+
+                --, div [ class "level-right" ] []
+                ]
+            ]
+        ]
 
 
 

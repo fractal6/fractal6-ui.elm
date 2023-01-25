@@ -169,10 +169,6 @@ hr {
     }
 }
 
-.clear-c-gap {
-   margin: -$column-gap;
-}
-
 .clearfix {
     display: flow-root;
 }
@@ -1478,14 +1474,6 @@ figcaption {
     }
 }
 
-#activities {
-    & > .title {
-        margin-top: 1rem !important;
-        margin-left: 1rem !important;
-        margin-bottom: 1rem !important;
-    }
-}
-
 .doc-container {
     .subtitle {
         color: var(--text-light);
@@ -1935,6 +1923,23 @@ tr.mediaBox {
         }
     }
 }
+
+.pinnedTile {
+    // horizontal padding
+    & > .tile + .tile {
+        padding-left: 0.5rem;
+    }
+
+    // vertical padding
+    .tile.is-vertical > div + div {
+        padding-top: 1.2rem;
+    }
+
+    .tile.is-vertical {
+        //padding-bottom: 0;
+    }
+}
+
 
 a.tag {
     text-decoration: none !important;

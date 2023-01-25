@@ -1654,8 +1654,9 @@ view_ global model =
                     |> withDefault Nothing
                     |> Maybe.map
                         (\x ->
-                            div [ class "clear-c-gap", attribute "style" "margin-bottom:-1rem !important;margin-top:0.5rem;" ]
-                                [ viewPinnedTensions "is-4" model.conf model.node_focus x ]
+                            -- @DEBUG: why margin-bottom changes if depending from where we come from ?
+                            div [ class "mt-4", attribute "style" "margin-bottom:-1rem !important;" ]
+                                [ viewPinnedTensions 3 model.conf model.node_focus x ]
                         )
                     |> withDefault (text "")
 
