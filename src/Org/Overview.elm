@@ -1263,7 +1263,7 @@ viewCanvas us model =
                 , br [ class "mb-5" ] []
                 , span
                     [ class "button-light has-text-info is-size-7 is-pulled-right"
-                    , onClick (HelpMsg Help.OnOpen)
+                    , onClick (HelpMsg (Help.OnOpen ""))
                     ]
                     [ text T.help ]
                 ]

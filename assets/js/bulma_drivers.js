@@ -666,7 +666,9 @@ function closeModal(e, modal, app) {
 //
 
 function triggerHelp(e, el, app) {
-    app.ports.triggerHelpFromJs.send(null)
+    var v = el.dataset.help;
+    if (!v) v = "";
+    app.ports.triggerHelpFromJs.send(v)
 }
 
 function triggerJoin(e, el, app) {

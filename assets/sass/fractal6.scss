@@ -937,12 +937,13 @@ figcaption {
         height: $navbar-height;
     }
 
-    .navbar-item {
-        .navbar-link:hover, .navbar-link.is-active {
-            // @debug: There is an background overflow on hover, bulma padding things... :/
-            background: none !important;
-        }
-    }
+    // @deprecated ?
+    //.navbar-item {
+    //    .navbar-link:hover, .navbar-link.is-active {
+    //        // @debug: There is an background overflow on hover, bulma padding things... :/
+    //        background: none !important;
+    //    }
+    //}
 
     // Fix right navbar top on touch
     .navbar-touch-end {
@@ -997,6 +998,13 @@ figcaption {
         border-bottom: solid 1px var(--grey-darker);
         border-left: solid 1px var(--grey-darker);
         border-right: solid 1px var(--grey-darker);
+        .navbar-item:hover { // @bulma bad!
+            background-color: var(--navbar-item-hover-background-color);
+            cursor: pointer;
+        }
+        .navbar-divider {
+            margin:0;
+        }
     }
 }
 
@@ -2588,7 +2596,8 @@ i.is-liked {
     .tabs  {
         li {
             a, span {
-                color: var(--grey);
+                color: var(--text-light);
+                opacity: 0.6;
                 align-items: center;
                 display: flex;
                 justify-content: center;
@@ -2597,7 +2606,8 @@ i.is-liked {
             }
             &.is-active {
                 a, span {
-                    color: var(--grey-darker);
+                    color: var(--text);
+                    opacity: 1;
                     border-bottom-color: orange !important;
                     border-bottom-style: solid;
                     border-bottom-width: 2px;
@@ -2607,6 +2617,12 @@ i.is-liked {
             }
 
         }
+    }
+    &.columns {
+        .tabs {
+            margin-bottom: 1rem;
+        }
+
     }
 }
 

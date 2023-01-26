@@ -133,7 +133,7 @@ notificationButton cls user notif url =
     case user of
         LoggedIn _ ->
             a
-                [ class ("navbar-item " ++ cls)
+                [ class ("navbar-item px-3 " ++ cls)
                 , href (toHref Notifications)
                 , title T.notifications
                 , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
@@ -165,12 +165,22 @@ helpButton user =
     case user of
         LoggedIn _ ->
             div
-                [ class "navbar-item helpTrigger"
+                [ class "navbar-item has-dropdown px-2"
                 , title "Help and feedback"
                 ]
                 [ div [ class "navbar-link is-arrowless is-hidden-touch" ]
                     [ div [ class "button is-rounded is-small has-background-navbar", style "height" "inherit" ] [ A.icon "icon-question" ] ]
                 , div [ class "button-light is-hidden-tablet" ] [ A.icon1 "icon-question" "Help" ]
+                , div [ class "navbar-dropdown" ]
+                    [ div [ class "navbar-item pb-3 helpTrigger", attribute "data-help" "QuickHelp" ]
+                        [ text T.quickHelp ]
+                    , hr [ class "navbar-divider" ] []
+                    , div [ class "navbar-item py-3 helpTrigger", attribute "data-help" "AskQuestion" ]
+                        [ text T.askQuestion ]
+                    , hr [ class "navbar-divider" ] []
+                    , div [ class "navbar-item pt-3 helpTrigger", attribute "data-help" "Feedback" ]
+                        [ text T.giveFeedback ]
+                    ]
                 ]
 
         LoggedOut ->
@@ -213,15 +223,15 @@ userButtons user url replaceUrl =
                         [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
-                    , span [ id "themeTrigger", class "navbar-item is-w" ]
+                    , div [ id "themeTrigger", class "navbar-item pb-3" ]
                         [ A.icon1 "icon-moon" T.toggleLightMode ]
                     , hr [ class "navbar-divider" ] []
-                    , a [ class "navbar-item", href (toHref New_Orga) ]
+                    , a [ class "navbar-item py-3", href (toHref New_Orga) ]
                         [ A.icon1 "icon-plus" T.newOrganisation ]
                     , hr [ class "navbar-divider" ] []
 
                     -- Prevout logout to be log in the browser history (@debug do not work)
-                    , div [ class "navbar-item button-light", onClick (replaceUrl (toHref Logout)) ]
+                    , div [ class "navbar-item pt-3", onClick (replaceUrl (toHref Logout)) ]
                         [ A.icon1 "icon-power" T.signout ]
                     ]
                 ]

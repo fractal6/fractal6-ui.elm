@@ -19,7 +19,7 @@
 -}
 
 
-module Form.Help exposing (Msg(..), State, init, subscriptions, update, view)
+module Form.Help exposing (Model, Msg(..), State, init, subscriptions, update, view, viewFix)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -73,6 +73,7 @@ type alias Model =
     { isActive : Bool
     , isActive2 : Bool
     , activeTab : HelpTab
+    , withChoice : Bool -- fix view
     , doc : WebData QuickDoc
     , type_ : FeedbackType
     , formAsk : NT.Model
@@ -89,6 +90,22 @@ type HelpTab
     = QuickHelp
     | AskQuestion
     | Feedback
+
+
+fromString : String -> Maybe HelpTab
+fromString tab =
+    case tab of
+        "QuickHelp" ->
+            Just QuickHelp
+
+        "AskQuestion" ->
+            Just AskQuestion
+
+        "Feedback" ->
+            Just Feedback
+
+        _ ->
+            Nothing
 
 
 type FeedbackType
@@ -132,6 +149,7 @@ initModel user conf =
     { isActive = False
     , isActive2 = False
     , activeTab = QuickHelp
+    , withChoice = True
     , doc = RemoteData.NotAsked
     , type_ = BugReport
     , formAsk = formAsk
@@ -236,7 +254,7 @@ setLabelsFeedback data =
 
 type Msg
     = SetIsActive2 Bool
-    | OnOpen
+    | OnOpen String
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -304,13 +322,20 @@ update_ apis message model =
             else
                 ( { model | isActive2 = model.isActive }, noOut )
 
-        OnOpen ->
-            ( { model | isActive2 = True, doc = RemoteData.Loading }
-            , if not (isWebSuccess model.doc) then
-                out0 [ getQuickDoc apis "en" OnGotQuickDoc, sendSleep (SetIsActive2 True) 10 ]
+        OnOpen tab_s ->
+            let
+                tab =
+                    withDefault QuickHelp (fromString tab_s)
+            in
+            ( { model | isActive2 = True, doc = RemoteData.Loading, activeTab = tab }
+            , out0
+                [ sendSleep (SetIsActive2 True) 10
+                , if not (isWebSuccess model.doc) && tab == QuickHelp then
+                    getQuickDoc apis "en" OnGotQuickDoc
 
-              else
-                out0 [ sendSleep (SetIsActive2 True) 10 ]
+                  else
+                    send NoMsg
+                ]
             )
 
         OnClose data ->
@@ -355,7 +380,13 @@ update_ apis message model =
             ( setDocResult result model, noOut )
 
         OnChangeTab tab ->
-            ( changeTab tab model, noOut )
+            ( changeTab tab model |> (\x -> { x | withChoice = False })
+            , if not (isWebSuccess model.doc) && tab == QuickHelp then
+                out0 [ getQuickDoc apis "en" OnGotQuickDoc ]
+
+              else
+                noOut
+            )
 
         OnChangePostAsk field value ->
             ( postAsk field value model, noOut )
@@ -459,7 +490,7 @@ update_ apis message model =
 
 subscriptions : List (Sub Msg)
 subscriptions =
-    [ Ports.triggerHelpFromJs (always OnOpen)
+    [ Ports.triggerHelpFromJs OnOpen
     , Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
@@ -501,15 +532,15 @@ viewModal op (State model) =
             , onClick (OnCloseSafe "" "")
             ]
             []
-        , div [ class "modal-content" ] [ viewModalContent op (State model) ]
+        , div [ class "modal-content" ] [ viewModalContent True op (State model) ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewModalContent : Op -> State -> Html Msg
-viewModalContent op (State model) =
-    div [ class "modal-card" ]
-        [ div [ class "modal-card-head" ]
+viewModalContent : Bool -> Op -> State -> Html Msg
+viewModalContent fromModal op (State model) =
+    div [ classList [ ( "modal-card", fromModal ) ] ]
+        [ div [ classList [ ( "modal-card-head", fromModal ) ] ]
             [ div [ class "tabs is-centered is-medium is-fullwidth" ]
                 [ ul []
                     [ li
@@ -530,22 +561,22 @@ viewModalContent op (State model) =
                     ]
                 ]
             ]
-        , div [ class "modal-card-body" ]
+        , div [ classList [ ( "modal-card-body", fromModal ) ] ]
             [ case model.activeTab of
                 QuickHelp ->
-                    viewQuickHelp op (State model)
+                    viewQuickHelp fromModal op (State model)
 
                 AskQuestion ->
-                    viewAskQuestion op (State model)
+                    viewAskQuestion fromModal op (State model)
 
                 Feedback ->
-                    viewFeedback op (State model)
+                    viewFeedback fromModal op (State model)
             ]
         ]
 
 
-viewQuickHelp : Op -> State -> Html Msg
-viewQuickHelp op (State model) =
+viewQuickHelp : Bool -> Op -> State -> Html Msg
+viewQuickHelp fromModal op (State model) =
     case model.doc of
         RemoteData.Success docs ->
             docs
@@ -563,7 +594,7 @@ viewQuickHelp op (State model) =
                                             , section [ class "acc" ]
                                                 [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown "is-light" ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "is-light" "box") ]
                                                 ]
                                             ]
                                         )
@@ -571,7 +602,7 @@ viewQuickHelp op (State model) =
                                )
                     )
                 |> List.append [ input [ id "acc-close", name "accordion", type_ "radio" ] [] ]
-                |> nav [ class "accordion arrows-left quickHelp" ]
+                |> nav [ class "accordion arrows-left", classList [ ( "quickHelp", fromModal ) ] ]
 
         RemoteData.Failure err ->
             viewHttpErrors err
@@ -583,8 +614,8 @@ viewQuickHelp op (State model) =
             text ""
 
 
-viewAskQuestion : Op -> State -> Html Msg
-viewAskQuestion op (State model) =
+viewAskQuestion : Bool -> Op -> State -> Html Msg
+viewAskQuestion fromModal op (State model) =
     let
         form =
             model.formAsk.nodeDoc.form
@@ -698,8 +729,8 @@ viewAskQuestion op (State model) =
                 ]
 
 
-viewFeedback : Op -> State -> Html Msg
-viewFeedback op (State model) =
+viewFeedback : Bool -> Op -> State -> Html Msg
+viewFeedback fromModal op (State model) =
     let
         form =
             model.formFeedback.nodeDoc.form
@@ -847,3 +878,32 @@ viewFeedback op (State model) =
                         ]
                     ]
                 ]
+
+
+viewFix : Op -> State -> Html Msg
+viewFix op (State model) =
+    div [ id "helpModal", class "columns is-centered top-section" ]
+        [ div [ class "column is-5-fullhd is-6-desktop" ]
+            [ if model.withChoice then
+                [ ( T.quickHelp, QuickHelp ), ( T.askQuestion, AskQuestion ), ( T.giveFeedback, Feedback ) ]
+                    |> List.map
+                        (\x ->
+                            div
+                                [ class "card has-border column is-paddingless m-3 is-h"
+                                , onClick (OnChangeTab (Tuple.second x))
+                                ]
+                                [ div [ class "card-content p-4" ]
+                                    [ h2 [ class "is-strong is-size-5" ]
+                                        [ text (Tuple.first x) ]
+
+                                    --, div [ class "content is-small" ]
+                                    --    [ text description ]
+                                    ]
+                                ]
+                        )
+                    |> div [ class "columns is-multiline section" ]
+
+              else
+                viewModalContent False op (State model)
+            ]
+        ]

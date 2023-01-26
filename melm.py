@@ -3,8 +3,8 @@
 '''Elm module generator from templates.
 
 Usage:
-    melm add  [-w] [-t TEMPLATE ] MODULE_NAME...
-    melm push [-w]  MODULE_NAME...
+    melm add  [-w] [-t TEMPLATE ] MODULE_NAME
+    melm push [-w] MODULE_SOURCE MODULE_TARGET
 
 Commands:
     add     Add a new sub-component.
@@ -58,9 +58,9 @@ class ElmSpa(object):
     def run(self):
         q = self.conf
         if q["add"]:
-            self.add_subcomponent(q["MODULE_NAME"][0])
+            self.add_subcomponent(q["MODULE_NAME"])
         elif q["push"]:
-            self.push_subcomponent(*q["MODULE_NAME"])
+            self.push_subcomponent(q["MODULE_SOURCE"], q["MODULE_TARGET"])
 
     def get_module_map(self, module_name):
         modules = module_name.split(".")
@@ -85,6 +85,7 @@ class ElmSpa(object):
             print(s)
 
     def push_subcomponent(self, module_name_source, module_name_target):
+        """ See self.rmatch for the sec doc. """
         push_in_submodule = False
         if "Components" in module_name_target.split('.'):
             push_in_submodule = True
@@ -102,14 +103,15 @@ class ElmSpa(object):
                 pos = 0,
             ),
             dict(
-                reg =  r"\n",
+                reg =  r"}",
                 pos = -1,
-                t = ", ${module_basename_lower1} : ${module_basename}.State"
+                t = ", ${module_basename_lower1} : ${module_basename}.State",
+                before = True
             )
         ]
         init_spec = [
             dict(
-                reg =  r"^init .*?=\s*let.*? in ",
+                reg =  r"^init .*?=\s*let.*? in\s",
                 pos = 0,
             ),
             dict(
@@ -117,9 +119,10 @@ class ElmSpa(object):
                 pos = 0,
             ),
             dict(
-                reg =  r"\n",
+                reg =  r"}",
                 pos = -1,
-                t = ", ${module_basename_lower1} = ${module_basename}.init global.session.user"
+                t = ", ${module_basename_lower1} = ${module_basename}.init global.session.user",
+                before = True
             )
         ]
         msg_spec = [
@@ -129,7 +132,7 @@ class ElmSpa(object):
             ),
             dict(
                 reg =  r"\n",
-                pos = -3,
+                pos = -4,
                 t = "| ${module_basename}Msg ${module_basename}.Msg"
             )
         ]
@@ -142,33 +145,34 @@ class ElmSpa(object):
                 reg =  r"\n",
                 pos = -3,
                 t = '''
-            ${module_basename}Msg msg ->
-                let
-                    ( data, out ) = ${module_basename}.update apis msg model.${module_basename_lower1}
+${module_basename}Msg msg ->
+    let
+        ( data, out ) = ${module_basename}.update apis msg model.${module_basename_lower1}
 
-                    ( cmds, gcmds ) = %s
-                in
-                ( %s )
-                ''' % ('mapGlobalOutcmds out.gcmds' if not push_in_submodule else '([], [])'
-                    ,"{model | ${module_basename_lower1} = data}, out.cmds |> List.map (\m -> Cmd.map ${module_basename}Msg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds" if not push_in_submodule else
-                    "{ model | ${module_basename_lower1} = data }, out2 (List.map (\m -> Cmd.map ${module_basename}Msg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)")
+        ( cmds, gcmds ) = %s
+    in
+    ( %s )\n''' % ('mapGlobalOutcmds out.gcmds' if not push_in_submodule else '([], [])'
+                       ,"{model | ${module_basename_lower1} = data}, out.cmds |> List.map (\m -> Cmd.map ${module_basename}Msg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds" if not push_in_submodule else
+                       "{ model | ${module_basename_lower1} = data }, out2 (List.map (\m -> Cmd.map ${module_basename}Msg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)"),
+            indent_offset = 4,
             ),
         ]
         subscriptions_spec = [
             dict(
                 reg =  r"^subscriptions .*?=.*?\n\n\n",
                 pos = 0,
-                t = "|> Sub.batch" if not push_in_submodule else ""
+                t = "|> Sub.batch" if not push_in_submodule else "",
+                before = True,
             ),
             dict(
                 reg =  r"\n",
-                pos = -4,
+                pos = -2 if not push_in_submodule else -4,
                 t = "++ (${module_basename}.subscriptions |> List.map (\s -> Sub.map ${module_basename}Msg s))"
             )
         ]
         view_spec = [
             dict(
-                reg =  r"^view .*?=.*?\n\n\n",
+                reg =  r"^view .*?=.*?(\n\n\n|\Z)",
                 pos = 0,
             ),
             dict(
@@ -176,9 +180,10 @@ class ElmSpa(object):
                 pos = 0,
             ),
             dict(
-                reg =  r"\n",
+                reg =  r"\]",
                 pos = -1,
-                t = ", ${module_basename}.view {} model.${module_basename_lower1} |> Html.map ${module_basename}Msg"
+                t = ", ${module_basename}.view {} model.${module_basename_lower1} |> Html.map ${module_basename}Msg",
+                before= True,
             )
         ]
 
@@ -219,6 +224,9 @@ class ElmSpa(object):
             reg: regexp,
             pos: int (0 for the first match and -1 for the last match)
             t: template to add
+            -- OPTIONAL
+            before: insert content before the match (default after)
+            indent_offset: int (substract some indentation)
            }
 
         '''
@@ -226,19 +234,17 @@ class ElmSpa(object):
         if len(regs) == 0:
             return
 
-        #print(content)
-        #print('-'*29)
-
         reg = regs[0]
         lines = []
         for m in re.finditer(reg["reg"], content, re.MULTILINE|re.DOTALL):
             start, end = m.start(), m.end()
             line_start, line_end = content[0:start].count("\n"), content[0:end].count("\n")
             # recompute start/end after/before the next/previous newline.
-            offset = content[start:end].find('\n')
-            start = (start if offset < 0 else start + offset)+1
-            offset = content[:end][::-1].find('\n')
-            end = (end if offset < 0 else end - offset)-1
+            # WTF?
+            #offset = content[start:end].find('\n')
+            #start = (start if offset < 0 else start + offset)+1
+            #offset = content[:end][::-1].find('\n')
+            #end = (end if offset < 0 else end - offset)-1 # @debug: end < start ??
             lines.append((line_start, line_end, start, end, m.group()))
 
         if len(lines) == 0:
@@ -258,11 +264,25 @@ class ElmSpa(object):
             if temp[line - offset].strip() != n.strip():
                 # Get the indent of the last line of content that is not empty
                 indent = len(temp[line-offset]) - len(temp[line-offset].lstrip())
+                if reg.get("indent_offset") and indent >= reg["indent_offset"]:
+                    indent -= reg["indent_offset"]
                 # indent the patch
-                n = list(map(lambda x: " "*indent + x.lstrip(), n.split("\n")))
-                extension = temp[:line+1] + n + temp[line+1:]
+                n = list(map(lambda x: " "*indent + x, n.split("\n")))
+
+                # Pasting index
+                if reg.get("before"):
+                    nr = 0
+                    last = temp[line-1]
+                    while last == "":
+                        nr += 1
+                        last = temp[line-1-nr]
+                else:
+                    nr = -1
+
+                # Rebuild content
+                extension = temp[:line-nr] + n + temp[line-nr:]
                 content = "\n".join(extension)
-                end = end + len(n)
+                end += len(n)
 
         r = self.rmatch(regs[1:], content[start:end], mapping=mapping)
         if r:

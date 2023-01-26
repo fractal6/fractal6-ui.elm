@@ -63,7 +63,7 @@ import ModelSchema
 -- Trigger
 
 
-port triggerHelpFromJs : (() -> msg) -> Sub msg
+port triggerHelpFromJs : (String -> msg) -> Sub msg
 
 
 port triggerJoinFromJs : (() -> msg) -> Sub msg

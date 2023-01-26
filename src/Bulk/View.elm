@@ -269,8 +269,6 @@ viewPin conf focus tension =
                         [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                     , viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
                     ]
-
-                --, div [ class "level-right" ] []
                 ]
             ]
         ]
