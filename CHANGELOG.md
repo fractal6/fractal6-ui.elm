@@ -9,6 +9,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ...
 
 
+## [0.7.5]
+
+## New
+- Tension pin support.
+- make tension category explicit in tension view.
+- new https://fractale.co/help route to give feedback.
+
+## Changed
+- ui/refactor: the help button triggers now a dropdown before opening the modal.
+- ui: slight header highlight for authored comments.
+
+## Fixed
+- tension can now be moved to the root circle.
+
+
 ## [0.7.4]
 
 ### Fixed
