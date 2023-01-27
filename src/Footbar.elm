@@ -40,7 +40,7 @@ view =
             , div [ class "level-item" ]
                 [ div [ class "columns is-mobile is-multiline is-centered contacts" ]
                     [ span [ class "column is-narrow" ] [ a [ href "https://status.fractale.co", target "_blank" ] [ text "Status" ] ]
-                    , span [ class "column is-narrow" ] [ a [ href "https://fractale.co/about", target "_blank" ] [ text "About" ] ]
+                    , span [ class "column is-narrow" ] [ a [ href "https://fractale.co/about" ] [ text "About" ] ]
                     , span [ class "column is-narrow" ] [ a [ href "https://doc.fractale.co", target "_blank", title "User documentation" ] [ text "Docs" ] ]
                     , span [ class "column is-narrow" ] [ a [ href "https://github.com/fractal6", target "_blank", title "Github" ] [ text "Code" ] ]
                     , span [ class "column is-narrow" ] [ a [ href "https://matrix.to/#/#fractal6:matrix.org", target "_blank", title "Chat on matrix" ] [ text "Community" ] ]
