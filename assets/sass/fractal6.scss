@@ -332,6 +332,9 @@ a:hover .is-name, a:hover .is-username {
 .has-background-author {
     background-color: var(--tag-author) !important;
 }
+.has-background-counter {
+    background-color: var(--tag-counter) !important;
+}
 .has-background-header {
     background-color: var(--hbc);
 }
@@ -1236,6 +1239,24 @@ figcaption {
     }
 }
 
+.logo-f6 {
+    fill: white;
+}
+#footBar {
+    .logo-f6 {
+        fill: var(--logo-footer-color) !important;
+    }
+}
+#authModal {
+    .logo-f6 {
+       fill: var(--logo-modal-color) !important;
+    }
+}
+#welcome {
+    .logo-f6 {
+        fill: #375a7f !important;
+    }
+}
 
 //
 // Fixed Pos Menu

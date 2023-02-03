@@ -269,15 +269,10 @@ viewHero model =
                   else
                     --div [ class "has-text-centered" ] [ A.logo_about "#34663d" ]
                     --div [ class "has-text-centered" ] [ A.logo_about "#7888ae" ]
-                    div [ class "logo" ] [ A.logo_about "#375a7f" ]
+                    div [ class "logo" ] [ A.logo_about ]
                 ]
             ]
         ]
-
-
-logo : Html Msg
-logo =
-    span [ attribute "style" "position:relative;top:10px;right:10px;" ] [ A.logo1 "white" ]
 
 
 viewSignBox : Model -> Html Msg

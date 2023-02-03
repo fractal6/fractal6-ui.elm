@@ -426,7 +426,7 @@ viewRefreshModal op model =
         --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
         [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
-            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
+            [ div [ class "has-text-centered" ] [ A.logo2 ]
             , div [ class "box" ] <|
                 case model.modalAuth of
                     Active form result ->
@@ -507,7 +507,7 @@ viewSignupModal op model =
         --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
         [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
-            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
+            [ div [ class "has-text-centered" ] [ A.logo2 ]
             , div [ class "box" ] <|
                 case model.modalAuth of
                     Active form result ->
@@ -600,7 +600,7 @@ viewSigninModal op model =
         --[ div [ class "modal-background", onClick <| DoCloseAuthModal "" ] []
         [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
-            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
+            [ div [ class "has-text-centered" ] [ A.logo2 ]
             , div [ class "box" ] <|
                 case model.modalAuth of
                     Active form result ->

@@ -29,7 +29,7 @@ import Text as T
 
 logo_footer : Html msg
 logo_footer =
-    a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 "lightgray" ]
+    a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 ]
 
 
 view : Html msg

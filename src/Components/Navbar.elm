@@ -53,7 +53,7 @@ view user notif url replaceUrl =
             [ div [ class "navbar-brand" ]
                 ([ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ A.logo0 "white"
+                    [ A.logo0
                     , case user of
                         LoggedOut ->
                             strong [ class "is-recursiv", attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]

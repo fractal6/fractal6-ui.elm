@@ -83,24 +83,24 @@ icon1 cls words =
 -- VIEWS
 
 
-logo0 : String -> Html msg
-logo0 color =
-    Lazy.lazy Logo.logo_fractal { color = color, h = "30", w = "38" }
+logo0 : Html msg
+logo0 =
+    Lazy.lazy Logo.logo_fractal { h = "30", w = "38" }
 
 
-logo1 : String -> Html msg
-logo1 color =
-    Lazy.lazy Logo.logo_fractal { color = color, h = "38", w = "54" }
+logo1 : Html msg
+logo1 =
+    Lazy.lazy Logo.logo_fractal { h = "38", w = "54" }
 
 
-logo2 : String -> Html msg
-logo2 color =
-    Lazy.lazy Logo.logo_fractal { color = color, h = "96", w = "128" }
+logo2 : Html msg
+logo2 =
+    Lazy.lazy Logo.logo_fractal { h = "96", w = "128" }
 
 
-logo_about : String -> Html msg
-logo_about color =
-    Lazy.lazy Logo.logo_about { color = color, h = "", w = "500" }
+logo_about : Html msg
+logo_about =
+    Lazy.lazy Logo.logo_about { h = "", w = "500" }
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.

@@ -691,7 +691,7 @@ viewRoleLine type_txt focus roles =
             ]
             [ div [ class "level is-mobile" ]
                 [ div [ class "level-left", attribute "style" "width:82%;" ]
-                    [ span [ class "tag is-small has-background-border-light" ]
+                    [ span [ class "tag is-small has-background-tag" ]
                         [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                     , case List.sum <| List.map .n_tensions roles of
                         0 ->

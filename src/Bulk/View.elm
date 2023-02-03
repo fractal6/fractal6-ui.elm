@@ -786,7 +786,7 @@ byAt conf createdBy createdAt =
 counter : Int -> Html msg
 counter c =
     span
-        [ class "tag is-normal is-rounded has-background-border-light ml-2"
+        [ class "tag is-normal is-rounded has-background-counter ml-2"
         , attribute "style" "height: 1.25rem;"
         ]
         [ text (String.fromInt c) ]

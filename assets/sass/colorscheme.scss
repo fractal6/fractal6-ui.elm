@@ -36,7 +36,9 @@ $dark-dimmed-top: #2A2F35;
 $darker-dimmed: #1c2128;
 $white-dimmed: #c1cdd9;
 
-$blue: #3498db;
+//$blue: #106ddb;
+$blue: #1293d8;
+//$blue: #3498db;
 $red: #e74c3c;
 $green: #2ecc71;
 $turquoise: #1abc9c; // green like
@@ -203,11 +205,12 @@ $link-discrete: $blue-grey;
 $is-discrete: $grey;
 $is-highlight: $dark;
 $is-highlight2: $grey;
-$is-hint: $grey-light;
-$is-hint2: $grey;
+$is-hint: #57606a;
+$is-hint2: darken($is-hint, 15);
 $tag-hint: lighten($white-ter, 5);
 $tag-hint-active: rgba($primary, 0.1);
 $tag-author: lighten($link, 47);
+$tag-counter: $grey-lighter;
 
 $success-light: lighten($success, 50);
 $danger-light: lighten($danger, 50);
@@ -257,7 +260,6 @@ $footer-background-color: $hbc;
 $comment-header-background-color: $chbc;
 $orga-menu-background-color: $hbc;
 $tree-menu-background-color: darken($hbc, 5);
-
 
 // Text
 $text: $dark;
@@ -355,6 +357,10 @@ $navbar-dropdown-item-hover-background-color: lighten($nbc, 3);
 $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $link;
 
+// Logo
+$logo-footer-color: $grey;
+$logo-modal-color: $grey-light3;
+
 // Extra
 $button-vote-success: $success-light;
 $button-vote-success-background: $success;
@@ -384,6 +390,7 @@ $button-vote-danger-background: $danger;
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
   --tag-author: #{$tag-author};
+  --tag-counter: #{$tag-counter};
   --success-light: #{$success-light};
   --is-announce: #{$is-announce};
 
@@ -524,6 +531,10 @@ $button-vote-danger-background: $danger;
   --navbar-dropdown-item-active-background-color: #{$navbar-dropdown-item-active-background-color};
   --navbar-dropdown-item-active-color: #{$navbar-dropdown-item-active-color};
 
+  // Logo
+  --logo-footer-color: #{$logo-footer-color};
+  --logo-modal-color: #{$logo-modal-color};
+
   // Extra
   --tag-background-color: inherit;
   --button-vote-success: #{$button-vote-success};
@@ -573,6 +584,7 @@ $is-hint2: $grey-light2;
 $tag-hint: $grey-darker;
 $tag-hint-active: rgba($primary, 0.3);
 $tag-author: darken($blue-grey, 25);
+$tag-counter: $grey-darker2;
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
@@ -727,6 +739,10 @@ $button-vote-success-background: $success-light;
 $button-vote-danger: $danger;
 $button-vote-danger-background: $danger-light;
 
+// Logo
+$logo-footer-color: lightgray;
+$logo-modal-color: $grey-dark;
+
 :root, :root.dark, .modal.is-dark {
   // Default colors
   --primary: #{$primary};
@@ -751,6 +767,7 @@ $button-vote-danger-background: $danger-light;
   --tag-hint: #{$tag-hint};
   --tag-hint-active: #{$tag-hint-active};
   --tag-author: #{$tag-author};
+  --tag-counter: #{$tag-counter};
   --success-light: #{$success-light};
   --is-announce: #{$is-announce};
 
@@ -894,6 +911,10 @@ $button-vote-danger-background: $danger-light;
   --navbar-dropdown-item-hover-background-color: #{$navbar-dropdown-item-hover-background-color};
   --navbar-dropdown-item-active-background-color: #{$navbar-dropdown-item-active-background-color};
   --navbar-dropdown-item-active-color: #{$navbar-dropdown-item-active-color};
+
+  // Logo
+  --logo-footer-color: #{$logo-footer-color};
+  --logo-modal-color: #{$logo-modal-color};
 
   // Extra
   --tag-background-color: inherit;
