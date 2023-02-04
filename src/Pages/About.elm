@@ -252,7 +252,7 @@ viewHero model =
         [ div [ class "columns is-centered custom-b-1 m-0" ]
             [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd", style "min-width" "300px" ]
                 [ h1 [ class "title top-title" ]
-                    [ renderMarkdown "is-human" T.heroTitle ]
+                    [ renderMarkdown "is-huma" T.heroTitle ]
 
                 --[ text "Build unstoppable organizations" ]
                 --[ text "Self-organization", br [] [], text "for humans" ]
