@@ -469,16 +469,16 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
                 ( 15, 6 )
     in
     div []
-        [ textarea
+        [ div
             [ id targetid
             , class "textarea"
             , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
             , rows (min max_len (max line_len min_len))
             , placeholder placeholder_txt
+            , attribute "data-placeholder" placeholder_txt
             , value message
             , onInput (op.doChangePost "message")
-
-            --, contenteditable True
+            , contenteditable True
             ]
             []
         , if form.viewMode == Preview then
@@ -487,4 +487,5 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
 
           else
             text ""
+        , span [ id "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ] [ text "Hey ✌️" ]
         ]

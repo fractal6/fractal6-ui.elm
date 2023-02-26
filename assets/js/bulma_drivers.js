@@ -532,11 +532,52 @@ function markupRichText(e, el) {
 		// put caret at right position again
 		el.selectionStart =
 			el.selectionEnd = start + replacer.length;
+    } else if (e.key == "@") {
+        toggleSearchInput(e, el);
+        return false;
     }
     // Breaking space or not ???
     //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)
     //    el.value = "x";
     //}
+}
+
+function getCaretCoordinates() {
+    let x = 0,
+        y = 0;
+    const isSupported = typeof window.getSelection !== "undefined";
+    if (isSupported) {
+        const selection = window.getSelection();
+        // Check if there is a selection (i.e. cursor in place)
+        if (selection.rangeCount !== 0) {
+            // Clone the range
+            const range = selection.getRangeAt(0).cloneRange();
+            // Collapse the range to the start, so there are not multiple chars selected
+            range.collapse(true);
+            // getCientRects returns all the positioning information we need
+            const rect = range.getClientRects()[0];
+            if (rect) {
+                x = rect.left; // since the caret is only 1px wide, left == right
+                y = rect.top; // top edge of the caret
+            }
+        }
+    }
+    return { x, y };
+}
+
+function toggleSearchInput(event, contenteditable) {
+    const tooltip = document.getElementById("searchInput");
+    if (contenteditable.contains(event.target)) {
+        const { x, y } = getCaretCoordinates();
+        tooltip.setAttribute("aria-hidden", "false");
+        tooltip.setAttribute(
+            "style",
+            `display: inline-block; left: ${x - 32}px; top: ${y - 36}px`
+        );
+    } else {
+        tooltip.setAttribute("aria-hidden", "true");
+        tooltip.setAttribute("style", "display: none;");
+    }
 }
 
 //

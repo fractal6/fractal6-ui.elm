@@ -214,6 +214,11 @@ hr {
     &::placeholder {
         color: var(--input-placeholder-color) !important;
     }
+    &:empty:before {
+        content: attr(data-placeholder);
+        color: var(--input-placeholder-color) !important;
+        opacity: 0.3;
+    }
 }
 .input:not([type="search"]),
 .textarea {
@@ -1623,6 +1628,9 @@ figcaption {
     }
     .textarea {
         resize: both;
+        // Make it work with a "contenteditable" div.
+        min-height: 8rem;
+        overflow: auto;
     }
 }
 
@@ -1728,6 +1736,18 @@ figcaption {
     .panel-icon {
         font-size: 1.5rem;
     }
+}
+
+#searchInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#searchInput::after {
+    content: " ";
+    position: absolute;
+    top: 100%;
+    left: 50%;
 }
 
 #colorPicker {

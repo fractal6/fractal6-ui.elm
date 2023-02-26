@@ -288,7 +288,7 @@ $input-background-color: $white;
 $input-disabled-background-color: $grey-lighter;
 $input-disabled-background-color2: darken($grey-lighter, 10);
 $input-disabled-color: $grey-lightest;
-$input-placeholder-color: $grey;
+$input-placeholder-color: $grey-dark;
 $input-focus-border-color: $link2;
 
 // Button
@@ -660,7 +660,7 @@ $input-background-color: $darker-dimmed;
 $input-disabled-background-color: $grey-dark;
 $input-disabled-background-color2: lighten($grey-dark, 10);
 $input-disabled-color: $grey;
-$input-placeholder-color: $grey-light;
+$input-placeholder-color: $grey-lighter;
 $input-focus-border-color: darken($link2, 25);
 
 // Button
