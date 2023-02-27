@@ -1628,9 +1628,6 @@ figcaption {
     }
     .textarea {
         resize: both;
-        // Make it work with a "contenteditable" div.
-        min-height: 8rem;
-        overflow: auto;
     }
 }
 

@@ -1507,7 +1507,17 @@ viewTension op model =
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ viewCommentTextarea "textAreaModal" True T.leaveCommentOpt { doChangePost = OnChangePost, conf = model.conf } form message ]
+                                    [ viewCommentTextarea "textAreaModal"
+                                        True
+                                        T.leaveCommentOpt
+                                        { doChangePost = OnChangePost
+                                        , conf = model.conf
+                                        , userSearchInput = Nothing
+                                        , userSearchInputMsg = Nothing
+                                        }
+                                        form
+                                        message
+                                    ]
                                 , p [ class "help-label" ] [ text model.txt.message_help ]
                                 , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
                                 , br [ class "is-hidden-mobile" ] []

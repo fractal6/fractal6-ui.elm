@@ -1336,6 +1336,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Please, enter a valid email address or username"
   fr="Veuillez entrer une adresse e-mail ou un nom d'utilisateur valide."
 
+[userNotFound]
+  en="No member found."
+  fr="Aucun membre trouvé."
+
 [color]
   en="Color"
   fr="Couleur"

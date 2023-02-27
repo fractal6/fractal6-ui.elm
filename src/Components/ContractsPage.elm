@@ -967,6 +967,8 @@ viewContractPage c op model =
                                 , doSubmitComment = SubmitCommentPost
                                 , doRichText = OnRichText
                                 , doToggleMdHelp = OnToggleMdHelp
+                                , userSearchInput = Nothing
+                                , userSearchInputMsg = Nothing
                                 , conf = model.conf
                                 }
                         in
@@ -1201,6 +1203,8 @@ viewComments op conf comments comment_patch_form comment_result =
             , doToggleMdHelp = OnToggleMdHelp
             , doAddReaction = OnAddReaction
             , doDeleteReaction = OnDeleteReaction
+            , userSearchInput = Nothing
+            , userSearchInputMsg = Nothing
             , conf = conf
             }
     in

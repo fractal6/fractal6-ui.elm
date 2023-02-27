@@ -25,6 +25,7 @@ import Assets as A
 import Bulk exposing (CommentPatchForm, InputViewMode(..), TensionForm)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
+import Components.UserInput as UserInput
 import Dict
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD2)
@@ -55,6 +56,8 @@ type alias OpEditComment msg =
     , doToggleMdHelp : String -> msg
     , doAddReaction : String -> Int -> msg
     , doDeleteReaction : String -> Int -> msg
+    , userSearchInput : Maybe UserInput.State
+    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
     , conf : Conf
     }
 
@@ -66,6 +69,8 @@ type alias OpNewComment msg =
     , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
     , doRichText : String -> String -> msg
     , doToggleMdHelp : String -> msg
+    , userSearchInput : Maybe UserInput.State
+    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
     , conf : Conf
     }
 
@@ -77,6 +82,8 @@ type alias OpNewCommentContract msg =
     , doSubmitComment : Time.Posix -> msg
     , doRichText : String -> String -> msg
     , doToggleMdHelp : String -> msg
+    , userSearchInput : Maybe UserInput.State
+    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
     , conf : Conf
     }
 
@@ -469,16 +476,16 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
                 ( 15, 6 )
     in
     div []
-        [ div
+        [ textarea
             [ id targetid
             , class "textarea"
             , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
             , rows (min max_len (max line_len min_len))
             , placeholder placeholder_txt
-            , attribute "data-placeholder" placeholder_txt
             , value message
             , onInput (op.doChangePost "message")
-            , contenteditable True
+
+            --, contenteditable True
             ]
             []
         , if form.viewMode == Preview then
@@ -487,5 +494,13 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
 
           else
             text ""
-        , span [ id "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ] [ text "Hey ✌️" ]
+        , span [ id "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
+            [ Maybe.map2
+                (\userSearchInput userInputMsg ->
+                    UserInput.viewUserSeeker userSearchInput |> Html.map userInputMsg
+                )
+                op.userSearchInput
+                op.userSearchInputMsg
+                |> withDefault (text "")
+            ]
         ]

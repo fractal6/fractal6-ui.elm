@@ -672,14 +672,10 @@ function toggleMarkup(obj, mark, prefix, suffix) {
 // PushLine add a markup with new lines before and eventually after.
 // isInline: stay on the line when the line start by the same mark.
 function pushLine(obj, mark, isInline) {
-    selectElementContents(obj);
-
     var value = obj.value;
     var start = obj.selectionStart;
     var end = obj.selectionEnd;
     var selection = value.substring(start, end);
-    console.log(obj)
-    console.log(value, start, end)
 
     // Ignore if cursor already start with mark
     var startsWith = value.substring(start-mark.length, start) == mark ||
@@ -746,11 +742,3 @@ function pushLine(obj, mark, isInline) {
     }
 }
 
-function selectElementContents(el) {
-    var range = document.createRange();
-    range.selectNodeContents(el);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    return sel
-}

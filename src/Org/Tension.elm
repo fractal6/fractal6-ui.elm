@@ -2080,6 +2080,8 @@ viewConversation u t model =
                                 , doSubmitComment = SubmitComment
                                 , doRichText = OnRichText
                                 , doToggleMdHelp = OnToggleMdHelp
+                                , userSearchInput = Nothing
+                                , userSearchInputMsg = Nothing
                                 , conf = model.conf
                                 }
                         in
@@ -2162,6 +2164,8 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                                     , doToggleMdHelp = OnToggleMdHelp
                                     , doAddReaction = OnAddReaction
                                     , doDeleteReaction = OnDeleteReaction
+                                    , userSearchInput = Nothing
+                                    , userSearchInputMsg = Nothing
                                     , conf = conf
                                     }
                             in

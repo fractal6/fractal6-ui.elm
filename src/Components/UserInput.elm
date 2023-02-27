@@ -19,7 +19,7 @@
 -}
 
 
-module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view, viewUserSeeker)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -331,6 +331,27 @@ view op (State model) =
     div []
         [ viewInput op model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
+
+
+viewUserSeeker : State -> Html Msg
+viewUserSeeker (State model) =
+    div [ class "panel sidePanel" ]
+        [ div [ class "selectors" ] <|
+            if model.lookup == [] then
+                [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.userNotFound ] ]
+
+            else
+                model.lookup
+                    |> List.map
+                        (\u ->
+                            p
+                                [ class "panel-block pt-1 pb-1"
+                                , onClick (OnClickUser u)
+                                ]
+                                [ viewUserFull 1 False False u ]
+                        )
+                    |> List.append [ loadingSpinRight (model.users_result == LoadingSlowly) ]
         ]
 
 

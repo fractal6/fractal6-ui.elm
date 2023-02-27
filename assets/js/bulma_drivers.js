@@ -533,8 +533,8 @@ function markupRichText(e, el) {
 		el.selectionStart =
 			el.selectionEnd = start + replacer.length;
     } else if (e.key == "@") {
-        toggleSearchInput(e, el);
-        return false;
+        // todo
+        toggleSearchInput(el);
     }
     // Breaking space or not ???
     //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)
@@ -542,37 +542,65 @@ function markupRichText(e, el) {
     //}
 }
 
-function getCaretCoordinates() {
-    let x = 0,
-        y = 0;
-    const isSupported = typeof window.getSelection !== "undefined";
-    if (isSupported) {
-        const selection = window.getSelection();
-        // Check if there is a selection (i.e. cursor in place)
-        if (selection.rangeCount !== 0) {
-            // Clone the range
-            const range = selection.getRangeAt(0).cloneRange();
-            // Collapse the range to the start, so there are not multiple chars selected
-            range.collapse(true);
-            // getCientRects returns all the positioning information we need
-            const rect = range.getClientRects()[0];
-            if (rect) {
-                x = rect.left; // since the caret is only 1px wide, left == right
-                y = rect.top; // top edge of the caret
-            }
-        }
-    }
-    return { x, y };
+/**
+ * returns x, y coordinates for absolute positioning of a span within a given text input
+ * at a given selection point
+ * @param {object} input - the input element to obtain coordinates for
+ * @param {number} selectionPoint - the selection point for the input
+ * https://gist.github.com/jh3y/6c066cea00216e3ac860d905733e65c7#file-getcursorxy-js
+ */
+function getCaretCoordinates(input, selectionPoint) {
+  const {
+    offsetLeft: inputX,
+    offsetTop: inputY,
+  } = input
+  // create a dummy element that will be a clone of our input
+  const div = document.createElement('div')
+  // get the computed style of the input and clone it onto the dummy element
+  const copyStyle = getComputedStyle(input)
+  for (const prop of copyStyle) {
+    div.style[prop] = copyStyle[prop]
+  }
+  // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
+  const swap = '.'
+  const inputValue = input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
+  // set the div content to that of the textarea up until selection
+  const textContent = inputValue.substr(0, selectionPoint)
+  // set the text content of the dummy element div
+  div.textContent = textContent
+  if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
+  // if a single line input then the div needs to be single line and not break out like a text area
+  if (input.tagName === 'INPUT') div.style.width = 'auto'
+  // create a marker element to obtain caret position
+  const span = document.createElement('span')
+  // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
+  span.textContent = inputValue.substr(selectionPoint) || '.'
+  // append the span marker to the div
+  div.appendChild(span)
+  // append the dummy element to the body
+  document.body.appendChild(div)
+  // get the marker position, this is the caret position top and left relative to the input
+  const { offsetLeft: spanX, offsetTop: spanY } = span
+  // lastly, remove that dummy element
+  // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
+  document.body.removeChild(div)
+  // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
+  return {
+    x: inputX + spanX,
+    y: inputY + spanY,
+  }
 }
 
-function toggleSearchInput(event, contenteditable) {
+function toggleSearchInput(elt) {
     const tooltip = document.getElementById("searchInput");
-    if (contenteditable.contains(event.target)) {
-        const { x, y } = getCaretCoordinates();
+    console.log(event.target)
+    if (elt.contains(event.target)) {
+        const { x, y } = getCaretCoordinates(elt, elt.selectionStart);
         tooltip.setAttribute("aria-hidden", "false");
         tooltip.setAttribute(
             "style",
-            `display: inline-block; left: ${x - 32}px; top: ${y - 36}px`
+            //`display: inline-block; left: ${x - 32}px; top: ${y - 36}px`
+            `display: inline-block; left: ${x}px; top: ${y + 36}px`
         );
     } else {
         tooltip.setAttribute("aria-hidden", "true");
