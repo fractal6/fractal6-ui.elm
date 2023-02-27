@@ -600,7 +600,7 @@ function toggleSearchInput(elt) {
         tooltip.setAttribute(
             "style",
             //`display: inline-block; left: ${x - 32}px; top: ${y - 36}px`
-            `display: inline-block; left: ${x}px; top: ${y + 36}px`
+            `display: inline-block; left: ${x}px; top: ${y + 30}px`
         );
     } else {
         tooltip.setAttribute("aria-hidden", "true");

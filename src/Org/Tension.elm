@@ -88,6 +88,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(.
 import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
+import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (decap, ternary, textD, textH, unwrap, upH)
@@ -310,6 +311,7 @@ type alias Model =
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
+    , userInput : UserInput.State
     }
 
 
@@ -423,6 +425,7 @@ type Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
+    | UserInputMsg UserInput.Msg
 
 
 
@@ -580,6 +583,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , userInput = UserInput.init False global.session.user
             }
     in
     ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }
@@ -1786,6 +1790,16 @@ update global message model =
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | userInput = data }, out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1804,6 +1818,7 @@ subscriptions _ model =
         ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
+        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
         |> Sub.batch
 
 
@@ -2080,8 +2095,8 @@ viewConversation u t model =
                                 , doSubmitComment = SubmitComment
                                 , doRichText = OnRichText
                                 , doToggleMdHelp = OnToggleMdHelp
-                                , userSearchInput = Nothing
-                                , userSearchInputMsg = Nothing
+                                , userSearchInput = Just model.userInput
+                                , userSearchInputMsg = Just UserInputMsg
                                 , conf = model.conf
                                 }
                         in
