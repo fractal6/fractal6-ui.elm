@@ -100,7 +100,7 @@ initModel nameid user screen =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init True user
+    , userInput = UserInput.init True True user
     }
 
 
@@ -309,7 +309,7 @@ update_ apis message model =
                         , out0
                             [ Ports.open_modal "JoinOrgaModal"
                             , fetchNode apis rootnameid OnGetNode
-                            , Cmd.map UserInputMsg (send (UserInput.OnLoad True))
+                            , Cmd.map UserInputMsg (send UserInput.OnLoad)
                             ]
                         )
 

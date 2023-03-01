@@ -141,7 +141,7 @@ initModel user screen =
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , moveTension = MoveTension.init user
-    , userInput = UserInput.init False user
+    , userInput = UserInput.init True False user
     }
 
 
@@ -733,7 +733,7 @@ update_ apis message model =
                 cmds =
                     case action of
                         LinkAction ->
-                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad False)) ]
+                            [ Cmd.map UserInputMsg (send UserInput.OnLoad) ]
 
                         _ ->
                             []

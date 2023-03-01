@@ -366,10 +366,10 @@ update msg model =
             case data of
                 Just path ->
                     if path.focus.pinned == NotAsked || isFailure path.focus.pinned then
-                        ( { model | session = { session | path_data = data, children = Nothing } }, send (RefreshPinTension path.focus.nameid) )
+                        ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.batch [ send (RefreshPinTension path.focus.nameid), Ports.propagatePath (List.map .nameid path.path) ] )
 
                     else
-                        ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.none )
+                        ( { model | session = { session | path_data = data, children = Nothing } }, Ports.propagatePath (List.map .nameid path.path) )
 
                 Nothing ->
                     ( { model | session = { session | path_data = Nothing, children = Nothing } }, Cmd.none )

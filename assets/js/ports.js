@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { InitBulma, catchEsc, updateLang } from './bulma_drivers'
+import { InitBulma, catchEsc, updateLang, showSearchInput } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -164,7 +164,7 @@ export const actions = {
         // Setup User quickSearch
         initQuickSearch(qs, data.users);
         // And return a search result
-        var res = qs.search(data.pattern, {prefix:true}).slice(0,20);
+        var res = qs.search(data.pattern, {prefix:true}).slice(0,11);
         app.ports.lookupUserFromJs_.send(res);
     },
     'INIT_LABELSEARCH': (app, session, data) => {
@@ -186,7 +186,7 @@ export const actions = {
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qsn;
         var nodes = session.gp.nodesDict;
-        var res = qs.search(pattern, {prefix:true}).slice(0,20).map(n => {
+        var res = qs.search(pattern, {prefix:true}).slice(0,11).map(n => {
             // Ignore Filtered Node (Owner, Member, etc)
             if (nodes[n.nameid]) {
                 return nodes[n.nameid].data;
@@ -201,12 +201,12 @@ export const actions = {
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
-        var res = qs.search(pattern, {prefix:true}).slice(0,20);
+        var res = qs.search(pattern, {prefix:true}).slice(0,11);
         app.ports.lookupUserFromJs_.send(res);
     },
     'SEARCH_LABELS': (app, session, pattern) => {
         var qs = session.qsl;
-        var res = qs.search(pattern, {prefix:true}).slice(0,20);
+        var res = qs.search(pattern, {prefix:true}).slice(0,11);
         app.ports.lookupLabelFromJs_.send(res);
     },
     //
@@ -352,6 +352,9 @@ export const actions = {
     },
     'PATH_CHANGED' : (app, session, _) => {
         app.ports.reloadPathFromJs.send(null);
+    },
+    'PROPAGATE_PATH' : (app, session, data) => {
+        app.ports.propagatePathFromJs.send(data.data);
     },
     //
     // Popups
@@ -578,6 +581,8 @@ export const actions = {
             pushLine($input, "- [ ] ")
         } else if (c == "MentionUser") {
             pushLine($input, "@", true)
+            showSearchInput($input, document.getElementById("searchInput"));
+            app.ports.loadMembersFromJs.send(null)
         } else if (c == "MentionTension") {
             pushLine($input, "0x", true)
         } else {

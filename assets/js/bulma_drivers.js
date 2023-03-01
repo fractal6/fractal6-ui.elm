@@ -299,7 +299,7 @@ export function BulmaDriver(app, target, handlers) {
     const $textareas = $doc.querySelectorAll('.textarea');
     if ($textareas.length > 0) {
         $textareas.forEach( el => {
-            setupHandler("keydown", markupRichText, el, el);
+            setupHandler("keydown", markupRichText, el, el, app);
         });
     }
 
@@ -462,7 +462,65 @@ function submitFocus(e, el) {
 // """ Markup Rich Text"""
 //
 
-function markupRichText(e, el) {
+function markupRichText(e, el, app) {
+
+    /*
+     * User search input
+     * tooltip helper.
+     */
+
+    const userTooltip = document.getElementById("searchInput");
+
+    // Handle backspace/removing charater
+    if (!isHidden(userTooltip)) {
+
+        // Handle toggle down tooltip
+        if (e.key == " " || e.key == "\n" || e.key == "Enter") {
+            hideSearchInput(userTooltip);
+            return
+        }
+
+        var start = el.selectionStart;
+
+        // Handle update patter/input
+        //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
+        if (e.key === "Backspace" && el.value[start-1] == "@") { // Check if @ keyword has been deleted
+            // Hide tooltip
+            hideSearchInput(userTooltip);
+        } else {
+            // update pattern
+            var pattern = "";
+            var m = null;
+            if (e.key === "Backspace") {
+                m = el.value.slice(Math.max(0, start-50), start-1).match(/@[\w-\.]*$/);
+                pattern = m[m.length -1]
+            } else if (e.key.match(/[\w-\.]/)) {
+                m = el.value.slice(Math.max(0, start-50), start).match(/@[\w-\.]*$/);
+                pattern = m[m.length -1] + e.key;
+            }
+
+            if (m) {
+                pattern = m[m.length - 1].slice(1);
+                app.ports.changePatternFromJs.send(pattern);
+            }
+        }
+    }
+
+    // Handle toggle up tooltip
+    if (e.key == "@" &&
+        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart-1]))) {
+        // Show user search input
+        showSearchInput(el, userTooltip);
+        app.ports.loadMembersFromJs.send(null)
+    }
+
+
+    /*
+     * Tabulations and
+     * List completion on newline
+     *
+     */
+
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
         // Allow indentions (as space) - usefull to enter list level
         // or indent for code - after two line break
@@ -532,9 +590,6 @@ function markupRichText(e, el) {
 		// put caret at right position again
 		el.selectionStart =
 			el.selectionEnd = start + replacer.length;
-    } else if (e.key == "@") {
-        // todo
-        toggleSearchInput(el);
     }
     // Breaking space or not ???
     //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)
@@ -549,28 +604,28 @@ function markupRichText(e, el) {
  * @param {number} selectionPoint - the selection point for the input
  * https://gist.github.com/jh3y/6c066cea00216e3ac860d905733e65c7#file-getcursorxy-js
  */
-function getCaretCoordinates(input, selectionPoint) {
+export function getCaretCoordinates(content, selectionPoint) {
   const {
     offsetLeft: inputX,
     offsetTop: inputY,
-  } = input
+  } = content
   // create a dummy element that will be a clone of our input
   const div = document.createElement('div')
   // get the computed style of the input and clone it onto the dummy element
-  const copyStyle = getComputedStyle(input)
+  const copyStyle = getComputedStyle(content)
   for (const prop of copyStyle) {
     div.style[prop] = copyStyle[prop]
   }
   // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
   const swap = '.'
-  const inputValue = input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
+  const inputValue = content.tagName === 'INPUT' ? content.value.replace(/ /g, swap) : content.value
   // set the div content to that of the textarea up until selection
   const textContent = inputValue.substr(0, selectionPoint)
   // set the text content of the dummy element div
   div.textContent = textContent
-  if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
+  if (content.tagName === 'TEXTAREA') div.style.height = 'auto'
   // if a single line input then the div needs to be single line and not break out like a text area
-  if (input.tagName === 'INPUT') div.style.width = 'auto'
+  if (content.tagName === 'INPUT') div.style.width = 'auto'
   // create a marker element to obtain caret position
   const span = document.createElement('span')
   // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
@@ -591,21 +646,22 @@ function getCaretCoordinates(input, selectionPoint) {
   }
 }
 
-function toggleSearchInput(elt) {
-    const tooltip = document.getElementById("searchInput");
-    console.log(event.target)
-    if (elt.contains(event.target)) {
-        const { x, y } = getCaretCoordinates(elt, elt.selectionStart);
-        tooltip.setAttribute("aria-hidden", "false");
-        tooltip.setAttribute(
-            "style",
-            //`display: inline-block; left: ${x - 32}px; top: ${y - 36}px`
-            `display: inline-block; left: ${x}px; top: ${y + 30}px`
-        );
-    } else {
-        tooltip.setAttribute("aria-hidden", "true");
-        tooltip.setAttribute("style", "display: none;");
-    }
+export function showSearchInput(content, input) {
+    const { x, y } = getCaretCoordinates(content, content.selectionStart);
+    input.setAttribute("aria-hidden", "false");
+    input.setAttribute( "style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+}
+
+export function hideSearchInput(input) {
+    input.setAttribute("aria-hidden", "true");
+    input.setAttribute("style", "display: none;");
+}
+
+// Where el is the DOM element you'd like to test for visibility.
+// Shouldn't work for position:fixed element.
+export function isHidden(el) {
+    if (!el) return null
+    return (el.offsetParent === null)
 }
 
 //

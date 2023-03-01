@@ -91,6 +91,9 @@ port loggedOutOkFromJs : (() -> msg) -> Sub msg
 port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
 
 
+port propagatePathFromJs : (List String -> msg) -> Sub msg
+
+
 port updateMenuOrgaFromJs : (Maybe Bool -> msg) -> Sub msg
 
 
@@ -333,6 +336,17 @@ pathChanged =
     outgoing
         { action = "PATH_CHANGED"
         , data = JE.string ""
+        }
+
+
+propagatePath : List String -> Cmd msg
+propagatePath targets =
+    outgoing
+        { action = "PROPAGATE_PATH"
+        , data =
+            JE.object
+                [ ( "data", JE.list JE.string targets )
+                ]
         }
 
 

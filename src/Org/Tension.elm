@@ -583,7 +583,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
-            , userInput = UserInput.init False global.session.user
+            , userInput = UserInput.init False False global.session.user
             }
     in
     ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }

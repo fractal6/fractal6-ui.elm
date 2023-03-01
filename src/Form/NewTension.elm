@@ -211,7 +211,7 @@ initModel user conf =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , userInput = UserInput.init False user
+    , userInput = UserInput.init True False user
     }
 
 

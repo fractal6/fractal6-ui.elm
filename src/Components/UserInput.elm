@@ -19,7 +19,7 @@
 -}
 
 
-module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view, viewUserSeeker)
+port module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view, viewUserSeeker)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -39,10 +39,11 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, loadingSpinRight, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
+import Query.QueryNode exposing (queryMembers)
 import Query.QueryUser exposing (queryUser)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
@@ -60,10 +61,11 @@ type alias Model =
     , pattern : String
     , lookup : List User
     , multiSelect : Bool
-    , isInvite : Bool
+    , isInvite : Bool -- @TOIMPROVE: Either Invitation (user wide search), or mentions (member only search, email deactivated.)
     , lastPattern : String -- last pattern used to fetch data
     , lastTime : Time.Posix -- last time data were fetch
     , isOpen : Bool -- state of the selectors panel
+    , targets : List String
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -71,18 +73,19 @@ type alias Model =
     }
 
 
-initModel : Bool -> UserState -> Model
-initModel multiSelect user =
+initModel : Bool -> Bool -> UserState -> Model
+initModel isInvite multiSelect user =
     { user = user
     , users_result = NotAsked
     , form = []
     , pattern = ""
     , lookup = []
     , multiSelect = multiSelect
-    , isInvite = False
+    , isInvite = isInvite
     , lastPattern = ""
     , lastTime = Time.millisToPosix 0
     , isOpen = False
+    , targets = []
 
     -- Common
     , refresh_trial = 0
@@ -90,9 +93,9 @@ initModel multiSelect user =
     }
 
 
-init : Bool -> UserState -> State
-init multiSelect user =
-    initModel multiSelect user |> State
+init : Bool -> Bool -> UserState -> State
+init isInvite multiSelect user =
+    initModel isInvite multiSelect user |> State
 
 
 
@@ -105,7 +108,7 @@ init multiSelect user =
 
 reset : Model -> Model
 reset model =
-    initModel model.multiSelect model.user
+    initModel model.isInvite model.multiSelect model.user
 
 
 open : Model -> Model
@@ -170,7 +173,8 @@ setDataResult result model =
 
 type Msg
     = -- Data
-      OnLoad Bool
+      OnLoad
+    | OnLoadMembers
     | OnReset
     | OnInput Bool String
     | OnClickUser User
@@ -180,6 +184,8 @@ type Msg
     | OnUsersAck (GqlData (List User))
       -- Lookup
     | ChangeUserLookup (LookupResult User)
+    | ChangePath (List String)
+    | ChangePattern String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -227,8 +233,19 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnLoad isInvite ->
-            ( { model | isInvite = isInvite }, out0 [ Ports.focusOn "userInput" ] )
+        OnLoad ->
+            ( model, out0 [ Ports.focusOn "userInput" ] )
+
+        OnLoadMembers ->
+            if
+                not (isSuccess model.users_result)
+                    && not model.isInvite
+                -- prevent multiple call to queryMembers user invitation input box
+            then
+                ( { model | users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
+
+            else
+                ( model, noOut )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
@@ -286,10 +303,20 @@ update_ apis message model =
         ChangeUserLookup data ->
             case data of
                 Ok d ->
-                    ( { model | lookup = d }, noOut )
+                    if model.pattern == "" && not model.isInvite then
+                        ( { model | lookup = withMaybeData model.users_result |> withDefault [] |> List.take 5 }, noOut )
+
+                    else
+                        ( { model | lookup = d }, noOut )
 
                 Err err ->
                     ( model, out0 [ Ports.logErr err ] )
+
+        ChangePath targets ->
+            ( { model | targets = targets }, noOut )
+
+        ChangePattern pattern ->
+            ( setPattern pattern model, out0 [ Ports.searchUser pattern ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -313,7 +340,16 @@ subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.lookupUserFromJs ChangeUserLookup
+    , Ports.propagatePathFromJs ChangePath
+    , loadMembersFromJs (always OnLoadMembers)
+    , changePatternFromJs ChangePattern
     ]
+
+
+port loadMembersFromJs : (() -> msg) -> Sub msg
+
+
+port changePatternFromJs : (String -> msg) -> Sub msg
 
 
 

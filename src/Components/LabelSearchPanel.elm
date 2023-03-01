@@ -52,6 +52,12 @@ import Text as T
 import Time
 
 
+
+{-
+   A panel for multi-label selection
+-}
+
+
 type alias Model =
     Session.LabelSearchPanelModel
 
