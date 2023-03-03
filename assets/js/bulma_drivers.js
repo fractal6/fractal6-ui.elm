@@ -476,7 +476,7 @@ function markupRichText(e, el, app) {
 
         // Handle toggle down tooltip
         if (e.key == " " || e.key == "\n" || e.key == "Enter") {
-            hideSearchInput(userTooltip);
+            hideSearchInput(userTooltip, app);
             return
         }
 
@@ -486,7 +486,7 @@ function markupRichText(e, el, app) {
         //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
         if (e.key === "Backspace" && el.value[start-1] == "@") { // Check if @ keyword has been deleted
             // Hide tooltip
-            hideSearchInput(userTooltip);
+            hideSearchInput(userTooltip, app);
         } else {
             // update pattern
             var pattern = "";
@@ -494,13 +494,14 @@ function markupRichText(e, el, app) {
             if (e.key === "Backspace") {
                 m = el.value.slice(Math.max(0, start-50), start-1).match(/@[\w-\.]*$/);
                 pattern = m[m.length -1]
+                pattern = pattern.slice(1);
             } else if (e.key.match(/[\w-\.]/)) {
                 m = el.value.slice(Math.max(0, start-50), start).match(/@[\w-\.]*$/);
                 pattern = m[m.length -1] + e.key;
+                pattern = pattern.slice(1);
             }
 
             if (m) {
-                pattern = m[m.length - 1].slice(1);
                 app.ports.changePatternFromJs.send(pattern);
             }
         }
@@ -510,8 +511,7 @@ function markupRichText(e, el, app) {
     if (e.key == "@" &&
         (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart-1]))) {
         // Show user search input
-        showSearchInput(el, userTooltip);
-        app.ports.loadMembersFromJs.send(null)
+        showSearchInput(el, userTooltip, app);
     }
 
 
@@ -646,15 +646,19 @@ export function getCaretCoordinates(content, selectionPoint) {
   }
 }
 
-export function showSearchInput(content, input) {
+export function showSearchInput(content, input, app) {
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
     input.setAttribute( "style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+
+    app.ports.openMembersFromJs.send(null);
 }
 
-export function hideSearchInput(input) {
+export function hideSearchInput(input, app) {
     input.setAttribute("aria-hidden", "true");
     input.setAttribute("style", "display: none;");
+
+    app.ports.closeMembersFromJs.send(null);
 }
 
 // Where el is the DOM element you'd like to test for visibility.

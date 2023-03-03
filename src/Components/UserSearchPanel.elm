@@ -375,16 +375,14 @@ update_ apis message model =
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.lookupUserFromJs ChangeAssigneeLookup
-    ]
-        ++ (if model.isOpen then
-                [ Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
-                , Events.onKeyUp (Dom.key "Escape" OnClose)
-                ]
+    if model.isOpen then
+        [ Ports.lookupUserFromJs ChangeAssigneeLookup
+        , Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
+        , Events.onKeyUp (Dom.key "Escape" OnClose)
+        ]
 
-            else
-                []
-           )
+    else
+        []
 
 
 

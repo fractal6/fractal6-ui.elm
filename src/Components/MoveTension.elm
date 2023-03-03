@@ -460,12 +460,17 @@ update_ apis message model =
             ( { model | confirmContract = data }, out2 (out.cmds |> List.map (\m -> Cmd.map ConfirmContractMsg m) |> List.append cmds) out.gcmds )
 
 
-subscriptions : List (Sub Msg)
-subscriptions =
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
-        ++ (ConfirmContract.subscriptions |> List.map (\s -> Sub.map ConfirmContractMsg s))
+        ++ (if model.isActive then
+                ConfirmContract.subscriptions |> List.map (\s -> Sub.map ConfirmContractMsg s)
+
+            else
+                []
+           )
 
 
 

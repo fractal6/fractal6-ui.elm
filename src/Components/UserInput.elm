@@ -118,7 +118,7 @@ open model =
 
 close : Model -> Model
 close model =
-    { model | isOpen = False }
+    { model | isOpen = False, lookup = [], pattern = "" }
 
 
 clickUser : User -> Model -> Model
@@ -174,7 +174,8 @@ setDataResult result model =
 type Msg
     = -- Data
       OnLoad
-    | OnLoadMembers
+    | OnOpenMembers
+    | OnCloseMembers
     | OnReset
     | OnInput Bool String
     | OnClickUser User
@@ -236,16 +237,22 @@ update_ apis message model =
         OnLoad ->
             ( model, out0 [ Ports.focusOn "userInput" ] )
 
-        OnLoadMembers ->
+        OnOpenMembers ->
             if
                 not (isSuccess model.users_result)
                     && not model.isInvite
                 -- prevent multiple call to queryMembers user invitation input box
             then
-                ( { model | users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
+                ( { model | isOpen = True, users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
+
+            else if not model.isInvite && model.pattern == "" then
+                ( { model | isOpen = True, lookup = withMaybeData model.users_result |> withDefault [] |> List.take 5 }, noOut )
 
             else
                 ( model, noOut )
+
+        OnCloseMembers ->
+            ( close model, noOut )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
@@ -336,17 +343,34 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
-subscriptions : List (Sub Msg)
-subscriptions =
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
-    , Ports.lookupUserFromJs ChangeUserLookup
-    , Ports.propagatePathFromJs ChangePath
-    , loadMembersFromJs (always OnLoadMembers)
-    , changePatternFromJs ChangePattern
     ]
+        ++ (if (model.isOpen && not model.isInvite) || model.isInvite then
+                -- Prevent for user mention search box to trigger msg when not open.
+                -- For invite, the "open" status is handled in the parents components...
+                [ Ports.lookupUserFromJs ChangeUserLookup ]
+
+            else
+                []
+           )
+        ++ (if not model.isInvite then
+                [ Ports.propagatePathFromJs ChangePath
+                , openMembersFromJs (always OnOpenMembers)
+                , closeMembersFromJs (always OnCloseMembers)
+                , changePatternFromJs ChangePattern
+                ]
+
+            else
+                []
+           )
 
 
-port loadMembersFromJs : (() -> msg) -> Sub msg
+port openMembersFromJs : (() -> msg) -> Sub msg
+
+
+port closeMembersFromJs : (() -> msg) -> Sub msg
 
 
 port changePatternFromJs : (String -> msg) -> Sub msg

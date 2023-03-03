@@ -981,12 +981,12 @@ subscriptions (State model) =
       Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
-        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
-        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
         ++ (if model.isOpen then
                 [ Events.onMouseUp (Dom.outsideClickClose model.domid OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
                 ]
+                    ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
+                    ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
             else if model.isModalActive then
                 [ Events.onKeyUp (Dom.key "Escape" (OnCloseModal { reset = False, link = "" }))

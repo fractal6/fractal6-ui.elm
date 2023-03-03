@@ -1418,7 +1418,7 @@ update global message model =
                 ( panel, out ) =
                     UserSearchPanel.update apis msg model.assigneesPanel
 
-                th =
+                ( th, upth ) =
                     Maybe.map
                         (\r ->
                             withMapData
@@ -1436,7 +1436,8 @@ update global message model =
                                 model.tension_head
                         )
                         out.result
-                        |> withDefault model.tension_head
+                        |> Maybe.map (\th_ -> ( th_, send <| UpdateSessionTensionHead (withMaybeData th_) ))
+                        |> withDefault ( model.tension_head, Cmd.none )
 
                 isAssigneeOpen =
                     UserSearchPanel.isOpen_ panel
@@ -1446,7 +1447,7 @@ update global message model =
             in
             ( { model | assigneesPanel = panel, tension_head = th, isAssigneeOpen = isAssigneeOpen }
             , out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch
-            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            , Cmd.batch (gcmds ++ [ upth ])
             )
 
         -- Labels
@@ -1462,7 +1463,7 @@ update global message model =
                 ( panel, out ) =
                     LabelSearchPanel.update apis msg model.labelsPanel
 
-                th =
+                ( th, upth ) =
                     Maybe.map
                         (\r ->
                             withMapData
@@ -1480,7 +1481,8 @@ update global message model =
                                 model.tension_head
                         )
                         out.result
-                        |> withDefault model.tension_head
+                        |> Maybe.map (\th_ -> ( th_, send <| UpdateSessionTensionHead (withMaybeData th_) ))
+                        |> withDefault ( model.tension_head, Cmd.none )
 
                 isLabelOpen =
                     LabelSearchPanel.isOpen_ panel
@@ -1490,7 +1492,7 @@ update global message model =
             in
             ( { model | labelsPanel = panel, tension_head = th, isLabelOpen = isLabelOpen }
             , out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch
-            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            , Cmd.batch (gcmds ++ [ upth ])
             )
 
         -- Node Action
@@ -1672,21 +1674,22 @@ update global message model =
                 ( data, out ) =
                     ContractsPage.update apis msg model.contractsPage
 
-                th =
+                ( th, upth ) =
                     Maybe.map
                         (\r ->
                             --withMapData (\x -> { x | contracts = Just (Tuple.second r) }) model.tension_head
                             withMapData (\x -> { x | contracts = Just [ { id = x.id } ] }) model.tension_head
                         )
                         out.result
-                        |> withDefault model.tension_head
+                        |> Maybe.map (\th_ -> ( th_, send <| UpdateSessionTensionHead (withMaybeData th_) ))
+                        |> withDefault ( model.tension_head, Cmd.none )
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
             ( { model | contractsPage = data, tension_head = th }
             , out.cmds |> List.map (\m -> Cmd.map ContractsPageMsg m) |> List.append cmds |> Cmd.batch
-            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            , Cmd.batch (gcmds ++ [ upth ])
             )
 
         SelectTypeMsg msg ->
@@ -1694,20 +1697,18 @@ update global message model =
                 ( data, out ) =
                     SelectType.update apis msg model.selectType
 
-                th =
+                ( th, upth ) =
                     out.result
-                        |> Maybe.map
-                            (\( _, r ) ->
-                                withMapData (\x -> { x | type_ = r }) model.tension_head
-                            )
-                        |> withDefault model.tension_head
+                        |> Maybe.map (\( _, r ) -> withMapData (\x -> { x | type_ = r }) model.tension_head)
+                        |> Maybe.map (\th_ -> ( th_, send <| UpdateSessionTensionHead (withMaybeData th_) ))
+                        |> withDefault ( model.tension_head, Cmd.none )
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
             ( { model | selectType = data, tension_head = th }
             , out.cmds |> List.map (\m -> Cmd.map SelectTypeMsg m) |> List.append cmds |> Cmd.batch
-            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            , Cmd.batch (gcmds ++ [ upth ])
             )
 
         ActionPanelMsg msg ->
@@ -1814,11 +1815,11 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
-        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
-        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
         |> Sub.batch
 
 

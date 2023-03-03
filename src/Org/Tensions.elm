@@ -1586,7 +1586,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
-        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 
 

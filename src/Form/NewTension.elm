@@ -1119,8 +1119,13 @@ subscriptions (State model) =
     --, Ports.lookupUserFromJs OnChangeUserLookup
     --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
     ]
-        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
-        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (if model.isActive then
+                (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+                    ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+
+            else
+                []
+           )
 
 
 

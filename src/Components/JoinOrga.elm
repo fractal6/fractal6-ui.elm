@@ -529,7 +529,12 @@ subscriptions (State model) =
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
-        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (if model.isOpen then
+                UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+
+            else
+                []
+           )
 
 
 

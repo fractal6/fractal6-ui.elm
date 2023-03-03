@@ -581,8 +581,7 @@ export const actions = {
             pushLine($input, "- [ ] ")
         } else if (c == "MentionUser") {
             pushLine($input, "@", true)
-            showSearchInput($input, document.getElementById("searchInput"));
-            app.ports.loadMembersFromJs.send(null)
+            showSearchInput($input, document.getElementById("searchInput"), app);
         } else if (c == "MentionTension") {
             pushLine($input, "0x", true)
         } else {
