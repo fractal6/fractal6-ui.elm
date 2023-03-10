@@ -256,7 +256,7 @@ update_ apis message model =
                 ( { model | isOpen = True, users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
 
             else if not model.isInvite && model.pattern == "" then
-                ( { model | isOpen = True, lookup = withMaybeData model.users_result |> withDefault [] |> List.take 5 }, noOut )
+                ( { model | isOpen = True, lookup = withMaybeData model.users_result |> withDefault [] |> List.take 12 }, noOut )
 
             else
                 ( model, noOut )
@@ -321,7 +321,7 @@ update_ apis message model =
             case data of
                 Ok d ->
                     if model.pattern == "" && not model.isInvite then
-                        ( { model | lookup = withMaybeData model.users_result |> withDefault [] |> List.take 5 }, noOut )
+                        ( { model | lookup = withMaybeData model.users_result |> withDefault [] |> List.take 12 }, noOut )
 
                     else
                         ( { model | lookup = d }, noOut )
