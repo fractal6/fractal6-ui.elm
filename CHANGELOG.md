@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.7.6]
 
 ### Fixed
-- fix markdown link parsin for french character (accents)
+- fix markdown link parsing for french character (accents)
 - open new tab by default in foorbar links
 - light color themes fixes.
 
