@@ -31,7 +31,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (diffTime)
-import Extra.Events exposing (onClickPD)
+import Extra.Events exposing (onMousedownPD)
 import Form exposing (isPostEmpty, isUsersSendable)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
@@ -73,8 +73,8 @@ type alias Model =
     }
 
 
-initModel : Bool -> Bool -> UserState -> Model
-initModel isInvite multiSelect user =
+initModel : List String -> Bool -> Bool -> UserState -> Model
+initModel targets isInvite multiSelect user =
     { user = user
     , users_result = NotAsked
     , form = []
@@ -85,7 +85,7 @@ initModel isInvite multiSelect user =
     , lastPattern = ""
     , lastTime = Time.millisToPosix 0
     , isOpen = False
-    , targets = []
+    , targets = targets
 
     -- Common
     , refresh_trial = 0
@@ -93,9 +93,9 @@ initModel isInvite multiSelect user =
     }
 
 
-init : Bool -> Bool -> UserState -> State
-init isInvite multiSelect user =
-    initModel isInvite multiSelect user |> State
+init : List String -> Bool -> Bool -> UserState -> State
+init targets isInvite multiSelect user =
+    initModel targets isInvite multiSelect user |> State
 
 
 
@@ -108,7 +108,7 @@ init isInvite multiSelect user =
 
 reset : Model -> Model
 reset model =
-    initModel model.isInvite model.multiSelect model.user
+    initModel model.targets model.isInvite model.multiSelect model.user
 
 
 open : Model -> Model
@@ -128,7 +128,12 @@ clickUser user model =
             initUserForm
     in
     { model
-        | form = model.form ++ [ { form | username = user.username, name = user.name } ] |> LE.uniqueBy .username
+        | form =
+            if model.multiSelect then
+                model.form ++ [ { form | username = user.username, name = user.name } ] |> LE.uniqueBy .username
+
+            else
+                [ { form | username = user.username, name = user.name } ]
         , pattern = ""
     }
 
@@ -140,7 +145,12 @@ clickEmail email model =
             initUserForm
     in
     { model
-        | form = model.form ++ [ { form | email = String.toLower email |> String.trim } ] |> LE.uniqueBy .email
+        | form =
+            if model.multiSelect then
+                model.form ++ [ { form | email = String.toLower email |> String.trim } ] |> LE.uniqueBy .email
+
+            else
+                [ { form | email = String.toLower email |> String.trim } ]
         , pattern = ""
     }
 
@@ -407,7 +417,7 @@ viewUserSeeker (State model) =
                         (\u ->
                             p
                                 [ class "panel-block pt-1 pb-1"
-                                , onClick (OnClickUser u)
+                                , onMousedownPD (OnClickUser u)
                                 ]
                                 [ viewUserFull 1 False False u ]
                         )

@@ -100,7 +100,7 @@ initModel nameid user screen =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init True True user
+    , userInput = UserInput.init [ nameid ] True True user
     }
 
 

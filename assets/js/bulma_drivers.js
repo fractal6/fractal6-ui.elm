@@ -469,7 +469,7 @@ function markupRichText(e, el, app) {
      * tooltip helper.
      */
 
-    const userTooltip = document.getElementById("searchInput");
+    const userTooltip = document.getElementById(el.id + "searchInput");
 
     // Handle backspace/removing charater
     if (!isHidden(userTooltip)) {
@@ -490,18 +490,18 @@ function markupRichText(e, el, app) {
         } else {
             // update pattern
             var pattern = "";
+            var extra = "";
             var m = null;
             if (e.key === "Backspace") {
                 m = el.value.slice(Math.max(0, start-50), start-1).match(/@[\w-\.]*$/);
-                pattern = m[m.length -1]
-                pattern = pattern.slice(1);
             } else if (e.key.match(/[\w-\.]/)) {
                 m = el.value.slice(Math.max(0, start-50), start).match(/@[\w-\.]*$/);
-                pattern = m[m.length -1] + e.key;
-                pattern = pattern.slice(1);
+                extra = e.key;
             }
 
             if (m) {
+                pattern = m[m.length -1] + extra;
+                pattern = pattern.slice(1);
                 app.ports.changePatternFromJs.send(pattern);
             }
         }
@@ -647,6 +647,7 @@ export function getCaretCoordinates(content, selectionPoint) {
 }
 
 export function showSearchInput(content, input, app) {
+    if (!input) return
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
     input.setAttribute( "style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
@@ -655,6 +656,7 @@ export function showSearchInput(content, input, app) {
 }
 
 export function hideSearchInput(input, app) {
+    if (!input) return
     input.setAttribute("aria-hidden", "true");
     input.setAttribute("style", "display: none;");
 
@@ -664,7 +666,7 @@ export function hideSearchInput(input, app) {
 // Where el is the DOM element you'd like to test for visibility.
 // Shouldn't work for position:fixed element.
 export function isHidden(el) {
-    if (!el) return null
+    if (!el) return true
     return (el.offsetParent === null)
 }
 

@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { InitBulma, catchEsc, updateLang, showSearchInput } from './bulma_drivers'
+import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -209,6 +209,39 @@ export const actions = {
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
         app.ports.lookupLabelFromJs_.send(res);
     },
+    'PUSH_INPUT_SELECTION': (app, session, name) => {
+        var $i = document.activeElement;
+        var start = $i.selectionStart;
+        var end = $i.selectionEnd;
+        if (!$i || !start) return
+
+        // Push the new value
+        var pattern = "";
+        var m = $i.value.slice(Math.max(0, start-50), start).match(/@[\w-\.]*$/);
+        if (m) {
+            pattern = m[m.length -1].slice(1);
+            start -= pattern.length;
+            end +=  pattern.length;
+        }
+        var replacer = name + " ";
+		$i.value = $i.value.substring(0, start) +
+			replacer + $i.value.substring(end);
+
+		// put caret at right position again
+		$i.selectionStart =
+			$i.selectionEnd = start + replacer.length;
+
+        // Propagate change to Elm.
+        $i.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
+
+        // Remove the search input
+        const userTooltip = document.getElementById($i.id + "searchInput");
+        hideSearchInput(userTooltip, app);
+    },
+
     //
     // GraphPack
     //
@@ -581,7 +614,7 @@ export const actions = {
             pushLine($input, "- [ ] ")
         } else if (c == "MentionUser") {
             pushLine($input, "@", true)
-            showSearchInput($input, document.getElementById("searchInput"), app);
+            showSearchInput($input, document.getElementById(target + "searchInput"), app);
         } else if (c == "MentionTension") {
             pushLine($input, "0x", true)
         } else {
@@ -590,11 +623,10 @@ export const actions = {
         }
 
         //app.ports[msg.toMsg].send($input.value);
-        var e = new Event('input', {
-                bubbles: true,
-                cancelable: true,
-        });
-        $input.dispatchEvent(e);
+        $input.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
     },
 }
 

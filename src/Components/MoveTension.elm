@@ -23,6 +23,7 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Bulk exposing (Ev, UserState(..), sortNode)
 import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
 import Bulk.Error exposing (viewGqlErrors)
@@ -30,6 +31,7 @@ import Bulk.View exposing (action2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
+import Dom
 import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
@@ -464,6 +466,8 @@ subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+
+    --, Events.onKeyUp (Dom.key "Escape" (OnClose { reset = False, link = "" }))
     ]
         ++ (if model.isActive then
                 ConfirmContract.subscriptions |> List.map (\s -> Sub.map ConfirmContractMsg s)

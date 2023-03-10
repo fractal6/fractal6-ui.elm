@@ -1735,12 +1735,12 @@ figcaption {
     }
 }
 
-#searchInput {
+.searchInput {
     position: absolute;
     top: 0;
     left: 0;
 }
-#searchInput::after {
+.searchInput::after {
     content: " ";
     position: absolute;
     top: 100%;

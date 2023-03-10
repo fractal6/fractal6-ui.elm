@@ -579,11 +579,11 @@ init global flags =
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
-            -- Oen a sigin dialog if contracts are requested
+            -- Oen a signin dialog if contracts are requested
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
-            , userInput = UserInput.init False False global.session.user
+            , userInput = UserInput.init [ newFocus.nameid ] False False global.session.user
             }
     in
     ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }
@@ -1796,10 +1796,27 @@ update global message model =
                 ( data, out ) =
                     UserInput.update apis msg model.userInput
 
+                cmd =
+                    case out.result of
+                        Just ( selected, us ) ->
+                            if selected then
+                                case us of
+                                    [ u ] ->
+                                        Ports.pushInputSelection u.username
+
+                                    _ ->
+                                        Cmd.none
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | userInput = data }, out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | userInput = data }, out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg

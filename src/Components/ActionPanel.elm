@@ -141,7 +141,7 @@ initModel user screen =
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , moveTension = MoveTension.init user
-    , userInput = UserInput.init True False user
+    , userInput = UserInput.init [] True False user
     }
 
 
@@ -877,7 +877,7 @@ update_ apis message model =
                     ( setActionResult result model, ternary (isFailure result) (out1 [ DoUpdateToken ]) noOut )
 
         OnActionMove ->
-            ( model, out0 [ getTensionHead apis model.form.uctx model.form.tid GotTensionToMove ] )
+            ( setAction MoveAction model, out0 [ getTensionHead apis model.form.uctx model.form.tid GotTensionToMove ] )
 
         GotTensionToMove result ->
             case result of
@@ -985,15 +985,22 @@ subscriptions (State model) =
                 [ Events.onMouseUp (Dom.outsideClickClose model.domid OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
                 ]
-                    ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
-                    ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
             else if model.isModalActive then
-                [ Events.onKeyUp (Dom.key "Escape" (OnCloseModal { reset = False, link = "" }))
-                ]
+                [ Events.onKeyUp (Dom.key "Escape" (OnCloseModal { reset = False, link = "" })) ]
 
             else
                 []
+           )
+        ++ (case model.state of
+                MoveAction ->
+                    MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s)
+
+                LinkAction ->
+                    UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+
+                _ ->
+                    []
            )
 
 

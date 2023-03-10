@@ -494,7 +494,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form message =
 
           else
             text ""
-        , span [ id "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
+        , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ Maybe.map2
                 (\userSearchInput userInputMsg ->
                     UserInput.viewUserSeeker userSearchInput |> Html.map userInputMsg

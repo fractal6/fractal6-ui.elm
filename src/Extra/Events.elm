@@ -40,6 +40,11 @@ import Json.Decode as JD
 -- Need the target attr to be set to _self as a workaround: https://github.com/elm/browser/issues/74
 
 
+onMousedownPD : msg -> Html.Attribute msg
+onMousedownPD msg =
+    preventDefaultOn "mousedown" <| JD.succeed ( msg, True )
+
+
 onClickPD : msg -> Html.Attribute msg
 onClickPD msg =
     preventDefaultOn "click" <| JD.succeed ( msg, True )

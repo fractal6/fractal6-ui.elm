@@ -474,6 +474,14 @@ searchLabel pattern =
         }
 
 
+pushInputSelection : String -> Cmd msg
+pushInputSelection name =
+    outgoing
+        { action = "PUSH_INPUT_SELECTION"
+        , data = JE.string name
+        }
+
+
 
 --- Popups
 
