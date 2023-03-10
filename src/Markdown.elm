@@ -168,7 +168,7 @@ frac6Renderer style recursive =
                 if recursive then
                     mardownRoutine
                         style
-                        ( "(^|[^\\w\\[\\`])https?://[À-ÿ\\w\\-\\+\\.\\?\\#/@~&=:]+", autoLink )
+                        ( "(^|[^\\w\\[\\`])https?://[À-ÿ\\w\\-\\+\\.\\?\\#/@~&=:%]+", autoLink )
                         [ ( "(^|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
                         , ( "(^|[^\\w\\[\\`])0x[0-9a-f]+", tensionLink )
 
