@@ -41,6 +41,7 @@ import Bulk.View
         )
 import Components.Comments exposing (viewComment, viewContractCommentInput)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.UserInput as UserInput
 import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, upH)
 import Extra.Date exposing (formatDate)
@@ -98,6 +99,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , userInput : UserInput.State
     }
 
 
@@ -125,6 +127,9 @@ initModel rootnameid user conf =
     , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+
+    -- Components
+    , userInput = UserInput.init [ rootnameid ] False False user
     }
 
 
@@ -306,6 +311,7 @@ type Msg
     | UpdateUctx UserCtx
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
+    | UserInputMsg UserInput.Msg
 
 
 type alias Out =
@@ -792,12 +798,41 @@ update_ apis message model =
             in
             ( { model | comment_patch_form = { form | viewMode = viewMode } }, noOut )
 
+        -- Components
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
 
-subscriptions : List (Sub Msg)
-subscriptions =
+                cmd =
+                    case out.result of
+                        Just ( selected, us ) ->
+                            if selected then
+                                case us of
+                                    [ u ] ->
+                                        Ports.pushInputSelection u.username
+
+                                    _ ->
+                                        Cmd.none
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
+
+                ( cmds, gcmds ) =
+                    ( [], [] )
+            in
+            ( { model | userInput = data }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append (cmd :: cmds)) (out.gcmds ++ gcmds) )
+
+
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
+        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
 
 
@@ -967,8 +1002,8 @@ viewContractPage c op model =
                                 , doSubmitComment = SubmitCommentPost
                                 , doRichText = OnRichText
                                 , doToggleMdHelp = OnToggleMdHelp
-                                , userSearchInput = Nothing
-                                , userSearchInputMsg = Nothing
+                                , userSearchInput = Just model.userInput
+                                , userSearchInputMsg = Just UserInputMsg
                                 , conf = model.conf
                                 }
                         in

@@ -1843,7 +1843,7 @@ subscriptions _ model =
                     []
 
                 Contracts ->
-                    ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s)
+                    ContractsPage.subscriptions model.contractsPage |> List.map (\s -> Sub.map ContractsPageMsg s)
            )
         |> Sub.batch
 
