@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ...
 
+## [0.7.7]
+
+### New
+- Search panel helper when mentionning user with "@" character. Available for
+    - tension comment input.
+    - new tension form.
+    - contrant comment input.
+
+### Fixed
+- Accept "%" character in markdown autolink parsing.
+- List autocompletion for large input value. 
+
 
 ## [0.7.6]
 
