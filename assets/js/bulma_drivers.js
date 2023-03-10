@@ -561,11 +561,12 @@ function markupRichText(e, el, app) {
         if (el.value.length < 3 || start == 0) return
 
         // /[^\S\r\n]/ -> all whitespace but without newline
-        var currentLineList = el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
+        var subvalue = el.value.slice(Math.max(0, start-500), start);
+        var currentLineList = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
         var replacer;
 
         if (currentLineList >= 0) {
-            var s = el.value.slice(currentLineList, currentLineList+10).trimLeft().slice(0, 3)
+            var s = subvalue.slice(currentLineList, currentLineList+10).trimLeft().slice(0, 3)
             if (s == "- [") {
                 replacer = "\n" + "- [ ] ";
             } else if (parseInt(s)) {
