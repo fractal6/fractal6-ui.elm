@@ -1478,7 +1478,7 @@ viewLabels model =
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
-                            [ thead []
+                            [ thead [ class "is-size-7" ]
                                 [ tr []
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.description ]
@@ -1747,7 +1747,7 @@ viewRoles model =
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
-                            [ thead []
+                            [ thead [ class "is-size-7" ]
                                 [ tr []
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.description ]

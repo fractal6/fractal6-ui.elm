@@ -650,7 +650,7 @@ export function getCaretCoordinates(content, selectionPoint) {
 
     // lastly, remove that dummy element
     // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-    //document.body.removeChild(div)
+    document.body.removeChild(div)
     // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
     return {
         x: inputX + spanX - content.scrollLeft,

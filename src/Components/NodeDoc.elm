@@ -1195,7 +1195,7 @@ viewVersions_ conf blobsData =
             div [ class "table-containe" ]
                 -- @debug table-container with width=100%, do not work!
                 [ table [ class "table is-fullwidth table-container" ]
-                    [ thead []
+                    [ thead [ class "is-size-7" ]
                         [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
                         ]
                     , tblobs.blobs

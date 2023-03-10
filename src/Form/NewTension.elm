@@ -123,6 +123,7 @@ type alias Model =
 
     -- Components
     , labelsPanel : LabelSearchPanel.State
+    , inviteInput : UserInput.State
     , userInput : UserInput.State
     }
 
@@ -211,7 +212,8 @@ initModel user conf =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , userInput = UserInput.init [] True False user
+    , inviteInput = UserInput.init [] True False user
+    , userInput = UserInput.init [] False False user
     }
 
 
@@ -599,6 +601,7 @@ type Msg
     | UpdateUctx UserCtx
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | InviteInputMsg UserInput.Msg
     | UserInputMsg UserInput.Msg
 
 
@@ -742,7 +745,7 @@ update_ apis message model =
                                                 send (OnSwitchTab NewCircleTab)
                                 in
                                 ( { data | isActive2 = True } |> setUctx uctx
-                                , out0 [ sendSleep (SetIsActive2 True) 10, switch_cmd ]
+                                , out0 [ sendSleep (SetIsActive2 True) 10, switch_cmd, Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path)) ]
                                 )
 
                 LoggedOut ->
@@ -1072,21 +1075,50 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds
             )
 
-        UserInputMsg msg ->
+        InviteInputMsg msg ->
             let
                 ( data, out ) =
-                    UserInput.update apis msg model.userInput
+                    UserInput.update apis msg model.inviteInput
 
                 users =
                     out.result
                         |> Maybe.map (\( selected, u ) -> ternary selected u [])
                         |> withDefault model.nodeDoc.form.users
 
-                ( cmds, gcmds ) =
-                    ( [], [] )
+                ( cmds, _ ) =
+                    mapGlobalOutcmds out.gcmds
             in
-            ( { model | userInput = data, nodeDoc = NodeDoc.setUsers users model.nodeDoc }
-            , out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)
+            ( { model | inviteInput = data, nodeDoc = NodeDoc.setUsers users model.nodeDoc }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map InviteInputMsg m) |> List.append cmds) out.gcmds
+            )
+
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                cmd =
+                    case out.result of
+                        Just ( selected, us ) ->
+                            if selected then
+                                case us of
+                                    [ u ] ->
+                                        Ports.pushInputSelection u.username
+
+                                    _ ->
+                                        Cmd.none
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
+
+                ( cmds, _ ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | userInput = data }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
             )
 
         -- Confirm Modal
@@ -1121,6 +1153,7 @@ subscriptions (State model) =
     ]
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+                    ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
                     ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
             else
@@ -1517,8 +1550,8 @@ viewTension op model =
                                         T.leaveCommentOpt
                                         { doChangePost = OnChangePost
                                         , conf = model.conf
-                                        , userSearchInput = Nothing
-                                        , userSearchInputMsg = Nothing
+                                        , userSearchInput = Just model.userInput
+                                        , userSearchInputMsg = Just UserInputMsg
                                         }
                                         form
                                         message
@@ -1855,7 +1888,7 @@ viewInviteRole model =
     in
     div [ class "columns is-centered mt-2" ]
         [ div [ class "column is-8" ]
-            [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.userInput |> Html.map UserInputMsg
+            [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
             , viewComment model
             , case model.action_result of
                 Failure err ->

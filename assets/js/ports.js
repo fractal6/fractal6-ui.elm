@@ -683,7 +683,6 @@ function toggleMarkup(obj, mark, prefix, suffix) {
         */
         // Create range (do not suport texarea range + not undo :/
         //var range = document.createRange();
-        //console.log(start, end)
         ////range.deleteContents();
         ////range.selectNodeContents(obj);
         //range.setStart(obj, start);

@@ -857,7 +857,7 @@ viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]
         [ thead [ class "is-size-7" ]
-            [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ text x ]))
+            [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
             ]
         , data
             |> List.concatMap (\d -> viewRow d op model)

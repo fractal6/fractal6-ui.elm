@@ -1833,10 +1833,18 @@ subscriptions _ model =
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
-        ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
-        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (case model.activeTab of
+                Conversation ->
+                    UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+
+                Document ->
+                    []
+
+                Contracts ->
+                    ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s)
+           )
         |> Sub.batch
 
 
