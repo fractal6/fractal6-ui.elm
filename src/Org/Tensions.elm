@@ -836,16 +836,16 @@ dataNeedLoad model =
     --
     case model.viewMode of
         ListView ->
-            model.tensions_int == Loading
+            not (isSuccess model.tensions_int)
 
         IntExtView ->
-            model.tensions_int == Loading
+            not (isSuccess model.tensions_int)
 
         CircleView ->
-            model.tensions_all == Loading
+            not (isSuccess model.tensions_all)
 
         AssigneeView ->
-            model.tensions_all == Loading
+            not (isSuccess model.tensions_all)
 
 
 
