@@ -1981,8 +1981,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Les invités peuvent créer des tensions"
 
 [guestCanCreateTensionHelp]
-  en="Guests are users that has been invited but do not play any role in the organisation."
-  fr="Les invités sont des utilisateurs qui ont été invités mais qui ne jouent aucun rôle dans cette organisation."
+  en="Guests are users who have been invited but do not yet have a role in the organization."
+  fr="Les invités sont des utilisateurs qui ont été invités mais qui n'ont pas encore de rôle dans l'organisation."
 
 [notifyByEmail]
   en="Enable email notifications."
