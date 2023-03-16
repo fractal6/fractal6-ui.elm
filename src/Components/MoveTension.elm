@@ -19,7 +19,7 @@
 -}
 
 
-module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view, viewNodeSelect)
+module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -30,6 +30,7 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (ternary, textH, upH)
@@ -39,12 +40,12 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -563,6 +564,14 @@ viewModalContent op model =
 
         isSendable =
             model.form.target.nameid /= ""
+
+        decoded_nid =
+            case model.decoded_type_m of
+                Just t ->
+                    nodeIdCodec model.target model.encoded_nid t
+
+                Nothing ->
+                    ""
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
@@ -609,30 +618,9 @@ viewModalContent op model =
                                 ]
                             ]
                         , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
-                            [ div [ class "dropdown-content has-border" ] <|
-                                case op.tree_data of
-                                    Success data ->
-                                        let
-                                            decoded_nid =
-                                                case model.decoded_type_m of
-                                                    Just t ->
-                                                        nodeIdCodec model.target model.encoded_nid t
-
-                                                    Nothing ->
-                                                        ""
-                                        in
-                                        List.map
-                                            (\n -> Lazy.lazy2 viewNodeSelect n OnChangeTarget)
-                                            (Dict.values data
-                                                |> List.filter
-                                                    (\n ->
-                                                        not (List.member n.nameid [ model.form.target.nameid, model.target, decoded_nid ])
-                                                    )
-                                                |> List.sortWith sortNode
-                                            )
-
-                                    _ ->
-                                        [ div [ class "spinner" ] [] ]
+                            [ -- The fixed position allow the dropdown to overflow the modal
+                              div [ class "dropdown-content has-border", style "position" "fixed" ]
+                                [ viewSelectorTree OnChangeTarget [ model.form.target.nameid, model.target, decoded_nid ] op.tree_data ]
                             ]
                         ]
                     ]
@@ -680,6 +668,8 @@ viewModalContent op model =
         ]
 
 
+{-| has been @deprecated by viewSelectorTree
+-}
 viewNodeSelect : Node -> (Node -> msg) -> Html msg
 viewNodeSelect n onChangeTarget =
     div

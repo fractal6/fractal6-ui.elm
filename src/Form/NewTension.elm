@@ -1470,7 +1470,7 @@ viewRecipients op model =
             , div [ id "target-menu", class "dropdown-menu is-right is-left-mobile", attribute "role" "menu" ]
                 --, div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
                 [ div [ class "dropdown-content has-border", style "max-height" "420px" ]
-                    [ viewSelectorTree (OnChangeTensionTarget op.tree_data) model.nodeDoc.form.target.nameid op.tree_data ]
+                    [ viewSelectorTree (OnChangeTensionTarget op.tree_data) [ model.nodeDoc.form.target.nameid ] op.tree_data ]
                 ]
             ]
         ]

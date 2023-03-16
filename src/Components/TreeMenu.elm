@@ -713,7 +713,7 @@ viewRoleLine type_txt focus roles =
 --
 
 
-viewSelectorTree : (Node -> msg) -> String -> GqlData NodesDict -> Html msg
+viewSelectorTree : (Node -> msg) -> List String -> GqlData NodesDict -> Html msg
 viewSelectorTree onTargetClick selected odata =
     case odata of
         Success data ->
@@ -727,7 +727,7 @@ viewSelectorTree onTargetClick selected odata =
             div [ class "spinner" ] []
 
 
-viewSubTree2 : (Node -> msg) -> Int -> String -> Tree Node -> Html msg
+viewSubTree2 : (Node -> msg) -> Int -> List String -> Tree Node -> Html msg
 viewSubTree2 onTargetClick depth selected (Tree { node, children }) =
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [] [])
         [ li []
@@ -753,15 +753,25 @@ viewSubTree2 onTargetClick depth selected (Tree { node, children }) =
         ]
 
 
-viewNodeLine : (Node -> msg) -> String -> Node -> Html msg
+viewNodeLine : (Node -> msg) -> List String -> Node -> Html msg
 viewNodeLine onTargetClick selected node =
+    let
+        isActive =
+            List.member node.nameid selected
+    in
     a
-        [ class "treeMenu"
-        , id (prefixId node.nameid)
-        , classList [ ( "is-active", selected == node.nameid ) ]
-        , target "_blank"
-        , onClick (onTargetClick node)
-        ]
+        ([ class "treeMenu"
+         , id (prefixId node.nameid)
+         , classList [ ( "is-active", isActive ) ]
+         , target "_blank"
+         ]
+            ++ (if not isActive then
+                    [ onClick (onTargetClick node) ]
+
+                else
+                    []
+               )
+        )
         [ A.icon1 (action2icon { doc_type = NODE node.type_ }) node.name
         , case node.first_link of
             Just f ->

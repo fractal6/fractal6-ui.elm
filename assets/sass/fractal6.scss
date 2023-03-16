@@ -1428,6 +1428,12 @@ figcaption {
 
       a {
           color: var(--grey-dark);
+          &.is-active {
+              background-color: var(--grey-lighter) !important;
+          }
+          &.is-active:hover {
+              cursor: default;
+          }
       }
   }
 }
