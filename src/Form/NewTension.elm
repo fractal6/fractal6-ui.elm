@@ -31,8 +31,8 @@ import Bulk
         , UserState(..)
         , getCircles
         , isSelfContract
+        , localGraphFromOrga
         , makeCandidateContractForm
-        , sortNode
         , tensionToActionForm
         )
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
@@ -42,7 +42,6 @@ import Codecs exposing (LookupResult)
 import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.MoveTension exposing (viewNodeSelect)
 import Components.NodeDoc as NodeDoc
     exposing
         ( NodeDoc
@@ -50,6 +49,7 @@ import Components.NodeDoc as NodeDoc
         , viewAboutInput2
         , viewMandateInput
         )
+import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
 import Extra exposing (space_, ternary, textH, textT, unwrap, unwrap2, upH)
@@ -575,7 +575,7 @@ type Msg
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource EmitterOrReceiver
-    | OnChangeTensionTarget Node
+    | OnChangeTensionTarget (GqlData NodesDict) Node
     | OnChangePost String String
     | OnSelectRoleExt RoleExtFull
     | OnSelectVisibility NodeVisibility.NodeVisibility
@@ -919,8 +919,13 @@ update_ apis message model =
         OnChangeTensionSource source ->
             ( setSource source model, noOut )
 
-        OnChangeTensionTarget target ->
-            ( setTarget (shrinkNode target) model, noOut )
+        OnChangeTensionTarget odata target ->
+            case localGraphFromOrga target.nameid odata of
+                Just path ->
+                    ( setPath path model, noOut )
+
+                Nothing ->
+                    ( setTarget (shrinkNode target) model, noOut )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
@@ -1464,18 +1469,8 @@ viewRecipients op model =
                 ]
             , div [ id "target-menu", class "dropdown-menu is-right is-left-mobile", attribute "role" "menu" ]
                 --, div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
-                [ div [ class "dropdown-content has-border", style "max-height" "420px" ] <|
-                    case op.tree_data of
-                        Success data ->
-                            List.map
-                                (\n -> Lazy.lazy2 viewNodeSelect n OnChangeTensionTarget)
-                                (Dict.values data
-                                    |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
-                                    |> List.sortWith sortNode
-                                )
-
-                        _ ->
-                            [ div [ class "spinner" ] [] ]
+                [ div [ class "dropdown-content has-border", style "max-height" "420px" ]
+                    [ viewSelectorTree (OnChangeTensionTarget op.tree_data) model.nodeDoc.form.target.nameid op.tree_data ]
                 ]
             ]
         ]

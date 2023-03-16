@@ -19,7 +19,7 @@
 -}
 
 
-module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, init, subscriptions, update, view)
+module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, init, subscriptions, update, view, viewSelectorTree)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -705,3 +705,68 @@ viewRoleLine type_txt focus roles =
 
     else
         text ""
+
+
+
+--
+-- External
+--
+
+
+viewSelectorTree : (Node -> msg) -> String -> GqlData NodesDict -> Html msg
+viewSelectorTree onTargetClick selected odata =
+    case odata of
+        Success data ->
+            let
+                tree =
+                    buildTree_ Nothing data
+            in
+            div [ id "tree-selector", class "menu" ] [ Lazy.lazy4 viewSubTree2 onTargetClick 0 selected tree ]
+
+        _ ->
+            div [ class "spinner" ] []
+
+
+viewSubTree2 : (Node -> msg) -> Int -> String -> Tree Node -> Html msg
+viewSubTree2 onTargetClick depth selected (Tree { node, children }) =
+    ul ([ class "menu-list" ] ++ ternary (depth == 0) [] [])
+        [ li []
+            (Lazy.lazy3 viewNodeLine onTargetClick selected node
+                :: List.map
+                    (\(Tree c) ->
+                        if c.node.role_type == Nothing then
+                            viewSubTree2 onTargetClick (depth + 1) selected (Tree c)
+
+                        else
+                            text ""
+                    )
+                    children
+            )
+        , ul [ class "menu-list pl-0" ]
+            ((List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children
+                |> List.map (\(Tree c) -> li [] [ viewNodeLine onTargetClick selected c.node ])
+             )
+                ++ (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Bot ]) children
+                        |> List.map (\(Tree c) -> li [] [ viewNodeLine onTargetClick selected c.node ])
+                   )
+            )
+        ]
+
+
+viewNodeLine : (Node -> msg) -> String -> Node -> Html msg
+viewNodeLine onTargetClick selected node =
+    a
+        [ class "treeMenu"
+        , id (prefixId node.nameid)
+        , classList [ ( "is-active", selected == node.nameid ) ]
+        , target "_blank"
+        , onClick (onTargetClick node)
+        ]
+        [ A.icon1 (action2icon { doc_type = NODE node.type_ }) node.name
+        , case node.first_link of
+            Just f ->
+                span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
+
+            Nothing ->
+                text ""
+        ]

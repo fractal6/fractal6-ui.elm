@@ -1397,6 +1397,45 @@ figcaption {
     }
 }
 
+#tree-selector {
+  width: $tree-menu-width;
+  //background-color: var(--tree-menu-background-color);
+  //box-shadow: inset -1px 0 0 var(--border-color-light);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  // First level child
+  &.menu > .menu-list > li > ul,
+  &.menu > .menu-list > ul {
+      margin-left: 0.5em;
+      border-left: none;
+  }
+  & .menu-list {
+      font-size: 0.95em;
+      border-left: 1px solid var(--bbc);
+      & li ul {
+          //padding: 0.5em 0 0.5em 0.25em ;
+          padding: 0 0 0 0em;
+          margin: 0;
+          margin-left: 1em;
+          a {
+              padding-left: 1em !important;
+              padding-top: 5px !important;
+              padding-bottom: 5px !important;
+          }
+      }
+
+      a {
+          color: var(--grey-dark);
+      }
+  }
+}
+
+#target-menu .dropdown-content {
+    width: calc(#{$tree-menu-width} + 15px);
+}
+
 .hinter {
   z-index: 10;
   position: fixed;
