@@ -592,10 +592,16 @@ function markupRichText(e, el, app) {
 		el.selectionStart =
 			el.selectionEnd = start + replacer.length;
     }
-    // Breaking space or not ???
-    //else if (e.key ==  '\xa0') { // Non-breakable space is char 0xa0 (160 dec)
-    //    el.value = "x";
-    //}
+    // Do not allow non-breaking space
+    else if (e.key == " ") {
+        var start = el.selectionStart;
+        var end = el.selectionEnd;
+        if (start == end) {
+            e.preventDefault();
+            el.value = el.value.substring(0, start) +
+                " " + el.value.substring(end);
+        }
+    }
 }
 
 /**
