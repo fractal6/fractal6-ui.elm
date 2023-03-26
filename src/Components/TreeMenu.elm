@@ -189,7 +189,7 @@ getOrgaData_ (State model) =
 getList_ : String -> State -> List String
 getList_ nameid (State model) =
     -- Get the ordered list of nodes
-    -- starting from the given nameid
+    -- starting from (or below to) the given nameid
     if isSuccess model.tree_result then
         next_ (Just nameid) model.tree
 

@@ -40,12 +40,13 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, web2gql, withMapData, withMaybeData, withMaybeDataMap)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
+import Requests exposing (fetchLabelsTop)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Task
 import Text as T
@@ -192,7 +193,7 @@ setPattern pattern data =
 
 
 type Msg
-    = OnOpen (List PNode) Bool
+    = OnOpen (List PNode) (Maybe Bool)
     | OnClose
     | OnClose_
     | OnChangePattern String
@@ -246,9 +247,10 @@ update_ : Apis -> Msg -> Model -> ( Model, Out )
 update_ apis message model =
     case message of
         OnOpen targets isDepth ->
-            -- if isDepth
-            --   * fetch label recurcively in children
-            --   * else stick to given targets
+            -- case isDepth of
+            -- Just True: fetch label recurcively in children.
+            -- Just False: fetch label in parents until root.
+            -- Nothing: stick to given targets
             if model.isOpen == False then
                 let
                     nameids =
@@ -258,11 +260,16 @@ update_ apis message model =
                         nameids /= model.form.targets
 
                     ( newModel, cmd ) =
-                        if hasChanged && isDepth then
-                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis nameids OnGotLabels ] )
+                        if hasChanged then
+                            case isDepth of
+                                Just True ->
+                                    ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis nameids OnGotLabels ] )
 
-                        else if hasChanged && not isDepth then
-                            ( { model | labels_data = LoadingSlowly }, [ queryLabels apis nameids OnGotLabels ] )
+                                Just False ->
+                                    ( { model | labels_data = LoadingSlowly }, [ fetchLabelsTop apis (List.head nameids |> withDefault "") True (web2gql >> OnGotLabels) ] )
+
+                                Nothing ->
+                                    ( { model | labels_data = LoadingSlowly }, [ queryLabels apis nameids OnGotLabels ] )
 
                         else
                             ( model, [] )
@@ -592,7 +599,7 @@ viewNew op (State model) =
             ]
         , div
             [ class "button is-small  mr-2"
-            , onClick (OnOpen op.targets False)
+            , onClick (OnOpen op.targets Nothing)
             ]
             [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
         , if List.length op.selectedLabels > 0 then

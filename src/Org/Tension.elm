@@ -579,7 +579,7 @@ init global flags =
             , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
-            -- Oen a signin dialog if contracts are requested
+            -- Open a signin dialog if contracts are requested
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
@@ -1409,7 +1409,7 @@ update global message model =
         DoAssigneeEdit ->
             let
                 targets =
-                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                    getCircles model.path_data |> List.map (\y -> y.nameid)
             in
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
@@ -1455,8 +1455,21 @@ update global message model =
             let
                 targets =
                     getCircles model.path_data
+
+                receiver_m =
+                    withMaybeData model.tension_head |> Maybe.map .receiver
             in
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets False)), Cmd.none )
+            case receiver_m of
+                Just receiver ->
+                    case LE.elemIndex receiver.nameid (List.map .nameid targets) of
+                        Just i ->
+                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)), Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ { name = receiver.name, nameid = receiver.nameid, source = Nothing } ] (Just False))), Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets Nothing)), Cmd.none )
 
         LabelSearchPanelMsg msg ->
             let

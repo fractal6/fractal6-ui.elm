@@ -129,12 +129,12 @@ membersDecoder =
     Get all ** Labels ** from the parent, unril the root node
 
 -}
-fetchLabelsTop api targetid msg =
+fetchLabelsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = api.rest ++ "/top_labels"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
         , tracker = Nothing

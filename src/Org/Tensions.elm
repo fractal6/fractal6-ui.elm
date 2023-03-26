@@ -1146,7 +1146,7 @@ update global message model =
                 targets =
                     getCircles model.path_data
             in
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets True)), Cmd.none )
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets (Just True))), Cmd.none )
 
         SearchKeyDown key ->
             case key of

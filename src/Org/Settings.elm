@@ -487,7 +487,7 @@ init global flags =
                 ++ (case menu of
                         LabelsMenu ->
                             [ getLabels apis newFocus.nameid GotLabels
-                            , fetchLabelsTop apis newFocus.nameid GotLabelsTop
+                            , fetchLabelsTop apis newFocus.nameid False GotLabelsTop
                             , fetchLabelsSub apis newFocus.nameid GotLabelsSub
                             ]
 
@@ -1566,7 +1566,7 @@ viewLabelsExt url txt_yes list_d list_ext_d =
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
                     , data
-                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
+                        |> List.filter (\d -> not (List.member d.name (List.map .name circle_data)))
                         |> List.map
                             (\d ->
                                 let
@@ -1843,7 +1843,7 @@ viewRolesExt url txt_yes list_d list_ext_d =
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
                     , data
-                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
+                        |> List.filter (\d -> not (List.member d.name (List.map .name circle_data)))
                         |> List.map
                             (\d ->
                                 let

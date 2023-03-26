@@ -423,3 +423,8 @@ fromMaybeWebData ma type_ =
     ma
         |> Maybe.map (\x -> RemoteData.Success x)
         |> withDefault type_
+
+
+web2gql : WebData a -> GqlData a
+web2gql data =
+    mapWeb2Data identity data
