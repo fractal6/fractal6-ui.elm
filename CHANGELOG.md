@@ -3,8 +3,12 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unrealeased]
+
+[...]
+
+
+## [0.7.8]
 
 ### New
 - Tree selector for targets/recipients for moveTension and newTension input
@@ -15,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - fix label context: https://fractale.co/tension/f6/0x349bda
-- markdown unbreakble space ignore when AltGr is pressed.
+- markdown unbreakable space ignore when AltGr is pressed.
 - loading state not updated sometimes on tensions page loaded
 
 
