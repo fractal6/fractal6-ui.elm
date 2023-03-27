@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
 import Extra exposing (space_, ternary, textH, unwrap, upH)
 import Extra.Date exposing (formatDate)
@@ -868,7 +868,7 @@ viewAboutInput2 txt node op =
                 Just NodeType.Role ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ text T.authority ]
+                            [ label [ class "label is-pulled-left" ] [ text T.authority, helperButton "ml-2 is-right" T.authorityHelper ]
                             , viewSelectAuthority op
                             ]
                         ]
@@ -876,7 +876,7 @@ viewAboutInput2 txt node op =
                 Just NodeType.Circle ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ text T.governance ]
+                            [ label [ class "label is-pulled-left" ] [ text T.governance, helperButton "ml-2 is-right" T.governanceHelper ]
                             , viewSelectGovernance op
                             ]
                         ]

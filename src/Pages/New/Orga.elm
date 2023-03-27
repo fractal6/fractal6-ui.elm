@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
 import Bulk.Error exposing (viewHttpErrors)
-import Bulk.View exposing (visibility2descr, visibility2icon)
+import Bulk.View exposing (visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
@@ -488,7 +488,7 @@ viewOrgaVisibility model =
                         ]
                         [ div [ class "card-content p-4", onClick (OnSelectVisibility x) ]
                             [ h2 [ class "is-strong is-size-5 mb-5" ] [ A.icon1 (visibility2icon x ++ " icon-bg") (NodeVisibility.toString x) ]
-                            , div [ class "content is-smaller2" ] [ text (visibility2descr x) ]
+                            , div [ class "content is-smaller" ] [ text (visibility2descr x), span [ class "help mt-4" ] [ text (visibility2extra x) ] ]
                             ]
                         ]
                 )

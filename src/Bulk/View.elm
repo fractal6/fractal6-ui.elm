@@ -1091,6 +1091,19 @@ visibility2descr visibility =
             T.visibilitySeccret
 
 
+visibility2extra : NodeVisibility.NodeVisibility -> String
+visibility2extra visibility =
+    case visibility of
+        NodeVisibility.Public ->
+            T.visibilityPublicExtra
+
+        NodeVisibility.Private ->
+            T.visibilityPrivateExtra
+
+        NodeVisibility.Secret ->
+            T.notImplemented
+
+
 auth2str : TensionCharac -> String
 auth2str tc =
     case tc.doc_type of
@@ -1276,3 +1289,22 @@ getNodeTextFromNodeType type_ =
 
         NodeType.Role ->
             FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit
+
+
+
+--
+-- Helper
+--
+
+
+helperButton : String -> String -> Html msg
+helperButton cls content =
+    span [ class ("is-helper dropdown " ++ cls) ]
+        [ div [ class "dropdown-trigger" ] [ A.icon "icon-help-circle is-sm button-light is-h" ]
+        , div [ class "dropdown-menu", attribute "style" "menu" ]
+            [ div [ class "dropdown-content" ]
+                [ div [ class "dropdown-item" ]
+                    [ renderMarkdown "" content ]
+                ]
+            ]
+        ]

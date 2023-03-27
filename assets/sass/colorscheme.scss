@@ -367,7 +367,7 @@ $button-vote-success-background: $success;
 $button-vote-danger: $danger-light;
 $button-vote-danger-background: $danger;
 
-:root.light, .modal.is-light {
+:root.light, .modal.is-light, .is-helper {
   --primary: #{$primary};
   --link: #{$link};
   --link-visited: #{$link-visited};

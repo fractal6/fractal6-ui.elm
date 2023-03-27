@@ -2325,10 +2325,6 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   en="The entire world can see it."
   fr="Le monde entier peut la voir."
 
-[visibilityPublicCircle]
-  en="The entire world can see it."
-  fr="Le monde entier peut le voir."
-
 [visibilityPrivate]
   en="Only members of the organization can see it."
   fr="Visible uniquement par les membres de l’organisation."
@@ -2336,6 +2332,14 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
 [visibilitySeccret]
   en="Only roles inside this circle can see it."
   fr="Seuls les rôles à l’intérieur de ce cercle peuvent le voir."
+
+[visibilityPublicExtra]
+  en="Users can discover your organisation (public circles only), follow it to be notified of your annoucements, and (if enabled) apply to join it."
+  fr="Les utilisateurs peuvent découvrir votre organisation (cercles publics uniquement), la suivre pour être informés de vos annonces, et (si l'option est activée) demander à la rejoindre."
+
+[visibilityPrivateExtra]
+  en="Users must be invited to collaborate with you."
+  fr="Les utilisateurs doivent être invités pour collaborer avec vous."
 
 [visibilityRestriction]
   en="Users will be able to join this organization by invitation only."
@@ -2507,4 +2511,38 @@ Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le c
 - le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
 - le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter pour toutes questions ou feedback.
 - le bouton **d’utilisateur** pour accéder à votre profil et d'autre raccourcis.
+"""
+
+[authorityHelper]
+  en="""A role has an authority that determines the rights of users playing that role.
+These rights are circumscribed to the circle in which the role is created.
+
+- **Peer**: Can create and comment on tensions. Propose mandate changes.
+- **Coordinator**: All *Pee*r authority + can edit tension type, labels and assignees, edit mandates, invitate members, and create new roles and sub-circle (limited to the circle to which the role belongs).
+
+See [the documentation](https://doc.fractale.co/circle/#authority) to learn more.
+"""
+  fr="""Un rôle a une autorité qui détermine les droits des utilisateurs jouant ce rôle.
+Ces droits sont circonscrits au cercle dans lequel le rôle est crée.
+
+- **Peer**: Peut créer et commenter des tensions. Proposer des changements de mandat.
+- **Coordinator**: Tous les droits des *Peer* + peut modifier le type des tensions, les étiquettes et les assignés, modifier les mandats, inviter des membres et créer de nouveaux rôles et sous-cercles (limité au cercle auquel le rôle appartient).
+
+Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
+"""
+
+[governanceHelper]
+  en="""The governance of a circle determines how the authority of roles is interpreted.
+
+- **Coordinated** : Only roles with *Coordinator* authority have editing rights in their circle.
+- **Agile** : All roles in a circle have edit/modification rights, without distinction.
+
+See [the documentation](https://doc.fractale.co/circle/#authority) to learn more.
+"""
+  fr="""La gouvernance d'un cercle détermine la manière dont l'authorité des rôles est interprété.
+
+- **Coordinated** : Seul les rôles avec l'authorité *Coordinator* ont les droits d'édition dans leurs cercle.
+- **Agile** : Tout les rôles d'un cercle ont les droits d'édition/modification, sans distinction.
+
+Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
 """

@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
-...
+### New
+- Tree selector for targets/recipients for moveTension and newTension input
+- Add hint helper beside Authority/Governance input for new Role/Circle and for visibility choice at org creation.
+
+### Changed
+- increase the max number of users showed in user mention search box.
+
+### Fixed
+- fix label context: https://fractale.co/tension/f6/0x349bda
+- markdown unbreakble space ignore when AltGr is pressed.
+- loading state not updated sometimes on tensions page loaded
+
 
 ## [0.7.7]
 

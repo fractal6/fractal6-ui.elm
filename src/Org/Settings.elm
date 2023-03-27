@@ -28,7 +28,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (getNodeTextFromNodeType, viewLabel, viewRoleExt)
+import Bulk.View exposing (getNodeTextFromNodeType, helperButton, viewLabel, viewRoleExt)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -1677,7 +1677,7 @@ viewRoleAddBox model =
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ text T.authority ]
+                [ label [ class "label is-small" ] [ text T.authority, helperButton "ml-2 is-right" T.authorityHelper ]
                 , viewSelectAuthority
                     { onChangePost = UpdateNodePost
                     , data = model.nodeDoc

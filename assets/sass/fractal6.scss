@@ -113,11 +113,21 @@ html.has-modal-active, html.has-modal-active2 {
 
 .dropdown-content {
       .dropdown-item:hover {
-          background-color: var(--dropdown-item-hover-background-color) !important;
+          background-color: var(--dropdown-item-hover-background-color);
       }
       a.dropdown-item:hover {
           color: var(--link);
       }
+}
+
+.is-helper {
+    .dropdown-content {
+        font-weight: 500;
+        background-color: #fffaeb !important;
+    }
+    .dropdown-item:hover {
+        background-color: inherit;
+    }
 }
 
 .navbar-divider {
@@ -631,15 +641,6 @@ span[data-tooltip] {
 	}
 }
 
-.dropdown-content {
-    max-height: 280px;
-    overflow: auto;
-}
-
-.dropdown-menu.is-right {
-	left: auto;
-	right: 0;
-}
 
 .media.is-small {
     font-size: 0.9rem !important;
@@ -649,6 +650,16 @@ span[data-tooltip] {
     min-width: 7rem !important;
     width: max-content;
     max-width: 330px;
+}
+
+.dropdown-menu.is-right {
+	left: auto;
+	right: 0;
+}
+
+.dropdown-content {
+    max-height: 400px;
+    overflow: auto;
 }
 
 .tabs, .tabs.is-boxed  {

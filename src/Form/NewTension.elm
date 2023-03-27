@@ -37,7 +37,7 @@ import Bulk
         )
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt)
+import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt, visibility2descr)
 import Codecs exposing (LookupResult)
 import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -1848,13 +1848,13 @@ viewCircleVisibility model =
                         ( icon, description ) =
                             case x of
                                 NodeVisibility.Public ->
-                                    ( "icon-globe", T.visibilityPublic )
+                                    ( "icon-globe", visibility2descr x )
 
                                 NodeVisibility.Private ->
-                                    ( "icon-users", T.visibilityPrivate )
+                                    ( "icon-users", visibility2descr x )
 
                                 NodeVisibility.Secret ->
-                                    ( "icon-lock", T.visibilitySeccret )
+                                    ( "icon-lock", visibility2descr x )
                     in
                     div
                         [ class "card has-border column is-paddingless m-3 is-h"
