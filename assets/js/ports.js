@@ -62,8 +62,8 @@ window.addEventListener('load', _ => {
                 // Node Quick Search
                 qsn: new MiniSearch({
                     idField: 'nameid',
-                    storeFields: ['nameid'],
                     fields: ['nameid', 'name', 'first_link'],
+                    storeFields: ['nameid'],
                     searchOptions: {
                         fuzzy: 0.3,
                         boost: { name: 2 },
@@ -79,9 +79,9 @@ window.addEventListener('load', _ => {
                 // Label Quick Search
                 qsl: new MiniSearch({
                     idField: 'id',
-                    storeFields: ['id', 'name', 'color'],
                     fields: ['name'],
-                    searchOptions: { fuzzy: 0.3, },
+                    storeFields: ['id', 'name', 'color'],
+                    searchOptions: { fuzzy: 0.3 },
                 }),
             };
 
