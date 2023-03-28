@@ -1551,22 +1551,25 @@ viewLabels model =
 viewLabelsExt : Url -> String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
 viewLabelsExt url txt_yes list_d list_ext_d =
     case list_ext_d of
-        RemoteData.Success data ->
+        RemoteData.Success data_ ->
+            let
+                circle_data =
+                    withDefaultData [] list_d
+
+                data =
+                    List.filter (\d -> not (List.member d.name (List.map .name circle_data))) data_
+            in
             if List.length data == 0 then
                 text ""
 
             else
                 let
-                    circle_data =
-                        withDefaultData [] list_d
-
                     q =
                         url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
                     , data
-                        |> List.filter (\d -> not (List.member d.name (List.map .name circle_data)))
                         |> List.map
                             (\d ->
                                 let
@@ -1828,22 +1831,25 @@ viewRoles model =
 viewRolesExt : Url -> String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
 viewRolesExt url txt_yes list_d list_ext_d =
     case list_ext_d of
-        RemoteData.Success data ->
+        RemoteData.Success data_ ->
+            let
+                circle_data =
+                    withDefaultData [] list_d
+
+                data =
+                    List.filter (\d -> not (List.member d.name (List.map .name circle_data))) data_
+            in
             if List.length data == 0 then
                 text ""
 
             else
                 let
-                    circle_data =
-                        withDefaultData [] list_d
-
                     q =
                         url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
                     [ text (txt_yes ++ " ")
                     , data
-                        |> List.filter (\d -> not (List.member d.name (List.map .name circle_data)))
                         |> List.map
                             (\d ->
                                 let
