@@ -366,7 +366,8 @@ update_ apis message model =
                     ( { model | form = f, activeView = ContractsView }, out0 [ send DoQueryContracts ] )
 
                 _ ->
-                    ( { model | form = f, activeView = ContractView }, out0 [ send DoQueryContract ] )
+                    -- @debug: sendSleep to try to fix a race condition where the contract is fetch before tension_head
+                    ( { model | form = f, activeView = ContractView }, out0 [ sendSleep DoQueryContract 250 ] )
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )
@@ -870,7 +871,11 @@ viewContracts : Op -> Model -> Html Msg
 viewContracts op model =
     case model.contracts_result of
         Success data ->
-            viewContractsTable data op model
+            if List.length data == 0 then
+                div [] [ text "No contracts yet..." ]
+
+            else
+                viewContractsTable data op model
 
         Failure err ->
             viewGqlErrors err

@@ -2064,7 +2064,7 @@ viewTension u t model =
 
                           else
                             text ""
-                        , if t.contracts /= Nothing && t.contracts /= Just [] then
+                        , if t.contracts /= Nothing && t.contracts /= Just [] || model.baseUri == ContractsBaseUri then
                             li [ classList [ ( "is-active", model.activeTab == Contracts ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                     [ A.icon1 "icon-link-2" T.contracts ]
@@ -2087,15 +2087,10 @@ viewTension u t model =
                                 div [] [ text "No document yet..." ]
 
                     Contracts ->
-                        case t.contracts |> withDefault [] of
-                            [ c ] ->
-                                ContractsPage.view
-                                    { receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin }
-                                    model.contractsPage
-                                    |> Html.map ContractsPageMsg
-
-                            _ ->
-                                div [] [ text "No contracts yet..." ]
+                        ContractsPage.view
+                            { receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin }
+                            model.contractsPage
+                            |> Html.map ContractsPageMsg
                 ]
             , div [ class "column is-3" ]
                 [ viewSidePane u t model ]
