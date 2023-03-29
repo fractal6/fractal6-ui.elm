@@ -293,6 +293,16 @@ update global message model =
                     , Cmd.none
                     )
 
+                NameTooLong ->
+                    ( { model
+                        | result = RemoteData.Failure (BadBody T.nameTooLongError)
+                        , hasDuplicate = True
+                        , hasBeenDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
                 _ ->
                     ( { model | result = result }, Cmd.none, Cmd.none )
 
@@ -555,9 +565,14 @@ viewOrgaValidate model =
                 in
                 div [ class "f6-error message is-danger is-light is-small mt-1" ]
                     [ p [ class "message-body" ]
-                        [ text T.duplicateNameError
-                        , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
-                        ]
+                        (if String.length nid > 42 then
+                            [ text T.nameTooLongError ]
+
+                         else
+                            [ text T.duplicateNameError
+                            , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            ]
+                        )
                     ]
 
               else

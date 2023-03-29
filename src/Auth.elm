@@ -47,6 +47,7 @@ type ErrState a
     | OkAuth a
     | NoErr
     | DuplicateErr
+    | NameTooLong
     | UnknownErr
 
 
@@ -67,11 +68,11 @@ messageToErrState message_ trial =
     if contains "token is expired" message || contains "no token found" message then
         Authenticate
 
-    else if startsWith "duplicate error" message then
+    else if startsWith "duplicate error" message || contains "already exists for field" message then
         DuplicateErr
 
-    else if contains "already exists for field" message then
-        DuplicateErr
+    else if startsWith "name too long" message then
+        NameTooLong
 
     else if startsWith "access denied" message || contains "refresh token" message || contains "authorization failed" message then
         if trial == 0 then

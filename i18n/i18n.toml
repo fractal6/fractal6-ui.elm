@@ -1300,6 +1300,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="⚠️ This name (DOMAIN) already exists, please choose another one."
   fr="⚠️ Ce nom (DOMAIN) existe déja, veuillez en choisir un autre."
 
+[nameTooLongError]
+  en="⚠️ This name (DOMAIN) is too long, please enter a shorter one."
+  fr="⚠️ Ce nom (DOMAIN) est trop long, veuillez en entrer un plus court."
+
 [duplicateOrgHint]
   en="""
 **Tips**: To experiment with Fractale's features or as a personal organization, you can use your own username as a suffix, for example `{{}}-{{}}`.
