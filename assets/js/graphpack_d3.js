@@ -631,6 +631,8 @@ export const GraphPack = {
 
         // final
         if (text) {
+            // Upper case the first char
+            text = text[0].toUpperCase() + text.slice(1);
             ctx2d.beginPath();
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.textAlign = "center";

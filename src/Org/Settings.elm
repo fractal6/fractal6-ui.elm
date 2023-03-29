@@ -745,7 +745,7 @@ update global message model =
                 DuplicateErr ->
                     let
                         label_name =
-                            Dict.get "name" model.artefact_form.post |> withDefault ""
+                            Dict.get "name" model.artefact_form.post |> withDefault "" |> String.toLower
 
                         here name =
                             (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
@@ -935,7 +935,7 @@ update global message model =
                 DuplicateErr ->
                     let
                         role_name =
-                            Dict.get "name" model.artefact_form.post |> withDefault ""
+                            Dict.get "name" model.artefact_form.post |> withDefault "" |> String.toLower
 
                         here name =
                             (withMaybeData model.roles |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
@@ -1463,7 +1463,7 @@ viewLabels model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
-            , div [ class "level-right" ] [ button [ class "button is-success", classList [ ( "is-active", model.label_add ) ], onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
+            , div [ class "level-right", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
             ]
         , if model.label_add then
             viewLabelAddBox model
@@ -1735,7 +1735,7 @@ viewRoles model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
-            , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
+            , div [ class "level-right", classList [ ( "is-hidden", model.role_add ) ] ] [ button [ class "button is-success level-right", onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
             ]
         , if model.role_add then
             viewRoleAddBox model

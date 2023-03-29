@@ -653,7 +653,7 @@ viewRole cls_ now_m link_m r =
          ]
             ++ color
         )
-        [ A.icon1 (role2icon r) r.name ]
+        [ A.icon1 (role2icon r) (upH r.name) ]
 
 
 viewRole2 : Maybe ( Conf, String ) -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
@@ -683,7 +683,7 @@ viewRole2 now_m r msg =
          ]
             ++ color
         )
-        [ A.icon1 (role2icon r) r.name ]
+        [ A.icon1 (role2icon r) (upH r.name) ]
 
 
 viewProfileC : UserCommon a -> Html msg
