@@ -581,6 +581,11 @@ type alias PatchTensionPayloadID =
     }
 
 
+type alias Project =
+    { name : String
+    }
+
+
 
 --
 -- Mandate
