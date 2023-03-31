@@ -231,6 +231,29 @@ initLabelForm tid user =
     }
 
 
+type alias ProjectForm =
+    { uctx : UserCtx
+    , id : String
+    , nameid : String -- use for roonameid identification
+    , post : Post
+    }
+
+
+initProjectForm : UserState -> String -> ProjectForm
+initProjectForm user nameid =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                initUserctx
+    , id = ""
+    , nameid = nameid
+    , post = Dict.fromList []
+    }
+
+
 
 --Settings Form
 
