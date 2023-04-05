@@ -89,7 +89,8 @@ import ModelSchema
 import Page exposing (Document, Page)
 import Ports
 import Process
-import Query.QueryNode exposing (getProjects, queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph)
+import Query.QueryProject exposing (getProjects)
 import RemoteData exposing (RemoteData)
 import Requests exposing (fetchProjectsSub, fetchProjectsTop)
 import Session exposing (Conf, GlobalCmd(..), Screen)

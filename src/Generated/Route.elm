@@ -25,12 +25,14 @@ type Route
     | New_Orga
     | M_Dynamic { param1 : String }
     | O_Dynamic { param1 : String }
+    | P_Dynamic { param1 : String }
     | S_Dynamic { param1 : String }
     | T_Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
     | User_Dynamic_Settings { param1 : String }
     | M_Dynamic_Dynamic { param1 : String, param2 : String }
     | O_Dynamic_Dynamic { param1 : String, param2 : String }
+    | P_Dynamic_Dynamic { param1 : String, param2 : String }
     | S_Dynamic_Dynamic { param1 : String, param2 : String }
     | T_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic { param1 : String, param2 : String }
@@ -38,6 +40,7 @@ type Route
     | Tension_Dynamic_Dynamic_Contract { param1 : String, param2 : String }
     | M_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | O_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
+    | P_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | S_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | T_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | Tension_Dynamic_Dynamic_Contract_Dynamic { param1 : String, param2 : String, param3 : String }
@@ -75,6 +78,9 @@ routes =
         , (Parser.s "o" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map O_Dynamic
+        , (Parser.s "p" </> Parser.string)
+          |> Parser.map (\param1 -> { param1 = param1 })
+          |> Parser.map P_Dynamic
         , (Parser.s "s" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map S_Dynamic
@@ -93,6 +99,9 @@ routes =
         , (Parser.s "o" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map O_Dynamic_Dynamic
+        , (Parser.s "p" </> Parser.string </> Parser.string)
+          |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
+          |> Parser.map P_Dynamic_Dynamic
         , (Parser.s "s" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map S_Dynamic_Dynamic
@@ -114,6 +123,9 @@ routes =
         , (Parser.s "o" </> Parser.string </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 param3 -> { param1 = param1, param2 = param2, param3 = param3 })
           |> Parser.map O_Dynamic_Dynamic_Dynamic
+        , (Parser.s "p" </> Parser.string </> Parser.string </> Parser.string)
+          |> Parser.map (\param1 param2 param3 -> { param1 = param1, param2 = param2, param3 = param3 })
+          |> Parser.map P_Dynamic_Dynamic_Dynamic
         , (Parser.s "s" </> Parser.string </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 param3 -> { param1 = param1, param2 = param2, param3 = param3 })
           |> Parser.map S_Dynamic_Dynamic_Dynamic
@@ -180,6 +192,9 @@ toHref route =
                 O_Dynamic { param1 } ->
                     [ "o", param1 ]
                 
+                P_Dynamic { param1 } ->
+                    [ "p", param1 ]
+                
                 S_Dynamic { param1 } ->
                     [ "s", param1 ]
                 
@@ -197,6 +212,9 @@ toHref route =
                 
                 O_Dynamic_Dynamic { param1, param2 } ->
                     [ "o", param1, param2 ]
+                
+                P_Dynamic_Dynamic { param1, param2 } ->
+                    [ "p", param1, param2 ]
                 
                 S_Dynamic_Dynamic { param1, param2 } ->
                     [ "s", param1, param2 ]
@@ -218,6 +236,9 @@ toHref route =
                 
                 O_Dynamic_Dynamic_Dynamic { param1, param2, param3 } ->
                     [ "o", param1, param2, param3 ]
+                
+                P_Dynamic_Dynamic_Dynamic { param1, param2, param3 } ->
+                    [ "p", param1, param2, param3 ]
                 
                 S_Dynamic_Dynamic_Dynamic { param1, param2, param3 } ->
                     [ "s", param1, param2, param3 ]
