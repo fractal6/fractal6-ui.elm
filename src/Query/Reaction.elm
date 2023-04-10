@@ -88,12 +88,13 @@ addReactionInputEncoder username cid type_ =
             , comment =
                 Input.buildCommentRef (\u -> { u | id = cid |> encodeId |> Present })
             , type_ = type_
+            , reactionid = "" -- set in the backend
             }
 
-        inputOpt =
-            \x -> x
+        --inputOpt =
+        --    \x -> x
     in
-    { input = [ Input.buildAddReactionInput inputReq inputOpt ] }
+    { input = [ Input.buildAddReactionInput inputReq ] }
 
 
 reactionPayload : SelectionSet ReactionResponse Fractal.Object.Reaction

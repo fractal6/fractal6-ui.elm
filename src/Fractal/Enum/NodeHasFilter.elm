@@ -33,6 +33,7 @@ type NodeHasFilter
     | Children
     | Labels
     | Roles
+    | Projects
     | Pinned
     | Role_ext
     | Role_type
@@ -46,7 +47,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -129,6 +130,9 @@ decoder =
 
                     "roles" ->
                         Decode.succeed Roles
+
+                    "projects" ->
+                        Decode.succeed Projects
 
                     "pinned" ->
                         Decode.succeed Pinned
@@ -241,6 +245,9 @@ toString enum____ =
 
         Roles ->
             "roles"
+
+        Projects ->
+            "projects"
 
         Pinned ->
             "pinned"
@@ -358,6 +365,9 @@ fromString enumString____ =
 
         "roles" ->
             Just Roles
+
+        "projects" ->
+            Just Projects
 
         "pinned" ->
             Just Pinned

@@ -309,6 +309,184 @@ aggregateRoleExt fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateRoleExt" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetProjectRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getProject :
+    GetProjectRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Project
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getProject requiredArgs____ object____ =
+    Object.selectionForCompositeField "getProject" [ Argument.required "id" requiredArgs____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryProjectOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryProject :
+    (QueryProjectOptionalArguments -> QueryProjectOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Project
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryProject fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryProject" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateProjectOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectFilter }
+
+
+aggregateProject :
+    (AggregateProjectOptionalArguments -> AggregateProjectOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateProject fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateProject" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias GetProjectTensionRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getProjectTension :
+    GetProjectTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.ProjectTension
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getProjectTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "getProjectTension" [ Argument.required "id" requiredArgs____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryProjectTensionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectTensionFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectTensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryProjectTension :
+    (QueryProjectTensionOptionalArguments -> QueryProjectTensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectTension
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryProjectTension fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectTensionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryProjectTension" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateProjectTensionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectTensionFilter }
+
+
+aggregateProjectTension :
+    (AggregateProjectTensionOptionalArguments -> AggregateProjectTensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectTensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateProjectTension fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectTensionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateProjectTension" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias GetProjectColumnOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , name : OptionalArgument String
+    }
+
+
+getProjectColumn :
+    (GetProjectColumnOptionalArguments -> GetProjectColumnOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumn
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getProjectColumn fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { id = Absent, name = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "id" filledInOptionals____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "name" filledInOptionals____.name Encode.string ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "getProjectColumn" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryProjectColumnOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectColumnOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryProjectColumn :
+    (QueryProjectColumnOptionalArguments -> QueryProjectColumnOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumn
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryProjectColumn fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectColumnOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryProjectColumn" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateProjectColumnOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
+
+
+aggregateProjectColumn :
+    (AggregateProjectColumnOptionalArguments -> AggregateProjectColumnOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumnAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateProjectColumn fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateProjectColumn" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias QueryOrgaAggOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.OrgaAggFilter
     , order : OptionalArgument Fractal.InputObject.OrgaAggOrder

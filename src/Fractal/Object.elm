@@ -57,6 +57,18 @@ type AddPendingUserPayload
     = AddPendingUserPayload
 
 
+type AddProjectColumnPayload
+    = AddProjectColumnPayload
+
+
+type AddProjectPayload
+    = AddProjectPayload
+
+
+type AddProjectTensionPayload
+    = AddProjectTensionPayload
+
+
 type AddReactionPayload
     = AddReactionPayload
 
@@ -163,6 +175,18 @@ type DeletePendingUserPayload
 
 type DeletePostPayload
     = DeletePostPayload
+
+
+type DeleteProjectColumnPayload
+    = DeleteProjectColumnPayload
+
+
+type DeleteProjectPayload
+    = DeleteProjectPayload
+
+
+type DeleteProjectTensionPayload
+    = DeleteProjectTensionPayload
 
 
 type DeleteReactionPayload
@@ -297,6 +321,30 @@ type PostAggregateResult
     = PostAggregateResult
 
 
+type Project
+    = Project
+
+
+type ProjectAggregateResult
+    = ProjectAggregateResult
+
+
+type ProjectColumn
+    = ProjectColumn
+
+
+type ProjectColumnAggregateResult
+    = ProjectColumnAggregateResult
+
+
+type ProjectTension
+    = ProjectTension
+
+
+type ProjectTensionAggregateResult
+    = ProjectTensionAggregateResult
+
+
 type Reaction
     = Reaction
 
@@ -375,6 +423,18 @@ type UpdatePendingUserPayload
 
 type UpdatePostPayload
     = UpdatePostPayload
+
+
+type UpdateProjectColumnPayload
+    = UpdateProjectColumnPayload
+
+
+type UpdateProjectPayload
+    = UpdateProjectPayload
+
+
+type UpdateProjectTensionPayload
+    = UpdateProjectTensionPayload
 
 
 type UpdateReactionPayload

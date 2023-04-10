@@ -24,9 +24,9 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-reactionid : SelectionSet (Maybe String) Fractal.Object.Reaction
+reactionid : SelectionSet String Fractal.Object.Reaction
 reactionid =
-    Object.selectionForField "(Maybe String)" "reactionid" [] (Decode.string |> Decode.nullable)
+    Object.selectionForField "String" "reactionid" [] Decode.string
 
 
 type alias UserOptionalArguments =

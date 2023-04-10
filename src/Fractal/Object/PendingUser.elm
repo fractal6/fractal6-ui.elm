@@ -29,9 +29,9 @@ updatedAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
 
 
-username : SelectionSet (Maybe String) Fractal.Object.PendingUser
+username : SelectionSet String Fractal.Object.PendingUser
 username =
-    Object.selectionForField "(Maybe String)" "username" [] (Decode.string |> Decode.nullable)
+    Object.selectionForField "String" "username" [] Decode.string
 
 
 password : SelectionSet (Maybe String) Fractal.Object.PendingUser
@@ -39,9 +39,9 @@ password =
     Object.selectionForField "(Maybe String)" "password" [] (Decode.string |> Decode.nullable)
 
 
-email : SelectionSet (Maybe String) Fractal.Object.PendingUser
+email : SelectionSet String Fractal.Object.PendingUser
 email =
-    Object.selectionForField "(Maybe String)" "email" [] (Decode.string |> Decode.nullable)
+    Object.selectionForField "String" "email" [] Decode.string
 
 
 email_token : SelectionSet (Maybe String) Fractal.Object.PendingUser

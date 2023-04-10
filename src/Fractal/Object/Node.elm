@@ -312,6 +312,30 @@ roles fillInOptionals____ object____ =
     Object.selectionForCompositeField "roles" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias ProjectsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+projects :
+    (ProjectsOptionalArguments -> ProjectsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Project
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+projects fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "projects" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias PinnedOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter
     , order : OptionalArgument Fractal.InputObject.TensionOrder
@@ -592,6 +616,26 @@ rolesAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "rolesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias ProjectsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectFilter }
+
+
+projectsAggregate :
+    (ProjectsAggregateOptionalArguments -> ProjectsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+projectsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "projectsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias PinnedAggregateOptionalArguments =
