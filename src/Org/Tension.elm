@@ -3036,7 +3036,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
-                                    [ A.icon "icon-disc mr-1", text "Change type" ]
+                                    [ A.icon "icon-disc mr-1", text T.updateType ]
                                 ]
 
                             else
