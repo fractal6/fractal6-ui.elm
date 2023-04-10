@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [...]
 
 
+## [0.7.9]
+
+### Changed
+- Update package.json 
+
+### Fixed
+- make schema compatible with dgraph v22.
+- contractPage loading race condition.
+- add nameTooLong error + hint.
+- show sub/top section of labels/roles in settings only if present. 
+
 ## [0.7.8]
 
 ### New
