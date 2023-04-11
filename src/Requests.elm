@@ -111,7 +111,7 @@ membersDecoder =
 
 {-|
 
-    Get all ** Labels ** from the parent, unril the root node
+    Get all ** Labels ** from the parent, until the root node
 
 -}
 fetchLabelsTop api targetid include_self msg =
@@ -145,7 +145,7 @@ fetchLabelsSub api targetid msg =
 
 {-|
 
-    Get all ** Roles ** from the parent, unril the root node
+    Get all ** Roles ** from the parent, until the root node
 
 -}
 fetchRolesTop api targetid msg =
@@ -177,14 +177,38 @@ fetchRolesSub api targetid msg =
         }
 
 
-roleDecoder : JD.Decoder RoleExt
-roleDecoder =
-    JD.map5 RoleExt
-        (JD.field "id" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "color" JD.string |> JD.maybe)
-        (JD.field "role_type" RoleType.decoder)
-        (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
+{-|
+
+    Get all ** Project ** from the parent, until the root node
+
+-}
+fetchProjectsTop api targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.rest ++ "/top_projects"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-|
+
+    Get all ** Project ** below the given node recursively
+
+-}
+fetchProjectsSub api targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.rest ++ "/sub_projects"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 

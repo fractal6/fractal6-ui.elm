@@ -30,7 +30,6 @@ import Bulk exposing (..)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -84,13 +83,13 @@ import Maybe exposing (withDefault)
 import ModelSchema
     exposing
         ( LocalGraph
-        , Project
+        , ProjectFull
         )
 import Page exposing (Document, Page)
 import Ports
 import Process
-import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (getProjects)
+import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
+import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Requests exposing (fetchProjectsSub, fetchProjectsTop)
 import Session exposing (Conf, GlobalCmd(..), Screen)
@@ -196,16 +195,16 @@ type alias Model =
 
     -- Page
     , hasUnsavedData : Bool
-    , artefact_form : ProjectForm
+    , project_form : ProjectForm
 
     -- Projects
-    , projects : GqlData (List Project)
-    , projects_top : WebData (List Project)
-    , projects_sub : WebData (List Project)
+    , projects : GqlData (List ProjectFull)
+    , projects_top : WebData (List ProjectFull)
+    , projects_sub : WebData (List ProjectFull)
     , project_add : Bool
-    , project_edit : Maybe Project
-    , project_result : GqlData Project
-    , project_result_del : GqlData Project
+    , project_edit : Maybe ProjectFull
+    , project_result : GqlData ProjectFull
+    , project_result_del : GqlData ProjectFull
 
     -- Common
     , modal_confirm : ModalConfirm Msg
@@ -228,7 +227,7 @@ type alias Model =
 resetForm : Model -> Model
 resetForm model =
     { model
-        | project_form = initArtefactNodeForm (LoggedIn model.project_form.uctx) model.node_focus.nameidColorPicker.initColor
+        | project_form = initProjectForm (LoggedIn model.project_form.uctx) model.node_focus.nameid
         , hasUnsavedData = False
         , project_result = NotAsked
         , project_result_del = NotAsked
@@ -245,17 +244,17 @@ type Msg
     | SafeEdit Msg
     | SafeSend Msg
       -- Projects
-    | GotProjects (GqlData (List Project))
-    | GotProjectsTop (WebData (List Project))
-    | GotProjectsSub (WebData (List Project))
+    | GotProjects (GqlData (List ProjectFull))
+    | GotProjectsTop (WebData (List ProjectFull))
+    | GotProjectsSub (WebData (List ProjectFull))
     | AddProject
-    | EditProject Project
+    | EditProject ProjectFull
     | CancelProject
     | SubmitAddProject Time.Posix
     | SubmitEditProject Time.Posix
     | SubmitDeleteProject String Time.Posix
-    | GotProject (GqlData Project)
-    | GotProjectDel (GqlData Project)
+    | GotProject (GqlData ProjectFull)
+    | GotProjectDel (GqlData ProjectFull)
       -- Common
     | NoMsg
     | LogErr String
@@ -307,7 +306,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState SettingsBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState ProjectsBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -316,7 +315,7 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , hasUnsavedData = False
-            , artefact_form = ProjectForm
+            , project_form = initProjectForm global.session.user newFocus.nameid
 
             -- Projectss
             , projects = Loading
@@ -331,14 +330,14 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus global.session.user
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
 
@@ -349,7 +348,7 @@ init global flags =
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
                 ++ [ getProjects apis newFocus.nameid GotProjects
-                   , fetchProjectsTop apis newFocus.nameid False GotProjectsTop
+                   , fetchProjectsTop apis newFocus.nameid GotProjectsTop
                    , fetchProjectsSub apis newFocus.nameid GotProjectsSub
                    ]
     in
@@ -372,10 +371,10 @@ update global message model =
     case message of
         PassedSlowLoadTreshold ->
             let
-                labels =
-                    ternary (model.labels == Loading) LoadingSlowly model.labels
+                projects =
+                    ternary (model.projects == Loading) LoadingSlowly model.projects
             in
-            ( { model | labels = labels }, Cmd.none, Cmd.none )
+            ( { model | projects = projects }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -489,7 +488,6 @@ update global message model =
                         , post =
                             Dict.fromList
                                 ([ ( "name", project.name ) ]
-                                    ++ (project.color |> Maybe.map (\x -> [ ( "color", x ) ]) |> withDefault [])
                                     ++ (project.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
                                     ++ [ ( "old_name", project.name ) ]
                                 )
@@ -630,7 +628,7 @@ update global message model =
                 query =
                     model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, Cmd.none, send (NavigateRaw (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)) )
+            ( model, Cmd.none, send (NavigateRaw (uriFromNameid ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -782,7 +780,7 @@ view global model =
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
-            , div [ id "mainPane" ] [ view_ model.global model ]
+            , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -819,16 +817,16 @@ view_ global model =
                   else
                     text ""
                 , div [ class "columns mb-6 px-3" ]
-                    [ Lazy.lazy3 viewProjects model.conf "Circle's Projects" model.projects_top ]
+                    [ Lazy.lazy2 viewProjects "Circle's Projects" model.projects_top ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ Lazy.lazy3 viewProjects model.conf "Top Circle's Projects" model.projects_sub ]
+                    [ Lazy.lazy2 viewProjects "Top Circle's Projects" model.projects_sub ]
                 , div [ class "columns mb-6 px-3" ]
-                    [ Lazy.lazy3 viewProjects model.conf "Sub Circle's Projects" model.projects_top ]
+                    [ Lazy.lazy2 viewProjects "Sub Circle's Projects" model.projects_top ]
                 ]
             ]
         ]
 
 
-viewProjects : Conf -> String -> WebData (List Project) -> Html Msg
-viewProjects conf title data =
+viewProjects : String -> WebData (List ProjectFull) -> Html Msg
+viewProjects title data =
     text "no implemented"

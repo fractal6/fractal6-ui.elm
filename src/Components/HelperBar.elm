@@ -314,6 +314,17 @@ viewNavLevel op model =
                             counter i
                     ]
                 ]
+             , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
+                [ a [ href (uriFromNameid ProjectsBaseUri focusid []) ]
+                    [ A.icon1 "icon-layout" T.projects
+
+                    --, case unwrap 0 .n_projects op.orgaInfo of
+                    --    0 ->
+                    --        text ""
+                    --    i ->
+                    --        counter i
+                    ]
+                ]
 
              --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
              --    [ div [ class "dropdown is-hoverable" ]
@@ -353,8 +364,7 @@ viewNavLevel op model =
                         (\path ->
                             if model.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "vbar" ] []
-                                , li
-                                    [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
+                                , li [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
 

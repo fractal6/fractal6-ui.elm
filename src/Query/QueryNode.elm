@@ -33,6 +33,7 @@ module Query.QueryNode exposing
     , getLabels
     , getNodeId
     , getOrgaInfo
+    , getProjects
     , getRoles
     , labelFullPayload
     , labelPayload
@@ -45,6 +46,7 @@ module Query.QueryNode exposing
     , notifEventPayload
     , pNodePayload
     , pinPayload
+    , projectFullPayload
     , queryJournal
     , queryLabels
     , queryLabelsDown
@@ -55,8 +57,9 @@ module Query.QueryNode exposing
     , queryNodesSub
     , queryOrgaNode
     , queryOrgaTree
+    , queryProjects
     , queryPublicOrga
-    , queryRoles
+    , queryRolesFull
     , roleFullPayload
     , tensionEventPayload
     , tidPayload
@@ -72,6 +75,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeOrderable as NodeOrderable
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.ProjectOrderable as ProjectOrderable
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -580,6 +584,37 @@ nidFilter nid a =
     { a | nameid = Present nid }
 
 
+nidsFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nidsFilter nids a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c | nameid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nids |> Present } }
+                )
+                |> Present
+    }
+
+
+nidsDownFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nidsDownFilter nids a =
+    let
+        nameidsRegxp =
+            nids
+                |> List.map (\n -> "^" ++ n)
+                |> String.join "|"
+                |> SE.surround "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c | nameid = Present { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } }
+                )
+                |> Present
+    }
+
+
 
 --
 -- Query Local Graph / Path Data
@@ -758,7 +793,7 @@ pinPayload =
 
 
 --
--- Query  Orga rights
+-- Query Orga rights
 --
 
 
@@ -781,7 +816,7 @@ nodeRightsPayload =
 
 
 --
--- Query  Members
+-- Query Members
 --
 
 
@@ -979,12 +1014,40 @@ rolesFullDecoder data =
 
 
 getRoles url nid msg =
+    -- Fetch on the given node
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
             nodeRolesFullPayload
         )
         (RemoteData.fromResult >> decodeResponse rolesFullDecoder >> msg)
+
+
+rolesFullDecoder2 : Maybe (List (Maybe NodeRolesFull)) -> Maybe (List RoleExtFull)
+rolesFullDecoder2 data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.concatMap (\x -> withDefault [] x.roles)
+                        |> Just
+            )
+        |> withDefault Nothing
+
+
+queryRolesFull url nids msg =
+    -- Fetch on the given group of nodes
+    makeGQLQuery url
+        (Query.queryNode
+            (nidsFilter nids)
+            nodeRolesFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse rolesFullDecoder2 >> msg)
 
 
 nodeRolesFullPayload : SelectionSet NodeRolesFull Fractal.Object.Node
@@ -1038,6 +1101,7 @@ labelsFullDecoder data =
 
 
 getLabels url nid msg =
+    -- Fetch on the given node
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
@@ -1076,36 +1140,51 @@ labelFullPayload =
 
 
 --
--- Query Roles
+-- Query Project (Full)
 --
 
 
-rolesDecoder : Maybe (List (Maybe NodeRolesFull)) -> Maybe (List RoleExtFull)
-rolesDecoder data =
+type alias NodeProjectsFull =
+    { projects : Maybe (List ProjectFull) }
+
+
+projectsFullDecoder : Maybe NodeProjectsFull -> Maybe (List ProjectFull)
+projectsFullDecoder data =
     data
-        |> Maybe.map
-            (\d ->
-                if List.length d == 0 then
-                    Nothing
-
-                else
-                    d
-                        |> List.filterMap identity
-                        |> List.concatMap (\x -> withDefault [] x.roles)
-                        |> Just
-            )
-        |> withDefault Nothing
+        |> Maybe.map (\d -> withDefault [] d.projects)
 
 
-{-| Fetch on the given nodes only
--}
-queryRoles url nids msg =
+getProjects url nid msg =
+    -- Fetch on the given node
     makeGQLQuery url
-        (Query.queryNode
-            (nidsFilter nids)
-            nodeRolesFullPayload
+        (Query.getNode
+            (nidFilter nid)
+            nodeProjectsFullPayload
         )
-        (RemoteData.fromResult >> decodeResponse rolesDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse projectsFullDecoder >> msg)
+
+
+nodeProjectsFullPayload : SelectionSet NodeProjectsFull Fractal.Object.Node
+nodeProjectsFullPayload =
+    SelectionSet.map NodeProjectsFull
+        (Fractal.Object.Node.projects
+            (\args ->
+                { args
+                    | order =
+                        Input.buildProjectOrder (\b -> { b | asc = Present ProjectOrderable.Name })
+                            |> Present
+                }
+            )
+            projectFullPayload
+        )
+
+
+projectFullPayload : SelectionSet ProjectFull Fractal.Object.Project
+projectFullPayload =
+    SelectionSet.map3 ProjectFull
+        (Fractal.Object.Project.id |> SelectionSet.map decodedId)
+        Fractal.Object.Project.name
+        Fractal.Object.Project.description
 
 
 
@@ -1135,9 +1214,8 @@ labelsDecoder data =
         |> withDefault Nothing
 
 
-{-| Fetch on the given nodes only
--}
 queryLabels url nids msg =
+    -- Fetch on the given group of nodes
     makeGQLQuery url
         (Query.queryNode
             (nidsFilter nids)
@@ -1146,46 +1224,14 @@ queryLabels url nids msg =
         (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
 
 
-{-| Fetch on all children nodes
--}
 queryLabelsDown url nids msg =
+    -- Fetch on all children nodes
     makeGQLQuery url
         (Query.queryNode
             (nidsDownFilter nids)
             nodeLabelsPayload
         )
         (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
-
-
-nidsFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nidsFilter nids a =
-    { a
-        | filter =
-            Input.buildNodeFilter
-                (\c ->
-                    { c | nameid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nids |> Present } }
-                )
-                |> Present
-    }
-
-
-nidsDownFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nidsDownFilter nids a =
-    let
-        nameidsRegxp =
-            nids
-                |> List.map (\n -> "^" ++ n)
-                |> String.join "|"
-                |> SE.surround "/"
-    in
-    { a
-        | filter =
-            Input.buildNodeFilter
-                (\c ->
-                    { c | nameid = Present { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } }
-                )
-                |> Present
-    }
 
 
 nodeLabelsPayload : SelectionSet NodeLabels Fractal.Object.Node
@@ -1210,6 +1256,65 @@ labelPayload =
         |> with Fractal.Object.Label.name
         |> with Fractal.Object.Label.color
         |> hardcoded []
+
+
+
+--
+-- Query Projects
+--
+
+
+type alias NodeProjects =
+    { projects : Maybe (List Project) }
+
+
+projectsDecoder : Maybe (List (Maybe NodeProjects)) -> Maybe (List Project)
+projectsDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.concatMap (\x -> withDefault [] x.projects)
+                        |> Just
+            )
+        |> withDefault Nothing
+
+
+queryProjects url nids msg =
+    -- Fetch on the given group of nodes
+    makeGQLQuery url
+        (Query.queryNode
+            (nidsFilter nids)
+            nodeProjectsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse projectsDecoder >> msg)
+
+
+nodeProjectsPayload : SelectionSet NodeProjects Fractal.Object.Node
+nodeProjectsPayload =
+    SelectionSet.map NodeProjects
+        (Fractal.Object.Node.projects
+            (\args ->
+                { args
+                    | order =
+                        Input.buildProjectOrder (\b -> { b | asc = Present ProjectOrderable.Name })
+                            |> Present
+                }
+            )
+            projectPayload
+        )
+
+
+projectPayload : SelectionSet Project Fractal.Object.Project
+projectPayload =
+    SelectionSet.succeed Project
+        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Project.name
 
 
 

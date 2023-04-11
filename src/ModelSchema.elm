@@ -587,6 +587,13 @@ type alias Project =
     }
 
 
+type alias ProjectFull =
+    { id : String
+    , name : String
+    , description : Maybe String
+    }
+
+
 
 --
 -- Mandate

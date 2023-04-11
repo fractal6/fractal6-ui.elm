@@ -21,20 +21,24 @@
 
 module Query.PatchNode exposing
     ( addOneLabel
+    , addOneProject
     , addOneRole
     , removeOneLabel
+    , removeOneProject
     , removeOneRole
     , updateOneLabel
+    , updateOneProject
     , updateOneRole
     )
 
-import Bulk exposing (ArtefactNodeForm)
+import Bulk exposing (ArtefactNodeForm, ProjectForm)
 import Bulk.Codecs exposing (nid2rootid)
 import Dict
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddLabelPayload
+import Fractal.Object.AddProjectPayload
 import Fractal.Object.AddRoleExtPayload
 import Fractal.Object.UpdateLabelPayload
 import Fractal.Object.UpdateRoleExtPayload
@@ -44,7 +48,7 @@ import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate)
-import Query.QueryNode exposing (labelFullPayload, roleFullPayload)
+import Query.QueryNode exposing (labelFullPayload, projectFullPayload, roleFullPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -53,7 +57,7 @@ import RemoteData exposing (RemoteData)
 -- We do not directtly operate on Node, but user referecne instead. (see @hasLink schema directive).
 --
 --
--- Node LABEL Operation
+-- Node Label Operation
 --
 {-
    Add one Label
@@ -183,7 +187,7 @@ updateLabelInputEncoder form =
 
 
 {-
-   Remove label
+   Remove Label
 -}
 
 
@@ -366,7 +370,7 @@ updateRoleInputEncoder form =
 
 
 {-
-   Remove role
+   Remove Role
 -}
 
 
@@ -406,3 +410,178 @@ removeRoleInputEncoder form =
                 }
     in
     { input = Input.buildUpdateRoleExtInput inputReq inputOpt }
+
+
+
+--
+-- Node Project Operation
+--
+{-
+   Add one Project
+-}
+
+
+type alias ProjectsFullPayload =
+    { project : Maybe (List (Maybe ProjectFull)) }
+
+
+projectFullDecoder : Maybe ProjectsFullPayload -> Maybe ProjectFull
+projectFullDecoder data =
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.project
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
+
+
+addOneProject url form msg =
+    makeGQLMutation url
+        (Mutation.addProject
+            (addProjectInputEncoder form)
+            (SelectionSet.map ProjectsFullPayload <|
+                Fractal.Object.AddProjectPayload.project identity projectFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse projectFullDecoder >> msg)
+
+
+addProjectInputEncoder : ProjectForm -> Mutation.AddProjectRequiredArguments
+addProjectInputEncoder form =
+    let
+        inputReq =
+            { rootnameid = nid2rootid form.nameid
+            , parentnameid = form.nameid
+            , name = Dict.get "name" form.post |> withDefault ""
+            , nameid = Dict.get "nameid" form.post |> withDefault ""
+            }
+
+        inputOpt =
+            \x ->
+                { x
+                    | description = fromMaybe (Dict.get "description" form.post)
+                    , nodes =
+                        Present
+                            [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                }
+    in
+    { input = [ Input.buildAddProjectInput inputReq inputOpt ] }
+
+
+
+{-
+   Update Project
+-}
+
+
+updateOneProject url form msg =
+    makeGQLMutation url
+        (Mutation.updateProject
+            (updateProjectInputEncoder form)
+            (SelectionSet.map ProjectsFullPayload <|
+                Fractal.Object.UpdateProjectPayload.project identity <|
+                    projectFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse projectFullDecoder >> msg)
+
+
+updateProjectInputEncoder : ProjectForm -> Mutation.UpdateProjectRequiredArguments
+updateProjectInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                if form.id == "" then
+                    -- assumes duplicate update
+                    -- see the duplicate err handler
+                    Input.buildProjectFilter
+                        (\i ->
+                            { i
+                                | parentnameid = Present { eq = Present form.nameid, in_ = Absent }
+                                , nameid = Present { eq = fromMaybe (Dict.get "nameid" form.post), in_ = Absent }
+                            }
+                        )
+
+                else
+                    Input.buildProjectFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        post =
+            if form.id == "" then
+                -- Just register the project in the given node
+                -- see the duplicate err handler
+                form.post
+                    |> Dict.remove "name"
+                    |> Dict.remove "nameid"
+                    |> Dict.remove "description"
+
+            else if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                -- remove name to avoid making extra request due to @unique
+                form.post |> Dict.remove "name"
+
+            else
+                form.post
+
+        inputOpt =
+            \_ ->
+                { set =
+                    Input.buildProjectPatch
+                        (\i ->
+                            { i
+                                | name = fromMaybe (Dict.get "name" post)
+                                , nameid = fromMaybe (Dict.get "nameid" post)
+                                , description = fromMaybe (Dict.get "description" post)
+                                , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateProjectInput inputReq inputOpt }
+
+
+
+{-
+   Remove Project
+-}
+
+
+removeOneProject url form msg =
+    makeGQLMutation url
+        (Mutation.updateProject
+            (removeProjectInputEncoder form)
+            (SelectionSet.map ProjectsFullPayload <|
+                Fractal.Object.UpdateProjectPayload.project identity <|
+                    projectFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse projectFullDecoder >> msg)
+
+
+removeProjectInputEncoder : ProjectForm -> Mutation.UpdateProjectRequiredArguments
+removeProjectInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildProjectFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        inputOpt =
+            \_ ->
+                { set = Absent
+                , remove =
+                    Input.buildProjectPatch
+                        (\i ->
+                            { i
+                                | nodes =
+                                    Present
+                                        [ Input.buildNodeRef (\j -> { j | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                }
+    in
+    { input = Input.buildUpdateProjectInput inputReq inputOpt }
