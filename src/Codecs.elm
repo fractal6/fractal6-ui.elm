@@ -45,7 +45,9 @@ import ModelSchema
         , NodeId
         , NodesDict
         , PNode
+        , ProjectFull
         , RNode
+        , RoleExt
         , User
         , UserCtx
         , UserRights
@@ -71,6 +73,11 @@ labelDecoder =
         (JD.field "nodes" (JD.list (JD.map NameidPayload (JD.field "nameid" JD.string))) |> JDE.withDefault [])
 
 
+labelsEncoder : List Label -> JE.Value
+labelsEncoder users =
+    JE.list JE.object <| List.map labelEncoder users
+
+
 labelEncoder : Label -> List ( String, JE.Value )
 labelEncoder u =
     [ ( "id", JE.string u.id )
@@ -79,9 +86,34 @@ labelEncoder u =
     ]
 
 
-labelsEncoder : List Label -> JE.Value
-labelsEncoder users =
-    JE.list JE.object <| List.map labelEncoder users
+
+{-
+   RoleExt decoder/encoder
+-}
+
+
+roleDecoder : JD.Decoder RoleExt
+roleDecoder =
+    JD.map5 RoleExt
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "color" JD.string |> JD.maybe)
+        (JD.field "role_type" RoleType.decoder)
+        (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
+
+
+
+{-
+   Project decoder/encoder
+-}
+
+
+projectDecoder : JD.Decoder ProjectFull
+projectDecoder =
+    JD.map3 ProjectFull
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "description" JD.string |> JD.maybe)
 
 
 

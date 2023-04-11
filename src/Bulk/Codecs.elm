@@ -48,17 +48,24 @@ type alias Flags_ =
 type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
+    | ProjectsBaseUri
     | MembersBaseUri
     | SettingsBaseUri
     | UsersBaseUri
     | TensionBaseUri
     | MandateBaseUri
     | ContractsBaseUri
+    | ProjectBaseUri
 
 
 isTensionBaseUri : FractalBaseRoute -> Bool
 isTensionBaseUri r =
     List.member r [ TensionBaseUri, MandateBaseUri, ContractsBaseUri ]
+
+
+isProjectBaseUri : FractalBaseRoute -> Bool
+isProjectBaseUri r =
+    List.member r [ ProjectBaseUri ]
 
 
 
@@ -118,6 +125,9 @@ toLink route param params =
         TensionsBaseUri ->
             [ "/t" ] ++ String.split "#" param |> String.join "/"
 
+        ProjectsBaseUri ->
+            [ "/p" ] ++ String.split "#" param |> String.join "/"
+
         MembersBaseUri ->
             [ "/m" ] ++ String.split "#" param |> String.join "/"
 
@@ -132,6 +142,9 @@ toLink route param params =
 
         ContractsBaseUri ->
             toHref (Route.Tension_Dynamic_Dynamic_Contract { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
+
+        ProjectBaseUri ->
+            toHref (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
 
 
 {-| Just use to check if you are in organisation tab...

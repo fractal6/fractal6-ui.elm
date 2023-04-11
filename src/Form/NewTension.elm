@@ -59,7 +59,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (queryLocalGraph, queryRoles)
+import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
 import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -789,7 +789,7 @@ update_ apis message model =
                                     nameids =
                                         getCircles model.path_data |> List.map .nameid
                                 in
-                                [ queryRoles apis nameids OnGotRoles ]
+                                [ queryRolesFull apis nameids OnGotRoles ]
 
                             else
                                 []
