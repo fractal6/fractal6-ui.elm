@@ -493,7 +493,7 @@ getQuickDoc api lang msg =
     Http.request
         { method = "GET"
         , headers = []
-        , url = api.doc ++ ("/quickdoc." ++ lang ++ ".json")
+        , url = api.assets ++ ("/quickdoc." ++ lang ++ ".json")
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) quickDocDecoder
         , timeout = Nothing

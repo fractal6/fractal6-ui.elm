@@ -37,10 +37,10 @@ module.exports = (env, argv) => {
             auth: 'http://localhost:8888/auth',
             graphql: 'http://localhost:8888/api',
             rest: 'http://localhost:8888/q',
-            doc: 'http://localhost:8888/data'
+            assets: 'http://localhost:8888/assets'
             // @debug: CORS error.
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
-            //doc: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
+            //assets: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
         }
     }
     else if (isProd) {
@@ -48,7 +48,7 @@ module.exports = (env, argv) => {
             auth: 'https://api.fractale.co/auth',
             graphql: 'https://api.fractale.co/api',
             rest: 'https://api.fractale.co/q',
-            doc: 'https://api.fractale.co/data'
+            assets: 'https://api.fractale.co/assets'
         }
     }
 
@@ -81,7 +81,7 @@ module.exports = (env, argv) => {
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
-                'DOC_API': JSON.stringify(API_URL.doc),
+                'ASSETS_API': JSON.stringify(API_URL.assets),
                 'VERSION': JSON.stringify(commitHash),
                 'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG)
             }),
