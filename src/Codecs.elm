@@ -110,8 +110,9 @@ roleDecoder =
 
 projectDecoder : JD.Decoder ProjectFull
 projectDecoder =
-    JD.map3 ProjectFull
+    JD.map4 ProjectFull
         (JD.field "id" JD.string)
+        (JD.field "updatedAt" JD.string)
         (JD.field "name" JD.string)
         (JD.field "description" JD.string |> JD.maybe)
 
