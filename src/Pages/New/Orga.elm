@@ -24,7 +24,7 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
+import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
 import Bulk.Error exposing (viewHttpErrors)
 import Bulk.View exposing (visibility2descr, visibility2extra, visibility2icon)

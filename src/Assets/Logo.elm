@@ -23,8 +23,8 @@ module Assets.Logo exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Svg exposing (..)
-import Svg.Attributes exposing (..)
+import Svg exposing (circle, ellipse, node, polygon, svg)
+import Svg.Attributes exposing (class, cx, cy, d, height, id, points, r, rx, ry, viewBox, width, x, y)
 
 
 i18n : Html msg
