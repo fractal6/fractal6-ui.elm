@@ -37,7 +37,7 @@ module Global exposing
 import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
+import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
 import Codecs exposing (WindowPos)
 import Components.Navbar as Navbar

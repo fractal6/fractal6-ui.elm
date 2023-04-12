@@ -23,7 +23,7 @@ module Pages.About exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Browser.Navigation as Nav
-import Bulk exposing (..)
+import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)

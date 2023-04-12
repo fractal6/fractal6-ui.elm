@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (..)
+import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)

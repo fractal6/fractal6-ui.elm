@@ -24,7 +24,7 @@ module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
+import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
