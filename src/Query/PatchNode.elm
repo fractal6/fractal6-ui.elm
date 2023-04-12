@@ -451,11 +451,20 @@ addOneProject url form msg =
 addProjectInputEncoder : ProjectForm -> Mutation.AddProjectRequiredArguments
 addProjectInputEncoder form =
     let
+        createdAt =
+            Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime
+
         inputReq =
-            { rootnameid = nid2rootid form.nameid
+            { createdBy =
+                Input.buildUserRef
+                    (\x -> { x | username = Present form.uctx.username })
+            , createdAt = createdAt
+            , updatedAt = createdAt
+            , rootnameid = nid2rootid form.nameid
             , parentnameid = form.nameid
             , name = Dict.get "name" form.post |> withDefault ""
             , nameid = Dict.get "nameid" form.post |> withDefault ""
+            , status = ProjectStatus.Open
             }
 
         inputOpt =

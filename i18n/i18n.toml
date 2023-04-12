@@ -777,6 +777,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Search tensions"
   fr="Rechercher des tensions"
 
+[searchProjects]
+  en="Search projects"
+  fr="Rechercher des projets"
+
 [searchUsers]
   en="Search users"
   fr="Rechercher des utilisateurs"
@@ -794,6 +798,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Ouvert"
 
 [closedTension]
+  en="Closed"
+  fr="Fermé"
+
+[openProject]
+  en="Open"
+  fr="Ouvert"
+
+[closedProject]
   en="Closed"
   fr="Fermé"
 
@@ -884,6 +896,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [edited]
   en="edited"
   fr="édité"
+
+[updated]
+  en="updated"
+  fr="mis à jour"
 
 [authored]
   en="authored"
@@ -1435,6 +1451,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="New label"
   fr="Nouvelle étiquette"
 
+[newProject]
+  en="New project"
+  fr="Nouveau projet"
+
 [assignees]
   en="Assignees"
   fr="Assignés"
@@ -1466,6 +1486,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [noTensionCircle]
   en="No tensions in this circle yet."
   fr="Aucune tension dans ce cercle pour le moment."
+
+[noProjectRole]
+  en="No projects linked to this role yet."
+  fr="Aucun projet associé à ce rôle pour le moment."
+
+[noProjectCircle]
+  en="No projects linked to this circle yet."
+  fr="Aucun projet associé à ce cercle pour le moment."
 
 [newTension]
   en="New tension"
@@ -2288,6 +2316,22 @@ When you create a role here, you can use it as a template when you add a new rol
 Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque vous ajoutez un nouveau rôle dans votre organisation.
 
 **Portée** : Le modèle de rôles que vous pouvez utiliser lorsque vous créez un nouveau rôle sont ceux qui sont présents dans l’un de ses cercles parents.
+"""
+
+[projectsInfoHeader]
+  en="Les projets vous permettent d'organiser vos tensions et d'accompagner leurs suivies."
+  fr="Projects allow you to organize your tensions and track them."
+
+[projectsInfoDoc]
+  en="""
+When you create labels here, you can then attach them to your tensions. You will also be able to filter tensions according to labels.
+
+**Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
+"""
+  fr="""
+Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos tensions. Vous pourrez également filtrer les tensions en fonction des étiquettes.
+
+**Portée** : Les étiquettes que vous pouvez attacher à une tension sont celles qui sont présentes soit dans son cercle récepteur, soit dans l’un des parents du cercle récepteur.
 """
 
 [peerRoleInfo]

@@ -1880,8 +1880,8 @@ viewSearchBar model =
         ]
 
 
-viewTensionsListHeader : Model -> Html Msg
-viewTensionsListHeader model =
+viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> SortFilter -> Html Msg
+viewTensionsListHeader focus counts statusFilter sortFilter =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
@@ -1895,8 +1895,8 @@ viewTensionsListHeader model =
         ]
         [ div [ class "level is-marginless is-mobile" ]
             [ div [ class "level-left px-3" ]
-                [ viewTensionsCount model
-                , if model.node_focus.nameid /= model.node_focus.rootnameid then
+                [ viewTensionsCount counts statusFilter
+                , if focus.nameid /= focus.rootnameid then
                     span [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
                   else
@@ -1913,14 +1913,14 @@ viewTensionsListHeader model =
                             List.map
                                 (\t ->
                                     div [ class "dropdown-item button-light", onClick <| ChangeSortFilter t ]
-                                        [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilter2Text |> text ]
+                                        [ ternary (sortFilter == t) checked unchecked, t |> sortFilter2Text |> text ]
                                 )
                                 sortFilterList
                         ]
                     ]
                 ]
             ]
-        , if model.node_focus.nameid /= model.node_focus.rootnameid then
+        , if focus.nameid /= focus.rootnameid then
             div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
           else
@@ -1928,9 +1928,9 @@ viewTensionsListHeader model =
         ]
 
 
-viewTensionsCount : Model -> Html Msg
-viewTensionsCount model =
-    case model.tensions_count of
+viewTensionsCount : GqlData TensionsCount -> StatusFilter -> Html Msg
+viewTensionsCount counts statusFilter =
+    case counts of
         Success c ->
             let
                 activeCls =
@@ -1939,16 +1939,16 @@ viewTensionsCount model =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons has-addons" ]
+            div [ class "buttons mb-0 has-addons" ]
                 [ div
                     [ class "button is-rounded is-small"
-                    , classList [ ( activeCls, model.statusFilter == OpenStatus ), ( inactiveCls, model.statusFilter /= OpenStatus ) ]
+                    , classList [ ( activeCls, statusFilter == OpenStatus ), ( inactiveCls, statusFilter /= OpenStatus ) ]
                     , onClick <| ChangeStatusFilter OpenStatus
                     ]
                     [ span [] [ c.open |> String.fromInt |> text ], text (space_ ++ T.openTension) ]
                 , div
                     [ class "button is-rounded is-small"
-                    , classList [ ( activeCls, model.statusFilter == ClosedStatus ), ( inactiveCls, model.statusFilter /= ClosedStatus ) ]
+                    , classList [ ( activeCls, statusFilter == ClosedStatus ), ( inactiveCls, statusFilter /= ClosedStatus ) ]
                     , onClick <| ChangeStatusFilter ClosedStatus
                     ]
                     [ c.closed |> String.fromInt |> text, text (space_ ++ T.closedTension) ]
@@ -1985,7 +1985,7 @@ viewListTensions model =
     div [ class "columns" ]
         [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
         , div [ class "column is-10" ]
-            [ viewTensionsListHeader model
+            [ viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
             , viewTensions model.conf model.node_focus model.initPattern tensions_d ListTension
             ]
         ]

@@ -292,6 +292,10 @@ type alias TensionsCount =
     { open : Int, closed : Int }
 
 
+type alias ProjectsCount =
+    { open : Int, closed : Int }
+
+
 type alias Count =
     { count : Maybe Int }
 
@@ -589,6 +593,7 @@ type alias Project =
 
 type alias ProjectFull =
     { id : String
+    , updateAt : String
     , name : String
     , description : Maybe String
     }

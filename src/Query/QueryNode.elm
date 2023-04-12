@@ -1181,8 +1181,9 @@ nodeProjectsFullPayload =
 
 projectFullPayload : SelectionSet ProjectFull Fractal.Object.Project
 projectFullPayload =
-    SelectionSet.map3 ProjectFull
+    SelectionSet.map4 ProjectFull
         (Fractal.Object.Project.id |> SelectionSet.map decodedId)
+        (Fractal.Object.Project.updatedAt |> SelectionSet.map decodedTime)
         Fractal.Object.Project.name
         Fractal.Object.Project.description
 

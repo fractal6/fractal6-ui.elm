@@ -32,6 +32,7 @@ import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -449,6 +450,22 @@ tensionIcon3 type_ =
 
 
 --
+-- Projects
+--
+
+
+projectStatus2str : ProjectStatus.ProjectStatus -> String
+projectStatus2str s =
+    case s of
+        ProjectStatus.Open ->
+            T.openProject
+
+        ProjectStatus.Closed ->
+            T.closedProject
+
+
+
+--
 -- Users
 --
 
@@ -681,7 +698,7 @@ viewOpenedDate : Conf -> String -> Html msg
 viewOpenedDate conf date =
     span [] <|
         List.intersperse (text " ") <|
-            [ span [] [ text T.authored ]
+            [ text T.authored
             , text (formatDate conf.lang conf.now date)
             ]
 
@@ -691,7 +708,7 @@ viewUpdated conf date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ text " ·"
-            , span [] [ text T.edited ]
+            , text T.edited
             , text (formatDate conf.lang conf.now date)
             ]
 
@@ -700,7 +717,7 @@ viewCommentedDate : Conf -> String -> Html msg
 viewCommentedDate conf date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
-            [ span [] [ text T.commented ]
+            [ text T.commented
             , text (formatDate conf.lang conf.now date)
             ]
 
