@@ -25,7 +25,7 @@ fi
 
 PATTERN='cannot find a `.*`'
 TARGET="$1"
-MODULE="Svg.Attributes"
+MODULE="ModelSchema"
 TERMS=$(node_modules/.bin/elm make src/Main.elm --output=/dev/null  2>&1  | command grep "$PATTERN" | sed 's/.*`\([^`]*\)`.*/\1/' | sort | uniq | paste -sd "," | sed "s/,/, /g")
 
 if [ -z "$TERMS" ]; then

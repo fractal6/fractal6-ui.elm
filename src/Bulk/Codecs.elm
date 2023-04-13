@@ -610,16 +610,6 @@ playsRole uctx nameid =
         |> List.member nameid
 
 
-hasLazyAdminRole : UserCtx -> String -> Bool
-hasLazyAdminRole uctx nameid =
-    -- has admin role somewhere in the organisation
-    -- @debug: assignees, etc...
-    uctx.roles
-        |> List.filter (\r -> r.role_type == RoleType.Coordinator || r.role_type == RoleType.Owner)
-        |> List.map (\r -> nid2rootid r.nameid)
-        |> List.member (nid2rootid nameid)
-
-
 
 {-
    Tension Codec

@@ -593,7 +593,7 @@ view_ global model =
         isAdmin =
             case global.session.user of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx model.node_focus.rootnameid
+                    hasLazyAdminRole uctx (withMaybeData model.path_data |> unwrap Nothing (\p -> Maybe.map .mode p.root)) model.node_focus.rootnameid
 
                 LoggedOut ->
                     False

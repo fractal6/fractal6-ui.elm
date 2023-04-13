@@ -22,13 +22,13 @@
 module Org.Projects exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), getProjectRights, hasAdminRole, parseErr)
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (projectStatus2str)
 import Codecs exposing (QuickDoc)
@@ -199,6 +199,7 @@ type alias Model =
     , pattern : Maybe String
     , statusFilter : StatusFilter
     , projects_count : GqlData ProjectsCount
+    , isAdmin : Bool
 
     -- Projects
     , projects : GqlData (List ProjectFull)
@@ -386,6 +387,7 @@ init global flags =
             , pattern = Dict.get "q" query |> withDefault [] |> List.head
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , projects_count = Loading
+            , isAdmin = False
 
             -- Projectss
             , projects = Loading
@@ -934,7 +936,7 @@ viewDefault user model =
         isAdmin =
             case user of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx model.node_focus.rootnameid
+                    hasAdminRole uctx (withMaybeData model.path_data)
 
                 LoggedOut ->
                     False

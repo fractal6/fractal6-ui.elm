@@ -24,7 +24,7 @@ port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions,
 import Array
 import Assets as A
 import Assets.Logo as Logo
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
@@ -1186,7 +1186,7 @@ viewCanvas us model =
         isAdmin =
             case us of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx model.node_focus.rootnameid
+                    hasLazyAdminRole uctx (unwrap Nothing (\p -> Maybe.map .mode p.root) model.path_data) model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
@@ -1242,7 +1242,7 @@ viewCanvas us model =
 
         {- Hidden classes use in graphpack_d3.js -}
         --
-        -- Welcom buttons
+        -- Welcome buttons
         --
         , withMaybeData model.tree_data
             |> withDefault Dict.empty

@@ -37,16 +37,13 @@ import ModelSchema
     exposing
         ( BlobId
         , EmitterOrReceiver
-        , FocusNode
         , IdPayload
         , Label
         , NameidPayload
         , Node
         , NodeId
         , NodesDict
-        , PNode
         , ProjectFull
-        , RNode
         , RoleExt
         , User
         , UserCtx

@@ -1468,7 +1468,7 @@ viewTension op model =
             model.nodeDoc.form
 
         isAdmin =
-            hasLazyAdminRole form.uctx form.target.nameid
+            hasLazyAdminRole form.uctx Nothing form.target.nameid
 
         title =
             Dict.get "title" form.post |> withDefault ""
@@ -1587,7 +1587,7 @@ viewCircle op model =
             model.nodeDoc.form
 
         isAdmin =
-            hasLazyAdminRole form.uctx form.target.nameid
+            hasLazyAdminRole form.uctx Nothing form.target.nameid
 
         node_type =
             withDefault NodeType.Role form.node.type_
