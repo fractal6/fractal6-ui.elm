@@ -22,7 +22,7 @@
 module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), getNodeRights, parseErr)
 import Browser.Events as Events
 import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, getNodeRights, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)

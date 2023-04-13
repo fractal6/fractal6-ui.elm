@@ -147,6 +147,7 @@ type alias RNode =
     { name : String
     , nameid : String
     , userCanJoin : Maybe Bool
+    , mode : NodeMode.NodeMode
     }
 
 
@@ -596,6 +597,13 @@ type alias ProjectFull =
     , updateAt : String
     , name : String
     , description : Maybe String
+    }
+
+
+type alias ProjectAuth a =
+    { a
+        | nodes : List NodeId
+        , leaders : List Username
     }
 
 

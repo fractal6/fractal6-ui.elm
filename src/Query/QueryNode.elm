@@ -640,6 +640,7 @@ type alias LocalRootNode =
     , name : String
     , nameid : String
     , userCanJoin : Maybe Bool
+    , mode : NodeMode.NodeMode
     , source : Maybe BlobId
     }
 
@@ -657,7 +658,7 @@ lgDecoder data =
                 case n.parent of
                     Just p ->
                         if p.isRoot then
-                            { root = RNode p.name p.nameid p.userCanJoin |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin p.mode |> Just
                             , path = [ shrinkNode p, shrinkNode n ]
                             , focus = ln2fn n
                             }
@@ -671,7 +672,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -718,6 +719,7 @@ lg2Payload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.userCanJoin
+        |> with Fractal.Object.Node.mode
         |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 

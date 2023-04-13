@@ -22,7 +22,7 @@
 module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink, uriFromNameid)
