@@ -1438,7 +1438,7 @@ viewRecipients op model =
           --                (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
           --        ]
           --    ]
-          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to ++ ":" ++ space_) ]
+          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
         , span [ class "dropdown " ]
             [ span [ class "dropdown-trigger", onClick OnTargetClick, attribute "style" "max-width: 280px;" ]
                 [ span [ class "is-wrapped-33", attribute "aria-controls" "target-menu" ]

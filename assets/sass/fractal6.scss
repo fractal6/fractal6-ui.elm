@@ -424,6 +424,12 @@ a:hover .is-name, a:hover .is-username {
     text-align: right !important;
 }
 
+.is-pushed-right {
+    // Should be combined with a is-flex container
+    // is-pulled-right instead which produce overlaping effect whene screen is narrow.
+    margin: auto 0 auto auto;
+}
+
 .is-underline {
     border-bottom: 1px ridge;
     //text-decoration: underline;

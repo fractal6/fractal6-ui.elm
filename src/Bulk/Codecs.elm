@@ -173,6 +173,15 @@ urlToFractalRoute url =
                     T_Dynamic_Dynamic_Dynamic a ->
                         Just TensionsBaseUri
 
+                    P_Dynamic a ->
+                        Just ProjectsBaseUri
+
+                    P_Dynamic_Dynamic a ->
+                        Just ProjectsBaseUri
+
+                    P_Dynamic_Dynamic_Dynamic a ->
+                        Just ProjectsBaseUri
+
                     M_Dynamic _ ->
                         Just MembersBaseUri
 
@@ -220,7 +229,9 @@ isOrgUrl url =
     urlToFractalRoute url
         |> Maybe.map
             (\u ->
-                List.member u [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ] || isTensionBaseUri u
+                List.member u [ OverviewBaseUri, TensionsBaseUri, ProjectsBaseUri, MembersBaseUri, SettingsBaseUri ]
+                    || isTensionBaseUri u
+                    || isProjectBaseUri u
             )
         |> withDefault False
 
