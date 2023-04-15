@@ -215,7 +215,7 @@ hasAdminRole uctx path_m =
                 filter_role =
                     case p.focus.mode of
                         NodeMode.Agile ->
-                            \r -> List.member r.role_type [ RoleType.Peer, RoleType.Coordinator, RoleType.Owner ]
+                            \r -> List.member r.role_type [ RoleType.Peer, RoleType.Coordinator ]
 
                         NodeMode.Coordinated ->
                             \r -> List.member r.role_type [ RoleType.Coordinator, RoleType.Owner ]
@@ -223,6 +223,9 @@ hasAdminRole uctx path_m =
             if List.member p.focus.nameid (List.map .nameid orga_roles) then
                 -- User is admin of its own roles (ie to add thing **inside** projects or files etc)
                 -- Not to modify it directly (as for getNodeRights...)
+                True
+
+            else if isOwner uctx p.focus.nameid then
                 True
 
             else

@@ -752,7 +752,7 @@ update global message model =
                         ( { model | label_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
 
                     else
-                        -- trow error if the labels is in the list of labels
+                        -- throw error if the labels is in the list of labels
                         ( { model | label_result = result }, Cmd.none, Cmd.none )
 
                 _ ->
@@ -942,7 +942,7 @@ update global message model =
                         ( { model | role_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditRole), Cmd.none )
 
                     else
-                        -- trow error if the roles is in the list of roles
+                        -- throw error if the roles is in the list of roles
                         ( { model | role_result = result }, Cmd.none, Cmd.none )
 
                 _ ->

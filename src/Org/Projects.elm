@@ -22,13 +22,26 @@
 module Org.Projects exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), getProjectRights, hasAdminRole, parseErr)
+import Auth exposing (ErrState(..), getProjectRights, hasLazyAdminRole, parseErr)
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs
+    exposing
+        ( ActionType(..)
+        , DocType(..)
+        , Flags_
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , basePathChanged
+        , focusFromNameid
+        , focusState
+        , nameidEncoder
+        , nameidFromFlags
+        , uriFromNameid
+        )
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (projectStatus2str)
 import Codecs exposing (QuickDoc)
@@ -38,6 +51,7 @@ import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
+import Components.NodeDoc exposing (viewUrlForm)
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
@@ -56,7 +70,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -90,8 +104,9 @@ import Process
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData exposing (RemoteData)
-import Requests exposing (fetchProjectsSub, fetchProjectsTop)
+import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
 import Session exposing (Conf, GlobalCmd(..), Screen)
+import String.Format as Format
 import Task
 import Text as T
 import Time
@@ -199,7 +214,7 @@ type alias Model =
     , pattern : Maybe String
     , statusFilter : StatusFilter
     , projects_count : GqlData ProjectsCount
-    , isAdmin : Bool
+    , hasDuplicate : Bool
 
     -- Projects
     , projects : GqlData (List ProjectFull)
@@ -299,6 +314,7 @@ type Msg
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
       -- Page
+    | DoLoad
     | ChangeProjectPost String String
     | SafeEdit Msg
     | SafeSend Msg
@@ -387,7 +403,7 @@ init global flags =
             , pattern = Dict.get "q" query |> withDefault [] |> List.head
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , projects_count = Loading
-            , isAdmin = False
+            , hasDuplicate = False
 
             -- Projectss
             , projects = Loading
@@ -417,13 +433,10 @@ init global flags =
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
+            , send DoLoad
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
-                ++ [ getProjects apis newFocus.nameid GotProjects
-                   , fetchProjectsTop apis newFocus.nameid GotProjectsTop
-                   , fetchProjectsSub apis newFocus.nameid GotProjectsSub
-                   ]
     in
     ( model
     , Cmd.batch cmds
@@ -485,13 +498,38 @@ update global message model =
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
+        DoLoad ->
+            ( model
+            , Cmd.batch
+                [ getProjects apis model.node_focus.nameid GotProjects
+                , fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
+                , fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
+
+                --, fetchProjectCount apis nameids model.pattern Nothing GotProjectCount
+                ]
+            , Cmd.none
+            )
+
         ChangeProjectPost field value ->
             let
                 f =
                     model.project_form
 
                 newForm =
-                    { f | post = Dict.insert field value f.post }
+                    case field of
+                        "name" ->
+                            { f
+                                | post =
+                                    f.post
+                                        |> Dict.insert field value
+                                        |> Dict.insert "nameid" (nameidEncoder value)
+                            }
+
+                        "nameid" ->
+                            { f | post = Dict.insert field (nameidEncoder value) f.post }
+
+                        _ ->
+                            { f | post = Dict.insert field value f.post }
             in
             ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
 
@@ -560,7 +598,7 @@ update global message model =
             )
 
         ResetData ->
-            ( { model | projects = Loading, projects_sub = RemoteData.Loading, projects_top = RemoteData.Loading, path_data = Loading }
+            ( { model | projects = Loading, projects_sub = RemoteData.Loading, projects_top = RemoteData.Loading, path_data = Loading, projects_count = Loading }
             , Cmd.none
             , Cmd.batch
                 []
@@ -640,15 +678,41 @@ update global message model =
                 , project_result_del = NotAsked
               }
                 |> resetForm
-            , Cmd.none
+            , Ports.bulma_driver ""
             , Cmd.none
             )
 
-        SubmitAddProject _ ->
-            ( { model | project_result = LoadingSlowly }, addOneProject apis model.project_form GotProject, Cmd.none )
+        SubmitAddProject time ->
+            let
+                form =
+                    model.project_form
 
-        SubmitEditProject _ ->
-            ( { model | project_result = LoadingSlowly }, updateOneProject apis model.project_form GotProject, Cmd.none )
+                newForm =
+                    { form
+                        | post =
+                            Dict.insert "createdAt" (fromTime time) form.post
+                    }
+            in
+            ( { model | project_result = LoadingSlowly, project_form = newForm }
+            , addOneProject apis newForm GotProject
+            , Cmd.none
+            )
+
+        SubmitEditProject time ->
+            let
+                form =
+                    model.project_form
+
+                newForm =
+                    { form
+                        | post =
+                            Dict.insert "updatedAt" (fromTime time) form.post
+                    }
+            in
+            ( { model | project_result = LoadingSlowly, project_form = newForm }
+            , updateOneProject apis newForm GotProject
+            , Cmd.none
+            )
 
         SubmitDeleteProject id _ ->
             let
@@ -695,29 +759,35 @@ update global message model =
                                     d
                     in
                     ( { model | project_result = result, projects = Success new, project_add = False, project_edit = Nothing } |> resetForm
-                    , Cmd.none
+                    , Ports.bulma_driver ""
                     , Cmd.none
                     )
 
                 DuplicateErr ->
-                    let
-                        project_name =
-                            Dict.get "name" model.project_form.post |> withDefault "" |> String.toLower
+                    --let
+                    --    project_name =
+                    --        Dict.get "name" model.project_form.post |> withDefault "" |> String.toLower
+                    --    form =
+                    --        model.project_form
+                    --in
+                    -- @TODO: **LINK** project from other circles
+                    --( { model | project_result = LoadingSlowly, project_form = { form | id = "" } }, send (Submit SubmitEditProject), Cmd.none )
+                    ( { model
+                        | project_result = Failure [ T.duplicateNameError ]
+                        , hasDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
-                        here name =
-                            (withMaybeData model.projects |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
-                                > 0
-
-                        form =
-                            model.project_form
-                    in
-                    if model.project_add && not (here project_name) then
-                        -- set the projects in the node projects list
-                        ( { model | project_result = LoadingSlowly, project_form = { form | id = "" } }, send (Submit SubmitEditProject), Cmd.none )
-
-                    else
-                        -- trow error if the projects is in the list of projects
-                        ( { model | project_result = result }, Cmd.none, Cmd.none )
+                NameTooLong ->
+                    ( { model
+                        | project_result = Failure [ T.nameTooLongError ]
+                        , hasDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( { model | project_result = result }, Cmd.none, Cmd.none )
@@ -927,7 +997,114 @@ view_ global model =
 
 viewNewProject : Model -> Html Msg
 viewNewProject model =
-    text ""
+    let
+        post =
+            model.project_form.post
+
+        isLoading =
+            model.project_result == LoadingSlowly
+
+        isSendable =
+            isPostSendable [ "name" ] post
+
+        submitOrga =
+            ternary isSendable [ onClick (Submit <| SubmitAddProject) ] []
+
+        --
+        name =
+            Dict.get "name" post |> withDefault ""
+
+        description =
+            Dict.get "description" post |> withDefault ""
+    in
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
+            [ div [ class "field" ]
+                [ div [ class "label" ] [ text T.name ]
+                , div [ class "control" ]
+                    [ input
+                        [ class "input autofocus followFocus"
+                        , attribute "data-nextfocus" "aboutField"
+                        , autocomplete False
+                        , type_ "text"
+                        , placeholder T.name
+                        , value name
+                        , onInput <| ChangeProjectPost "name"
+
+                        --, onBlur SaveData
+                        , required True
+                        ]
+                        []
+                    , p [ class "help" ] [ text T.orgaNameHelp ]
+                    ]
+                , if model.hasDuplicate then
+                    div [ class "mt-3" ]
+                        [ viewUrlForm (Dict.get "nameid" post) (ChangeProjectPost "nameid") model.hasDuplicate ]
+
+                  else
+                    text ""
+                , if model.hasDuplicate then
+                    let
+                        nid =
+                            Dict.get "nameid" post |> withDefault ""
+                    in
+                    div [ class "f6-error message is-danger is-light is-small mt-1" ]
+                        [ p [ class "message-body" ]
+                            (if String.length nid > 42 then
+                                [ text T.nameTooLongError ]
+
+                             else
+                                [ text T.duplicateNameError ]
+                            )
+                        ]
+
+                  else
+                    text ""
+                ]
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text T.purpose ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ id "aboutField"
+                        , class "textarea"
+                        , rows 5
+                        , placeholder "Short description (Optional)"
+                        , value description
+                        , onInput <| ChangeProjectPost "description"
+
+                        --, onBlur SaveData
+                        , required True
+                        ]
+                        []
+                    ]
+                , p [ class "help" ] [ text T.purposeHelpOrga ]
+                ]
+            , div [ class "field pt-3 level is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ button [ class "button", onClick CancelProject ]
+                        [ A.icon0 "icon-chevron-left", text T.cancel ]
+                    ]
+                , div [ class "level-right" ]
+                    [ div [ class "buttons" ]
+                        [ button
+                            ([ class "button has-text-weight-semibold"
+                             , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                             , disabled (not isSendable)
+                             ]
+                                ++ submitOrga
+                            )
+                            [ text T.create ]
+                        ]
+                    ]
+                ]
+            , case model.project_result of
+                Failure err ->
+                    viewGqlErrors err
+
+                _ ->
+                    text ""
+            ]
+        ]
 
 
 viewDefault : UserState -> Model -> Html Msg
@@ -936,7 +1113,8 @@ viewDefault user model =
         isAdmin =
             case user of
                 LoggedIn uctx ->
-                    hasAdminRole uctx (withMaybeData model.path_data)
+                    --hasAdminRole uctx (withMaybeData model.path_data)
+                    hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
@@ -947,8 +1125,8 @@ viewDefault user model =
                 [ div [ class "column is-tree-quarter" ]
                     [ viewSearchBar model.pattern ]
                 , if isAdmin then
-                    div [ class "column is-one-quarter" ]
-                        [ button [ class "button is-success", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
+                    div [ class "column is-one-quarter is-flex" ]
+                        [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
 
                   else
                     text ""
@@ -1113,8 +1291,8 @@ mediaProject conf focus project =
         [ class ("media mediaBox is-hoverable " ++ size) ]
         [ div [ class "media-left" ] []
         , div [ class "media-content " ]
-            [ div [ class "columns" ]
-                [ div [ class ("colummn " ++ ternary (project.description == Nothing) "is-11" "is-5") ]
+            [ div [ class "columns mb-0" ]
+                [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-5") ]
                     [ a
                         [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
 
@@ -1149,15 +1327,15 @@ mediaProject conf focus project =
                         ]
                     ]
                 ]
-            ]
-        , span [ class "level is-smaller2 is-mobile" ]
-            [ div [ class "level-left" ]
-                [ span [ class "is-discrete" ] <|
-                    List.intersperse (text " ") <|
-                        [ textH T.updated, text (formatDate conf.lang conf.now project.updateAt) ]
+            , div [ class "level is-smaller2 is-mobile mb-0" ]
+                [ div [ class "level-left" ]
+                    [ span [ class "is-discrete" ] <|
+                        List.intersperse (text " ") <|
+                            [ textH T.updated, text (formatDate conf.lang conf.now project.updateAt) ]
+                    ]
+                , div [ class "level-right" ] []
                 ]
-            , div [ class "level-right" ] []
+            , div [ class "media-right wrapped-container-33" ]
+                []
             ]
-        , div [ class "media-right wrapped-container-33" ]
-            []
         ]

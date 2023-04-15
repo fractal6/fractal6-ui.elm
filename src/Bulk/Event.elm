@@ -214,13 +214,13 @@ contractTypeToText c =
             "Invitation"
 
         ContractType.AnyCoordoDual ->
-            "Coordinators Validation"
+            "Coordinators validation needed"
 
         ContractType.AnyCoordoTarget ->
-            "Coordinator Validation"
+            "Coordinator validation needed"
 
         ContractType.AnyCoordoSource ->
-            "Coordinator Validation"
+            "Coordinator validation needed"
 
 
 contractEventToText : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String

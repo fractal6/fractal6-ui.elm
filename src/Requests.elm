@@ -22,7 +22,8 @@
 module Requests exposing (..)
 
 import Bytes exposing (Bytes)
-import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
+import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -306,6 +307,34 @@ tensionDecoder =
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
         |> JDE.andMap (JD.maybe <| JD.field "assignees" (JD.list <| userDecoder))
+
+
+
+--
+-- Projects
+--
+
+
+fetchProjectCount api targetids query_ sort_ msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.rest ++ "/projects_count"
+        , body = Http.jsonBody <| JE.object <| projectEncoder targetids 0 0 query_ Nothing sort_
+        , expect = expectJson (fromResult >> msg) <| JD.map2 ProjectsCount (JD.field "open" JD.int) (JD.field "closed" JD.int)
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+projectEncoder : List String -> Int -> Int -> Maybe String -> Maybe ProjectStatus.ProjectStatus -> Maybe String -> List ( String, JD.Value )
+projectEncoder nameids first offset query_ status_ sort_ =
+    [ ( "nameids", JE.list JE.string nameids )
+    , ( "first", JE.int first )
+    , ( "offset", JE.int offset )
+    , ( "query", JEE.maybe JE.string query_ )
+    , ( "sort", JEE.maybe JE.string sort_ )
+    ]
 
 
 
