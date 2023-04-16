@@ -1193,7 +1193,7 @@ view op (State model) =
 
 viewButton : Op -> Model -> Html Msg
 viewButton op model =
-    div [ class "tensionButton", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
+    div [ class "tensionButton is-hidden-tablet", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
         [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen (FromPath p)) ]) |> withDefault []))
             [ A.icon "icon-plus icon-2x" ]
         ]
