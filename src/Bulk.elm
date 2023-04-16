@@ -376,6 +376,7 @@ type alias ContractForm =
     , candidates : List Username
     , pending_candidates : List Email
     , post : Post
+    , node_type : Maybe NodeType.NodeType
     }
 
 
@@ -397,6 +398,7 @@ initContractForm user =
     , candidates = []
     , pending_candidates = []
     , post = Dict.empty
+    , node_type = Nothing -- help identify the type of tension for "Move" events.
     }
 
 
@@ -448,6 +450,7 @@ makeCandidateContractForm form =
                 , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
                 , candidates = candidates
                 , pending_candidates = pending_candidates
+                , node_type = Nothing
                 }
             )
 

@@ -1082,11 +1082,15 @@ viewPanel op model =
             (-- SHORTCUT ACTION
              if not (List.member model.form.node.role_type [ Just RoleType.Guest, Just RoleType.Owner ]) then
                 [ -- View Action
-                  div
-                    [ class "dropdown-item button-light"
-                    , onClick (Navigate (uriFromNameid OverviewBaseUri model.form.node.nameid []))
-                    ]
-                    [ A.icon1 "" T.view ]
+                  if model.domid /= "actionPanelContentTooltip" then
+                    div
+                        [ class "dropdown-item button-light"
+                        , onClick (Navigate (uriFromNameid OverviewBaseUri model.form.node.nameid []))
+                        ]
+                        [ A.icon1 "icon-disc" T.view ]
+
+                  else
+                    text ""
                 , -- Edit Action
                   div
                     [ class "dropdown-item button-light"

@@ -158,7 +158,14 @@ open tid target blob_m model =
                     )
                 |> withDefault ( "", Nothing )
     in
-    { model | isActive2 = True, target = target, form = { form | tid = tid }, blob = blob_m, encoded_nid = encoded_nid, decoded_type_m = decoded_type_m }
+    { model
+        | isActive2 = True
+        , target = target
+        , form = { form | tid = tid }
+        , blob = blob_m
+        , encoded_nid = encoded_nid
+        , decoded_type_m = decoded_type_m
+    }
 
 
 close : Model -> Model
@@ -401,7 +408,17 @@ update_ apis message model =
                 ( data, cmd ) =
                     case contract_m of
                         Just c ->
-                            ( setMoveResult NotAsked model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen model.target model.form.post (Just c))) )
+                            ( setMoveResult NotAsked model
+                            , Cmd.map ConfirmContractMsg
+                                (send
+                                    (ConfirmContract.OnOpen
+                                        model.target
+                                        model.form.post
+                                        model.blob
+                                        (Just c)
+                                    )
+                                )
+                            )
 
                         Nothing ->
                             ( setMoveResult result model, Cmd.none )
