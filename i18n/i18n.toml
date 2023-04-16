@@ -2134,6 +2134,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Move tension"
   fr="Deplacer la tension"
 
+[moved_circle]
+  en="Move circle"
+  fr="Deplacer le cercle"
+
+[moved_role]
+  en="Move role"
+  fr="Deplacer la rôle"
+
 [memberLinked_contract]
   en="New lead link"
   fr="Nouveau lead link"
@@ -2151,6 +2159,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [moved_contract_success]
   en="Congratulations, tension has been moved."
   fr="Félicitations, la tension a été déplacée."
+
+[moved_circle_contract_success]
+  en="Congratulations, circle has been moved."
+  fr="Félicitations, la cercle a été déplacée."
+
+[moved_role_contract_success]
+  en="Congratulations, role has been moved."
+  fr="Félicitations, le rôle a été déplacée."
 
 [memberLinked_contract_success]
   en="Congratulations, you have been link to this role."
@@ -2253,8 +2269,8 @@ Lorsque vous créez un rôle ici, vous pouvez l’utiliser comme modèle lorsque
   fr="Une validation par les pairs est nécessaire pour compléter cette action."
 
 [contractInfo]
-  en="By creating a contract, it will notify the organization roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
-  fr="En créant un contrat, il notifiera les rôles de l’organisation avec le niveau d’autorité capable de valider votre demande. L’action sera exécutée une fois que le contrat aura été validé."
+  en="When you do not have the authority to modify a ressource, you can create a contract. It will notify the organization roles with the authority level able to validate your request. The action will be performed if the contract is accepted."
+  fr="Lorsque vous n'avez pas l'autorité nécessaire pour modifier une ressource, vous pouvez créer un contrat. Il notifiera les rôles de l'organisation avec le niveau d'autorité capable de valider votre demande. L'action sera exécutée si le contrat est accepté."
 
 [tensionTypeHeader]
   en="Select the right category to help finding and solving tensions."

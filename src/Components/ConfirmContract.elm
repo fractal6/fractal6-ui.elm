@@ -30,7 +30,7 @@ import Bulk.Event exposing (contractEventToText, contractTypeToText)
 import Bulk.View exposing (viewTensionArrow)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary, textH, unwrap, upH)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty)
@@ -61,6 +61,7 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , target : String -- keep origin target
+    , blob : Maybe Blob -- potential blob attached to tension
     , data_result : GqlData IdPayload -- contract created
     , contract : Maybe Contract -- partial contract
     , form : ContractForm -- user inputs
@@ -76,6 +77,7 @@ initModel user =
     { user = user
     , isOpen = False
     , target = ""
+    , blob = Nothing
     , data_result = NotAsked
     , contract = Nothing
     , form = initContractForm user
@@ -116,26 +118,43 @@ isOpen_ (State model) =
 --- State Controls
 
 
-open : String -> Post -> Maybe Contract -> Model -> Model
-open target post c_m model =
+open : String -> Post -> Maybe Blob -> Maybe Contract -> Model -> Model
+open target post blob_m c_m model =
     let
         newForm =
-            case c_m of
-                Just c ->
-                    updateFormFromData c model.form
+            model.form
+                |> (\f ->
+                        case c_m of
+                            Just c ->
+                                updateFormFromData c f
 
-                Nothing ->
-                    model.form
+                            Nothing ->
+                                f
+                   )
+                |> (\f ->
+                        case Dict.get "message" post of
+                            Just m ->
+                                { f | post = Dict.insert "message" m f.post }
 
-        upf f =
-            case Dict.get "message" post of
-                Just m ->
-                    { f | post = Dict.insert "message" m f.post }
+                            Nothing ->
+                                f
+                   )
+                |> (\f ->
+                        case blob_m of
+                            Just b ->
+                                { f | node_type = unwrap Nothing .type_ b.node }
 
-                Nothing ->
-                    f
+                            Nothing ->
+                                f
+                   )
     in
-    { model | isOpen = True, target = target, contract = c_m, form = upf newForm }
+    { model
+        | isOpen = True
+        , target = target
+        , blob = blob_m
+        , contract = c_m
+        , form = newForm
+    }
 
 
 close : Model -> Model
@@ -185,7 +204,7 @@ hasData model =
 
 
 type Msg
-    = OnOpen String Post (Maybe Contract)
+    = OnOpen String Post (Maybe Blob) (Maybe Contract)
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -242,8 +261,8 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen target post c_m ->
-            ( open target post c_m model
+        OnOpen target post blob_m c_m ->
+            ( open target post blob_m c_m model
             , out0 [ Ports.open_modal "ConfirmContractModal" ]
             )
 
@@ -483,7 +502,7 @@ showContractForm f =
                                 f.event.new |> withDefault "unkown" |> nid2eor
                         in
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (contractEventToText f.event.event_type), disabled True ] []
+                            [ input [ class "input", value (contractEventToText f.node_type f.event.event_type), disabled True ] []
                             ]
                         , viewTensionArrow "is-pulled-right" emitter receiver
                         ]

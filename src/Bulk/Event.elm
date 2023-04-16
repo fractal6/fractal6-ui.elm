@@ -244,11 +244,19 @@ contractTypeToText c =
             "Coordinator Validation"
 
 
-contractEventToText : TensionEvent.TensionEvent -> String
-contractEventToText c =
+contractEventToText : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+contractEventToText ntm c =
     case c of
         TensionEvent.Moved ->
-            T.moved_contract
+            case ntm of
+                Nothing ->
+                    T.moved_contract
+
+                Just NodeType.Circle ->
+                    T.moved_circle
+
+                Just NodeType.Role ->
+                    T.moved_role
 
         TensionEvent.MemberLinked ->
             T.memberLinked_contract
@@ -273,11 +281,19 @@ contractToJonction c =
             T.to
 
 
-cev2c : TensionEvent.TensionEvent -> String
-cev2c c =
+cev2c : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+cev2c ntm c =
     case c of
         TensionEvent.Moved ->
-            T.moved_contract_success
+            case ntm of
+                Nothing ->
+                    T.moved_contract_success
+
+                Just NodeType.Circle ->
+                    T.moved_circle_contract_success
+
+                Just NodeType.Role ->
+                    T.moved_role_contract_success
 
         TensionEvent.MemberLinked ->
             T.memberLinked_contract_success
@@ -292,8 +308,8 @@ cev2c c =
             "@TODO contractEventToText"
 
 
-cev2p : TensionEvent.TensionEvent -> String
-cev2p c =
+cev2p : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+cev2p ntm c =
     case c of
         TensionEvent.MemberLinked ->
             T.memberLinked_contract_success_ext
@@ -302,7 +318,7 @@ cev2p c =
             T.userJoined_contract_success_ext
 
         _ ->
-            cev2c c
+            cev2c ntm c
 
 
 eventToIcon : TensionEvent.TensionEvent -> String

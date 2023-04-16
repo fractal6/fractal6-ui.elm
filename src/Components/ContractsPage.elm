@@ -923,7 +923,7 @@ viewRow d op model =
                 [ class "discrete-link"
                 , href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref)
                 ]
-                [ text (contractEventToText d.event.event_type), Maybe.map (\x -> " ・ " ++ x) d.event.new |> withDefault "" |> text ]
+                [ text (contractEventToText Nothing d.event.event_type), Maybe.map (\x -> " ・ " ++ x) d.event.new |> withDefault "" |> text ]
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
@@ -986,60 +986,92 @@ viewContract op model =
 viewContractPage : ContractFull -> Op -> Model -> Html Msg
 viewContractPage c op model =
     let
+        participants =
+            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid)
+
+        candidates =
+            c.candidates |> withDefault [] |> List.map .username
+
         isCandidate =
-            c.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member model.form.uctx.username
+            List.member model.form.uctx.username candidates
 
         isParticipant =
-            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
+            List.member model.form.uctx.username participants
 
         isValidator =
             withDefault False c.isValidator
 
-        userInput =
-            case model.user of
-                LoggedIn uctx ->
-                    if isParticipant || isValidator || isCandidate then
-                        let
-                            opNew =
-                                { doChangeViewMode = ChangeInputViewMode
-                                , doChangePost = ChangeCommentPost
-                                , doSubmit = OnSubmit
-                                , doSubmitComment = SubmitCommentPost
-                                , doRichText = OnRichText
-                                , doToggleMdHelp = OnToggleMdHelp
-                                , userSearchInput = Just model.userInput
-                                , userSearchInputMsg = Just UserInputMsg
-                                , conf = model.conf
-                                }
-                        in
-                        viewContractCommentInput opNew uctx model.comment_form model.comment_result
-
-                    else
-                        text ""
-
-                LoggedOut ->
-                    text ""
+        isVoteSuccess =
+            withMaybeData model.vote_result /= Nothing
     in
     div [ class "comments" ]
         [ viewContractBox c op model
         , if (isValidator || isCandidate) && not isParticipant then
-            viewVoteBox c op model
+            if isVoteSuccess && model.voteForm.vote == 1 then
+                let
+                    n =
+                        nodeFromTension c.tension
+                in
+                div [ class "notification is-success is-light" ]
+                    [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    , ternary isCandidate
+                        (text (cev2c n.type_ c.event.event_type))
+                        (text (cev2p n.type_ c.event.event_type))
+                    ]
+
+            else if isVoteSuccess && model.voteForm.vote == 0 then
+                div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
+
+            else
+                viewVoteBox model.form.uctx isValidator participants candidates c model
+
+          else if isParticipant then
+            -- @TODO: Change your vote button
+            --div [ class "help has-text-centered" ] [ text T.alreadyVoted ]
+            text ""
 
           else
+            -- Close, Cancelled or no auth.
             text ""
         , c.comments
             |> Maybe.map
                 (\comments ->
-                    Lazy.lazy5 viewComments op model.conf comments model.comment_patch_form model.comment_result
+                    Lazy.lazy4 viewComments model.conf comments model.comment_patch_form model.comment_result
                 )
             |> withDefault (text "")
         , hr [ class "has-background-border-light is-2" ] []
-        , userInput
+        , case model.user of
+            LoggedIn uctx ->
+                if isParticipant || isValidator || isCandidate then
+                    let
+                        opNew =
+                            { doChangeViewMode = ChangeInputViewMode
+                            , doChangePost = ChangeCommentPost
+                            , doSubmit = OnSubmit
+                            , doSubmitComment = SubmitCommentPost
+                            , doRichText = OnRichText
+                            , doToggleMdHelp = OnToggleMdHelp
+                            , userSearchInput = Just model.userInput
+                            , userSearchInputMsg = Just UserInputMsg
+                            , conf = model.conf
+                            }
+                    in
+                    viewContractCommentInput opNew uctx model.comment_form model.comment_result
+
+                else
+                    text ""
+
+            LoggedOut ->
+                text ""
         ]
 
 
 viewContractBox : ContractFull -> Op -> Model -> Html Msg
 viewContractBox c op model =
+    let
+        n =
+            nodeFromTension c.tension
+    in
     form [ class "box form" ]
         [ div [ class "columns" ]
             [ div [ class "column is-5" ]
@@ -1054,7 +1086,7 @@ viewContractBox c op model =
                     [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractEvent ] ]
                     , div [ class "field-bod" ]
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (contractEventToText c.event.event_type), disabled True ] [] ]
+                            [ input [ class "input", value (contractEventToText n.type_ c.event.event_type), disabled True ] [] ]
                         ]
                     ]
                 ]
@@ -1077,9 +1109,6 @@ viewContractBox c op model =
 
                             isYou =
                                 user == model.form.uctx.username
-
-                            n =
-                                nodeFromTension c.tension
 
                             role =
                                 { name = withDefault "" n.name
@@ -1143,94 +1172,58 @@ viewContractBox c op model =
         ]
 
 
-viewVoteBox : ContractFull -> Op -> Model -> Html Msg
-viewVoteBox c op model =
+viewVoteBox : UserCtx -> Bool -> List String -> List String -> ContractFull -> Model -> Html Msg
+viewVoteBox uctx isValidator participants candidates c model =
     let
-        participants =
-            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid)
-
-        -- @doublon
         isCandidate =
-            c.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member model.form.uctx.username
+            List.member uctx.username candidates
 
-        -- @doublon
-        isParticipant =
-            participants |> List.member model.form.uctx.username
+        hasPendingCandidateVote =
+            List.any (\x -> not (List.member x participants)) candidates
 
         isLoading =
             model.vote_result == LoadingSlowly
-
-        isSuccess =
-            withMaybeData model.vote_result /= Nothing
     in
-    if isSuccess && model.voteForm.vote == 1 then
-        div [ class "notification is-success is-light" ]
-            [ A.icon1 "icon-check icon-2x has-text-success" " "
-            , if isCandidate then
-                text (cev2c c.event.event_type)
-
-              else
-                text (cev2p c.event.event_type)
-            ]
-
-    else if isSuccess && model.voteForm.vote == 0 then
-        div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
-
-    else
-        let
-            isPendingCandidateVote =
-                case c.candidates of
-                    Just [ invitedOne ] ->
-                        not (List.member invitedOne.username participants)
-
-                    _ ->
-                        True
-        in
-        div [ class "mb-5" ]
-            [ p [ class "buttons is-centered voteButton" ] <|
-                (-- If contract is an user invitation and the candidate vote is waited
-                 -- Only show a "cancel invitation" button for coordinator.
-                 if isPendingCandidateVote && not isCandidate then
-                    [ div
-                        [ class "button is-danger is-rounded"
-                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
-                        , onClick (OnSubmit isLoading <| DoVote 0)
-                        ]
-                        [ span [ class "mx-4" ] [ text T.cancelInvitation ] ]
+    div [ class "mb-5" ]
+        [ p [ class "buttons is-centered voteButton" ] <|
+            (-- If contract is an user invitation and the candidate vote is waited
+             -- Only show a "cancel invitation" button for coordinator.
+             if hasPendingCandidateVote && not isCandidate then
+                [ div
+                    [ class "button is-danger is-rounded"
+                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
+                    , onClick (OnSubmit isLoading <| DoVote 0)
                     ]
+                    [ span [ class "mx-4" ] [ text T.cancelInvitation ] ]
+                ]
 
-                 else
-                    -- Otherwire show a "Accept/Cancel" buttons
-                    [ div
-                        [ class "button is-success is-rounded"
-                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
-                        , onClick (OnSubmit isLoading <| DoVote 1)
-                        ]
-                        [ span [ class "mx-4" ] [ text T.accept ] ]
-                    , div
-                        [ class "button is-danger is-rounded"
-                        , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
-                        , onClick (OnSubmit isLoading <| DoVote 0)
-                        ]
-                        [ span [ class "mx-4" ] [ text T.decline ] ]
+             else
+                -- Otherwire show a "Accept/Cancel" buttons
+                [ div
+                    [ class "button is-success is-rounded"
+                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
+                    , onClick (OnSubmit isLoading <| DoVote 1)
                     ]
-                )
-            , if isParticipant then
-                div [ class "help has-text-centered" ] [ text T.alreadyVoted ]
+                    [ span [ class "mx-4" ] [ text T.accept ] ]
+                , div
+                    [ class "button is-danger is-rounded"
+                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
+                    , onClick (OnSubmit isLoading <| DoVote 0)
+                    ]
+                    [ span [ class "mx-4" ] [ text T.decline ] ]
+                ]
+            )
+        , case model.vote_result of
+            Failure err ->
+                viewGqlErrors err
 
-              else
+            _ ->
                 text ""
-            , case model.vote_result of
-                Failure err ->
-                    viewGqlErrors err
-
-                _ ->
-                    text ""
-            ]
+        ]
 
 
-viewComments : Op -> Conf -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
-viewComments op conf comments comment_patch_form comment_result =
+viewComments : Conf -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
+viewComments conf comments comment_patch_form comment_result =
     let
         opEdit =
             { doUpdate = DoUpdateComment

@@ -715,7 +715,7 @@ viewUserEvent conf ue =
                         [ ( "id", ue.id )
                         , ( "contract", contractTypeToText c.contract_type )
                         , ( "jonction", contractToJonction c.contract_type )
-                        , ( "title", contractEventToText c.event.event_type )
+                        , ( "title", contractEventToText Nothing c.event.event_type )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
                         , ( "date", c.createdAt )
