@@ -175,7 +175,7 @@ hr {
     &.flex-gap {
         display: inline-flex;
         flex-wrap: wrap;
-        //gap: 8px;
+        gap: 8px 0;
     }
 }
 
@@ -660,6 +660,40 @@ span[data-tooltip] {
 .dropdown-content {
     max-height: 400px;
     overflow: auto;
+}
+
+// Dropleft components
+.right-hoverable {
+    &.button-light:active {
+       filter:none !important;
+    }
+
+    .dropdown-content {
+        min-width: 7rem !important;
+    }
+}
+.right-hoverable:hover > .dropdown-menu {
+    display: block;
+}
+.right-hoverable > .dropdown-menu {
+    //margin-left: 100%;
+    top: -10px;
+    left: 100%;
+    .dropdown-item:active {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
+}
+.right-hoverable *:nth-child(1):hover + .dropdown-menu {
+    .dropdown-item:first-child {
+        background-color: var(--dropdown-item-hover-background-color);
+    }
+}
+.right-hoverable *:nth-child(1):active + .dropdown-menu {
+    .dropdown-item:first-child {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
 }
 
 .tabs, .tabs.is-boxed  {
@@ -1835,7 +1869,11 @@ figcaption {
     .dropdown-content {
         position: absolute;
         z-index: 25;
+        overflow: unset;
         min-width: 12rem;
+        max-height: none;
+        width: auto;
+        height: auto;
         &.is-right {
             left: auto;
             right: 0;
@@ -2084,7 +2122,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
             }
         }
         & > .subtitle {
-            border-bottom: 1px solid var(--grey);
+            border-bottom: 1px solid var(--border-color-light);
         }
     }
 }

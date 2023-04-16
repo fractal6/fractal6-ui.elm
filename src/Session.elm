@@ -26,9 +26,7 @@ import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
 import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
 import Loading
     exposing
@@ -140,7 +138,7 @@ type
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoToggleWatchOrga String
       -- Components Msg
-    | DoCreateTension String
+    | DoCreateTension (Maybe NodeType.NodeType) String
     | DoJoinOrga String
     | DoOpenActionPanel String String (Maybe ( Int, Int ))
     | DoToggleTreeMenu

@@ -103,10 +103,11 @@ The commit name should starts with a name that identify the **type** of modifica
 
 example: `fix/AuthModal: prevent the auth modal to be closed when a click in the background occur.`
 
-Here are some common used for so called semantic commit message:
+Here are some common used for so called semantic commit message, which help to write release notes from the git commit:
 
 - feat: A new feature
 - fix: A bug fix
+- change: something changed (style, configuration, spec)
 - perf: A code change that improves performance
 - refactor: A code change that neither fixes a bug nor adds a feature
 - typo: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)

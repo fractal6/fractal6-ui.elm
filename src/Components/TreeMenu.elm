@@ -668,7 +668,7 @@ viewCircleLine hover focus node =
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
-                    [ span [ class "tag is-rounded has-border", onClickPD2 (Do [ DoCreateTension node.nameid ]) ] [ A.icon "icon-plus" ] ]
+                    [ span [ class "tag is-rounded has-border", onClickPD2 (Do [ DoCreateTension Nothing node.nameid ]) ] [ A.icon "icon-plus" ] ]
 
               else
                 text ""
