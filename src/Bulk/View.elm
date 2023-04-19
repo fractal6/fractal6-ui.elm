@@ -84,6 +84,7 @@ import ModelSchema
         )
 import Session exposing (Conf)
 import String.Extra as SE
+import String.Format as Format
 import Text as T
 import Time
 
@@ -621,7 +622,7 @@ viewRole cls_ now_m link_m r =
 
         cls =
             if hasTooltip then
-                cls_ ++ " tooltip has-tooltip-arrow has-tooltip-bottom"
+                cls_ ++ " tooltip has-tooltip-arrow has-tooltip-bottom is-multiline has-tooltip-text-left"
 
             else
                 cls_
@@ -648,7 +649,12 @@ viewRole cls_ now_m link_m r =
     in
     a_or_span
         ([ class ("button buttonRole is-multiline " ++ cls)
-         , attribute (ternary hasTooltip "data-tooltip" "data-void") ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
+         , attribute (ternary hasTooltip "data-tooltip" "data-void")
+            (T.youPlay
+                |> Format.namedValue "role" (upH r.name)
+                |> Format.namedValue "circle" (getParentFragmentFromRole r)
+                |> Format.namedValue "since" since
+            )
          , href link
          ]
             ++ color
@@ -677,8 +683,13 @@ viewRole2 now_m r msg =
                     [ colorAttr (roleColor r.role_type) ]
     in
     div
-        ([ class "button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-top"
-         , attribute "data-tooltip" ([ r.name, T.in_, getParentFragmentFromRole r, since ] |> String.join " ")
+        ([ class "button buttonRole is-small tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
+         , attribute "data-tooltip"
+            (T.youPlay
+                |> Format.namedValue "role" (upH r.name)
+                |> Format.namedValue "circle" (getParentFragmentFromRole r)
+                |> Format.namedValue "since" since
+            )
          , onClickPos (msg "actionPanelHelper" r.nameid)
          ]
             ++ color
@@ -915,8 +926,6 @@ viewOrgaMedia_ user_m root =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
-
-                            --, span [ class "is-hint" ] [ text "Your roles: " ]
                             , div [ class "buttons is-inline" ] <|
                                 (roles
                                     |> List.map

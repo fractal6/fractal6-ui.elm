@@ -2680,7 +2680,7 @@ viewEventMentioned lang now event =
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
                                 [ span
-                                    [ class "tooltip has-tooltip-arrow has-tooltip-top"
+                                    [ class "tooltip has-tooltip-arrow"
                                     , attribute "data-tooltip" (tensionStatus2str status)
                                     ]
                                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
