@@ -27,7 +27,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
-import Bulk.Error exposing (viewGqlErrors)
+import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (lang2str, viewProfileC)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
@@ -56,6 +56,7 @@ import Query.PatchUser exposing (patchUser)
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserFull)
 import RemoteData exposing (RemoteData)
+import Requests exposing (updatePassword)
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
@@ -113,6 +114,7 @@ type alias Model =
     { username : String
     , user : GqlData UserFull
     , user_result : GqlData UserFull
+    , password_result : WebData UserCtx
     , menuFocus : MenuSettings
     , hasUnsavedData : Bool
     , switch_index : Int
@@ -207,6 +209,8 @@ type Msg
     | OnChangePost String String
     | SwitchLang Lang.Lang
     | SwitchNotifyByEmail Int Bool
+    | OnPasswordUpdate
+    | OnPasswordUpdateAck (WebData UserCtx)
       -- Common
     | NoMsg
     | LogErr String
@@ -244,6 +248,7 @@ init global flags =
             { username = username
             , user = Loading
             , user_result = NotAsked
+            , password_result = RemoteData.NotAsked
             , menuFocus = menu
             , hasUnsavedData = False
             , switch_index = -1
@@ -360,6 +365,24 @@ update global message model =
             ( { model | user_result = Loading, switch_index = i }
             , patchUser apis (initUserProfileForm model.username |> (\x -> { x | notifyByEmail = Just (not val) })) GotUserPatch
             , Cmd.none
+            )
+
+        OnPasswordUpdate ->
+            let
+                post =
+                    model.form.post |> Dict.insert "username" model.username
+            in
+            ( model, updatePassword apis post OnPasswordUpdateAck, Cmd.none )
+
+        OnPasswordUpdateAck result ->
+            ( { model | password_result = result }
+            , Cmd.none
+            , case result of
+                RemoteData.Success uctx ->
+                    send (UpdateUserSession uctx)
+
+                _ ->
+                    Cmd.none
             )
 
         -- Common
@@ -501,7 +524,7 @@ viewSettingsContent user model =
         AccountMenu ->
             div [ class "columns" ]
                 [ div [ class "column is-6" ]
-                    [ viewAccountSettings user model.user_result model.switch_index model.menuFocus model.form ]
+                    [ viewAccountSettings user model.user_result model.password_result model.switch_index model.menuFocus model.form ]
                 ]
 
         EmailMenu ->
@@ -624,37 +647,38 @@ viewEmailSettings user result switch_index menuFocus =
             [ SwitchRecord 0 SwitchNotifyByEmail T.notifyByEmail "" .notifyByEmail
             ]
     in
-    switches
-        |> List.map
-            (\x ->
-                let
-                    ref_name =
-                        "switch" ++ String.fromInt x.index
-                in
-                div [ class "media" ]
-                    [ div [ class "field" ]
-                        [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user) ] []
-                        , label [ for ref_name ]
-                            [ text space_
-                            , text x.title
+    List.map
+        -- Switches
+        (\x ->
+            let
+                ref_name =
+                    "switch" ++ String.fromInt x.index
+            in
+            div [ class "media" ]
+                [ div [ class "field" ]
+                    [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user) ] []
+                    , label [ for ref_name ]
+                        [ text space_
+                        , text x.title
 
-                            -- Use loadingSlowly because here it causes eyes distraction !
-                            --, loadingSpin ((result ==Loading) && switch_index == x.index)
-                            ]
-                        , case result of
-                            Failure e ->
-                                if switch_index == x.index then
-                                    viewGqlErrors e
-
-                                else
-                                    text ""
-
-                            _ ->
-                                text ""
-                        , span [ class "help" ] [ text x.help ]
+                        -- Use loadingSlowly because here it causes eyes distraction !
+                        --, loadingSpin ((result ==Loading) && switch_index == x.index)
                         ]
+                    , case result of
+                        Failure e ->
+                            if switch_index == x.index then
+                                viewGqlErrors e
+
+                            else
+                                text ""
+
+                        _ ->
+                            text ""
+                    , span [ class "help" ] [ text x.help ]
                     ]
-            )
+                ]
+        )
+        switches
         |> List.append
             [ div [ class "mb-4" ]
                 [ div [ class "field" ]
@@ -670,19 +694,14 @@ viewEmailSettings user result switch_index menuFocus =
         |> div []
 
 
-viewAccountSettings : UserFull -> GqlData UserFull -> Int -> MenuSettings -> UserProfileForm -> Html Msg
-viewAccountSettings user result switch_index menuFocus form =
+viewAccountSettings : UserFull -> GqlData UserFull -> WebData UserCtx -> Int -> MenuSettings -> UserProfileForm -> Html Msg
+viewAccountSettings user user_result password_result switch_index menuFocus form =
     let
         switches =
             []
 
-        isLoading =
-            Loading.isLoading result
-
         isSendable =
             isPostSendable [ "password", "newPassword", "confirmPassword" ] form.post
-
-        -- * request resetPasword form
     in
     div [] <|
         [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ]
@@ -697,6 +716,7 @@ viewAccountSettings user result switch_index menuFocus form =
             ]
         ]
             ++ List.map
+                -- Switches
                 (\x ->
                     let
                         ref_name =
@@ -712,7 +732,7 @@ viewAccountSettings user result switch_index menuFocus form =
                                 -- Use loadingSlowly because here it causes eyes distraction !
                                 --, loadingSpin ((result == Loading) && switch_index == x.index)
                                 ]
-                            , case result of
+                            , case user_result of
                                 Failure e ->
                                     if switch_index == x.index then
                                         viewGqlErrors e
@@ -734,7 +754,8 @@ viewAccountSettings user result switch_index menuFocus form =
                         [ label [ class "label" ] [ text "Current password" ]
                         , div [ class "control" ]
                             [ input
-                                [ class "input"
+                                [ class "input followFocus"
+                                , attribute "data-nextfocus" "newPassword"
                                 , type_ "password"
                                 , placeholder "Enter your current password"
                                 , value (getd "password" form.post)
@@ -748,7 +769,9 @@ viewAccountSettings user result switch_index menuFocus form =
                         [ label [ class "label" ] [ text "New password" ]
                         , div [ class "control" ]
                             [ input
-                                [ class "input"
+                                [ id "newPassword"
+                                , class "input followFocus"
+                                , attribute "data-nextfocus" "confirmPassword"
                                 , type_ "password"
                                 , placeholder "Enter your new password"
                                 , value (getd "newPassword" form.post)
@@ -762,7 +785,8 @@ viewAccountSettings user result switch_index menuFocus form =
                         [ label [ class "label" ] [ text "Confirm password" ]
                         , div [ class "control" ]
                             [ input
-                                [ class "input"
+                                [ id "confirmPassword"
+                                , class "input"
                                 , type_ "password"
                                 , placeholder "Confirm your new password"
                                 , value (getd "confirmPassword" form.post)
@@ -776,23 +800,23 @@ viewAccountSettings user result switch_index menuFocus form =
                         [ div [ class "control is-text-aligned" ]
                             [ button
                                 [ class "button is-primary"
-                                , classList [ ( "is-loading", isLoading ) ]
+                                , classList [ ( "is-loading", Loading.isLoadingWeb password_result ) ]
+                                , type_ "submit"
                                 , disabled (not isSendable)
                                 , ternary isSendable
+                                    (onClick OnPasswordUpdate)
                                     (onClick NoMsg)
-                                    -- onClick ResetPassword
-                                    (class "")
                                 ]
                                 [ text "Update Password" ]
                             , a [ class "underlined-link mx-4 is-link", href (toHref Route.PasswordReset ++ "?email=" ++ user.email) ] [ textH T.passwordForgotten ]
                             ]
                         ]
-                    , case result of
-                        Success _ ->
+                    , case password_result of
+                        RemoteData.Success _ ->
                             div [ class "notification is-success" ] [ text "Your password has been reset successfully." ]
 
-                        Failure e ->
-                            viewGqlErrors e
+                        RemoteData.Failure e ->
+                            viewHttpErrors e
 
                         _ ->
                             text ""

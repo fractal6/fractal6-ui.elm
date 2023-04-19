@@ -273,6 +273,7 @@ viewSignup global model =
                             [ id "submitButton"
                             , class "button is-success"
                             , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
+                            , type_ "submit"
                             , onClick (SubmitUser model.form)
                             ]
                             [ text T.signup ]
