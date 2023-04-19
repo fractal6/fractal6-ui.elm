@@ -8,11 +8,15 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type ProjectHasFilter
-    = Rootnameid
+    = CreatedBy
+    | CreatedAt
+    | UpdatedAt
+    | Rootnameid
     | Parentnameid
     | Nameid
     | Name
     | Description
+    | Status
     | Columns
     | Leaders
     | Nodes
@@ -20,7 +24,7 @@ type ProjectHasFilter
 
 list : List ProjectHasFilter
 list =
-    [ Rootnameid, Parentnameid, Nameid, Name, Description, Columns, Leaders, Nodes ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description, Status, Columns, Leaders, Nodes ]
 
 
 decoder : Decoder ProjectHasFilter
@@ -29,6 +33,15 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "createdBy" ->
+                        Decode.succeed CreatedBy
+
+                    "createdAt" ->
+                        Decode.succeed CreatedAt
+
+                    "updatedAt" ->
+                        Decode.succeed UpdatedAt
+
                     "rootnameid" ->
                         Decode.succeed Rootnameid
 
@@ -43,6 +56,9 @@ decoder =
 
                     "description" ->
                         Decode.succeed Description
+
+                    "status" ->
+                        Decode.succeed Status
 
                     "columns" ->
                         Decode.succeed Columns
@@ -63,6 +79,15 @@ decoder =
 toString : ProjectHasFilter -> String
 toString enum____ =
     case enum____ of
+        CreatedBy ->
+            "createdBy"
+
+        CreatedAt ->
+            "createdAt"
+
+        UpdatedAt ->
+            "updatedAt"
+
         Rootnameid ->
             "rootnameid"
 
@@ -77,6 +102,9 @@ toString enum____ =
 
         Description ->
             "description"
+
+        Status ->
+            "status"
 
         Columns ->
             "columns"
@@ -102,6 +130,15 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe ProjectHasFilter
 fromString enumString____ =
     case enumString____ of
+        "createdBy" ->
+            Just CreatedBy
+
+        "createdAt" ->
+            Just CreatedAt
+
+        "updatedAt" ->
+            Just UpdatedAt
+
         "rootnameid" ->
             Just Rootnameid
 
@@ -116,6 +153,9 @@ fromString enumString____ =
 
         "description" ->
             Just Description
+
+        "status" ->
+            Just Status
 
         "columns" ->
             Just Columns

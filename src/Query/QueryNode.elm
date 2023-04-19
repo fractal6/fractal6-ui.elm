@@ -461,14 +461,20 @@ cidPayload =
 
 
 type alias NodeDataSource =
-    { source : Maybe { node : Maybe NodeData } }
+    { source : Maybe { node : Maybe { about : Maybe String, mandate : Maybe Mandate }, tension : { n_open_contracts : Maybe Int } } }
 
 
 nodeDataSourceDecoder : Maybe NodeDataSource -> Maybe NodeData
 nodeDataSourceDecoder data =
     data
         |> unwrap Nothing .source
-        |> unwrap Nothing .node
+        |> Maybe.map
+            (\x ->
+                { about = unwrap Nothing .about x.node
+                , mandate = unwrap Nothing .mandate x.node
+                , n_open_contracts = x.tension.n_open_contracts
+                }
+            )
 
 
 fetchNodeData url nameid msg =
@@ -485,11 +491,17 @@ nodeDataPayload =
     SelectionSet.succeed NodeDataSource
         |> with
             (Fractal.Object.Node.source identity
-                (SelectionSet.map (\x -> { node = x })
+                (SelectionSet.map2 (\x y -> { node = x, tension = y })
                     (Fractal.Object.Blob.node identity
-                        (SelectionSet.map2 NodeData
+                        (SelectionSet.map2 (\xx yy -> { about = xx, mandate = yy })
                             Fractal.Object.NodeFragment.about
                             (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+                        )
+                    )
+                    (Fractal.Object.Blob.tension identity
+                        (SelectionSet.map2 (\_ z -> { n_open_contracts = z })
+                            (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                            Fractal.Object.Tension.n_open_contracts
                         )
                     )
                 )

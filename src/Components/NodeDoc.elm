@@ -40,7 +40,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, strong, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, style, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
@@ -590,7 +590,8 @@ viewBlob data op_m =
                                 isSendable =
                                     (data.node_data.about /= op.data.form.node.about)
                                         || (Maybe.map .name data.node /= op.data.form.node.name)
-                                        || (nameid_ /= op.data.form.node.nameid)
+                                        -- root nameid is ""
+                                        || (nameid_ /= op.data.form.node.nameid && op.data.form.node.nameid /= Just "")
 
                                 isLoading =
                                     op.data.result == LoadingSlowly
@@ -635,7 +636,22 @@ viewBlob data op_m =
                             [ -- Node Hints
                               div [ class "columns mb-0" ]
                                 [ div [ class "column is-6 pb-0", class "is-hint" ]
-                                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
+                                    [ viewNodeDescr False node (tensionCharacFromNode node)
+                                    , case data.node_data.n_open_contracts of
+                                        Nothing ->
+                                            text ""
+
+                                        Just 0 ->
+                                            text ""
+
+                                        Just i ->
+                                            let
+                                                tid =
+                                                    withDefaultData "" data.tid_r
+                                            in
+                                            a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
+                                                [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
+                                    ]
                                 ]
                             , -- Circle lead
                               if List.length data.leads > 0 then
@@ -650,7 +666,12 @@ viewBlob data op_m =
                                         else
                                             String.toLower T.firstLinks
                                 in
-                                div [ class "is-hint" ] [ A.icon1 "icon-users" "", span [ class "is-hint-2" ] [ text (String.fromInt i) ], text (" " ++ txt ++ "  " ++ space_), viewUsers data.leads ]
+                                div [ class "is-hint" ]
+                                    [ A.icon1 "icon-users" ""
+                                    , span [ class "is-hint-2" ] [ text (String.fromInt i) ]
+                                    , text (" " ++ txt ++ "  " ++ space_)
+                                    , viewUsers data.leads
+                                    ]
 
                               else
                                 -- Role Lead link Maybe.map

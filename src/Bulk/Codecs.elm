@@ -272,22 +272,12 @@ basePathChanged loc url =
 
 uriFromNameid : FractalBaseRoute -> String -> List String -> String
 uriFromNameid loc nameid params =
-    -- @deprecated: use toLink instead ?
-    if nameid == "" then
-        "#"
-
-    else
-        toLink loc nameid params
+    toLink loc nameid params
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
 uriFromUsername loc username =
-    -- @deprecated: use toLink instead ?
-    if username == "" then
-        "#"
-
-    else
-        toLink loc username []
+    toLink loc username []
 
 
 nameidFromFlags : Flags_ -> String

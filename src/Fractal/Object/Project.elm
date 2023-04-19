@@ -4,6 +4,7 @@
 
 module Fractal.Object.Project exposing (..)
 
+import Fractal.Enum.ProjectStatus
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -22,6 +23,36 @@ import Json.Decode as Decode
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Project
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+
+
+type alias CreatedByOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Project
+createdBy fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "createdBy" optionalArgs____ object____ Basics.identity
+
+
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Project
+createdAt =
+    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+
+
+updatedAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Project
+updatedAt =
+    Object.selectionForField "ScalarCodecs.DateTime" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
 
 
 rootnameid : SelectionSet String Fractal.Object.Project
@@ -47,6 +78,11 @@ name =
 description : SelectionSet (Maybe String) Fractal.Object.Project
 description =
     Object.selectionForField "(Maybe String)" "description" [] (Decode.string |> Decode.nullable)
+
+
+status : SelectionSet Fractal.Enum.ProjectStatus.ProjectStatus Fractal.Object.Project
+status =
+    Object.selectionForField "Enum.ProjectStatus.ProjectStatus" "status" [] Fractal.Enum.ProjectStatus.decoder
 
 
 type alias ColumnsOptionalArguments =

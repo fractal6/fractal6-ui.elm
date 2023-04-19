@@ -75,12 +75,11 @@ import Loading
         , fromMaybeData
         , fromMaybeWebData
         , isSuccess
-        , isWebSuccess
         , withDefaultData
         , withDefaultWebData
         , withMapData
         , withMaybeData
-        , withMaybeDataMap
+        , withMaybeMapData
         )
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -1145,7 +1144,7 @@ update global message model =
         ChangeAuthor ->
             let
                 targets =
-                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                    model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
             in
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
@@ -1826,7 +1825,7 @@ viewSearchBar model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
-                            , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> [ shrinkNode x.focus ]) |> withDefault []
                             , isRight = False
                             }
                             model.labelsPanel
@@ -1840,7 +1839,7 @@ viewSearchBar model =
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
-                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
                             , isRight = True
                             }
                             model.authorsPanel

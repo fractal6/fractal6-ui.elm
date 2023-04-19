@@ -128,7 +128,7 @@ import Loading
         , withDefaultData
         , withMapData
         , withMaybeData
-        , withMaybeDataMap
+        , withMaybeMapData
         )
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -263,6 +263,7 @@ type alias Model =
     , focusState : FocusState
     , tensionid : String
     , baseUri : FractalBaseRoute
+    , force_reload_path : Bool
     , contractid : Maybe String
     , activeTab : TensionTab
     , nodeView : NodeView
@@ -516,6 +517,7 @@ init global flags =
             , lookup_users = []
             , tensionid = tid
             , baseUri = baseUri
+            , force_reload_path = global.url.fragment == Just ""
             , contractid = cid_m
             , activeTab = tab
             , nodeView = nodeView
@@ -830,7 +832,14 @@ update global message model =
                                     ( th.receiver.nameid, model.nodeDoc )
 
                         hasLocalGraph =
-                            isSuccess model.path_data && not model.focusState.orgChange
+                            isSuccess model.path_data && not model.focusState.orgChange && not model.force_reload_path
+
+                        focusid =
+                            if model.force_reload_path then
+                                targetid
+
+                            else
+                                nid2rootid targetid
 
                         isAdmin =
                             getTensionRights (uctxFromUser global.session.user) result model.path_data
@@ -846,7 +855,7 @@ update global message model =
                         [ ternary hasLocalGraph
                             -- Do not change the context of the user anonymously, its confusing
                             (Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none)
-                            (queryLocalGraph apis (nid2rootid targetid) True (GotPath True))
+                            (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
                         ]
@@ -1229,7 +1238,7 @@ update global message model =
                                 |> Dict.insert "createdAt" (fromTime time)
                         , events =
                             [ Ev TensionEvent.TitleUpdated
-                                (model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "")
+                                (model.tension_head |> withMaybeMapData (\x -> x.title) |> withDefault "")
                                 (Dict.get "title" form.post |> withDefault "")
                             ]
                     }
@@ -1892,7 +1901,15 @@ view global model =
     { title =
         case model.tension_head of
             Success t ->
-                t.title
+                case model.activeTab of
+                    Conversation ->
+                        t.title
+
+                    Document ->
+                        t.title ++ " · " ++ T.document
+
+                    Contracts ->
+                        t.title ++ " · " ++ T.contracts
 
             _ ->
                 "Loading..."
@@ -2702,7 +2719,7 @@ viewDocument u t b model =
                 { focus = model.node_focus
                 , tid_r = Success t.id
                 , node = b.node |> Maybe.map (nodeFromFragment t.receiver.nameid)
-                , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault (NodeData Nothing Nothing)
+                , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate t.n_open_contracts) |> withDefault initNodeData
                 , leads = []
                 , isLazy = False
                 , source = model.baseUri
@@ -2823,7 +2840,7 @@ viewSidePane u t model =
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = t.assignees |> withDefault []
-                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
                             , isRight = False
                             }
                             model.assigneesPanel
@@ -2865,7 +2882,7 @@ viewSidePane u t model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = t.labels |> withDefault []
-                            , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> [ shrinkNode x.focus ]) |> withDefault []
                             , isRight = False
                             }
                             model.labelsPanel

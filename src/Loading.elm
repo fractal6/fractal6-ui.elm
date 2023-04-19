@@ -234,8 +234,8 @@ loadingDiv =
 
 
 loadingSpin : Bool -> Html msg
-loadingSpin isLoading =
-    if isLoading then
+loadingSpin hasLoading =
+    if hasLoading then
         span [ class "spinner2 is-small", attribute "style" "left: 13px;" ] []
 
     else
@@ -243,8 +243,8 @@ loadingSpin isLoading =
 
 
 loadingSpinRight : Bool -> Html msg
-loadingSpinRight isLoading =
-    if isLoading then
+loadingSpinRight hasLoading =
+    if hasLoading then
         span [ class "mx-5 is-pulled-right spinner2 is-small" ] []
 
     else
@@ -252,7 +252,7 @@ loadingSpinRight isLoading =
 
 
 
--- RequestResult / Data methods
+-- RequestResult / Data methods (GQL API)
 
 
 isSuccess : GqlData a -> Bool
@@ -269,6 +269,19 @@ isFailure : GqlData a -> Bool
 isFailure data =
     case data of
         Failure _ ->
+            True
+
+        _ ->
+            False
+
+
+isLoading : GqlData a -> Bool
+isLoading data =
+    case data of
+        Loading ->
+            True
+
+        LoadingSlowly ->
             True
 
         _ ->
@@ -295,8 +308,8 @@ withMaybeData result =
             Nothing
 
 
-withMaybeDataMap : (a -> b) -> RequestResult e a -> Maybe b
-withMaybeDataMap resMap result =
+withMaybeMapData : (a -> b) -> RequestResult e a -> Maybe b
+withMaybeMapData resMap result =
     case result of
         Success d ->
             Just (resMap d)
@@ -342,12 +355,12 @@ withMaybeSlowly result =
 
 
 --
--- Idem but for WebData :S
+-- Idem but for WebData (Rest API) :S
 --
 
 
-isWebSuccess : WebData a -> Bool
-isWebSuccess data =
+isSuccessWeb : WebData a -> Bool
+isSuccessWeb data =
     case data of
         RemoteData.Success _ ->
             True
@@ -356,10 +369,20 @@ isWebSuccess data =
             False
 
 
-isWebFailure : WebData a -> Bool
-isWebFailure data =
+isFailureWeb : WebData a -> Bool
+isFailureWeb data =
     case data of
         RemoteData.Failure _ ->
+            True
+
+        _ ->
+            False
+
+
+isLoadingWeb : WebData a -> Bool
+isLoadingWeb data =
+    case data of
+        RemoteData.Loading ->
             True
 
         _ ->
