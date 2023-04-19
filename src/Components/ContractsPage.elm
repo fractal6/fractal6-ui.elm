@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
+import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Bulk.View
     exposing
         ( byAt
@@ -923,7 +923,9 @@ viewRow d op model =
                 [ class "discrete-link"
                 , href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref)
                 ]
-                [ text (contractEventToText Nothing d.event.event_type), Maybe.map (\x -> " ・ " ++ x) d.event.new |> withDefault "" |> text ]
+                (text (contractEventToText Nothing d.event.event_type)
+                    :: (Maybe.map (\x -> [ text " ・ ", x ]) (contractEventToValue d.event) |> withDefault [])
+                )
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
@@ -1100,7 +1102,7 @@ viewContractBox c op model =
                             receiver =
                                 c.event.new |> withDefault "unkown" |> nid2eor
                         in
-                        viewTensionArrow "is-pulled-right" emitter receiver
+                        viewTensionArrow "margin-left-25" emitter receiver
 
                     TensionEvent.MemberLinked ->
                         let

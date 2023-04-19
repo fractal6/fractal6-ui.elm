@@ -33,7 +33,7 @@ import Bulk.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import Bulk.View exposing (byAt, statusColor)
+import Bulk.View exposing (byAt, statusColor, viewCircleSimple)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Date exposing (formatDate)
@@ -54,7 +54,21 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Identicon
 import Maybe exposing (withDefault)
-import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
+import ModelSchema
+    exposing
+        ( ContractNotif
+        , EmitterOrReceiver
+        , EventFragment
+        , EventNotif
+        , Label
+        , NodeExt
+        , Post
+        , Tension
+        , User
+        , UserCtx
+        , UserEvent
+        , Username
+        )
 import Session exposing (Conf)
 import String.Extra as SE
 import Text as T
@@ -269,6 +283,21 @@ contractEventToText ntm c =
 
         _ ->
             c |> TensionEvent.toString |> SE.humanize
+
+
+contractEventToValue : EventFragment -> Maybe (Html msg)
+contractEventToValue event =
+    case event.event_type of
+        TensionEvent.Moved ->
+            Maybe.map2
+                (\old new ->
+                    span [] [ viewCircleSimple old, span [ class "arrow-right" ] [], viewCircleSimple new ]
+                )
+                event.old
+                event.new
+
+        _ ->
+            Maybe.map (\x -> text x) event.new
 
 
 contractToJonction : ContractType.ContractType -> String
