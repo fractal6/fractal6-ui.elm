@@ -1861,7 +1861,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="and"
   fr="et"
 
-# ADDME END ^
+[youPlay]
+  en="You play the role: {{role}},\nin the circle: {{circle}}\n{{since}}"
+  fr="Vous jouez le rôle: {{role}},\ndans le cercle: {{circle}}\n{{since}}"
+
+# ADDME END @next ^
 # --
 #
 # Legend
