@@ -169,7 +169,5 @@ viewJoinForCommentNeeded userCanJoin =
                 ]
 
           else
-            p []
-                [ text T.onlyMemberCanParticipate
-                ]
+            p [] [ text T.onlyMemberCanParticipate ]
         ]

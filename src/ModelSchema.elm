@@ -594,6 +594,7 @@ type alias PatchTensionPayloadID =
 type alias NodeData =
     { about : Maybe String
     , mandate : Maybe Mandate
+    , n_open_contracts : Maybe Int
     }
 
 
@@ -612,7 +613,10 @@ initUserctx =
 
 initNodeData : NodeData
 initNodeData =
-    NodeData Nothing Nothing
+    { about = Nothing
+    , mandate = Nothing
+    , n_open_contracts = Nothing
+    }
 
 
 initNode : Node

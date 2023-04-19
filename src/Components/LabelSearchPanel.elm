@@ -40,7 +40,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, web2gql, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, web2gql, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -536,12 +536,8 @@ viewLabelSelectors isInternal labels op model =
                                 l_ =
                                     if isActive then
                                         model.labels_data
-                                            |> withMaybeDataMap
-                                                (\labels_d ->
-                                                    labels_d
-                                                        |> List.filter (\x -> x.name == l.name)
-                                                        |> List.head
-                                                )
+                                            |> withMaybeMapData
+                                                (List.filter (\x -> x.name == l.name) >> List.head)
                                             |> withDefault Nothing
                                             |> withDefault l
 

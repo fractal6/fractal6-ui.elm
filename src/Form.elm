@@ -23,7 +23,13 @@ module Form exposing (..)
 
 import Bulk exposing (UserForm)
 import Dict
+import Maybe exposing (withDefault)
 import ModelSchema exposing (Post)
+
+
+getd : String -> Post -> String
+getd k form =
+    Dict.get k form |> withDefault ""
 
 
 isUsersSendable : List UserForm -> Bool

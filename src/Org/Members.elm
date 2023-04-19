@@ -26,7 +26,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Bulk.View exposing (viewRole2, viewUser, viewUsernameLink)
 import Codecs exposing (QuickDoc)
@@ -59,7 +59,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), WebData, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

@@ -49,7 +49,7 @@ import Html.Attributes exposing (attribute, autocomplete, class, classList, disa
 import Html.Events exposing (onBlur, onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)

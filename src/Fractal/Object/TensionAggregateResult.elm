@@ -84,26 +84,6 @@ titleMax =
     Object.selectionForField "(Maybe String)" "titleMax" [] (Decode.string |> Decode.nullable)
 
 
-n_commentsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_commentsMin =
-    Object.selectionForField "(Maybe Int)" "n_commentsMin" [] (Decode.int |> Decode.nullable)
-
-
-n_commentsMax : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_commentsMax =
-    Object.selectionForField "(Maybe Int)" "n_commentsMax" [] (Decode.int |> Decode.nullable)
-
-
-n_commentsSum : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_commentsSum =
-    Object.selectionForField "(Maybe Int)" "n_commentsSum" [] (Decode.int |> Decode.nullable)
-
-
-n_commentsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
-n_commentsAvg =
-    Object.selectionForField "(Maybe Float)" "n_commentsAvg" [] (Decode.float |> Decode.nullable)
-
-
 n_open_contractsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
 n_open_contractsMin =
     Object.selectionForField "(Maybe Int)" "n_open_contractsMin" [] (Decode.int |> Decode.nullable)
@@ -122,3 +102,23 @@ n_open_contractsSum =
 n_open_contractsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
 n_open_contractsAvg =
     Object.selectionForField "(Maybe Float)" "n_open_contractsAvg" [] (Decode.float |> Decode.nullable)
+
+
+n_commentsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_commentsMin =
+    Object.selectionForField "(Maybe Int)" "n_commentsMin" [] (Decode.int |> Decode.nullable)
+
+
+n_commentsMax : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_commentsMax =
+    Object.selectionForField "(Maybe Int)" "n_commentsMax" [] (Decode.int |> Decode.nullable)
+
+
+n_commentsSum : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_commentsSum =
+    Object.selectionForField "(Maybe Int)" "n_commentsSum" [] (Decode.int |> Decode.nullable)
+
+
+n_commentsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
+n_commentsAvg =
+    Object.selectionForField "(Maybe Float)" "n_commentsAvg" [] (Decode.float |> Decode.nullable)

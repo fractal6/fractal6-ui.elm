@@ -295,14 +295,12 @@ viewSignBox model =
 
                 Signup ->
                     viewSignup model
-            , div []
-                [ case model.result of
-                    RemoteData.Failure err ->
-                        viewHttpErrors err
+            , case model.result of
+                RemoteData.Failure err ->
+                    viewHttpErrors err
 
-                    _ ->
-                        text ""
-                ]
+                _ ->
+                    text ""
             ]
         ]
 
@@ -368,7 +366,7 @@ viewLogin model =
                     button
                         [ id "submitButton"
                         , class "button is-success"
-                        , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
+                        , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text T.signin ]
@@ -462,7 +460,7 @@ viewSignup model =
                     button
                         [ id "submitButton2"
                         , class "button is-success"
-                        , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
+                        , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text T.signup ]

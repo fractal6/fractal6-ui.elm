@@ -35,14 +35,14 @@ import Dict exposing (Dict)
 import Extra exposing (mor, space_, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
-import Form exposing (isPostSendable, isPostSendableOr)
+import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, label, li, nav, option, p, select, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, rows, selected, spellcheck, style, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, selected, spellcheck, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -128,12 +128,13 @@ type alias Model =
 
 type MenuSettings
     = ProfileMenu
+    | AccountMenu
     | EmailMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ ProfileMenu, EmailMenu ]
+    [ ProfileMenu, AccountMenu, EmailMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -141,6 +142,9 @@ menuEncoder menu =
     case menu of
         ProfileMenu ->
             "profile"
+
+        AccountMenu ->
+            "account"
 
         EmailMenu ->
             "email"
@@ -151,6 +155,9 @@ menuDecoder menu =
     case menu of
         "profile" ->
             ProfileMenu
+
+        "account" ->
+            AccountMenu
 
         "email" ->
             EmailMenu
@@ -165,9 +172,12 @@ menuToString menu =
         ProfileMenu ->
             ( T.profile, T.publicProfil )
 
+        AccountMenu ->
+            ( T.account, "" )
+
         EmailMenu ->
             --( "Email settings", "Email settings" )
-            ( T.emailConf, T.emailConf )
+            ( T.emailConf, "" )
 
 
 menuToIcon : MenuSettings -> String
@@ -175,6 +185,9 @@ menuToIcon menu =
     case menu of
         ProfileMenu ->
             "icon-user"
+
+        AccountMenu ->
+            "icon-settings"
 
         EmailMenu ->
             "icon-mail"
@@ -485,6 +498,12 @@ viewSettingsContent user model =
                     [ viewProfileC user ]
                 ]
 
+        AccountMenu ->
+            div [ class "columns" ]
+                [ div [ class "column is-6" ]
+                    [ viewAccountSettings user model.user_result model.switch_index model.menuFocus model.form ]
+                ]
+
         EmailMenu ->
             div [ class "columns" ]
                 [ div [ class "column is-6" ]
@@ -496,7 +515,7 @@ viewProfileSettings : UserFull -> GqlData UserFull -> Int -> MenuSettings -> Use
 viewProfileSettings user result switch_index menuFocus form =
     let
         isLoading =
-            result == Loading
+            Loading.isLoading result
 
         isSendable =
             isPostSendableOr [ "name", "bio", "location" ] form.post
@@ -649,3 +668,133 @@ viewEmailSettings user result switch_index menuFocus =
             ]
         |> List.append [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ] ]
         |> div []
+
+
+viewAccountSettings : UserFull -> GqlData UserFull -> Int -> MenuSettings -> UserProfileForm -> Html Msg
+viewAccountSettings user result switch_index menuFocus form =
+    let
+        switches =
+            []
+
+        isLoading =
+            Loading.isLoading result
+
+        isSendable =
+            isPostSendable [ "password", "newPassword", "confirmPassword" ] form.post
+
+        -- * request resetPasword form
+    in
+    div [] <|
+        [ h2 [ class "subtitle is-size-3" ] [ text (menuToString menuFocus |> Tuple.second) ]
+        , div [ class "mb-4" ]
+            [ div [ class "field" ]
+                [ label [ class "label" ]
+                    [ text T.username ]
+                , div [ class "control" ]
+                    [ input [ class "input", type_ "text", value user.username, disabled True ] [] ]
+                ]
+            , div [ class "help-label" ] [ text T.usernameHelp ]
+            ]
+        ]
+            ++ List.map
+                (\x ->
+                    let
+                        ref_name =
+                            "switch" ++ String.fromInt x.index
+                    in
+                    div [ class "media" ]
+                        [ div [ class "field" ]
+                            [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val user) ] []
+                            , label [ for ref_name ]
+                                [ text space_
+                                , text x.title
+
+                                -- Use loadingSlowly because here it causes eyes distraction !
+                                --, loadingSpin ((result == Loading) && switch_index == x.index)
+                                ]
+                            , case result of
+                                Failure e ->
+                                    if switch_index == x.index then
+                                        viewGqlErrors e
+
+                                    else
+                                        text ""
+
+                                _ ->
+                                    text ""
+                            , span [ class "help" ] [ text x.help ]
+                            ]
+                        ]
+                )
+                switches
+            ++ [ -- Reset password Form
+                 div [ class "box is-warning-light my-6" ]
+                    [ h2 [ class "subtitle" ] [ text "Change Password" ]
+                    , div [ class "field" ]
+                        [ label [ class "label" ] [ text "Current password" ]
+                        , div [ class "control" ]
+                            [ input
+                                [ class "input"
+                                , type_ "password"
+                                , placeholder "Enter your current password"
+                                , value (getd "password" form.post)
+                                , onInput (OnChangePost "password")
+                                , required True
+                                ]
+                                []
+                            ]
+                        ]
+                    , div [ class "field" ]
+                        [ label [ class "label" ] [ text "New password" ]
+                        , div [ class "control" ]
+                            [ input
+                                [ class "input"
+                                , type_ "password"
+                                , placeholder "Enter your new password"
+                                , value (getd "newPassword" form.post)
+                                , onInput (OnChangePost "newPassword")
+                                , required True
+                                ]
+                                []
+                            ]
+                        ]
+                    , div [ class "field" ]
+                        [ label [ class "label" ] [ text "Confirm password" ]
+                        , div [ class "control" ]
+                            [ input
+                                [ class "input"
+                                , type_ "password"
+                                , placeholder "Confirm your new password"
+                                , value (getd "confirmPassword" form.post)
+                                , onInput (OnChangePost "confirmPassword")
+                                , required True
+                                ]
+                                []
+                            ]
+                        ]
+                    , div [ class "field" ]
+                        [ div [ class "control is-text-aligned" ]
+                            [ button
+                                [ class "button is-primary"
+                                , classList [ ( "is-loading", isLoading ) ]
+                                , disabled (not isSendable)
+                                , ternary isSendable
+                                    (onClick NoMsg)
+                                    -- onClick ResetPassword
+                                    (class "")
+                                ]
+                                [ text "Update Password" ]
+                            , a [ class "underlined-link mx-4 is-link", href (toHref Route.PasswordReset ++ "?email=" ++ user.email) ] [ textH T.passwordForgotten ]
+                            ]
+                        ]
+                    , case result of
+                        Success _ ->
+                            div [ class "notification is-success" ] [ text "Your password has been reset successfully." ]
+
+                        Failure e ->
+                            viewGqlErrors e
+
+                        _ ->
+                            text ""
+                    ]
+               ]

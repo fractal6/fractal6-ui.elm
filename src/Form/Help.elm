@@ -46,7 +46,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccessWeb, loadingDiv, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -330,7 +330,7 @@ update_ apis message model =
             ( { model | isActive2 = True, doc = RemoteData.Loading, activeTab = tab }
             , out0
                 [ sendSleep (SetIsActive2 True) 10
-                , if not (isWebSuccess model.doc) && tab == QuickHelp then
+                , if not (isSuccessWeb model.doc) && tab == QuickHelp then
                     getQuickDoc apis "en" OnGotQuickDoc
 
                   else
@@ -381,7 +381,7 @@ update_ apis message model =
 
         OnChangeTab tab ->
             ( changeTab tab model |> (\x -> { x | withChoice = False })
-            , if not (isWebSuccess model.doc) && tab == QuickHelp then
+            , if not (isSuccessWeb model.doc) && tab == QuickHelp then
                 out0 [ getQuickDoc apis "en" OnGotQuickDoc ]
 
               else

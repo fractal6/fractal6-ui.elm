@@ -229,7 +229,7 @@ viewUpdateInput op uctx comment form result =
             Dict.get "message" form.post |> withDefault comment.message
 
         isLoading =
-            result == LoadingSlowly
+            Loading.isLoading result
 
         isSendable =
             message /= comment.message
@@ -276,7 +276,7 @@ viewCommentInput op uctx tension form result =
             Dict.get "message" form.post |> withDefault ""
 
         isLoading =
-            result == LoadingSlowly
+            Loading.isLoading result
 
         isSendable =
             isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
@@ -354,7 +354,7 @@ viewContractCommentInput op uctx form result =
             Dict.get "message" form.post |> withDefault ""
 
         isLoading =
-            result == LoadingSlowly
+            Loading.isLoading result
 
         isSendable =
             isPostSendable [ "message" ] form.post

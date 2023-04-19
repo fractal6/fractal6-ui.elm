@@ -24,6 +24,26 @@ count =
     Object.selectionForField "(Maybe Int)" "count" [] (Decode.int |> Decode.nullable)
 
 
+createdAtMin : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ProjectAggregateResult
+createdAtMin =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAtMin" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+createdAtMax : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ProjectAggregateResult
+createdAtMax =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAtMax" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+updatedAtMin : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ProjectAggregateResult
+updatedAtMin =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAtMin" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+updatedAtMax : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ProjectAggregateResult
+updatedAtMax =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAtMax" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
 rootnameidMin : SelectionSet (Maybe String) Fractal.Object.ProjectAggregateResult
 rootnameidMin =
     Object.selectionForField "(Maybe String)" "rootnameidMin" [] (Decode.string |> Decode.nullable)

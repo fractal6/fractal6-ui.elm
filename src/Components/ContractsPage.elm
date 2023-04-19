@@ -60,7 +60,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeMapData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -567,7 +567,7 @@ update_ apis message model =
                         | post =
                             form.post
                                 |> Dict.insert "createdAt" (fromTime time)
-                                |> Dict.insert "contractid" (withMaybeDataMap .id model.contract_result |> withDefault "")
+                                |> Dict.insert "contractid" (withMaybeMapData .id model.contract_result |> withDefault "")
                     }
                 , comment_result = LoadingSlowly
               }
@@ -1200,13 +1200,13 @@ viewVoteBox uctx isValidator participants candidates c model =
              else
                 -- Otherwire show a "Accept/Cancel" buttons
                 [ div
-                    [ class "button is-success is-rounded"
+                    [ class "button is-success is-light is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
                     , onClick (OnSubmit isLoading <| DoVote 1)
                     ]
                     [ span [ class "mx-4" ] [ text T.accept ] ]
                 , div
-                    [ class "button is-danger is-rounded"
+                    [ class "button is-danger is-light is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
                     , onClick (OnSubmit isLoading <| DoVote 0)
                     ]

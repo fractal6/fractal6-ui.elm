@@ -5,7 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
-[...]
+### New
+- Add user password reset, in user settings page.
+- Show open contracts in circle about section, in overview page.
+
+### Changed
+- Better title for Document and Contracts tab, in tension page .
+
+### Fixed 
+- Fix navigation context when navigating from Document or Contracts, in tension page.
+- minor codefactor.
+
+
+
 
 
 ## [0.7.9]

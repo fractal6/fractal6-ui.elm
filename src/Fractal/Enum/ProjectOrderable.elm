@@ -8,7 +8,9 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type ProjectOrderable
-    = Rootnameid
+    = CreatedAt
+    | UpdatedAt
+    | Rootnameid
     | Parentnameid
     | Nameid
     | Name
@@ -17,7 +19,7 @@ type ProjectOrderable
 
 list : List ProjectOrderable
 list =
-    [ Rootnameid, Parentnameid, Nameid, Name, Description ]
+    [ CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description ]
 
 
 decoder : Decoder ProjectOrderable
@@ -26,6 +28,12 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "createdAt" ->
+                        Decode.succeed CreatedAt
+
+                    "updatedAt" ->
+                        Decode.succeed UpdatedAt
+
                     "rootnameid" ->
                         Decode.succeed Rootnameid
 
@@ -51,6 +59,12 @@ decoder =
 toString : ProjectOrderable -> String
 toString enum____ =
     case enum____ of
+        CreatedAt ->
+            "createdAt"
+
+        UpdatedAt ->
+            "updatedAt"
+
         Rootnameid ->
             "rootnameid"
 
@@ -81,6 +95,12 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe ProjectOrderable
 fromString enumString____ =
     case enumString____ of
+        "createdAt" ->
+            Just CreatedAt
+
+        "updatedAt" ->
+            Just UpdatedAt
+
         "rootnameid" ->
             Just Rootnameid
 

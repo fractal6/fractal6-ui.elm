@@ -83,16 +83,12 @@ import List.Extra as LE
 import Loading
     exposing
         ( GqlData
-        , ModalData
         , RequestResult(..)
-        , WebData
         , fromMaybeData
         , isFailure
         , isSuccess
-        , withDefaultData
         , withMapData
         , withMaybeData
-        , withMaybeDataMap
         )
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -1003,7 +999,7 @@ view_ global model =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
             , node = getNode model.node_focus.nameid model.tree_data
-            , node_data = withMaybeData model.node_data |> withDefault (NodeData Nothing Nothing)
+            , node_data = withMaybeData model.node_data |> withDefault initNodeData
             , leads = leads
             , isLazy = model.init_data
             , source = OverviewBaseUri

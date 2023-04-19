@@ -83,6 +83,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { form : UserAuthForm
+    , email_given : Maybe String
     , result : WebData UserCtx
     , challenge_data : RemoteData Http.Error String
     , reset_result : WebData Bool
@@ -118,8 +119,12 @@ init global flags =
         gcmd =
             Cmd.none
 
+        email_given =
+            Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
+
         model =
-            { form = { post = Dict.empty }
+            { form = { post = Dict.fromList [ ( "email", withDefault "" email_given ) ] }
+            , email_given = email_given
             , result = RemoteData.NotAsked
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
@@ -313,7 +318,9 @@ view_ global model =
                 Nothing ->
                     case model.reset_result of
                         RemoteData.Success True ->
-                            almostThere (Dict.get "email" model.form.post |> withDefault "") T.toResetYourPassword (toHref Route.PasswordReset)
+                            almostThere (Dict.get "email" model.form.post |> withDefault "")
+                                T.toResetYourPassword
+                                (toHref Route.PasswordReset ++ ternary (model.email_given == Nothing) "" ("?email=" ++ withDefault "" model.email_given))
 
                         _ ->
                             viewResetForm global model
@@ -327,7 +334,7 @@ viewResetForm global model =
         [ div [ class "card" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
-                    [ text "Forgot your password?" ]
+                    [ text T.passwordForgotten ]
                 ]
             , div [ class "card-content" ]
                 [ div [ class "field is-horizntl" ]
@@ -337,14 +344,15 @@ viewResetForm global model =
                             [ div [ class "control" ]
                                 [ input
                                     [ class "input autofocus"
+                                    , classList [ ( "autofocus", model.email_given == Nothing ) ]
                                     , attribute "data-nextfocus" "challengeInput"
                                     , type_ "text"
                                     , placeholder "email"
                                     , name "email"
                                     , value (Dict.get "email" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "email"
-                                    , required True
-                                    , onInput (ChangeUserPost "email")
+                                    , ternary (model.email_given == Nothing) (required True) (disabled True)
+                                    , ternary (model.email_given == Nothing) (onInput (ChangeUserPost "email")) (class "")
                                     ]
                                     []
                                 ]
@@ -366,7 +374,7 @@ viewResetForm global model =
 
                             RemoteData.Failure err ->
                                 --viewHttpErrors err
-                                div [ class "box has-background-danger is-size-6" ] [ text "Failed to fetch captcha" ]
+                                div [ class "box has-background-danger is-size-6" ] [ text T.failedCaptcha ]
 
                             RemoteData.NotAsked ->
                                 text ""
@@ -376,6 +384,7 @@ viewResetForm global model =
                                 [ input
                                     [ id "challengeInput"
                                     , class "input"
+                                    , classList [ ( "autofocus", model.email_given /= Nothing ) ]
                                     , style "max-width" "200px"
                                     , type_ "challenge"
                                     , placeholder ""
@@ -400,7 +409,7 @@ viewResetForm global model =
                                 , classList [ ( "is-loading", model.reset_result == RemoteData.Loading ) ]
                                 , onClick (SubmitReset model.form)
                                 ]
-                                [ text "Reset password" ]
+                                [ text T.resetPassword ]
 
                           else
                             button [ class "button", disabled True ] [ text T.resetPassword ]
@@ -417,7 +426,7 @@ viewResetForm global model =
                     text ""
             , case model.reset_result of
                 RemoteData.Success False ->
-                    div [ class "notification is-light is-warning" ] [ text "Wrong code, please try again." ]
+                    div [ class "notification is-light is-warning" ] [ text T.wrongCode ]
 
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -434,7 +443,7 @@ viewResetForm2 global model =
         [ div [ class "card" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
-                    [ text "Update your password" ]
+                    [ text T.updatePassword2 ]
                 ]
             , div [ class "card-content" ]
                 [ div [ class "field is-horizntl" ]

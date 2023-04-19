@@ -45,7 +45,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMapData, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -396,7 +396,7 @@ update_ apis message model =
         OnMoveAck result ->
             let
                 contract_m =
-                    withMaybeDataMap
+                    withMaybeMapData
                         (\x ->
                             x.contracts
                                 |> Maybe.map (\y -> y |> List.filter (\c -> c.id == "") |> List.head)

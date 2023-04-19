@@ -392,7 +392,6 @@ viewPath baseUri uriQuery maybePath =
         , attribute "aria-label" "breadcrumbs"
         ]
     <|
-        --A.icon0 "icon-layers icon-lg" ,
         case maybePath of
             Just g ->
                 let
@@ -410,8 +409,14 @@ viewPath baseUri uriQuery maybePath =
                             if i < (List.length g.path - 1) then
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
-                                    , a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
-                                        [ text p.name ]
+                                    , if List.member baseUri [ MandateBaseUri, ContractsBaseUri ] then
+                                        -- Fix issue with path not updated when moving from mandate (due to the no anonuymous path change policie)
+                                        a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ "#" ++ q) ]
+                                            [ text p.name ]
+
+                                      else
+                                        a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
+                                            [ text p.name ]
                                     ]
 
                             else

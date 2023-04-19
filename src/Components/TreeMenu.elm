@@ -44,7 +44,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter, on
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -316,7 +316,7 @@ update_ apis message model =
                 -- Happens for exemple when a tension page is visited without the nameid name (which is optional) in the url
                 ( model, noOut )
 
-            else if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeDataMap (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
+            else if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeMapData (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
                 ( setDataResult LoadingSlowly model
                   -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane when navigating from non orgs pages.
                 , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, ternary model.isHover Cmd.none Ports.openTreeMenu ]

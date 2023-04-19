@@ -272,7 +272,7 @@ viewSignup global model =
                         button
                             [ id "submitButton"
                             , class "button is-success"
-                            , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
+                            , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
                             , onClick (SubmitUser model.form)
                             ]
                             [ text T.signup ]
@@ -282,12 +282,10 @@ viewSignup global model =
                     ]
                 ]
             ]
-        , div []
-            [ case model.result of
-                RemoteData.Failure err ->
-                    viewHttpErrors err
+        , case model.result of
+            RemoteData.Failure err ->
+                viewHttpErrors err
 
-                _ ->
-                    text ""
-            ]
+            _ ->
+                text ""
         ]

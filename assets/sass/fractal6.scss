@@ -763,12 +763,16 @@ span[data-tooltip] {
         }
     }
 
-    &.box.has-background-light {
+    &.has-background-light {
         label {color: var(--grey);}
         color: black;
     }
-    &.box.has-background-danger {
+    &.has-background-danger {
         color: white;
+    }
+
+    &.is-warning {
+        background: var(--orange);
     }
 }
 
@@ -2900,21 +2904,6 @@ i.is-liked {
     }
 }
 
-.voteButton {
-    .button.is-success {
-        color: var(--button-vote-success);
-        background-color: var(--button-vote-success-background);
-    }
-    .button.is-danger {
-        color: var(--button-vote-danger);
-        background-color: var(--button-vote-danger-background);
-    }
-    .button:hover {
-        filter: invert(5%);
-        border: solid 1px var(--border-color-light);
-    }
-}
-
 /*
  *
  * Utils
@@ -3027,6 +3016,13 @@ i.is-liked {
 .is-success-light {
     background-color: var(--success-light);
     color: lighten($dark, 10);
+}
+.is-warning-light {
+    background-color: var(--warning-light);
+    color: lighten($dark, 10);
+    .label, .subtitle, .title {
+        color: lighten($dark, 10);
+    }
 }
 
 .arrow-left { // long

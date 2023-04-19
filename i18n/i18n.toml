@@ -154,6 +154,21 @@
   en="Explore public organizations."
   fr="Explorer les organisations publiques."
 
+[failedCaptcha]
+  en="Failed to fetch captcha"
+  fr="Échec de la récupération du captcha"
+
+[updatePassword]
+en="Update password"
+fr="Enregister le mot de passe"
+
+[updatePassword2]
+en="Update your password"
+fr="Enregister votre mot de passe"
+
+[wrongCode]
+  en="Wrong code, please try again."
+  fr="Code incorrect, veuillez réessayer."
 
 # Features
 
@@ -327,9 +342,17 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Notifications"
   fr="Notifications"
 
+[account]
+  en="Account"
+  fr="Compte"
+
 [emailHelp]
   en="Your address is private, only you can see it."
   fr="Votre adresse est privée, vous seul pouvez la voir."
+
+[usernameHelp]
+  en="Contact us to change your username."
+  fr="Contactez-nous pour changer votre nom d'utilisateur."
 
 [languageHelp]
   en="Change the system language."
@@ -2016,6 +2039,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 # Blob State
 #
 
+[newContractCreated]
+  en="New contract created."
+  fr="Nouveau contrat créé."
 
 [onNode_blob]
   en="Document created"

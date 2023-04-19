@@ -213,7 +213,8 @@ $tag-author: lighten($link, 47);
 $tag-counter: $grey-lighter;
 
 $success-light: lighten($success, 50);
-$danger-light: lighten($danger, 50);
+$danger-light: lighten($danger, 30);
+$warning-light: lighten($yellow, 40);
 
 $is-announce: #bfb40c;
 
@@ -361,12 +362,6 @@ $navbar-dropdown-item-active-color: $link;
 $logo-footer-color: $grey;
 $logo-modal-color: $grey-light3;
 
-// Extra
-$button-vote-success: $success-light;
-$button-vote-success-background: $success;
-$button-vote-danger: $danger-light;
-$button-vote-danger-background: $danger;
-
 :root.light, .modal.is-light, .is-helper {
   --primary: #{$primary};
   --link: #{$link};
@@ -392,6 +387,8 @@ $button-vote-danger-background: $danger;
   --tag-author: #{$tag-author};
   --tag-counter: #{$tag-counter};
   --success-light: #{$success-light};
+  --danger-light: #{$danger-light};
+  --warning-light: #{$warning-light};
   --is-announce: #{$is-announce};
 
   // Hover case
@@ -537,10 +534,6 @@ $button-vote-danger-background: $danger;
 
   // Extra
   --tag-background-color: inherit;
-  --button-vote-success: #{$button-vote-success};
-  --button-vote-success-background: #{$button-vote-success-background};
-  --button-vote-danger: #{$button-vote-danger};
-  --button-vote-danger-background: #{$button-vote-danger-background};
 
 }
 .markdown-body.is-light, .content.is-light {
@@ -588,6 +581,7 @@ $tag-counter: $grey-darker2;
 
 $success-light: lighten($success, 53);
 $danger-light: lighten($danger, 35);
+$warning-light: lighten($yellow, 30);
 
 // Hover case
 $primary-hover: darken($primary, 5);
@@ -733,12 +727,6 @@ $navbar-dropdown-item-hover-background-color: lighten($nbc, 3);
 $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $link;
 
-// Extra
-$button-vote-success: $success;
-$button-vote-success-background: $success-light;
-$button-vote-danger: $danger;
-$button-vote-danger-background: $danger-light;
-
 // Logo
 $logo-footer-color: lightgray;
 $logo-modal-color: $grey-dark;
@@ -769,6 +757,8 @@ $logo-modal-color: $grey-dark;
   --tag-author: #{$tag-author};
   --tag-counter: #{$tag-counter};
   --success-light: #{$success-light};
+  --danger-light: #{$danger-light};
+  --warning-light: #{$warning-light};
   --is-announce: #{$is-announce};
 
   // Hover case
@@ -918,10 +908,6 @@ $logo-modal-color: $grey-dark;
 
   // Extra
   --tag-background-color: inherit;
-  --button-vote-success: #{$button-vote-success};
-  --button-vote-success-background: #{$button-vote-success-background};
-  --button-vote-danger: #{$button-vote-danger};
-  --button-vote-danger-background: #{$button-vote-danger-background};
 
 }
 .markdown-body.is-dark, .content.is-dark {

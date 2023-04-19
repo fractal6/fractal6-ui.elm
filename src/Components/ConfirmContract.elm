@@ -43,7 +43,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, withMaybeDataMap)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -275,7 +275,7 @@ update_ apis message model =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
 
                 res =
-                    withMaybeDataMap (\r -> ( True, r )) model.data_result
+                    withMaybeMapData (\r -> ( True, r )) model.data_result
             in
             ( close model, Out (Ports.close_modal :: cmds) gcmds res )
 
@@ -398,7 +398,7 @@ viewModal op (State model) =
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "New contract created. "
+                        , text T.newContractCreated
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })

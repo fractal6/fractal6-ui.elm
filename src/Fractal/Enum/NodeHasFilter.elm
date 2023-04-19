@@ -43,11 +43,12 @@ type NodeHasFilter
     | Contracts
     | Orga_agg
     | Events_history
+    | N_open_contracts
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Orga_agg, Events_history, N_open_contracts ]
 
 
 decoder : Decoder NodeHasFilter
@@ -160,6 +161,9 @@ decoder =
 
                     "events_history" ->
                         Decode.succeed Events_history
+
+                    "n_open_contracts" ->
+                        Decode.succeed N_open_contracts
 
                     _ ->
                         Decode.fail ("Invalid NodeHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -275,6 +279,9 @@ toString enum____ =
 
         Events_history ->
             "events_history"
+
+        N_open_contracts ->
+            "n_open_contracts"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -395,6 +402,9 @@ fromString enumString____ =
 
         "events_history" ->
             Just Events_history
+
+        "n_open_contracts" ->
+            Just N_open_contracts
 
         _ ->
             Nothing

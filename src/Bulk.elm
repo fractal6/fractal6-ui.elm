@@ -58,7 +58,7 @@ import Loading
         , RequestResult(..)
         , WebData
         , withMaybeData
-        , withMaybeDataMap
+        , withMaybeMapData
         )
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -580,7 +580,7 @@ getChildren nid odata =
             nearestCircleid nid
     in
     odata
-        |> withMaybeDataMap
+        |> withMaybeMapData
             (\x ->
                 x |> Dict.values |> List.filter (\n -> n.first_link /= Nothing && (Just parentid == Maybe.map .nameid n.parent))
             )
@@ -590,7 +590,7 @@ getChildren nid odata =
 getOwners : GqlData NodesDict -> List Node
 getOwners odata =
     odata
-        |> withMaybeDataMap
+        |> withMaybeMapData
             (\x ->
                 x |> Dict.values |> List.filter (\n -> n.role_type == Just RoleType.Owner)
             )
