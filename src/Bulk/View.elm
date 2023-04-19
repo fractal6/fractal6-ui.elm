@@ -201,6 +201,11 @@ viewCircleTarget cls er =
             viewRole ("is-tiny is-wrapped " ++ cls) Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
 
 
+viewCircleSimple : String -> Html msg
+viewCircleSimple nameid =
+    span [ class "tag has-border-light is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
+
+
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow cls emitter receiver =
     span [ class cls ]
