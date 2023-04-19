@@ -498,6 +498,7 @@ viewResetForm2 global model =
                                 [ id "submitButton"
                                 , class "button is-success"
                                 , classList [ ( "is-loading", model.reset2_result == RemoteData.Loading ) ]
+                                , type_ "submit"
                                 , onClick (SubmitReset2 model.form)
                                 ]
                                 [ text T.resetPassword ]

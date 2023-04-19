@@ -483,6 +483,18 @@ httpReponseToImage response =
             Err (Http.BadStatus metadata.statusCode)
 
 
+updatePassword api post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.auth ++ "/updatepassword"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 
 --
 -- Get Doc
