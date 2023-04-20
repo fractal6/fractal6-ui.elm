@@ -335,109 +335,6 @@ type TensionTab
 
 
 
----- MSG ----
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | LoadTensionHead
-    | LoadTensionComments
-    | PushCommentPatch
-    | PushTitle
-    | PushBlob_ TensionForm
-    | PublishBlob
-    | Submit Bool (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
-    | GotPath Bool (GqlData LocalGraph)
-    | GotTensionHead (GqlData TensionHead)
-    | GotIsSubscribe (GqlData Bool)
-    | GotTensionComments (GqlData TensionComments)
-    | GotTensionBlobs (GqlData TensionBlobs)
-    | MarkAsRead String
-    | GotMarkAsRead (GqlData IdPayload)
-    | ToggleSubscription String
-      -- Unsubscribe from url
-    | DoUnsubscribe String
-    | GotUnsubscribe (GqlData Bool)
-    | OnCloseUnsubscribe
-      -- @TODO: move this to global (e.g ToggleWatchOrga)
-    | DoUnwatch String
-    | GotUnwatch (GqlData Bool)
-    | OnCloseUnwatch
-      -- Pin/Unpin
-    | PinTension Time.Posix
-    | UnpinTension Time.Posix
-    | PinAck (GqlData IdPayload)
-      --
-      -- Page Action
-      --
-    | ExpandEvent Int
-      -- Edit title
-    | DoChangeTitle
-    | CancelTitle
-    | SubmitTitle Time.Posix
-    | TitleAck (GqlData IdPayload)
-      -- New comment
-    | ChangeCommentPost String String -- {field value}
-    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
-    | CommentAck (GqlData PatchTensionPayloadID)
-      -- Edit comment
-    | DoUpdateComment Comment
-    | CancelCommentPatch
-    | ChangeCommentPatch String String
-    | SubmitCommentPatch Time.Posix
-    | CommentPatchAck (GqlData Comment)
-      -- Blob edit
-    | ChangeBlobEdit NodeEdit
-    | ChangeBlobPost String String
-    | AddDomains
-    | AddPolicies
-    | AddResponsabilities
-      -- Blob Submit
-    | CommitBlob NodeDoc Time.Posix
-    | BlobAck (GqlData PatchTensionPayloadID)
-    | PushBlob String Time.Posix
-    | PushBlobAck (GqlData TensionBlobFlag)
-    | CancelBlob
-      -- Assignees
-    | DoAssigneeEdit
-      -- Labels
-    | DoLabelEdit
-      -- move tension
-    | DoMove TensionHead
-      -- Node Action
-    | OpenActionPanel String String (Maybe ( Int, Int ))
-      -- Common
-    | NoMsg
-    | LogErr String
-    | ChangeInputViewMode InputViewMode
-    | ChangeUpdateViewMode InputViewMode
-    | OnRichText String String
-    | OnToggleMdHelp String
-    | OnAddReaction String Int
-    | OnAddReactionAck (GqlData ReactionResponse)
-    | OnDeleteReaction String Int
-    | OnDeleteReactionAck (GqlData ReactionResponse)
-    | ScrollToElement String
-    | UpdateUctx UserCtx
-      -- Components
-    | HelperBarMsg HelperBar.Msg
-    | HelpMsg Help.Msg
-    | NewTensionMsg NTF.Msg
-    | UserSearchPanelMsg UserSearchPanel.Msg
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
-    | MoveTensionMsg MoveTension.Msg
-    | ContractsPageMsg ContractsPage.Msg
-    | SelectTypeMsg SelectType.Msg
-    | ActionPanelMsg ActionPanel.Msg
-    | JoinOrgaMsg JoinOrga.Msg
-    | AuthModalMsg AuthModal.Msg
-    | OrgaMenuMsg OrgaMenu.Msg
-    | TreeMenuMsg TreeMenu.Msg
-    | UserInputMsg UserInput.Msg
-
-
-
 ---- INIT ----
 
 
@@ -668,6 +565,109 @@ refresh_cmds refresh global model =
     , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
     , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
     ]
+
+
+
+---- MSG ----
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | LoadTensionHead
+    | LoadTensionComments
+    | PushCommentPatch
+    | PushTitle
+    | PushBlob_ TensionForm
+    | PublishBlob
+    | Submit Bool (Time.Posix -> Msg) -- Get Current Time
+      -- Data Queries
+    | GotPath Bool (GqlData LocalGraph)
+    | GotTensionHead (GqlData TensionHead)
+    | GotIsSubscribe (GqlData Bool)
+    | GotTensionComments (GqlData TensionComments)
+    | GotTensionBlobs (GqlData TensionBlobs)
+    | MarkAsRead String
+    | GotMarkAsRead (GqlData IdPayload)
+    | ToggleSubscription String
+      -- Unsubscribe from url
+    | DoUnsubscribe String
+    | GotUnsubscribe (GqlData Bool)
+    | OnCloseUnsubscribe
+      -- @TODO: move this to global (e.g ToggleWatchOrga)
+    | DoUnwatch String
+    | GotUnwatch (GqlData Bool)
+    | OnCloseUnwatch
+      -- Pin/Unpin
+    | PinTension Time.Posix
+    | UnpinTension Time.Posix
+    | PinAck (GqlData IdPayload)
+      --
+      -- Page Action
+      --
+    | ExpandEvent Int
+      -- Edit title
+    | DoChangeTitle
+    | CancelTitle
+    | SubmitTitle Time.Posix
+    | TitleAck (GqlData IdPayload)
+      -- New comment
+    | ChangeCommentPost String String -- {field value}
+    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
+    | CommentAck (GqlData PatchTensionPayloadID)
+      -- Edit comment
+    | DoUpdateComment Comment
+    | CancelCommentPatch
+    | ChangeCommentPatch String String
+    | SubmitCommentPatch Time.Posix
+    | CommentPatchAck (GqlData Comment)
+      -- Blob edit
+    | ChangeBlobEdit NodeEdit
+    | ChangeBlobPost String String
+    | AddDomains
+    | AddPolicies
+    | AddResponsabilities
+      -- Blob Submit
+    | CommitBlob NodeDoc Time.Posix
+    | BlobAck (GqlData PatchTensionPayloadID)
+    | PushBlob String Time.Posix
+    | PushBlobAck (GqlData TensionBlobFlag)
+    | CancelBlob
+      -- Assignees
+    | DoAssigneeEdit
+      -- Labels
+    | DoLabelEdit
+      -- move tension
+    | DoMove TensionHead
+      -- Node Action
+    | OpenActionPanel String String (Maybe ( Int, Int ))
+      -- Common
+    | NoMsg
+    | LogErr String
+    | ChangeInputViewMode InputViewMode
+    | ChangeUpdateViewMode InputViewMode
+    | OnRichText String String
+    | OnToggleMdHelp String
+    | OnAddReaction String Int
+    | OnAddReactionAck (GqlData ReactionResponse)
+    | OnDeleteReaction String Int
+    | OnDeleteReactionAck (GqlData ReactionResponse)
+    | ScrollToElement String
+    | UpdateUctx UserCtx
+      -- Components
+    | HelperBarMsg HelperBar.Msg
+    | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | MoveTensionMsg MoveTension.Msg
+    | ContractsPageMsg ContractsPage.Msg
+    | SelectTypeMsg SelectType.Msg
+    | ActionPanelMsg ActionPanel.Msg
+    | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
+    | UserInputMsg UserInput.Msg
 
 
 

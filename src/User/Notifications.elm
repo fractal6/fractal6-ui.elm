@@ -235,34 +235,6 @@ menuToCount menu notif =
 
 
 
----- MSG ----
-
-
-type Msg
-    = Submit (Time.Posix -> Msg) -- Get Current Time
-    | LoadNotifications
-    | LoadAssigned
-    | GotNotifications (GqlData UserEvents)
-    | GotAssigned (GqlData (Dict String (List Tension)))
-    | MarkAsRead String
-    | GotMarkAsRead (GqlData IdPayload)
-    | MarkAllAsRead
-    | GotMarkAllAsRead (GqlData IdPayload)
-    | ChangeMenuFocus MenuNotif
-    | UpdateNotif NotifCount
-      -- Common
-    | NoMsg
-    | PassedSlowLoadTreshold -- timer
-    | LogErr String
-    | DoOpenModal
-    | DoCloseModal ModalData
-    | GoBack
-      -- Help
-    | HelpMsg Help.Msg
-    | AuthModalMsg AuthModal.Msg
-
-
-
 -- INIT --
 
 
@@ -333,6 +305,34 @@ init global flags =
     , Cmd.batch cmds
     , Cmd.batch (gcmds ++ [ send (UpdateCanReferer model.can_referer) ])
     )
+
+
+
+---- MSG ----
+
+
+type Msg
+    = Submit (Time.Posix -> Msg) -- Get Current Time
+    | LoadNotifications
+    | LoadAssigned
+    | GotNotifications (GqlData UserEvents)
+    | GotAssigned (GqlData (Dict String (List Tension)))
+    | MarkAsRead String
+    | GotMarkAsRead (GqlData IdPayload)
+    | MarkAllAsRead
+    | GotMarkAllAsRead (GqlData IdPayload)
+    | ChangeMenuFocus MenuNotif
+    | UpdateNotif NotifCount
+      -- Common
+    | NoMsg
+    | PassedSlowLoadTreshold -- timer
+    | LogErr String
+    | DoOpenModal
+    | DoCloseModal ModalData
+    | GoBack
+      -- Help
+    | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 

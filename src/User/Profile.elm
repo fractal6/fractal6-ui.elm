@@ -119,26 +119,6 @@ type alias Model =
 
 
 
----- MSG ----
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-    | LoadNodes (List UserRole)
-    | GotNodes (GqlData (List NodeExt))
-    | GotProfile (GqlData UserProfile)
-      -- Common
-    | NoMsg
-    | LogErr String
-    | DoOpenModal
-    | DoCloseModal ModalData
-      -- Help
-    | HelpMsg Help.Msg
-    | AuthModalMsg AuthModal.Msg
-
-
-
 -- INIT --
 
 
@@ -175,6 +155,26 @@ init global flags =
     , Cmd.batch cmds
     , send (UpdateSessionFocus Nothing)
     )
+
+
+
+---- MSG ----
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | LoadNodes (List UserRole)
+    | GotNodes (GqlData (List NodeExt))
+    | GotProfile (GqlData UserProfile)
+      -- Common
+    | NoMsg
+    | LogErr String
+    | DoOpenModal
+    | DoCloseModal ModalData
+      -- Help
+    | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 

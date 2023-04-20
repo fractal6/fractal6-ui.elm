@@ -256,57 +256,6 @@ nfirstTensions =
 
 
 
----- MSG ----
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | LoadOrga
-    | OnUpdateTree (Maybe NodesDict)
-    | PushTension Tension
-    | Submit (Time.Posix -> Msg) -- Get the current time
-      -- Gql Data Queries
-    | GotOrga (GqlData NodesDict)
-    | GotTensions (GqlData (List Tension))
-    | GotData (GqlData NodeData)
-      -- Page
-    | SwitchWindow
-    | SetLegend Bool
-    | UpdatePath
-      -- Quick search
-    | LookupFocus String
-    | ToggleLookup
-    | LookupBlur
-    | LookupBlur_
-    | ChangePattern String
-    | ChangeNodeLookup (LookupResult Node)
-    | SearchKeyDown Int
-    | ChangeActivityTab ActivityTab
-    | GotJournal (GqlData (List EventNotif))
-      -- Node Action
-    | OpenActionPanel String String (Maybe ( Int, Int ))
-      -- GP JS Interop
-    | FlushGraphpack
-    | NodeClicked String
-    | NodeHovered String
-    | NodeFocused ( String, Int )
-    | OnClearTooltip
-    | ToggleGraphReverse
-      -- Common
-    | NoMsg
-    | LogErr String
-      -- Components
-    | HelperBarMsg HelperBar.Msg
-    | HelpMsg Help.Msg
-    | NewTensionMsg NTF.Msg
-    | ActionPanelMsg ActionPanel.Msg
-    | JoinOrgaMsg JoinOrga.Msg
-    | AuthModalMsg AuthModal.Msg
-    | OrgaMenuMsg OrgaMenu.Msg
-    | TreeMenuMsg TreeMenu.Msg
-
-
-
 ---- INIT ----
 
 
@@ -444,6 +393,57 @@ init global flags =
       else
         Cmd.none
     )
+
+
+
+---- MSG ----
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | LoadOrga
+    | OnUpdateTree (Maybe NodesDict)
+    | PushTension Tension
+    | Submit (Time.Posix -> Msg) -- Get the current time
+      -- Gql Data Queries
+    | GotOrga (GqlData NodesDict)
+    | GotTensions (GqlData (List Tension))
+    | GotData (GqlData NodeData)
+      -- Page
+    | SwitchWindow
+    | SetLegend Bool
+    | UpdatePath
+      -- Quick search
+    | LookupFocus String
+    | ToggleLookup
+    | LookupBlur
+    | LookupBlur_
+    | ChangePattern String
+    | ChangeNodeLookup (LookupResult Node)
+    | SearchKeyDown Int
+    | ChangeActivityTab ActivityTab
+    | GotJournal (GqlData (List EventNotif))
+      -- Node Action
+    | OpenActionPanel String String (Maybe ( Int, Int ))
+      -- GP JS Interop
+    | FlushGraphpack
+    | NodeClicked String
+    | NodeHovered String
+    | NodeFocused ( String, Int )
+    | OnClearTooltip
+    | ToggleGraphReverse
+      -- Common
+    | NoMsg
+    | LogErr String
+      -- Components
+    | HelperBarMsg HelperBar.Msg
+    | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | ActionPanelMsg ActionPanel.Msg
+    | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
 
 
 

@@ -623,73 +623,6 @@ typeDecoder typeF =
 
 
 
----- MSG ----
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | OnResize Int Int
-    | FitBoard (Result Dom.Error Dom.Element)
-    | PushTension Tension
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
-    | GotPath Bool (GqlData LocalGraph) -- GraphQL
-    | GotChildren (RestData (List NodeId)) -- HTTP/Json @deprecated
-    | GotChildren2 (List String) -- use TreeMenu to get children
-    | GotTensionsInt Int (GqlData (List Tension)) -- GraphQL
-    | GotTensionsExt (GqlData (List Tension)) -- GraphQL
-    | GotTensionsAll (GqlData (List Tension)) -- GraphQL
-    | GotTensionsCount (GqlData TensionsCount)
-      -- Page Action
-    | DoLoadInit
-    | DoLoad Bool -- query tensions
-    | ChangePattern String
-    | ChangeViewFilter TensionsView
-    | ChangeStatusFilter StatusFilter
-    | ChangeTypeFilter TypeFilter
-    | ChangeDepthFilter DepthFilter
-    | ChangeSortFilter SortFilter
-    | ChangeAuthor
-    | ChangeLabel
-    | SearchKeyDown Int
-    | ResetData
-    | ResetDataSoft
-    | OnClearFilter
-    | SubmitTextSearch
-    | SubmitSearchReset
-    | SubmitSearch
-    | GoView TensionsView
-    | SetOffset Int
-      -- Board
-    | OnColumnHover (Maybe String)
-    | OnMove { pos : Int, to_receiverid : String } Tension
-    | OnCancelHov
-    | OnEndMove
-    | OnMoveEnterC { pos : Int, to_receiverid : String } Bool
-    | OnMoveLeaveC
-    | OnMoveLeaveC_
-    | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
-    | OnMoveDrop String
-      -- Common
-    | NoMsg
-    | LogErr String
-    | OnGoRoot
-    | OpenActionPanel String String (Maybe ( Int, Int ))
-      -- Components
-    | HelperBarMsg HelperBar.Msg
-    | HelpMsg Help.Msg
-    | NewTensionMsg NTF.Msg
-    | UserSearchPanelMsg UserSearchPanel.Msg
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
-    | JoinOrgaMsg JoinOrga.Msg
-    | AuthModalMsg AuthModal.Msg
-    | OrgaMenuMsg OrgaMenu.Msg
-    | TreeMenuMsg TreeMenu.Msg
-    | ActionPanelMsg ActionPanel.Msg
-    | MoveTensionMsg MoveTension.Msg
-
-
-
 ---- INIT ----
 
 
@@ -853,6 +786,73 @@ dataNeedLoad model =
 
         AssigneeView ->
             not (isSuccess model.tensions_all)
+
+
+
+---- MSG ----
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | OnResize Int Int
+    | FitBoard (Result Dom.Error Dom.Element)
+    | PushTension Tension
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+      -- Data Queries
+    | GotPath Bool (GqlData LocalGraph) -- GraphQL
+    | GotChildren (RestData (List NodeId)) -- HTTP/Json @deprecated
+    | GotChildren2 (List String) -- use TreeMenu to get children
+    | GotTensionsInt Int (GqlData (List Tension)) -- GraphQL
+    | GotTensionsExt (GqlData (List Tension)) -- GraphQL
+    | GotTensionsAll (GqlData (List Tension)) -- GraphQL
+    | GotTensionsCount (GqlData TensionsCount)
+      -- Page Action
+    | DoLoadInit
+    | DoLoad Bool -- query tensions
+    | ChangePattern String
+    | ChangeViewFilter TensionsView
+    | ChangeStatusFilter StatusFilter
+    | ChangeTypeFilter TypeFilter
+    | ChangeDepthFilter DepthFilter
+    | ChangeSortFilter SortFilter
+    | ChangeAuthor
+    | ChangeLabel
+    | SearchKeyDown Int
+    | ResetData
+    | ResetDataSoft
+    | OnClearFilter
+    | SubmitTextSearch
+    | SubmitSearchReset
+    | SubmitSearch
+    | GoView TensionsView
+    | SetOffset Int
+      -- Board
+    | OnColumnHover (Maybe String)
+    | OnMove { pos : Int, to_receiverid : String } Tension
+    | OnCancelHov
+    | OnEndMove
+    | OnMoveEnterC { pos : Int, to_receiverid : String } Bool
+    | OnMoveLeaveC
+    | OnMoveLeaveC_
+    | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
+    | OnMoveDrop String
+      -- Common
+    | NoMsg
+    | LogErr String
+    | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
+      -- Components
+    | HelperBarMsg HelperBar.Msg
+    | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
+    | MoveTensionMsg MoveTension.Msg
 
 
 

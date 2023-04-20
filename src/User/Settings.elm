@@ -196,32 +196,6 @@ menuToIcon menu =
 
 
 
----- MSG ----
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-    | SubmitProfile Time.Posix
-    | GotUserFull (GqlData UserFull)
-    | GotUserPatch (GqlData UserFull)
-    | ChangeMenuFocus MenuSettings
-    | OnChangePost String String
-    | SwitchLang Lang.Lang
-    | SwitchNotifyByEmail Int Bool
-    | OnPasswordUpdate
-    | OnPasswordUpdateAck (RestData UserCtx)
-      -- Common
-    | NoMsg
-    | LogErr String
-    | DoOpenModal
-    | DoCloseModal ModalData
-      -- Help
-    | HelpMsg Help.Msg
-    | AuthModalMsg AuthModal.Msg
-
-
-
 -- INIT --
 
 
@@ -270,6 +244,32 @@ init global flags =
     , Cmd.batch cmds
     , send (UpdateSessionFocus Nothing)
     )
+
+
+
+---- MSG ----
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | SubmitProfile Time.Posix
+    | GotUserFull (GqlData UserFull)
+    | GotUserPatch (GqlData UserFull)
+    | ChangeMenuFocus MenuSettings
+    | OnChangePost String String
+    | SwitchLang Lang.Lang
+    | SwitchNotifyByEmail Int Bool
+    | OnPasswordUpdate
+    | OnPasswordUpdateAck (RestData UserCtx)
+      -- Common
+    | NoMsg
+    | LogErr String
+    | DoOpenModal
+    | DoCloseModal ModalData
+      -- Help
+    | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 

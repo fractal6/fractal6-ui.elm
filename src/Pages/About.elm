@@ -88,19 +88,6 @@ type ViewMode
 
 
 
----- MSG ----
-
-
-type Msg
-    = SubmitUser UserAuthForm
-    | ChangeUserPost String String
-    | GotSignin (RestData UserCtx)
-    | GotSignup (RestData Bool)
-    | ChangeViewMode ViewMode
-    | SubmitEnter Int
-
-
-
 ---- INIT ----
 
 
@@ -134,6 +121,19 @@ init global flags =
     , Cmd.none
     , Cmd.batch [ gcmd, send (UpdateSessionFocus Nothing) ]
     )
+
+
+
+---- MSG ----
+
+
+type Msg
+    = SubmitUser UserAuthForm
+    | ChangeUserPost String String
+    | GotSignin (RestData UserCtx)
+    | GotSignup (RestData Bool)
+    | ChangeViewMode ViewMode
+    | SubmitEnter Int
 
 
 
