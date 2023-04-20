@@ -120,7 +120,7 @@ import Loading
         ( GqlData
         , ModalData
         , RequestResult(..)
-        , WebData
+        , RestData
         , fromMaybeData
         , isFailure
         , isSuccess

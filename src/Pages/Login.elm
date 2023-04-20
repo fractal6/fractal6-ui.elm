@@ -38,7 +38,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li,
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Loading exposing (WebData)
+import Loading exposing (RestData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -66,7 +66,7 @@ page =
 
 type alias Model =
     { form : UserAuthForm
-    , result : WebData UserCtx
+    , result : RestData UserCtx
     }
 
 
@@ -111,7 +111,7 @@ init global flags =
 type Msg
     = SubmitUser UserAuthForm
     | ChangeUserPost String String
-    | GotSignin (WebData UserCtx) -- use remotedata.
+    | GotSignin (RestData UserCtx) -- use remotedata.
     | SubmitKeyDown Int
 
 
@@ -255,7 +255,7 @@ viewLogin model =
                         button
                             [ id "submitButton"
                             , class "button is-success"
-                            , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
+                            , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
                             , onClick (SubmitUser model.form)
                             ]
                             [ text T.signin ]

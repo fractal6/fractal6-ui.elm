@@ -40,7 +40,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, web2gql, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -266,7 +266,7 @@ update_ apis message model =
                                     ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis nameids OnGotLabels ] )
 
                                 Just False ->
-                                    ( { model | labels_data = LoadingSlowly }, [ fetchLabelsTop apis (List.head nameids |> withDefault "") True (web2gql >> OnGotLabels) ] )
+                                    ( { model | labels_data = LoadingSlowly }, [ fetchLabelsTop apis (List.head nameids |> withDefault "") True (rest2Gql >> OnGotLabels) ] )
 
                                 Nothing ->
                                     ( { model | labels_data = LoadingSlowly }, [ queryLabels apis nameids OnGotLabels ] )

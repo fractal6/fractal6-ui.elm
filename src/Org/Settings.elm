@@ -59,7 +59,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingSpin, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, loadingSpin, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -190,8 +190,8 @@ type alias Model =
 
     -- Labels
     , labels : GqlData (List LabelFull)
-    , labels_top : WebData (List Label)
-    , labels_sub : WebData (List Label)
+    , labels_top : RestData (List Label)
+    , labels_sub : RestData (List Label)
     , label_add : Bool
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
@@ -201,8 +201,8 @@ type alias Model =
     , nodeDoc : NodeDoc
     , showMandate : String
     , roles : GqlData (List RoleExtFull)
-    , roles_top : WebData (List RoleExt)
-    , roles_sub : WebData (List RoleExt)
+    , roles_top : RestData (List RoleExt)
+    , roles_sub : RestData (List RoleExt)
     , role_add : Bool
     , role_edit : Maybe RoleExtFull
     , role_result : GqlData RoleExtFull
@@ -210,7 +210,7 @@ type alias Model =
 
     -- Orga
     , orga_rights : GqlData NodeRights
-    , switch_result : WebData Bool
+    , switch_result : RestData Bool
     , switch_index : Int
 
     -- Common
@@ -338,8 +338,8 @@ type Msg
     | SafeSend Msg
       -- Labels
     | GotLabels (GqlData (List LabelFull))
-    | GotLabelsTop (WebData (List Label))
-    | GotLabelsSub (WebData (List Label))
+    | GotLabelsTop (RestData (List Label))
+    | GotLabelsSub (RestData (List Label))
     | AddLabel
     | EditLabel LabelFull
     | CancelLabel
@@ -350,8 +350,8 @@ type Msg
     | GotLabelDel (GqlData LabelFull)
       -- Roles
     | GotRoles (GqlData (List RoleExtFull))
-    | GotRolesTop (WebData (List RoleExt))
-    | GotRolesSub (WebData (List RoleExt))
+    | GotRolesTop (RestData (List RoleExt))
+    | GotRolesSub (RestData (List RoleExt))
     | AddRole
     | EditRole RoleExtFull
     | CancelRole
@@ -369,8 +369,8 @@ type Msg
     | GotRootRights (GqlData NodeRights)
     | SwitchUserCanJoin Int Bool
     | SwitchGuestCanCreateTension Int Bool
-    | GotUserCanJoin (WebData Bool)
-    | GotGuestCanCreateTension (WebData Bool)
+    | GotUserCanJoin (RestData Bool)
+    | GotGuestCanCreateTension (RestData Bool)
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -1556,7 +1556,7 @@ viewLabels model =
         ]
 
 
-viewLabelsExt : Url -> String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
+viewLabelsExt : Url -> String -> GqlData (List LabelFull) -> RestData (List Label) -> Html Msg
 viewLabelsExt url txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data_ ->
@@ -1836,7 +1836,7 @@ viewRoles model =
         ]
 
 
-viewRolesExt : Url -> String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
+viewRolesExt : Url -> String -> GqlData (List RoleExtFull) -> RestData (List RoleExt) -> Html Msg
 viewRolesExt url txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data_ ->
@@ -1895,7 +1895,7 @@ type alias SwitchRecord =
     }
 
 
-viewOrgaSettings : GqlData NodeRights -> WebData Bool -> Int -> Html Msg
+viewOrgaSettings : GqlData NodeRights -> RestData Bool -> Int -> Html Msg
 viewOrgaSettings orga_rights switch_result switch_index =
     let
         switches =

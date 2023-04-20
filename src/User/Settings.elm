@@ -47,7 +47,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -114,7 +114,7 @@ type alias Model =
     { username : String
     , user : GqlData UserFull
     , user_result : GqlData UserFull
-    , password_result : WebData UserCtx
+    , password_result : RestData UserCtx
     , menuFocus : MenuSettings
     , hasUnsavedData : Bool
     , switch_index : Int
@@ -210,7 +210,7 @@ type Msg
     | SwitchLang Lang.Lang
     | SwitchNotifyByEmail Int Bool
     | OnPasswordUpdate
-    | OnPasswordUpdateAck (WebData UserCtx)
+    | OnPasswordUpdateAck (RestData UserCtx)
       -- Common
     | NoMsg
     | LogErr String
@@ -694,7 +694,7 @@ viewEmailSettings user result switch_index menuFocus =
         |> div []
 
 
-viewAccountSettings : UserFull -> GqlData UserFull -> WebData UserCtx -> Int -> MenuSettings -> UserProfileForm -> Html Msg
+viewAccountSettings : UserFull -> GqlData UserFull -> RestData UserCtx -> Int -> MenuSettings -> UserProfileForm -> Html Msg
 viewAccountSettings user user_result password_result switch_index menuFocus form =
     let
         switches =
@@ -800,7 +800,7 @@ viewAccountSettings user user_result password_result switch_index menuFocus form
                         [ div [ class "control is-text-aligned" ]
                             [ button
                                 [ class "button is-primary"
-                                , classList [ ( "is-loading", Loading.isLoadingWeb password_result ) ]
+                                , classList [ ( "is-loading", Loading.isLoadingRest password_result ) ]
                                 , type_ "submit"
                                 , disabled (not isSendable)
                                 , ternary isSendable
@@ -808,7 +808,7 @@ viewAccountSettings user user_result password_result switch_index menuFocus form
                                     (onClick NoMsg)
                                 ]
                                 [ text "Update Password" ]
-                            , a [ class "underlined-link mx-4 is-link", href (toHref Route.PasswordReset ++ "?email=" ++ user.email) ] [ textH T.passwordForgotten ]
+                            , a [ class "underlined-link mx-4 has-text-info", href (toHref Route.PasswordReset ++ "?email=" ++ user.email) ] [ textH T.passwordForgotten ]
                             ]
                         ]
                     , case password_result of

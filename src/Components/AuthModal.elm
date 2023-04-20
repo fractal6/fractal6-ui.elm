@@ -38,7 +38,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccess, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -95,7 +95,7 @@ type alias UserAuthForm =
 
 type ModalAuth
     = Inactive
-    | Active UserAuthForm (WebData UserCtx)
+    | Active UserAuthForm (RestData UserCtx)
 
 
 init : UserState -> Maybe String -> State
@@ -124,7 +124,7 @@ type Msg
     | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
+    | GotSignin (RestData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg

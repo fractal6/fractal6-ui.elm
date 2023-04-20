@@ -39,7 +39,7 @@ import Html.Attributes exposing (alt, attribute, class, classList, disabled, hei
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as JE
-import Loading exposing (WebData)
+import Loading exposing (RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -75,7 +75,7 @@ type alias Flags =
 
 type alias Model =
     { form : UserAuthForm
-    , result : WebData UserCtx
+    , result : RestData UserCtx
     , viewMode : ViewMode
     , lang : Lang.Lang
     , isHome : Bool
@@ -94,8 +94,8 @@ type ViewMode
 type Msg
     = SubmitUser UserAuthForm
     | ChangeUserPost String String
-    | GotSignin (WebData UserCtx)
-    | GotSignup (WebData Bool)
+    | GotSignin (RestData UserCtx)
+    | GotSignup (RestData Bool)
     | ChangeViewMode ViewMode
     | SubmitEnter Int
 
@@ -366,7 +366,7 @@ viewLogin model =
                     button
                         [ id "submitButton"
                         , class "button is-success"
-                        , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
+                        , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text T.signin ]
@@ -460,7 +460,7 @@ viewSignup model =
                     button
                         [ id "submitButton2"
                         , class "button is-success"
-                        , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
+                        , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text T.signup ]

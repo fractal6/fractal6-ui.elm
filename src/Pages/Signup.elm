@@ -39,7 +39,7 @@ import Html.Attributes exposing (attribute, autofocus, class, classList, disable
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Encode as JE
-import Loading exposing (WebData)
+import Loading exposing (RestData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -68,7 +68,7 @@ page =
 
 type alias Model =
     { form : UserAuthForm
-    , result : WebData Bool
+    , result : RestData Bool
     }
 
 
@@ -113,7 +113,7 @@ init global flags =
 type Msg
     = SubmitUser UserAuthForm
     | ChangeUserPost String String
-    | GotSignup (WebData Bool)
+    | GotSignup (RestData Bool)
     | SubmitKeyDown Int
 
 
@@ -272,7 +272,7 @@ viewSignup global model =
                         button
                             [ id "submitButton"
                             , class "button is-success"
-                            , classList [ ( "is-loading", Loading.isLoadingWeb model.result ) ]
+                            , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
                             , type_ "submit"
                             , onClick (SubmitUser model.form)
                             ]
