@@ -454,26 +454,6 @@ contracts fillInOptionals____ object____ =
     Object.selectionForCompositeField "contracts" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-type alias OrgaAggOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.OrgaAggFilter }
-
-
-orga_agg :
-    (OrgaAggOptionalArguments -> OrgaAggOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.OrgaAgg
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-orga_agg fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeOrgaAggFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "orga_agg" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
 type alias EventsHistoryOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.EventFilter
     , order : OptionalArgument Fractal.InputObject.EventOrder
