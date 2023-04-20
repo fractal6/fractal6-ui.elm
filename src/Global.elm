@@ -52,7 +52,7 @@ import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), WebData, isFailure, withMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, isFailure, withMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -130,7 +130,7 @@ type Msg
     | UpdateCanReferer (Maybe Url)
     | NavigateNode String
     | UpdateUserSession UserCtx -- user is logged In !
-    | UpdateUserTokenAck (WebData UserCtx)
+    | UpdateUserTokenAck (RestData UserCtx)
     | UpdateUserToken
     | LoggedOutUser
     | LoggedOutUserOk

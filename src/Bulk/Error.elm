@@ -36,7 +36,7 @@ import Loading
         , HttpError
         , ModalData
         , RequestResult(..)
-        , WebData
+        , RestData
         , errorDecoder
         , errorsDecoder
         , toErrorData
@@ -64,7 +64,7 @@ viewMaybeErrors data =
             text ""
 
 
-viewMaybeWebErrors : WebData a -> Html msg
+viewMaybeWebErrors : RestData a -> Html msg
 viewMaybeWebErrors data =
     case data of
         RemoteData.Failure err ->

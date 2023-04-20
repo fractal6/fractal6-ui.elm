@@ -34,7 +34,7 @@ import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
-import Loading exposing (expectJson, fromResult, mapWeb2Data)
+import Loading exposing (expectJson, fromResult, mapRest2Gql)
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing
@@ -105,7 +105,7 @@ fetchMembersSub api targetid msg =
         , headers = []
         , url = api.rest ++ "/sub_members"
         , body = Http.jsonBody <| JE.string targetid
-        , expect = expectJson (RemoteData.fromResult >> mapWeb2Data membersNodeDecoder >> msg) membersDecoder
+        , expect = expectJson (RemoteData.fromResult >> mapRest2Gql membersNodeDecoder >> msg) membersDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

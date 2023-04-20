@@ -1246,7 +1246,7 @@ viewCanvas us model =
             _ ->
                 text ""
         , if model.legend then
-            div [ id "canvasLegend", class "box has-background-warning-light has-text-dark" ]
+            div [ id "canvasLegend", class "box is-warning-light has-text-dark" ]
                 [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text T.circlesLegend ] ]
                 , br [ class "mb-3" ] []
                 , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text T.focusLegend ] ]

@@ -39,7 +39,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput)
 import Http
 import Image exposing (Image)
-import Loading exposing (WebData, loadingSpin)
+import Loading exposing (RestData, loadingSpin)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -84,12 +84,12 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { form : UserAuthForm
     , email_given : Maybe String
-    , result : WebData UserCtx
+    , result : RestData UserCtx
     , challenge_data : RemoteData Http.Error String
-    , reset_result : WebData Bool
-    , reset2_result : WebData UserCtx
+    , reset_result : RestData Bool
+    , reset2_result : RestData UserCtx
     , token_reset : Maybe String
-    , isValid : WebData Bool
+    , isValid : RestData Bool
 
     -- common
     , help : Help.State
@@ -160,13 +160,13 @@ type Msg
     | SubmitReset UserAuthForm
     | SubmitReset2 UserAuthForm
     | ChangeUserPost String String
-    | GotReset (WebData Bool) -- use remotedata.
-    | GotReset2 (WebData UserCtx) -- use remotedata.
+    | GotReset (RestData Bool) -- use remotedata.
+    | GotReset2 (RestData UserCtx) -- use remotedata.
       --| GotChallenge (RemoteData Http.Error File)
     | GotChallenge (RemoteData Http.Error (Maybe Image))
       --| FileLoaded String
     | SubmitKeyDown Int
-    | GotUuidCheck (WebData Bool)
+    | GotUuidCheck (RestData Bool)
     | HelpMsg Help.Msg
 
 

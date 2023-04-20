@@ -49,7 +49,7 @@ import Html.Attributes exposing (attribute, autocomplete, class, classList, disa
 import Html.Events exposing (onBlur, onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData)
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -109,7 +109,7 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { form : OrgaForm
     , step : OrgaStep
-    , result : WebData NodeId
+    , result : RestData NodeId
     , hasDuplicate : Bool
     , hasBeenDuplicate : Bool
     , isWriting : Maybe Bool
@@ -234,7 +234,7 @@ type Msg
     | CheckExist
     | CheckExistAck (GqlData NodeId)
     | SubmitOrga OrgaForm Time.Posix -- Send form
-    | OrgaAck (WebData NodeId)
+    | OrgaAck (RestData NodeId)
       -- Common
     | NoMsg
       -- Help

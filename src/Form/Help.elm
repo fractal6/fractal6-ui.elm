@@ -46,7 +46,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccessWeb, loadingDiv, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccessRest, loadingDiv, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -74,7 +74,7 @@ type alias Model =
     , isActive2 : Bool
     , activeTab : HelpTab
     , withChoice : Bool -- fix view
-    , doc : WebData QuickDoc
+    , doc : RestData QuickDoc
     , type_ : FeedbackType
     , formAsk : NT.Model
     , formFeedback : NT.Model
@@ -212,7 +212,7 @@ resetModel model =
     initModel model.formAsk.user model.conf
 
 
-setDocResult : WebData QuickDoc -> Model -> Model
+setDocResult : RestData QuickDoc -> Model -> Model
 setDocResult result data =
     { data | doc = result }
 
@@ -259,7 +259,7 @@ type Msg
     | OnCloseSafe String String
     | OnReset
     | OnResetForm HelpTab
-    | OnGotQuickDoc (WebData QuickDoc)
+    | OnGotQuickDoc (RestData QuickDoc)
     | OnChangeTab HelpTab
     | OnChangePostAsk String String
     | OnChangePostFeedback String String
@@ -330,7 +330,7 @@ update_ apis message model =
             ( { model | isActive2 = True, doc = RemoteData.Loading, activeTab = tab }
             , out0
                 [ sendSleep (SetIsActive2 True) 10
-                , if not (isSuccessWeb model.doc) && tab == QuickHelp then
+                , if not (isSuccessRest model.doc) && tab == QuickHelp then
                     getQuickDoc apis "en" OnGotQuickDoc
 
                   else
@@ -381,7 +381,7 @@ update_ apis message model =
 
         OnChangeTab tab ->
             ( changeTab tab model |> (\x -> { x | withChoice = False })
-            , if not (isSuccessWeb model.doc) && tab == QuickHelp then
+            , if not (isSuccessRest model.doc) && tab == QuickHelp then
                 out0 [ getQuickDoc apis "en" OnGotQuickDoc ]
 
               else

@@ -56,7 +56,7 @@ import Loading
     exposing
         ( GqlData
         , RequestResult(..)
-        , WebData
+        , RestData
         , withMaybeData
         , withMaybeMapData
         )

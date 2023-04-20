@@ -71,12 +71,12 @@ import Loading
         ( GqlData
         , ModalData
         , RequestResult(..)
-        , WebData
+        , RestData
         , fromMaybeData
-        , fromMaybeWebData
+        , fromMaybeDataRest
         , isSuccess
         , withDefaultData
-        , withDefaultWebData
+        , withDefaultDataRest
         , withMapData
         , withMaybeData
         , withMaybeMapData
@@ -200,7 +200,7 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
-    , children : WebData (List NodeId)
+    , children : RestData (List NodeId)
 
     -- Pages
     , tensions_int : GqlData (List Tension)
@@ -634,7 +634,7 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
-    | GotChildren (WebData (List NodeId)) -- HTTP/Json @deprecated
+    | GotChildren (RestData (List NodeId)) -- HTTP/Json @deprecated
     | GotChildren2 (List String) -- use TreeMenu to get children
     | GotTensionsInt Int (GqlData (List Tension)) -- GraphQL
     | GotTensionsExt (GqlData (List Tension)) -- GraphQL
@@ -724,7 +724,7 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = fromMaybeData global.session.path_data Loading
-            , children = fromMaybeWebData global.session.children RemoteData.Loading
+            , children = fromMaybeDataRest global.session.children RemoteData.Loading
             , tensions_int = fromMaybeData global.session.tensions_int Loading
             , tensions_ext = fromMaybeData global.session.tensions_ext Loading
             , tensions_all = fromMaybeData global.session.tensions_all Loading
@@ -2038,7 +2038,7 @@ viewCircleTensions model =
         Success data ->
             let
                 keys =
-                    withDefaultWebData [] model.children
+                    withDefaultDataRest [] model.children
                         |> List.map .nameid
                         |> List.filter
                             (\n ->

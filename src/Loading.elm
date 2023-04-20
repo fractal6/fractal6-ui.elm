@@ -61,7 +61,7 @@ type alias GqlData a =
     RequestResult ErrorData a
 
 
-type alias WebData a =
+type alias RestData a =
     RemoteData (HttpError String) a
 
 
@@ -355,12 +355,12 @@ withMaybeSlowly result =
 
 
 --
--- Idem but for WebData (Rest API) :S
+-- Idem but for RestData (Rest API) :S
 --
 
 
-isSuccessWeb : WebData a -> Bool
-isSuccessWeb data =
+isSuccessRest : RestData a -> Bool
+isSuccessRest data =
     case data of
         RemoteData.Success _ ->
             True
@@ -369,8 +369,8 @@ isSuccessWeb data =
             False
 
 
-isFailureWeb : WebData a -> Bool
-isFailureWeb data =
+isFailureRest : RestData a -> Bool
+isFailureRest data =
     case data of
         RemoteData.Failure _ ->
             True
@@ -379,8 +379,8 @@ isFailureWeb data =
             False
 
 
-isLoadingWeb : WebData a -> Bool
-isLoadingWeb data =
+isLoadingRest : RestData a -> Bool
+isLoadingRest data =
     case data of
         RemoteData.Loading ->
             True
@@ -389,8 +389,8 @@ isLoadingWeb data =
             False
 
 
-withDefaultWebData : a -> RemoteData e a -> a
-withDefaultWebData default result =
+withDefaultDataRest : a -> RemoteData e a -> a
+withDefaultDataRest default result =
     case result of
         RemoteData.Success d ->
             d
@@ -399,8 +399,8 @@ withDefaultWebData default result =
             default
 
 
-withMaybeWebData : RemoteData e a -> Maybe a
-withMaybeWebData result =
+withMaybeDataRest : RemoteData e a -> Maybe a
+withMaybeDataRest result =
     case result of
         RemoteData.Success d ->
             Just d
@@ -409,8 +409,8 @@ withMaybeWebData result =
             Nothing
 
 
-withMapWebData : (a -> b) -> RemoteData e a -> RemoteData e b
-withMapWebData resMap result =
+withMapDataRest : (a -> b) -> RemoteData e a -> RemoteData e b
+withMapDataRest resMap result =
     case result of
         RemoteData.Success d ->
             RemoteData.Success (resMap d)
@@ -425,8 +425,15 @@ withMapWebData resMap result =
             RemoteData.NotAsked
 
 
-mapWeb2Data : (a -> b) -> WebData a -> GqlData b
-mapWeb2Data fun input =
+fromMaybeDataRest : Maybe a -> RemoteData e a -> RemoteData e a
+fromMaybeDataRest ma type_ =
+    ma
+        |> Maybe.map (\x -> RemoteData.Success x)
+        |> withDefault type_
+
+
+mapRest2Gql : (a -> b) -> RestData a -> GqlData b
+mapRest2Gql fun input =
     case input of
         RemoteData.Success data ->
             Success <| fun data
@@ -441,13 +448,6 @@ mapWeb2Data fun input =
             Failure (toErrorData err)
 
 
-fromMaybeWebData : Maybe a -> RemoteData e a -> RemoteData e a
-fromMaybeWebData ma type_ =
-    ma
-        |> Maybe.map (\x -> RemoteData.Success x)
-        |> withDefault type_
-
-
-web2gql : WebData a -> GqlData a
-web2gql data =
-    mapWeb2Data identity data
+rest2Gql : RestData a -> GqlData a
+rest2Gql data =
+    mapRest2Gql identity data

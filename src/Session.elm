@@ -31,7 +31,7 @@ import Json.Decode as JD
 import Loading
     exposing
         ( GqlData
-        , WebData
+        , RestData
         )
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -95,7 +95,7 @@ type alias Session =
     , notif : NotifCount
     , referer : Maybe Url
     , can_referer : Maybe Url
-    , token_data : WebData UserCtx
+    , token_data : RestData UserCtx
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , children : Maybe (List NodeId)

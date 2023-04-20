@@ -38,7 +38,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li,
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Loading exposing (WebData)
+import Loading exposing (RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -85,7 +85,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { form : UserAuthForm
-    , result : WebData UserCtx
+    , result : RestData UserCtx
     , email_token : Maybe String
     , email : Maybe String
 
@@ -141,7 +141,7 @@ init global flags =
 
 type Msg
     = SubmitVerification String
-    | GotVerification (WebData UserCtx)
+    | GotVerification (RestData UserCtx)
     | HelpMsg Help.Msg
 
 

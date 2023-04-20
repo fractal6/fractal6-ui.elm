@@ -41,7 +41,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, ModalData, RequestResult(..), WebData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
