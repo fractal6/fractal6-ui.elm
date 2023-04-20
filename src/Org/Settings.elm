@@ -322,81 +322,6 @@ resetForm model =
 
 
 --
--- Msg
---
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
-    | GotPath Bool (GqlData LocalGraph)
-      -- Page
-    | ChangeMenuFocus MenuSettings
-    | ChangeArtefactPost String String
-    | SafeEdit Msg
-    | SafeSend Msg
-      -- Labels
-    | GotLabels (GqlData (List LabelFull))
-    | GotLabelsTop (RestData (List Label))
-    | GotLabelsSub (RestData (List Label))
-    | AddLabel
-    | EditLabel LabelFull
-    | CancelLabel
-    | SubmitAddLabel Time.Posix
-    | SubmitEditLabel Time.Posix
-    | SubmitDeleteLabel String Time.Posix
-    | GotLabel (GqlData LabelFull)
-    | GotLabelDel (GqlData LabelFull)
-      -- Roles
-    | GotRoles (GqlData (List RoleExtFull))
-    | GotRolesTop (RestData (List RoleExt))
-    | GotRolesSub (RestData (List RoleExt))
-    | AddRole
-    | EditRole RoleExtFull
-    | CancelRole
-    | SubmitAddRole Time.Posix
-    | SubmitEditRole Time.Posix
-    | SubmitDeleteRole String Time.Posix
-    | GotRole (GqlData RoleExtFull)
-    | GotRoleDel (GqlData RoleExtFull)
-    | ToggleMandate String
-    | AddDomains
-    | AddPolicies
-    | AddResponsabilities
-    | UpdateNodePost String String
-      -- Orga
-    | GotRootRights (GqlData NodeRights)
-    | SwitchUserCanJoin Int Bool
-    | SwitchGuestCanCreateTension Int Bool
-    | GotUserCanJoin (RestData Bool)
-    | GotGuestCanCreateTension (RestData Bool)
-      -- Color Picker
-    | OpenColor
-    | CloseColor
-    | SelectColor String
-      -- Common
-    | NoMsg
-    | LogErr String
-    | OnGoRoot
-    | OpenActionPanel String String (Maybe ( Int, Int ))
-      -- Confirm Modal
-    | DoModalConfirmOpen Msg TextMessage
-    | DoModalConfirmClose ModalData
-    | DoModalConfirmSend
-      -- Components
-    | HelperBarMsg HelperBar.Msg
-    | HelpMsg Help.Msg
-    | NewTensionMsg NTF.Msg
-    | JoinOrgaMsg JoinOrga.Msg
-    | AuthModalMsg AuthModal.Msg
-    | OrgaMenuMsg OrgaMenu.Msg
-    | TreeMenuMsg TreeMenu.Msg
-    | ActionPanelMsg ActionPanel.Msg
-
-
-
---
 -- INIT
 --
 
@@ -520,6 +445,81 @@ init global flags =
       else
         Cmd.none
     )
+
+
+
+--
+-- Msg
+--
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+      -- Data Queries
+    | GotPath Bool (GqlData LocalGraph)
+      -- Page
+    | ChangeMenuFocus MenuSettings
+    | ChangeArtefactPost String String
+    | SafeEdit Msg
+    | SafeSend Msg
+      -- Labels
+    | GotLabels (GqlData (List LabelFull))
+    | GotLabelsTop (RestData (List Label))
+    | GotLabelsSub (RestData (List Label))
+    | AddLabel
+    | EditLabel LabelFull
+    | CancelLabel
+    | SubmitAddLabel Time.Posix
+    | SubmitEditLabel Time.Posix
+    | SubmitDeleteLabel String Time.Posix
+    | GotLabel (GqlData LabelFull)
+    | GotLabelDel (GqlData LabelFull)
+      -- Roles
+    | GotRoles (GqlData (List RoleExtFull))
+    | GotRolesTop (RestData (List RoleExt))
+    | GotRolesSub (RestData (List RoleExt))
+    | AddRole
+    | EditRole RoleExtFull
+    | CancelRole
+    | SubmitAddRole Time.Posix
+    | SubmitEditRole Time.Posix
+    | SubmitDeleteRole String Time.Posix
+    | GotRole (GqlData RoleExtFull)
+    | GotRoleDel (GqlData RoleExtFull)
+    | ToggleMandate String
+    | AddDomains
+    | AddPolicies
+    | AddResponsabilities
+    | UpdateNodePost String String
+      -- Orga
+    | GotRootRights (GqlData NodeRights)
+    | SwitchUserCanJoin Int Bool
+    | SwitchGuestCanCreateTension Int Bool
+    | GotUserCanJoin (RestData Bool)
+    | GotGuestCanCreateTension (RestData Bool)
+      -- Color Picker
+    | OpenColor
+    | CloseColor
+    | SelectColor String
+      -- Common
+    | NoMsg
+    | LogErr String
+    | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
+      -- Confirm Modal
+    | DoModalConfirmOpen Msg TextMessage
+    | DoModalConfirmClose ModalData
+    | DoModalConfirmSend
+      -- Components
+    | HelperBarMsg HelperBar.Msg
+    | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )

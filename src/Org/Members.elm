@@ -202,41 +202,6 @@ type alias Model =
 
 
 --
--- Msg
---
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-    | OnReload
-      -- Data Queries
-    | GotPath Bool (GqlData LocalGraph) -- GraphQL
-      -- Page
-    | GotMembers (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- Rest
-    | OnPendingHover Bool
-    | OnPendingRowHover (Maybe Int)
-    | OnGoToContract String
-    | OnGoContractAck (GqlData IdPayload)
-      -- Common
-    | NoMsg
-    | LogErr String
-    | OnGoRoot
-    | OpenActionPanel String String (Maybe ( Int, Int ))
-      -- Components
-    | HelperBarMsg HelperBar.Msg
-    | HelpMsg Help.Msg
-    | NewTensionMsg NTF.Msg
-    | JoinOrgaMsg JoinOrga.Msg
-    | AuthModalMsg AuthModal.Msg
-    | OrgaMenuMsg OrgaMenu.Msg
-    | TreeMenuMsg TreeMenu.Msg
-    | ActionPanelMsg ActionPanel.Msg
-
-
-
---
 -- INIT
 --
 
@@ -305,6 +270,41 @@ init global flags =
       else
         Cmd.none
     )
+
+
+
+--
+-- Msg
+--
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | OnReload
+      -- Data Queries
+    | GotPath Bool (GqlData LocalGraph) -- GraphQL
+      -- Page
+    | GotMembers (GqlData (List Member)) -- GraphQL
+    | GotMembersSub (GqlData (List Member)) -- Rest
+    | OnPendingHover Bool
+    | OnPendingRowHover (Maybe Int)
+    | OnGoToContract String
+    | OnGoContractAck (GqlData IdPayload)
+      -- Common
+    | NoMsg
+    | LogErr String
+    | OnGoRoot
+    | OpenActionPanel String String (Maybe ( Int, Int ))
+      -- Components
+    | HelperBarMsg HelperBar.Msg
+    | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )

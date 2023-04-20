@@ -36,11 +36,6 @@ type alias Model =
     { help : Help.State }
 
 
-type Msg
-    = NoOp
-    | HelpMsg Help.Msg
-
-
 page : Page Flags Model Msg
 page =
     Page.component
@@ -86,6 +81,11 @@ init global flags =
             }
     in
     ( model, Cmd.none, Cmd.none )
+
+
+type Msg
+    = NoOp
+    | HelpMsg Help.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
