@@ -877,13 +877,6 @@ viewOrgaMedia user_m root =
 
 viewOrgaMedia_ : Maybe (UserCommon a) -> NodeExt -> Html msg
 viewOrgaMedia_ user_m root =
-    let
-        n_members =
-            root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_members) |> withDefault 0
-
-        n_guests =
-            root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_guests) |> withDefault 0
-    in
     div [ class "media mediaBox box pb-3" ]
         [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
@@ -901,14 +894,8 @@ viewOrgaMedia_ user_m root =
                     [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
                         [ div [ class "control" ]
                             [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text T.members ]
-                                , span [ class "tag is-white" ] [ text (String.fromInt n_members) ]
-                                ]
-                            ]
-                        , div [ class "control" ]
-                            [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text T.guests ]
-                                , span [ class "tag is-white" ] [ text (String.fromInt n_guests) ]
+                                [ span [ class "tag" ] [ A.icon1 "icon-users" (String.fromInt root.n_members) ]
+                                , span [ class "tag" ] [ A.icon1 "icon-eye" (String.fromInt root.n_watchers) ]
                                 ]
                             ]
                         ]

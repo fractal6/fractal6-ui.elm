@@ -114,13 +114,8 @@ type alias NodeExt =
     , about : Maybe String
 
     -- aggregate
-    , orga_agg : Maybe OrgaAgg
-    }
-
-
-type alias OrgaAgg =
-    { n_members : Maybe Int
-    , n_guests : Maybe Int
+    , n_members : Int
+    , n_watchers : Int
     }
 
 

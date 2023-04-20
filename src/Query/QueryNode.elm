@@ -88,7 +88,6 @@ import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
 import Fractal.Object.NodeFragment
 import Fractal.Object.Notif
-import Fractal.Object.OrgaAgg
 import Fractal.Object.RoleExt
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
@@ -209,10 +208,29 @@ nodeOrgaExtPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.about
         |> with
-            (Fractal.Object.Node.orga_agg identity <|
-                SelectionSet.map2 OrgaAgg
-                    Fractal.Object.OrgaAgg.n_members
-                    Fractal.Object.OrgaAgg.n_guests
+            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+                Fractal.Object.Node.childrenAggregate
+                    (\a ->
+                        { a
+                            | filter =
+                                Present <|
+                                    Input.buildNodeFilter
+                                        (\x ->
+                                            { x
+                                                | type_ = Present { eq = Present NodeType.Role, in_ = Absent }
+                                                , nameid = Present { regexp = Present "/^.*##@/", eq = Absent, in_ = Absent }
+                                                , not = Present <| Input.buildNodeFilter (\y -> { y | role_type = Present { in_ = Present [ Just RoleType.Retired, Just RoleType.Pending ], eq = Absent } })
+                                            }
+                                        )
+                        }
+                    )
+                <|
+                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            )
+        |> with
+            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+                Fractal.Object.Node.watchersAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
             )
 
 
