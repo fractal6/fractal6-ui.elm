@@ -1359,19 +1359,19 @@ figcaption {
 
 .orgaMenu {
     margin-top: $size-small !important;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 3px;
+    margin-right: 6px;
     padding-left: 5px;
     padding-right: 5px;
-    border-left: solid 3px var(--header-background-color);
+    border-left: solid 4px var(--header-background-color);
     transition: top,height .2s ease;
 
     &:hover {
-        border-left: solid 3px white;
+        border-left: solid 4px white;
     }
 
     &.is-active {
-        border-left: solid 3px var(--link);
+        border-left: solid 4px var(--link);
     }
 
     & > .here {
@@ -2961,23 +2961,22 @@ i.is-liked {
         background-color: var(--green);
     }
 }
-
-.is-contract-badge {
-    color: var(--info);
-    &.badge {
-        background-color: var(--info);
-    }
-}
-
 .is-event-badge-bg {
     .tag {
         background-color: var(--green) !important;
     }
 }
 
+.is-contract-badge {
+    color: var(--orange);
+    &.badge {
+        background-color: var(--orange);
+    }
+}
 .is-contract-badge-bg {
     .tag {
-        background-color: var(--info) !important;
+        color: $dark;
+        background-color: var(--orange) !important;
     }
 }
 
@@ -3178,13 +3177,13 @@ i.is-liked {
 
 .circleBase {
     color: var(--text) !important;
-    border: 0px solid #000;
+    border: 0px solid $dark;
     border-radius: 50%;
     text-align: center;
 }
 
 .circleBaseInline {
-    border: 0px solid #000;
+    border: 0px solid $dark;
     border-radius: 50%;
     color: white !important;
     text-align: center;

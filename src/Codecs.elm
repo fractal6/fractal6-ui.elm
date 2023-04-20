@@ -205,7 +205,8 @@ nodeEncoder node =
                 node.source
       )
     , ( "userCanJoin", JEE.maybe JE.bool node.userCanJoin )
-    , ( "n_tensions", JE.int node.n_tensions )
+    , ( "n_open_tensions", JE.int node.n_open_tensions )
+    , ( "n_open_contracts", JE.int node.n_open_contracts )
     ]
 
 
@@ -227,7 +228,8 @@ nodeDecoder =
         |> JDE.andMap (JD.field "mode" NodeMode.decoder)
         |> JDE.andMap (JD.maybe (JD.field "source" blobIdDecoder))
         |> JDE.andMap (JD.maybe (JD.field "userCanJoin" JD.bool))
-        |> JDE.andMap (JD.field "n_tensions" JD.int)
+        |> JDE.andMap (JD.field "n_open_tensions" JD.int)
+        |> JDE.andMap (JD.field "n_open_contracts" JD.int)
 
 
 idDecoder : JD.Decoder IdPayload

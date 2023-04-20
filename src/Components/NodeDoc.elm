@@ -418,7 +418,7 @@ type alias OrgaNodeData =
     { focus : NodeFocus
     , tid_r : GqlData String
 
-    -- The Node get from another components...
+    -- The node is given by another components...
     , node : Maybe Node
     , node_data : NodeData
     , leads : List User
@@ -637,14 +637,11 @@ viewBlob data op_m =
                               div [ class "columns mb-0" ]
                                 [ div [ class "column is-6 pb-0", class "is-hint" ]
                                     [ viewNodeDescr False node (tensionCharacFromNode node)
-                                    , case data.node_data.n_open_contracts of
-                                        Nothing ->
+                                    , case unwrap 0 .n_open_contracts data.node of
+                                        0 ->
                                             text ""
 
-                                        Just 0 ->
-                                            text ""
-
-                                        Just i ->
+                                        i ->
                                             let
                                                 tid =
                                                     withDefaultData "" data.tid_r
