@@ -65,7 +65,8 @@ module Query.QueryNode exposing
 
 import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (unwrap)
+import Extra exposing (unwrap, unwrap2)
+import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeOrderable as NodeOrderable
@@ -78,6 +79,7 @@ import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Contract
+import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
 import Fractal.Object.EventFragment
 import Fractal.Object.Label
@@ -381,9 +383,21 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with Fractal.Object.Node.userCanJoin
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
                 Fractal.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.TensionAggregateResult.count
+            )
+        |> with
+            (SelectionSet.map (\x -> withDefault Nothing x |> unwrap2 0 .count) <|
+                Fractal.Object.Node.source identity
+                    (SelectionSet.map identity
+                        (Fractal.Object.Blob.tension identity
+                            (SelectionSet.map identity <|
+                                Fractal.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
+                                    SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
+                            )
+                        )
+                    )
             )
 
 
@@ -403,6 +417,7 @@ nodeOrgaPayload2 =
         |> with Fractal.Object.Node.mode
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with Fractal.Object.Node.userCanJoin
+        |> hardcoded 0
         |> hardcoded 0
 
 
@@ -461,7 +476,7 @@ cidPayload =
 
 
 type alias NodeDataSource =
-    { source : Maybe { node : Maybe { about : Maybe String, mandate : Maybe Mandate }, tension : { n_open_contracts : Maybe Int } } }
+    { source : Maybe { node : Maybe { about : Maybe String, mandate : Maybe Mandate } } }
 
 
 nodeDataSourceDecoder : Maybe NodeDataSource -> Maybe NodeData
@@ -472,7 +487,6 @@ nodeDataSourceDecoder data =
             (\x ->
                 { about = unwrap Nothing .about x.node
                 , mandate = unwrap Nothing .mandate x.node
-                , n_open_contracts = x.tension.n_open_contracts
                 }
             )
 
@@ -491,17 +505,11 @@ nodeDataPayload =
     SelectionSet.succeed NodeDataSource
         |> with
             (Fractal.Object.Node.source identity
-                (SelectionSet.map2 (\x y -> { node = x, tension = y })
+                (SelectionSet.map (\x -> { node = x })
                     (Fractal.Object.Blob.node identity
                         (SelectionSet.map2 (\xx yy -> { about = xx, mandate = yy })
                             Fractal.Object.NodeFragment.about
                             (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-                        )
-                    )
-                    (Fractal.Object.Blob.tension identity
-                        (SelectionSet.map2 (\_ z -> { n_open_contracts = z })
-                            (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                            Fractal.Object.Tension.n_open_contracts
                         )
                     )
                 )

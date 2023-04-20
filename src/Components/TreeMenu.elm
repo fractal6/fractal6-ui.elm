@@ -659,12 +659,20 @@ viewCircleLine hover focus node =
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left", attribute "style" "width:82%;" ]
                 [ text node.name
-                , case node.n_tensions of
+                , case node.n_open_tensions of
                     0 ->
                         text ""
 
                     i ->
                         counter i
+                , case node.n_open_contracts of
+                    0 ->
+                        text ""
+
+                    i ->
+                        span
+                            [ class "is-contract-badge-bg" ]
+                            [ counter i ]
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
@@ -693,7 +701,7 @@ viewRoleLine type_txt focus roles =
                 [ div [ class "level-left", attribute "style" "width:82%;" ]
                     [ span [ class "tag is-small has-background-tag" ]
                         [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
-                    , case List.sum <| List.map .n_tensions roles of
+                    , case List.sum <| List.map .n_open_tensions roles of
                         0 ->
                             text ""
 

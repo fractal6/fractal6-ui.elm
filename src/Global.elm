@@ -408,7 +408,7 @@ update msg model =
                 orgaInfo =
                     Maybe.map2
                         (\oi nodes ->
-                            { oi | n_tensions = Dict.foldl (\_ n count -> n.n_tensions + count) 0 nodes }
+                            { oi | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
                         )
                         session.orgaInfo
                         data
@@ -641,7 +641,7 @@ update msg model =
                         oi =
                             Maybe.map
                                 (\nodes ->
-                                    { data | n_tensions = Dict.foldl (\_ n count -> n.n_tensions + count) 0 nodes }
+                                    { data | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
                                 )
                                 session.tree_data
                                 |> withDefault data

@@ -96,7 +96,8 @@ type alias Node =
     , userCanJoin : Maybe Bool
 
     -- Aggregate
-    , n_tensions : Int
+    , n_open_tensions : Int
+    , n_open_contracts : Int
     }
 
 
@@ -373,8 +374,8 @@ type alias TensionHead =
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : Maybe (List Event)
 
-    -- Count @debug: filter Open contract
-    , n_open_contracts : Maybe Int
+    -- Aggregate
+    , n_open_contracts : Int
     }
 
 
@@ -594,7 +595,6 @@ type alias PatchTensionPayloadID =
 type alias NodeData =
     { about : Maybe String
     , mandate : Maybe Mandate
-    , n_open_contracts : Maybe Int
     }
 
 
@@ -615,7 +615,6 @@ initNodeData : NodeData
 initNodeData =
     { about = Nothing
     , mandate = Nothing
-    , n_open_contracts = Nothing
     }
 
 
@@ -632,7 +631,8 @@ initNode =
     , mode = NodeMode.Coordinated
     , source = Nothing
     , userCanJoin = Nothing
-    , n_tensions = 0
+    , n_open_tensions = 0
+    , n_open_contracts = 0
     }
 
 

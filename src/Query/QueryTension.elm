@@ -38,7 +38,7 @@ module Query.QueryTension exposing
 
 import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
@@ -231,10 +231,8 @@ tensionHeadPayload tid uctx =
             )
         -- Aggregate
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
-                -- @debug: filter OPEN contract
-                Fractal.Object.Tension.contractsAggregate identity
-                <|
+            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+                Fractal.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
             )
 
