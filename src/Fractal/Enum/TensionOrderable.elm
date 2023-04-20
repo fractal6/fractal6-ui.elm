@@ -14,13 +14,12 @@ type TensionOrderable
     | Emitterid
     | Receiverid
     | Title
-    | N_open_contracts
     | N_comments
 
 
 list : List TensionOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, Emitterid, Receiverid, Title, N_open_contracts, N_comments ]
+    [ CreatedAt, UpdatedAt, Message, Emitterid, Receiverid, Title, N_comments ]
 
 
 decoder : Decoder TensionOrderable
@@ -46,9 +45,6 @@ decoder =
 
                     "title" ->
                         Decode.succeed Title
-
-                    "n_open_contracts" ->
-                        Decode.succeed N_open_contracts
 
                     "n_comments" ->
                         Decode.succeed N_comments
@@ -80,9 +76,6 @@ toString enum____ =
 
         Title ->
             "title"
-
-        N_open_contracts ->
-            "n_open_contracts"
 
         N_comments ->
             "n_comments"
@@ -119,9 +112,6 @@ fromString enumString____ =
 
         "title" ->
             Just Title
-
-        "n_open_contracts" ->
-            Just N_open_contracts
 
         "n_comments" ->
             Just N_comments
