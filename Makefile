@@ -63,10 +63,8 @@ publish_build: prod
 		git push origin master && \
 		cd -
 
-publish_test: $(BUILD_DIRS)
-	@git rev-parse --short HEAD > ../public-build/client_version
-	echo "-- $@ done"
 
+# Build and publish in public-build repo.
 publish: $(BUILD_DIRS)
 	@echo $(COMMIT_NAME) > ../public-build/client_version && \
 		cd ../public-build/ && \
@@ -75,6 +73,11 @@ publish: $(BUILD_DIRS)
 		git push origin main && \
 		cd - && \
 		echo "-- $@ done"
+
+# Build in public-build but don't push.
+publish_test: $(BUILD_DIRS)
+	@git rev-parse --short HEAD > ../public-build/client_version
+	echo "-- $@ done"
 
 $(BUILD_DIRS): public-build/%:
 	@# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
