@@ -112,23 +112,3 @@ colorMin =
 colorMax : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
 colorMax =
     Object.selectionForField "(Maybe String)" "colorMax" [] (Decode.string |> Decode.nullable)
-
-
-n_open_contractsMin : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_open_contractsMin =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsMin" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsMax : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_open_contractsMax =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsMax" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsSum : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_open_contractsSum =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsSum" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsAvg : SelectionSet (Maybe Float) Fractal.Object.NodeAggregateResult
-n_open_contractsAvg =
-    Object.selectionForField "(Maybe Float)" "n_open_contractsAvg" [] (Decode.float |> Decode.nullable)

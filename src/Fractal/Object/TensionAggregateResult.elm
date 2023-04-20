@@ -84,26 +84,6 @@ titleMax =
     Object.selectionForField "(Maybe String)" "titleMax" [] (Decode.string |> Decode.nullable)
 
 
-n_open_contractsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_open_contractsMin =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsMin" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsMax : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_open_contractsMax =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsMax" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsSum : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_open_contractsSum =
-    Object.selectionForField "(Maybe Int)" "n_open_contractsSum" [] (Decode.int |> Decode.nullable)
-
-
-n_open_contractsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
-n_open_contractsAvg =
-    Object.selectionForField "(Maybe Float)" "n_open_contractsAvg" [] (Decode.float |> Decode.nullable)
-
-
 n_commentsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
 n_commentsMin =
     Object.selectionForField "(Maybe Int)" "n_commentsMin" [] (Decode.int |> Decode.nullable)

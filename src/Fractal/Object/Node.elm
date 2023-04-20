@@ -498,11 +498,6 @@ events_history fillInOptionals____ object____ =
     Object.selectionForCompositeField "events_history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-n_open_contracts : SelectionSet (Maybe Int) Fractal.Object.Node
-n_open_contracts =
-    Object.selectionForField "(Maybe Int)" "n_open_contracts" [] (Decode.int |> Decode.nullable)
-
-
 type alias TensionsOutAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

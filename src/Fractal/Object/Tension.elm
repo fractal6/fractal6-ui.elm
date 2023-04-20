@@ -308,11 +308,6 @@ projects fillInOptionals____ object____ =
     Object.selectionForCompositeField "projects" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-n_open_contracts : SelectionSet (Maybe Int) Fractal.Object.Tension
-n_open_contracts =
-    Object.selectionForField "(Maybe Int)" "n_open_contracts" [] (Decode.int |> Decode.nullable)
-
-
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
 n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
