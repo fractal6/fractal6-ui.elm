@@ -22,33 +22,29 @@
 module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Auth exposing (ErrState(..))
+import Bulk exposing (UserState(..))
+import Bulk.Error exposing (viewAuthNeeded, viewHttpErrors)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onKeydown)
-import Form exposing (isPostEmpty, isPostSendable)
-import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Extra exposing (ternary)
+import Extra.Events exposing (onKeydown)
+import Form exposing (isPostSendable)
+import Generated.Route as Route exposing (toHref)
+import Global exposing (send)
+import Html exposing (Html, a, br, button, div, input, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccess, withMaybeData)
+import Loading exposing (ModalData, RequestResult(..), RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (login, signupValidate)
 import Session exposing (Apis, GlobalCmd(..))
 import String.Format as Format
 import Text as T
-import Time
 
 
 type State

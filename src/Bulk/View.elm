@@ -23,23 +23,7 @@ module Bulk.View exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , TensionCharac
-        , eor2ur
-        , getOrgaRoles
-        , getTensionCharac
-        , nid2rootid
-        , nid2type
-        , toLink
-        , uriFromNameid
-        , uriFromUsername
-        )
-import Dict exposing (Dict)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink, uriFromNameid, uriFromUsername)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPos)
@@ -53,36 +37,14 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, title)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, br, div, hr, span, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, title)
 import Html.Lazy as Lazy
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( EmitterOrReceiver
-        , Label
-        , Node
-        , NodeExt
-        , PNode
-        , PinTension
-        , Post
-        , RoleExt
-        , RoleExtCommon
-        , RoleExtFull
-        , Tension
-        , User
-        , UserCommon
-        , UserRole
-        , UserRoleCommon
-        , UserRoleExtended
-        , UserView
-        , Username
-        , shrinkNode
-        )
+import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, User, UserCommon, UserRoleCommon, UserView, Username)
 import Session exposing (Conf)
 import String.Extra as SE
 import String.Format as Format

@@ -21,18 +21,16 @@
 
 module Org.Tensions exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Array
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
-import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -44,54 +42,30 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (space_, ternary, textH, unwrap, upH)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
+import Extra exposing (space_, ternary, upH)
+import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
-import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
-import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
+import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , RestData
-        , fromMaybeData
-        , fromMaybeDataRest
-        , isSuccess
-        , withDefaultData
-        , withDefaultDataRest
-        , withMapData
-        , withMaybeData
-        , withMaybeMapData
-        )
+import Loading exposing (GqlData, RequestResult(..), RestData, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Process
-import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryTension exposing (queryExtTension, queryIntTension)
-import RemoteData exposing (RemoteData)
-import Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt)
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
+import RemoteData
+import Requests exposing (fetchTensionAll, fetchTensionCount, fetchTensionInt)
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Task
 import Text as T
 import Time

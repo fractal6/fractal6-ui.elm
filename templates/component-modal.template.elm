@@ -37,7 +37,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Error exposing (viewGqlErrors)
-import ModelSchema exposing (..)
+import ModelSchema exposing (MyData)
 import Ports
 import Query.AddData exposing (getData)
 import Session exposing (Apis, GlobalCmd(..))

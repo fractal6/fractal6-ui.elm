@@ -23,28 +23,23 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Browser.Events as Events
-import Bulk exposing (Ev, UserState(..), sortNode)
+import Bulk exposing (Ev, UserState(..))
 import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu exposing (viewSelectorTree)
-import Dict exposing (Dict)
-import Dom
-import Extra exposing (ternary, textH, upH)
+import Dict
+import Extra exposing (ternary)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Html.Lazy as Lazy
+import Html exposing (Html, button, div, i, p, span, text, textarea)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)

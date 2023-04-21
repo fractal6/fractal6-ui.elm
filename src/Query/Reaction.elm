@@ -24,8 +24,6 @@ module Query.Reaction exposing
     , deleteReaction
     )
 
-import Dict exposing (Dict)
-import Extra exposing (ternary)
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -33,13 +31,10 @@ import Fractal.Object.AddReactionPayload
 import Fractal.Object.Comment
 import Fractal.Object.DeleteReactionPayload
 import Fractal.Object.Reaction
-import Fractal.Object.Tension
-import Fractal.Object.User
-import Fractal.Scalar
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import Maybe exposing (withDefault)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Maybe
 import ModelSchema exposing (IdPayload, ReactionResponse, decodeResponse, decodedId, encodeId)
 import RemoteData exposing (RemoteData)
 

@@ -22,10 +22,10 @@
 module Loading exposing (..)
 
 import Assets as A
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (upH)
 import Graphql.Http as GqlHttp
-import Html exposing (Html, a, button, div, img, p, span, text)
-import Html.Attributes exposing (alt, attribute, class, height, href, src, width)
+import Html exposing (Html, a, div, img, span, text)
+import Html.Attributes exposing (alt, attribute, class, height, src, width)
 import Http
 import Json.Decode as JD
 import Maybe exposing (withDefault)

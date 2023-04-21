@@ -28,35 +28,26 @@ module Query.QueryContract exposing
     , getContracts
     )
 
-import Dict exposing (Dict)
-import Extra exposing (ternary)
 import Fractal.Enum.ContractOrderable as ContractOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
 import Fractal.Object
-import Fractal.Object.AddContractPayload
 import Fractal.Object.Blob
 import Fractal.Object.Contract
 import Fractal.Object.EventFragment
 import Fractal.Object.Node
-import Fractal.Object.NodeFragment
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Object.Vote
 import Fractal.Query as Query
-import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload)
 import Query.QueryTension exposing (commentPayload, nodeFragmentPayload)
-import RemoteData exposing (RemoteData)
+import RemoteData
 
 
 nCommentPerContract : Int

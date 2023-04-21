@@ -32,33 +32,23 @@ module Query.PatchTension exposing
     )
 
 import Bulk exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
-import Dict exposing (Dict)
+import Dict
 import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.CommentOrderable as CommentOrderable
 import Fractal.Enum.ContractOrderable as ContractOrderable
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
-import Fractal.Object.Comment
-import Fractal.Object.Contract
-import Fractal.Object.Label
-import Fractal.Object.Node
 import Fractal.Object.Tension
 import Fractal.Object.UpdateCommentPayload
 import Fractal.Object.UpdateTensionPayload
-import Fractal.Object.Vote
-import Fractal.Query as Query
 import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)

@@ -21,23 +21,9 @@
 
 module Bulk exposing (..)
 
-import Array exposing (Array)
-import Bulk.Codecs
-    exposing
-        ( FractalBaseRoute(..)
-        , contractIdCodec
-        , getCircleRoles
-        , getCoordoRoles
-        , getOrgaRoles
-        , isCircle
-        , isOwner
-        , memberIdCodec
-        , nearestCircleid
-        , nid2rootid
-        , nodeFromFragment
-        , voteIdCodec
-        )
-import Dict exposing (Dict)
+import Array
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, memberIdCodec, nearestCircleid, nid2rootid, nodeFromFragment, voteIdCodec)
+import Dict
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
@@ -52,14 +38,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , RequestResult(..)
-        , RestData
-        , withMaybeData
-        , withMaybeMapData
-        )
+import Loading exposing (GqlData, RequestResult(..), withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Set

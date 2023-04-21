@@ -27,41 +27,23 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event
-    exposing
-        ( contractEventToText
-        , contractToJonction
-        , contractToLink
-        , contractTypeToText
-        , eventToIcon
-        , eventToLink
-        , eventTypeToText
-        , viewContractMedia
-        , viewEventMedia
-        , viewNotifMedia
-        )
-import Bulk.View exposing (byAt, counter, mediaTension, viewOrga)
-import Codecs exposing (QuickDoc)
+import Bulk.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
+import Bulk.View exposing (counter, mediaTension, viewOrga)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (mor, ternary, textH, upH, upT)
+import Extra exposing (ternary, upT)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
-import Form exposing (isPostSendable)
 import Form.Help as Help
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, target, title, type_)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
+import Html.Attributes exposing (attribute, class, classList, id, target, title)
+import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMapData, withMaybeSlowly)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeSlowly)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -69,7 +51,6 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import RemoteData exposing (RemoteData)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T

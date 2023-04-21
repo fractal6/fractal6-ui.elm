@@ -26,26 +26,21 @@ import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (Ev, UserState(..))
 import Bulk.Codecs exposing (ActionType(..), DocType(..), nid2rootid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (viewUser)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict exposing (Dict)
+import Dict
 import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, pre, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, a, br, button, div, h2, header, i, input, label, li, nav, p, section, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, target, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccessRest, loadingDiv, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)

@@ -63,7 +63,7 @@ import String.Format as Format
 import Task exposing (Task)
 import Text as T
 import Time
-import Url as Url exposing (Url)
+import Url exposing (Url)
 
 
 page : Page Flags Model Msg

@@ -23,8 +23,7 @@ module GqlClient exposing (..)
 
 import Graphql.Http
 import Graphql.Operation exposing (RootMutation, RootQuery)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
-import RemoteData exposing (RemoteData)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Session exposing (Apis)
 
 

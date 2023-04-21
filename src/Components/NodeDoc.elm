@@ -23,34 +23,31 @@ module Components.NodeDoc exposing (..)
 
 import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nid2type, nodeIdCodec, tensionCharacFromNode, uriFromNameid, uriFromUsername)
+import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (blobTypeStr, byAt, getNodeTextFromNodeType, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
-import Extra exposing (space_, ternary, textH, unwrap, upH)
+import Extra exposing (space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, strong, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, style, title, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html, a, br, button, div, hr, i, input, label, p, span, strong, table, tbody, td, text, textarea, th, thead, tr)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, withDefaultData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Session exposing (Conf)
-import String.Extra as SE
 import Text as T
 import Time
 

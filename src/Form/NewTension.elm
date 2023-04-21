@@ -23,41 +23,21 @@ module Form.NewTension exposing (..)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk
-    exposing
-        ( Ev
-        , InputViewMode(..)
-        , TensionForm
-        , UserState(..)
-        , getCircles
-        , isSelfContract
-        , localGraphFromOrga
-        , makeCandidateContractForm
-        , tensionToActionForm
-        )
+import Bulk exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getCircles, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Bulk.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, tensionTypeIcon, viewRoleExt, visibility2descr)
-import Codecs exposing (LookupResult)
+import Bulk.View exposing (FormText, getNodeTextFromNodeType, getTensionText, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc as NodeDoc
-    exposing
-        ( NodeDoc
-        , NodeView(..)
-        , viewAboutInput2
-        , viewMandateInput
-        )
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (space_, ternary, textH, textT, unwrap, unwrap2, upH)
-import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
-import Extra.Views exposing (showMsg)
+import Extra exposing (space_, ternary, textH, unwrap2)
+import Extra.Events exposing (onClickPD, onClickPD2, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -67,13 +47,12 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html exposing (Html, a, br, button, div, h2, i, input, label, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports

@@ -27,13 +27,13 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, contenteditable, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
+import Html exposing (Html, a, button, div, hr, i, li, span, strong, text, textarea, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..))

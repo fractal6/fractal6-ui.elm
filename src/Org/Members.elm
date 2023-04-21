@@ -21,53 +21,40 @@
 
 module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Array
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..))
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole2, viewUserFull)
-import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
-import Form exposing (isPostSendable)
+import Extra exposing (ternary)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
+import Html exposing (Html, a, div, h2, i, span, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (class, classList, href, id, style)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
-import RemoteData exposing (RemoteData)
 import Requests exposing (fetchMembersSub)
 import Session exposing (Conf, GlobalCmd(..))
 import Task

@@ -21,29 +21,20 @@
 
 module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewOrgaMedia, viewProfileC)
-import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Form exposing (isPostSendable)
+import Extra exposing (ternary)
 import Form.Help as Help
-import Fractal.Enum.RoleType as RoleType
-import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html exposing (Html, a, div, h1, i, p, text)
+import Html.Attributes exposing (class, id)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -51,7 +42,6 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserProfile)
-import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T

@@ -28,26 +28,11 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , Flags_
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , focusFromNameid
-        , focusState
-        , hasLazyAdminRole
-        , nameidFromFlags
-        , nearestCircleid
-        , nid2rootid
-        , tensionCharacFromNode
-        , uriFromNameid
-        )
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
-import Bulk.View exposing (mediaTension, viewPinnedTensions, viewUsernameLink)
-import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
+import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
+import Bulk.View exposing (mediaTension, viewPinnedTensions)
+import Codecs exposing (LookupResult, WindowPos)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -55,51 +40,30 @@ import Components.JoinOrga as JoinOrga
 import Components.NodeDoc as NodeDoc
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
-import Debug
-import Dict exposing (Dict)
+import Dict
 import Dom
-import Extra exposing (ternary, textH, unwrap, upH)
+import Extra exposing (ternary, unwrap)
 import Extra.Events exposing (onClickPD, onKeydown)
-import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
-import Json.Decode as JD
+import Global exposing (Msg(..), send, sendSleep)
+import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Events exposing (onBlur, onClick, onInput)
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , RequestResult(..)
-        , fromMaybeData
-        , isFailure
-        , isSuccess
-        , withMapData
-        , withMaybeData
-        )
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNode exposing (fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
+import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
-import RemoteData exposing (RemoteData)
 import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
 import String
-import String.Extra as SE
 import Task
 import Text as T
 import Time

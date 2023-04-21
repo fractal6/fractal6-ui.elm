@@ -23,28 +23,22 @@ module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, ini
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Browser.Dom
 import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon, counter, viewOrga0)
+import Bulk.View exposing (action2icon, counter)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
 import Dict.Extra as DE
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2)
-import Form exposing (isPostEmpty)
-import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
-import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, title, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter, onMouseLeave)
+import Global exposing (send, sendSleep)
+import Html exposing (Html, a, div, i, li, span, text, ul)
+import Html.Attributes exposing (attribute, class, classList, id, selected, target)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -53,7 +47,6 @@ import Scroll
 import Session exposing (Apis, GlobalCmd(..))
 import String
 import Text as T
-import Time
 
 
 type State

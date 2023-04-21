@@ -23,7 +23,6 @@ module Requests exposing (..)
 
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
-import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -35,24 +34,10 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (expectJson, fromResult, mapRest2Gql)
-import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( Count
-        , Label
-        , Member
-        , NameidPayload
-        , NodeId
-        , Post
-        , RoleExt
-        , Tension
-        , TensionsCount
-        , User
-        , UserRoleExtended
-        , Username
-        )
+import Maybe
+import ModelSchema exposing (Label, NameidPayload, RoleExt, Tension, TensionsCount, User, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Session exposing (Apis)
 
 

@@ -23,11 +23,7 @@ module Query.PatchContract exposing (pushComment, sendVote)
 
 import Bulk exposing (CommentPatchForm)
 import Bulk.Codecs exposing (memberIdCodec)
-import Dict exposing (Dict)
-import Extra exposing (ternary)
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.TensionEvent as TensionEvent
+import Dict
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -35,18 +31,14 @@ import Fractal.Object.AddVotePayload
 import Fractal.Object.Contract
 import Fractal.Object.UpdateContractPayload
 import Fractal.Object.Vote
-import Fractal.Query as Query
 import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
 import Query.PatchTension exposing (pushCommentFilter)
-import Query.QueryContract exposing (contractPayload)
-import Query.QueryNode exposing (cidPayload)
 import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
 

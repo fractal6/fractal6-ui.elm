@@ -25,57 +25,9 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , FocusState
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , eor2ur
-        , focusFromNameid
-        , focusFromPath
-        , focusState
-        , getOrgaRoles
-        , getTensionCharac
-        , isOwner
-        , nid2rootid
-        , nodeFromFragment
-        , tensionAction2NodeType
-        , toLink
-        , uriFromNameid
-        , uriFromUsername
-        )
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View
-    exposing
-        ( action2icon
-        , action2str
-        , archiveActionToggle
-        , auth2icon
-        , auth2val
-        , statusColor
-        , tensionIcon2
-        , tensionStatus2str
-        , tensionTypeColor
-        , viewCircleTarget
-        , viewLabel
-        , viewLabels
-        , viewNodeDescr
-        , viewNodeRefShort
-        , viewRole
-        , viewRoleExt
-        , viewTensionDateAndUser
-        , viewTensionDateAndUserC
-        , viewUpdated
-        , viewUser0
-        , viewUser2
-        , viewUserFull
-        , viewUsernameLink
-        , viewUsers
-        , visibility2icon
-        )
-import Codecs exposing (LookupResult, QuickDoc)
+import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Comments exposing (viewComment, viewCommentInput)
@@ -90,59 +42,39 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
-import Dict exposing (Dict)
-import Extra exposing (decap, ternary, textD, textH, unwrap, upH)
+import Dict
+import Extra exposing (decap, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
-import Extra.Url exposing (queryBuilder, queryParser)
-import Form exposing (isPostSendable)
+import Extra.Url exposing (queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
-import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, spellcheck, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Generated.Route as Route exposing (toHref)
+import Global exposing (Msg(..), send, sendSleep)
+import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , RestData
-        , fromMaybeData
-        , isFailure
-        , isSuccess
-        , loadingSpin
-        , withDefaultData
-        , withMapData
-        , withMaybeData
-        , withMaybeMapData
-        )
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
+import Query.PatchTension exposing (patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubscription)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
-import Query.QueryUser exposing (getIsSubscribe)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import RemoteData exposing (RemoteData)
 import Scroll
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..), toReflink)
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Task

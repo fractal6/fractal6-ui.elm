@@ -28,12 +28,10 @@ module Query.AddTension exposing
     )
 
 import Bulk exposing (Ev, TensionForm, UserForm, encodeLabel)
-import Dict exposing (Dict)
-import Extra exposing (listToMaybe, ternary)
+import Dict
+import Extra exposing (listToMaybe)
 import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
@@ -41,14 +39,10 @@ import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddTensionPayload
-import Fractal.Object.Label
-import Fractal.Object.Tension
-import Fractal.Query as Query
 import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)

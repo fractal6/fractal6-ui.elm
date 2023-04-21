@@ -21,15 +21,13 @@
 
 module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Array
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid)
+import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (getNodeTextFromNodeType, helperButton, viewLabel, viewRoleExt)
-import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -39,45 +37,32 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
-import Dict exposing (Dict)
-import Extra exposing (space_, ternary, textH, textT, upH)
-import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
+import Dict
+import Extra exposing (space_, ternary, textT)
+import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
-import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, rows, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
+import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, target, type_, value)
+import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, loadingSpin, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchNode
-    exposing
-        ( addOneLabel
-        , addOneRole
-        , removeOneLabel
-        , removeOneRole
-        , updateOneLabel
-        , updateOneRole
-        )
-import Query.PatchTension exposing (actionRequest)
+import Query.PatchNode exposing (addOneLabel, addOneRole, removeOneLabel, removeOneRole, updateOneLabel, updateOneRole)
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
 import Time

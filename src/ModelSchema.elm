@@ -42,7 +42,7 @@ import Graphql.Http
 import Json.Encode as JE
 import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Text as T
 
 

@@ -28,11 +28,7 @@ import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
-import Loading
-    exposing
-        ( GqlData
-        , RestData
-        )
+import Loading exposing (GqlData, RestData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports

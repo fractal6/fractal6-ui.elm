@@ -26,13 +26,12 @@ import Assets.Logo as Logo
 import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toLink)
 import Bulk.View exposing (lang2str)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
-import Html exposing (Html, a, button, div, header, hr, i, nav, span, strong, text)
-import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Maybe exposing (withDefault)
+import Html exposing (Html, a, div, header, hr, nav, span, strong, text)
+import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, title)
+import Html.Events exposing (onClick)
 import ModelSchema exposing (NotifCount)
 import Text as T
 import Url exposing (Url)

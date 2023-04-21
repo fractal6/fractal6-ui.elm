@@ -46,11 +46,9 @@ import Extra exposing (ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
-import Html exposing (Html, div, text)
-import Html.Attributes as Attr exposing (attribute, class, href, id, style)
+import Html exposing (div)
+import Html.Attributes as Attr exposing (id)
 import Html.Lazy as Lazy
-import Http
-import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, isFailure, withMapData)
 import Maybe exposing (withDefault)
@@ -61,18 +59,9 @@ import Query.PatchUser exposing (toggleOrgaWatch)
 import Query.QueryNode exposing (getOrgaInfo)
 import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (tokenack)
-import Session
-    exposing
-        ( LabelSearchPanelModel
-        , Screen
-        , Session
-        , SessionFlags
-        , UserSearchPanelModel
-        , fromLocalSession
-        , resetSession
-        )
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)

@@ -22,8 +22,8 @@
 module Footbar exposing (view)
 
 import Assets as A
-import Html exposing (Html, a, div, header, hr, i, nav, small, span, text)
-import Html.Attributes as Attr exposing (attribute, class, href, id, style, target, title)
+import Html exposing (Html, a, div, small, span, text)
+import Html.Attributes as Attr exposing (attribute, class, href, id, target, title)
 import Text as T
 
 

@@ -24,44 +24,30 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nodeIdCodec, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
-import Bulk.View
-    exposing
-        ( byAt
-        , viewRole
-        , viewTensionArrow
-        , viewTensionDateAndUserC
-        , viewUpdated
-        , viewUser0
-        , viewUser2
-        , viewUserFull
-        , viewUsernameLink
-        )
+import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
 import Components.Comments exposing (viewComment, viewContractCommentInput)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
-import Dict exposing (Dict)
-import Extra exposing (space_, ternary, textH, upH)
+import Dict
+import Extra exposing (space_, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, type_, value)
+import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, withMapData, withMaybeData, withMaybeMapData)
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports

@@ -22,14 +22,7 @@
 module Extra.Events exposing (..)
 
 import Html
-import Html.Events
-    exposing
-        ( custom
-        , keyCode
-        , on
-        , preventDefaultOn
-        , stopPropagationOn
-        )
+import Html.Events exposing (custom, keyCode, on, preventDefaultOn)
 import Json.Decode as JD
 
 

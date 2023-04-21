@@ -21,15 +21,9 @@
 
 module Auth exposing (ErrState(..), parseErr, parseErr2)
 
-import Assets as A
-import Extra exposing (ternary, textH, upH)
-import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
-import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData)
-import Maybe exposing (withDefault)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import String exposing (contains, startsWith)
 import String.Extra as SE
 import Text as T

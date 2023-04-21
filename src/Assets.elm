@@ -22,10 +22,9 @@
 module Assets exposing (..)
 
 import Assets.Logo as Logo
-import Extra exposing (space_, ternary, textH, upH)
-import Generated.Route as Route exposing (Route, toHref)
+import Extra exposing (space_)
 import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
-import Html.Attributes exposing (attribute, class, href, style)
+import Html.Attributes exposing (attribute, class, href)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T

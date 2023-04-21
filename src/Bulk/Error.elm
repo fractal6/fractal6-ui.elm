@@ -21,29 +21,16 @@
 
 module Bulk.Error exposing (..)
 
-import Assets as A
-import Bulk.Codecs exposing (NodeFocus)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (upH)
 import Extra.Events exposing (onClickPD)
-import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, button, div, img, p, span, text)
-import Html.Attributes exposing (alt, attribute, class, height, href, src, target, width)
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html, a, button, div, p, text)
+import Html.Attributes exposing (class, href, target)
 import Json.Decode as JD
-import Loading
-    exposing
-        ( ErrorData
-        , GqlData
-        , HttpError
-        , ModalData
-        , RequestResult(..)
-        , RestData
-        , errorDecoder
-        , errorsDecoder
-        , toErrorData
-        )
+import Loading exposing (ErrorData, GqlData, HttpError, ModalData, RequestResult(..), RestData, errorDecoder, errorsDecoder, toErrorData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Text as T
 
 
