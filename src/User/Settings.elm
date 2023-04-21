@@ -23,39 +23,33 @@ module User.Settings exposing (Flags, Model, Msg, init, page, subscriptions, upd
 
 import Assets as A
 import Assets.Logo as Logo
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..))
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..))
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (lang2str, viewProfileC)
-import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Dict exposing (Dict)
-import Extra exposing (mor, space_, ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
+import Dict
+import Extra exposing (mor, space_, ternary, textH)
+import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
-import Fractal.Enum.RoleType as RoleType
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, label, li, nav, option, p, select, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, selected, spellcheck, style, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Html.Lazy as Lazy
-import Iso8601 exposing (fromTime)
-import List.Extra as LE
+import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchUser exposing (patchUser)
-import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserFull)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (updatePassword)
 import Session exposing (GlobalCmd(..))
 import Task

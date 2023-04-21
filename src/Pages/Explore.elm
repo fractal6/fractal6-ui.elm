@@ -52,7 +52,7 @@ import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
 import Time
-import Url as Url
+import Url
 
 
 

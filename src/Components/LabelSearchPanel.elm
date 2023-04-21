@@ -25,19 +25,18 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewLabel, viewLabels)
 import Codecs exposing (LookupResult)
-import Dict exposing (Dict)
+import Dict
 import Dom
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Html.Lazy as Lazy
+import Html exposing (Html, div, i, input, label, nav, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withMaybeData, withMaybeMapData)
@@ -48,7 +47,6 @@ import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
 import Requests exposing (fetchLabelsTop)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
-import Task
 import Text as T
 import Time
 

@@ -23,22 +23,20 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
+import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Extra.Events exposing (onClickPD)
+import Dict
+import Extra exposing (ternary)
 import Extra.Views exposing (showMsg)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, button, div, i, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, type_, value)
+import Html.Events exposing (onClick)
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)

@@ -94,7 +94,6 @@ import Fractal.Object.TensionAggregateResult
 import Fractal.Object.User
 import Fractal.Object.UserAggregateResult
 import Fractal.Query as Query
-import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -102,7 +101,7 @@ import List.Extra as LE
 import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import String.Extra as SE
 
 

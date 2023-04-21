@@ -24,30 +24,16 @@ module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscript
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk
-    exposing
-        ( ActionForm
-        , Ev
-        , UserForm
-        , UserState(..)
-        , blobFromTensionHead
-        , getNode
-        , getNodeRights
-        , getOwners
-        , initActionForm
-        , isSelfContract
-        , makeCandidateContractForm
-        , uctxFromUser
-        )
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nearestCircleid, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
+import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, getNodeRights, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
-import Dict exposing (Dict)
+import Dict
 import Dom
-import Extra exposing (mor, ternary, textH, upH)
+import Extra exposing (mor, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -55,15 +41,13 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)

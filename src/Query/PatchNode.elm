@@ -30,24 +30,17 @@ module Query.PatchNode exposing
 
 import Bulk exposing (ArtefactNodeForm)
 import Bulk.Codecs exposing (nid2rootid)
-import Dict exposing (Dict)
-import Fractal.Enum.RoleType as RoleType
+import Dict
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddLabelPayload
 import Fractal.Object.AddRoleExtPayload
-import Fractal.Object.DeleteLabelPayload
-import Fractal.Object.DeleteRoleExtPayload
-import Fractal.Object.Node
 import Fractal.Object.UpdateLabelPayload
-import Fractal.Object.UpdateNodePayload
 import Fractal.Object.UpdateRoleExtPayload
-import Fractal.Object.User
-import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate)

@@ -31,8 +31,6 @@ module Query.QueryUser exposing
     , usernameFilter
     )
 
-import Dict exposing (Dict)
-import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
@@ -41,13 +39,12 @@ import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Object.UserRights
 import Fractal.Query as Query
-import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import String.Extra as SE
 
 

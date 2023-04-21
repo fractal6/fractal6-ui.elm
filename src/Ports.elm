@@ -21,25 +21,7 @@
 
 port module Ports exposing (..)
 
-import Bulk.Codecs exposing (nearestCircleid)
-import Codecs
-    exposing
-        ( LookupResult
-        , WindowPos
-        , labelDecoder
-        , labelsEncoder
-        , modalDataDecoder
-        , nodeDecoder
-        , nodeEncoder
-        , nodesEncoder
-        , userCtxDecoder
-        , userCtxEncoder
-        , userDecoder
-        , userEncoder
-        , usersEncoder
-        , windowEncoder
-        )
-import Dict exposing (Dict)
+import Codecs exposing (LookupResult, WindowPos, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
 import Json.Decode as JD
 import Json.Encode as JE
 import Loading exposing (ModalData)

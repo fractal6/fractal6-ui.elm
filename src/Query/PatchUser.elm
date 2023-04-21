@@ -28,28 +28,23 @@ module Query.PatchUser exposing
     )
 
 import Bulk exposing (UserProfileForm)
-import Dict exposing (Dict)
+import Dict
 import Extra exposing (ternary)
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Node
-import Fractal.Object.Tension
 import Fractal.Object.UpdateUserEventPayload
 import Fractal.Object.UpdateUserPayload
 import Fractal.Object.User
 import Fractal.Object.UserEvent
-import Fractal.Object.UserRights
-import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload, userProfilePayload)
-import RemoteData exposing (RemoteData)
+import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload)
+import RemoteData
 import String.Extra as SE
 
 

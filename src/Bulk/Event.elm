@@ -22,57 +22,22 @@
 module Bulk.Event exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , getTensionCharac
-        , nid2rootid
-        , uriFromNameid
-        , uriFromUsername
-        )
+import Bulk exposing (UserState(..))
+import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), nid2rootid)
 import Bulk.View exposing (byAt, statusColor, viewCircleSimple)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
-import Extra.Date exposing (formatDate)
-import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global
-import Html exposing (Html, a, br, button, div, hr, i, p, small, span, strong, sub, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
-import Html.Events exposing (onClick)
-import Identicon
+import Html exposing (Html, a, div, p, small, span, strong, text)
+import Html.Attributes exposing (class, classList, href)
 import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( ContractNotif
-        , EmitterOrReceiver
-        , EventFragment
-        , EventNotif
-        , Label
-        , NodeExt
-        , Post
-        , Tension
-        , User
-        , UserCtx
-        , UserEvent
-        , Username
-        )
+import ModelSchema exposing (ContractNotif, EventFragment, EventNotif, UserEvent, Username)
 import Session exposing (Conf)
 import String.Extra as SE
 import Text as T
-import Time
 
 
 eventToLink : UserEvent -> EventNotif -> String

@@ -21,29 +21,15 @@
 
 module Components.ModalConfirm exposing (..)
 
-import Assets as A
-import Bulk exposing (ActionForm, UserState(..), initActionForm)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUser)
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Bulk exposing (UserState(..))
+import Bulk.Codecs exposing (ActionType(..), DocType(..))
 import Extra.Views exposing (showMsg)
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..))
-import Maybe exposing (withDefault)
+import Html exposing (Html, button, div, span, text)
+import Html.Attributes exposing (attribute, class, classList, id)
+import Html.Events exposing (onClick)
+import Loading exposing (ModalData, RequestResult(..))
 import ModelSchema exposing (..)
-import String.Format as Format
 import Text as T
-import Time
 
 
 type alias ModalConfirm msg =

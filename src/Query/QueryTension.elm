@@ -38,17 +38,14 @@ module Query.QueryTension exposing
 
 import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (ternary, unwrap, unwrap2)
+import Extra exposing (ternary, unwrap2)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionOrderable as TensionOrderable
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Comment
@@ -56,48 +53,20 @@ import Fractal.Object.CommentAggregateResult
 import Fractal.Object.Contract
 import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
-import Fractal.Object.Label
-import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeFragment
 import Fractal.Object.Reaction
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
-import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( Blob
-        , Comment
-        , Count
-        , EmitterOrReceiver
-        , Event
-        , IdPayload
-        , Label
-        , MentionedTension
-        , NodeFragment
-        , PinTension
-        , Reaction
-        , Tension
-        , TensionBlobs
-        , TensionComments
-        , TensionHead
-        , User
-        , UserCtx
-        , Username
-        , decodeResponse
-        , decodedId
-        , decodedTime
-        , encodeId
-        )
-import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, pinPayload, tidPayload, userPayload)
-import RemoteData exposing (RemoteData)
+import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, userPayload)
+import RemoteData
 import String.Extra as SE
 
 

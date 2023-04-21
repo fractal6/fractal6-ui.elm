@@ -24,20 +24,20 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscri
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (isMember, isPending, memberIdCodec, nid2rootid)
+import Bulk.Codecs exposing (isMember, isPending, nid2rootid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
-import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Dict
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
-import Form exposing (isPostEmpty, isUsersSendable)
+import Form exposing (isPostEmpty)
 import Fractal.Enum.TensionEvent as TensionEvent
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, a, button, div, i, p, span, strong, text, textarea)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData)
@@ -45,7 +45,6 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
-import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
 import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)

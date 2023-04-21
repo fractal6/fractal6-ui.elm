@@ -22,27 +22,21 @@
 module Query.AddContract exposing (addOneContract, deleteOneContract)
 
 import Bulk exposing (ContractForm)
-import Dict exposing (Dict)
-import Extra exposing (listToMaybe, ternary)
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.TensionEvent as TensionEvent
+import Dict
+import Extra exposing (listToMaybe)
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddContractPayload
-import Fractal.Object.Contract
 import Fractal.Object.DeleteContractPayload
-import Fractal.Query as Query
 import Fractal.Scalar
-import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildComment)
-import Query.QueryContract exposing (cidPayload, contractPayload)
+import Query.QueryContract exposing (cidPayload)
 import RemoteData exposing (RemoteData)
 
 

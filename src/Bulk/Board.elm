@@ -22,36 +22,20 @@
 module Bulk.Board exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs exposing (NodeFocus, uriFromNameid, uriFromUsername)
+import Bulk exposing (UserState(..))
+import Bulk.Codecs exposing (NodeFocus)
 import Bulk.View exposing (mediaTension)
 import Dict exposing (Dict)
-import Extra exposing (colorAttr, ternary, upH)
-import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, title)
+import Extra exposing (ternary)
+import Extra.Events exposing (onDragEnd, onDragEnter, onDragLeave, onDragStart)
+import Html exposing (Html, div, i, span, text)
+import Html.Attributes exposing (attribute, class, classList, id, style)
 import Html.Events exposing (onClick)
-import Html.Lazy as Lazy
-import Identicon
 import List.Extra as LE
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Tension)
 import Session exposing (Conf)
-import String.Extra as SE
 import Text as T
-import Time
 
 
 type alias Op msg =

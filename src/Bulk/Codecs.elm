@@ -21,7 +21,7 @@
 
 module Bulk.Codecs exposing (..)
 
-import Array exposing (Array)
+import Array
 import Extra exposing (cleanDup, ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -31,17 +31,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( EmitterOrReceiver
-        , LocalGraph
-        , Node
-        , NodeFragment
-        , UserCommon
-        , UserCtx
-        , UserRole
-        , UserRoleCommon
-        )
+import ModelSchema exposing (EmitterOrReceiver, LocalGraph, Node, NodeFragment, UserCommon, UserCtx, UserRole, UserRoleCommon)
 import Url exposing (Url)
 
 

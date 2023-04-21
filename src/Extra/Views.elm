@@ -22,10 +22,9 @@
 module Extra.Views exposing (..)
 
 import Assets as A
-import Extra exposing (ternary, textH, upH)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Extra exposing (upH)
+import Html exposing (Html, div, input, label, section)
+import Html.Attributes exposing (attribute, class, for, id, name, type_)
 import Markdown exposing (renderMarkdown)
 import Text as T
 

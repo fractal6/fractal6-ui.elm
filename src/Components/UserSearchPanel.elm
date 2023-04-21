@@ -25,29 +25,26 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
-import Bulk.Codecs exposing (nearestCircleid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull)
 import Codecs exposing (LookupResult)
-import Dict exposing (Dict)
+import Dict
 import Dom
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html exposing (Html, div, i, input, nav, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
-import Process
 import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
 import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
-import Task
 import Text as T
 import Time
 
