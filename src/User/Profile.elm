@@ -411,6 +411,5 @@ viewProfileRight user_s user model =
 viewUserOrgas : UserCommon a -> List NodeExt -> Html Msg
 viewUserOrgas user orgas =
     orgas
-        |> List.map
-            (\root -> viewOrgaMedia (Just user) root)
+        |> List.map (\root -> Lazy.lazy2 viewOrgaMedia (Just user) root)
         |> div [ class "nodesList" ]

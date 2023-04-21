@@ -676,8 +676,6 @@ type alias Email =
 type alias User =
     { username : String
     , name : Maybe String
-
-    -- avatar ?
     }
 
 
@@ -685,6 +683,15 @@ type alias Member =
     { username : String
     , name : Maybe String
     , roles : List UserRoleExtended
+    }
+
+
+type alias UserView a =
+    { a
+        | username : String
+        , name : Maybe String
+
+        -- avatar ?
     }
 
 

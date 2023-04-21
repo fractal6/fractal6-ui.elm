@@ -79,6 +79,7 @@ import ModelSchema
         , UserRole
         , UserRoleCommon
         , UserRoleExtended
+        , UserView
         , Username
         , shrinkNode
         )
@@ -522,7 +523,7 @@ viewUser2 username =
         ]
 
 
-viewUserFull : Int -> Bool -> Bool -> User -> Html msg
+viewUserFull : Int -> Bool -> Bool -> UserView a -> Html msg
 viewUserFull size isLinked isBoxed user =
     let
         ( pad, avatar ) =

@@ -1139,6 +1139,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="the subject"
   fr="le sujet"
 
+[user]
+  en="User"
+  fr="Utilisateur"
+
 [name]
   en="Name"
   fr="Nom"
