@@ -28,7 +28,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
-import Bulk.View exposing (viewRole2, viewUser, viewUsernameLink)
+import Bulk.View exposing (viewRole2, viewUserFull)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -73,7 +73,7 @@ import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
-import Url as Url
+import Url
 
 
 page : Page Flags Model Msg
@@ -659,9 +659,7 @@ viewMembers conf data focus isPanelOpen =
                         [ div [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr []
-                                    [ th [] []
-                                    , th [] [ text T.username ]
-                                    , th [] [ text T.name ]
+                                    [ th [] [ text T.user ]
                                     , th [] [ text T.rolesHere ]
                                     , th [] [ text T.rolesSub ]
                                     ]
@@ -706,9 +704,7 @@ viewGuest conf members_d focus isPanelOpen =
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
                         [ tr []
-                            [ th [] []
-                            , th [] [ text T.username ]
-                            , th [] [ text T.name ]
+                            [ th [] [ text T.user ]
                             , th [] [ text T.roles ]
                             ]
                         ]
@@ -754,16 +750,14 @@ viewPending _ members_d focus pending_hover pending_hover_i tid =
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
                         [ tr []
-                            [ th [] [ text T.username ]
-                            , th [] [ text T.name ]
+                            [ th [] [ text T.user ]
                             ]
                         ]
                     , tbody [] <|
                         List.indexedMap
                             (\i m ->
                                 tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                    [ td [] [ viewUsernameLink m.username ]
-                                    , td [] [ m.name |> withDefault "--" |> text ]
+                                    [ td [] [ viewUserFull 1 True False m ]
                                     , if Just i == pending_hover_i then
                                         td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
 
@@ -797,10 +791,8 @@ viewMemberRow conf focus m isPanelOpen =
                 |> (\( x, y ) -> ( List.reverse x, List.reverse y ))
     in
     tr []
-        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
-        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
-        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ]
+        [ td [] [ viewUserFull 1 True False m ]
+        , td []
             [ case roles_ of
                 [] ->
                     text "--"
@@ -808,7 +800,7 @@ viewMemberRow conf focus m isPanelOpen =
                 _ ->
                     viewMemberRoles conf OverviewBaseUri roles_ isPanelOpen
             ]
-        , td [ class "pt-3" ]
+        , td []
             [ case sub_roles_ of
                 [] ->
                     text "--"
@@ -822,10 +814,8 @@ viewMemberRow conf focus m isPanelOpen =
 viewGuestRow : Conf -> Member -> Bool -> Html Msg
 viewGuestRow conf m isPanelOpen =
     tr []
-        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
-        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
-        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-        , td [ class "pt-3" ] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
+        [ td [] [ viewUserFull 1 True False m ]
+        , td [] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
         ]
 
 

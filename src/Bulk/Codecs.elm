@@ -100,7 +100,7 @@ toLink route param params =
         -- User  url
         UsersBaseUri ->
             if
-                -- Those name are seserved in the backedn though.
+                -- Those name are reserved in the backend though.
                 List.member param
                     [ "explore"
                     , "login"
