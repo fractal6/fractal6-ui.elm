@@ -603,21 +603,35 @@ view_ global model =
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
-            [ div [ class "section_ mt-2" ]
-                [ if isAdmin then
-                    div
-                        [ class "button is-primary is-pulled-right"
-                        , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+            [ div [ class "columns is-centered" ]
+                [ div [ class "column is-four-fifth" ]
+                    [ text ""
+
+                    --viewSearchBar model.pattern
+                    ]
+                , if isAdmin then
+                    div [ class "column is-one-fifth is-flex is-flex-direction-column" ]
+                        [ div
+                            [ class "button is-primary is-pushed-right"
+                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                            ]
+                            [ A.icon1 "icon-user-plus" T.inviteMembers ]
                         ]
-                        [ A.icon1 "icon-user-plus" T.inviteMembers ]
 
                   else
                     text ""
-                , div [ class "columns mb-6 px-3" ]
-                    [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
-                , div [ class "columns mb-6 px-3" ]
-                    [ div [ class "column is-5 is-4-fullhd pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
-                    , div [ class "column is-3" ] [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                ]
+            , div [ class "columns is-centere" ]
+                [ div [ class "column is-four-fifth" ]
+                    [ div [ class "columns mb-6 px-3" ]
+                        [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
+                    , div [ class "columns mb-6 px-3" ]
+                        [ div [ class "column is-5 is-4-fullhd pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
+                        ]
+                    ]
+                , div [ class "column is-one-fifth is-flex is-flex-direction-column" ]
+                    [ div [ class "is-pushed-right" ]
+                        [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
             ]
@@ -727,7 +741,7 @@ viewPending _ members_d focus pending_hover pending_hover_i tid =
             [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
                 [ text T.pending
                 , a
-                    [ class "button is-small is-primary mx-3"
+                    [ class "button is-small is-primary ml-3"
                     , classList [ ( "is-invisible", not pending_hover ) ]
                     , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
                     ]

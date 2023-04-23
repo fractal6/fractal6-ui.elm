@@ -234,6 +234,8 @@ type alias OrgaInfo =
       n_tensions : Int
     , -- total numbers of members
       n_members : Int
+    , -- total number of projects
+      n_projects : Int
     , -- total numbers of watching users
       n_watchers : Int
     , -- is logged user watching the orga
