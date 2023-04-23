@@ -107,7 +107,7 @@ view op =
             []
         , div
             [ id "colorPicker"
-            , classList [ ( "is-hidden", op.data.isOpen == False ) ]
+            , classList [ ( "is-hidden", not op.data.isOpen ) ]
             ]
             [ div [ class "colorBoxes" ]
                 [ span [ class "is-size-7" ]

@@ -1129,7 +1129,7 @@ viewSearchList _ model =
                     )
 
         isHidden =
-            (qs.visible == False) || (qs.pattern == "" && sortedLookup == [])
+            not qs.visible || (qs.pattern == "" && sortedLookup == [])
     in
     div
         [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]

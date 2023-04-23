@@ -1010,7 +1010,7 @@ update global message model =
                 isPublic =
                     withMaybeData model.orga_rights |> Maybe.map .visibility |> Maybe.map (\x -> x == NodeVisibility.Public) |> withDefault False
             in
-            if val == False && not isPublic && not confirmed then
+            if not val && not isPublic && not confirmed then
                 -- show modal to confirm root circle is going to be public
                 ( model
                 , send <|
@@ -1064,7 +1064,7 @@ update global message model =
         -- Color Picker
         OpenColor ->
             ( { model | colorPicker = ColorPicker.open model.colorPicker }
-            , if model.colorPicker.isOpen == False then
+            , if not model.colorPicker.isOpen then
                 Cmd.batch [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" ]
 
               else
@@ -1272,12 +1272,10 @@ view global model =
 view_ : Model -> Html Msg
 view_ model =
     div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
-            [ div [ class "section_" ]
-                [ div [ class "columns" ]
-                    [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
-                    , div [ class "column" ] [ viewSettingsContent model ]
-                    ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+            [ div [ class "columns" ]
+                [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                , div [ class "column" ] [ viewSettingsContent model ]
                 ]
             ]
         ]

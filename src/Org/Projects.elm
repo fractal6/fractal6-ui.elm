@@ -1006,7 +1006,7 @@ viewNewProject model =
             Dict.get "description" post |> withDefault ""
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "field" ]
                 [ div [ class "label" ] [ text T.name ]
                 , div [ class "control" ]
@@ -1108,7 +1108,7 @@ viewDefault user model =
                     False
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-tree-quarter" ]
                     [ viewSearchBar model.pattern ]

@@ -1057,7 +1057,7 @@ update global message model =
                     ternary reset 0 model.offset
 
                 ( inc, first, skip ) =
-                    if offset > 1 && model.tensions_int == Loading && reset == False then
+                    if offset > 1 && model.tensions_int == Loading && not reset then
                         -- load a bunch of data (do not increase offset here)
                         ( 0, nfirstL * offset, 0 )
 
@@ -1627,8 +1627,8 @@ view_ global model =
         isFullwidth =
             List.member model.viewMode [ CircleView, AssigneeView ]
     in
-    div [ id "tensions", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-10-fullhd pt-1", classList [ ( "pb-0", isFullwidth ) ] ]
+    div [ id "tensions", class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
             [ if model.viewMode == ListView then
                 withMaybeData model.path_data
                     |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
@@ -1636,15 +1636,16 @@ view_ global model =
                     |> Maybe.map
                         (\x ->
                             -- @DEBUG: why margin-bottom changes if depending from where we come from ?
-                            div [ class "mt-4", attribute "style" "margin-bottom:-1rem !important;" ]
+                            --
+                            div [ class "mb-4", attribute "style" "margin-top:-1rem !important;" ]
                                 [ viewPinnedTensions 3 model.conf model.node_focus x ]
                         )
                     |> withDefault (text "")
 
               else
                 text ""
-            , div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
+            , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
+                [ div [ class "column is-12 is-paddingless", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
                     [ viewSearchBar model ]
                 ]
             , case model.children of

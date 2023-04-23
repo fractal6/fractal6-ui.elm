@@ -1053,7 +1053,7 @@ viewMandateInput txt mandate op =
 
           else
             text ""
-        , if showResponsabilities == False then
+        , if not showResponsabilities then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddResponsabilities ]
                     [ A.icon1 "icon-plus" "", text T.addResponsabilities ]
@@ -1061,7 +1061,7 @@ viewMandateInput txt mandate op =
 
           else
             text ""
-        , if showDomains == False then
+        , if not showDomains then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddDomains ]
                     [ A.icon1 "icon-plus" "", text T.addDomains ]
@@ -1069,7 +1069,7 @@ viewMandateInput txt mandate op =
 
           else
             text ""
-        , if showPolicies == False then
+        , if not showPolicies then
             span [ class "pr-2" ]
                 [ div [ class "button is-small", onClick op.onAddPolicies ]
                     [ A.icon1 "icon-plus" "", text T.addPolicies ]

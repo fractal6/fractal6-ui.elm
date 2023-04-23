@@ -491,8 +491,7 @@ setEvents events data =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    (hasData model
-        == False
+    (not (hasData model)
         && (case model.state of
                 VisibilityAction ->
                     List.member model.form.fragment.visibility [ Just model.form.node.visibility, Nothing ]
@@ -518,7 +517,7 @@ canExitSafe model =
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    isPostEmpty [ "message" ] model.form.post == False
+    not (isPostEmpty [ "message" ] model.form.post)
 
 
 isSendable : Model -> Bool

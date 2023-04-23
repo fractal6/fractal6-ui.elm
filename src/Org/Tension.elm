@@ -1927,7 +1927,7 @@ viewTension u t model =
         [ div [ class "columns is-marginless" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
-            [ div [ class "column is-9 px-0" ]
+            [ div [ class "column is-9 px-0 pt-0" ]
                 [ h1 [ class "title tensionTitle" ] <|
                     if model.isTitleEdit then
                         let
@@ -2210,13 +2210,13 @@ viewComments conf action history_m comments_m comment_form comment_result expand
                     -- Ignore these type
                     ( evts, state )
 
-                else if isAbove && state.nskip == 0 && isClicked == False then
+                else if isAbove && state.nskip == 0 && not isClicked then
                     ( evts, { state | nskip = 1, i = i } )
 
-                else if isAbove && state.nskip > 0 && state.isClicked == False then
+                else if isAbove && state.nskip > 0 && not state.isClicked then
                     ( evts, { state | nskip = state.nskip + 1 } )
 
-                else if state.nskip > 0 && e.type_ == Nothing && state.isClicked == False then
+                else if state.nskip > 0 && e.type_ == Nothing && not state.isClicked then
                     let
                         btn =
                             { type_ = Nothing, n = state.nskip, createdAt = "", i = state.i }

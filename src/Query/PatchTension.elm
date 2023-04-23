@@ -338,7 +338,7 @@ setAssigneeEncoder f =
         inputOpt =
             \_ ->
                 { set = ternary f.isNew patch historyPatch
-                , remove = ternary (f.isNew == False) patch Absent
+                , remove = ternary (not f.isNew) patch Absent
                 }
     in
     { input = Input.buildUpdateTensionInput inputReq inputOpt }
@@ -398,7 +398,7 @@ setLabelEncoder f =
         inputOpt =
             \_ ->
                 { set = ternary f.isNew patch historyPatch
-                , remove = ternary (f.isNew == False) patch Absent
+                , remove = ternary (not f.isNew) patch Absent
                 }
     in
     { input = Input.buildUpdateTensionInput inputReq inputOpt }

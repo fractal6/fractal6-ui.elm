@@ -1160,8 +1160,8 @@ figcaption {
 
 #mainPane {
     // Prevent NavbarTop overflow
-    & > .columns {
-        margin: 0;
+    & > .columns:not(#overview) { // mt-3
+        margin: 0.75rem 0 0 0;
     }
 }
 
@@ -1570,13 +1570,14 @@ figcaption {
 //
 
 #overview {
+    margin-top: 0.1rem;
     & > .column {
         margin-top: 0;
         padding-top: 0;
-        &  > * {
-            margin-top: 21px;
-            margin-bottom: 21px;
-        }
+         & > * {
+             margin-top: 21px;
+             margin-bottom: 21px;
+         }
     }
 
     @include desktop-only {
