@@ -317,12 +317,12 @@ viewNavLevel op model =
              , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
                 [ a [ href (uriFromNameid ProjectsBaseUri focusid []) ]
                     [ A.icon1 "icon-layout" T.projects
+                    , case unwrap 0 .n_projects op.orgaInfo of
+                        0 ->
+                            text ""
 
-                    --, case unwrap 0 .n_projects op.orgaInfo of
-                    --    0 ->
-                    --        text ""
-                    --    i ->
-                    --        counter i
+                        i ->
+                            counter i
                     ]
                 ]
 

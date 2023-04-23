@@ -76,6 +76,7 @@ import Fractal.Enum.NodeOrderable as NodeOrderable
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.ProjectOrderable as ProjectOrderable
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -93,6 +94,7 @@ import Fractal.Object.NodeAggregateResult
 import Fractal.Object.NodeFragment
 import Fractal.Object.Notif
 import Fractal.Object.Project
+import Fractal.Object.ProjectAggregateResult
 import Fractal.Object.RoleExt
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
@@ -1429,9 +1431,16 @@ orgaInfoPayload username =
             )
         |> with
             (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
-                Fractal.Object.Node.watchersAggregate identity <|
-                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+                Fractal.Object.Node.projectsAggregate (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) }) <|
+                    SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count
             )
+        -- @DEBUG: multiple query to query  aggregate from root !
+        |> hardcoded 0
+        --|> with
+        --    (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+        --        Fractal.Object.Node.watchersAggregate identity <|
+        --            SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+        --    )
         |> with
             (SelectionSet.map (\x -> Maybe.map (\y -> List.length y > 0) x)
                 (Fractal.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
