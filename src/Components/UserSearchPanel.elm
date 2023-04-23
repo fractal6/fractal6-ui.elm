@@ -239,7 +239,7 @@ update_ : Apis -> Msg -> Model -> ( Model, Out )
 update_ apis message model =
     case message of
         OnOpen targets ->
-            if model.isOpen == False then
+            if not model.isOpen then
                 let
                     ( newModel, cmd ) =
                         ternary (targets /= model.form.targets)
@@ -497,7 +497,7 @@ viewAssigneeSelectors users op model =
                         p
                             [ class "panel-block p-1"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
+                            , onClick (OnSubmit <| OnAssigneeClick u (not isActive))
                             ]
                             [ span [ class "panel-icon" ] [ A.icon iconCls ]
                             , viewUserFull 1 False False u

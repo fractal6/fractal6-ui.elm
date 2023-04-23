@@ -602,7 +602,7 @@ view_ global model =
             ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
                     [ text ""
@@ -621,7 +621,7 @@ view_ global model =
                   else
                     text ""
                 ]
-            , div [ class "columns is-centere" ]
+            , div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
                     [ div [ class "columns mb-6 px-3" ]
                         [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]

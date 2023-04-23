@@ -186,13 +186,13 @@ setDataResult result model =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    (hasData model && withMaybeData model.data_result == Nothing) == False
+    not (hasData model && withMaybeData model.data_result == Nothing)
 
 
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    isPostEmpty [ "message" ] model.form.post == False
+    not (isPostEmpty [ "message" ] model.form.post)
 
 
 

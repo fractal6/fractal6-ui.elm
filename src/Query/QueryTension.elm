@@ -798,6 +798,17 @@ pinnedTensionDecoder : Maybe PinnedTensions -> Maybe (Maybe (List PinTension))
 pinnedTensionDecoder data =
     data
         |> Maybe.map .pinned
+        |> Maybe.map
+            (Maybe.map
+                (\y ->
+                    if List.length y > 0 then
+                        Just y
+
+                    else
+                        Nothing
+                )
+            )
+        |> withDefault Nothing
 
 
 queryPinnedTensions url nameid msg =

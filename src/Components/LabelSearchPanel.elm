@@ -249,7 +249,7 @@ update_ apis message model =
             -- Just True: fetch label recurcively in children.
             -- Just False: fetch label in parents until root.
             -- Nothing: stick to given targets
-            if model.isOpen == False then
+            if not model.isOpen then
                 let
                     nameids =
                         List.map (\x -> x.nameid) targets
@@ -552,8 +552,8 @@ viewLabelSelectors isInternal labels op model =
                                 [ class "panel-block"
                                 , classList [ ( "is-active", isActive ) ]
                                 , ternary isInternal
-                                    (onClick (OnLabelClickInt l (isActive == False)))
-                                    (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
+                                    (onClick (OnLabelClickInt l (not isActive)))
+                                    (onClick (OnSubmit <| OnLabelClick l (not isActive)))
                                 ]
                                 [ span [ class "panel-icon" ] [ A.icon iconCls ]
                                 , viewLabel "" Nothing l_

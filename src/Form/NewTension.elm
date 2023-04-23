@@ -518,7 +518,7 @@ canExitSafe data =
 
 hasData : Model -> Bool
 hasData data =
-    isPostEmpty [ "title", "message" ] data.nodeDoc.form.post == False
+    not (isPostEmpty [ "title", "message" ] data.nodeDoc.form.post)
 
 
 
@@ -1028,7 +1028,7 @@ update_ apis message model =
         --    ( cancelUser pos model, noOut )
         --OnShowLookupFs ->
         --    ( openLookup model
-        --    , if model.isLookupOpen == False then
+        --    , if not model.isLookupOpen then
         --        out0 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
         --      else
         --        noOut

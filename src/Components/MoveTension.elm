@@ -202,12 +202,12 @@ setMoveResult result model =
 
 canExitSafe : Model -> Bool
 canExitSafe model =
-    (hasData model && withMaybeData model.move_result == Nothing) == False
+    not (hasData model && withMaybeData model.move_result == Nothing)
 
 
 hasData : Model -> Bool
 hasData model =
-    (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "") == False
+    not (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "")
 
 
 buildOutResult : Model -> ( String, ( String, String, String ) )
