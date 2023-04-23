@@ -22,9 +22,9 @@
 module Form.NewTension exposing (..)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
 import Bulk exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getCircles, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, hasLazyAdminRole, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (FormText, getNodeTextFromNodeType, getTensionText, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)

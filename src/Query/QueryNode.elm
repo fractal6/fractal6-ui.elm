@@ -92,6 +92,7 @@ import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
 import Fractal.Object.NodeFragment
 import Fractal.Object.Notif
+import Fractal.Object.Project
 import Fractal.Object.RoleExt
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult

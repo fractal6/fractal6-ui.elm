@@ -41,7 +41,9 @@ import Fractal.Object.AddLabelPayload
 import Fractal.Object.AddProjectPayload
 import Fractal.Object.AddRoleExtPayload
 import Fractal.Object.UpdateLabelPayload
+import Fractal.Object.UpdateProjectPayload
 import Fractal.Object.UpdateRoleExtPayload
+import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet
@@ -464,7 +466,7 @@ addProjectInputEncoder form =
             , parentnameid = form.nameid
             , name = Dict.get "name" form.post |> withDefault ""
             , nameid = Dict.get "nameid" form.post |> withDefault ""
-            , status = ProjectStatus.Open
+            , status = form.status
             }
 
         inputOpt =

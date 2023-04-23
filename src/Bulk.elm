@@ -30,6 +30,8 @@ import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.Lang as Lang
+import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -233,6 +235,7 @@ type alias ProjectForm =
     { uctx : UserCtx
     , id : String
     , nameid : String -- use for roonameid identification
+    , status : ProjectStatus.ProjectStatus
     , post : Post
     }
 
@@ -248,6 +251,7 @@ initProjectForm user nameid =
                 initUserctx
     , id = ""
     , nameid = nameid
+    , status = ProjectStatus.Open
     , post = Dict.fromList []
     }
 

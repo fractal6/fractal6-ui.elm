@@ -75,29 +75,9 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading
-    exposing
-        ( GqlData
-        , ModalData
-        , RequestResult(..)
-        , WebData
-        , fromMaybeData
-        , fromMaybeWebData
-        , isSuccess
-        , isWebSuccess
-        , withDefaultData
-        , withDefaultWebData
-        , withMapData
-        , withMaybeData
-        , withMaybeDataMap
-        )
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema
-    exposing
-        ( LocalGraph
-        , ProjectFull
-        , ProjectsCount
-        )
+import ModelSchema exposing (LocalGraph, ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
 import Process
@@ -162,8 +142,16 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension a ->
-                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                    DoCreateTension ntm a ->
+                        case ntm of
+                            Nothing ->
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+
+                            Just NodeType.Circle ->
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )
+
+                            Just NodeType.Role ->
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpenRole (FromNameid a)), Cmd.none )
 
                     DoJoinOrga a ->
                         ( Cmd.map JoinOrgaMsg <| send (JoinOrga.OnOpen a JoinOrga.JoinOne), Cmd.none )
@@ -218,8 +206,8 @@ type alias Model =
 
     -- Projects
     , projects : GqlData (List ProjectFull)
-    , projects_top : WebData (List ProjectFull)
-    , projects_sub : WebData (List ProjectFull)
+    , projects_top : RestData (List ProjectFull)
+    , projects_sub : RestData (List ProjectFull)
     , project_add : Bool
     , project_edit : Maybe ProjectFull
     , project_result : GqlData ProjectFull
@@ -327,8 +315,8 @@ type Msg
     | SubmitSearchReset
       -- Projects
     | GotProjects (GqlData (List ProjectFull))
-    | GotProjectsTop (WebData (List ProjectFull))
-    | GotProjectsSub (WebData (List ProjectFull))
+    | GotProjectsTop (RestData (List ProjectFull))
+    | GotProjectsSub (RestData (List ProjectFull))
     | AddProject
     | EditProject ProjectFull
     | CloseProject ProjectFull
