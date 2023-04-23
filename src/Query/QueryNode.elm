@@ -1079,11 +1079,11 @@ roleFullPayload =
         Fractal.Object.RoleExt.role_type
         Fractal.Object.RoleExt.about
         (Fractal.Object.RoleExt.mandate identity mandatePayload)
-        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+        (SelectionSet.map (unwrap Nothing .count) <|
             Fractal.Object.RoleExt.nodesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
-        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+        (SelectionSet.map (unwrap Nothing .count) <|
             Fractal.Object.RoleExt.rolesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
@@ -1137,7 +1137,7 @@ labelFullPayload =
         Fractal.Object.Label.name
         Fractal.Object.Label.color
         Fractal.Object.Label.description
-        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+        (SelectionSet.map (unwrap Nothing .count) <|
             Fractal.Object.Label.nodesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
@@ -1413,9 +1413,11 @@ notifEventPayload =
 
 getOrgaInfo url username nameid msg =
     makeGQLQuery url
-        (Query.getNode
-            (nidFilter nameid)
-            (orgaInfoPayload username)
+        (SelectionSet.map2 (\x y -> Maybe.map (\oi -> { oi | n_projects = unwrap2 0 .count y }) x)
+            (Query.getNode (nidFilter nameid) (orgaInfoPayload username))
+            (Query.aggregateProject (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | rootnameid = Present { eq = Present nameid, in_ = Absent }, status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) })
+                (SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count)
+            )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -1425,22 +1427,16 @@ orgaInfoPayload username =
     SelectionSet.succeed OrgaInfo
         |> hardcoded 0
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
+            (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| [ RoleType.Owner, RoleType.Member, RoleType.Guest ], eq = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
             )
-        |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
-                Fractal.Object.Node.projectsAggregate (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) }) <|
-                    SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count
-            )
-        -- @DEBUG: multiple query to query  aggregate from root !
         |> hardcoded 0
-        --|> with
-        --    (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing |> withDefault 0) <|
-        --        Fractal.Object.Node.watchersAggregate identity <|
-        --            SelectionSet.map Count Fractal.Object.UserAggregateResult.count
-        --    )
+        |> with
+            (SelectionSet.map (unwrap2 0 .count) <|
+                Fractal.Object.Node.watchersAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+            )
         |> with
             (SelectionSet.map (\x -> Maybe.map (\y -> List.length y > 0) x)
                 (Fractal.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
