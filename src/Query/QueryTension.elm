@@ -38,7 +38,7 @@ module Query.QueryTension exposing
 
 import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (ternary, unwrap2)
+import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -435,7 +435,7 @@ tensionPayload =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+            (SelectionSet.map (unwrap Nothing .count) <|
                 Fractal.Object.Tension.commentsAggregate identity <|
                     SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
             )
@@ -456,7 +456,7 @@ tensionPayloadFiltered authors labels =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+            (SelectionSet.map (unwrap Nothing .count) <|
                 Fractal.Object.Tension.commentsAggregate identity <|
                     SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
             )
