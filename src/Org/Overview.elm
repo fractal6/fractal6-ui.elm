@@ -28,7 +28,7 @@ import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)

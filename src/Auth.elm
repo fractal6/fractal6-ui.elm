@@ -38,9 +38,10 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
-import Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, Node, NodesDict, ProjectAuth, TensionHead, UserCtx, UserRole, initNode)
+import RemoteData
 import String exposing (contains, startsWith)
 import String.Extra as SE
 import Text as T

@@ -36,7 +36,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, NameidPayload, RoleExt, Tension, TensionsCount, User, Username)
+import ModelSchema exposing (Label, NameidPayload, ProjectsCount, RoleExt, Tension, TensionsCount, User, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
 import Session exposing (Apis)

@@ -22,10 +22,10 @@
 module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..))
+import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -34,7 +34,7 @@ import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
-import Extra exposing (ternary)
+import Extra exposing (ternary, unwrap)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType

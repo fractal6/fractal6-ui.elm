@@ -23,7 +23,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
 import Bulk.View exposing (counter, viewRole)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Form.NewTension exposing (NewTensionInput(..))
