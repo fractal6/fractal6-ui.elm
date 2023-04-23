@@ -2001,7 +2001,7 @@ viewTension u t model =
                       else
                         text ""
                     , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
-                    , viewCircleTarget "is-pulled-right" t.receiver
+                    , viewCircleTarget { noMsg = NoMsg } "is-pulled-right" t.receiver
                     ]
                 ]
             ]
@@ -2898,16 +2898,16 @@ viewSidePane u t model =
                                 ++ [ -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
-                                            viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                            viewCircleTarget { noMsg = NoMsg } "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
 
                                         NodeType.Role ->
                                             case node.role_type of
                                                 Just rt ->
                                                     if model.hasBeenPushed then
-                                                        viewRole "is-small mb-2" Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (eor2ur node)
+                                                        viewRole "mb-2" False False Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
-                                                        viewRoleExt "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
+                                                        viewRoleExt { noMsg = NoMsg } "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
 
                                                 Nothing ->
                                                     text ""

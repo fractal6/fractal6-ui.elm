@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (viewOrgaMedia)
+import Bulk.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -302,5 +302,5 @@ viewPublicOrgas model =
                     [ viewGqlErrors err ]
 
                 Success nodes ->
-                    List.map (\n -> viewOrgaMedia Nothing n) nodes
+                    List.map (\n -> mediaOrga { noMsg = NoMsg } Nothing n) nodes
         ]

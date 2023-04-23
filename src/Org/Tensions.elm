@@ -2083,6 +2083,7 @@ viewCircleTensions model =
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
                     , onNoTask = OnGoRoot
+                    , noMsg = NoMsg
                     }
             in
             viewBoard op header keys data
@@ -2143,6 +2144,7 @@ viewAssigneeTensions model =
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
                     , onNoTask = OnGoRoot
+                    , noMsg = NoMsg
                     }
             in
             viewBoard op header keys data
@@ -2169,7 +2171,7 @@ viewTensions conf focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension conf focus t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension { noMsg = NoMsg } conf focus t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

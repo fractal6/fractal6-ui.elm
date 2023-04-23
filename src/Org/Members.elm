@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, hasLazyAdminRole, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewRole2, viewUserFull)
+import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -811,7 +811,7 @@ viewMemberRoles conf baseUri roles isPanelOpen =
     div [ class "buttons" ] <|
         List.map
             (\r ->
-                viewRole2 (Just ( conf, r.createdAt )) r (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel)
+                viewRole "" True False (Just ( conf, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
             )
             roles
 

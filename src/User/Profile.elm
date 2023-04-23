@@ -26,7 +26,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewOrgaMedia, viewProfileC)
+import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Extra exposing (ternary)
 import Form.Help as Help
@@ -401,5 +401,5 @@ viewProfileRight user_s user model =
 viewUserOrgas : UserCommon a -> List NodeExt -> Html Msg
 viewUserOrgas user orgas =
     orgas
-        |> List.map (\root -> Lazy.lazy2 viewOrgaMedia (Just user) root)
+        |> List.map (\root -> mediaOrga { noMsg = NoMsg } (Just user) root)
         |> div [ class "nodesList" ]

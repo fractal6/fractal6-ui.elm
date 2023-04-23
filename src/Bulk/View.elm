@@ -61,13 +61,19 @@ import Time
 --
 
 
-mediaTension : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension conf focus tension showStatus showRecip size =
-    Lazy.lazy6 mediaTension_ conf focus tension showStatus showRecip size
+type alias Op msg =
+    { -- @improves: pass onClickRole message directly instead of assuming what the message will be in functions.
+      noMsg : msg
+    }
 
 
-mediaTension_ : Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension_ conf focus tension showStatus showRecip size =
+mediaTension : Op msg -> Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension op conf focus tension showStatus showRecip size =
+    Lazy.lazy7 mediaTension_ op conf focus tension showStatus showRecip size
+
+
+mediaTension_ : Op msg -> Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension_ op conf focus tension showStatus showRecip size =
     let
         n_comments =
             withDefault 0 tension.n_comments
@@ -120,7 +126,7 @@ mediaTension_ conf focus tension showStatus showRecip size =
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
-            [ ternary showRecip (viewCircleTarget "is-small" tension.receiver) (text "")
+            [ ternary showRecip (viewCircleTarget op "is-small" tension.receiver) (text "")
             , br [] []
             , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
@@ -154,14 +160,14 @@ mediaTension_ conf focus tension showStatus showRecip size =
         ]
 
 
-viewCircleTarget : String -> EmitterOrReceiver -> Html msg
-viewCircleTarget cls er =
+viewCircleTarget : Op msg -> String -> EmitterOrReceiver -> Html msg
+viewCircleTarget op cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
             span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
-            viewRole ("is-tiny is-wrapped " ++ cls) Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (eor2ur er)
+            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (\_ _ _ -> op.noMsg) (eor2ur er)
 
 
 viewCircleSimple : String -> Html msg
@@ -569,31 +575,30 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewRoleExt : String -> Maybe String -> RoleExtCommon a -> Html msg
-viewRoleExt cls link_m r =
-    viewRole cls Nothing link_m { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
+viewRoleExt : Op msg -> String -> Maybe String -> RoleExtCommon a -> Html msg
+viewRoleExt op cls link_m r =
+    viewRole cls False False Nothing link_m (\_ _ _ -> op.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
 
 
-viewRole : String -> Maybe ( Lang.Lang, Time.Posix, String ) -> Maybe String -> UserRoleCommon a -> Html msg
-viewRole cls_ now_m link_m r =
+viewRole : String -> Bool -> Bool -> Maybe ( Conf, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
+viewRole cls_ hasTooltip isSelf now_m link_m msg r =
+    -- link and msg are mutually exclusive
     let
-        hasTooltip =
-            r.nameid /= ""
+        cls =
+            if hasTooltip then
+                String.split " " cls_
+                    ++ String.split " " "tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
+
+            else
+                String.split " " cls_
 
         since =
             case now_m of
-                Just ( lang, createdAt, uri ) ->
-                    T.sinceThe ++ " " ++ formatDate lang createdAt uri
+                Just ( conf, uri ) ->
+                    T.sinceThe ++ " " ++ formatDate conf.lang conf.now uri
 
                 Nothing ->
                     ""
-
-        cls =
-            if hasTooltip then
-                cls_ ++ " tooltip has-tooltip-arrow has-tooltip-bottom is-multiline has-tooltip-text-left"
-
-            else
-                cls_
 
         color =
             case r.color of
@@ -616,49 +621,16 @@ viewRole cls_ now_m link_m r =
             withDefault "#" link_m
     in
     a_or_span
-        ([ class ("button buttonRole is-multiline " ++ cls)
+        ([ class "button buttonRole is-small"
+         , classList (List.map (\x -> ( x, True )) cls)
          , attribute (ternary hasTooltip "data-tooltip" "data-void")
-            (T.youPlay
-                |> Format.namedValue "role" (upH r.name)
-                |> Format.namedValue "circle" (getParentFragmentFromRole r)
-                |> Format.namedValue "since" since
-            )
-         , href link
-         ]
-            ++ color
-        )
-        [ A.icon1 (role2icon r) (upH r.name) ]
-
-
-viewRole2 : Maybe ( Conf, String ) -> UserRoleCommon a -> (String -> String -> Maybe ( Int, Int ) -> msg) -> Html msg
-viewRole2 now_m r msg =
-    let
-        since =
-            case now_m of
-                Just ( conf, uri ) ->
-                    T.sinceThe ++ " " ++ formatDate conf.lang conf.now uri
-
-                Nothing ->
-                    ""
-
-        color =
-            case r.color of
-                Just c ->
-                    [ colorAttr c ]
-
-                Nothing ->
-                    --( "is-" ++ roleColor r.role_type, [] )
-                    [ colorAttr (roleColor r.role_type) ]
-    in
-    div
-        ([ class "button buttonRole is-small tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
-         , attribute "data-tooltip"
-            (T.youPlay
+            (ternary isSelf T.youPlay T.theyPlay
                 |> Format.namedValue "role" (upH r.name)
                 |> Format.namedValue "circle" (getParentFragmentFromRole r)
                 |> Format.namedValue "since" since
             )
          , onClickPos (msg "actionPanelHelper" r.nameid)
+         , href link
          ]
             ++ color
         )
@@ -833,13 +805,13 @@ viewNodeRefShort baseUri nid =
     a [ href ref ] [ text name ]
 
 
-viewOrgaMedia : Maybe (UserCommon a) -> NodeExt -> Html msg
-viewOrgaMedia user_m root =
-    Lazy.lazy2 viewOrgaMedia_ user_m root
+mediaOrga : Op msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
+mediaOrga op user_m root =
+    Lazy.lazy3 mediaOrga_ op user_m root
 
 
-viewOrgaMedia_ : Maybe (UserCommon a) -> NodeExt -> Html msg
-viewOrgaMedia_ user_m root =
+mediaOrga_ : Op msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
+mediaOrga_ op user_m root =
     div [ class "media mediaBox box pb-3" ]
         [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
@@ -886,10 +858,10 @@ viewOrgaMedia_ user_m root =
                                     |> List.map
                                         (\r ->
                                             if r.role_type == RoleType.Guest then
-                                                viewRole "is-small" Nothing (Just <| uriFromNameid MembersBaseUri r.nameid []) r
+                                                viewRole "" True False Nothing (Just <| uriFromNameid MembersBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
 
                                             else
-                                                viewRole "is-small" Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) r
+                                                viewRole "" True False Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
                                         )
                                 )
                             ]

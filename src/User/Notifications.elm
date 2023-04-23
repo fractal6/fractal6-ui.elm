@@ -808,7 +808,7 @@ viewAssigned conf tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> mediaTension conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension { noMsg = NoMsg } conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

@@ -1431,7 +1431,7 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension model.conf model.node_focus x False True "is-size-6") tensions
+                                List.map (\x -> mediaTension { noMsg = NoMsg } model.conf model.node_focus x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
