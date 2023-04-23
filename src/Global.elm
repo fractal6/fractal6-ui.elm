@@ -151,6 +151,7 @@ type Msg
     | GotIsWatching (GqlData Bool)
     | RefreshPinTension String
     | AckPinTension (GqlData (Maybe (List PinTension)))
+    | VOID
       -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -660,6 +661,9 @@ update msg model =
                         session.path_data
             in
             ( { model | session = { session | path_data = new_path } }, Ports.pathChanged )
+
+        VOID ->
+            ( model, Cmd.none )
 
         UpdateSessionAuthorsPanel data ->
             let

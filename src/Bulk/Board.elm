@@ -58,6 +58,7 @@ type alias Op msg =
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
     , onNoTask : msg
+    , noMsg : msg
     }
 
 
@@ -154,7 +155,7 @@ viewBoard op header keys data =
                                                         []
                                                    )
                                             )
-                                            [ mediaTension op.conf op.node_focus t True False "is-size-6" ]
+                                            [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
                                        ]
                                     ++ ternary hasLastColumn
                                         [ draggingDiv ]

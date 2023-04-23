@@ -24,7 +24,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 import Assets as A
 import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
-import Bulk.View exposing (counter, viewRole2)
+import Bulk.View exposing (counter, viewRole)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
@@ -484,7 +484,7 @@ memberButtons roles_ op model =
                     []
 
                 else
-                    [ viewRole2 Nothing r (ternary op.isPanelOpen (\_ _ _ -> NoMsg) OnOpenPanel) ]
+                    [ viewRole "" True True Nothing Nothing (ternary op.isPanelOpen (\_ _ _ -> NoMsg) OnOpenPanel) r ]
             )
         |> List.reverse
         |> List.append [ lastButton ]
