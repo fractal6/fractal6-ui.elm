@@ -420,7 +420,31 @@ export function BulmaDriver(app, target, handlers) {
 }
 
 //
+// Submit methods
+//
+
+function submitFocus(e, el) {
+    if (e.key == "Enter" && e.ctrlKey) {
+        // submit focus.
+        var s = el.querySelector(".defaultSubmit")
+        if (s) {
+            e.preventDefault(); // prevent a line break on the text area
+            s.click();
+        }
+    } else if (e.key == "Tab" && !e.shiftKey && !e.ctrlKey) {
+        var s = el.querySelector(".defaultSubmit")
+        if (s) {
+            var $active = document.activeElement;
+            if ($active && $active.dataset.nextfocus) { return true }
+            e.preventDefault();
+            s.focus();
+        }
+    };
+}
+
+//
 // Focus methods
+//
 //
 
 function moveFocus(e, el) {
@@ -428,6 +452,7 @@ function moveFocus(e, el) {
         var $t = document.getElementById(el.dataset.nextfocus);
         if ($t) {
             e.preventDefault(); // prevent a line break on the next text area.
+            e.stopPropagation(); // stop furher event execution.
             $t.focus();
             return true
         }
@@ -441,21 +466,6 @@ function moveFocus(e, el) {
 function copyToClipboard(e, el) {
     var text = el.dataset.clipboard;
     navigator.clipboard.writeText(text);
-}
-
-//
-// Submit methods
-//
-
-function submitFocus(e, el) {
-    if (e.key == "Enter" && e.ctrlKey) {
-        // submit focus.
-        var s = el.querySelector(".defaultSubmit")
-        if (s) {
-            e.preventDefault(); // prevent a line break on the text area
-            s.click();
-        }
-    }
 }
 
 //

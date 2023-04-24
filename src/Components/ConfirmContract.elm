@@ -425,7 +425,7 @@ viewModalContent op (State model) =
         isSendable =
             True
     in
-    div [ class "modal-card" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ text T.newContract ]
@@ -434,7 +434,7 @@ viewModalContent op (State model) =
             [ showMsg "0" "is-info is-light" "icon-info" T.contractInfoHeader T.contractInfo
             , showContractForm model.form
             , div [ class "field" ]
-                [ div [ class "control submitFocus" ]
+                [ div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 3
