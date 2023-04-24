@@ -585,7 +585,7 @@ viewModalContent op model =
                 Nothing ->
                     ""
     in
-    div [ class "modal-card" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ case model.blob of
@@ -638,7 +638,7 @@ viewModalContent op model =
                     ]
                 ]
             , div [ class "field" ]
-                [ div [ class "control submitFocus" ]
+                [ div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 3

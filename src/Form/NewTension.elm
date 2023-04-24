@@ -1892,7 +1892,7 @@ viewComment model =
             Dict.get "message" model.nodeDoc.form.post |> withDefault ""
     in
     div [ class "field" ]
-        [ div [ class "control submitFocus" ]
+        [ div [ class "control" ]
             [ textarea
                 [ class "textarea"
                 , rows 3

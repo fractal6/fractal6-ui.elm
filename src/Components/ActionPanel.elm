@@ -1282,7 +1282,7 @@ viewStep1 op model =
         isLoading =
             model.action_result == LoadingSlowly
     in
-    div [ class "modal-card" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ action2header model.state model.form.node.type_
@@ -1372,7 +1372,7 @@ viewComment model =
             Dict.get "message" model.form.post |> withDefault ""
 
         line_len =
-            List.length <| String.lines message
+            List.length (String.lines message)
 
         ( max_len, min_len ) =
             if isMobile model.screen then
@@ -1382,13 +1382,13 @@ viewComment model =
                 ( 10, 3 )
     in
     div [ class "field" ]
-        [ div [ class "control submitFocus" ]
+        [ div [ class "control" ]
             [ textarea
                 [ class "textarea"
                 , rows (min max_len (max line_len min_len))
                 , placeholder T.leaveCommentOpt
                 , value message
-                , onInput <| OnChangePost "message"
+                , onInput (OnChangePost "message")
                 ]
                 []
             ]
