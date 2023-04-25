@@ -88,11 +88,6 @@ first_link =
     Object.selectionForField "(Maybe String)" "first_link" [] (Decode.string |> Decode.nullable)
 
 
-second_link : SelectionSet (Maybe String) Fractal.Object.NodeFragment
-second_link =
-    Object.selectionForField "(Maybe String)" "second_link" [] (Decode.string |> Decode.nullable)
-
-
 role_ext : SelectionSet (Maybe String) Fractal.Object.NodeFragment
 role_ext =
     Object.selectionForField "(Maybe String)" "role_ext" [] (Decode.string |> Decode.nullable)

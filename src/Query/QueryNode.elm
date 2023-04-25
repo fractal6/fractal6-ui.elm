@@ -102,7 +102,7 @@ import Fractal.Object.User
 import Fractal.Object.UserAggregateResult
 import Fractal.Query as Query
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra as LE
 import Loading exposing (RequestResult(..))
@@ -214,7 +214,7 @@ nodeOrgaExtPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.about
         |> with
-            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+            (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Node.childrenAggregate
                     (\a ->
                         { a
@@ -234,7 +234,7 @@ nodeOrgaExtPayload =
                     SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
             )
         |> with
-            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+            (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Node.watchersAggregate identity <|
                     SelectionSet.map Count Fractal.Object.UserAggregateResult.count
             )
@@ -385,7 +385,7 @@ matchAnyRoleType alls =
         [ Input.buildNodeFilter
             (\d ->
                 { d
-                    | role_type = Present { eq = Absent, in_ = alls |> List.map (\x -> Just x) |> Present }
+                    | role_type = Present { eq = Absent, in_ = alls |> List.map Just |> Present }
                 }
             )
             |> Just
@@ -407,7 +407,7 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with Fractal.Object.Node.userCanJoin
         |> with
-            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+            (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.TensionAggregateResult.count
             )
@@ -840,7 +840,7 @@ membersDecoder data =
                 else
                     d
                         |> List.filterMap identity
-                        |> List.filterMap (\x -> x.first_link)
+                        |> List.filterMap .first_link
                         |> Just
             )
         |> withDefault Nothing
@@ -1150,32 +1150,76 @@ labelFullPayload =
 
 
 type alias NodeProjectsFull =
-    { projects : Maybe (List ProjectFull) }
+    { projects : Maybe (List ProjectFull), open : Maybe Int, closed : Maybe Int }
 
 
-projectsFullDecoder : Maybe NodeProjectsFull -> Maybe (List ProjectFull)
-projectsFullDecoder data =
-    data
-        |> Maybe.map (\d -> withDefault [] d.projects)
+projectsFullDecoder : NodeProjectsFull -> Maybe { projects : List ProjectFull, counts : ProjectsCount }
+projectsFullDecoder d =
+    Just
+        { projects = withDefault [] d.projects
+        , counts = { open = withDefault 0 d.open, closed = withDefault 0 d.closed }
+        }
 
 
-getProjects url nid msg =
+getProjects url nid pattern status msg =
     -- Fetch on the given node
     makeGQLQuery url
-        (Query.getNode
-            (nidFilter nid)
-            nodeProjectsFullPayload
+        (SelectionSet.map3 NodeProjectsFull
+            (Query.getNode (nidFilter nid) (nodeProjectsFullPayload pattern status))
+            (Query.aggregateProject
+                (\args ->
+                    { args
+                        | filter =
+                            Input.buildProjectFilter
+                                (\c ->
+                                    { c
+                                        | parentnameid = Present { eq = Present nid, in_ = Absent }
+                                        , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                        , status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
+                                    }
+                                )
+                                |> Present
+                    }
+                )
+                (SelectionSet.map (withDefault 0) Fractal.Object.ProjectAggregateResult.count)
+            )
+            (Query.aggregateProject
+                (\args ->
+                    { args
+                        | filter =
+                            Input.buildProjectFilter
+                                (\c ->
+                                    { c
+                                        | parentnameid = Present { eq = Present nid, in_ = Absent }
+                                        , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                        , status = Present { eq = Present ProjectStatus.Closed, in_ = Absent }
+                                    }
+                                )
+                                |> Present
+                    }
+                )
+                (SelectionSet.map (withDefault 0) Fractal.Object.ProjectAggregateResult.count)
+            )
         )
         (RemoteData.fromResult >> decodeResponse projectsFullDecoder >> msg)
 
 
-nodeProjectsFullPayload : SelectionSet NodeProjectsFull Fractal.Object.Node
-nodeProjectsFullPayload =
-    SelectionSet.map NodeProjectsFull
+nodeProjectsFullPayload : Maybe String -> ProjectStatus.ProjectStatus -> SelectionSet (List ProjectFull) Fractal.Object.Node
+nodeProjectsFullPayload pattern status =
+    SelectionSet.map (withDefault [])
         (Fractal.Object.Node.projects
             (\args ->
                 { args
-                    | order =
+                    | filter =
+                        Input.buildProjectFilter
+                            (\c ->
+                                { c
+                                    | name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                    , status = Present <| { eq = Present status, in_ = Absent }
+                                }
+                            )
+                            |> Present
+                    , order =
                         Input.buildProjectOrder (\b -> { b | asc = Present ProjectOrderable.Name })
                             |> Present
                 }
@@ -1438,7 +1482,7 @@ orgaInfoPayload username =
                     SelectionSet.map Count Fractal.Object.UserAggregateResult.count
             )
         |> with
-            (SelectionSet.map (\x -> Maybe.map (\y -> List.length y > 0) x)
+            (SelectionSet.map (Maybe.map (\y -> List.length y > 0))
                 (Fractal.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
                     (SelectionSet.map NameidPayload Fractal.Object.User.username)
                 )

@@ -12,14 +12,13 @@ type NodeFragmentOrderable
     | Name
     | About
     | First_link
-    | Second_link
     | Role_ext
     | Color
 
 
 list : List NodeFragmentOrderable
 list =
-    [ Nameid, Name, About, First_link, Second_link, Role_ext, Color ]
+    [ Nameid, Name, About, First_link, Role_ext, Color ]
 
 
 decoder : Decoder NodeFragmentOrderable
@@ -39,9 +38,6 @@ decoder =
 
                     "first_link" ->
                         Decode.succeed First_link
-
-                    "second_link" ->
-                        Decode.succeed Second_link
 
                     "role_ext" ->
                         Decode.succeed Role_ext
@@ -70,9 +66,6 @@ toString enum____ =
 
         First_link ->
             "first_link"
-
-        Second_link ->
-            "second_link"
 
         Role_ext ->
             "role_ext"
@@ -106,9 +99,6 @@ fromString enumString____ =
 
         "first_link" ->
             Just First_link
-
-        "second_link" ->
-            Just Second_link
 
         "role_ext" ->
             Just Role_ext

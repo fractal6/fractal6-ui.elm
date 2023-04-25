@@ -95,10 +95,10 @@ userProfilePayload =
                 (SelectionSet.map4 UserRole
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
-                    (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                    (Fractal.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
                     Fractal.Object.Node.color
                 )
-                |> SelectionSet.map (\x -> withDefault [] x)
+                |> SelectionSet.map (withDefault [])
             )
         |> with Fractal.Object.User.notifyByEmail
         |> with Fractal.Object.User.bio
@@ -128,10 +128,10 @@ userFullPayload =
                 (SelectionSet.map4 UserRole
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
-                    (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                    (Fractal.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
                     Fractal.Object.Node.color
                 )
-                |> SelectionSet.map (\x -> withDefault [] x)
+                |> SelectionSet.map (withDefault [])
             )
         |> with Fractal.Object.User.notifyByEmail
         |> with Fractal.Object.User.lang

@@ -34,6 +34,7 @@ module Query.PatchNode exposing
 import Bulk exposing (ArtefactNodeForm, ProjectForm)
 import Bulk.Codecs exposing (nid2rootid)
 import Dict
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -76,7 +77,7 @@ labelFullDecoder data =
         |> Maybe.andThen
             (\d ->
                 d.label
-                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.map List.head
                     |> Maybe.withDefault Nothing
                     |> Maybe.withDefault Nothing
             )
@@ -250,7 +251,7 @@ roleFullDecoder data =
         |> Maybe.andThen
             (\d ->
                 d.role
-                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.map List.head
                     |> Maybe.withDefault Nothing
                     |> Maybe.withDefault Nothing
             )
@@ -433,7 +434,7 @@ projectFullDecoder data =
         |> Maybe.andThen
             (\d ->
                 d.project
-                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.map List.head
                     |> Maybe.withDefault Nothing
                     |> Maybe.withDefault Nothing
             )
@@ -466,7 +467,7 @@ addProjectInputEncoder form =
             , parentnameid = form.nameid
             , name = Dict.get "name" form.post |> withDefault ""
             , nameid = Dict.get "nameid" form.post |> withDefault ""
-            , status = form.status
+            , status = withDefault ProjectStatus.Open form.status
             }
 
         inputOpt =
@@ -544,6 +545,7 @@ updateProjectInputEncoder form =
                                 | name = fromMaybe (Dict.get "name" post)
                                 , nameid = fromMaybe (Dict.get "nameid" post)
                                 , description = fromMaybe (Dict.get "description" post)
+                                , status = fromMaybe form.status
                                 , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                             }
                         )

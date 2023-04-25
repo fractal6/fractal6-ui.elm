@@ -43,7 +43,7 @@ import Bulk.Codecs
         , uriFromNameid
         )
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (projectStatus2str)
+import Bulk.View exposing (nodeType2str, projectStatus2str)
 import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -56,7 +56,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (space_, ternary, textH, textT, unwrap, upH)
+import Extra exposing (decap, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
@@ -75,7 +75,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
@@ -244,11 +244,11 @@ statusFilterEncoder x =
         AllStatus ->
             "all"
 
-        ClosedStatus ->
-            "closed"
-
         OpenStatus ->
             "open"
+
+        ClosedStatus ->
+            "closed"
 
 
 statusFilterDecoder : String -> StatusFilter
@@ -286,6 +286,19 @@ statusFilter2Text x =
             projectStatus2str ProjectStatus.Closed
 
 
+statusDecoder : StatusFilter -> ProjectStatus.ProjectStatus
+statusDecoder sf =
+    case sf of
+        AllStatus ->
+            ProjectStatus.Open
+
+        OpenStatus ->
+            ProjectStatus.Open
+
+        ClosedStatus ->
+            ProjectStatus.Closed
+
+
 resetForm : Model -> Model
 resetForm model =
     { model
@@ -313,13 +326,14 @@ type Msg
     | SubmitSearch
     | SubmitTextSearch
     | SubmitSearchReset
+    | SubmitSearchTextReset
       -- Projects
-    | GotProjects (GqlData (List ProjectFull))
+    | GotProjects (GqlData { projects : List ProjectFull, counts : ProjectsCount })
     | GotProjectsTop (RestData (List ProjectFull))
     | GotProjectsSub (RestData (List ProjectFull))
     | AddProject
     | EditProject ProjectFull
-    | CloseProject ProjectFull
+    | ChangeStatus ProjectStatus.ProjectStatus ProjectFull
     | CancelProject
     | SubmitAddProject Time.Posix
     | SubmitEditProject Time.Posix
@@ -487,12 +501,16 @@ update global message model =
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         DoLoad ->
+            let
+                status =
+                    statusDecoder model.statusFilter
+            in
             ( model
             , Cmd.batch
-                [ getProjects apis model.node_focus.nameid GotProjects
-                , fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
-                , fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
+                [ getProjects apis model.node_focus.nameid model.pattern status GotProjects
 
+                --, fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
+                --, fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
                 --, fetchProjectCount apis nameids model.pattern Nothing GotProjectCount
                 ]
             , Cmd.none
@@ -585,6 +603,13 @@ update global message model =
             , Cmd.none
             )
 
+        SubmitSearchTextReset ->
+            -- Send search and reset search text only
+            ( { model | pattern = Nothing }
+            , Cmd.batch [ send SubmitSearch, send ResetData ]
+            , Cmd.none
+            )
+
         ResetData ->
             ( { model | projects = Loading, projects_sub = RemoteData.Loading, projects_top = RemoteData.Loading, path_data = Loading, projects_count = Loading }
             , Cmd.none
@@ -598,7 +623,7 @@ update global message model =
         GotProjects result ->
             let
                 newModel =
-                    { model | projects = result }
+                    { model | projects = withMapData .projects result, projects_count = withMapData .counts result }
             in
             ( newModel, Cmd.none, Cmd.none )
 
@@ -655,8 +680,21 @@ update global message model =
             , Cmd.none
             )
 
-        CloseProject project ->
-            ( model, Cmd.none, Cmd.none )
+        ChangeStatus status project ->
+            let
+                form =
+                    model.project_form
+
+                newForm =
+                    { form
+                        | status = Just status
+                        , post = Dict.insert "nameid" (nameidEncoder project.name) form.post
+                    }
+            in
+            ( { model | project_result = LoadingSlowly, project_form = newForm }
+            , updateOneProject apis newForm GotProject
+            , Cmd.none
+            )
 
         CancelProject ->
             ( { model
@@ -728,25 +766,38 @@ update global message model =
                 OkAuth project ->
                     let
                         d =
-                            withMaybeData model.projects |> withDefault []
+                            withDefaultData [] model.projects
 
-                        new =
+                        c =
+                            withDefaultData (ProjectsCount 0 0) model.projects_count
+
+                        ( new_d, new_c ) =
                             if model.project_add then
-                                [ project ] ++ d
+                                ( [ project ] ++ d
+                                , { c | open = c.open + 1 }
+                                )
+
+                            else if model.project_form.status == Nothing || model.project_form.status == Just (statusDecoder model.statusFilter) then
+                                -- assume edit
+                                ( LE.setIf (\x -> x.id == project.id) project d
+                                , c
+                                )
 
                             else
-                                -- assume edit
-                                List.map
-                                    (\x ->
-                                        if x.id == project.id then
-                                            project
+                                -- Status Project changed
+                                ( LE.filterNot (\x -> x.id == project.id) d
+                                , case model.project_form.status of
+                                    Just ProjectStatus.Open ->
+                                        { c | open = c.open + 1, closed = c.closed - 1 }
 
-                                        else
-                                            x
-                                    )
-                                    d
+                                    Just ProjectStatus.Closed ->
+                                        { c | open = c.open - 1, closed = c.closed + 1 }
+
+                                    Nothing ->
+                                        c
+                                )
                     in
-                    ( { model | project_result = result, projects = Success new, project_add = False, project_edit = Nothing } |> resetForm
+                    ( { model | project_result = result, projects = Success new_d, projects_count = Success new_c, project_add = False, project_edit = Nothing } |> resetForm
                     , Ports.bulma_driver ""
                     , Cmd.none
                     )
@@ -791,7 +842,7 @@ update global message model =
                 OkAuth _ ->
                     let
                         d =
-                            withMaybeData model.projects |> withDefault []
+                            withDefaultData [] model.projects
 
                         new =
                             List.filter (\x -> x.id /= model.project_form.id) d
@@ -977,37 +1028,59 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     if model.project_add then
-        viewNewProject model
+        viewNewOrEditProject True model
+
+    else if model.project_edit /= Nothing then
+        viewNewOrEditProject False model
 
     else
         viewDefault global.session.user model
 
 
-viewNewProject : Model -> Html Msg
-viewNewProject model =
+viewNewOrEditProject : Bool -> Model -> Html Msg
+viewNewOrEditProject isNew model =
     let
+        title =
+            ternary isNew T.newProject T.editProject
+
+        submit_txt =
+            ternary isNew T.create T.edit
+
+        --
         post =
             model.project_form.post
 
-        isLoading =
-            model.project_result == LoadingSlowly
-
-        isSendable =
-            isPostSendable [ "name" ] post
-
-        submitOrga =
-            ternary isSendable [ onClick (Submit <| SubmitAddProject) ] []
-
-        --
         name =
             Dict.get "name" post |> withDefault ""
 
         description =
             Dict.get "description" post |> withDefault ""
+
+        --
+        isLoading =
+            model.project_result == LoadingSlowly
+
+        isSendable =
+            if isNew then
+                isPostSendable [ "name" ] post
+
+            else
+                isPostSendable [ "name" ] post
+                    && ((Just name /= Maybe.map .name model.project_edit)
+                            || (Just description /= unwrap Nothing .description model.project_edit)
+                       )
+
+        submitOrga =
+            if isNew then
+                ternary isSendable [ onClick (Submit <| SubmitAddProject) ] []
+
+            else
+                ternary isSendable [ onClick (Submit <| SubmitEditProject) ] []
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
-            [ div [ class "field" ]
+            [ h1 [ class "title" ] [ text title ]
+            , div [ class "field" ]
                 [ div [ class "label" ] [ text T.name ]
                 , div [ class "control" ]
                     [ input
@@ -1081,7 +1154,7 @@ viewNewProject model =
                              ]
                                 ++ submitOrga
                             )
-                            [ text T.create ]
+                            [ text submit_txt ]
                         ]
                     ]
                 ]
@@ -1111,7 +1184,7 @@ viewDefault user model =
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-tree-quarter" ]
-                    [ viewSearchBar model.pattern ]
+                    [ viewSearchBar (Dict.get "q" model.query /= Nothing) model.pattern ]
                 , if isAdmin then
                     div [ class "column is-one-quarter is-flex" ]
                         [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
@@ -1127,8 +1200,8 @@ viewDefault user model =
         ]
 
 
-viewSearchBar : Maybe String -> Html Msg
-viewSearchBar pattern =
+viewSearchBar : Bool -> Maybe String -> Html Msg
+viewSearchBar isQueried pattern =
     div [ id "searchBarProjects", class "searchBar" ]
         [ div [ class "columns" ]
             [ div [ class "column is-8" ]
@@ -1146,7 +1219,12 @@ viewSearchBar pattern =
                             ]
                             []
                         , span [ class "icon-input-flex-right" ]
-                            [ span [ class "vbar has-border-color" ] []
+                            [ if isQueried then
+                                span [ class "delete is-hidden-mobile", onClick SubmitSearchTextReset ] []
+
+                              else
+                                text ""
+                            , span [ class "vbar has-border-color" ] []
                             , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]
@@ -1162,7 +1240,7 @@ viewProjects model =
     div [ class "columns" ]
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
-            , viewProjectsList model.conf model.node_focus model.pattern model.projects
+            , viewProjectsList model.conf model.node_focus model.pattern model.statusFilter model.projects
             ]
         ]
 
@@ -1236,8 +1314,8 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : Conf -> NodeFocus -> Maybe String -> GqlData (List ProjectFull) -> Html Msg
-viewProjectsList conf focus pattern data =
+viewProjectsList : Conf -> NodeFocus -> Maybe String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList conf focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -1247,19 +1325,20 @@ viewProjectsList conf focus pattern data =
             Success items ->
                 if List.length items > 0 then
                     items
-                        |> List.map (\x -> Lazy.lazy3 mediaProject conf focus x)
+                        |> List.map (\x -> Lazy.lazy4 mediaProject conf focus statusFilter x)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then
                     div [ class "m-4" ] [ text T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
 
                 else
-                    case focus.type_ of
-                        NodeType.Role ->
-                            div [ class "m-4" ] [ text T.noProjectRole ]
-
-                        NodeType.Circle ->
-                            div [ class "m-4" ] [ text T.noProjectCircle ]
+                    div [ class "m-4" ]
+                        [ text
+                            (T.noProjects
+                                |> Format.namedValue "type" (nodeType2str focus.type_ |> decap)
+                                |> Format.namedValue "status" (projectStatus2str (statusDecoder statusFilter) |> decap)
+                            )
+                        ]
 
             Failure err ->
                 viewGqlErrors err
@@ -1269,20 +1348,25 @@ viewProjectsList conf focus pattern data =
         ]
 
 
-mediaProject : Conf -> NodeFocus -> ProjectFull -> Html Msg
-mediaProject conf focus project =
+mediaProject : Conf -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject conf focus statusFilter project =
     let
-        size =
-            "is-size-"
+        ( status_new, status_txt ) =
+            case statusDecoder statusFilter of
+                ProjectStatus.Open ->
+                    ( ProjectStatus.Closed, T.close )
+
+                ProjectStatus.Closed ->
+                    ( ProjectStatus.Open, T.reopen )
     in
     div
-        [ class ("media mediaBox is-hoverable " ++ size) ]
+        [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] []
         , div [ class "media-content " ]
             [ div [ class "columns mb-0" ]
-                [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-5") ]
+                [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
                     [ a
-                        [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
+                        [ class "has-text-weight-semibold is-human discrete-link"
 
                         --, href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]
@@ -1290,30 +1374,11 @@ mediaProject conf focus project =
                     ]
                 , case project.description of
                     Just x ->
-                        div [ class "column is-6" ]
-                            [ span [ class "is-discrete" ] [ text x ] ]
+                        div [ class "column is-8" ]
+                            [ span [ class "is-discret" ] [ text x ] ]
 
                     Nothing ->
                         text ""
-                , div [ class "column is-1" ]
-                    [ div [ class "dropdown is-right" ]
-                        [ div [ class "dropdown-trigger is-w is-h" ]
-                            [ div
-                                [ class "ellipsis"
-                                , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
-                                , attribute "aria-haspopup" "true"
-                                ]
-                                [ A.icon "icon-more-horizontal icon-lg" ]
-                            ]
-                        , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
-                            [ div [ class "dropdown-content p-0" ] <|
-                                [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div [ class "dropdown-item button-light", onClick (CloseProject project) ] [ text T.close ]
-                                ]
-                            ]
-                        ]
-                    ]
                 ]
             , div [ class "level is-smaller2 is-mobile mb-0" ]
                 [ div [ class "level-left" ]
@@ -1323,7 +1388,24 @@ mediaProject conf focus project =
                     ]
                 , div [ class "level-right" ] []
                 ]
-            , div [ class "media-right wrapped-container-33" ]
-                []
+            ]
+        , div [ class "media-right wrapped-container-33" ]
+            [ div [ class "dropdown is-right" ]
+                [ div [ class "dropdown-trigger is-w is-h" ]
+                    [ div
+                        [ class "ellipsis"
+                        , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
+                        , attribute "aria-haspopup" "true"
+                        ]
+                        [ A.icon "icon-more-horizontal icon-lg" ]
+                    ]
+                , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
+                    [ div [ class "dropdown-content p-0" ] <|
+                        [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
+                        , hr [ class "dropdown-divider" ] []
+                        , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
+                        ]
+                    ]
+                ]
             ]
         ]

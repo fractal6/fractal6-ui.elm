@@ -352,11 +352,11 @@ statusFilterEncoder x =
         AllStatus ->
             "all"
 
-        ClosedStatus ->
-            "closed"
-
         OpenStatus ->
             "open"
+
+        ClosedStatus ->
+            "closed"
 
 
 statusFilterDecoder : String -> StatusFilter
@@ -795,9 +795,10 @@ type Msg
     | ResetData
     | ResetDataSoft
     | OnClearFilter
+    | SubmitSearch
     | SubmitTextSearch
     | SubmitSearchReset
-    | SubmitSearch
+    | SubmitSearchTextReset
     | GoView TensionsView
     | SetOffset Int
       -- Board
@@ -1187,13 +1188,6 @@ update global message model =
             else
                 ( model, send SubmitSearchReset, Cmd.none )
 
-        SubmitSearchReset ->
-            -- Send search and reset the other results
-            ( model
-            , Cmd.batch [ send SubmitSearch, send ResetData ]
-            , Cmd.none
-            )
-
         SubmitSearch ->
             let
                 query =
@@ -1212,6 +1206,20 @@ update global message model =
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
+
+        SubmitSearchReset ->
+            -- Send search and reset the other results
+            ( model
+            , Cmd.batch [ send SubmitSearch, send ResetData ]
+            , Cmd.none
+            )
+
+        SubmitSearchTextReset ->
+            -- Send search and reset search text only
+            ( { model | pattern = Nothing }
+            , Cmd.batch [ send SubmitSearch, send ResetData ]
+            , Cmd.none
+            )
 
         GoView viewMode ->
             let
@@ -1646,7 +1654,7 @@ view_ global model =
                 text ""
             , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
                 [ div [ class "column is-12 is-paddingless", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
-                    [ viewSearchBar model ]
+                    [ viewSearchBar (Dict.get "q" model.query /= Nothing) model ]
                 ]
             , case model.children of
                 RemoteData.Failure err ->
@@ -1706,8 +1714,8 @@ viewCatMenu typeFilter =
         ]
 
 
-viewSearchBar : Model -> Html Msg
-viewSearchBar model =
+viewSearchBar : Bool -> Model -> Html Msg
+viewSearchBar isQueried model =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
@@ -1744,7 +1752,12 @@ viewSearchBar model =
                             ]
                             []
                         , span [ class "icon-input-flex-right" ]
-                            [ span [ class "vbar has-border-color" ] []
+                            [ if isQueried then
+                                span [ class "delete is-hidden-mobile", onClick SubmitSearchTextReset ] []
+
+                              else
+                                text ""
+                            , span [ class "vbar has-border-color" ] []
                             , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]

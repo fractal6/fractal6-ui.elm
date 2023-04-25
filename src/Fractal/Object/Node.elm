@@ -410,26 +410,6 @@ first_link fillInOptionals____ object____ =
     Object.selectionForCompositeField "first_link" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
-type alias SecondLinkOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserFilter }
-
-
-second_link :
-    (SecondLinkOptionalArguments -> SecondLinkOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.User
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-second_link fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "second_link" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
 type alias ContractsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
     , order : OptionalArgument Fractal.InputObject.VoteOrder

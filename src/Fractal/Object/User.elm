@@ -182,30 +182,6 @@ roles fillInOptionals____ object____ =
     Object.selectionForCompositeField "roles" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-type alias BackedRolesOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter
-    , order : OptionalArgument Fractal.InputObject.NodeOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-backed_roles :
-    (BackedRolesOptionalArguments -> BackedRolesOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Node
-    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
-backed_roles fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "backed_roles" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
-
-
 type alias TensionsCreatedOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter
     , order : OptionalArgument Fractal.InputObject.TensionOrder
@@ -409,26 +385,6 @@ rolesAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "rolesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
-type alias BackedRolesAggregateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
-
-
-backed_rolesAggregate :
-    (BackedRolesAggregateOptionalArguments -> BackedRolesAggregateOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
-backed_rolesAggregate fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "backed_rolesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias TensionsCreatedAggregateOptionalArguments =

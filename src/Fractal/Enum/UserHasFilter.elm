@@ -25,7 +25,6 @@ type UserHasFilter
     | Watching
     | Rights
     | Roles
-    | Backed_roles
     | Tensions_created
     | Tensions_assigned
     | Contracts
@@ -37,7 +36,7 @@ type UserHasFilter
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Reactions, Events, MarkAllAsRead, Event_count ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Tensions_created, Tensions_assigned, Contracts, Reactions, Events, MarkAllAsRead, Event_count ]
 
 
 decoder : Decoder UserHasFilter
@@ -96,9 +95,6 @@ decoder =
 
                     "roles" ->
                         Decode.succeed Roles
-
-                    "backed_roles" ->
-                        Decode.succeed Backed_roles
 
                     "tensions_created" ->
                         Decode.succeed Tensions_created
@@ -181,9 +177,6 @@ toString enum____ =
 
         Roles ->
             "roles"
-
-        Backed_roles ->
-            "backed_roles"
 
         Tensions_created ->
             "tensions_created"
@@ -271,9 +264,6 @@ fromString enumString____ =
 
         "roles" ->
             Just Roles
-
-        "backed_roles" ->
-            Just Backed_roles
 
         "tensions_created" ->
             Just Tensions_created
