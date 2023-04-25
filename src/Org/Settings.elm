@@ -1438,7 +1438,7 @@ viewLabels model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
-            , div [ class "level-right", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
             ]
         , if model.label_add then
             viewLabelAddBox model
@@ -1710,7 +1710,7 @@ viewRoles model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
-            , div [ class "level-right", classList [ ( "is-hidden", model.role_add ) ] ] [ button [ class "button is-success level-right", onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.role_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
             ]
         , if model.role_add then
             viewRoleAddBox model

@@ -1653,7 +1653,7 @@ view_ global model =
               else
                 text ""
             , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
-                [ div [ class "column is-12 is-paddingless", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
+                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
                     [ viewSearchBar (Dict.get "q" model.query /= Nothing) model ]
                 ]
             , case model.children of
@@ -1736,7 +1736,7 @@ viewSearchBar isQueried model =
                     [ text T.clearFilters ]
     in
     div [ id "searchBarTensions", class "searchBar" ]
-        [ div [ class "columns mt-0 mb-0" ]
+        [ div [ class "columns mb-0" ]
             [ div [ class "column is-5" ]
                 [ div [ class "field has-addons" ]
                     [ div [ class "control is-expanded" ]
@@ -1953,7 +1953,7 @@ viewTensionsCount counts statusFilter =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons mb-0 has-addons" ]
+            div [ class "buttons has-addons" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, statusFilter == OpenStatus ), ( inactiveCls, statusFilter /= OpenStatus ) ]
