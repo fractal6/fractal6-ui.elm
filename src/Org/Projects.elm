@@ -1203,7 +1203,7 @@ viewDefault user model =
 viewSearchBar : Bool -> Maybe String -> Html Msg
 viewSearchBar isQueried pattern =
     div [ id "searchBarProjects", class "searchBar" ]
-        [ div [ class "columns" ]
+        [ div [ class "columns mb-0" ]
             [ div [ class "column is-8" ]
                 [ div [ class "field has-addons" ]
                     [ div [ class "control is-expanded" ]
@@ -1289,7 +1289,7 @@ viewProjectsCount counts statusFilter =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons mb-0 has-addons" ]
+            div [ class "buttons has-addons" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, statusFilter == OpenStatus ), ( inactiveCls, statusFilter /= OpenStatus ) ]
@@ -1375,12 +1375,12 @@ mediaProject conf focus statusFilter project =
                 , case project.description of
                     Just x ->
                         div [ class "column is-8" ]
-                            [ span [ class "is-discret" ] [ text x ] ]
+                            [ span [ class "is-discret is-smaller" ] [ text x ] ]
 
                     Nothing ->
                         text ""
                 ]
-            , div [ class "level is-smaller2 is-mobile mb-0" ]
+            , div [ class "level is-smaller2 is-mobile" ]
                 [ div [ class "level-left" ]
                     [ span [ class "is-discrete" ] <|
                         List.intersperse (text " ") <|
