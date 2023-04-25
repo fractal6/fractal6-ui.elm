@@ -133,7 +133,7 @@ patchTensionInputEncoder f =
             Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         updatedAt =
-            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+            Dict.get "updatedAt" f.post |> Maybe.map Fractal.Scalar.DateTime
 
         message =
             -- new comment
@@ -234,7 +234,7 @@ patchCommentInputEncoder f =
     let
         -- new comment
         updatedAt =
-            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+            Dict.get "updatedAt" f.post |> Maybe.map Fractal.Scalar.DateTime
 
         message =
             Dict.get "message" f.post |> Maybe.map String.trim
@@ -531,7 +531,7 @@ publishBlob url bid form msg =
                     SelectionSet.map2 TensionBlobFlag
                         Fractal.Object.Tension.title
                         (Fractal.Object.Tension.blobs (bidFilter bid) <|
-                            SelectionSet.map BlobFlag (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+                            SelectionSet.map BlobFlag (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
                         )
             )
         )

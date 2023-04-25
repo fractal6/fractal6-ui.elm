@@ -39,14 +39,13 @@ type NodeHasFilter
     | Role_type
     | Color
     | First_link
-    | Second_link
     | Contracts
     | Events_history
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Second_link, Contracts, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -147,9 +146,6 @@ decoder =
 
                     "first_link" ->
                         Decode.succeed First_link
-
-                    "second_link" ->
-                        Decode.succeed Second_link
 
                     "contracts" ->
                         Decode.succeed Contracts
@@ -259,9 +255,6 @@ toString enum____ =
 
         First_link ->
             "first_link"
-
-        Second_link ->
-            "second_link"
 
         Contracts ->
             "contracts"
@@ -376,9 +369,6 @@ fromString enumString____ =
 
         "first_link" ->
             Just First_link
-
-        "second_link" ->
-            Just Second_link
 
         "contracts" ->
             Just Contracts

@@ -235,7 +235,7 @@ type alias ProjectForm =
     { uctx : UserCtx
     , id : String
     , nameid : String -- use for roonameid identification
-    , status : ProjectStatus.ProjectStatus
+    , status : Maybe ProjectStatus.ProjectStatus
     , post : Post
     }
 
@@ -251,7 +251,7 @@ initProjectForm user nameid =
                 initUserctx
     , id = ""
     , nameid = nameid
-    , status = ProjectStatus.Open
+    , status = Nothing
     , post = Dict.fromList []
     }
 

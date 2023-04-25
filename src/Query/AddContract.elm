@@ -64,7 +64,7 @@ contractIdDecoder a =
         |> Maybe.andThen
             (\b ->
                 b.contract
-                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.map List.head
                     |> Maybe.withDefault Nothing
                     |> Maybe.withDefault Nothing
             )

@@ -1459,6 +1459,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="New project"
   fr="Nouveau projet"
 
+[editProject]
+  en="Edit project"
+  fr="Editer le projet"
+
 [assignees]
   en="Assignees"
   fr="Assignés"
@@ -1491,13 +1495,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No tensions in this circle yet."
   fr="Aucune tension dans ce cercle pour le moment."
 
-[noProjectRole]
-  en="No projects linked to this role yet."
-  fr="Aucun projet associé à ce rôle pour le moment."
-
-[noProjectCircle]
-  en="No projects linked to this circle yet."
-  fr="Aucun projet associé à ce cercle pour le moment."
+[noProjects]
+  en="No {{status}} projects linked to this {{type}} yet."
+  fr="Aucun projet {{status}} associé à ce {{type}} pour le moment."
 
 [newTension]
   en="New tension"

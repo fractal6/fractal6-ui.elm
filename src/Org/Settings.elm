@@ -720,15 +720,7 @@ update global message model =
 
                             else
                                 -- assume edit
-                                List.map
-                                    (\x ->
-                                        if x.id == label.id then
-                                            label
-
-                                        else
-                                            x
-                                    )
-                                    d
+                                LE.setIf (\x -> x.id == label.id) label d
                     in
                     ( { model | label_result = result, labels = Success new, label_add = False, label_edit = Nothing } |> resetForm
                     , Cmd.none
@@ -910,15 +902,7 @@ update global message model =
 
                             else
                                 -- assume edit
-                                List.map
-                                    (\x ->
-                                        if x.id == role.id then
-                                            role
-
-                                        else
-                                            x
-                                    )
-                                    d
+                                LE.setIf (\x -> x.id == role.id) role d
                     in
                     ( { model | role_result = result, roles = Success new, role_add = False, role_edit = Nothing } |> resetForm
                     , Cmd.none

@@ -450,22 +450,6 @@ tensionIcon3 type_ =
 
 
 --
--- Projects
---
-
-
-projectStatus2str : ProjectStatus.ProjectStatus -> String
-projectStatus2str s =
-    case s of
-        ProjectStatus.Open ->
-            T.openProject
-
-        ProjectStatus.Closed ->
-            T.closedProject
-
-
-
---
 -- Users
 --
 
@@ -959,9 +943,29 @@ role2icon r =
             "ml--1"
 
 
+nodeType2str : NodeType.NodeType -> String
+nodeType2str x =
+    case x of
+        NodeType.Circle ->
+            T.circle
+
+        NodeType.Role ->
+            T.role
+
+
+projectStatus2str : ProjectStatus.ProjectStatus -> String
+projectStatus2str s =
+    case s of
+        ProjectStatus.Open ->
+            T.openProject
+
+        ProjectStatus.Closed ->
+            T.closedProject
+
+
 lang2str : Lang.Lang -> String
-lang2str lang =
-    case lang of
+lang2str x =
+    case x of
         Lang.En ->
             "English"
 

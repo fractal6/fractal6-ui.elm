@@ -55,7 +55,7 @@ reactionDecoder data =
         |> Maybe.andThen
             (\d ->
                 d.reaction
-                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.map List.head
                     |> Maybe.withDefault Nothing
                     |> Maybe.withDefault Nothing
             )
@@ -96,7 +96,7 @@ reactionPayload : SelectionSet ReactionResponse Fractal.Object.Reaction
 reactionPayload =
     SelectionSet.map2 ReactionResponse
         (Fractal.Object.Reaction.comment identity (SelectionSet.map IdPayload (Fractal.Object.Comment.id |> SelectionSet.map decodedId))
-            |> SelectionSet.map (\x -> x.id)
+            |> SelectionSet.map .id
         )
         Fractal.Object.Reaction.type_
 

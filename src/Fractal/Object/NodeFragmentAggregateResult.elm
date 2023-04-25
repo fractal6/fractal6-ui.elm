@@ -64,16 +64,6 @@ first_linkMax =
     Object.selectionForField "(Maybe String)" "first_linkMax" [] (Decode.string |> Decode.nullable)
 
 
-second_linkMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
-second_linkMin =
-    Object.selectionForField "(Maybe String)" "second_linkMin" [] (Decode.string |> Decode.nullable)
-
-
-second_linkMax : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
-second_linkMax =
-    Object.selectionForField "(Maybe String)" "second_linkMax" [] (Decode.string |> Decode.nullable)
-
-
 role_extMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
 role_extMin =
     Object.selectionForField "(Maybe String)" "role_extMin" [] (Decode.string |> Decode.nullable)

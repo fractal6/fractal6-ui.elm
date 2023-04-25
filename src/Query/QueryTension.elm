@@ -200,7 +200,7 @@ tensionHeadPayload tid uctx =
             )
         -- Aggregate
         |> with
-            (SelectionSet.map (\x -> unwrap2 0 .count x) <|
+            (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
             )
@@ -241,7 +241,7 @@ commentPayload =
     SelectionSet.succeed Comment
         |> with (Fractal.Object.Comment.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Comment.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map decodedTime))
         |> with (Fractal.Object.Comment.createdBy identity (SelectionSet.map Username Fractal.Object.User.username))
         |> with Fractal.Object.Comment.message
         |> with
@@ -280,7 +280,7 @@ blobPayload =
         |> with Fractal.Object.Blob.blob_type
         |> with (Fractal.Object.Blob.node identity nodeFragmentPayload)
         |> with Fractal.Object.Blob.md
-        |> with (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
 
 
 eventPayload : SelectionSet Event Fractal.Object.Event

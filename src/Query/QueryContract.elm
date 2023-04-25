@@ -73,7 +73,7 @@ type alias TensionContracts =
 contractsDecoder : Maybe TensionContracts -> Maybe (List Contract)
 contractsDecoder data =
     data
-        |> Maybe.map (\x -> x.contracts)
+        |> Maybe.map .contracts
         |> withDefault Nothing
 
 
@@ -147,7 +147,7 @@ contractPayload =
     SelectionSet.succeed Contract
         |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
         |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.tension identity tidPayload)
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
@@ -163,7 +163,7 @@ contractFullPayload =
     SelectionSet.succeed ContractFull
         |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
         |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.tension identity tensionForContractPayload)
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
