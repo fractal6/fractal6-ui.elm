@@ -284,8 +284,8 @@ type Msg
     | DoLoad
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
     | GotMembers (GqlData (List Member)) -- GraphQL
-    | GotUserRoles (GqlData (List Member))
-      --| GotMembersSub (GqlData (List Member)) -- Rest
+      --| GotUserRoles (GqlData (List Member))
+    | GotMembersSub (GqlData (List Member)) -- Rest
       -- Page
     | OnPendingHover Bool
     | OnPendingRowHover (Maybe Int)
@@ -349,7 +349,7 @@ update global message model =
                 [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
 
                 -- @deprecated : we use gql queryUserRoles now.
-                --, fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                , fetchMembersSub apis model.node_focus.nameid GotMembersSub
                 ]
             , Cmd.none
             )
@@ -406,51 +406,52 @@ update global message model =
                                 a ->
                                     Just a
                     in
-                    ( newModel, queryUserRoles apis model.node_focus.rootnameid users pattern_m GotUserRoles, Cmd.none )
+                    --( newModel, queryUserRoles apis model.node_focus.rootnameid users pattern_m GotUserRoles, Cmd.none )
+                    ( newModel, Cmd.none, Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
 
-        GotUserRoles result ->
+        --GotUserRoles result ->
+        --    case result of
+        --        Success data ->
+        --            let
+        --                path =
+        --                    -- path from nameid (not included) to root node
+        --                    withMapData .path model.path_data |> withDefaultData [] |> List.map .nameid |> List.filter (\x -> x /= model.node_focus.nameid)
+        --                ur =
+        --                    -- Filter roles in above circles
+        --                    List.map
+        --                        (\y -> { y | roles = List.filter (\z -> not (List.member (nearestCircleid z.nameid) path)) y.roles })
+        --                        data
+        --            in
+        --            ( { model | members_sub = Success ur }, Cmd.none, Cmd.none )
+        --        _ ->
+        --            ( { model | members_sub = result }, Cmd.none, Cmd.none )
+        GotMembersSub result ->
             case result of
-                Success data ->
-                    let
-                        path =
-                            -- path from nameid (not included) to root node
-                            withMapData .path model.path_data |> withDefaultData [] |> List.map .nameid |> List.filter (\x -> x /= model.node_focus.nameid)
+                Success mbs ->
+                    ( { model
+                        | members_sub =
+                            List.filterMap
+                                (\m ->
+                                    case memberRolesFilter m.roles of
+                                        [] ->
+                                            Nothing
 
-                        ur =
-                            -- Filter roles in above circles
-                            List.map
-                                (\y -> { y | roles = List.filter (\z -> not (List.member (nearestCircleid z.nameid) path)) y.roles })
-                                data
-                    in
-                    ( { model | members_sub = Success ur }, Cmd.none, Cmd.none )
+                                        roles ->
+                                            Just { m | roles = roles }
+                                )
+                                mbs
+                                |> Success
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( { model | members_sub = result }, Cmd.none, Cmd.none )
 
-        --GotMembersSub result ->
-        --    case result of
-        --        Success mbs ->
-        --            ( { model
-        --                | members_sub =
-        --                    List.filterMap
-        --                        (\m ->
-        --                            case memberRolesFilter m.roles of
-        --                                [] ->
-        --                                    Nothing
-        --                                roles ->
-        --                                    Just { m | roles = roles }
-        --                        )
-        --                        mbs
-        --                        |> Success
-        --              }
-        --            , Cmd.none
-        --            , Cmd.none
-        --            )
-        --        _ ->
-        --            ( { model | members_sub = result }, Cmd.none, Cmd.none )
         OnPendingHover b ->
             ( { model | pending_hover = b }, Cmd.none, Cmd.none )
 
@@ -964,7 +965,11 @@ memberRolesFilter roles =
     roles
         |> List.concatMap
             (\r ->
-                if r.role_type == RoleType.Member && List.length roles > 1 then
+                if List.member r.role_type [ RoleType.Guest, RoleType.Pending ] then
+                    -- Filter Special roles
+                    []
+
+                else if r.role_type == RoleType.Member && List.length roles > 1 then
                     -- Filter Member with roles
                     []
 
