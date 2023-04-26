@@ -26,9 +26,11 @@ module Query.QueryUser exposing
     , queryUser
     , queryUserFull
     , queryUserProfile
+    , queryUserRoles
     , userFullPayload
     , userProfilePayload
     , usernameFilter
+    , usernamesFilter
     )
 
 import Fractal.Enum.RoleType as RoleType
@@ -41,9 +43,10 @@ import Fractal.Object.UserRights
 import Fractal.Query as Query
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
+import Query.QueryNode exposing (nodeIdPayload, nodeOrgaFilter, searchUserFilter)
 import RemoteData
 import String.Extra as SE
 
@@ -201,6 +204,76 @@ userPayload =
     SelectionSet.succeed User
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
+
+
+
+--
+-- Query Users Roles
+--
+
+
+usersRoleDecoder : Maybe (List (Maybe Member)) -> Maybe (List Member)
+usersRoleDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d
+                    |> List.filterMap identity
+                    |> List.filter (\x -> x.roles /= [])
+                    |> Just
+            )
+        |> withDefault Nothing
+
+
+queryUserRoles url nameid usernames pattern msg =
+    makeGQLQuery url
+        (Query.queryUser
+            (case pattern of
+                Just _ ->
+                    searchUserFilter pattern
+
+                Nothing ->
+                    usernamesFilter usernames
+            )
+            (userRolesPayload nameid)
+        )
+        (RemoteData.fromResult >> decodeResponse usersRoleDecoder >> msg)
+
+
+usernamesFilter : List String -> Query.QueryUserOptionalArguments -> Query.QueryUserOptionalArguments
+usernamesFilter usernames a =
+    { a
+        | filter =
+            Input.buildUserFilter
+                (\c ->
+                    { c | username = Present { eq = Absent, regexp = Absent, in_ = List.map Just usernames |> Present } }
+                )
+                |> Present
+    }
+
+
+userRolesPayload : String -> SelectionSet Member Fractal.Object.User
+userRolesPayload nameid =
+    SelectionSet.succeed Member
+        |> with Fractal.Object.User.username
+        |> with Fractal.Object.User.name
+        -- Retired is alreaady ignored in queryMembersLocal
+        |> with (Fractal.Object.User.roles (nodeOrgaFilter nameid [ RoleType.Pending, RoleType.Guest, RoleType.Member ]) userRoleExtendedPayload |> withDefaultSelectionMap [])
+
+
+userRoleExtendedPayload : SelectionSet UserRoleExtended Fractal.Object.Node
+userRoleExtendedPayload =
+    SelectionSet.succeed UserRoleExtended
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with (Fractal.Object.Node.role_type |> withDefaultSelectionMap RoleType.Pending)
+        |> with Fractal.Object.Node.color
+        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
+
+
+withDefaultSelectionMap default a =
+    SelectionSet.map (withDefault default) a
 
 
 

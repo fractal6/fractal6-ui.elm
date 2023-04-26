@@ -42,6 +42,7 @@ module Query.QueryNode exposing
     , nidFilter
     , nodeDecoder
     , nodeIdPayload
+    , nodeOrgaFilter
     , nodeOrgaPayload
     , notifEventPayload
     , pNodePayload
@@ -61,6 +62,7 @@ module Query.QueryNode exposing
     , queryPublicOrga
     , queryRolesFull
     , roleFullPayload
+    , searchUserFilter
     , tensionEventPayload
     , tidPayload
     , userPayload
@@ -176,26 +178,6 @@ publicOrgaFilter a =
         , order =
             Input.buildNodeOrder
                 (\b -> { b | desc = Present NodeOrderable.CreatedAt })
-                |> Present
-    }
-
-
-memberFilter : Query.AggregateNodeOptionalArguments -> Query.AggregateNodeOptionalArguments
-memberFilter a =
-    { a
-        | filter =
-            Input.buildNodeFilter
-                (\b -> { b | role_type = Present { eq = Present RoleType.Member, in_ = Absent } })
-                |> Present
-    }
-
-
-guestFilter : Query.AggregateNodeOptionalArguments -> Query.AggregateNodeOptionalArguments
-guestFilter a =
-    { a
-        | filter =
-            Input.buildNodeFilter
-                (\b -> { b | role_type = Present { eq = Present RoleType.Guest, in_ = Absent } })
                 |> Present
     }
 
@@ -343,14 +325,14 @@ nodeOrgaDecoder data =
 queryOrgaTree url rootid msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeOrgaFilter rootid)
+            (nodeOrgaFilter rootid [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ])
             nodeOrgaPayload
         )
         (RemoteData.fromResult >> decodeResponse nodeOrgaDecoder >> msg)
 
 
-nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nodeOrgaFilter rootid a =
+nodeOrgaFilter : String -> List RoleType.RoleType -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeOrgaFilter rootid alls a =
     { a
         | filter =
             Input.buildNodeFilter
@@ -358,7 +340,7 @@ nodeOrgaFilter rootid a =
                     { b
                         | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
                         , not =
-                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ] })
+                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType alls })
                                 |> Present
                     }
                 )
@@ -969,17 +951,17 @@ membersNodeDecoder nodes =
         |> Dict.values
 
 
-queryMembersLocal url nid msg =
+queryMembersLocal url nid pattern msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
-            membersLocalPayload
+            (membersLocalPayload pattern)
         )
         (RemoteData.fromResult >> decodeResponse membersLocalDecoder >> msg)
 
 
-membersLocalPayload : SelectionSet LocalMemberNode Fractal.Object.Node
-membersLocalPayload =
+membersLocalPayload : Maybe String -> SelectionSet LocalMemberNode Fractal.Object.Node
+membersLocalPayload pattern =
     SelectionSet.succeed LocalMemberNode
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
@@ -996,10 +978,39 @@ membersLocalPayload =
                     |> with Fractal.Object.Node.nameid
                     |> with Fractal.Object.Node.role_type
                     |> with Fractal.Object.Node.color
-                    |> with (Fractal.Object.Node.first_link identity userPayload)
+                    |> with (Fractal.Object.Node.first_link (searchUserFilter pattern) userPayload)
                     |> hardcoded Nothing
                 )
             )
+
+
+
+--searchUserFilter : Maybe String -> Fractal.Object.Node.FirstLinkOptionalArguments -> Fractal.Object.Node.FirstLinkOptionalArguments
+
+
+searchUserFilter pattern a =
+    { a
+        | filter =
+            Maybe.map
+                (\p ->
+                    Input.buildUserFilter
+                        (\b ->
+                            { b
+                                | username = { regexp = Present ("/" ++ p ++ "/"), eq = Absent, in_ = Absent } |> Present
+                                , or =
+                                    Present
+                                        [ Input.buildUserFilter
+                                            (\c ->
+                                                { c | name = { regexp = Present ("/" ++ p ++ "/") } |> Present }
+                                            )
+                                            |> Just
+                                        ]
+                            }
+                        )
+                )
+                pattern
+                |> fromMaybe
+    }
 
 
 

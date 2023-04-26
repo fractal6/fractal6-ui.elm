@@ -38,6 +38,7 @@ import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar as SearchBar
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
@@ -182,8 +183,8 @@ type alias Model =
     , tensions_all : GqlData TensionsDict
     , query : Dict String (List String)
     , offset : Int
-    , pattern : Maybe String
-    , initPattern : Maybe String
+    , pattern : String
+    , pattern_init : String
     , viewMode : TensionsView
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
@@ -641,8 +642,8 @@ init global flags =
                 UserSearchPanel.load global.session.authorsPanel global.session.user
             , labelsPanel =
                 LabelSearchPanel.load global.session.labelsPanel global.session.user
-            , pattern = Dict.get "q" query |> withDefault [] |> List.head
-            , initPattern = Dict.get "q" query |> withDefault [] |> List.head
+            , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
@@ -796,9 +797,8 @@ type Msg
     | ResetDataSoft
     | OnClearFilter
     | SubmitSearch
-    | SubmitTextSearch
+    | SubmitTextSearch String
     | SubmitSearchReset
-    | SubmitSearchTextReset
     | GoView TensionsView
     | SetOffset Int
       -- Board
@@ -1044,6 +1044,14 @@ update global message model =
                 nameids =
                     getTargetsHere model
 
+                pattern_m =
+                    case model.pattern of
+                        "" ->
+                            Nothing
+
+                        a ->
+                            Just a
+
                 status =
                     statusDecoder model.statusFilter
 
@@ -1070,7 +1078,7 @@ update global message model =
 
             else if List.member model.viewMode [ CircleView, AssigneeView ] then
                 ( { model | tensions_all = LoadingSlowly }
-                , fetchTensionAll apis nameids nfirstC 0 model.pattern status model.authors model.labels type_ sort_ GotTensionsAll
+                , fetchTensionAll apis nameids nfirstC 0 pattern_m status model.authors model.labels type_ sort_ GotTensionsAll
                 , Ports.hide "footBar"
                 )
 
@@ -1081,12 +1089,12 @@ update global message model =
                   else
                     model
                 , Cmd.batch
-                    [ fetchTensionInt apis nameids first skip model.pattern status model.authors model.labels type_ sort_ (GotTensionsInt inc)
+                    [ fetchTensionInt apis nameids first skip pattern_m status model.authors model.labels type_ sort_ (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
-                    --, fetchTensionExt apis nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
+                    --, fetchTensionExt apis nameids first skip pattern_m status model.authors model.labels type_ GotTensionsExt
                     --
-                    , fetchTensionCount apis nameids model.pattern model.authors model.labels type_ Nothing GotTensionsCount
+                    , fetchTensionCount apis nameids pattern_m model.authors model.labels type_ Nothing GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
@@ -1095,7 +1103,7 @@ update global message model =
                 ( model, Cmd.none, Cmd.none )
 
         ChangePattern value ->
-            ( { model | pattern = Just value }, Cmd.none, Cmd.none )
+            ( { model | pattern = value }, Cmd.none, Cmd.none )
 
         ChangeViewFilter value ->
             ( { model | viewMode = value }, send SubmitSearch, Cmd.none )
@@ -1134,7 +1142,7 @@ update global message model =
             case key of
                 13 ->
                     --ENTER
-                    ( model, send SubmitTextSearch, Cmd.none )
+                    ( model, send (SubmitTextSearch model.pattern), Cmd.none )
 
                 27 ->
                     --ESC
@@ -1178,21 +1186,18 @@ update global message model =
             , Cmd.none
             )
 
-        SubmitTextSearch ->
-            if
-                (model.pattern |> withDefault "" |> String.trim)
-                    == (Dict.get "q" model.query |> withDefault [] |> List.head |> withDefault "")
-            then
+        SubmitTextSearch pattern ->
+            if (pattern |> String.trim) == model.pattern_init then
                 ( model, Cmd.none, Cmd.none )
 
             else
-                ( model, send SubmitSearchReset, Cmd.none )
+                ( { model | pattern = pattern }, send SubmitSearchReset, Cmd.none )
 
         SubmitSearch ->
             let
                 query =
                     queryBuilder
-                        ([ ( "q", model.pattern |> withDefault "" |> String.trim )
+                        ([ ( "q", model.pattern |> String.trim )
                          , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
@@ -1210,13 +1215,6 @@ update global message model =
         SubmitSearchReset ->
             -- Send search and reset the other results
             ( model
-            , Cmd.batch [ send SubmitSearch, send ResetData ]
-            , Cmd.none
-            )
-
-        SubmitSearchTextReset ->
-            -- Send search and reset search text only
-            ( { model | pattern = Nothing }
             , Cmd.batch [ send SubmitSearch, send ResetData ]
             , Cmd.none
             )
@@ -1654,7 +1652,7 @@ view_ global model =
                 text ""
             , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
                 [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
-                    [ viewSearchBar (Dict.get "q" model.query /= Nothing) model ]
+                    [ viewSearchBar model ]
                 ]
             , case model.children of
                 RemoteData.Failure err ->
@@ -1714,8 +1712,8 @@ viewCatMenu typeFilter =
         ]
 
 
-viewSearchBar : Bool -> Model -> Html Msg
-viewSearchBar isQueried model =
+viewSearchBar : Model -> Html Msg
+viewSearchBar model =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
@@ -1746,14 +1744,14 @@ viewSearchBar isQueried model =
                             , autocomplete False
                             , autofocus False
                             , placeholder T.searchTensions
-                            , value (withDefault "" model.pattern)
+                            , value model.pattern
                             , onInput ChangePattern
                             , onKeydown SearchKeyDown
                             ]
                             []
                         , span [ class "icon-input-flex-right" ]
-                            [ if isQueried then
-                                span [ class "delete is-hidden-mobile", onClick SubmitSearchTextReset ] []
+                            [ if model.pattern_init /= "" then
+                                span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
 
                               else
                                 text ""
@@ -1911,7 +1909,11 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount counts statusFilter
                 , if focus.nameid /= focus.rootnameid then
-                    span [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                    span
+                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
+                        , onClick OnGoRoot
+                        ]
+                        [ A.icon "arrow-up", text T.goRoot ]
 
                   else
                     text ""
@@ -1935,7 +1937,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                 ]
             ]
         , if focus.nameid /= focus.rootnameid then
-            div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+            div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
           else
             text ""
@@ -1953,7 +1955,7 @@ viewTensionsCount counts statusFilter =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons has-addons" ]
+            div [ class "buttons has-addons mb-0" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, statusFilter == OpenStatus ), ( inactiveCls, statusFilter /= OpenStatus ) ]
@@ -2000,7 +2002,7 @@ viewListTensions model =
         [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
         , div [ class "column is-10" ]
             [ viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
-            , viewTensions model.conf model.node_focus model.initPattern tensions_d ListTension
+            , viewTensions model.conf model.node_focus model.pattern_init tensions_d ListTension
             ]
         ]
 
@@ -2010,12 +2012,12 @@ viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "Internal tensions" ]
-            , viewTensions model.conf model.node_focus model.initPattern model.tensions_int InternalTension
+            , viewTensions model.conf model.node_focus model.pattern_init model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "External tensions" ]
-            , viewTensions model.conf model.node_focus model.initPattern model.tensions_ext ExternalTension
+            , viewTensions model.conf model.node_focus model.pattern_init model.tensions_ext ExternalTension
             ]
         ]
 
@@ -2174,7 +2176,7 @@ viewAssigneeTensions model =
 -- viewBoard elmId data move?
 
 
-viewTensions : Conf -> NodeFocus -> Maybe String -> GqlData (List Tension) -> TensionDirection -> Html Msg
+viewTensions : Conf -> NodeFocus -> String -> GqlData (List Tension) -> TensionDirection -> Html Msg
 viewTensions conf focus pattern tensionsData tensionDir =
     div
         [ class "box is-shrinked"
@@ -2188,8 +2190,8 @@ viewTensions conf focus pattern tensionsData tensionDir =
                         |> List.map (\t -> mediaTension { noMsg = NoMsg } conf focus t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
-                else if pattern /= Nothing then
-                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
+                else if pattern /= "" then
+                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text pattern ]
 
                 else
                     case focus.type_ of
