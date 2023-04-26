@@ -102,6 +102,7 @@ type alias Session =
     , tensions_all : Maybe TensionsDict
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
+    , project_data : Maybe ProjectData
     , orgs_data : Maybe (List OrgaNode)
     , tree_data : Maybe NodesDict
     , isAdmin : Maybe Bool
@@ -174,6 +175,7 @@ resetSession session flags =
     , tensions_all = Nothing
     , tensions_count = Nothing
     , tension_head = Nothing
+    , project_data = Nothing
     , orgs_data = Nothing
     , tree_data = Nothing
     , isAdmin = Nothing
@@ -248,6 +250,7 @@ fromLocalSession flags =
       , tensions_all = Nothing
       , tensions_count = Nothing
       , tension_head = Nothing
+      , project_data = Nothing
       , orgs_data = Nothing
       , tree_data = Nothing
       , isAdmin = Nothing

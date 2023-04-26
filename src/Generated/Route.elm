@@ -33,6 +33,7 @@ type Route
     | M_Dynamic_Dynamic { param1 : String, param2 : String }
     | O_Dynamic_Dynamic { param1 : String, param2 : String }
     | P_Dynamic_Dynamic { param1 : String, param2 : String }
+    | Project_Dynamic_Dynamic { param1 : String, param2 : String }
     | S_Dynamic_Dynamic { param1 : String, param2 : String }
     | T_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic { param1 : String, param2 : String }
@@ -102,6 +103,9 @@ routes =
         , (Parser.s "p" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map P_Dynamic_Dynamic
+        , (Parser.s "project" </> Parser.string </> Parser.string)
+          |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
+          |> Parser.map Project_Dynamic_Dynamic
         , (Parser.s "s" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map S_Dynamic_Dynamic
@@ -215,6 +219,9 @@ toHref route =
                 
                 P_Dynamic_Dynamic { param1, param2 } ->
                     [ "p", param1, param2 ]
+                
+                Project_Dynamic_Dynamic { param1, param2 } ->
+                    [ "project", param1, param2 ]
                 
                 S_Dynamic_Dynamic { param1, param2 } ->
                     [ "s", param1, param2 ]

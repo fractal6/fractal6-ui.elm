@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
@@ -296,7 +296,6 @@ init global flags =
         cid_m =
             flags.param4
 
-        -- Focus
         newFocus_ =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
@@ -326,9 +325,6 @@ init global flags =
                 global.session.path_data
                     |> Maybe.map focusFromPath
                     |> withDefault newFocus_
-
-        refresh =
-            Maybe.map (\th -> tensionChanged2 th global.url) global.session.tension_head |> withDefault True
 
         nodeView =
             Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
@@ -424,6 +420,9 @@ init global flags =
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             , userInput = UserInput.init [ newFocus.nameid ] False False global.session.user
             }
+
+        refresh =
+            Maybe.map (\x -> id3Changed x.id global.url) global.session.tension_head |> withDefault True
     in
     ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }
     , Cmd.batch (refresh_cmds refresh global model)
@@ -504,7 +503,8 @@ refresh_cmds refresh global model =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
+    = -- Loading
+      PassedSlowLoadTreshold -- timer
     | LoadTensionHead
     | LoadTensionComments
     | PushCommentPatch
@@ -3057,37 +3057,6 @@ viewSidePane u t model =
 
 
 ---- Utils
-
-
-url2tid : Url -> String
-url2tid url =
-    url.path |> String.split "/" |> LE.getAt 3 |> withDefault url.path
-
-
-tensionChanged : Maybe Url -> Url -> Bool
-tensionChanged from_m to =
-    let
-        tid1 =
-            from_m
-                |> Maybe.map url2tid
-                |> withDefault ""
-
-        tid2 =
-            url2tid to
-    in
-    tid1 /= tid2
-
-
-tensionChanged2 : TensionHead -> Url -> Bool
-tensionChanged2 th to =
-    let
-        tid1 =
-            th.id
-
-        tid2 =
-            url2tid to
-    in
-    tid1 /= tid2
 
 
 eventFromForm : Ev -> TensionForm -> Event

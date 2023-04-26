@@ -19,13 +19,13 @@
 -}
 
 
-module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -51,15 +51,13 @@ import Html.Attributes exposing (class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryContract exposing (getContractId)
-import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
-import Query.QueryUser exposing (queryUserRoles)
-import Requests exposing (fetchMembersSub)
+import Query.QueryNode exposing (queryLocalGraph)
+import Query.QueryProject exposing (queryProject)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
@@ -169,12 +167,8 @@ type alias Model =
     , path_data : GqlData LocalGraph
 
     -- Page
-    , members_top : GqlData (List Member)
-    , members_sub : GqlData (List Member)
-    , pending_hover : Bool
-    , pending_hover_i : Maybe Int
-    , pattern : String
-    , pattern_init : String
+    , projectid : String
+    , project_data : GqlData ProjectData
 
     -- Common
     , conf : Conf
@@ -200,7 +194,7 @@ type alias Model =
 
 
 type alias Flags =
-    Flags_
+    { param1 : String, param2 : String }
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -217,14 +211,18 @@ init global flags =
             queryParser global.url
 
         -- Focus
+        rootnameid =
+            flags.param1 |> Url.percentDecode |> withDefault ""
+
+        projectid =
+            "0x" ++ flags.param2
+
         newFocus =
-            flags
-                |> nameidFromFlags
-                |> focusFromNameid
+            NodeFocus rootnameid rootnameid NodeType.Circle
 
         -- What has changed
         fs =
-            focusState MembersBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState ProjectBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -232,24 +230,20 @@ init global flags =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , members_top = Loading
-            , members_sub = Loading
-            , pending_hover = False
-            , pending_hover_i = Nothing
-            , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
+            , projectid = projectid
+            , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
 
             -- Common
             , conf = conf
             , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
             , empty = {}
-            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus global.session.user
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
 
@@ -260,10 +254,13 @@ init global flags =
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
+
+        refresh =
+            Maybe.map (\x -> id3Changed x.id global.url) global.session.project_data |> withDefault True
     in
     ( model
     , Cmd.batch cmds
-    , if fs.refresh then
+    , if fs.menuChange || refresh then
         send (UpdateSessionFocus (Just newFocus))
 
       else
@@ -278,26 +275,13 @@ init global flags =
 
 
 type Msg
-    = -- Loading
+    = --Loading
       PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-    | DoLoad
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
-    | GotMembers (GqlData (List Member)) -- GraphQL
-      --| GotUserRoles (GqlData (List Member))
-    | GotMembersSub (GqlData (List Member)) -- Rest
       -- Page
-    | OnPendingHover Bool
-    | OnPendingRowHover (Maybe Int)
-    | OnGoToContract String
-    | OnGoContractAck (GqlData IdPayload)
-      -- Search
-    | ChangePattern String
-    | SearchKeyDown Int
-    | ResetData
-    | SubmitSearch
-    | SubmitTextSearch String
-    | SubmitSearchReset
+    | DoLoad
+    | GotProject (GqlData ProjectData) -- Rest
       -- Common
     | NoMsg
     | LogErr String
@@ -367,161 +351,15 @@ update global message model =
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         DoLoad ->
-            let
-                pattern_m =
-                    case model.pattern of
-                        "" ->
-                            Nothing
-
-                        a ->
-                            Just a
-            in
             ( model
             , Cmd.batch
-                [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
-
-                -- @deprecated : we use gql queryUserRoles now.
-                , fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                [ queryProject apis model.projectid GotProject
                 ]
             , Cmd.none
             )
 
-        GotMembers result ->
-            let
-                newModel =
-                    { model | members_top = result }
-            in
-            case result of
-                Success m ->
-                    let
-                        users =
-                            List.map .username m
-
-                        pattern_m =
-                            case model.pattern of
-                                "" ->
-                                    Nothing
-
-                                a ->
-                                    Just a
-                    in
-                    --( newModel, queryUserRoles apis model.node_focus.rootnameid users pattern_m GotUserRoles, Cmd.none )
-                    ( newModel, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( newModel, Cmd.none, Cmd.none )
-
-        --GotUserRoles result ->
-        --    case result of
-        --        Success data ->
-        --            let
-        --                path =
-        --                    -- path from nameid (not included) to root node
-        --                    withMapData .path model.path_data |> withDefaultData [] |> List.map .nameid |> List.filter (\x -> x /= model.node_focus.nameid)
-        --                ur =
-        --                    -- Filter roles in above circles
-        --                    List.map
-        --                        (\y -> { y | roles = List.filter (\z -> not (List.member (nearestCircleid z.nameid) path)) y.roles })
-        --                        data
-        --            in
-        --            ( { model | members_sub = Success ur }, Cmd.none, Cmd.none )
-        --        _ ->
-        --            ( { model | members_sub = result }, Cmd.none, Cmd.none )
-        GotMembersSub result ->
-            case result of
-                Success mbs ->
-                    ( { model
-                        | members_sub =
-                            List.filterMap
-                                (\m ->
-                                    case memberRolesFilter m.roles of
-                                        [] ->
-                                            Nothing
-
-                                        roles ->
-                                            Just { m | roles = roles }
-                                )
-                                mbs
-                                |> Success
-                      }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | members_sub = result }, Cmd.none, Cmd.none )
-
-        OnPendingHover b ->
-            ( { model | pending_hover = b }, Cmd.none, Cmd.none )
-
-        OnPendingRowHover i ->
-            ( { model | pending_hover_i = i }, Cmd.none, Cmd.none )
-
-        OnGoToContract username ->
-            let
-                tid =
-                    tidFromPath model.path_data |> withDefault ""
-
-                contractid =
-                    contractIdCodec tid (TensionEvent.toString TensionEvent.UserJoined) "" username
-            in
-            ( model, getContractId apis contractid OnGoContractAck, Cmd.none )
-
-        OnGoContractAck result ->
-            case result of
-                Success c ->
-                    let
-                        tid =
-                            tidFromPath model.path_data |> withDefault ""
-
-                        link =
-                            toHref <| Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.node_focus.rootnameid, param2 = tid, param3 = c.id }
-                    in
-                    ( model, Cmd.none, send (NavigateRaw link) )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        -- Search
-        ChangePattern value ->
-            ( { model | pattern = value }, Cmd.none, Cmd.none )
-
-        SearchKeyDown key ->
-            case key of
-                13 ->
-                    --ENTER
-                    ( model, send (SubmitTextSearch model.pattern), Cmd.none )
-
-                27 ->
-                    --ESC
-                    ( model, send (ChangePattern ""), Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitSearch ->
-            let
-                query =
-                    queryBuilder
-                        [ ( "q", model.pattern |> String.trim )
-                        ]
-                        |> (\q -> ternary (q == "") "" ("?" ++ q))
-            in
-            ( model, Nav.pushUrl global.key (uriFromNameid MembersBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
-
-        SubmitTextSearch pattern ->
-            if (pattern |> String.trim) == model.pattern_init then
-                ( model, Cmd.none, Cmd.none )
-
-            else
-                ( { model | pattern = pattern }, send SubmitSearchReset, Cmd.none )
-
-        SubmitSearchReset ->
-            -- Send search and reset the other results
-            ( model, Cmd.batch [ send SubmitSearch, send ResetData ], Cmd.none )
-
-        ResetData ->
-            ( { model | members_top = Loading, members_sub = Loading, path_data = Loading }, Cmd.none, Cmd.none )
+        GotProject result ->
+            ( { model = result }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -535,7 +373,7 @@ update global message model =
                 query =
                     global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, Cmd.none, send (NavigateRaw (uriFromNameid MembersBaseUri model.node_focus.rootnameid [] ++ query)) )
+            ( model, Cmd.none, send (NavigateRaw (uriFromNameid ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -672,7 +510,7 @@ view global model =
     { title =
         (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
             ++ " · "
-            ++ T.members
+            ++ T.projects
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg

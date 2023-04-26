@@ -137,6 +137,7 @@ type Msg
     | UpdateSessionTensionsAll (Maybe TensionsDict)
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
+    | UpdateSessionProject (Maybe ProjectData)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionMenuOrga (Maybe Bool)
@@ -328,6 +329,7 @@ update msg model =
                     { session
                         | node_focus = data
                         , tension_head = Nothing
+                        , project_data = Nothing
                         , tensions_data = Nothing
                         , tensions_int = Nothing
                         , tensions_ext = Nothing
@@ -469,6 +471,13 @@ update msg model =
                            )
             in
             ( { model | session = { session | tension_head = data, path_data = pdata } }, Cmd.none )
+
+        UpdateSessionProject data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | project_data = data } }, Cmd.none )
 
         UpdateSessionOrgs data ->
             let
