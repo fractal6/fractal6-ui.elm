@@ -588,6 +588,12 @@ type alias PatchTensionPayloadID =
     }
 
 
+
+--
+-- Project
+--
+
+
 type alias Project =
     { id : String
     , name : String
@@ -606,6 +612,12 @@ type alias ProjectAuth a =
     { a
         | nodes : List NodeId
         , leaders : List Username
+    }
+
+
+type alias ProjectData =
+    { id : String
+    , name : String
     }
 
 

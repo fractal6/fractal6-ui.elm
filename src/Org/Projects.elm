@@ -28,20 +28,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs
-    exposing
-        ( ActionType(..)
-        , DocType(..)
-        , Flags_
-        , FractalBaseRoute(..)
-        , NodeFocus
-        , basePathChanged
-        , focusFromNameid
-        , focusState
-        , nameidEncoder
-        , nameidFromFlags
-        , uriFromNameid
-        )
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (nodeType2str, projectStatus2str)
 import Codecs exposing (QuickDoc)
@@ -68,6 +55,7 @@ import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, type_, value)
@@ -1001,7 +989,7 @@ view global model =
     { title =
         (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
             ++ " · "
-            ++ T.settings
+            ++ T.projects
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
@@ -1337,8 +1325,7 @@ mediaProject conf focus statusFilter project =
                 [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
                     [ a
                         [ class "has-text-weight-semibold is-human discrete-link"
-
-                        --, href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                        , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
                         ]
                         [ text project.name ]
                     ]

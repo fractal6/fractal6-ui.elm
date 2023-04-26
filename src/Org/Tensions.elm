@@ -768,7 +768,8 @@ dataNeedLoad model =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
+    = -- Loading
+      PassedSlowLoadTreshold -- timer
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
     | PushTension Tension

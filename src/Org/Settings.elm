@@ -439,9 +439,9 @@ init global flags =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
+    = -- Loading
+      PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
       -- Page
     | ChangeMenuFocus MenuSettings

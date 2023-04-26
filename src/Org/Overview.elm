@@ -364,12 +364,12 @@ init global flags =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
-    | LoadOrga
+    = -- Loading
+      PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get the current time
     | OnUpdateTree (Maybe NodesDict)
     | PushTension Tension
-    | Submit (Time.Posix -> Msg) -- Get the current time
-      -- Gql Data Queries
+    | LoadOrga
     | GotOrga (GqlData NodesDict)
     | GotTensions (GqlData (List Tension))
     | GotData (GqlData NodeData)

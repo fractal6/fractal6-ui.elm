@@ -212,6 +212,9 @@ urlToFractalRoute url =
                     Tension_Dynamic_Dynamic_Contract_Dynamic _ ->
                         Just ContractsBaseUri
 
+                    Project_Dynamic_Dynamic _ ->
+                        Just ProjectBaseUri
+
                     Dynamic _ ->
                         Just UsersBaseUri
 
@@ -276,6 +279,28 @@ basePathChanged loc url =
             url |> Maybe.map (\u -> u.path) |> withDefault "/" |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
     in
     base /= baseRef
+
+
+id3Changed : String -> Url -> Bool
+id3Changed id_ to =
+    let
+        tid1 =
+            id_
+
+        tid2 =
+            url2id3 to
+    in
+    tid1 /= tid2
+
+
+url2id3 : Url -> String
+url2id3 url =
+    url.path |> String.split "/" |> LE.getAt 3 |> withDefault url.path
+
+
+shortId : String -> String
+shortId id_ =
+    String.dropLeft 2 id_
 
 
 
