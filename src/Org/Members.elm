@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -33,8 +33,11 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
+import Dict
 import Extra exposing (ternary, unwrap)
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
@@ -43,18 +46,19 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, div, h2, i, span, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (class, classList, href, id, style)
+import Html exposing (Html, a, div, h2, i, input, span, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
+import Query.QueryUser exposing (queryUserRoles)
 import Requests exposing (fetchMembersSub)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
@@ -144,7 +148,7 @@ mapGlobalOutcmds gcmds =
 
                     -- App
                     DoUpdateNode nameid fun ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send OnReload ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send DoLoad ], Cmd.none )
 
                     _ ->
                         ( [], Cmd.none )
@@ -169,6 +173,8 @@ type alias Model =
     , members_sub : GqlData (List Member)
     , pending_hover : Bool
     , pending_hover_i : Maybe Int
+    , pattern : String
+    , pattern_init : String
 
     -- Common
     , conf : Conf
@@ -206,6 +212,10 @@ init global flags =
         conf =
             { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
 
+        -- Query parameters
+        query =
+            queryParser global.url
+
         -- Focus
         newFocus =
             flags
@@ -226,6 +236,8 @@ init global flags =
             , members_sub = Loading
             , pending_hover = False
             , pending_hover_i = Nothing
+            , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
 
             -- Common
             , conf = conf
@@ -243,7 +255,7 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
-            , send OnReload
+            , ternary fs.focusChange (sendSleep DoLoad 250) (send DoLoad)
             , sendSleep PassedSlowLoadTreshold 500
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
@@ -266,18 +278,26 @@ init global flags =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
+    = --Loading
+      PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-    | OnReload
-      -- Data Queries
+    | DoLoad
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
-      -- Page
     | GotMembers (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- Rest
+    | GotUserRoles (GqlData (List Member))
+      --| GotMembersSub (GqlData (List Member)) -- Rest
+      -- Page
     | OnPendingHover Bool
     | OnPendingRowHover (Maybe Int)
     | OnGoToContract String
     | OnGoContractAck (GqlData IdPayload)
+      -- Search
+    | ChangePattern String
+    | SearchKeyDown Int
+    | ResetData
+    | SubmitSearch
+    | SubmitTextSearch String
+    | SubmitSearchReset
       -- Common
     | NoMsg
     | LogErr String
@@ -314,11 +334,22 @@ update global message model =
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
-        OnReload ->
+        DoLoad ->
+            let
+                pattern_m =
+                    case model.pattern of
+                        "" ->
+                            Nothing
+
+                        a ->
+                            Just a
+            in
             ( model
             , Cmd.batch
-                [ queryMembersLocal apis model.node_focus.nameid GotMembers
-                , fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
+
+                -- @deprecated : we use gql queryUserRoles now.
+                --, fetchMembersSub apis model.node_focus.nameid GotMembersSub
                 ]
             , Cmd.none
             )
@@ -361,32 +392,65 @@ update global message model =
                 newModel =
                     { model | members_top = result }
             in
-            ( newModel, Cmd.none, Cmd.none )
-
-        GotMembersSub result ->
             case result of
-                Success mbs ->
-                    ( { model
-                        | members_sub =
-                            List.filterMap
-                                (\m ->
-                                    case memberRolesFilter m.roles of
-                                        [] ->
-                                            Nothing
+                Success m ->
+                    let
+                        users =
+                            List.map .username m
 
-                                        roles ->
-                                            Just { m | roles = roles }
-                                )
-                                mbs
-                                |> Success
-                      }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+                        pattern_m =
+                            case model.pattern of
+                                "" ->
+                                    Nothing
+
+                                a ->
+                                    Just a
+                    in
+                    ( newModel, queryUserRoles apis model.node_focus.rootnameid users pattern_m GotUserRoles, Cmd.none )
+
+                _ ->
+                    ( newModel, Cmd.none, Cmd.none )
+
+        GotUserRoles result ->
+            case result of
+                Success data ->
+                    let
+                        path =
+                            -- path from nameid (not included) to root node
+                            withMapData .path model.path_data |> withDefaultData [] |> List.map .nameid |> List.filter (\x -> x /= model.node_focus.nameid)
+
+                        ur =
+                            -- Filter roles in above circles
+                            List.map
+                                (\y -> { y | roles = List.filter (\z -> not (List.member (nearestCircleid z.nameid) path)) y.roles })
+                                data
+                    in
+                    ( { model | members_sub = Success ur }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( { model | members_sub = result }, Cmd.none, Cmd.none )
 
+        --GotMembersSub result ->
+        --    case result of
+        --        Success mbs ->
+        --            ( { model
+        --                | members_sub =
+        --                    List.filterMap
+        --                        (\m ->
+        --                            case memberRolesFilter m.roles of
+        --                                [] ->
+        --                                    Nothing
+        --                                roles ->
+        --                                    Just { m | roles = roles }
+        --                        )
+        --                        mbs
+        --                        |> Success
+        --              }
+        --            , Cmd.none
+        --            , Cmd.none
+        --            )
+        --        _ ->
+        --            ( { model | members_sub = result }, Cmd.none, Cmd.none )
         OnPendingHover b ->
             ( { model | pending_hover = b }, Cmd.none, Cmd.none )
 
@@ -417,6 +481,47 @@ update global message model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        -- Search
+        ChangePattern value ->
+            ( { model | pattern = value }, Cmd.none, Cmd.none )
+
+        SearchKeyDown key ->
+            case key of
+                13 ->
+                    --ENTER
+                    ( model, send (SubmitTextSearch model.pattern), Cmd.none )
+
+                27 ->
+                    --ESC
+                    ( model, send (ChangePattern ""), Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        SubmitSearch ->
+            let
+                query =
+                    queryBuilder
+                        [ ( "q", model.pattern |> String.trim )
+                        ]
+                        |> (\q -> ternary (q == "") "" ("?" ++ q))
+            in
+            ( model, Nav.pushUrl global.key (uriFromNameid MembersBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
+
+        SubmitTextSearch pattern ->
+            if (pattern |> String.trim) == model.pattern_init then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | pattern = pattern }, send SubmitSearchReset, Cmd.none )
+
+        SubmitSearchReset ->
+            -- Send search and reset the other results
+            ( model, Cmd.batch [ send SubmitSearch, send ResetData ], Cmd.none )
+
+        ResetData ->
+            ( { model | members_top = Loading, members_sub = Loading, path_data = Loading }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -587,9 +692,6 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
-        rtid =
-            tidFromPath model.path_data |> withDefault ""
-
         isAdmin =
             case global.session.user of
                 LoggedIn uctx ->
@@ -598,19 +700,27 @@ view_ global model =
                 LoggedOut ->
                     False
 
+        isRoot =
+            model.node_focus.nameid == model.node_focus.rootnameid
+
         isPanelOpen =
             ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
+
+        opSearch =
+            { onChangePattern = ChangePattern
+            , onSearchKeyDown = SearchKeyDown
+            , onSubmitText = SubmitTextSearch
+            , id_name = "searchBarMembers"
+            , placeholder_txt = T.searchMembers
+            }
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
-                    [ text ""
-
-                    --viewSearchBar model.pattern
-                    ]
+                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
                 , if isAdmin then
-                    div [ class "column is-one-fifth is-flex is-flex-direction-column" ]
+                    div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
                         [ div
                             [ class "button is-primary is-pushed-right"
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
@@ -626,12 +736,24 @@ view_ global model =
                     [ div [ class "columns mb-6 px-3" ]
                         [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
                     , div [ class "columns mb-6 px-3" ]
-                        [ div [ class "column is-5 pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
+                        [ if isRoot then
+                            div [ class "column is-5 pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
+
+                          else
+                            text ""
                         ]
                     ]
-                , div [ class "column is-one-fifth is-flex is-flex-direction-column" ]
-                    [ div [ class "is-pushed-right" ]
-                        [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                , div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
+                    [ if isRoot then
+                        let
+                            rtid =
+                                tidFromPath model.path_data |> withDefault ""
+                        in
+                        div [ class "is-pushed-right" ]
+                            [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
+
+                      else
+                        text ""
                     ]
                 ]
             ]
@@ -655,7 +777,7 @@ viewMembers conf data focus isPanelOpen =
 
             else
                 div []
-                    [ h2 [ class "subtitle is-size-3" ] [ text T.members, goToParent ]
+                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.members, goToParent ]
                     , div [ class "table-container" ]
                         [ div [ class "table is-fullwidth" ]
                             [ thead []
@@ -842,11 +964,7 @@ memberRolesFilter roles =
     roles
         |> List.concatMap
             (\r ->
-                if List.member r.role_type [ RoleType.Guest, RoleType.Pending ] then
-                    -- Filter Special roles
-                    []
-
-                else if r.role_type == RoleType.Member && List.length roles > 1 then
+                if r.role_type == RoleType.Member && List.length roles > 1 then
                     -- Filter Member with roles
                     []
 

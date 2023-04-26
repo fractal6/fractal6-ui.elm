@@ -425,7 +425,7 @@ a:hover .is-name, a:hover .is-username {
 }
 
 .is-pushed-right {
-    // Should be combined with a is-flex container
+    // Should be combined with a is-flex container and potentially is-align-self-flex-start
     // is-pulled-right instead which produce overlaping effect whene screen is narrow.
     margin: auto 0 auto auto;
 }

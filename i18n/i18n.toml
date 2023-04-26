@@ -785,6 +785,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Search projects"
   fr="Rechercher des projets"
 
+[searchMembers]
+  en="Search members"
+  fr="Rechercher des membres"
+
 [searchUsers]
   en="Search users"
   fr="Rechercher des utilisateurs"

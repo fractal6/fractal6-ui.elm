@@ -53,12 +53,12 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.MoveTension as MoveTension
 import Components.NodeDoc exposing (viewUrlForm)
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (decap, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onDrop, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
 import Fifo exposing (Fifo)
@@ -198,8 +198,8 @@ type alias Model =
     -- Page
     , hasUnsavedData : Bool
     , project_form : ProjectForm
-    , query : Dict String (List String)
-    , pattern : Maybe String
+    , pattern : String
+    , pattern_init : String
     , statusFilter : StatusFilter
     , projects_count : GqlData ProjectsCount
     , hasDuplicate : Bool
@@ -310,24 +310,15 @@ resetForm model =
 
 
 type Msg
-    = PassedSlowLoadTreshold -- timer
+    = --Loading
+      PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
-      -- Page
     | DoLoad
+      -- Projects
     | ChangeProjectPost String String
     | SafeEdit Msg
     | SafeSend Msg
-    | ChangePattern String
-    | ChangeStatusFilter StatusFilter
-    | SearchKeyDown Int
-    | ResetData
-    | SubmitSearch
-    | SubmitTextSearch
-    | SubmitSearchReset
-    | SubmitSearchTextReset
-      -- Projects
     | GotProjects (GqlData { projects : List ProjectFull, counts : ProjectsCount })
     | GotProjectsTop (RestData (List ProjectFull))
     | GotProjectsSub (RestData (List ProjectFull))
@@ -340,6 +331,14 @@ type Msg
     | SubmitDeleteProject String Time.Posix
     | GotProject (GqlData ProjectFull)
     | GotProjectDel (GqlData ProjectFull)
+      -- Search
+    | ChangePattern String
+    | ChangeStatusFilter StatusFilter
+    | SearchKeyDown Int
+    | ResetData
+    | SubmitSearch
+    | SubmitTextSearch String
+    | SubmitSearchReset
       -- Common
     | NoMsg
     | LogErr String
@@ -401,8 +400,8 @@ init global flags =
                     |> withDefault Loading
             , hasUnsavedData = False
             , project_form = initProjectForm global.session.user newFocus.nameid
-            , query = query
-            , pattern = Dict.get "q" query |> withDefault [] |> List.head
+            , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , projects_count = Loading
             , hasDuplicate = False
@@ -504,10 +503,18 @@ update global message model =
             let
                 status =
                     statusDecoder model.statusFilter
+
+                pattern_m =
+                    case model.pattern of
+                        "" ->
+                            Nothing
+
+                        a ->
+                            Just a
             in
             ( model
             , Cmd.batch
-                [ getProjects apis model.node_focus.nameid model.pattern status GotProjects
+                [ getProjects apis model.node_focus.nameid pattern_m status GotProjects
 
                 --, fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
                 --, fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
@@ -557,7 +564,7 @@ update global message model =
             ( resetForm model, send msg, Cmd.none )
 
         ChangePattern value ->
-            ( { model | pattern = Just value }, Cmd.none, Cmd.none )
+            ( { model | pattern = value }, Cmd.none, Cmd.none )
 
         ChangeStatusFilter value ->
             ( { model | statusFilter = value }, send SubmitSearchReset, Cmd.none )
@@ -566,7 +573,7 @@ update global message model =
             case key of
                 13 ->
                     --ENTER
-                    ( model, send SubmitTextSearch, Cmd.none )
+                    ( model, send (SubmitTextSearch model.pattern), Cmd.none )
 
                 27 ->
                     --ESC
@@ -579,42 +586,28 @@ update global message model =
             let
                 query =
                     queryBuilder
-                        [ ( "q", model.pattern |> withDefault "" |> String.trim )
+                        [ ( "q", model.pattern |> String.trim )
                         , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                         ]
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model, Nav.pushUrl global.key (uriFromNameid ProjectsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
 
-        SubmitTextSearch ->
-            if
-                (model.pattern |> withDefault "" |> String.trim)
-                    == (Dict.get "q" model.query |> withDefault [] |> List.head |> withDefault "")
-            then
+        SubmitTextSearch pattern ->
+            if (pattern |> String.trim) == model.pattern_init then
                 ( model, Cmd.none, Cmd.none )
 
             else
-                ( model, send SubmitSearchReset, Cmd.none )
+                ( { model | pattern = pattern }, send SubmitSearchReset, Cmd.none )
 
         SubmitSearchReset ->
             -- Send search and reset the other results
-            ( model
-            , Cmd.batch [ send SubmitSearch, send ResetData ]
-            , Cmd.none
-            )
-
-        SubmitSearchTextReset ->
-            -- Send search and reset search text only
-            ( { model | pattern = Nothing }
-            , Cmd.batch [ send SubmitSearch, send ResetData ]
-            , Cmd.none
-            )
+            ( model, Cmd.batch [ send SubmitSearch, send ResetData ], Cmd.none )
 
         ResetData ->
             ( { model | projects = Loading, projects_sub = RemoteData.Loading, projects_top = RemoteData.Loading, path_data = Loading, projects_count = Loading }
             , Cmd.none
-            , Cmd.batch
-                []
+            , Cmd.none
             )
 
         --
@@ -1179,14 +1172,22 @@ viewDefault user model =
 
                 LoggedOut ->
                     False
+
+        opSearch =
+            { onChangePattern = ChangePattern
+            , onSearchKeyDown = SearchKeyDown
+            , onSubmitText = SubmitTextSearch
+            , id_name = "searchBarProjects"
+            , placeholder_txt = T.searchProjects
+            }
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-tree-quarter" ]
-                    [ viewSearchBar (Dict.get "q" model.query /= Nothing) model.pattern ]
+                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
                 , if isAdmin then
-                    div [ class "column is-one-quarter is-flex" ]
+                    div [ class "column is-one-quarter is-flex is-align-self-flex-start" ]
                         [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
 
                   else
@@ -1200,47 +1201,12 @@ viewDefault user model =
         ]
 
 
-viewSearchBar : Bool -> Maybe String -> Html Msg
-viewSearchBar isQueried pattern =
-    div [ id "searchBarProjects", class "searchBar" ]
-        [ div [ class "columns mb-0" ]
-            [ div [ class "column is-8" ]
-                [ div [ class "field has-addons" ]
-                    [ div [ class "control is-expanded" ]
-                        [ input
-                            [ class "is-rounded input is-small pr-6"
-                            , type_ "search"
-                            , autocomplete False
-                            , autofocus False
-                            , placeholder T.searchProjects
-                            , value (withDefault "" pattern)
-                            , onInput ChangePattern
-                            , onKeydown SearchKeyDown
-                            ]
-                            []
-                        , span [ class "icon-input-flex-right" ]
-                            [ if isQueried then
-                                span [ class "delete is-hidden-mobile", onClick SubmitSearchTextReset ] []
-
-                              else
-                                text ""
-                            , span [ class "vbar has-border-color" ] []
-                            , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
-                                [ A.icon "icon-search" ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
 viewProjects : Model -> Html Msg
 viewProjects model =
     div [ class "columns" ]
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
-            , viewProjectsList model.conf model.node_focus model.pattern model.statusFilter model.projects
+            , viewProjectsList model.conf model.node_focus model.pattern_init model.statusFilter model.projects
             ]
         ]
 
@@ -1262,7 +1228,11 @@ viewProjectsListHeader focus counts statusFilter =
             [ div [ class "level-left px-3" ]
                 [ viewProjectsCount counts statusFilter
                 , if focus.nameid /= focus.rootnameid then
-                    span [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                    span
+                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
+                        , onClick OnGoRoot
+                        ]
+                        [ A.icon "arrow-up", text T.goRoot ]
 
                   else
                     text ""
@@ -1270,7 +1240,7 @@ viewProjectsListHeader focus counts statusFilter =
             , div [ class "level-right px-3" ]
                 []
             , if focus.nameid /= focus.rootnameid then
-                div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
               else
                 text ""
@@ -1289,7 +1259,7 @@ viewProjectsCount counts statusFilter =
                 inactiveCls =
                     "has-background-header"
             in
-            div [ class "buttons has-addons" ]
+            div [ class "buttons has-addons mb-0" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, statusFilter == OpenStatus ), ( inactiveCls, statusFilter /= OpenStatus ) ]
@@ -1314,7 +1284,7 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : Conf -> NodeFocus -> Maybe String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList : Conf -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
 viewProjectsList conf focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
@@ -1328,8 +1298,8 @@ viewProjectsList conf focus pattern statusFilter data =
                         |> List.map (\x -> Lazy.lazy4 mediaProject conf focus statusFilter x)
                         |> div [ id "tensionsTab" ]
 
-                else if pattern /= Nothing then
-                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
+                else if pattern /= "" then
+                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text pattern ]
 
                 else
                     div [ class "m-4" ]
