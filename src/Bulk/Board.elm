@@ -46,7 +46,7 @@ type alias Op msg =
     , boardId : String
     , boardHeight : Maybe Float
     , movingTension : Maybe Tension
-    , movingHoverC : Maybe { pos : Int, to_receiverid : String }
+    , movingHoverCol : Maybe { pos : Int, to_receiverid : String }
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
 
     -- Board Msg
@@ -54,8 +54,8 @@ type alias Op msg =
     , onMove : { pos : Int, to_receiverid : String } -> Tension -> msg
     , onCancelHov : msg
     , onEndMove : msg
-    , onMoveEnterC : { pos : Int, to_receiverid : String } -> Bool -> msg
-    , onMoveLeaveC : msg
+    , onMoveEnterCol : { pos : Int, to_receiverid : String } -> Bool -> msg
+    , onMoveLeaveCol : msg
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
     , noMsg : msg
@@ -95,8 +95,8 @@ viewBoard op header keys_title data =
                 [ div
                     ([ class "column is-3" ]
                         ++ ternary op.hasTaskMove
-                            [ onDragEnter (op.onMoveEnterC { pos = i, to_receiverid = key } False)
-                            , onDragLeave op.onMoveLeaveC
+                            [ onDragEnter (op.onMoveEnterCol { pos = i, to_receiverid = key } False)
+                            , onDragLeave op.onMoveLeaveCol
 
                             -- @DEBUG doesn't work
                             --, onDrop (OnMoveDrop key)
@@ -136,7 +136,7 @@ viewBoard op header keys_title data =
                                             -- nothing to drag
                                             && (op.movingHoverT == Nothing)
                                             -- last item
-                                            && (j_last == j && Maybe.map .pos op.movingHoverC == Just i)
+                                            && (j_last == j && Maybe.map .pos op.movingHoverCol == Just i)
 
                                     draggingDiv =
                                         div
@@ -164,7 +164,7 @@ viewBoard op header keys_title data =
                                                     []
                                                 ++ (if j_last == j && op.hasTaskMove then
                                                         -- reset hoverT to draw below
-                                                        [ onDragLeave (op.onMoveEnterC { pos = i, to_receiverid = t.receiver.nameid } True) ]
+                                                        [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
 
                                                     else
                                                         []
