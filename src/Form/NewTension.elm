@@ -34,7 +34,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutI
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (space_, ternary, textH, unwrap2)
+import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
@@ -671,7 +671,7 @@ update_ apis message model =
                                     { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                 nameid =
-                                    List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+                                    List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }, out0 [ queryLocalGraph apis nameid False (GotPath False) ] )
 
@@ -1173,7 +1173,7 @@ view op (State model) =
 viewButton : Op -> Model -> Html Msg
 viewButton op model =
     div [ class "tensionButton is-hidden-tablet", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
-        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen (FromPath p)) ]) |> withDefault []))
+        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> unwrap [] (\p -> [ onClick (OnOpen (FromPath p)) ])))
             [ A.icon "icon-plus icon-2x" ]
         ]
 
@@ -1596,7 +1596,7 @@ viewCircle op model =
             model.result == LoadingSlowly
 
         isSendable =
-            isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
+            isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map .purpose) /= Nothing
 
         submitTension =
             ternary isSendable [ onClickPD2 (OnSubmit isLoading <| OnSubmitTension False) ] []

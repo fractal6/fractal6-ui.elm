@@ -560,7 +560,7 @@ getTargetsHere model =
         AllSubChildren ->
             case model.children of
                 RemoteData.Success children ->
-                    children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
+                    children |> List.map .nameid |> List.append [ model.node_focus.nameid ]
 
                 _ ->
                     []
@@ -568,7 +568,7 @@ getTargetsHere model =
         SelectedNode ->
             case model.path_data of
                 Success path ->
-                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+                    path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
 
                 _ ->
                     []
@@ -770,8 +770,6 @@ dataNeedLoad model =
 type Msg
     = -- Loading
       PassedSlowLoadTreshold -- timer
-    | OnResize Int Int
-    | FitBoard (Result Dom.Error Dom.Element)
     | PushTension Tension
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
@@ -803,6 +801,8 @@ type Msg
     | GoView TensionsView
     | SetOffset Int
       -- Board
+    | OnResize Int Int
+    | FitBoard (Result Dom.Error Dom.Element)
     | OnColumnHover (Maybe String)
     | OnMove { pos : Int, to_receiverid : String } Tension
     | OnCancelHov
@@ -870,47 +870,6 @@ update global message model =
                     ternary (model.tensions_count == Loading) LoadingSlowly model.tensions_count
             in
             ( { model | tensions_int = tensions_int, tensions_ext = tensions_ext, tensions_all = tensions_all, tensions_count = tensions_count }, Cmd.none, Cmd.none )
-
-        OnResize w h ->
-            let
-                conf =
-                    model.conf
-
-                newScreen =
-                    { w = w, h = h }
-
-                newConf =
-                    { conf | screen = newScreen }
-
-                elmId =
-                    case model.viewMode of
-                        CircleView ->
-                            "tensionsCircle"
-
-                        AssigneeView ->
-                            "tensionsAssignee"
-
-                        _ ->
-                            ""
-            in
-            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
-
-        FitBoard elt ->
-            case elt of
-                Ok e ->
-                    let
-                        h =
-                            if e.viewport.height - e.element.y < 511 then
-                                -- allow y-scroll here. Substract the header size.
-                                e.viewport.height - 50
-
-                            else
-                                e.viewport.height - e.element.y
-                    in
-                    ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
-
-                Err _ ->
-                    ( model, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -1128,7 +1087,7 @@ update global message model =
         ChangeAuthor ->
             let
                 targets =
-                    model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                    model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
             in
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
@@ -1244,6 +1203,48 @@ update global message model =
         SetOffset v ->
             ( { model | offset = v }, Cmd.none, Cmd.none )
 
+        -- Board
+        OnResize w h ->
+            let
+                conf =
+                    model.conf
+
+                newScreen =
+                    { w = w, h = h }
+
+                newConf =
+                    { conf | screen = newScreen }
+
+                elmId =
+                    case model.viewMode of
+                        CircleView ->
+                            "tensionsCircle"
+
+                        AssigneeView ->
+                            "tensionsAssignee"
+
+                        _ ->
+                            ""
+            in
+            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
+
+        FitBoard elt ->
+            case elt of
+                Ok e ->
+                    let
+                        h =
+                            if e.viewport.height - e.element.y < 511 then
+                                -- allow y-scroll here. Substract the header size.
+                                e.viewport.height - 50
+
+                            else
+                                e.viewport.height - e.element.y
+                    in
+                    ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none, Cmd.none )
+
         OnColumnHover v ->
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
@@ -1267,7 +1268,7 @@ update global message model =
                     else
                         let
                             j =
-                                Maybe.map (\x -> x.pos) model.movingHoverT |> withDefault -1
+                                Maybe.map .pos model.movingHoverT |> withDefault -1
                         in
                         ( { newModel | moveFifo = Fifo.insert ( j, t ) model.moveFifo }
                         , Cmd.map MoveTensionMsg (send (MoveTension.OnMoveRaw t.id t.receiver.nameid to_receiverid))
@@ -1638,12 +1639,10 @@ view_ global model =
         [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
             [ if model.viewMode == ListView then
                 withMaybeData model.path_data
-                    |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
+                    |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
                     |> withDefault Nothing
                     |> Maybe.map
                         (\x ->
-                            -- @DEBUG: why margin-bottom changes if depending from where we come from ?
-                            --
                             div [ class "mb-4", attribute "style" "margin-top:-1rem !important;" ]
                                 [ viewPinnedTensions 3 model.conf model.node_focus x ]
                         )
@@ -1673,7 +1672,7 @@ view_ global model =
 
                 AssigneeView ->
                     text ""
-            , if isFullwidth && (withMaybeData model.tensions_all |> Maybe.map (\x -> (Dict.values x |> List.concat |> List.length) >= 200) |> withDefault False) then
+            , if isFullwidth && (withMaybeMapData (\x -> (Dict.values x |> List.concat |> List.length) >= 200) model.tensions_all |> withDefault False) then
                 div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ button [ class "button is-small" ]
                         -- @TODO: load more for CircleView
@@ -1826,7 +1825,7 @@ viewSearchBar model =
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
-                            , targets = model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
                             , isRight = True
                             }
                             model.authorsPanel
@@ -2052,8 +2051,8 @@ viewCircleTensions model =
                         |> queryBuilder
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
 
-                header : String -> Maybe Tension -> Html Msg
-                header n t_m =
+                header : String -> String -> Maybe Tension -> Html Msg
+                header n _ t_m =
                     let
                         title_name =
                             Maybe.map (.receiver >> .name) t_m
@@ -2082,6 +2081,7 @@ viewCircleTensions model =
 
                 op =
                     { hasTaskMove = True
+                    , hasNewCol = False
                     , conf = model.conf
                     , node_focus = model.node_focus
                     , boardId = "tensionsCircle"
@@ -2099,11 +2099,19 @@ viewCircleTensions model =
                     , onMoveLeaveC = OnMoveLeaveC
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , onNoTask = OnGoRoot
                     , noMsg = NoMsg
                     }
             in
-            viewBoard op header keys data
+            if List.length keys == 0 then
+                div [ class "ml-6 p-6" ]
+                    [ text T.noTensionsYet
+                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
+                        (text "")
+                    ]
+
+            else
+                viewBoard op header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err
@@ -2128,8 +2136,8 @@ viewAssigneeTensions model =
                 keys =
                     Dict.keys data
 
-                header : String -> Maybe Tension -> Html Msg
-                header n t_m =
+                header : String -> String -> Maybe Tension -> Html Msg
+                header n _ t_m =
                     let
                         user =
                             Maybe.map (.assignees >> withDefault [] >> LE.find (\t -> t.username == n)) t_m
@@ -2143,6 +2151,7 @@ viewAssigneeTensions model =
 
                 op =
                     { hasTaskMove = False
+                    , hasNewCol = False
                     , conf = model.conf
                     , node_focus = model.node_focus
                     , boardId = "tensionsAssignee"
@@ -2160,11 +2169,19 @@ viewAssigneeTensions model =
                     , onMoveLeaveC = OnMoveLeaveC
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , onNoTask = OnGoRoot
                     , noMsg = NoMsg
                     }
             in
-            viewBoard op header keys data
+            if List.length keys == 0 then
+                div [ class "ml-6 p-6" ]
+                    [ text T.noTensionsAssigneesYet
+                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
+                        (text "")
+                    ]
+
+            else
+                viewBoard op header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err

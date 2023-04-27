@@ -35,7 +35,7 @@ import Html exposing (Html, a, div, i, label, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, id, name, placeholder, rows, style, value)
 import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, loadingSpinRight, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, loadingSpinRight, withDefaultData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -252,7 +252,7 @@ update_ apis message model =
                 ( { model | isOpen = True, users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
 
             else if not model.isInvite && model.pattern == "" then
-                ( { model | isOpen = True, lookup = withMaybeData model.users_result |> withDefault [] |> List.take 12 }, noOut )
+                ( { model | isOpen = True, lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
 
             else
                 ( model, noOut )
@@ -317,7 +317,7 @@ update_ apis message model =
             case data of
                 Ok d ->
                     if model.pattern == "" && not model.isInvite then
-                        ( { model | lookup = withMaybeData model.users_result |> withDefault [] |> List.take 12 }, noOut )
+                        ( { model | lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
 
                     else
                         ( { model | lookup = d }, noOut )

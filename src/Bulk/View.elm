@@ -211,10 +211,12 @@ viewPinnedTensions size conf focus pins =
         []
         (List.range 0 (List.length pins - 1))
         |> LE.transpose
+        |> List.map (List.filterMap identity)
+        |> List.filter (\x -> x /= [])
         |> List.map
             (\x ->
                 div [ class "tile is-parent is-vertical", classList [ ( "is-" ++ String.fromInt (12 // size), True ) ] ] <|
-                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin conf focus y ]) (List.filterMap identity x)
+                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin conf focus y ]) x
             )
         |> div [ class "tile is-ancestor pinnedTile" ]
 

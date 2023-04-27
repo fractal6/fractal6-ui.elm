@@ -40,6 +40,7 @@ import Text as T
 
 type alias Op msg =
     { hasTaskMove : Bool
+    , hasNewCol : Bool
     , conf : Conf
     , node_focus : NodeFocus
     , boardId : String
@@ -57,19 +58,33 @@ type alias Op msg =
     , onMoveLeaveC : msg
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
-    , onNoTask : msg
     , noMsg : msg
     }
 
 
-viewBoard : Op msg -> (String -> Maybe Tension -> Html msg) -> List String -> Dict String (List Tension) -> Html msg
-viewBoard op header keys data =
-    keys
+{-| The given code defines a function `viewBoard` which takes four arguments:
+
+1.  `op`: representing the operations (msgs) that can be performed on the given board.
+2.  `header`: which is a function to display the header of each column in the board. The parameter of the header functioun are
+    1.  An unique identifier of the column
+    2.  A potential name for that column
+    3.  The potential first tension of the column
+3.  `keys_title`: A list of pairs representing the keys and names of each column in the board.
+4.  `data`: representing the tensions in each column of the board.
+
+The function returns an HTML structure which displays the board with each column having its own header and list of tensions.
+
+This function generates a drag-and-drop board with the ability to move tension items around.
+
+-}
+viewBoard : Op msg -> (String -> String -> Maybe Tension -> Html msg) -> List ( String, String ) -> Dict String (List Tension) -> Html msg
+viewBoard op header keys_title data =
+    keys_title
         |> List.indexedMap
-            (\i n ->
+            (\i ( key, name ) ->
                 let
                     tensions =
-                        Dict.get n data |> withDefault []
+                        Dict.get key data |> withDefault []
 
                     j_last =
                         List.length tensions - 1
@@ -80,18 +95,18 @@ viewBoard op header keys data =
                 [ div
                     ([ class "column is-3" ]
                         ++ ternary op.hasTaskMove
-                            [ onDragEnter (op.onMoveEnterC { pos = i, to_receiverid = n } False)
+                            [ onDragEnter (op.onMoveEnterC { pos = i, to_receiverid = key } False)
                             , onDragLeave op.onMoveLeaveC
 
                             -- @DEBUG doesn't work
-                            --, onDrop (OnMoveDrop n)
+                            --, onDrop (OnMoveDrop key)
                             , attribute "ondragover" "return false"
 
-                            --, onMouseEnter (OnColumnHover (Just n)
+                            --, onMouseEnter (OnColumnHover (Just key)
                             ]
                             []
                     )
-                    [ div [ class "subtitle is-aligned-center mb-0 pb-3" ] [ header n t_m ]
+                    [ div [ class "subtitle is-aligned-center mb-0 pb-3" ] [ header key name t_m ]
                     , tensions
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -169,17 +184,13 @@ viewBoard op header keys data =
             )
         |> List.concat
         |> (\x ->
-                if List.length x == 0 then
-                    [ div [ class "ml-6 p-6" ]
-                        [ text T.noTensionsAssigneesYet
-                        , ternary (op.node_focus.nameid /= op.node_focus.rootnameid)
-                            (span [ class "help-label button-light is-h is-discrete", onClick op.onNoTask ] [ A.icon "arrow-up", text T.goRoot ])
-                            (text "")
-                        ]
-                    ]
+                x
+                    ++ (if op.hasNewCol then
+                            [ viewNewCol op ]
 
-                else
-                    x
+                        else
+                            []
+                       )
            )
         |> div
             [ id op.boardId
@@ -194,3 +205,14 @@ viewBoard op header keys data =
                     Nothing ->
                         "overflow-y: hidden; overflow-x: auto;"
             ]
+
+
+viewNewCol : Op msg -> Html msg
+viewNewCol op =
+    div [ class "column is-2" ]
+        [ div
+            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
+            , style "width" "100%"
+            ]
+            [ A.icon1 "icon-plus" "Add column" ]
+        ]

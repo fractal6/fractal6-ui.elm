@@ -55,7 +55,7 @@ import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tb
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -681,7 +681,7 @@ update global message model =
                 Just path ->
                     let
                         nameids =
-                            path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+                            path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
 
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
@@ -963,7 +963,7 @@ view_ global model =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
             , node = getNode model.node_focus.nameid model.tree_data
-            , node_data = withMaybeData model.node_data |> withDefault initNodeData
+            , node_data = withDefaultData initNodeData model.node_data
             , leads = leads
             , isLazy = model.init_data
             , source = OverviewBaseUri
@@ -981,7 +981,7 @@ view_ global model =
                 "activities" ->
                     div []
                         [ model.path_data
-                            |> Maybe.map (.focus >> .pinned >> withMaybeData >> withDefault Nothing)
+                            |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
                             |> withDefault Nothing
                             |> Maybe.map
                                 (\x ->
@@ -1333,7 +1333,7 @@ viewCanvas us model =
                             , case model.path_data of
                                 Just g ->
                                     LE.getAt 1 (List.reverse g.path)
-                                        |> Maybe.map (\x -> x.nameid)
+                                        |> Maybe.map .nameid
                                         |> withDefault g.focus.nameid
                                         |> NodeClicked
                                         |> onClick

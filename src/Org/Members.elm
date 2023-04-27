@@ -359,7 +359,7 @@ update global message model =
                                     { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                 nameid =
-                                    List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+                                    List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }, queryLocalGraph apis nameid False (GotPath False), Cmd.none )
 
@@ -816,7 +816,7 @@ viewGuest conf members_d focus isPanelOpen =
                 |> List.filter
                     (\u ->
                         u.roles
-                            |> List.map (\r -> r.role_type)
+                            |> List.map .role_type
                             |> List.member RoleType.Guest
                     )
     in
@@ -854,7 +854,7 @@ viewPending _ members_d focus pending_hover pending_hover_i tid =
                 |> List.filter
                     (\u ->
                         u.roles
-                            |> List.map (\r -> r.role_type)
+                            |> List.map .role_type
                             |> List.member RoleType.Pending
                     )
     in

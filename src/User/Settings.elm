@@ -31,7 +31,7 @@ import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (lang2str, viewProfileC)
 import Components.AuthModal as AuthModal
 import Dict
-import Extra exposing (mor, space_, ternary, textH)
+import Extra exposing (mor, space_, ternary, textH, unwrap)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
@@ -354,7 +354,7 @@ update global message model =
         SwitchNotifyByEmail i _ ->
             let
                 val =
-                    withMaybeData model.user |> Maybe.map .notifyByEmail |> withDefault False
+                    withMaybeData model.user |> unwrap False .notifyByEmail
             in
             ( { model | user_result = Loading, switch_index = i }
             , patchUser apis (initUserProfileForm model.username |> (\x -> { x | notifyByEmail = Just (not val) })) GotUserPatch

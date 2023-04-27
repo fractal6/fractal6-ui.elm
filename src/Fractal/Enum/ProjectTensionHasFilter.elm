@@ -11,11 +11,12 @@ type ProjectTensionHasFilter
     = Tension
     | Pos
     | Pc
+    | Values
 
 
 list : List ProjectTensionHasFilter
 list =
-    [ Tension, Pos, Pc ]
+    [ Tension, Pos, Pc, Values ]
 
 
 decoder : Decoder ProjectTensionHasFilter
@@ -32,6 +33,9 @@ decoder =
 
                     "pc" ->
                         Decode.succeed Pc
+
+                    "values" ->
+                        Decode.succeed Values
 
                     _ ->
                         Decode.fail ("Invalid ProjectTensionHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,6 +55,9 @@ toString enum____ =
 
         Pc ->
             "pc"
+
+        Values ->
+            "values"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -75,6 +82,9 @@ fromString enumString____ =
 
         "pc" ->
             Just Pc
+
+        "values" ->
+            Just Values
 
         _ ->
             Nothing

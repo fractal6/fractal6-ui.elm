@@ -40,7 +40,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -665,7 +665,7 @@ viewJoinStep op model =
         InviteOne ->
             let
                 name =
-                    model.node_data |> withMaybeData |> Maybe.map .name |> withDefault ""
+                    model.node_data |> withMaybeMapData .name |> withDefault ""
             in
             div [ class "modal-card-body" ]
                 [ UserInput.view { label_text = span [] [ text (T.inviteMembers ++ " " ++ T.in_ ++ " "), strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg

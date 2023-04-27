@@ -389,7 +389,7 @@ init global flags =
             , hasBeenPushed =
                 case global.session.tension_head of
                     Just th ->
-                        th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                        th.history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
 
                     Nothing ->
                         False
@@ -740,7 +740,7 @@ update global message model =
                 OkAuth th ->
                     let
                         hasBeenPushed =
-                            th.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                            th.history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
 
                         ( targetid, nodeDoc ) =
                             case th.action of
@@ -1142,7 +1142,7 @@ update global message model =
                                     other
 
                         focusid =
-                            withMaybeData model.path_data |> Maybe.map (\p -> p.focus.nameid) |> withDefault model.node_focus.nameid
+                            withMaybeData model.path_data |> unwrap model.node_focus.nameid (\p -> p.focus.nameid)
 
                         resetForm =
                             initCommentPatchForm global.session.user [ ( "reflink", toReflink model.conf.url ), ( "focusid", focusid ) ]
@@ -1170,7 +1170,7 @@ update global message model =
                                 |> Dict.insert "createdAt" (fromTime time)
                         , events =
                             [ Ev TensionEvent.TitleUpdated
-                                (model.tension_head |> withMaybeMapData (\x -> x.title) |> withDefault "")
+                                (model.tension_head |> withMaybeMapData .title |> withDefault "")
                                 (Dict.get "title" form.post |> withDefault "")
                             ]
                     }
@@ -1358,7 +1358,7 @@ update global message model =
         DoAssigneeEdit ->
             let
                 targets =
-                    getCircles model.path_data |> List.map (\y -> y.nameid)
+                    getCircles model.path_data |> List.map .nameid
             in
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
@@ -2718,7 +2718,7 @@ viewSidePane u t model =
                     let
                         fs =
                             b.node
-                                |> Maybe.map (\n -> n.first_link)
+                                |> Maybe.map .first_link
                                 |> withDefault Nothing
                     in
                     Maybe.map (\uctx -> Just uctx.username == fs) uctx_m |> withDefault False
@@ -2772,7 +2772,7 @@ viewSidePane u t model =
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = t.assignees |> withDefault []
-                            , targets = model.path_data |> withMaybeMapData (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
                             , isRight = False
                             }
                             model.assigneesPanel
@@ -2961,7 +2961,7 @@ viewSidePane u t model =
             LoggedIn uctx ->
                 let
                     ( iconElt, subscribe_txt ) =
-                        case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) of
+                        case model.tension_head |> withMaybeData |> Maybe.map .isSubscribed of
                             Just True ->
                                 ( A.icon1 "icon-bell-off icon-1x" T.unsubscribe, T.tensionSubscribeText )
 

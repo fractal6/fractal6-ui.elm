@@ -18,13 +18,14 @@ type ProjectHasFilter
     | Description
     | Status
     | Columns
+    | Fields
     | Leaders
     | Nodes
 
 
 list : List ProjectHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description, Status, Columns, Leaders, Nodes ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description, Status, Columns, Fields, Leaders, Nodes ]
 
 
 decoder : Decoder ProjectHasFilter
@@ -62,6 +63,9 @@ decoder =
 
                     "columns" ->
                         Decode.succeed Columns
+
+                    "fields" ->
+                        Decode.succeed Fields
 
                     "leaders" ->
                         Decode.succeed Leaders
@@ -108,6 +112,9 @@ toString enum____ =
 
         Columns ->
             "columns"
+
+        Fields ->
+            "fields"
 
         Leaders ->
             "leaders"
@@ -159,6 +166,9 @@ fromString enumString____ =
 
         "columns" ->
             Just Columns
+
+        "fields" ->
+            Just Fields
 
         "leaders" ->
             Just Leaders

@@ -517,6 +517,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Projects"
   fr="Projets"
 
+[project]
+  en="Project"
+  fr="Projet"
+
 [members]
   en="Members"
   fr="Membres"

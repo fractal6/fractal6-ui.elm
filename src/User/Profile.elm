@@ -28,7 +28,7 @@ import Bulk.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
-import Extra exposing (ternary)
+import Extra exposing (ternary, unwrap)
 import Form.Help as Help
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, div, h1, i, p, text)
@@ -204,7 +204,7 @@ update global message model =
                 RefreshToken i ->
                     let
                         roles =
-                            withMaybeData model.user |> Maybe.map .roles |> withDefault []
+                            withMaybeData model.user |> unwrap [] .roles
                     in
                     ( { model | refresh_trial = i }, sendSleep (LoadNodes roles) 500, send UpdateUserToken )
 

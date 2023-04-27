@@ -380,6 +380,9 @@ a:hover .is-name, a:hover .is-username {
 .has-border-color-light {
     border-color: var(--border-color-light) !important;
 }
+.is-dashed {
+    border-style: dashed;
+}
 .is-md {
     font-size: 0.9rem !important;
 }
@@ -2825,12 +2828,6 @@ i.is-liked {
     }
     #actionPanelContentSearchBar {
         margin-left: -1px;
-    }
-}
-
-#searchBarTensions {
-    & > .field {
-        margin-bottom: 0.25rem;
     }
 }
 
