@@ -178,7 +178,7 @@ type alias Model =
     , hover_column : Maybe String
     , movingTension : Maybe Tension
     , moveFifo : Fifo ( Int, Tension )
-    , movingHoverC : Maybe { pos : Int, to_receiverid : String }
+    , movingHoverCol : Maybe { pos : Int, to_receiverid : String }
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
     , dragCount : Int
     , draging : Bool
@@ -251,7 +251,7 @@ init global flags =
             , hover_column = Nothing
             , movingTension = Nothing
             , moveFifo = Fifo.empty
-            , movingHoverC = Nothing
+            , movingHoverCol = Nothing
             , movingHoverT = Nothing
             , dragCount = 0
             , draging = False
@@ -314,9 +314,9 @@ type Msg
     | OnMove { pos : Int, to_receiverid : String } Tension
     | OnCancelHov
     | OnEndMove
-    | OnMoveEnterC { pos : Int, to_receiverid : String } Bool
-    | OnMoveLeaveC
-    | OnMoveLeaveC_
+    | OnMoveEnterCol { pos : Int, to_receiverid : String } Bool
+    | OnMoveLeaveCol
+    | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
     | OnMoveDrop String
       --
@@ -435,7 +435,7 @@ update global message model =
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
         OnMove c t ->
-            ( { model | draging = True, dragCount = 0, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+            ( { model | draging = True, dragCount = 0, movingHoverCol = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
 
         OnEndMove ->
             let
@@ -462,15 +462,15 @@ update global message model =
                         )
                 )
                 model.movingTension
-                model.movingHoverC
+                model.movingHoverCol
                 |> withDefault
                     ( newModel, Cmd.batch cmds, Cmd.none )
 
         OnCancelHov ->
-            ( { model | movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+            ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
-        OnMoveEnterC hover reset ->
-            if Just hover == model.movingHoverC then
+        OnMoveEnterCol hover reset ->
+            if Just hover == model.movingHoverCol then
                 if reset then
                     ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
@@ -478,12 +478,12 @@ update global message model =
                     ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
 
             else
-                ( { model | dragCount = 1, movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+                ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
-        OnMoveLeaveC ->
-            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveC_ 15, Cmd.none )
+        OnMoveLeaveCol ->
+            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveCol_ 15, Cmd.none )
 
-        OnMoveLeaveC_ ->
+        OnMoveLeaveCol_ ->
             if model.dragCount < 0 && model.draging then
                 ( model, send OnCancelHov, Cmd.none )
 
@@ -494,7 +494,7 @@ update global message model =
             ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
 
         OnMoveDrop nameid ->
-            ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }
+            ( { model | movingTension = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }
             , Cmd.none
             , Cmd.none
             )
@@ -772,7 +772,7 @@ viewProject data model =
             , boardId = "projectView"
             , boardHeight = model.boardHeight
             , movingTension = model.movingTension
-            , movingHoverC = model.movingHoverC
+            , movingHoverCol = model.movingHoverCol
             , movingHoverT = model.movingHoverT
 
             -- Board Msg
@@ -780,8 +780,8 @@ viewProject data model =
             , onMove = OnMove
             , onCancelHov = OnCancelHov
             , onEndMove = OnEndMove
-            , onMoveEnterC = OnMoveEnterC
-            , onMoveLeaveC = OnMoveLeaveC
+            , onMoveEnterCol = OnMoveEnterCol
+            , onMoveLeaveCol = OnMoveLeaveCol
             , onMoveEnterT = OnMoveEnterT
             , onMoveDrop = OnMoveDrop
             , noMsg = NoMsg
