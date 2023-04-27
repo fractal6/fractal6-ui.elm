@@ -39,6 +39,8 @@ import Fractal.Enum.UserType as UserType
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Json.Encode as JE
 import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
@@ -618,6 +620,22 @@ type alias ProjectAuth a =
 type alias ProjectData =
     { id : String
     , name : String
+    , columns : List ProjectColumn
+    }
+
+
+type alias ProjectColumn =
+    { id : String
+    , name : String
+    , pos : Int
+    , tensions : List ProjectTension
+    }
+
+
+type alias ProjectTension =
+    { id : String
+    , pos : Int
+    , tension : Tension
     }
 
 
@@ -981,6 +999,11 @@ mutationDecoder =
 --
 
 
+decodedTime : Fractal.ScalarCodecs.DateTime -> String
+decodedTime (Fractal.Scalar.DateTime time) =
+    time
+
+
 decodedId : Fractal.ScalarCodecs.Id -> String
 decodedId (Fractal.Scalar.Id id) =
     id
@@ -991,6 +1014,9 @@ encodeId id =
     Fractal.Scalar.Id id
 
 
-decodedTime : Fractal.ScalarCodecs.DateTime -> String
-decodedTime (Fractal.Scalar.DateTime time) =
-    time
+oneId id_ =
+    \a -> { a | id = Present [ encodeId id_ ] }
+
+
+withDefaultSelectionMap default a =
+    SelectionSet.map (withDefault default) a

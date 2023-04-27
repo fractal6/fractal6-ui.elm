@@ -49,16 +49,20 @@ type AddNotifPayload
     = AddNotifPayload
 
 
-type AddOrgaAggPayload
-    = AddOrgaAggPayload
-
-
 type AddPendingUserPayload
     = AddPendingUserPayload
 
 
 type AddProjectColumnPayload
     = AddProjectColumnPayload
+
+
+type AddProjectFieldPayload
+    = AddProjectFieldPayload
+
+
+type AddProjectFieldValuePayload
+    = AddProjectFieldValuePayload
 
 
 type AddProjectPayload
@@ -165,10 +169,6 @@ type DeleteNotifPayload
     = DeleteNotifPayload
 
 
-type DeleteOrgaAggPayload
-    = DeleteOrgaAggPayload
-
-
 type DeletePendingUserPayload
     = DeletePendingUserPayload
 
@@ -179,6 +179,14 @@ type DeletePostPayload
 
 type DeleteProjectColumnPayload
     = DeleteProjectColumnPayload
+
+
+type DeleteProjectFieldPayload
+    = DeleteProjectFieldPayload
+
+
+type DeleteProjectFieldValuePayload
+    = DeleteProjectFieldValuePayload
 
 
 type DeleteProjectPayload
@@ -285,14 +293,6 @@ type NotifAggregateResult
     = NotifAggregateResult
 
 
-type OrgaAgg
-    = OrgaAgg
-
-
-type OrgaAggAggregateResult
-    = OrgaAggAggregateResult
-
-
 type PendingUser
     = PendingUser
 
@@ -335,6 +335,22 @@ type ProjectColumn
 
 type ProjectColumnAggregateResult
     = ProjectColumnAggregateResult
+
+
+type ProjectField
+    = ProjectField
+
+
+type ProjectFieldAggregateResult
+    = ProjectFieldAggregateResult
+
+
+type ProjectFieldValue
+    = ProjectFieldValue
+
+
+type ProjectFieldValueAggregateResult
+    = ProjectFieldValueAggregateResult
 
 
 type ProjectTension
@@ -413,10 +429,6 @@ type UpdateNotifPayload
     = UpdateNotifPayload
 
 
-type UpdateOrgaAggPayload
-    = UpdateOrgaAggPayload
-
-
 type UpdatePendingUserPayload
     = UpdatePendingUserPayload
 
@@ -427,6 +439,14 @@ type UpdatePostPayload
 
 type UpdateProjectColumnPayload
     = UpdateProjectColumnPayload
+
+
+type UpdateProjectFieldPayload
+    = UpdateProjectFieldPayload
+
+
+type UpdateProjectFieldValuePayload
+    = UpdateProjectFieldValuePayload
 
 
 type UpdateProjectPayload

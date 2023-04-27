@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.OrgaAgg exposing (..)
+module Fractal.Object.ProjectFieldValueAggregateResult exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,11 +19,16 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-n_members : SelectionSet (Maybe Int) Fractal.Object.OrgaAgg
-n_members =
-    Object.selectionForField "(Maybe Int)" "n_members" [] (Decode.int |> Decode.nullable)
+count : SelectionSet (Maybe Int) Fractal.Object.ProjectFieldValueAggregateResult
+count =
+    Object.selectionForField "(Maybe Int)" "count" [] (Decode.int |> Decode.nullable)
 
 
-n_guests : SelectionSet (Maybe Int) Fractal.Object.OrgaAgg
-n_guests =
-    Object.selectionForField "(Maybe Int)" "n_guests" [] (Decode.int |> Decode.nullable)
+valueMin : SelectionSet (Maybe String) Fractal.Object.ProjectFieldValueAggregateResult
+valueMin =
+    Object.selectionForField "(Maybe String)" "valueMin" [] (Decode.string |> Decode.nullable)
+
+
+valueMax : SelectionSet (Maybe String) Fractal.Object.ProjectFieldValueAggregateResult
+valueMax =
+    Object.selectionForField "(Maybe String)" "valueMax" [] (Decode.string |> Decode.nullable)

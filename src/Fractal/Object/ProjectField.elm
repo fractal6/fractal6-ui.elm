@@ -2,8 +2,9 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.ProjectTension exposing (..)
+module Fractal.Object.ProjectField exposing (..)
 
+import Fractal.Enum.ProjectFieldType
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -19,54 +20,14 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.ProjectTension
-id =
-    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+type_ : SelectionSet Fractal.Enum.ProjectFieldType.ProjectFieldType Fractal.Object.ProjectField
+type_ =
+    Object.selectionForField "Enum.ProjectFieldType.ProjectFieldType" "type_" [] Fractal.Enum.ProjectFieldType.decoder
 
 
-type alias TensionOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
-
-
-tension :
-    (TensionOptionalArguments -> TensionOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Tension
-    -> SelectionSet decodesTo Fractal.Object.ProjectTension
-tension fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "tension" optionalArgs____ object____ Basics.identity
-
-
-pos : SelectionSet Int Fractal.Object.ProjectTension
-pos =
-    Object.selectionForField "Int" "pos" [] Decode.int
-
-
-type alias PcOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
-
-
-pc :
-    (PcOptionalArguments -> PcOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.ProjectColumn
-    -> SelectionSet decodesTo Fractal.Object.ProjectTension
-pc fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "pc" optionalArgs____ object____ Basics.identity
+isVisible : SelectionSet Bool Fractal.Object.ProjectField
+isVisible =
+    Object.selectionForField "Bool" "isVisible" [] Decode.bool
 
 
 type alias ValuesOptionalArguments =
@@ -80,7 +41,7 @@ type alias ValuesOptionalArguments =
 values :
     (ValuesOptionalArguments -> ValuesOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.ProjectFieldValue
-    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.ProjectTension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.ProjectField
 values fillInOptionals____ object____ =
     let
         filledInOptionals____ =
@@ -100,7 +61,7 @@ type alias ValuesAggregateOptionalArguments =
 valuesAggregate :
     (ValuesAggregateOptionalArguments -> ValuesAggregateOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.ProjectFieldValueAggregateResult
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.ProjectTension
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.ProjectField
 valuesAggregate fillInOptionals____ object____ =
     let
         filledInOptionals____ =

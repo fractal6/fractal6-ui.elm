@@ -39,7 +39,7 @@ import Html.Attributes exposing (attribute, class, classList, id, placeholder, t
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withDefaultData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -122,7 +122,7 @@ isOpen_ (State model) =
 
 isEmpty_ : State -> Bool
 isEmpty_ (State model) =
-    (withMaybeData model.labels_data |> withDefault [] |> List.length) == 0
+    (withDefaultData [] model.labels_data |> List.length) == 0
 
 
 
@@ -344,12 +344,10 @@ update_ apis message model =
                     SelectLabel ->
                         let
                             data =
-                                newModel
-                                    |> setClickResult LoadingSlowly
+                                setClickResult LoadingSlowly newModel
 
                             labels =
-                                withMaybeData model.labels_data
-                                    |> withDefault []
+                                withDefaultData [] model.labels_data
                                     |> (\x ->
                                             if isNew then
                                                 x ++ [ label ]

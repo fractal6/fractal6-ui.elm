@@ -70,7 +70,7 @@ module Query.QueryNode exposing
 
 import Bulk.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (unwrap, unwrap2)
+import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeMode as NodeMode
@@ -466,13 +466,13 @@ pNodePayload =
 tidPayload : SelectionSet IdPayload Fractal.Object.Tension
 tidPayload =
     SelectionSet.map IdPayload
-        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        (SelectionSet.map decodedId Fractal.Object.Tension.id)
 
 
 cidPayload : SelectionSet IdPayload Fractal.Object.Contract
 cidPayload =
     SelectionSet.map IdPayload
-        (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        (SelectionSet.map decodedId Fractal.Object.Contract.id)
 
 
 
@@ -688,7 +688,7 @@ lgPayload isInit =
                 if isInit then
                     x
                         |> with (Fractal.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
-                        |> with (Fractal.Object.Node.pinned identity pinPayload)
+                        |> with (Fractal.Object.Node.pinned identity pinPayload |> SelectionSet.map (\y -> ternary (y == Just []) Nothing y))
 
                 else
                     x

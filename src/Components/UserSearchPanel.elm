@@ -38,7 +38,7 @@ import Html.Attributes exposing (attribute, class, classList, id, placeholder, t
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -120,7 +120,7 @@ isOpen_ (State model) =
 
 isEmpty_ : State -> Bool
 isEmpty_ (State model) =
-    (withMaybeData model.assignees_data |> withDefault [] |> List.length) == 0
+    (withDefaultData [] model.assignees_data |> List.length) == 0
 
 
 
@@ -318,12 +318,10 @@ update_ apis message model =
                     SelectUser ->
                         let
                             data =
-                                newModel
-                                    |> setClickResult LoadingSlowly
+                                setClickResult LoadingSlowly newModel
 
                             users =
-                                withMaybeData model.assignees_data
-                                    |> withDefault []
+                                withDefaultData [] model.assignees_data
                                     |> (\x ->
                                             if isNew then
                                                 x ++ [ assignee ]
@@ -404,7 +402,7 @@ view op (State model) =
                     List.concatMap
                         -- name is not passed from url
                         (\l ->
-                            List.filter (\u -> l.username == u.username) (withMaybeData model.assignees_data |> withDefault [])
+                            List.filter (\u -> l.username == u.username) (withDefaultData [] model.assignees_data)
                         )
                         op.selectedAssignees
             in

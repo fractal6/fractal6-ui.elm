@@ -2,48 +2,41 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.OrgaAggOrderable exposing (..)
+module Fractal.Enum.ProjectFieldValueOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type OrgaAggOrderable
-    = N_members
-    | N_guests
+type ProjectFieldValueOrderable
+    = Value
 
 
-list : List OrgaAggOrderable
+list : List ProjectFieldValueOrderable
 list =
-    [ N_members, N_guests ]
+    [ Value ]
 
 
-decoder : Decoder OrgaAggOrderable
+decoder : Decoder ProjectFieldValueOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "n_members" ->
-                        Decode.succeed N_members
-
-                    "n_guests" ->
-                        Decode.succeed N_guests
+                    "value" ->
+                        Decode.succeed Value
 
                     _ ->
-                        Decode.fail ("Invalid OrgaAggOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ProjectFieldValueOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : OrgaAggOrderable -> String
+toString : ProjectFieldValueOrderable -> String
 toString enum____ =
     case enum____ of
-        N_members ->
-            "n_members"
-
-        N_guests ->
-            "n_guests"
+        Value ->
+            "value"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -57,14 +50,11 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe OrgaAggOrderable
+fromString : String -> Maybe ProjectFieldValueOrderable
 fromString enumString____ =
     case enumString____ of
-        "n_members" ->
-            Just N_members
-
-        "n_guests" ->
-            Just N_guests
+        "value" ->
+            Just Value
 
         _ ->
             Nothing

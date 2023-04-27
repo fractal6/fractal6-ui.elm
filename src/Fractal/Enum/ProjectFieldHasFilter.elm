@@ -2,48 +2,55 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.OrgaAggHasFilter exposing (..)
+module Fractal.Enum.ProjectFieldHasFilter exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type OrgaAggHasFilter
-    = N_members
-    | N_guests
+type ProjectFieldHasFilter
+    = Type_
+    | IsVisible
+    | Values
 
 
-list : List OrgaAggHasFilter
+list : List ProjectFieldHasFilter
 list =
-    [ N_members, N_guests ]
+    [ Type_, IsVisible, Values ]
 
 
-decoder : Decoder OrgaAggHasFilter
+decoder : Decoder ProjectFieldHasFilter
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "n_members" ->
-                        Decode.succeed N_members
+                    "type_" ->
+                        Decode.succeed Type_
 
-                    "n_guests" ->
-                        Decode.succeed N_guests
+                    "isVisible" ->
+                        Decode.succeed IsVisible
+
+                    "values" ->
+                        Decode.succeed Values
 
                     _ ->
-                        Decode.fail ("Invalid OrgaAggHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ProjectFieldHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : OrgaAggHasFilter -> String
+toString : ProjectFieldHasFilter -> String
 toString enum____ =
     case enum____ of
-        N_members ->
-            "n_members"
+        Type_ ->
+            "type_"
 
-        N_guests ->
-            "n_guests"
+        IsVisible ->
+            "isVisible"
+
+        Values ->
+            "values"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -57,14 +64,17 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe OrgaAggHasFilter
+fromString : String -> Maybe ProjectFieldHasFilter
 fromString enumString____ =
     case enumString____ of
-        "n_members" ->
-            Just N_members
+        "type_" ->
+            Just Type_
 
-        "n_guests" ->
-            Just N_guests
+        "isVisible" ->
+            Just IsVisible
+
+        "values" ->
+            Just Values
 
         _ ->
             Nothing

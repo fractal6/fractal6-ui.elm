@@ -23,8 +23,10 @@ module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
+import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Bulk exposing (..)
+import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
@@ -38,6 +40,7 @@ import Components.TreeMenu as TreeMenu
 import Dict
 import Extra exposing (ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
+import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
@@ -57,7 +60,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (queryProject)
+import Query.QueryProject exposing (getProject, moveProjectTension)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
@@ -170,6 +173,16 @@ type alias Model =
     , projectid : String
     , project_data : GqlData ProjectData
 
+    -- Board
+    , boardHeight : Maybe Float
+    , hover_column : Maybe String
+    , movingTension : Maybe Tension
+    , moveFifo : Fifo ( Int, Tension )
+    , movingHoverC : Maybe { pos : Int, to_receiverid : String }
+    , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
+    , dragCount : Int
+    , draging : Bool
+
     -- Common
     , conf : Conf
     , refresh_trial : Int
@@ -233,6 +246,16 @@ init global flags =
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
 
+            -- Board
+            , boardHeight = Nothing
+            , hover_column = Nothing
+            , movingTension = Nothing
+            , moveFifo = Fifo.empty
+            , movingHoverC = Nothing
+            , movingHoverT = Nothing
+            , dragCount = 0
+            , draging = False
+
             -- Common
             , conf = conf
             , tensionForm = NTF.init global.session.user conf
@@ -250,6 +273,8 @@ init global flags =
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
             , send DoLoad
+            , Ports.hide "footBar"
+            , Task.attempt FitBoard (Dom.getElement "projectView")
             , sendSleep PassedSlowLoadTreshold 500
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
@@ -282,6 +307,20 @@ type Msg
       -- Page
     | DoLoad
     | GotProject (GqlData ProjectData) -- Rest
+      -- Board
+    | OnResize Int Int
+    | FitBoard (Result Dom.Error Dom.Element)
+    | OnColumnHover (Maybe String)
+    | OnMove { pos : Int, to_receiverid : String } Tension
+    | OnCancelHov
+    | OnEndMove
+    | OnMoveEnterC { pos : Int, to_receiverid : String } Bool
+    | OnMoveLeaveC
+    | OnMoveLeaveC_
+    | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
+    | OnMoveDrop String
+      --
+    | GotCardMoved (GqlData IdPayload)
       -- Common
     | NoMsg
     | LogErr String
@@ -307,13 +346,10 @@ update global message model =
     case message of
         PassedSlowLoadTreshold ->
             let
-                members_top =
-                    ternary (model.members_top == Loading) LoadingSlowly model.members_top
-
-                members_sub =
-                    ternary (model.members_sub == Loading) LoadingSlowly model.members_sub
+                project_data =
+                    ternary (model.project_data == Loading) LoadingSlowly model.project_data
             in
-            ( { model | members_top = members_top, members_sub = members_sub }, Cmd.none, Cmd.none )
+            ( { model | project_data = project_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -343,7 +379,7 @@ update global message model =
                                     { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                 nameid =
-                                    List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+                                    List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }, queryLocalGraph apis nameid False (GotPath False), Cmd.none )
 
@@ -353,13 +389,120 @@ update global message model =
         DoLoad ->
             ( model
             , Cmd.batch
-                [ queryProject apis model.projectid GotProject
+                [ getProject apis model.projectid GotProject
                 ]
             , Cmd.none
             )
 
         GotProject result ->
-            ( { model = result }, Cmd.none, Cmd.none )
+            ( { model | project_data = result }, Cmd.none, Cmd.none )
+
+        -- Board
+        OnResize w h ->
+            let
+                conf =
+                    model.conf
+
+                newScreen =
+                    { w = w, h = h }
+
+                newConf =
+                    { conf | screen = newScreen }
+
+                elmId =
+                    "projectView"
+            in
+            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
+
+        FitBoard elt ->
+            case elt of
+                Ok e ->
+                    let
+                        h =
+                            if e.viewport.height - e.element.y < 511 then
+                                -- allow y-scroll here. Substract the header size.
+                                e.viewport.height - 50
+
+                            else
+                                e.viewport.height - e.element.y
+                    in
+                    ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnColumnHover v ->
+            ( { model | hover_column = v }, Cmd.none, Cmd.none )
+
+        OnMove c t ->
+            ( { model | draging = True, dragCount = 0, movingHoverC = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+
+        OnEndMove ->
+            let
+                newModel =
+                    { model | draging = False }
+
+                cmds =
+                    [ sendSleep OnCancelHov 300 ]
+            in
+            Maybe.map2
+                (\t { pos, to_receiverid } ->
+                    --if t.id == tid then
+                    if t.receiver.nameid == to_receiverid then
+                        ( newModel, Cmd.batch cmds, Cmd.none )
+
+                    else
+                        let
+                            j =
+                                Maybe.map .pos model.movingHoverT |> withDefault -1
+                        in
+                        ( { newModel | moveFifo = Fifo.insert ( j, t ) model.moveFifo }
+                        , moveProjectTension apis t.id pos to_receiverid GotCardMoved
+                        , Cmd.none
+                        )
+                )
+                model.movingTension
+                model.movingHoverC
+                |> withDefault
+                    ( newModel, Cmd.batch cmds, Cmd.none )
+
+        OnCancelHov ->
+            ( { model | movingHoverC = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+        OnMoveEnterC hover reset ->
+            if Just hover == model.movingHoverC then
+                if reset then
+                    ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+                else
+                    ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
+
+            else
+                ( { model | dragCount = 1, movingHoverC = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+
+        OnMoveLeaveC ->
+            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveC_ 15, Cmd.none )
+
+        OnMoveLeaveC_ ->
+            if model.dragCount < 0 && model.draging then
+                ( model, send OnCancelHov, Cmd.none )
+
+            else
+                ( model, Cmd.none, Cmd.none )
+
+        OnMoveEnterT hover ->
+            ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
+
+        OnMoveDrop nameid ->
+            ( { model | movingTension = Nothing, movingHoverC = Nothing, movingHoverT = Nothing }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        --
+        GotCardMoved result ->
+            -- @TODO: save result and show a popup on error !
+            ( model, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -508,13 +651,27 @@ view global model =
             }
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.projects
+        case model.project_data of
+            Success p ->
+                T.project ++ " · " ++ p.name
+
+            _ ->
+                "Loading..."
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
-            , div [ id "mainPane" ] [ view_ global model ]
+            , div [ id "mainPane" ]
+                [ view_ global model
+                , case model.project_data of
+                    Success data ->
+                        viewProject data model
+
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        div [ class "spinner" ] []
+                ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -529,287 +686,105 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
+            [ div [ class "columns is-centered mb-0" ]
+                [ div [ class "column is-12 pb-1" ]
+                    [ viewSearchBar model ]
+                ]
+            ]
+        ]
+
+
+viewSearchBar : Model -> Html Msg
+viewSearchBar model =
+    div [ id "searchBarProject", class "searchBar" ]
+        [ div [ class "columns mb-0" ]
+            [ case model.project_data of
+                Success p ->
+                    h2 [ class "subtitle is-strong" ] [ text p.name ]
+
+                _ ->
+                    text ""
+
+            --div [ class "column is-5" ]
+            --  [ div [ class "field has-addons" ]
+            --      [ div [ class "control is-expanded" ]
+            --          [ input
+            --              [ class "is-rounded input is-small pr-6"
+            --              , type_ "search"
+            --              , autocomplete False
+            --              , autofocus False
+            --              , placeholder T.searchTensions
+            --              , value model.pattern
+            --              , onInput ChangePattern
+            --              , onKeydown SearchKeyDown
+            --              ]
+            --              []
+            --          , span [ class "icon-input-flex-right" ]
+            --              [ if model.pattern_init /= "" then
+            --                  span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
+            --                else
+            --                  text ""
+            --              , span [ class "vbar has-border-color" ] []
+            --              , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+            --                  [ A.icon "icon-search" ]
+            --              ]
+            --          ]
+            --      ]
+            --  ]
+            ]
+        ]
+
+
+viewProject : ProjectData -> Model -> Html Msg
+viewProject data model =
     let
-        isAdmin =
-            case global.session.user of
-                LoggedIn uctx ->
-                    hasLazyAdminRole uctx (withMaybeData model.path_data |> unwrap Nothing (\p -> Maybe.map .mode p.root)) model.node_focus.rootnameid
+        -- Computation @TODO: optimize/lazy
+        keys =
+            data.columns |> List.sortBy .pos |> List.map .id
 
-                LoggedOut ->
-                    False
+        names =
+            data.columns |> List.sortBy .pos |> List.map .name
 
-        isRoot =
-            model.node_focus.nameid == model.node_focus.rootnameid
+        dict_data =
+            data.columns |> List.map (\x -> ( x.name, List.sortBy .pos x.tensions |> List.map .tension )) |> Dict.fromList
 
-        isPanelOpen =
-            ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
+        header : String -> String -> Maybe Tension -> Html Msg
+        header key title t_m =
+            span []
+                [ text title
+                , span
+                    [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
 
-        opSearch =
-            { onChangePattern = ChangePattern
-            , onSearchKeyDown = SearchKeyDown
-            , onSubmitText = SubmitTextSearch
-            , id_name = "searchBarMembers"
-            , placeholder_txt = T.searchMembers
+                    --  It's distracting for for the eyes (works with onMouseEnter below)
+                    --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]
+                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid)))
+                    ]
+                    [ A.icon "icon-plus" ]
+                ]
+
+        op =
+            { hasTaskMove = True
+            , hasNewCol = True
+            , conf = model.conf
+            , node_focus = model.node_focus
+            , boardId = "projectView"
+            , boardHeight = model.boardHeight
+            , movingTension = model.movingTension
+            , movingHoverC = model.movingHoverC
+            , movingHoverT = model.movingHoverT
+
+            -- Board Msg
+            , onColumnHover = OnColumnHover
+            , onMove = OnMove
+            , onCancelHov = OnCancelHov
+            , onEndMove = OnEndMove
+            , onMoveEnterC = OnMoveEnterC
+            , onMoveLeaveC = OnMoveLeaveC
+            , onMoveEnterT = OnMoveEnterT
+            , onMoveDrop = OnMoveDrop
+            , noMsg = NoMsg
             }
     in
-    div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
-            [ div [ class "columns is-centered" ]
-                [ div [ class "column is-four-fifth" ]
-                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
-                , if isAdmin then
-                    div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
-                        [ div
-                            [ class "button is-primary is-pushed-right"
-                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
-                            ]
-                            [ A.icon1 "icon-user-plus" T.inviteMembers ]
-                        ]
-
-                  else
-                    text ""
-                ]
-            , div [ class "columns is-centered" ]
-                [ div [ class "column is-four-fifth" ]
-                    [ div [ class "columns mb-6 px-3" ]
-                        [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
-                    , div [ class "columns mb-6 px-3" ]
-                        [ if isRoot then
-                            div [ class "column is-5 pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
-
-                          else
-                            text ""
-                        ]
-                    ]
-                , div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
-                    [ if isRoot then
-                        let
-                            rtid =
-                                tidFromPath model.path_data |> withDefault ""
-                        in
-                        div [ class "is-pushed-right" ]
-                            [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
-
-                      else
-                        text ""
-                    ]
-                ]
-            ]
-        ]
-
-
-viewMembers : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewMembers conf data focus isPanelOpen =
-    let
-        goToParent =
-            if focus.nameid /= focus.rootnameid then
-                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-            else
-                text ""
-    in
-    case data of
-        Success members ->
-            if List.length members == 0 then
-                div [] [ text T.noMemberYet, goToParent ]
-
-            else
-                div []
-                    [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.members, goToParent ]
-                    , div [ class "table-container" ]
-                        [ div [ class "table is-fullwidth" ]
-                            [ thead []
-                                [ tr []
-                                    [ th [] [ text T.user ]
-                                    , th [] [ text T.rolesHere ]
-                                    , th [] [ text T.rolesSub ]
-                                    ]
-                                ]
-                            , tbody [] <|
-                                List.map
-                                    (\m ->
-                                        Lazy.lazy4 viewMemberRow conf focus m isPanelOpen
-                                    )
-                                    members
-                            ]
-                        ]
-                    ]
-
-        Failure err ->
-            viewGqlErrors err
-
-        LoadingSlowly ->
-            div [ class "spinner" ] []
-
-        _ ->
-            text ""
-
-
-viewGuest : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewGuest conf members_d focus isPanelOpen =
-    let
-        guests =
-            members_d
-                |> withDefaultData []
-                |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map (\r -> r.role_type)
-                            |> List.member RoleType.Guest
-                    )
-    in
-    if List.length guests > 0 then
-        div []
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.guest ]
-            , div [ class "table-container" ]
-                [ div [ class "table is-fullwidth" ]
-                    [ thead []
-                        [ tr []
-                            [ th [] [ text T.user ]
-                            , th [] [ text T.roles ]
-                            ]
-                        ]
-                    , tbody [] <|
-                        List.indexedMap
-                            (\i m ->
-                                Lazy.lazy3 viewGuestRow conf m isPanelOpen
-                            )
-                            guests
-                    ]
-                ]
-            ]
-
-    else
-        div [] []
-
-
-viewPending : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
-viewPending _ members_d focus pending_hover pending_hover_i tid =
-    let
-        guests =
-            members_d
-                |> withDefaultData []
-                |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map (\r -> r.role_type)
-                            |> List.member RoleType.Pending
-                    )
-    in
-    if List.length guests > 0 then
-        div []
-            [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
-                [ text T.pending
-                , a
-                    [ class "button is-small is-primary ml-3"
-                    , classList [ ( "is-invisible", not pending_hover ) ]
-                    , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
-                    ]
-                    [ text T.goContracts ]
-                ]
-            , div [ class "table-container", style "min-width" "375px" ]
-                [ div [ class "table is-fullwidth" ]
-                    [ thead []
-                        [ tr []
-                            [ th [] [ text T.user ]
-                            ]
-                        ]
-                    , tbody [] <|
-                        List.indexedMap
-                            (\i m ->
-                                tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                    [ td [] [ viewUserFull 1 True False m ]
-                                    , if Just i == pending_hover_i then
-                                        td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
-
-                                      else
-                                        text ""
-                                    ]
-                            )
-                            guests
-                    ]
-                ]
-            ]
-
-    else
-        div [] []
-
-
-viewMemberRow : Conf -> NodeFocus -> Member -> Bool -> Html Msg
-viewMemberRow conf focus m isPanelOpen =
-    let
-        ( roles_, sub_roles_ ) =
-            List.foldl
-                (\r ( roles, sub_roles ) ->
-                    if (Maybe.map .nameid r.parent |> withDefault focus.nameid) == focus.nameid then
-                        ( r :: roles, sub_roles )
-
-                    else
-                        ( roles, r :: sub_roles )
-                )
-                ( [], [] )
-                m.roles
-                |> (\( x, y ) -> ( List.reverse x, List.reverse y ))
-    in
-    tr []
-        [ td [] [ viewUserFull 1 True False m ]
-        , td []
-            [ case roles_ of
-                [] ->
-                    text "--"
-
-                _ ->
-                    viewMemberRoles conf OverviewBaseUri roles_ isPanelOpen
-            ]
-        , td []
-            [ case sub_roles_ of
-                [] ->
-                    text "--"
-
-                _ ->
-                    viewMemberRoles conf OverviewBaseUri sub_roles_ isPanelOpen
-            ]
-        ]
-
-
-viewGuestRow : Conf -> Member -> Bool -> Html Msg
-viewGuestRow conf m isPanelOpen =
-    tr []
-        [ td [] [ viewUserFull 1 True False m ]
-        , td [] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
-        ]
-
-
-viewMemberRoles : Conf -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
-viewMemberRoles conf baseUri roles isPanelOpen =
-    div [ class "buttons" ] <|
-        List.map
-            (\r ->
-                viewRole "" True False (Just ( conf, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
-            )
-            roles
-
-
-
---
--- Utils
---
---
-
-
-memberRolesFilter : List UserRoleExtended -> List UserRoleExtended
-memberRolesFilter roles =
-    roles
-        |> List.concatMap
-            (\r ->
-                if List.member r.role_type [ RoleType.Guest, RoleType.Pending ] then
-                    -- Filter Special roles
-                    []
-
-                else if r.role_type == RoleType.Member && List.length roles > 1 then
-                    -- Filter Member with roles
-                    []
-
-                else
-                    [ r ]
-            )
+    viewBoard op header (LE.zip keys names) dict_data

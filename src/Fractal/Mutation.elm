@@ -248,42 +248,6 @@ deleteProject requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteProject" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias AddProjectTensionRequiredArguments =
-    { input : List Fractal.InputObject.AddProjectTensionInput }
-
-
-addProjectTension :
-    AddProjectTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddProjectTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-addProjectTension requiredArgs____ object____ =
-    Object.selectionForCompositeField "addProjectTension" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddProjectTensionInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
-
-
-type alias UpdateProjectTensionRequiredArguments =
-    { input : Fractal.InputObject.UpdateProjectTensionInput }
-
-
-updateProjectTension :
-    UpdateProjectTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateProjectTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updateProjectTension requiredArgs____ object____ =
-    Object.selectionForCompositeField "updateProjectTension" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateProjectTensionInput ] object____ (Basics.identity >> Decode.nullable)
-
-
-type alias DeleteProjectTensionRequiredArguments =
-    { filter : Fractal.InputObject.ProjectTensionFilter }
-
-
-deleteProjectTension :
-    DeleteProjectTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteProjectTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deleteProjectTension requiredArgs____ object____ =
-    Object.selectionForCompositeField "deleteProjectTension" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectTensionFilter ] object____ (Basics.identity >> Decode.nullable)
-
-
 type alias AddProjectColumnOptionalArguments =
     { upsert : OptionalArgument Bool }
 
@@ -333,40 +297,112 @@ deleteProjectColumn requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteProjectColumn" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectColumnFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias AddOrgaAggRequiredArguments =
-    { input : List Fractal.InputObject.AddOrgaAggInput }
+type alias AddProjectFieldRequiredArguments =
+    { input : List Fractal.InputObject.AddProjectFieldInput }
 
 
-addOrgaAgg :
-    AddOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddOrgaAggPayload
+addProjectField :
+    AddProjectFieldRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddProjectFieldPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addOrgaAgg requiredArgs____ object____ =
-    Object.selectionForCompositeField "addOrgaAgg" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddOrgaAggInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+addProjectField requiredArgs____ object____ =
+    Object.selectionForCompositeField "addProjectField" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddProjectFieldInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias UpdateOrgaAggRequiredArguments =
-    { input : Fractal.InputObject.UpdateOrgaAggInput }
+type alias UpdateProjectFieldRequiredArguments =
+    { input : Fractal.InputObject.UpdateProjectFieldInput }
 
 
-updateOrgaAgg :
-    UpdateOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateOrgaAggPayload
+updateProjectField :
+    UpdateProjectFieldRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateProjectFieldPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateOrgaAgg requiredArgs____ object____ =
-    Object.selectionForCompositeField "updateOrgaAgg" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateOrgaAggInput ] object____ (Basics.identity >> Decode.nullable)
+updateProjectField requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateProjectField" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateProjectFieldInput ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias DeleteOrgaAggRequiredArguments =
-    { filter : Fractal.InputObject.OrgaAggFilter }
+type alias DeleteProjectFieldRequiredArguments =
+    { filter : Fractal.InputObject.ProjectFieldFilter }
 
 
-deleteOrgaAgg :
-    DeleteOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteOrgaAggPayload
+deleteProjectField :
+    DeleteProjectFieldRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteProjectFieldPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteOrgaAgg requiredArgs____ object____ =
-    Object.selectionForCompositeField "deleteOrgaAgg" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeOrgaAggFilter ] object____ (Basics.identity >> Decode.nullable)
+deleteProjectField requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteProjectField" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectFieldFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddProjectFieldValueRequiredArguments =
+    { input : List Fractal.InputObject.AddProjectFieldValueInput }
+
+
+addProjectFieldValue :
+    AddProjectFieldValueRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddProjectFieldValuePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addProjectFieldValue requiredArgs____ object____ =
+    Object.selectionForCompositeField "addProjectFieldValue" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddProjectFieldValueInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateProjectFieldValueRequiredArguments =
+    { input : Fractal.InputObject.UpdateProjectFieldValueInput }
+
+
+updateProjectFieldValue :
+    UpdateProjectFieldValueRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateProjectFieldValuePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateProjectFieldValue requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateProjectFieldValue" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateProjectFieldValueInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteProjectFieldValueRequiredArguments =
+    { filter : Fractal.InputObject.ProjectFieldValueFilter }
+
+
+deleteProjectFieldValue :
+    DeleteProjectFieldValueRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteProjectFieldValuePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteProjectFieldValue requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteProjectFieldValue" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectFieldValueFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddProjectTensionRequiredArguments =
+    { input : List Fractal.InputObject.AddProjectTensionInput }
+
+
+addProjectTension :
+    AddProjectTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddProjectTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addProjectTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "addProjectTension" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddProjectTensionInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateProjectTensionRequiredArguments =
+    { input : Fractal.InputObject.UpdateProjectTensionInput }
+
+
+updateProjectTension :
+    UpdateProjectTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateProjectTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateProjectTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateProjectTension" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateProjectTensionInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteProjectTensionRequiredArguments =
+    { filter : Fractal.InputObject.ProjectTensionFilter }
+
+
+deleteProjectTension :
+    DeleteProjectTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteProjectTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteProjectTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteProjectTension" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeProjectTensionFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdatePostRequiredArguments =

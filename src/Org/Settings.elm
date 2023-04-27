@@ -38,7 +38,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMa
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict
-import Extra exposing (space_, ternary, textT)
+import Extra exposing (space_, ternary, textT, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
@@ -712,7 +712,7 @@ update global message model =
                 OkAuth label ->
                     let
                         d =
-                            withMaybeData model.labels |> withDefault []
+                            withDefaultData [] model.labels
 
                         new =
                             if model.label_add then
@@ -733,7 +733,7 @@ update global message model =
                             Dict.get "name" model.artefact_form.post |> withDefault "" |> String.toLower
 
                         here name =
-                            (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
+                            (withDefaultData [] model.labels |> List.filter (\x -> x.name == name) |> List.length)
                                 > 0
 
                         form =
@@ -761,7 +761,7 @@ update global message model =
                 OkAuth _ ->
                     let
                         d =
-                            withMaybeData model.labels |> withDefault []
+                            withDefaultData [] model.labels
 
                         new =
                             List.filter (\x -> x.id /= model.artefact_form.id) d
@@ -894,7 +894,7 @@ update global message model =
                 OkAuth role ->
                     let
                         d =
-                            withMaybeData model.roles |> withDefault []
+                            withDefaultData [] model.roles
 
                         new =
                             if model.role_add then
@@ -915,7 +915,7 @@ update global message model =
                             Dict.get "name" model.artefact_form.post |> withDefault "" |> String.toLower
 
                         here name =
-                            (withMaybeData model.roles |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
+                            (withDefaultData [] model.roles |> List.filter (\x -> x.name == name) |> List.length)
                                 > 0
 
                         form =
@@ -943,7 +943,7 @@ update global message model =
                 OkAuth _ ->
                     let
                         d =
-                            withMaybeData model.roles |> withDefault []
+                            withDefaultData [] model.roles
 
                         new =
                             List.filter (\x -> x.id /= model.artefact_form.id) d
@@ -989,7 +989,7 @@ update global message model =
         SwitchUserCanJoin i confirmed ->
             let
                 val =
-                    withMaybeData model.orga_rights |> Maybe.map .userCanJoin |> withDefault Nothing |> withDefault False
+                    withMaybeData model.orga_rights |> unwrap2 False .userCanJoin
 
                 isPublic =
                     withMaybeData model.orga_rights |> Maybe.map .visibility |> Maybe.map (\x -> x == NodeVisibility.Public) |> withDefault False
@@ -1026,7 +1026,7 @@ update global message model =
         SwitchGuestCanCreateTension i _ ->
             let
                 val =
-                    withMaybeData model.orga_rights |> Maybe.map .guestCanCreateTension |> withDefault Nothing |> withDefault False
+                    withMaybeData model.orga_rights |> unwrap2 False .guestCanCreateTension
             in
             ( { model | switch_result = RemoteData.Loading, switch_index = i }, setGuestCanCreateTension apis (nid2rootid model.node_focus.nameid) (not val) GotGuestCanCreateTension, Cmd.none )
 

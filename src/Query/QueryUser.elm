@@ -272,10 +272,6 @@ userRoleExtendedPayload =
         |> with (Fractal.Object.Node.parent identity nodeIdPayload)
 
 
-withDefaultSelectionMap default a =
-    SelectionSet.map (withDefault default) a
-
-
 
 --
 -- Check if user is subscribe to the given tension

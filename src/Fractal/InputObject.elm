@@ -36,14 +36,16 @@ import Fractal.Enum.NodeType
 import Fractal.Enum.NodeVisibility
 import Fractal.Enum.NotifHasFilter
 import Fractal.Enum.NotifOrderable
-import Fractal.Enum.OrgaAggHasFilter
-import Fractal.Enum.OrgaAggOrderable
 import Fractal.Enum.PendingUserHasFilter
 import Fractal.Enum.PendingUserOrderable
 import Fractal.Enum.PostHasFilter
 import Fractal.Enum.PostOrderable
 import Fractal.Enum.ProjectColumnHasFilter
 import Fractal.Enum.ProjectColumnOrderable
+import Fractal.Enum.ProjectFieldHasFilter
+import Fractal.Enum.ProjectFieldType
+import Fractal.Enum.ProjectFieldValueHasFilter
+import Fractal.Enum.ProjectFieldValueOrderable
 import Fractal.Enum.ProjectHasFilter
 import Fractal.Enum.ProjectOrderable
 import Fractal.Enum.ProjectStatus
@@ -732,40 +734,6 @@ encodeAddNotifInput (AddNotifInput input____) =
         [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ), ( "link", Encode.string |> Encode.optional input____.link ) ]
 
 
-buildAddOrgaAggInput :
-    (AddOrgaAggInputOptionalFields -> AddOrgaAggInputOptionalFields)
-    -> AddOrgaAggInput
-buildAddOrgaAggInput fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { n_members = Absent, n_guests = Absent }
-    in
-    { n_members = optionals____.n_members, n_guests = optionals____.n_guests }
-
-
-type alias AddOrgaAggInputOptionalFields =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Type for the AddOrgaAggInput input object.
--}
-type alias AddOrgaAggInput =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Encode a AddOrgaAggInput into a value that can be used as an argument.
--}
-encodeAddOrgaAggInput : AddOrgaAggInput -> Value
-encodeAddOrgaAggInput input____ =
-    Encode.maybeObject
-        [ ( "n_members", Encode.int |> Encode.optional input____.n_members ), ( "n_guests", Encode.int |> Encode.optional input____.n_guests ) ]
-
-
 buildAddPendingUserInput :
     AddPendingUserInputRequiredFields
     -> (AddPendingUserInputOptionalFields -> AddPendingUserInputOptionalFields)
@@ -880,6 +848,93 @@ encodeAddProjectColumnInput (AddProjectColumnInput input____) =
         [ ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "pos", Encode.int input____.pos |> Just ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef input____.project |> Just ) ]
 
 
+buildAddProjectFieldInput :
+    AddProjectFieldInputRequiredFields
+    -> (AddProjectFieldInputOptionalFields -> AddProjectFieldInputOptionalFields)
+    -> AddProjectFieldInput
+buildAddProjectFieldInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { values = Absent }
+    in
+    AddProjectFieldInput { type_ = required____.type_, isVisible = required____.isVisible, values = optionals____.values }
+
+
+type alias AddProjectFieldInputRequiredFields =
+    { type_ : Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : Bool
+    }
+
+
+type alias AddProjectFieldInputOptionalFields =
+    { values : OptionalArgument (List ProjectFieldValueRef) }
+
+
+{-| Type alias for the `AddProjectFieldInput` attributes. Note that this type
+needs to use the `AddProjectFieldInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddProjectFieldInputRaw =
+    { type_ : Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : Bool
+    , values : OptionalArgument (List ProjectFieldValueRef)
+    }
+
+
+{-| Type for the AddProjectFieldInput input object.
+-}
+type AddProjectFieldInput
+    = AddProjectFieldInput AddProjectFieldInputRaw
+
+
+{-| Encode a AddProjectFieldInput into a value that can be used as an argument.
+-}
+encodeAddProjectFieldInput : AddProjectFieldInput -> Value
+encodeAddProjectFieldInput (AddProjectFieldInput input____) =
+    Encode.maybeObject
+        [ ( "type_", Encode.enum Fractal.Enum.ProjectFieldType.toString input____.type_ |> Just ), ( "isVisible", Encode.bool input____.isVisible |> Just ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
+
+
+buildAddProjectFieldValueInput :
+    AddProjectFieldValueInputRequiredFields
+    -> AddProjectFieldValueInput
+buildAddProjectFieldValueInput required____ =
+    AddProjectFieldValueInput { field = required____.field, value = required____.value }
+
+
+type alias AddProjectFieldValueInputRequiredFields =
+    { field : ProjectFieldRef
+    , value : String
+    }
+
+
+{-| Type alias for the `AddProjectFieldValueInput` attributes. Note that this type
+needs to use the `AddProjectFieldValueInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddProjectFieldValueInputRaw =
+    { field : ProjectFieldRef
+    , value : String
+    }
+
+
+{-| Type for the AddProjectFieldValueInput input object.
+-}
+type AddProjectFieldValueInput
+    = AddProjectFieldValueInput AddProjectFieldValueInputRaw
+
+
+{-| Encode a AddProjectFieldValueInput into a value that can be used as an argument.
+-}
+encodeAddProjectFieldValueInput : AddProjectFieldValueInput -> Value
+encodeAddProjectFieldValueInput (AddProjectFieldValueInput input____) =
+    Encode.maybeObject
+        [ ( "field", encodeProjectFieldRef input____.field |> Just ), ( "value", Encode.string input____.value |> Just ) ]
+
+
 buildAddProjectInput :
     AddProjectInputRequiredFields
     -> (AddProjectInputOptionalFields -> AddProjectInputOptionalFields)
@@ -888,9 +943,9 @@ buildAddProjectInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { description = Absent, columns = Absent, leaders = Absent, nodes = Absent }
+                { description = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
     in
-    AddProjectInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = required____.updatedAt, rootnameid = required____.rootnameid, parentnameid = required____.parentnameid, nameid = required____.nameid, name = required____.name, description = optionals____.description, status = required____.status, columns = optionals____.columns, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    AddProjectInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = required____.updatedAt, rootnameid = required____.rootnameid, parentnameid = required____.parentnameid, nameid = required____.nameid, name = required____.name, description = optionals____.description, status = required____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
 
 
 type alias AddProjectInputRequiredFields =
@@ -908,6 +963,7 @@ type alias AddProjectInputRequiredFields =
 type alias AddProjectInputOptionalFields =
     { description : OptionalArgument String
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -929,6 +985,7 @@ type alias AddProjectInputRaw =
     , description : OptionalArgument String
     , status : Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -945,14 +1002,20 @@ type AddProjectInput
 encodeAddProjectInput : AddProjectInput -> Value
 encodeAddProjectInput (AddProjectInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.updatedAt |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "parentnameid", Encode.string input____.parentnameid |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString input____.status |> Just ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.updatedAt |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "parentnameid", Encode.string input____.parentnameid |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString input____.status |> Just ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildAddProjectTensionInput :
     AddProjectTensionInputRequiredFields
+    -> (AddProjectTensionInputOptionalFields -> AddProjectTensionInputOptionalFields)
     -> AddProjectTensionInput
-buildAddProjectTensionInput required____ =
-    AddProjectTensionInput { tension = required____.tension, pos = required____.pos, pc = required____.pc }
+buildAddProjectTensionInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { values = Absent }
+    in
+    AddProjectTensionInput { tension = required____.tension, pos = required____.pos, pc = required____.pc, values = optionals____.values }
 
 
 type alias AddProjectTensionInputRequiredFields =
@@ -960,6 +1023,10 @@ type alias AddProjectTensionInputRequiredFields =
     , pos : Int
     , pc : ProjectColumnRef
     }
+
+
+type alias AddProjectTensionInputOptionalFields =
+    { values : OptionalArgument (List ProjectFieldValueRef) }
 
 
 {-| Type alias for the `AddProjectTensionInput` attributes. Note that this type
@@ -971,6 +1038,7 @@ type alias AddProjectTensionInputRaw =
     { tension : TensionRef
     , pos : Int
     , pc : ProjectColumnRef
+    , values : OptionalArgument (List ProjectFieldValueRef)
     }
 
 
@@ -985,7 +1053,7 @@ type AddProjectTensionInput
 encodeAddProjectTensionInput : AddProjectTensionInput -> Value
 encodeAddProjectTensionInput (AddProjectTensionInput input____) =
     Encode.maybeObject
-        [ ( "tension", encodeTensionRef input____.tension |> Just ), ( "pos", Encode.int input____.pos |> Just ), ( "pc", encodeProjectColumnRef input____.pc |> Just ) ]
+        [ ( "tension", encodeTensionRef input____.tension |> Just ), ( "pos", Encode.int input____.pos |> Just ), ( "pc", encodeProjectColumnRef input____.pc |> Just ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
 
 
 buildAddReactionInput :
@@ -4630,166 +4698,6 @@ encodeNotifRef (NotifRef input____) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ), ( "link", Encode.string |> Encode.optional input____.link ) ]
 
 
-buildOrgaAggFilter :
-    (OrgaAggFilterOptionalFields -> OrgaAggFilterOptionalFields)
-    -> OrgaAggFilter
-buildOrgaAggFilter fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { has = Absent, and = Absent, or = Absent, not = Absent }
-    in
-    OrgaAggFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
-
-
-type alias OrgaAggFilterOptionalFields =
-    { has : OptionalArgument (List (Maybe Fractal.Enum.OrgaAggHasFilter.OrgaAggHasFilter))
-    , and : OptionalArgument (List (Maybe OrgaAggFilter))
-    , or : OptionalArgument (List (Maybe OrgaAggFilter))
-    , not : OptionalArgument OrgaAggFilter
-    }
-
-
-{-| Type alias for the `OrgaAggFilter` attributes. Note that this type
-needs to use the `OrgaAggFilter` type (not just a plain type alias) because it has
-references to itself either directly (recursive) or indirectly (circular). See
-<https://github.com/dillonkearns/elm-graphql/issues/33>.
--}
-type alias OrgaAggFilterRaw =
-    { has : OptionalArgument (List (Maybe Fractal.Enum.OrgaAggHasFilter.OrgaAggHasFilter))
-    , and : OptionalArgument (List (Maybe OrgaAggFilter))
-    , or : OptionalArgument (List (Maybe OrgaAggFilter))
-    , not : OptionalArgument OrgaAggFilter
-    }
-
-
-{-| Type for the OrgaAggFilter input object.
--}
-type OrgaAggFilter
-    = OrgaAggFilter OrgaAggFilterRaw
-
-
-{-| Encode a OrgaAggFilter into a value that can be used as an argument.
--}
-encodeOrgaAggFilter : OrgaAggFilter -> Value
-encodeOrgaAggFilter (OrgaAggFilter input____) =
-    Encode.maybeObject
-        [ ( "has", (Encode.enum Fractal.Enum.OrgaAggHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeOrgaAggFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeOrgaAggFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeOrgaAggFilter |> Encode.optional input____.not ) ]
-
-
-buildOrgaAggOrder :
-    (OrgaAggOrderOptionalFields -> OrgaAggOrderOptionalFields)
-    -> OrgaAggOrder
-buildOrgaAggOrder fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { asc = Absent, desc = Absent, then_ = Absent }
-    in
-    OrgaAggOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
-
-
-type alias OrgaAggOrderOptionalFields =
-    { asc : OptionalArgument Fractal.Enum.OrgaAggOrderable.OrgaAggOrderable
-    , desc : OptionalArgument Fractal.Enum.OrgaAggOrderable.OrgaAggOrderable
-    , then_ : OptionalArgument OrgaAggOrder
-    }
-
-
-{-| Type alias for the `OrgaAggOrder` attributes. Note that this type
-needs to use the `OrgaAggOrder` type (not just a plain type alias) because it has
-references to itself either directly (recursive) or indirectly (circular). See
-<https://github.com/dillonkearns/elm-graphql/issues/33>.
--}
-type alias OrgaAggOrderRaw =
-    { asc : OptionalArgument Fractal.Enum.OrgaAggOrderable.OrgaAggOrderable
-    , desc : OptionalArgument Fractal.Enum.OrgaAggOrderable.OrgaAggOrderable
-    , then_ : OptionalArgument OrgaAggOrder
-    }
-
-
-{-| Type for the OrgaAggOrder input object.
--}
-type OrgaAggOrder
-    = OrgaAggOrder OrgaAggOrderRaw
-
-
-{-| Encode a OrgaAggOrder into a value that can be used as an argument.
--}
-encodeOrgaAggOrder : OrgaAggOrder -> Value
-encodeOrgaAggOrder (OrgaAggOrder input____) =
-    Encode.maybeObject
-        [ ( "asc", Encode.enum Fractal.Enum.OrgaAggOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.OrgaAggOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeOrgaAggOrder |> Encode.optional input____.then_ ) ]
-
-
-buildOrgaAggPatch :
-    (OrgaAggPatchOptionalFields -> OrgaAggPatchOptionalFields)
-    -> OrgaAggPatch
-buildOrgaAggPatch fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { n_members = Absent, n_guests = Absent }
-    in
-    { n_members = optionals____.n_members, n_guests = optionals____.n_guests }
-
-
-type alias OrgaAggPatchOptionalFields =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Type for the OrgaAggPatch input object.
--}
-type alias OrgaAggPatch =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Encode a OrgaAggPatch into a value that can be used as an argument.
--}
-encodeOrgaAggPatch : OrgaAggPatch -> Value
-encodeOrgaAggPatch input____ =
-    Encode.maybeObject
-        [ ( "n_members", Encode.int |> Encode.optional input____.n_members ), ( "n_guests", Encode.int |> Encode.optional input____.n_guests ) ]
-
-
-buildOrgaAggRef :
-    (OrgaAggRefOptionalFields -> OrgaAggRefOptionalFields)
-    -> OrgaAggRef
-buildOrgaAggRef fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { n_members = Absent, n_guests = Absent }
-    in
-    { n_members = optionals____.n_members, n_guests = optionals____.n_guests }
-
-
-type alias OrgaAggRefOptionalFields =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Type for the OrgaAggRef input object.
--}
-type alias OrgaAggRef =
-    { n_members : OptionalArgument Int
-    , n_guests : OptionalArgument Int
-    }
-
-
-{-| Encode a OrgaAggRef into a value that can be used as an argument.
--}
-encodeOrgaAggRef : OrgaAggRef -> Value
-encodeOrgaAggRef input____ =
-    Encode.maybeObject
-        [ ( "n_members", Encode.int |> Encode.optional input____.n_members ), ( "n_guests", Encode.int |> Encode.optional input____.n_guests ) ]
-
-
 buildPendingUserFilter :
     (PendingUserFilterOptionalFields -> PendingUserFilterOptionalFields)
     -> PendingUserFilter
@@ -5515,6 +5423,321 @@ encodeProjectColumnRef (ProjectColumnRef input____) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef |> Encode.optional input____.project ) ]
 
 
+buildProjectFieldFilter :
+    (ProjectFieldFilterOptionalFields -> ProjectFieldFilterOptionalFields)
+    -> ProjectFieldFilter
+buildProjectFieldFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    ProjectFieldFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias ProjectFieldFilterOptionalFields =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.ProjectFieldHasFilter.ProjectFieldHasFilter))
+    , and : OptionalArgument (List (Maybe ProjectFieldFilter))
+    , or : OptionalArgument (List (Maybe ProjectFieldFilter))
+    , not : OptionalArgument ProjectFieldFilter
+    }
+
+
+{-| Type alias for the `ProjectFieldFilter` attributes. Note that this type
+needs to use the `ProjectFieldFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldFilterRaw =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.ProjectFieldHasFilter.ProjectFieldHasFilter))
+    , and : OptionalArgument (List (Maybe ProjectFieldFilter))
+    , or : OptionalArgument (List (Maybe ProjectFieldFilter))
+    , not : OptionalArgument ProjectFieldFilter
+    }
+
+
+{-| Type for the ProjectFieldFilter input object.
+-}
+type ProjectFieldFilter
+    = ProjectFieldFilter ProjectFieldFilterRaw
+
+
+{-| Encode a ProjectFieldFilter into a value that can be used as an argument.
+-}
+encodeProjectFieldFilter : ProjectFieldFilter -> Value
+encodeProjectFieldFilter (ProjectFieldFilter input____) =
+    Encode.maybeObject
+        [ ( "has", (Encode.enum Fractal.Enum.ProjectFieldHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeProjectFieldFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeProjectFieldFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeProjectFieldFilter |> Encode.optional input____.not ) ]
+
+
+buildProjectFieldPatch :
+    (ProjectFieldPatchOptionalFields -> ProjectFieldPatchOptionalFields)
+    -> ProjectFieldPatch
+buildProjectFieldPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { type_ = Absent, isVisible = Absent, values = Absent }
+    in
+    ProjectFieldPatch { type_ = optionals____.type_, isVisible = optionals____.isVisible, values = optionals____.values }
+
+
+type alias ProjectFieldPatchOptionalFields =
+    { type_ : OptionalArgument Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : OptionalArgument Bool
+    , values : OptionalArgument (List ProjectFieldValueRef)
+    }
+
+
+{-| Type alias for the `ProjectFieldPatch` attributes. Note that this type
+needs to use the `ProjectFieldPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldPatchRaw =
+    { type_ : OptionalArgument Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : OptionalArgument Bool
+    , values : OptionalArgument (List ProjectFieldValueRef)
+    }
+
+
+{-| Type for the ProjectFieldPatch input object.
+-}
+type ProjectFieldPatch
+    = ProjectFieldPatch ProjectFieldPatchRaw
+
+
+{-| Encode a ProjectFieldPatch into a value that can be used as an argument.
+-}
+encodeProjectFieldPatch : ProjectFieldPatch -> Value
+encodeProjectFieldPatch (ProjectFieldPatch input____) =
+    Encode.maybeObject
+        [ ( "type_", Encode.enum Fractal.Enum.ProjectFieldType.toString |> Encode.optional input____.type_ ), ( "isVisible", Encode.bool |> Encode.optional input____.isVisible ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
+
+
+buildProjectFieldRef :
+    (ProjectFieldRefOptionalFields -> ProjectFieldRefOptionalFields)
+    -> ProjectFieldRef
+buildProjectFieldRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { type_ = Absent, isVisible = Absent, values = Absent }
+    in
+    ProjectFieldRef { type_ = optionals____.type_, isVisible = optionals____.isVisible, values = optionals____.values }
+
+
+type alias ProjectFieldRefOptionalFields =
+    { type_ : OptionalArgument Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : OptionalArgument Bool
+    , values : OptionalArgument (List ProjectFieldValueRef)
+    }
+
+
+{-| Type alias for the `ProjectFieldRef` attributes. Note that this type
+needs to use the `ProjectFieldRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldRefRaw =
+    { type_ : OptionalArgument Fractal.Enum.ProjectFieldType.ProjectFieldType
+    , isVisible : OptionalArgument Bool
+    , values : OptionalArgument (List ProjectFieldValueRef)
+    }
+
+
+{-| Type for the ProjectFieldRef input object.
+-}
+type ProjectFieldRef
+    = ProjectFieldRef ProjectFieldRefRaw
+
+
+{-| Encode a ProjectFieldRef into a value that can be used as an argument.
+-}
+encodeProjectFieldRef : ProjectFieldRef -> Value
+encodeProjectFieldRef (ProjectFieldRef input____) =
+    Encode.maybeObject
+        [ ( "type_", Encode.enum Fractal.Enum.ProjectFieldType.toString |> Encode.optional input____.type_ ), ( "isVisible", Encode.bool |> Encode.optional input____.isVisible ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
+
+
+buildProjectFieldValueFilter :
+    (ProjectFieldValueFilterOptionalFields -> ProjectFieldValueFilterOptionalFields)
+    -> ProjectFieldValueFilter
+buildProjectFieldValueFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    ProjectFieldValueFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias ProjectFieldValueFilterOptionalFields =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.ProjectFieldValueHasFilter.ProjectFieldValueHasFilter))
+    , and : OptionalArgument (List (Maybe ProjectFieldValueFilter))
+    , or : OptionalArgument (List (Maybe ProjectFieldValueFilter))
+    , not : OptionalArgument ProjectFieldValueFilter
+    }
+
+
+{-| Type alias for the `ProjectFieldValueFilter` attributes. Note that this type
+needs to use the `ProjectFieldValueFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldValueFilterRaw =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.ProjectFieldValueHasFilter.ProjectFieldValueHasFilter))
+    , and : OptionalArgument (List (Maybe ProjectFieldValueFilter))
+    , or : OptionalArgument (List (Maybe ProjectFieldValueFilter))
+    , not : OptionalArgument ProjectFieldValueFilter
+    }
+
+
+{-| Type for the ProjectFieldValueFilter input object.
+-}
+type ProjectFieldValueFilter
+    = ProjectFieldValueFilter ProjectFieldValueFilterRaw
+
+
+{-| Encode a ProjectFieldValueFilter into a value that can be used as an argument.
+-}
+encodeProjectFieldValueFilter : ProjectFieldValueFilter -> Value
+encodeProjectFieldValueFilter (ProjectFieldValueFilter input____) =
+    Encode.maybeObject
+        [ ( "has", (Encode.enum Fractal.Enum.ProjectFieldValueHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeProjectFieldValueFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeProjectFieldValueFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeProjectFieldValueFilter |> Encode.optional input____.not ) ]
+
+
+buildProjectFieldValueOrder :
+    (ProjectFieldValueOrderOptionalFields -> ProjectFieldValueOrderOptionalFields)
+    -> ProjectFieldValueOrder
+buildProjectFieldValueOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    ProjectFieldValueOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias ProjectFieldValueOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.ProjectFieldValueOrderable.ProjectFieldValueOrderable
+    , desc : OptionalArgument Fractal.Enum.ProjectFieldValueOrderable.ProjectFieldValueOrderable
+    , then_ : OptionalArgument ProjectFieldValueOrder
+    }
+
+
+{-| Type alias for the `ProjectFieldValueOrder` attributes. Note that this type
+needs to use the `ProjectFieldValueOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldValueOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.ProjectFieldValueOrderable.ProjectFieldValueOrderable
+    , desc : OptionalArgument Fractal.Enum.ProjectFieldValueOrderable.ProjectFieldValueOrderable
+    , then_ : OptionalArgument ProjectFieldValueOrder
+    }
+
+
+{-| Type for the ProjectFieldValueOrder input object.
+-}
+type ProjectFieldValueOrder
+    = ProjectFieldValueOrder ProjectFieldValueOrderRaw
+
+
+{-| Encode a ProjectFieldValueOrder into a value that can be used as an argument.
+-}
+encodeProjectFieldValueOrder : ProjectFieldValueOrder -> Value
+encodeProjectFieldValueOrder (ProjectFieldValueOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.ProjectFieldValueOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.ProjectFieldValueOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeProjectFieldValueOrder |> Encode.optional input____.then_ ) ]
+
+
+buildProjectFieldValuePatch :
+    (ProjectFieldValuePatchOptionalFields -> ProjectFieldValuePatchOptionalFields)
+    -> ProjectFieldValuePatch
+buildProjectFieldValuePatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { field = Absent, value = Absent }
+    in
+    ProjectFieldValuePatch { field = optionals____.field, value = optionals____.value }
+
+
+type alias ProjectFieldValuePatchOptionalFields =
+    { field : OptionalArgument ProjectFieldRef
+    , value : OptionalArgument String
+    }
+
+
+{-| Type alias for the `ProjectFieldValuePatch` attributes. Note that this type
+needs to use the `ProjectFieldValuePatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldValuePatchRaw =
+    { field : OptionalArgument ProjectFieldRef
+    , value : OptionalArgument String
+    }
+
+
+{-| Type for the ProjectFieldValuePatch input object.
+-}
+type ProjectFieldValuePatch
+    = ProjectFieldValuePatch ProjectFieldValuePatchRaw
+
+
+{-| Encode a ProjectFieldValuePatch into a value that can be used as an argument.
+-}
+encodeProjectFieldValuePatch : ProjectFieldValuePatch -> Value
+encodeProjectFieldValuePatch (ProjectFieldValuePatch input____) =
+    Encode.maybeObject
+        [ ( "field", encodeProjectFieldRef |> Encode.optional input____.field ), ( "value", Encode.string |> Encode.optional input____.value ) ]
+
+
+buildProjectFieldValueRef :
+    (ProjectFieldValueRefOptionalFields -> ProjectFieldValueRefOptionalFields)
+    -> ProjectFieldValueRef
+buildProjectFieldValueRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { field = Absent, value = Absent }
+    in
+    ProjectFieldValueRef { field = optionals____.field, value = optionals____.value }
+
+
+type alias ProjectFieldValueRefOptionalFields =
+    { field : OptionalArgument ProjectFieldRef
+    , value : OptionalArgument String
+    }
+
+
+{-| Type alias for the `ProjectFieldValueRef` attributes. Note that this type
+needs to use the `ProjectFieldValueRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias ProjectFieldValueRefRaw =
+    { field : OptionalArgument ProjectFieldRef
+    , value : OptionalArgument String
+    }
+
+
+{-| Type for the ProjectFieldValueRef input object.
+-}
+type ProjectFieldValueRef
+    = ProjectFieldValueRef ProjectFieldValueRefRaw
+
+
+{-| Encode a ProjectFieldValueRef into a value that can be used as an argument.
+-}
+encodeProjectFieldValueRef : ProjectFieldValueRef -> Value
+encodeProjectFieldValueRef (ProjectFieldValueRef input____) =
+    Encode.maybeObject
+        [ ( "field", encodeProjectFieldRef |> Encode.optional input____.field ), ( "value", Encode.string |> Encode.optional input____.value ) ]
+
+
 buildProjectFilter :
     (ProjectFilterOptionalFields -> ProjectFilterOptionalFields)
     -> ProjectFilter
@@ -5628,9 +5851,9 @@ buildProjectPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, leaders = Absent, nodes = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
     in
-    ProjectPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    ProjectPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
 
 
 type alias ProjectPatchOptionalFields =
@@ -5644,6 +5867,7 @@ type alias ProjectPatchOptionalFields =
     , description : OptionalArgument String
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -5665,6 +5889,7 @@ type alias ProjectPatchRaw =
     , description : OptionalArgument String
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -5681,7 +5906,7 @@ type ProjectPatch
 encodeProjectPatch : ProjectPatch -> Value
 encodeProjectPatch (ProjectPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildProjectRef :
@@ -5691,9 +5916,9 @@ buildProjectRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, leaders = Absent, nodes = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
     in
-    ProjectRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    ProjectRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
 
 
 type alias ProjectRefOptionalFields =
@@ -5708,6 +5933,7 @@ type alias ProjectRefOptionalFields =
     , description : OptionalArgument String
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -5730,6 +5956,7 @@ type alias ProjectRefRaw =
     , description : OptionalArgument String
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
+    , fields : OptionalArgument (List ProjectFieldRef)
     , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
     }
@@ -5746,7 +5973,7 @@ type ProjectRef
 encodeProjectRef : ProjectRef -> Value
 encodeProjectRef (ProjectRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildProjectStatus_hash :
@@ -5884,15 +6111,16 @@ buildProjectTensionPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { tension = Absent, pos = Absent, pc = Absent }
+                { tension = Absent, pos = Absent, pc = Absent, values = Absent }
     in
-    ProjectTensionPatch { tension = optionals____.tension, pos = optionals____.pos, pc = optionals____.pc }
+    ProjectTensionPatch { tension = optionals____.tension, pos = optionals____.pos, pc = optionals____.pc, values = optionals____.values }
 
 
 type alias ProjectTensionPatchOptionalFields =
     { tension : OptionalArgument TensionRef
     , pos : OptionalArgument Int
     , pc : OptionalArgument ProjectColumnRef
+    , values : OptionalArgument (List ProjectFieldValueRef)
     }
 
 
@@ -5905,6 +6133,7 @@ type alias ProjectTensionPatchRaw =
     { tension : OptionalArgument TensionRef
     , pos : OptionalArgument Int
     , pc : OptionalArgument ProjectColumnRef
+    , values : OptionalArgument (List ProjectFieldValueRef)
     }
 
 
@@ -5919,7 +6148,7 @@ type ProjectTensionPatch
 encodeProjectTensionPatch : ProjectTensionPatch -> Value
 encodeProjectTensionPatch (ProjectTensionPatch input____) =
     Encode.maybeObject
-        [ ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "pc", encodeProjectColumnRef |> Encode.optional input____.pc ) ]
+        [ ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "pc", encodeProjectColumnRef |> Encode.optional input____.pc ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
 
 
 buildProjectTensionRef :
@@ -5929,9 +6158,9 @@ buildProjectTensionRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, tension = Absent, pos = Absent, pc = Absent }
+                { id = Absent, tension = Absent, pos = Absent, pc = Absent, values = Absent }
     in
-    ProjectTensionRef { id = optionals____.id, tension = optionals____.tension, pos = optionals____.pos, pc = optionals____.pc }
+    ProjectTensionRef { id = optionals____.id, tension = optionals____.tension, pos = optionals____.pos, pc = optionals____.pc, values = optionals____.values }
 
 
 type alias ProjectTensionRefOptionalFields =
@@ -5939,6 +6168,7 @@ type alias ProjectTensionRefOptionalFields =
     , tension : OptionalArgument TensionRef
     , pos : OptionalArgument Int
     , pc : OptionalArgument ProjectColumnRef
+    , values : OptionalArgument (List ProjectFieldValueRef)
     }
 
 
@@ -5952,6 +6182,7 @@ type alias ProjectTensionRefRaw =
     , tension : OptionalArgument TensionRef
     , pos : OptionalArgument Int
     , pc : OptionalArgument ProjectColumnRef
+    , values : OptionalArgument (List ProjectFieldValueRef)
     }
 
 
@@ -5966,7 +6197,7 @@ type ProjectTensionRef
 encodeProjectTensionRef : ProjectTensionRef -> Value
 encodeProjectTensionRef (ProjectTensionRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "pc", encodeProjectColumnRef |> Encode.optional input____.pc ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "pc", encodeProjectColumnRef |> Encode.optional input____.pc ), ( "values", (encodeProjectFieldValueRef |> Encode.list) |> Encode.optional input____.values ) ]
 
 
 buildReactionFilter :
@@ -7599,55 +7830,6 @@ encodeUpdateNotifInput (UpdateNotifInput input____) =
         [ ( "filter", encodeNotifFilter input____.filter |> Just ), ( "set", encodeNotifPatch |> Encode.optional input____.set ), ( "remove", encodeNotifPatch |> Encode.optional input____.remove ) ]
 
 
-buildUpdateOrgaAggInput :
-    UpdateOrgaAggInputRequiredFields
-    -> (UpdateOrgaAggInputOptionalFields -> UpdateOrgaAggInputOptionalFields)
-    -> UpdateOrgaAggInput
-buildUpdateOrgaAggInput required____ fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { set = Absent, remove = Absent }
-    in
-    UpdateOrgaAggInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
-
-
-type alias UpdateOrgaAggInputRequiredFields =
-    { filter : OrgaAggFilter }
-
-
-type alias UpdateOrgaAggInputOptionalFields =
-    { set : OptionalArgument OrgaAggPatch
-    , remove : OptionalArgument OrgaAggPatch
-    }
-
-
-{-| Type alias for the `UpdateOrgaAggInput` attributes. Note that this type
-needs to use the `UpdateOrgaAggInput` type (not just a plain type alias) because it has
-references to itself either directly (recursive) or indirectly (circular). See
-<https://github.com/dillonkearns/elm-graphql/issues/33>.
--}
-type alias UpdateOrgaAggInputRaw =
-    { filter : OrgaAggFilter
-    , set : OptionalArgument OrgaAggPatch
-    , remove : OptionalArgument OrgaAggPatch
-    }
-
-
-{-| Type for the UpdateOrgaAggInput input object.
--}
-type UpdateOrgaAggInput
-    = UpdateOrgaAggInput UpdateOrgaAggInputRaw
-
-
-{-| Encode a UpdateOrgaAggInput into a value that can be used as an argument.
--}
-encodeUpdateOrgaAggInput : UpdateOrgaAggInput -> Value
-encodeUpdateOrgaAggInput (UpdateOrgaAggInput input____) =
-    Encode.maybeObject
-        [ ( "filter", encodeOrgaAggFilter input____.filter |> Just ), ( "set", encodeOrgaAggPatch |> Encode.optional input____.set ), ( "remove", encodeOrgaAggPatch |> Encode.optional input____.remove ) ]
-
-
 buildUpdatePendingUserInput :
     UpdatePendingUserInputRequiredFields
     -> (UpdatePendingUserInputOptionalFields -> UpdatePendingUserInputOptionalFields)
@@ -7793,6 +7975,104 @@ encodeUpdateProjectColumnInput : UpdateProjectColumnInput -> Value
 encodeUpdateProjectColumnInput (UpdateProjectColumnInput input____) =
     Encode.maybeObject
         [ ( "filter", encodeProjectColumnFilter input____.filter |> Just ), ( "set", encodeProjectColumnPatch |> Encode.optional input____.set ), ( "remove", encodeProjectColumnPatch |> Encode.optional input____.remove ) ]
+
+
+buildUpdateProjectFieldInput :
+    UpdateProjectFieldInputRequiredFields
+    -> (UpdateProjectFieldInputOptionalFields -> UpdateProjectFieldInputOptionalFields)
+    -> UpdateProjectFieldInput
+buildUpdateProjectFieldInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateProjectFieldInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateProjectFieldInputRequiredFields =
+    { filter : ProjectFieldFilter }
+
+
+type alias UpdateProjectFieldInputOptionalFields =
+    { set : OptionalArgument ProjectFieldPatch
+    , remove : OptionalArgument ProjectFieldPatch
+    }
+
+
+{-| Type alias for the `UpdateProjectFieldInput` attributes. Note that this type
+needs to use the `UpdateProjectFieldInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateProjectFieldInputRaw =
+    { filter : ProjectFieldFilter
+    , set : OptionalArgument ProjectFieldPatch
+    , remove : OptionalArgument ProjectFieldPatch
+    }
+
+
+{-| Type for the UpdateProjectFieldInput input object.
+-}
+type UpdateProjectFieldInput
+    = UpdateProjectFieldInput UpdateProjectFieldInputRaw
+
+
+{-| Encode a UpdateProjectFieldInput into a value that can be used as an argument.
+-}
+encodeUpdateProjectFieldInput : UpdateProjectFieldInput -> Value
+encodeUpdateProjectFieldInput (UpdateProjectFieldInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeProjectFieldFilter input____.filter |> Just ), ( "set", encodeProjectFieldPatch |> Encode.optional input____.set ), ( "remove", encodeProjectFieldPatch |> Encode.optional input____.remove ) ]
+
+
+buildUpdateProjectFieldValueInput :
+    UpdateProjectFieldValueInputRequiredFields
+    -> (UpdateProjectFieldValueInputOptionalFields -> UpdateProjectFieldValueInputOptionalFields)
+    -> UpdateProjectFieldValueInput
+buildUpdateProjectFieldValueInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateProjectFieldValueInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateProjectFieldValueInputRequiredFields =
+    { filter : ProjectFieldValueFilter }
+
+
+type alias UpdateProjectFieldValueInputOptionalFields =
+    { set : OptionalArgument ProjectFieldValuePatch
+    , remove : OptionalArgument ProjectFieldValuePatch
+    }
+
+
+{-| Type alias for the `UpdateProjectFieldValueInput` attributes. Note that this type
+needs to use the `UpdateProjectFieldValueInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateProjectFieldValueInputRaw =
+    { filter : ProjectFieldValueFilter
+    , set : OptionalArgument ProjectFieldValuePatch
+    , remove : OptionalArgument ProjectFieldValuePatch
+    }
+
+
+{-| Type for the UpdateProjectFieldValueInput input object.
+-}
+type UpdateProjectFieldValueInput
+    = UpdateProjectFieldValueInput UpdateProjectFieldValueInputRaw
+
+
+{-| Encode a UpdateProjectFieldValueInput into a value that can be used as an argument.
+-}
+encodeUpdateProjectFieldValueInput : UpdateProjectFieldValueInput -> Value
+encodeUpdateProjectFieldValueInput (UpdateProjectFieldValueInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeProjectFieldValueFilter input____.filter |> Just ), ( "set", encodeProjectFieldValuePatch |> Encode.optional input____.set ), ( "remove", encodeProjectFieldValuePatch |> Encode.optional input____.remove ) ]
 
 
 buildUpdateProjectInput :
