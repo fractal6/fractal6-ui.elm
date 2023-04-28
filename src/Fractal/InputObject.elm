@@ -802,9 +802,9 @@ buildAddProjectColumnInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { about = Absent, tensions = Absent }
+                { description = Absent, color = Absent, tensions = Absent }
     in
-    AddProjectColumnInput { name = required____.name, about = optionals____.about, pos = required____.pos, tensions = optionals____.tensions, project = required____.project }
+    AddProjectColumnInput { name = required____.name, description = optionals____.description, color = optionals____.color, pos = required____.pos, tensions = optionals____.tensions, project = required____.project }
 
 
 type alias AddProjectColumnInputRequiredFields =
@@ -815,7 +815,8 @@ type alias AddProjectColumnInputRequiredFields =
 
 
 type alias AddProjectColumnInputOptionalFields =
-    { about : OptionalArgument String
+    { description : OptionalArgument String
+    , color : OptionalArgument String
     , tensions : OptionalArgument (List ProjectTensionRef)
     }
 
@@ -827,7 +828,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias AddProjectColumnInputRaw =
     { name : String
-    , about : OptionalArgument String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
     , pos : Int
     , tensions : OptionalArgument (List ProjectTensionRef)
     , project : ProjectRef
@@ -845,7 +847,7 @@ type AddProjectColumnInput
 encodeAddProjectColumnInput : AddProjectColumnInput -> Value
 encodeAddProjectColumnInput (AddProjectColumnInput input____) =
     Encode.maybeObject
-        [ ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "pos", Encode.int input____.pos |> Just ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef input____.project |> Just ) ]
+        [ ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int input____.pos |> Just ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef input____.project |> Just ) ]
 
 
 buildAddProjectFieldInput :
@@ -5332,13 +5334,14 @@ buildProjectColumnPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { about = Absent, pos = Absent, tensions = Absent, project = Absent }
+                { description = Absent, color = Absent, pos = Absent, tensions = Absent, project = Absent }
     in
-    ProjectColumnPatch { about = optionals____.about, pos = optionals____.pos, tensions = optionals____.tensions, project = optionals____.project }
+    ProjectColumnPatch { description = optionals____.description, color = optionals____.color, pos = optionals____.pos, tensions = optionals____.tensions, project = optionals____.project }
 
 
 type alias ProjectColumnPatchOptionalFields =
-    { about : OptionalArgument String
+    { description : OptionalArgument String
+    , color : OptionalArgument String
     , pos : OptionalArgument Int
     , tensions : OptionalArgument (List ProjectTensionRef)
     , project : OptionalArgument ProjectRef
@@ -5351,7 +5354,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias ProjectColumnPatchRaw =
-    { about : OptionalArgument String
+    { description : OptionalArgument String
+    , color : OptionalArgument String
     , pos : OptionalArgument Int
     , tensions : OptionalArgument (List ProjectTensionRef)
     , project : OptionalArgument ProjectRef
@@ -5369,7 +5373,7 @@ type ProjectColumnPatch
 encodeProjectColumnPatch : ProjectColumnPatch -> Value
 encodeProjectColumnPatch (ProjectColumnPatch input____) =
     Encode.maybeObject
-        [ ( "about", Encode.string |> Encode.optional input____.about ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef |> Encode.optional input____.project ) ]
+        [ ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef |> Encode.optional input____.project ) ]
 
 
 buildProjectColumnRef :
@@ -5379,15 +5383,16 @@ buildProjectColumnRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, name = Absent, about = Absent, pos = Absent, tensions = Absent, project = Absent }
+                { id = Absent, name = Absent, description = Absent, color = Absent, pos = Absent, tensions = Absent, project = Absent }
     in
-    ProjectColumnRef { id = optionals____.id, name = optionals____.name, about = optionals____.about, pos = optionals____.pos, tensions = optionals____.tensions, project = optionals____.project }
+    ProjectColumnRef { id = optionals____.id, name = optionals____.name, description = optionals____.description, color = optionals____.color, pos = optionals____.pos, tensions = optionals____.tensions, project = optionals____.project }
 
 
 type alias ProjectColumnRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , name : OptionalArgument String
-    , about : OptionalArgument String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
     , pos : OptionalArgument Int
     , tensions : OptionalArgument (List ProjectTensionRef)
     , project : OptionalArgument ProjectRef
@@ -5402,7 +5407,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias ProjectColumnRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , name : OptionalArgument String
-    , about : OptionalArgument String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
     , pos : OptionalArgument Int
     , tensions : OptionalArgument (List ProjectTensionRef)
     , project : OptionalArgument ProjectRef
@@ -5420,7 +5426,7 @@ type ProjectColumnRef
 encodeProjectColumnRef : ProjectColumnRef -> Value
 encodeProjectColumnRef (ProjectColumnRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef |> Encode.optional input____.project ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "tensions", (encodeProjectTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "project", encodeProjectRef |> Encode.optional input____.project ) ]
 
 
 buildProjectFieldFilter :

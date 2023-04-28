@@ -761,6 +761,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Save changes"
   fr="Enregistrer"
 
+[save]
+  en="Save"
+  fr="Enregistrer"
+
 [leaveComment]
   en="Leave a comment"
   fr="Laissez un commentaire"
@@ -1642,6 +1646,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [addPolicies]
   en="Add policies"
   fr="Ajouter des politiques"
+
+[addColumn]
+  en="Add a column"
+  fr="Ajouter une colone"
+
+[columnAboutHelp]
+  en="Short description about this column"
+  fr="Courte description pour cette colonne"
+
+[editColumn]
+  en="Edit column"
+  fr="Editer la colone"
 
 [selectRoleTemplate]
   en="Select a role template"

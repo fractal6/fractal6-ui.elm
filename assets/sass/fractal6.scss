@@ -2397,8 +2397,13 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
                 max-height: calc(100vh - 40px);
             }
         }
-        &.is-tiny {
+        &.is-small {
             max-width: 400px;
+            min-width: 300px;
+            .modal-card {
+                max-width: 400px;
+                min-width: 300px;
+            }
         }
         &.is-huge {
             width: 100%;

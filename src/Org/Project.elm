@@ -35,6 +35,7 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
+import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict
@@ -178,6 +179,7 @@ type alias Model =
     , hover_column : Maybe String
     , movingTension : Maybe Tension
     , moveFifo : Fifo ( Int, Tension )
+    , projectColumnModal : ProjectColumnModal.State
     , movingHoverCol : Maybe { pos : Int, to_receiverid : String }
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
     , dragCount : Int
@@ -256,6 +258,9 @@ init global flags =
             , dragCount = 0
             , draging = False
 
+            --
+            , projectColumnModal = ProjectColumnModal.init projectid global.session.user
+
             -- Common
             , conf = conf
             , tensionForm = NTF.init global.session.user conf
@@ -319,6 +324,7 @@ type Msg
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
     | OnMoveDrop String
+    | OnAddCol
       --
     | GotCardMoved (GqlData IdPayload)
       -- Common
@@ -335,6 +341,7 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | ProjectColumnModalMsg ProjectColumnModal.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -499,6 +506,13 @@ update global message model =
             , Cmd.none
             )
 
+        OnAddCol ->
+            let
+                pos =
+                    withMaybeData model.project_data |> unwrap [] .columns |> List.length
+            in
+            ( model, Cmd.map ProjectColumnModalMsg (send (ProjectColumnModal.OnOpenAdd pos)), Cmd.none )
+
         --
         GotCardMoved result ->
             -- @TODO: save result and show a popup on error !
@@ -615,6 +629,33 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ProjectColumnModalMsg msg ->
+            let
+                ( data, out ) =
+                    ProjectColumnModal.update apis msg model.projectColumnModal
+
+                pd =
+                    case out.result of
+                        Just ( a, b ) ->
+                            withMapData
+                                (\x ->
+                                    case a of
+                                        AddColumn ->
+                                            { x | columns = x.columns ++ [ b ] }
+
+                                        _ ->
+                                            x
+                                )
+                                model.project_data
+
+                        Nothing ->
+                            model.project_data
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | projectColumnModal = data, project_data = pd }, out.cmds |> List.map (\m -> Cmd.map ProjectColumnModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -627,6 +668,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
         |> Sub.batch
 
 
@@ -672,6 +714,7 @@ view global model =
                     _ ->
                         div [ class "spinner" ] []
                 ]
+            , ProjectColumnModal.view {} model.projectColumnModal |> Html.map ProjectColumnModalMsg
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -785,6 +828,7 @@ viewProject data model =
             , onMoveEnterT = OnMoveEnterT
             , onMoveDrop = OnMoveDrop
             , noMsg = NoMsg
+            , onAddCol = OnAddCol
             }
     in
     viewBoard op header (LE.zip keys names) dict_data

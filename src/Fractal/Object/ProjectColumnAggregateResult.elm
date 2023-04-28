@@ -34,14 +34,24 @@ nameMax =
     Object.selectionForField "(Maybe String)" "nameMax" [] (Decode.string |> Decode.nullable)
 
 
-aboutMin : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
-aboutMin =
-    Object.selectionForField "(Maybe String)" "aboutMin" [] (Decode.string |> Decode.nullable)
+descriptionMin : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
+descriptionMin =
+    Object.selectionForField "(Maybe String)" "descriptionMin" [] (Decode.string |> Decode.nullable)
 
 
-aboutMax : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
-aboutMax =
-    Object.selectionForField "(Maybe String)" "aboutMax" [] (Decode.string |> Decode.nullable)
+descriptionMax : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
+descriptionMax =
+    Object.selectionForField "(Maybe String)" "descriptionMax" [] (Decode.string |> Decode.nullable)
+
+
+colorMin : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
+colorMin =
+    Object.selectionForField "(Maybe String)" "colorMin" [] (Decode.string |> Decode.nullable)
+
+
+colorMax : SelectionSet (Maybe String) Fractal.Object.ProjectColumnAggregateResult
+colorMax =
+    Object.selectionForField "(Maybe String)" "colorMax" [] (Decode.string |> Decode.nullable)
 
 
 posMin : SelectionSet (Maybe Int) Fractal.Object.ProjectColumnAggregateResult

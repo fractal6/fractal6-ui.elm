@@ -199,6 +199,10 @@ ${module_basename}Msg msg ->
 
         s_map = self.get_module_map(module_name_source)
         t_map = self.get_module_map(module_name_target)
+
+        if not os.path.exists(s_map["fn"]):
+            raise ValueError("Module does not exists: %s" % s_map["fn"])
+
         content = open(t_map["fn"]).read()
 
         for spec in all_specs:
