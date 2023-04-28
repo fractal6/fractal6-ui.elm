@@ -2100,6 +2100,9 @@ viewCircleTensions model =
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
                     , noMsg = NoMsg
+
+                    -- Board Project Msg
+                    , onAddCol = NoMsg
                     }
             in
             if List.length keys == 0 then
@@ -2170,6 +2173,7 @@ viewAssigneeTensions model =
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
                     , noMsg = NoMsg
+                    , onAddCol = NoMsg
                     }
             in
             if List.length keys == 0 then

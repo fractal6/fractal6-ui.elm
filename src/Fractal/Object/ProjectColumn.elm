@@ -29,9 +29,14 @@ name =
     Object.selectionForField "String" "name" [] Decode.string
 
 
-about : SelectionSet (Maybe String) Fractal.Object.ProjectColumn
-about =
-    Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
+description : SelectionSet (Maybe String) Fractal.Object.ProjectColumn
+description =
+    Object.selectionForField "(Maybe String)" "description" [] (Decode.string |> Decode.nullable)
+
+
+color : SelectionSet (Maybe String) Fractal.Object.ProjectColumn
+color =
+    Object.selectionForField "(Maybe String)" "color" [] (Decode.string |> Decode.nullable)
 
 
 pos : SelectionSet Int Fractal.Object.ProjectColumn

@@ -22,7 +22,7 @@ module ${module_name} exposing (Msg(..), State, init, subscriptions, update, vie
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData, isFailure, isSuccess)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -36,7 +36,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Error exposing (viewGqlErrors)
-import ModelSchema exposing (MyData)
+import ModelSchema exposing (MyData, Post, UserCtx)
 import Ports
 import Query.AddData exposing (getData)
 import Session exposing (Apis, GlobalCmd(..))
@@ -103,8 +103,8 @@ init user =
 -- State Controls
 
 
-reset : Model -> Model
-reset model =
+resetModel : Model -> Model
+resetModel model =
     initModel model.user
 
 updatePost : String -> String -> Model -> Model
@@ -206,10 +206,7 @@ update_ apis message model =
             )
 
         DoDataQuery time ->
-            -- setup your form
-            (model
-            , out0 [ send OnQueryData ]
-            )
+            (model , out0 [ send OnQueryData ])
 
         OnDataAck result ->
             let

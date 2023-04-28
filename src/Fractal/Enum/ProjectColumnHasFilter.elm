@@ -9,7 +9,8 @@ import Json.Decode as Decode exposing (Decoder)
 
 type ProjectColumnHasFilter
     = Name
-    | About
+    | Description
+    | Color
     | Pos
     | Tensions
     | Project
@@ -17,7 +18,7 @@ type ProjectColumnHasFilter
 
 list : List ProjectColumnHasFilter
 list =
-    [ Name, About, Pos, Tensions, Project ]
+    [ Name, Description, Color, Pos, Tensions, Project ]
 
 
 decoder : Decoder ProjectColumnHasFilter
@@ -29,8 +30,11 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
-                    "about" ->
-                        Decode.succeed About
+                    "description" ->
+                        Decode.succeed Description
+
+                    "color" ->
+                        Decode.succeed Color
 
                     "pos" ->
                         Decode.succeed Pos
@@ -54,8 +58,11 @@ toString enum____ =
         Name ->
             "name"
 
-        About ->
-            "about"
+        Description ->
+            "description"
+
+        Color ->
+            "color"
 
         Pos ->
             "pos"
@@ -84,8 +91,11 @@ fromString enumString____ =
         "name" ->
             Just Name
 
-        "about" ->
-            Just About
+        "description" ->
+            Just Description
+
+        "color" ->
+            Just Color
 
         "pos" ->
             Just Pos

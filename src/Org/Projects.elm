@@ -1077,7 +1077,8 @@ viewNewOrEditProject isNew model =
                         , required True
                         ]
                         []
-                    , p [ class "help" ] [ text T.orgaNameHelp ]
+
+                    --, p [ class "help" ] [ text T.orgaNameHelp ]
                     ]
                 , if model.hasDuplicate then
                     div [ class "mt-3" ]
@@ -1104,7 +1105,7 @@ viewNewOrEditProject isNew model =
                     text ""
                 ]
             , div [ class "field" ]
-                [ div [ class "label" ] [ text T.purpose ]
+                [ div [ class "label" ] [ text T.description ]
                 , div [ class "control" ]
                     [ textarea
                         [ id "aboutField"
@@ -1119,7 +1120,8 @@ viewNewOrEditProject isNew model =
                         ]
                         []
                     ]
-                , p [ class "help" ] [ text T.purposeHelpOrga ]
+
+                --, p [ class "help" ] [ text T.purposeHelpOrga ]
                 ]
             , div [ class "field pt-3 level is-mobile" ]
                 [ div [ class "level-left" ]

@@ -9,13 +9,14 @@ import Json.Decode as Decode exposing (Decoder)
 
 type ProjectColumnOrderable
     = Name
-    | About
+    | Description
+    | Color
     | Pos
 
 
 list : List ProjectColumnOrderable
 list =
-    [ Name, About, Pos ]
+    [ Name, Description, Color, Pos ]
 
 
 decoder : Decoder ProjectColumnOrderable
@@ -27,8 +28,11 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
-                    "about" ->
-                        Decode.succeed About
+                    "description" ->
+                        Decode.succeed Description
+
+                    "color" ->
+                        Decode.succeed Color
 
                     "pos" ->
                         Decode.succeed Pos
@@ -46,8 +50,11 @@ toString enum____ =
         Name ->
             "name"
 
-        About ->
-            "about"
+        Description ->
+            "description"
+
+        Color ->
+            "color"
 
         Pos ->
             "pos"
@@ -70,8 +77,11 @@ fromString enumString____ =
         "name" ->
             Just Name
 
-        "about" ->
-            Just About
+        "description" ->
+            Just Description
+
+        "color" ->
+            Just Color
 
         "pos" ->
             Just Pos

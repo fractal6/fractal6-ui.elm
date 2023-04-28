@@ -378,7 +378,7 @@ viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
     let
         isLoading =
-            model.data_result == LoadingSlowly
+            Loading.isLoading model.data_result
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]

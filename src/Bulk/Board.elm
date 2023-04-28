@@ -59,6 +59,7 @@ type alias Op msg =
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
     , noMsg : msg
+    , onAddCol : msg
     }
 
 
@@ -213,6 +214,7 @@ viewNewCol op =
         [ div
             [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
             , style "width" "100%"
+            , onClick op.onAddCol
             ]
             [ A.icon1 "icon-plus" "Add column" ]
         ]

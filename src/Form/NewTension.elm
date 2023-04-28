@@ -356,11 +356,6 @@ changeNodeStep step model =
     { model | nodeStep = step, nodeDoc = nd }
 
 
-close : Model -> Model
-close data =
-    { data | isActive = False }
-
-
 setActiveButton : Bool -> Model -> Model
 setActiveButton doClose data =
     if doClose then
@@ -683,7 +678,6 @@ update_ apis message model =
 
         -- Modal control
         SetIsActive2 v ->
-            -- Prevent elm from computing the VDOM
             if v then
                 ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "tensionModal" ] )
 
@@ -1159,15 +1153,14 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        (if model.isActive2 then
+    if model.isActive2 then
+        div []
             [ viewModal op (State model)
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
 
-         else
-            [ viewButton op model ]
-        )
+    else
+        viewButton op model
 
 
 viewButton : Op -> Model -> Html Msg
@@ -1476,9 +1469,6 @@ viewTension op model =
         message =
             Dict.get "message" form.post |> withDefault ""
 
-        txt =
-            getTensionText
-
         isLoading =
             model.result == LoadingSlowly
 
@@ -1588,9 +1578,6 @@ viewCircle op model =
 
         isAdmin =
             hasLazyAdminRole form.uctx Nothing form.target.nameid
-
-        node_type =
-            withDefault NodeType.Role form.node.type_
 
         isLoading =
             model.result == LoadingSlowly

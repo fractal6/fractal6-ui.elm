@@ -20,10 +20,12 @@
 
 
 module Query.QueryProject exposing
-    ( getProject
+    ( addProjectColumn
+    , getProject
     , moveProjectTension
     )
 
+import Dict
 import Extra exposing (unwrap, unwrap2)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
@@ -34,14 +36,14 @@ import Fractal.Object.ProjectColumn
 import Fractal.Object.ProjectField
 import Fractal.Object.ProjectTension
 import Fractal.Object.Tension
+import Fractal.Object.UpdateProjectPayload
 import Fractal.Object.UpdateProjectTensionPayload
 import Fractal.Query as Query
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeIdPayload, nodeOrgaFilter, searchUserFilter)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData
 import String.Extra as SE
@@ -104,11 +106,58 @@ moveProjectTension url id_ pos colid msg =
                         }
                     )
             }
-            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing) <|
-                Fractal.Object.UpdateProjectTensionPayload.projectTension identity
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectTensionPayload.projectTension identity
                     (SelectionSet.map IdPayload
                         (SelectionSet.map decodedId Fractal.Object.ProjectTension.id)
                     )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+addProjectColumn url form msg =
+    let
+        name_m =
+            Dict.get "name" form.post
+
+        column =
+            Input.buildProjectColumnRef
+                (\i ->
+                    { i
+                        | name = fromMaybe name_m
+                        , description = fromMaybe (Dict.get "description" form.post)
+                        , color = fromMaybe (Dict.get "color" form.post)
+                        , pos = fromMaybe form.pos
+                    }
+                )
+    in
+    makeGQLMutation url
+        (Mutation.updateProject
+            { input =
+                Input.buildUpdateProjectInput { filter = Input.buildProjectFilter (oneId form.projectid) }
+                    (\_ ->
+                        { set = Input.buildProjectPatch (\i -> { i | columns = Present [ column ] }) |> Present
+                        , remove = Absent
+                        }
+                    )
+            }
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectPayload.project identity
+                    (SelectionSet.map (withDefault [] >> List.head)
+                        (Fractal.Object.Project.columns
+                            (\b ->
+                                { b
+                                    | filter =
+                                        Input.buildProjectColumnFilter (\c -> { c | name = fromMaybe <| Maybe.map (\name -> { eq = Present name, in_ = Absent }) name_m })
+                                            |> Present
+                                }
+                            )
+                            columnPayload
+                        )
+                    )
+                )
             )
         )
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
