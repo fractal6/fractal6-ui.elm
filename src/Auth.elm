@@ -57,10 +57,11 @@ type ErrState a
     = Authenticate
     | RefreshToken Int
     | OkAuth a
-    | NoErr
+    | NoAuth
     | DuplicateErr
     | NameTooLong
     | UnknownErr
+    | NoErr
 
 
 
@@ -77,21 +78,32 @@ messageToErrState message_ trial =
         message =
             String.toLower message_
     in
-    if contains "token is expired" message || contains "no token found" message then
+    if
+        contains "token is expired" message
+            || contains "no token found" message
+    then
         Authenticate
 
-    else if startsWith "duplicate error" message || contains "already exists for field" message then
+    else if
+        startsWith "duplicate error" message
+            || contains "already exists for field" message
+    then
         DuplicateErr
 
     else if startsWith "name too long" message then
         NameTooLong
 
-    else if startsWith "access denied" message || contains "refresh token" message || contains "authorization failed" message then
+    else if
+        startsWith "access denied" message
+            || contains "refresh token" message
+            || contains "authorization failed" message
+            || contains "mutation failed because authorization failed" message
+    then
         if trial == 0 then
             RefreshToken (trial + 1)
 
         else
-            UnknownErr
+            NoAuth
 
     else
         UnknownErr

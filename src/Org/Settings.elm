@@ -747,6 +747,9 @@ update global message model =
                         -- throw error if the labels is in the list of labels
                         ( { model | label_result = result }, Cmd.none, Cmd.none )
 
+                NoAuth ->
+                    ( { model | label_result = Failure [ T.noAuthErr ] }, Cmd.none, Cmd.none )
+
                 _ ->
                     ( { model | label_result = result }, Cmd.none, Cmd.none )
 
@@ -908,6 +911,9 @@ update global message model =
                     , Cmd.none
                     , Cmd.none
                     )
+
+                NoAuth ->
+                    ( { model | role_result = Failure [ T.noAuthErr ] }, Cmd.none, Cmd.none )
 
                 DuplicateErr ->
                     let

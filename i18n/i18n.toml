@@ -1379,6 +1379,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="⚠️ A similar contract already exists, please check it out."
   fr="⚠️ Un contrat similaire existe déjà, veuillez le consulter."
 
+[noAuthErr]
+  en="Access denied: Contact a coordinator to access this ressource."
+  fr="Accès refusé : Contactez un coordinateur pour accéder à cette ressource."
+
 [sinceThe]
   en="since the"
   fr="depuis le"
