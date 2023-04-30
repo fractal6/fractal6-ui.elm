@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "BooleanCase": true,
+    "DropConcatOfLists": true,
+    "DropConsOfItemAndList": true,
+    "NoUncurriedPrefix": true,
+    "MapNothingToNothing": true,
+    "SingleFieldRecord": false,
+    "UnnecessaryListConcat": true,
+    "UnnecessaryPortModule": true,
+    "UnusedImport": true,
+    "UnusedImportAlias": true,
+    "UnusedImportedVariable": true,
+    "UnusedPatternVariable": true,
+    "UnusedTopLevel": true,
+    "UnusedTypeAlias": true,
+    "UnusedValueConstructor": true,
+    "UnusedVariable": true,
+    "UseConsOverConcat": true,
+    "MissingTypeAnnotation": false
+  },
+  "excludedPaths": [""]
+}
