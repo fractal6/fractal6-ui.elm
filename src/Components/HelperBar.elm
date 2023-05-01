@@ -23,7 +23,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, uriFromNameid)
 import Bulk.View exposing (counter, viewRole)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Form.NewTension exposing (NewTensionInput(..))
@@ -31,7 +31,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, div, i, li, nav, p, text, ul)
+import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)
 import Html.Events exposing (onClick)
 import Loading exposing (RequestResult(..))
@@ -366,6 +366,26 @@ viewNavLevel op model =
                                 [ li [ class "vbar" ] []
                                 , li [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
+                                ]
+
+                            else
+                                []
+                        )
+                        op.path_data
+                        |> withDefault []
+                   )
+                ++ (Maybe.map
+                        (\path ->
+                            if path.focus.type_ == NodeType.Role then
+                                [ li [ class "" ]
+                                    [ span
+                                        [ class "help-label button-light is-h is-discrete is-align-self-flex-start"
+
+                                        --, onClick OnGoRoot
+                                        ]
+                                        [ a [ href (uriFromNameid model.baseUri (nearestCircleid focusid) []) ] [ A.icon "arrow-up", text T.goRoot ]
+                                        ]
+                                    ]
                                 ]
 
                             else
