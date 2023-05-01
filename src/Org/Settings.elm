@@ -411,7 +411,7 @@ init global flags =
 
                         RolesMenu ->
                             [ getRoles apis newFocus.nameid GotRoles
-                            , fetchRolesTop apis newFocus.nameid GotRolesTop
+                            , fetchRolesTop apis newFocus.nameid False GotRolesTop
                             , fetchRolesSub apis newFocus.nameid GotRolesSub
                             ]
 
@@ -1301,16 +1301,16 @@ viewSettingsContent model =
             div []
                 [ --@todo lazy loading...
                   viewLabels model
-                , viewLabelsExt model.url T.labelsTop model.labels model.labels_top
-                , viewLabelsExt model.url T.labelsSub model.labels model.labels_sub
+                , viewLabelsExt model.url T.labelsTop model.labels_top
+                , viewLabelsExt model.url T.labelsSub model.labels_sub
                 ]
 
         RolesMenu ->
             div []
                 [ --@todo lazy loading...
                   viewRoles model
-                , viewRolesExt model.url T.rolesTop model.roles model.roles_top
-                , viewRolesExt model.url T.rolesSub model.roles model.roles_sub
+                , viewRolesExt model.url T.rolesTop model.roles_top
+                , viewRolesExt model.url T.rolesSub model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -1529,17 +1529,10 @@ viewLabels model =
         ]
 
 
-viewLabelsExt : Url -> String -> GqlData (List LabelFull) -> RestData (List Label) -> Html Msg
-viewLabelsExt url txt_yes list_d list_ext_d =
+viewLabelsExt : Url -> String -> RestData (List Label) -> Html Msg
+viewLabelsExt url txt_yes list_ext_d =
     case list_ext_d of
-        RemoteData.Success data_ ->
-            let
-                circle_data =
-                    withDefaultData [] list_d
-
-                data =
-                    List.filter (\d -> not (List.member d.name (List.map .name circle_data))) data_
-            in
+        RemoteData.Success data ->
             if List.length data == 0 then
                 text ""
 
@@ -1809,17 +1802,10 @@ viewRoles model =
         ]
 
 
-viewRolesExt : Url -> String -> GqlData (List RoleExtFull) -> RestData (List RoleExt) -> Html Msg
-viewRolesExt url txt_yes list_d list_ext_d =
+viewRolesExt : Url -> String -> RestData (List RoleExt) -> Html Msg
+viewRolesExt url txt_yes list_ext_d =
     case list_ext_d of
-        RemoteData.Success data_ ->
-            let
-                circle_data =
-                    withDefaultData [] list_d
-
-                data =
-                    List.filter (\d -> not (List.member d.name (List.map .name circle_data))) data_
-            in
+        RemoteData.Success data ->
             if List.length data == 0 then
                 text ""
 

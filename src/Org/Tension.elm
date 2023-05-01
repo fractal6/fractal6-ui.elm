@@ -1358,7 +1358,7 @@ update global message model =
         DoAssigneeEdit ->
             let
                 targets =
-                    getCircles model.path_data |> List.map .nameid
+                    getPath model.path_data |> List.map .nameid
             in
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
@@ -1403,7 +1403,7 @@ update global message model =
         DoLabelEdit ->
             let
                 targets =
-                    getCircles model.path_data
+                    getPath model.path_data
 
                 receiver_m =
                     withMaybeData model.tension_head |> Maybe.map .receiver
@@ -1412,9 +1412,11 @@ update global message model =
                 Just receiver ->
                     case LE.elemIndex receiver.nameid (List.map .nameid targets) of
                         Just i ->
+                            -- receiver is in the current focus/path
                             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)), Cmd.none )
 
                         Nothing ->
+                            -- receiver does not match the current focus/path
                             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ { name = receiver.name, nameid = receiver.nameid, source = Nothing } ] (Just False))), Cmd.none )
 
                 Nothing ->
