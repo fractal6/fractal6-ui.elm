@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (getCircles, hotTensionPush, hotTensionPush2)
+import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
@@ -1094,7 +1094,7 @@ update global message model =
         ChangeLabel ->
             let
                 targets =
-                    getCircles model.path_data
+                    getPath model.path_data
             in
             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets (Just True))), Cmd.none )
 

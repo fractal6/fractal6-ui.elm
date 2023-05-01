@@ -1051,6 +1051,7 @@ rolesFullDecoder2 data =
                     d
                         |> List.filterMap identity
                         |> List.concatMap (\x -> withDefault [] x.roles)
+                        |> LE.uniqueBy .id
                         |> Just
             )
         |> withDefault Nothing
@@ -1270,6 +1271,7 @@ labelsDecoder data =
                     d
                         |> List.filterMap identity
                         |> List.concatMap (\x -> withDefault [] x.labels)
+                        |> LE.uniqueBy .id
                         |> Just
             )
         |> withDefault Nothing
@@ -1341,6 +1343,7 @@ projectsDecoder data =
                     d
                         |> List.filterMap identity
                         |> List.concatMap (\x -> withDefault [] x.projects)
+                        |> LE.uniqueBy .id
                         |> Just
             )
         |> withDefault Nothing

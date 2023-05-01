@@ -506,8 +506,8 @@ isFreshOrga data =
         == 1
 
 
-getCircles : GqlData LocalGraph -> List PNode
-getCircles lg =
+getPath : GqlData LocalGraph -> List PNode
+getPath lg =
     case lg of
         Success path ->
             path.path
@@ -686,8 +686,8 @@ localGraphFromOrga nameid orga_d =
                                 }
                             )
 
-                getPath : String -> List PNode
-                getPath nameid_ =
+                buildPath : String -> List PNode
+                buildPath nameid_ =
                     Dict.get nameid_ orga
                         |> Maybe.map
                             (\n ->
@@ -697,7 +697,7 @@ localGraphFromOrga nameid orga_d =
                                 }
                                     :: (case n.parent of
                                             Just p ->
-                                                getPath p.nameid
+                                                buildPath p.nameid
 
                                             Nothing ->
                                                 []
@@ -708,7 +708,7 @@ localGraphFromOrga nameid orga_d =
             Maybe.map
                 (\f ->
                     { root = root_m
-                    , path = getPath nameid |> List.reverse
+                    , path = buildPath nameid |> List.reverse
                     , focus = f
                     }
                 )

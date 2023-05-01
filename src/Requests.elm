@@ -149,12 +149,12 @@ fetchLabelsSub api targetid msg =
     Get all ** Roles ** from the parent, until the root node
 
 -}
-fetchRolesTop api targetid msg =
+fetchRolesTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = api.rest ++ "/top_roles"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
         , timeout = Nothing
         , tracker = Nothing
