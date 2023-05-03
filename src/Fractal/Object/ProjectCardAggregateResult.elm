@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.ProjectTensionAggregateResult exposing (..)
+module Fractal.Object.ProjectCardAggregateResult exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,26 +19,26 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-count : SelectionSet (Maybe Int) Fractal.Object.ProjectTensionAggregateResult
+count : SelectionSet (Maybe Int) Fractal.Object.ProjectCardAggregateResult
 count =
     Object.selectionForField "(Maybe Int)" "count" [] (Decode.int |> Decode.nullable)
 
 
-posMin : SelectionSet (Maybe Int) Fractal.Object.ProjectTensionAggregateResult
+posMin : SelectionSet (Maybe Int) Fractal.Object.ProjectCardAggregateResult
 posMin =
     Object.selectionForField "(Maybe Int)" "posMin" [] (Decode.int |> Decode.nullable)
 
 
-posMax : SelectionSet (Maybe Int) Fractal.Object.ProjectTensionAggregateResult
+posMax : SelectionSet (Maybe Int) Fractal.Object.ProjectCardAggregateResult
 posMax =
     Object.selectionForField "(Maybe Int)" "posMax" [] (Decode.int |> Decode.nullable)
 
 
-posSum : SelectionSet (Maybe Int) Fractal.Object.ProjectTensionAggregateResult
+posSum : SelectionSet (Maybe Int) Fractal.Object.ProjectCardAggregateResult
 posSum =
     Object.selectionForField "(Maybe Int)" "posSum" [] (Decode.int |> Decode.nullable)
 
 
-posAvg : SelectionSet (Maybe Float) Fractal.Object.ProjectTensionAggregateResult
+posAvg : SelectionSet (Maybe Float) Fractal.Object.ProjectCardAggregateResult
 posAvg =
     Object.selectionForField "(Maybe Float)" "posAvg" [] (Decode.float |> Decode.nullable)

@@ -53,8 +53,16 @@ type AddPendingUserPayload
     = AddPendingUserPayload
 
 
+type AddProjectCardPayload
+    = AddProjectCardPayload
+
+
 type AddProjectColumnPayload
     = AddProjectColumnPayload
+
+
+type AddProjectDraftPayload
+    = AddProjectDraftPayload
 
 
 type AddProjectFieldPayload
@@ -67,10 +75,6 @@ type AddProjectFieldValuePayload
 
 type AddProjectPayload
     = AddProjectPayload
-
-
-type AddProjectTensionPayload
-    = AddProjectTensionPayload
 
 
 type AddReactionPayload
@@ -177,8 +181,16 @@ type DeletePostPayload
     = DeletePostPayload
 
 
+type DeleteProjectCardPayload
+    = DeleteProjectCardPayload
+
+
 type DeleteProjectColumnPayload
     = DeleteProjectColumnPayload
+
+
+type DeleteProjectDraftPayload
+    = DeleteProjectDraftPayload
 
 
 type DeleteProjectFieldPayload
@@ -191,10 +203,6 @@ type DeleteProjectFieldValuePayload
 
 type DeleteProjectPayload
     = DeleteProjectPayload
-
-
-type DeleteProjectTensionPayload
-    = DeleteProjectTensionPayload
 
 
 type DeleteReactionPayload
@@ -329,12 +337,28 @@ type ProjectAggregateResult
     = ProjectAggregateResult
 
 
+type ProjectCard
+    = ProjectCard
+
+
+type ProjectCardAggregateResult
+    = ProjectCardAggregateResult
+
+
 type ProjectColumn
     = ProjectColumn
 
 
 type ProjectColumnAggregateResult
     = ProjectColumnAggregateResult
+
+
+type ProjectDraft
+    = ProjectDraft
+
+
+type ProjectDraftAggregateResult
+    = ProjectDraftAggregateResult
 
 
 type ProjectField
@@ -351,14 +375,6 @@ type ProjectFieldValue
 
 type ProjectFieldValueAggregateResult
     = ProjectFieldValueAggregateResult
-
-
-type ProjectTension
-    = ProjectTension
-
-
-type ProjectTensionAggregateResult
-    = ProjectTensionAggregateResult
 
 
 type Reaction
@@ -437,8 +453,16 @@ type UpdatePostPayload
     = UpdatePostPayload
 
 
+type UpdateProjectCardPayload
+    = UpdateProjectCardPayload
+
+
 type UpdateProjectColumnPayload
     = UpdateProjectColumnPayload
+
+
+type UpdateProjectDraftPayload
+    = UpdateProjectDraftPayload
 
 
 type UpdateProjectFieldPayload
@@ -451,10 +475,6 @@ type UpdateProjectFieldValuePayload
 
 type UpdateProjectPayload
     = UpdateProjectPayload
-
-
-type UpdateProjectTensionPayload
-    = UpdateProjectTensionPayload
 
 
 type UpdateReactionPayload

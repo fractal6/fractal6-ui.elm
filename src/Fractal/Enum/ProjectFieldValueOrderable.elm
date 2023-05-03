@@ -9,11 +9,12 @@ import Json.Decode as Decode exposing (Decoder)
 
 type ProjectFieldValueOrderable
     = Value
+    | Pos
 
 
 list : List ProjectFieldValueOrderable
 list =
-    [ Value ]
+    [ Value, Pos ]
 
 
 decoder : Decoder ProjectFieldValueOrderable
@@ -24,6 +25,9 @@ decoder =
                 case string of
                     "value" ->
                         Decode.succeed Value
+
+                    "pos" ->
+                        Decode.succeed Pos
 
                     _ ->
                         Decode.fail ("Invalid ProjectFieldValueOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +41,9 @@ toString enum____ =
     case enum____ of
         Value ->
             "value"
+
+        Pos ->
+            "pos"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +62,9 @@ fromString enumString____ =
     case enumString____ of
         "value" ->
             Just Value
+
+        "pos" ->
+            Just Pos
 
         _ ->
             Nothing

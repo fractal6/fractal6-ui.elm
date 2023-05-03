@@ -20,9 +20,9 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type_ : SelectionSet Fractal.Enum.ProjectFieldType.ProjectFieldType Fractal.Object.ProjectField
-type_ =
-    Object.selectionForField "Enum.ProjectFieldType.ProjectFieldType" "type_" [] Fractal.Enum.ProjectFieldType.decoder
+field_type : SelectionSet Fractal.Enum.ProjectFieldType.ProjectFieldType Fractal.Object.ProjectField
+field_type =
+    Object.selectionForField "Enum.ProjectFieldType.ProjectFieldType" "field_type" [] Fractal.Enum.ProjectFieldType.decoder
 
 
 isVisible : SelectionSet Bool Fractal.Object.ProjectField

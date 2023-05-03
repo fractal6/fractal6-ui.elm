@@ -32,3 +32,23 @@ valueMin =
 valueMax : SelectionSet (Maybe String) Fractal.Object.ProjectFieldValueAggregateResult
 valueMax =
     Object.selectionForField "(Maybe String)" "valueMax" [] (Decode.string |> Decode.nullable)
+
+
+posMin : SelectionSet (Maybe Int) Fractal.Object.ProjectFieldValueAggregateResult
+posMin =
+    Object.selectionForField "(Maybe Int)" "posMin" [] (Decode.int |> Decode.nullable)
+
+
+posMax : SelectionSet (Maybe Int) Fractal.Object.ProjectFieldValueAggregateResult
+posMax =
+    Object.selectionForField "(Maybe Int)" "posMax" [] (Decode.int |> Decode.nullable)
+
+
+posSum : SelectionSet (Maybe Int) Fractal.Object.ProjectFieldValueAggregateResult
+posSum =
+    Object.selectionForField "(Maybe Int)" "posSum" [] (Decode.int |> Decode.nullable)
+
+
+posAvg : SelectionSet (Maybe Float) Fractal.Object.ProjectFieldValueAggregateResult
+posAvg =
+    Object.selectionForField "(Maybe Float)" "posAvg" [] (Decode.float |> Decode.nullable)
