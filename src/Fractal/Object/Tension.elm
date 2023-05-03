@@ -284,28 +284,28 @@ subscribers fillInOptionals____ object____ =
     Object.selectionForCompositeField "subscribers" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-type alias ProjectsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.ProjectTensionFilter
-    , order : OptionalArgument Fractal.InputObject.ProjectTensionOrder
+type alias ProjectStatusesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectColumnOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-projects :
-    (ProjectsOptionalArguments -> ProjectsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.ProjectTension
+project_statuses :
+    (ProjectStatusesOptionalArguments -> ProjectStatusesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumn
     -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
-projects fillInOptionals____ object____ =
+project_statuses fillInOptionals____ object____ =
     let
         filledInOptionals____ =
             fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectTensionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectColumnOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "projects" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "project_statuses" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
@@ -513,21 +513,21 @@ subscribersAggregate fillInOptionals____ object____ =
     Object.selectionForCompositeField "subscribersAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
-type alias ProjectsAggregateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.ProjectTensionFilter }
+type alias ProjectStatusesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
 
 
-projectsAggregate :
-    (ProjectsAggregateOptionalArguments -> ProjectsAggregateOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.ProjectTensionAggregateResult
+project_statusesAggregate :
+    (ProjectStatusesAggregateOptionalArguments -> ProjectStatusesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumnAggregateResult
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
-projectsAggregate fillInOptionals____ object____ =
+project_statusesAggregate fillInOptionals____ object____ =
     let
         filledInOptionals____ =
             fillInOptionals____ { filter = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectTensionFilter ]
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "projectsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+    Object.selectionForCompositeField "project_statusesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

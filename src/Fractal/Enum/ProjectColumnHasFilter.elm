@@ -12,13 +12,15 @@ type ProjectColumnHasFilter
     | Description
     | Color
     | Pos
-    | Tensions
+    | Col_type
+    | Cards
     | Project
+    | Tensions
 
 
 list : List ProjectColumnHasFilter
 list =
-    [ Name, Description, Color, Pos, Tensions, Project ]
+    [ Name, Description, Color, Pos, Col_type, Cards, Project, Tensions ]
 
 
 decoder : Decoder ProjectColumnHasFilter
@@ -39,11 +41,17 @@ decoder =
                     "pos" ->
                         Decode.succeed Pos
 
-                    "tensions" ->
-                        Decode.succeed Tensions
+                    "col_type" ->
+                        Decode.succeed Col_type
+
+                    "cards" ->
+                        Decode.succeed Cards
 
                     "project" ->
                         Decode.succeed Project
+
+                    "tensions" ->
+                        Decode.succeed Tensions
 
                     _ ->
                         Decode.fail ("Invalid ProjectColumnHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -67,11 +75,17 @@ toString enum____ =
         Pos ->
             "pos"
 
-        Tensions ->
-            "tensions"
+        Col_type ->
+            "col_type"
+
+        Cards ->
+            "cards"
 
         Project ->
             "project"
+
+        Tensions ->
+            "tensions"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -100,11 +114,17 @@ fromString enumString____ =
         "pos" ->
             Just Pos
 
-        "tensions" ->
-            Just Tensions
+        "col_type" ->
+            Just Col_type
+
+        "cards" ->
+            Just Cards
 
         "project" ->
             Just Project
+
+        "tensions" ->
+            Just Tensions
 
         _ ->
             Nothing

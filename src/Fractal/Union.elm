@@ -5,5 +5,9 @@
 module Fractal.Union exposing (..)
 
 
+type CardKind
+    = CardKind
+
+
 type EventKind
     = EventKind

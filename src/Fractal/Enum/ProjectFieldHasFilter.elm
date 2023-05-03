@@ -8,14 +8,14 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type ProjectFieldHasFilter
-    = Type_
+    = Field_type
     | IsVisible
     | Values
 
 
 list : List ProjectFieldHasFilter
 list =
-    [ Type_, IsVisible, Values ]
+    [ Field_type, IsVisible, Values ]
 
 
 decoder : Decoder ProjectFieldHasFilter
@@ -24,8 +24,8 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "type_" ->
-                        Decode.succeed Type_
+                    "field_type" ->
+                        Decode.succeed Field_type
 
                     "isVisible" ->
                         Decode.succeed IsVisible
@@ -43,8 +43,8 @@ decoder =
 toString : ProjectFieldHasFilter -> String
 toString enum____ =
     case enum____ of
-        Type_ ->
-            "type_"
+        Field_type ->
+            "field_type"
 
         IsVisible ->
             "isVisible"
@@ -67,8 +67,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe ProjectFieldHasFilter
 fromString enumString____ =
     case enumString____ of
-        "type_" ->
-            Just Type_
+        "field_type" ->
+            Just Field_type
 
         "isVisible" ->
             Just IsVisible

@@ -2,62 +2,41 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.ProjectTensionHasFilter exposing (..)
+module Fractal.Enum.ProjectCardOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type ProjectTensionHasFilter
-    = Tension
-    | Pos
-    | Pc
-    | Values
+type ProjectCardOrderable
+    = Pos
 
 
-list : List ProjectTensionHasFilter
+list : List ProjectCardOrderable
 list =
-    [ Tension, Pos, Pc, Values ]
+    [ Pos ]
 
 
-decoder : Decoder ProjectTensionHasFilter
+decoder : Decoder ProjectCardOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "tension" ->
-                        Decode.succeed Tension
-
                     "pos" ->
                         Decode.succeed Pos
 
-                    "pc" ->
-                        Decode.succeed Pc
-
-                    "values" ->
-                        Decode.succeed Values
-
                     _ ->
-                        Decode.fail ("Invalid ProjectTensionHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ProjectCardOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : ProjectTensionHasFilter -> String
+toString : ProjectCardOrderable -> String
 toString enum____ =
     case enum____ of
-        Tension ->
-            "tension"
-
         Pos ->
             "pos"
-
-        Pc ->
-            "pc"
-
-        Values ->
-            "values"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -71,20 +50,11 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe ProjectTensionHasFilter
+fromString : String -> Maybe ProjectCardOrderable
 fromString enumString____ =
     case enumString____ of
-        "tension" ->
-            Just Tension
-
         "pos" ->
             Just Pos
-
-        "pc" ->
-            Just Pc
-
-        "values" ->
-            Just Values
 
         _ ->
             Nothing

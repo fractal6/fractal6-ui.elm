@@ -2,55 +2,48 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.ProjectFieldValueHasFilter exposing (..)
+module Fractal.Enum.ProjectColumnType exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type ProjectFieldValueHasFilter
-    = Field
-    | Value
-    | Pos
+type ProjectColumnType
+    = NormalColumn
+    | NoStatusColumn
 
 
-list : List ProjectFieldValueHasFilter
+list : List ProjectColumnType
 list =
-    [ Field, Value, Pos ]
+    [ NormalColumn, NoStatusColumn ]
 
 
-decoder : Decoder ProjectFieldValueHasFilter
+decoder : Decoder ProjectColumnType
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "field" ->
-                        Decode.succeed Field
+                    "NormalColumn" ->
+                        Decode.succeed NormalColumn
 
-                    "value" ->
-                        Decode.succeed Value
-
-                    "pos" ->
-                        Decode.succeed Pos
+                    "NoStatusColumn" ->
+                        Decode.succeed NoStatusColumn
 
                     _ ->
-                        Decode.fail ("Invalid ProjectFieldValueHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ProjectColumnType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : ProjectFieldValueHasFilter -> String
+toString : ProjectColumnType -> String
 toString enum____ =
     case enum____ of
-        Field ->
-            "field"
+        NormalColumn ->
+            "NormalColumn"
 
-        Value ->
-            "value"
-
-        Pos ->
-            "pos"
+        NoStatusColumn ->
+            "NoStatusColumn"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +57,14 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe ProjectFieldValueHasFilter
+fromString : String -> Maybe ProjectColumnType
 fromString enumString____ =
     case enumString____ of
-        "field" ->
-            Just Field
+        "NormalColumn" ->
+            Just NormalColumn
 
-        "value" ->
-            Just Value
-
-        "pos" ->
-            Just Pos
+        "NoStatusColumn" ->
+            Just NoStatusColumn
 
         _ ->
             Nothing

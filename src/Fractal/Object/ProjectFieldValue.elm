@@ -42,3 +42,8 @@ field fillInOptionals____ object____ =
 value : SelectionSet String Fractal.Object.ProjectFieldValue
 value =
     Object.selectionForField "String" "value" [] Decode.string
+
+
+pos : SelectionSet (Maybe Int) Fractal.Object.ProjectFieldValue
+pos =
+    Object.selectionForField "(Maybe Int)" "pos" [] (Decode.int |> Decode.nullable)

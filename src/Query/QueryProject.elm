@@ -20,25 +20,33 @@
 
 
 module Query.QueryProject exposing
-    ( addProjectColumn
+    ( addProjectCard
+    , addProjectColumn
     , getProject
-    , moveProjectTension
+    , moveProjectCard
     )
 
 import Dict
 import Extra exposing (unwrap, unwrap2)
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.AddProjectCardPayload
+import Fractal.Object.AddProjectColumnPayload
 import Fractal.Object.Project
+import Fractal.Object.ProjectCard
 import Fractal.Object.ProjectColumn
+import Fractal.Object.ProjectDraft
 import Fractal.Object.ProjectField
-import Fractal.Object.ProjectTension
 import Fractal.Object.Tension
+import Fractal.Object.UpdateProjectCardPayload
 import Fractal.Object.UpdateProjectPayload
-import Fractal.Object.UpdateProjectTensionPayload
 import Fractal.Query as Query
+import Fractal.Scalar
+import Fractal.Union
+import Fractal.Union.CardKind
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -72,92 +80,157 @@ projectDataPayload =
         |> with (Fractal.Object.Project.columns identity columnPayload |> withDefaultSelectionMap [])
 
 
+
+--
+-- Patch Project items
+--
+
+
+moveProjectCard url id_ pos colid msg =
+    makeGQLMutation url
+        (Mutation.updateProjectCard
+            { input =
+                Input.buildUpdateProjectCardInput { filter = Input.buildProjectCardFilter (oneId id_) }
+                    (\_ ->
+                        { set =
+                            Input.buildProjectCardPatch
+                                (\a ->
+                                    { a
+                                        | pos = Present pos
+                                        , pc = Input.buildProjectColumnRef (\b -> { b | id = Present (encodeId colid) }) |> Present
+
+                                        -- @todo: update cardKind (edit title / ard from separate view)
+                                    }
+                                )
+                                |> Present
+                        , remove = Absent
+                        }
+                    )
+            }
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectCardPayload.projectCard identity
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.ProjectCard.id)
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+
+--
+-- Add projects items
+--
+
+
+addProjectColumn url form msg =
+    makeGQLMutation url
+        (Mutation.addProjectColumn
+            { input =
+                [ Input.buildAddProjectColumnInput
+                    { name = Dict.get "name" form.post |> withDefault ""
+                    , pos = form.pos |> withDefault 0
+                    , col_type = ProjectColumnType.NormalColumn
+                    , project = Input.buildProjectRef (\a -> { a | id = Present (encodeId form.projectid) })
+                    }
+                    (\x ->
+                        { x
+                            | description = fromMaybe (Dict.get "description" form.post)
+                            , color = fromMaybe (Dict.get "color" form.post)
+                        }
+                    )
+                ]
+            }
+            --RequestResult (List String) (Maybe.Maybe (List (Maybe.Maybe ProjectColumn)))
+            (SelectionSet.map (unwrap2 Nothing List.head) <|
+                Fractal.Object.AddProjectColumnPayload.projectColumn identity
+                    columnPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+addProjectCard url form msg =
+    makeGQLMutation url
+        (Mutation.addProjectCard
+            { input =
+                form.tids
+                    |> List.map
+                        (\tid_m ->
+                            Input.buildAddProjectCardInput
+                                { pc = Input.buildProjectColumnRef (\a -> { a | id = Present (encodeId form.colid) })
+                                , pos = form.pos |> withDefault 0
+                                , card =
+                                    case tid_m of
+                                        Just tid ->
+                                            -- add tension card
+                                            Input.buildCardKindRef (\a -> { a | tensionRef = Input.buildTensionRef (\b -> { b | id = Present (encodeId tid) }) |> Present })
+
+                                        Nothing ->
+                                            -- add draft card
+                                            Input.buildCardKindRef
+                                                (\a ->
+                                                    { a
+                                                        | projectDraftRef =
+                                                            Input.buildProjectDraftRef
+                                                                (\b ->
+                                                                    { b
+                                                                        | title = fromMaybe (Dict.get "title" form.post)
+                                                                        , message = fromMaybe (Dict.get "message" form.post)
+                                                                        , createdAt = Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime |> Present
+                                                                        , createdBy = Input.buildUserRef (\u -> { u | username = Present form.uctx.username }) |> Present
+                                                                    }
+                                                                )
+                                                                |> Present
+                                                    }
+                                                )
+                                }
+                                identity
+                        )
+            }
+            (SelectionSet.map (unwrap2 Nothing List.head) <|
+                Fractal.Object.AddProjectCardPayload.projectCard identity
+                    projectCardPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+
+---
+--- PAYLOAD
+---
+
+
 columnPayload : SelectionSet ProjectColumn Fractal.Object.ProjectColumn
 columnPayload =
     SelectionSet.succeed ProjectColumn
         |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.ProjectColumn.name
         |> with Fractal.Object.ProjectColumn.pos
-        |> with
-            (Fractal.Object.ProjectColumn.tensions identity
-                (SelectionSet.succeed ProjectTension
-                    |> with (Fractal.Object.ProjectTension.id |> SelectionSet.map decodedId)
-                    |> with Fractal.Object.ProjectTension.pos
-                    |> with (Fractal.Object.ProjectTension.tension identity tensionPayload)
-                )
-                |> withDefaultSelectionMap []
-            )
+        |> with (Fractal.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
 
 
-
---
--- Patch Project
---
-
-
-moveProjectTension url id_ pos colid msg =
-    makeGQLMutation url
-        (Mutation.updateProjectTension
-            { input =
-                Input.buildUpdateProjectTensionInput { filter = Input.buildProjectTensionFilter (oneId id_) }
-                    (\_ ->
-                        { set = Absent
-                        , remove = Absent
-                        }
-                    )
-            }
-            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectTensionPayload.projectTension identity
-                    (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectTension.id)
-                    )
-                )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+projectCardPayload : SelectionSet ProjectCard Fractal.Object.ProjectCard
+projectCardPayload =
+    SelectionSet.succeed ProjectCard
+        |> with (Fractal.Object.ProjectCard.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectCard.pos
+        |> with (Fractal.Object.ProjectCard.card identity cardPayload)
 
 
-addProjectColumn url form msg =
-    let
-        name_m =
-            Dict.get "name" form.post
+cardPayload : SelectionSet CardKind Fractal.Union.CardKind
+cardPayload =
+    Fractal.Union.CardKind.fragments
+        { onTension = SelectionSet.map CardTension tensionPayload
+        , onProjectDraft = SelectionSet.map CardDraft draftPayload
+        }
 
-        column =
-            Input.buildProjectColumnRef
-                (\i ->
-                    { i
-                        | name = fromMaybe name_m
-                        , description = fromMaybe (Dict.get "description" form.post)
-                        , color = fromMaybe (Dict.get "color" form.post)
-                        , pos = fromMaybe form.pos
-                    }
-                )
-    in
-    makeGQLMutation url
-        (Mutation.updateProject
-            { input =
-                Input.buildUpdateProjectInput { filter = Input.buildProjectFilter (oneId form.projectid) }
-                    (\_ ->
-                        { set = Input.buildProjectPatch (\i -> { i | columns = Present [ column ] }) |> Present
-                        , remove = Absent
-                        }
-                    )
-            }
-            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectPayload.project identity
-                    (SelectionSet.map (withDefault [] >> List.head)
-                        (Fractal.Object.Project.columns
-                            (\b ->
-                                { b
-                                    | filter =
-                                        Input.buildProjectColumnFilter (\c -> { c | name = fromMaybe <| Maybe.map (\name -> { eq = Present name, in_ = Absent }) name_m })
-                                            |> Present
-                                }
-                            )
-                            columnPayload
-                        )
-                    )
-                )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+draftPayload : SelectionSet ProjectDraft Fractal.Object.ProjectDraft
+draftPayload =
+    SelectionSet.succeed ProjectDraft
+        |> with (Fractal.Object.ProjectDraft.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectDraft.title
+        |> with Fractal.Object.ProjectDraft.message

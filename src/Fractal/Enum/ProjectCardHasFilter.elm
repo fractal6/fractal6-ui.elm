@@ -2,55 +2,62 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.ProjectFieldValueHasFilter exposing (..)
+module Fractal.Enum.ProjectCardHasFilter exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type ProjectFieldValueHasFilter
-    = Field
-    | Value
-    | Pos
+type ProjectCardHasFilter
+    = Pos
+    | Card
+    | Pc
+    | Values
 
 
-list : List ProjectFieldValueHasFilter
+list : List ProjectCardHasFilter
 list =
-    [ Field, Value, Pos ]
+    [ Pos, Card, Pc, Values ]
 
 
-decoder : Decoder ProjectFieldValueHasFilter
+decoder : Decoder ProjectCardHasFilter
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "field" ->
-                        Decode.succeed Field
-
-                    "value" ->
-                        Decode.succeed Value
-
                     "pos" ->
                         Decode.succeed Pos
 
+                    "card" ->
+                        Decode.succeed Card
+
+                    "pc" ->
+                        Decode.succeed Pc
+
+                    "values" ->
+                        Decode.succeed Values
+
                     _ ->
-                        Decode.fail ("Invalid ProjectFieldValueHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ProjectCardHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : ProjectFieldValueHasFilter -> String
+toString : ProjectCardHasFilter -> String
 toString enum____ =
     case enum____ of
-        Field ->
-            "field"
-
-        Value ->
-            "value"
-
         Pos ->
             "pos"
+
+        Card ->
+            "card"
+
+        Pc ->
+            "pc"
+
+        Values ->
+            "values"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +71,20 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe ProjectFieldValueHasFilter
+fromString : String -> Maybe ProjectCardHasFilter
 fromString enumString____ =
     case enumString____ of
-        "field" ->
-            Just Field
-
-        "value" ->
-            Just Value
-
         "pos" ->
             Just Pos
+
+        "card" ->
+            Just Card
+
+        "pc" ->
+            Just Pc
+
+        "values" ->
+            Just Values
 
         _ ->
             Nothing

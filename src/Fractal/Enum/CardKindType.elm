@@ -2,41 +2,48 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.ProjectTensionOrderable exposing (..)
+module Fractal.Enum.CardKindType exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type ProjectTensionOrderable
-    = Pos
+type CardKindType
+    = Tension
+    | ProjectDraft
 
 
-list : List ProjectTensionOrderable
+list : List CardKindType
 list =
-    [ Pos ]
+    [ Tension, ProjectDraft ]
 
 
-decoder : Decoder ProjectTensionOrderable
+decoder : Decoder CardKindType
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "pos" ->
-                        Decode.succeed Pos
+                    "Tension" ->
+                        Decode.succeed Tension
+
+                    "ProjectDraft" ->
+                        Decode.succeed ProjectDraft
 
                     _ ->
-                        Decode.fail ("Invalid ProjectTensionOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid CardKindType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : ProjectTensionOrderable -> String
+toString : CardKindType -> String
 toString enum____ =
     case enum____ of
-        Pos ->
-            "pos"
+        Tension ->
+            "Tension"
+
+        ProjectDraft ->
+            "ProjectDraft"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -50,11 +57,14 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe ProjectTensionOrderable
+fromString : String -> Maybe CardKindType
 fromString enumString____ =
     case enumString____ of
-        "pos" ->
-            Just Pos
+        "Tension" ->
+            Just Tension
+
+        "ProjectDraft" ->
+            Just ProjectDraft
 
         _ ->
             Nothing
