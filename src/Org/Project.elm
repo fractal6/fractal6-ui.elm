@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Board exposing (viewBoard)
+import Bulk.Board2 exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
@@ -61,7 +61,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (getProject, moveProjectTension)
+import Query.QueryProject exposing (getProject, moveProjectCard)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
@@ -394,15 +394,10 @@ update global message model =
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         DoLoad ->
-            ( model
-            , Cmd.batch
-                [ getProject apis model.projectid GotProject
-                ]
-            , Cmd.none
-            )
+            ( model, Cmd.batch [ getProject apis model.projectid GotProject ], Cmd.none )
 
         GotProject result ->
-            ( { model | project_data = result }, Cmd.none, Cmd.none )
+            ( { model | project_data = result }, Task.attempt FitBoard (Dom.getElement "projectView"), Cmd.none )
 
         -- Board
         OnResize w h ->
@@ -415,11 +410,8 @@ update global message model =
 
                 newConf =
                     { conf | screen = newScreen }
-
-                elmId =
-                    "projectView"
             in
-            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
+            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement "projectView"), send (UpdateSessionScreen newScreen) )
 
         FitBoard elt ->
             case elt of
@@ -462,9 +454,12 @@ update global message model =
                         let
                             j =
                                 Maybe.map .pos model.movingHoverT |> withDefault -1
+
+                            form =
+                                {}
                         in
                         ( { newModel | moveFifo = Fifo.insert ( j, t ) model.moveFifo }
-                        , moveProjectTension apis t.id pos to_receiverid GotCardMoved
+                        , moveProjectCard apis t.id pos to_receiverid GotCardMoved
                         , Cmd.none
                         )
                 )
@@ -791,14 +786,14 @@ viewProject data model =
             data.columns |> List.sortBy .pos |> List.map .name
 
         dict_data =
-            data.columns |> List.map (\x -> ( x.name, List.sortBy .pos x.tensions |> List.map .tension )) |> Dict.fromList
+            data.columns |> List.map (\x -> ( x.name, List.sortBy .pos x.cards )) |> Dict.fromList
 
-        header : String -> String -> Maybe Tension -> Html Msg
-        header key title t_m =
+        header : String -> String -> Maybe ProjectCard -> Html Msg
+        header key title _ =
             span []
                 [ text title
                 , span
-                    [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
+                    [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
 
                     --  It's distracting for for the eyes (works with onMouseEnter below)
                     --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]

@@ -19,7 +19,7 @@
 -}
 
 
-module Bulk.Board exposing (..)
+module Bulk.Board2 exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..))
@@ -33,7 +33,7 @@ import Html.Attributes exposing (attribute, class, classList, id, style)
 import Html.Events exposing (onClick)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Tension)
+import ModelSchema exposing (CardKind(..), ProjectCard, ProjectDraft, Tension)
 import Session exposing (Conf)
 import Text as T
 
@@ -78,20 +78,20 @@ The function returns an HTML structure which displays the board with each column
 This function generates a drag-and-drop board with the ability to move tension items around.
 
 -}
-viewBoard : Op msg -> (String -> String -> Maybe Tension -> Html msg) -> List ( String, String ) -> Dict String (List Tension) -> Html msg
+viewBoard : Op msg -> (String -> String -> Maybe ProjectCard -> Html msg) -> List ( String, String ) -> Dict String (List ProjectCard) -> Html msg
 viewBoard op header keys_title data =
     keys_title
         |> List.indexedMap
             (\i ( key, name ) ->
                 let
-                    tensions =
+                    cards =
                         Dict.get key data |> withDefault []
 
                     j_last =
-                        List.length tensions - 1
+                        List.length cards - 1
 
                     t_m =
-                        List.head tensions
+                        List.head cards
                 in
                 [ div
                     (class "column is-3"
@@ -108,26 +108,26 @@ viewBoard op header keys_title data =
                             []
                     )
                     [ div [ class "subtitle is-aligned-center mb-0 pb-3" ] [ header key name t_m ]
-                    , tensions
+                    , cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                         |> List.indexedMap
-                            (\j t ->
+                            (\j card ->
                                 let
                                     draggedTid =
                                         Maybe.map .id op.movingTension
 
                                     itemDragged =
-                                        draggedTid == Just t.id
+                                        draggedTid == Just card.id
 
                                     upperTid =
-                                        LE.getAt (j - 1) tensions |> Maybe.map .id
+                                        LE.getAt (j - 1) cards |> Maybe.map .id
 
                                     isHoveredUp =
                                         -- exclude the dragged item
                                         not itemDragged
-                                            -- hovered tension
-                                            && (Maybe.map .tid op.movingHoverT == Just t.id)
+                                            -- hovered card
+                                            && (Maybe.map .tid op.movingHoverT == Just card.id)
                                             -- exclude if the dragged item is next
                                             && (draggedTid /= upperTid)
 
@@ -149,26 +149,31 @@ viewBoard op header keys_title data =
                                             []
                                 in
                                 [ ternary isHoveredUp draggingDiv (text "")
-                                , div
-                                    (class "box is-shrinked2 mb-2 mx-2"
-                                        :: ternary op.hasTaskMove
-                                            [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
-                                            , attribute "draggable" "true"
-                                            , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| op.onMove { pos = i, to_receiverid = t.receiver.nameid } t
-                                            , onDragEnd op.onEndMove
-                                            , onDragEnter (op.onMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
-                                            ]
-                                            []
-                                        ++ (if j_last == j && op.hasTaskMove then
-                                                -- reset hoverT to draw below
-                                                [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
+                                , case card.card of
+                                    CardTension t ->
+                                        div
+                                            (class "box is-shrinked2 mb-2 mx-2"
+                                                :: ternary op.hasTaskMove
+                                                    [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
+                                                    , attribute "draggable" "true"
+                                                    , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
+                                                    , onDragStart <| op.onMove { pos = i, to_receiverid = t.receiver.nameid } t
+                                                    , onDragEnd op.onEndMove
+                                                    , onDragEnter (op.onMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
+                                                    ]
+                                                    []
+                                                ++ (if j_last == j && op.hasTaskMove then
+                                                        -- reset hoverT to draw below
+                                                        [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
 
-                                            else
-                                                []
-                                           )
-                                    )
-                                    [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
+                                                    else
+                                                        []
+                                                   )
+                                            )
+                                            [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
+
+                                    CardDraft d ->
+                                        viewDraft d
                                 , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )
@@ -205,7 +210,7 @@ viewBoard op header keys_title data =
 
 viewNewCol : Op msg -> Html msg
 viewNewCol op =
-    div [ class "column is-2" ]
+    div [ class "column is-2 ml-2" ]
         [ div
             [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
             , style "width" "100%"
@@ -213,3 +218,8 @@ viewNewCol op =
             ]
             [ A.icon1 "icon-plus" "Add column" ]
         ]
+
+
+viewDraft : ProjectDraft -> Html msg
+viewDraft d =
+    text "todo"

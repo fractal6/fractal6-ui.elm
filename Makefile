@@ -40,7 +40,7 @@ dev:
 gen:
 	# Remove all directive due to a bug of elm-graphql who
 	# does not support multiple directive on the same field.
-	sed -E  "s/^directive .*$$//g;  s/@[[:alnum:]_]+\([^\)]+\)//g; s/@[[:alnum:]_]+//g;"  ../fractal6-schema/gen/schema.graphql  > schema.gql
+	sed -E  "s/^directive .*$$//g;  s/@[[:alnum:]_]+\([^\)]+\)//g; s/@[[:alnum:]_]+//g;" ../fractal6.go/schema/schema.graphql > schema.gql
 	npm run graphql_build
 	rm schema.gql
 

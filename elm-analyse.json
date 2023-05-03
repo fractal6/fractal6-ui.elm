@@ -19,5 +19,5 @@
     "UseConsOverConcat": true,
     "MissingTypeAnnotation": false
   },
-  "excludedPaths": [""]
+  "excludedPaths": ["snippets/"]
 }

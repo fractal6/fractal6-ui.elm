@@ -2070,7 +2070,7 @@ viewCircleTensions model =
                                 )
                             |> withDefault (text "Loading...")
                         , span
-                            [ class "tag is-rounded button-light is-w has-border is-pulled-right ml-1"
+                            [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
 
                             --  It's distracting for for the eyes (works with onMouseEnter below)
                             --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]

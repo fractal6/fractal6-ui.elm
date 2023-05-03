@@ -1,7 +1,9 @@
-# Elm
+# Js / Elm
 elm-stuff/
 node_modules/
 dist/
+
+# Dev
 releases/
 review/
 

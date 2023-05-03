@@ -628,14 +628,26 @@ type alias ProjectColumn =
     { id : String
     , name : String
     , pos : Int
-    , tensions : List ProjectTension
+    , cards : List ProjectCard
     }
 
 
-type alias ProjectTension =
+type alias ProjectCard =
     { id : String
     , pos : Int
-    , tension : Tension
+    , card : CardKind
+    }
+
+
+type CardKind
+    = CardTension Tension
+    | CardDraft ProjectDraft
+
+
+type alias ProjectDraft =
+    { id : String
+    , title : String
+    , message : Maybe String
     }
 
 
