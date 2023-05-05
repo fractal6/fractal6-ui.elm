@@ -282,8 +282,15 @@ input[type="checkbox"] {
         background-color: initial !important;
     }
 }
-a.is-link {
+a.is-link {;
     color: var(--link2) !important;
+}
+.link-like {
+    &:hover {
+        color: var(--link);
+        cursor: pointer !important;
+        text-decoration: underline;
+    }
 }
 .is-grey {
     color: var(--grey) !important;
@@ -946,12 +953,17 @@ span[data-tooltip] {
 
 .f6-notification {
     position: fixed;
-    top: calc(#{$navbar-height} * 2 + 0.5em);
+    top: calc(#{$navbar-height} + 0.5em);
     left: 50%;
-    -webkit-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
     max-width: 50%;
     min-width: 250px;
+    & > div {
+        // do not hide delete button when there is overflow.
+        max-height: 200px;
+        overflow: scroll;
+    }
 }
 
 
@@ -2151,6 +2163,14 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     }
 }
 
+.kb-board.board2 {
+    .kb-card {
+        & *:hover {
+            cursor: grab;
+        }
+    }
+}
+
 /*
  *
  * Graph Pack Canvas
@@ -3136,10 +3156,11 @@ i.is-liked {
     max-width: 33%;
 }
 
+// wrap text, keep it in one line.:
 .is-wrapped {
     max-width: 100%;
-    text-overflow: ellipsis;
     overflow: hidden;
+    text-overflow: ellipsis;
 }
 .nowrap {
     white-space: nowrap;

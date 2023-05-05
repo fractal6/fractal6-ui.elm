@@ -91,6 +91,36 @@ viewGqlErrors errMsg =
         |> div [ class "f6-error message is-danger is-light mt-2" ]
 
 
+viewGqlErrorsLight : ErrorData -> Html msg
+viewGqlErrorsLight errMsg =
+    errMsg
+        |> List.map
+            (\e ->
+                let
+                    err =
+                        case JD.decodeString errorsDecoder e of
+                            Ok err_ ->
+                                err_.errors
+                                    |> List.head
+                                    |> Maybe.map (\x -> upH x.message)
+                                    |> withDefault e
+
+                            Err err_ ->
+                                case JD.decodeString (JD.list errorDecoder) e of
+                                    Ok err2_ ->
+                                        err2_
+                                            |> List.head
+                                            |> Maybe.map (\x -> upH x.message)
+                                            |> withDefault e
+
+                                    Err t ->
+                                        e
+                in
+                renderMarkdown "is-light f6-error" err
+            )
+        |> div []
+
+
 viewAuthNeeded : (ModalData -> msg) -> Html msg
 viewAuthNeeded onClose =
     div [ class "modal-card" ]

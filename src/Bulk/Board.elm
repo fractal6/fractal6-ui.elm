@@ -160,13 +160,10 @@ viewBoard op header keys_title data =
                                             , onDragEnter (op.onMoveEnterT { pos = j, tid = t.id, to_receiverid = t.receiver.nameid })
                                             ]
                                             []
-                                        ++ (if j_last == j && op.hasTaskMove then
-                                                -- reset hoverT to draw below
-                                                [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
-
-                                            else
-                                                []
-                                           )
+                                        ++ ternary (j_last == j && op.hasTaskMove)
+                                            -- reset hoverT to draw below
+                                            [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
+                                            []
                                     )
                                     [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
                                 , ternary hasLastColumn draggingDiv (text "")
@@ -180,13 +177,12 @@ viewBoard op header keys_title data =
             )
         |> List.concat
         |> (\x ->
-                x
-                    ++ (if op.hasNewCol then
-                            [ viewNewCol op ]
+                -- View New Col Button
+                if op.hasNewCol then
+                    x ++ [ viewNewCol op ]
 
-                        else
-                            []
-                       )
+                else
+                    x
            )
         |> div
             [ id op.boardId

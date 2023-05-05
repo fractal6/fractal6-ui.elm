@@ -43,6 +43,7 @@ import Fractal.Object.ProjectField
 import Fractal.Object.Tension
 import Fractal.Object.UpdateProjectCardPayload
 import Fractal.Object.UpdateProjectPayload
+import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.Union
@@ -52,6 +53,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData
 import String.Extra as SE
@@ -77,7 +79,7 @@ projectDataPayload =
     SelectionSet.succeed ProjectData
         |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Project.name
-        |> with (Fractal.Object.Project.columns identity columnPayload |> withDefaultSelectionMap [])
+        |> with (Fractal.Object.Project.columns identity columnPayload |> withDefaultSelectionMap [] |> SelectionSet.map (List.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards })))
 
 
 
@@ -143,12 +145,11 @@ addProjectColumn url form msg =
                 ]
             }
             --RequestResult (List String) (Maybe.Maybe (List (Maybe.Maybe ProjectColumn)))
-            (SelectionSet.map (unwrap2 Nothing List.head) <|
-                Fractal.Object.AddProjectColumnPayload.projectColumn identity
-                    columnPayload
+            (SelectionSet.map (unwrap2 Nothing List.head)
+                (Fractal.Object.AddProjectColumnPayload.projectColumn identity columnPayload)
             )
         )
-        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing >> Maybe.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards })) >> msg)
 
 
 addProjectCard url form msg =
@@ -160,7 +161,7 @@ addProjectCard url form msg =
                         (\tid_m ->
                             Input.buildAddProjectCardInput
                                 { pc = Input.buildProjectColumnRef (\a -> { a | id = Present (encodeId form.colid) })
-                                , pos = form.pos |> withDefault 0
+                                , pos = form.pos
                                 , card =
                                     case tid_m of
                                         Just tid ->
@@ -176,7 +177,7 @@ addProjectCard url form msg =
                                                             Input.buildProjectDraftRef
                                                                 (\b ->
                                                                     { b
-                                                                        | title = fromMaybe (Dict.get "title" form.post)
+                                                                        | title = Present form.title
                                                                         , message = fromMaybe (Dict.get "message" form.post)
                                                                         , createdAt = Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime |> Present
                                                                         , createdBy = Input.buildUserRef (\u -> { u | username = Present form.uctx.username }) |> Present
@@ -194,7 +195,7 @@ addProjectCard url form msg =
                     projectCardPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing >> Maybe.map (\a -> { a | colid = form.colid })) >> msg)
 
 
 
@@ -216,6 +217,7 @@ projectCardPayload : SelectionSet ProjectCard Fractal.Object.ProjectCard
 projectCardPayload =
     SelectionSet.succeed ProjectCard
         |> with (Fractal.Object.ProjectCard.id |> SelectionSet.map decodedId)
+        |> hardcoded ""
         |> with Fractal.Object.ProjectCard.pos
         |> with (Fractal.Object.ProjectCard.card identity cardPayload)
 
@@ -223,7 +225,9 @@ projectCardPayload =
 cardPayload : SelectionSet CardKind Fractal.Union.CardKind
 cardPayload =
     Fractal.Union.CardKind.fragments
-        { onTension = SelectionSet.map CardTension tensionPayload
+        -- @DEBUG: agregate subquery doesn seems to work !!!
+        --{ onTension = SelectionSet.map CardTension tensionPayload
+        { onTension = SelectionSet.map CardTension tensionPayload2
         , onProjectDraft = SelectionSet.map CardDraft draftPayload
         }
 
@@ -234,3 +238,26 @@ draftPayload =
         |> with (Fractal.Object.ProjectDraft.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.ProjectDraft.title
         |> with Fractal.Object.ProjectDraft.message
+
+
+
+--
+-- Utils
+--
+
+
+tensionPayload2 : SelectionSet Tension Fractal.Object.Tension
+tensionPayload2 =
+    SelectionSet.succeed Tension
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with (Fractal.Object.Tension.labels identity labelPayload)
+        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.status
+        |> hardcoded Nothing
+        |> hardcoded Nothing
