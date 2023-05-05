@@ -179,7 +179,7 @@ type alias Model =
     -- Board
     , boardHeight : Maybe Float
     , hover_column : Maybe String
-    , movingTension : Maybe ProjectCard
+    , movingCard : Maybe ProjectCard
     , moveFifo : Fifo ( String, Int, ProjectCard )
     , movingHoverCol : Maybe { pos : Int, to_colid : String }
     , movingHoverT : Maybe { pos : Int, cardid : String, to_colid : String }
@@ -255,7 +255,7 @@ init global flags =
             -- Board
             , boardHeight = Nothing
             , hover_column = Nothing
-            , movingTension = Nothing
+            , movingCard = Nothing
             , moveFifo = Fifo.empty
             , movingHoverCol = Nothing
             , movingHoverT = Nothing
@@ -329,14 +329,14 @@ type Msg
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, cardid : String, to_colid : String }
     | OnMoveDrop String
+    | GotCardMoved (GqlData IdPayload)
+      --
     | OnAddCol
     | OnAddDraft String
     | OnDraftEdit String
     | OnDraftKeydown Int
     | OnDraftCancel
     | OnAddDraftAck (GqlData ProjectCard)
-      --
-    | GotCardMoved (GqlData IdPayload)
     | OnClearBoardResult
       -- Common
     | NoMsg
@@ -444,46 +444,47 @@ update global message model =
         OnColumnHover v ->
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
-        OnMove c t ->
-            ( { model | draging = True, dragCount = 0, movingHoverCol = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+        OnMove col card ->
+            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }, Cmd.none, Cmd.none )
 
         OnEndMove ->
             let
                 newModel =
                     { model | draging = False }
-
-                cmds =
-                    [ sendSleep OnCancelHov 300 ]
             in
-            Maybe.map2
-                (\t { pos, to_colid } ->
-                    case model.movingHoverT of
-                        Just c_hover ->
-                            if t.id == c_hover.cardid then
-                                ( newModel, Cmd.batch cmds, Cmd.none )
+            Maybe.map3
+                (\card { pos, to_colid } c_hover ->
+                    if card.id == c_hover.cardid then
+                        ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
-                            else
-                                ( { newModel | moveFifo = Fifo.insert ( to_colid, c_hover.pos, t ) model.moveFifo }
-                                , moveProjectCard apis t.id c_hover.pos to_colid GotCardMoved
-                                , Cmd.none
-                                )
-
-                        Nothing ->
-                            let
-                                d =
-                                    Debug.log "no moving hover T !" ""
-                            in
-                            ( model, Cmd.none, Cmd.none )
+                    else
+                        --let
+                        --    l1 =
+                        --        Debug.log "OnEndMove" ( model.moveFifo, model.board_result )
+                        --in
+                        ( { newModel | moveFifo = Fifo.insert ( to_colid, c_hover.pos, card ) model.moveFifo, board_result = Loading }
+                        , moveProjectCard apis card.id c_hover.pos to_colid GotCardMoved
+                        , Cmd.none
+                        )
                 )
-                model.movingTension
+                model.movingCard
                 model.movingHoverCol
+                model.movingHoverT
                 |> withDefault
-                    ( newModel, Cmd.batch cmds, Cmd.none )
+                    ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
         OnCancelHov ->
+            --let
+            --    l1 =
+            --        Debug.log "Cancel hov" ""
+            --in
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
         OnMoveEnterCol hover reset ->
+            --let
+            --    l1 =
+            --        Debug.log "Enter Col" hover.pos
+            --in
             if Just hover == model.movingHoverCol then
                 if reset then
                     ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
@@ -505,14 +506,65 @@ update global message model =
                 ( model, Cmd.none, Cmd.none )
 
         OnMoveEnterT hover ->
+            --let
+            --    l1 =
+            --        Debug.log "On move enter Card" hover.pos
+            --in
             ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
 
         OnMoveDrop nameid ->
-            ( { model | movingTension = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }
+            -- @not implemented.
+            ( { model | movingCard = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }
             , Cmd.none
             , Cmd.none
             )
 
+        GotCardMoved result ->
+            case result of
+                Failure err ->
+                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
+
+                NotAsked ->
+                    ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    -- Do not wait the query to success to move the column.
+                    let
+                        ( move, fifo ) =
+                            Fifo.remove model.moveFifo
+
+                        ( project_data, newfifo ) =
+                            Maybe.map2
+                                (\data ( colid, pos, c ) ->
+                                    let
+                                        pos_fixed =
+                                            ternary (colid == c.colid && pos > c.pos)
+                                                (pos - 1)
+                                                pos
+
+                                        newData =
+                                            data
+                                                -- Remove the card from old pos
+                                                |> (\d -> { d | columns = removeCard c d.columns })
+                                                -- Add the card in new pos tension to list
+                                                |> (\d -> { d | columns = pushCard { c | colid = colid, pos = pos_fixed } d.columns })
+                                    in
+                                    ( Success newData, fifo )
+                                )
+                                (withMaybeData model.project_data)
+                                move
+                                |> withDefault ( model.project_data, model.moveFifo )
+
+                        cmd =
+                            if List.length (Fifo.toList newfifo) == 0 then
+                                send OnCancelHov
+
+                            else
+                                Cmd.none
+                    in
+                    ( { model | moveFifo = newfifo, project_data = project_data, board_result = NotAsked }, cmd, Cmd.none )
+
+        --
         OnAddCol ->
             let
                 pos =
@@ -584,54 +636,13 @@ update global message model =
                                 )
                                 model.project_data
                     in
-                    ( { model | project_data = project_data, isAddingDraft = Nothing }, Cmd.none, Cmd.none )
+                    ( { model | project_data = project_data, isAddingDraft = Nothing }, send (OnAddDraft c.colid), Cmd.none )
 
                 Failure err ->
                     ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
-
-        --
-        GotCardMoved result ->
-            case result of
-                Failure err ->
-                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
-
-                NotAsked ->
-                    ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    -- Do not wait the query to success to move the column.
-                    let
-                        ( move, fifo ) =
-                            Fifo.remove model.moveFifo
-
-                        ( project_data, newfifo ) =
-                            Maybe.map2
-                                (\data ( colid, pos, c ) ->
-                                    let
-                                        newData =
-                                            data
-                                                -- Add the card in new pos tension to list
-                                                |> (\d -> { d | columns = pushCard { c | colid = colid, pos = pos } d.columns })
-                                                -- Remove the card from old pos
-                                                |> (\d -> { d | columns = removeCard c d.columns })
-                                    in
-                                    ( Success newData, fifo )
-                                )
-                                (withMaybeData model.project_data)
-                                move
-                                |> withDefault ( model.project_data, model.moveFifo )
-
-                        cmd =
-                            if List.length (Fifo.toList newfifo) == 0 then
-                                send OnCancelHov
-
-                            else
-                                Cmd.none
-                    in
-                    ( { model | moveFifo = newfifo, project_data = project_data }, cmd, Cmd.none )
 
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, Cmd.none, Cmd.none )
@@ -962,7 +973,7 @@ viewProject data model =
             , node_focus = model.node_focus
             , boardId = "projectView"
             , boardHeight = model.boardHeight
-            , movingTension = model.movingTension
+            , movingCard = model.movingCard
             , movingHoverCol = model.movingHoverCol
             , movingHoverT = model.movingHoverT
 

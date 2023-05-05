@@ -467,6 +467,9 @@ viewModalContent op (State model) =
 
         isLoading =
             Loading.isLoading model.data_result
+
+        isSendable_ =
+            isSendable model
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
@@ -520,11 +523,14 @@ viewModalContent op (State model) =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button is-light is-success"
-                        , classList [ ( "is-loading", isLoading ) ]
-                        , disabled (not (isSendable model) || isLoading)
-                        , onClick OnColAdd
-                        ]
+                        ([ class "button is-light is-success"
+                         , classList [ ( "is-loading", isLoading ) ]
+                         , disabled (not isSendable_)
+                         ]
+                            ++ ternary (isSendable_ && not isLoading)
+                                [ onClick OnColAdd ]
+                                []
+                        )
                         [ textH (toSubmit model.modal_type) ]
                     ]
                 ]

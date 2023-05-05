@@ -1053,10 +1053,10 @@ viewNewOrEditProject isNew model =
 
         submitOrga =
             if isNew then
-                ternary isSendable [ onClick (Submit <| SubmitAddProject) ] []
+                onClick (Submit <| SubmitAddProject)
 
             else
-                ternary isSendable [ onClick (Submit <| SubmitEditProject) ] []
+                onClick (Submit <| SubmitEditProject)
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
@@ -1135,7 +1135,9 @@ viewNewOrEditProject isNew model =
                              , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                              , disabled (not isSendable)
                              ]
-                                ++ submitOrga
+                                ++ ternary (isSendable && not isLoading)
+                                    [ submitOrga ]
+                                    []
                             )
                             [ text submit_txt ]
                         ]
