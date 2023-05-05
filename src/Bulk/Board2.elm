@@ -59,7 +59,7 @@ type alias Op msg =
     , node_focus : NodeFocus
     , boardId : String
     , boardHeight : Maybe Float
-    , movingTension : Maybe ProjectCard
+    , movingCard : Maybe ProjectCard
     , movingHoverCol : Maybe { pos : Int, to_colid : String }
     , movingHoverT : Maybe { pos : Int, cardid : String, to_colid : String }
 
@@ -133,7 +133,7 @@ viewBoard op header keys_title data =
                             (\j card ->
                                 let
                                     draggedTid =
-                                        Maybe.map .id op.movingTension
+                                        Maybe.map .id op.movingCard
 
                                     itemDragged =
                                         draggedTid == Just card.id

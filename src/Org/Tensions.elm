@@ -1255,15 +1255,12 @@ update global message model =
             let
                 newModel =
                     { model | draging = False }
-
-                cmds =
-                    [ sendSleep OnCancelHov 300 ]
             in
             Maybe.map2
                 (\t { pos, to_receiverid } ->
                     --if t.id == tid then
                     if t.receiver.nameid == to_receiverid then
-                        ( newModel, Cmd.batch cmds, Cmd.none )
+                        ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
                     else
                         let
@@ -1278,7 +1275,7 @@ update global message model =
                 model.movingTension
                 model.movingHoverCol
                 |> withDefault
-                    ( newModel, Cmd.batch cmds, Cmd.none )
+                    ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
