@@ -55,7 +55,7 @@ import Html.Attributes exposing (attribute, class, classList, href, id, style, t
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, isLoading, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -608,8 +608,8 @@ update global message model =
                     --ENTER
                     case model.isAddingDraft of
                         Just form ->
-                            ternary (form.title /= "")
-                                ( model, addProjectCard apis form OnAddDraftAck, Cmd.none )
+                            ternary (form.title /= "" && not (isLoading model.board_result))
+                                ( { model | board_result = Loading }, addProjectCard apis form OnAddDraftAck, Cmd.none )
                                 ( model, Cmd.none, Cmd.none )
 
                         Nothing ->
@@ -636,7 +636,10 @@ update global message model =
                                 )
                                 model.project_data
                     in
-                    ( { model | project_data = project_data, isAddingDraft = Nothing }, send (OnAddDraft c.colid), Cmd.none )
+                    ( { model | project_data = project_data, isAddingDraft = Nothing, board_result = NotAsked }
+                    , send (OnAddDraft c.colid)
+                    , Cmd.none
+                    )
 
                 Failure err ->
                     ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
