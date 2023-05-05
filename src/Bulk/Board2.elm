@@ -26,7 +26,7 @@ import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
 import Bulk.View exposing (mediaTension)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
 import Html exposing (Html, div, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, id, style)
@@ -60,17 +60,16 @@ type alias Op msg =
     , boardId : String
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
-    , movingHoverCol : Maybe { pos : Int, to_colid : String }
-    , movingHoverT : Maybe { pos : Int, cardid : String, to_colid : String }
+    , movingHoverCol : Maybe { pos : Int, colid : String }
+    , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
 
     -- Board Msg
-    , onColumnHover : Maybe String -> msg
-    , onMove : { pos : Int, to_colid : String } -> ProjectCard -> msg
+    , onMove : { pos : Int, colid : String } -> ProjectCard -> msg
     , onCancelHov : msg
     , onEndMove : msg
-    , onMoveEnterCol : { pos : Int, to_colid : String } -> Bool -> msg
+    , onMoveEnterCol : { pos : Int, colid : String } -> Bool -> msg
     , onMoveLeaveCol : msg
-    , onMoveEnterT : { pos : Int, cardid : String, to_colid : String } -> msg
+    , onMoveEnterT : { pos : Int, cardid : String, colid : String } -> msg
     , onMoveDrop : String -> msg
     , noMsg : msg
     , onAddCol : msg
@@ -108,79 +107,49 @@ viewBoard op header keys_title data =
                     j_last =
                         List.length cards - 1
 
-                    t_m =
+                    c1 =
                         List.head cards
                 in
                 [ div
                     (class "column is-3"
                         :: ternary op.hasTaskMove
-                            [ onDragEnter (op.onMoveEnterCol { pos = i, to_colid = colid } False)
+                            [ onDragEnter (op.onMoveEnterCol { pos = i, colid = colid } False)
                             , onDragLeave op.onMoveLeaveCol
 
                             -- @DEBUG doesn't work
                             --, onDrop (OnMoveDrop colid)
                             , attribute "ondragover" "return false"
-
-                            --, onMouseEnter (OnColumnHover (Just colid)
                             ]
                             []
                     )
-                    [ div [ class "subtitle is-aligned-center mb-0 pb-3" ] [ header colid name t_m ]
+                    [ div
+                        [ class "subtitle is-aligned-center mb-0 pb-3"
+                        , onDragEnter (op.onMoveEnterT { pos = unwrap 0 .pos c1, cardid = unwrap "" .id c1, colid = colid })
+                        ]
+                        [ header colid name c1 ]
                     , cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                         |> List.indexedMap
                             (\j card ->
-                                let
-                                    draggedTid =
-                                        Maybe.map .id op.movingCard
-
-                                    itemDragged =
-                                        draggedTid == Just card.id
-
-                                    upperTid =
-                                        LE.getAt (j - 1) cards |> Maybe.map .id
-
-                                    isHoveredUp =
-                                        -- exclude the dragged item
-                                        not itemDragged
-                                            -- hovered card
-                                            && (Maybe.map .cardid op.movingHoverT == Just card.id)
-                                            -- exclude if the dragged item is next
-                                            && (draggedTid /= upperTid)
-
-                                    hasLastColumn =
-                                        -- exclude the dragged item
-                                        not itemDragged
-                                            -- nothing to drag
-                                            && (op.movingHoverT == Nothing)
-                                            -- last item
-                                            && (j_last == j && Maybe.map .pos op.movingHoverCol == Just i)
-
-                                    draggingDiv =
-                                        div
-                                            [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
-                                            , style "opacity" "0.6"
-
-                                            --, style "height" "0rem"
-                                            ]
-                                            []
-                                in
-                                [ ternary isHoveredUp draggingDiv (text "")
+                                [ -- Elm bug#1: if you remove this empty text
+                                  --  It seems to be related/caused by the function composition to set an attribute
+                                  --  in addProjectCardFunction response decoder
+                                  text ""
                                 , div
                                     (class "box is-shrinked2 mb-2 mx-2 kb-card"
                                         :: ternary op.hasTaskMove
                                             [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| op.onMove { pos = i, to_colid = colid } card
+                                            , onDragStart <| op.onMove { pos = i, colid = colid } card
                                             , onDragEnd op.onEndMove
-                                            , onDragEnter (op.onMoveEnterT { pos = j, cardid = card.id, to_colid = colid })
+                                            , onDragEnter (op.onMoveEnterT { pos = j, cardid = card.id, colid = colid })
                                             ]
                                             []
                                         ++ ternary (j_last == j && op.hasTaskMove)
                                             -- reset hoverT to draw below
-                                            [ onDragLeave (op.onMoveEnterCol { pos = i, to_colid = colid } True) ]
+                                            [ onDragLeave (op.onMoveEnterCol { pos = i, colid = colid } True) ]
                                             []
                                     )
                                     (case card.card of
@@ -190,7 +159,6 @@ viewBoard op header keys_title data =
                                         CardDraft d ->
                                             [ Lazy.lazy viewMediaDraft d ]
                                     )
-                                , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )
                         |> List.concat
@@ -205,7 +173,20 @@ viewBoard op header keys_title data =
                                             x
 
                                     Nothing ->
-                                        x
+                                        -- Add potential draggind div
+                                        case op.movingHoverT of
+                                            Just c_hov ->
+                                                if
+                                                    (Maybe.map .colid op.movingHoverCol == Just colid)
+                                                        && (Maybe.map .id op.movingCard /= Just c_hov.cardid)
+                                                then
+                                                    insertAt c_hov.pos draggingDiv x
+
+                                                else
+                                                    x
+
+                                            Nothing ->
+                                                x
                            )
                         |> div [ id colid, class "content scrollbar-thin" ]
                     ]
@@ -224,8 +205,6 @@ viewBoard op header keys_title data =
         |> div
             [ id op.boardId
             , class "columns is-fullwidth is-marginless is-mobile kb-board board2"
-
-            --, onMouseLeave (OnColumnHover Nothing)
             , attribute "style" <|
                 case op.boardHeight of
                     Just h ->
@@ -234,6 +213,17 @@ viewBoard op header keys_title data =
                     Nothing ->
                         "overflow-y: hidden; overflow-x: auto;"
             ]
+
+
+draggingDiv : Html msg
+draggingDiv =
+    div
+        [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
+        , style "opacity" "0.6"
+
+        --, style "height" "0rem"
+        ]
+        []
 
 
 viewNewCol : Op msg -> Html msg

@@ -64,6 +64,7 @@ addParam_ value maybeValues =
 
 insertAt : Int -> a -> List a -> List a
 insertAt index element list =
+    --List.take pos l ++ (x :: List.drop pos l)
     let
         ( before, after ) =
             LE.splitAt index list

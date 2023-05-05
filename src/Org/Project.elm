@@ -178,11 +178,10 @@ type alias Model =
 
     -- Board
     , boardHeight : Maybe Float
-    , hover_column : Maybe String
     , movingCard : Maybe ProjectCard
     , moveFifo : Fifo ( String, Int, ProjectCard )
-    , movingHoverCol : Maybe { pos : Int, to_colid : String }
-    , movingHoverT : Maybe { pos : Int, cardid : String, to_colid : String }
+    , movingHoverCol : Maybe { pos : Int, colid : String }
+    , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
     , dragCount : Int
     , draging : Bool
     , projectColumnModal : ProjectColumnModal.State
@@ -254,7 +253,6 @@ init global flags =
 
             -- Board
             , boardHeight = Nothing
-            , hover_column = Nothing
             , movingCard = Nothing
             , moveFifo = Fifo.empty
             , movingHoverCol = Nothing
@@ -320,14 +318,13 @@ type Msg
       -- Board
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
-    | OnColumnHover (Maybe String)
-    | OnMove { pos : Int, to_colid : String } ProjectCard
+    | OnMove { pos : Int, colid : String } ProjectCard
     | OnCancelHov
     | OnEndMove
-    | OnMoveEnterCol { pos : Int, to_colid : String } Bool
+    | OnMoveEnterCol { pos : Int, colid : String } Bool
     | OnMoveLeaveCol
     | OnMoveLeaveCol_
-    | OnMoveEnterT { pos : Int, cardid : String, to_colid : String }
+    | OnMoveEnterT { pos : Int, cardid : String, colid : String }
     | OnMoveDrop String
     | GotCardMoved (GqlData IdPayload)
       --
@@ -441,9 +438,6 @@ update global message model =
                 Err _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        OnColumnHover v ->
-            ( { model | hover_column = v }, Cmd.none, Cmd.none )
-
         OnMove col card ->
             ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }, Cmd.none, Cmd.none )
 
@@ -453,7 +447,7 @@ update global message model =
                     { model | draging = False }
             in
             Maybe.map3
-                (\card { pos, to_colid } c_hover ->
+                (\card { pos, colid } c_hover ->
                     if card.id == c_hover.cardid then
                         ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
@@ -462,8 +456,8 @@ update global message model =
                         --    l1 =
                         --        Debug.log "OnEndMove" ( model.moveFifo, model.board_result )
                         --in
-                        ( { newModel | moveFifo = Fifo.insert ( to_colid, c_hover.pos, card ) model.moveFifo, board_result = Loading }
-                        , moveProjectCard apis card.id c_hover.pos to_colid GotCardMoved
+                        ( { newModel | moveFifo = Fifo.insert ( colid, c_hover.pos, card ) model.moveFifo, board_result = Loading }
+                        , moveProjectCard apis card.id c_hover.pos colid GotCardMoved
                         , Cmd.none
                         )
                 )
@@ -486,14 +480,41 @@ update global message model =
             --        Debug.log "Enter Col" hover.pos
             --in
             if Just hover == model.movingHoverCol then
-                if reset then
-                    ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
+                --if reset then
+                --    ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
-                else
-                    ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
+                --else
+                ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
 
             else
-                ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = Nothing }, Cmd.none, Cmd.none )
+                let
+                    -- Add a virtual card hover in empty columns in order to be able to move card there.
+                    ( last_cardid, n_cards ) =
+                        withMaybeMapData
+                            (\d ->
+                                LE.find (\x -> x.id == hover.colid) d.columns
+                                    |> unwrap ( "", -1 )
+                                        (\cols -> ( LE.last cols.cards |> unwrap "" .id, List.length cols.cards ))
+                            )
+                            model.project_data
+                            |> withDefault ( "", -1 )
+
+                    mht =
+                        case model.movingHoverT of
+                            Nothing ->
+                                if n_cards == 0 then
+                                    Just { pos = 0, cardid = "", colid = hover.colid }
+
+                                else if n_cards > 0 then
+                                    Just { pos = n_cards, cardid = last_cardid, colid = hover.colid }
+
+                                else
+                                    Nothing
+
+                            Just _ ->
+                                model.movingHoverT
+                in
+                ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, Cmd.none, Cmd.none )
 
         OnMoveLeaveCol ->
             ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveCol_ 15, Cmd.none )
@@ -928,13 +949,13 @@ viewProject data model =
     let
         -- Computation @TODO: optimize/lazy
         keys =
-            data.columns |> List.sortBy .pos |> List.map .id
+            data.columns |>  List.map .id
 
         names =
-            data.columns |> List.sortBy .pos |> List.map .name
+            data.columns |>  List.map .name
 
         dict_data =
-            data.columns |> List.map (\x -> ( x.id, List.sortBy .pos x.cards )) |> Dict.fromList
+            data.columns |> List.map (\x -> ( x.id, x.cards )) |> Dict.fromList
 
         header : String -> String -> Maybe ProjectCard -> Html Msg
         header colid title card =
@@ -981,7 +1002,6 @@ viewProject data model =
             , movingHoverT = model.movingHoverT
 
             -- Board Msg
-            , onColumnHover = OnColumnHover
             , onMove = OnMove
             , onCancelHov = OnCancelHov
             , onEndMove = OnEndMove
