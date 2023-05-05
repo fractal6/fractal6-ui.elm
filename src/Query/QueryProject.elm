@@ -79,7 +79,14 @@ projectDataPayload =
     SelectionSet.succeed ProjectData
         |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Project.name
-        |> with (Fractal.Object.Project.columns identity columnPayload |> withDefaultSelectionMap [] |> SelectionSet.map (List.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards })))
+        |> with
+            (Fractal.Object.Project.columns identity columnPayload
+                |> withDefaultSelectionMap []
+                |> SelectionSet.map
+                    (List.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards |> List.sortBy .pos })
+                        >> List.sortBy .pos
+                    )
+            )
 
 
 
