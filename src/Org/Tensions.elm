@@ -1235,7 +1235,7 @@ update global message model =
                         h =
                             if e.viewport.height - e.element.y < 511 then
                                 -- allow y-scroll here. Substract the header size.
-                                e.viewport.height - 50
+                                e.viewport.height - 42
 
                             else
                                 e.viewport.height - e.element.y
@@ -1507,11 +1507,11 @@ update global message model =
                 ( data, out ) =
                     MoveTension.update apis msg model.moveTension
 
-                ( tensions_all, moveFifo ) =
+                ( tensions_all, newfifo ) =
                     Maybe.map
                         (\( tid, ( old_nid, new_nid, _ ) ) ->
                             let
-                                ( move, moveFifo_ ) =
+                                ( move, fifo ) =
                                     Fifo.remove model.moveFifo
                             in
                             ( withMapData
@@ -1542,7 +1542,7 @@ update global message model =
                                     >> Dict.update old_nid (Maybe.map (List.filter (\t -> t.id /= tid)))
                                 )
                                 model.tensions_all
-                            , moveFifo_
+                            , fifo
                             )
                         )
                         (Maybe.map Tuple.second out.result |> withDefault Nothing)
@@ -1552,13 +1552,13 @@ update global message model =
                     mapGlobalOutcmds out.gcmds
 
                 cmds =
-                    if List.length (Fifo.toList moveFifo) == 0 then
+                    if List.length (Fifo.toList newfifo) == 0 then
                         cmds_ ++ [ send OnCancelHov ]
 
                     else
                         cmds_
             in
-            ( { model | moveFifo = moveFifo, tensions_all = tensions_all, moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | moveFifo = newfifo, tensions_all = tensions_all, moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg

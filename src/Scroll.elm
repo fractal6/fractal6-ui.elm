@@ -21,7 +21,7 @@
 
 module Scroll exposing
     ( Config(..), createConfig, scrollTo
-    , scrollToBottom, scrollToElement, scrollToSubElement, scrollToTop
+    , scrollToBottom, scrollToElement, scrollToSubBottom, scrollToSubElement, scrollToTop
     )
 
 {-| Scrolling to position that always takes the same amount of time.
@@ -43,18 +43,11 @@ import Time exposing (Posix)
 -}
 
 
-{-| Scroll to an element in the body viewport
+{-| Scroll to the given position in the body viewport
 -}
 scrollTo : Float -> Task Browser.Dom.Error ()
 scrollTo =
     scrollTo_ Nothing (createConfig Ease.inOutCubic 500)
-
-
-{-| Scroll to an element to the given viewport
--}
-scrollToOf : String -> Float -> Task Browser.Dom.Error ()
-scrollToOf vpid =
-    scrollTo_ (Just vpid) (createConfig Ease.inOutCubic 500)
 
 
 scrollToTop : msg -> Cmd msg
@@ -90,6 +83,30 @@ scrollToSubElement viewport_id id noop =
                         Task.fail (NotFound "element visible")
                 )
         )
+
+
+scrollToSubBottom : String -> msg -> Cmd msg
+scrollToSubBottom viewport_id noop =
+    Task.attempt (always noop)
+        (getElementOf { viewportId = viewport_id, elementId = viewport_id }
+            |> Task.andThen
+                (\e ->
+                    scrollToOf viewport_id e.element.height
+                )
+        )
+
+
+
+{-
+   Private functions
+-}
+
+
+{-| Scroll to an element to the given viewport
+-}
+scrollToOf : String -> Float -> Task Browser.Dom.Error ()
+scrollToOf vpid =
+    scrollTo_ (Just vpid) (createConfig Ease.inOutCubic 500)
 
 
 getElementOf :

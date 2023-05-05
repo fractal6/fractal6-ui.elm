@@ -991,6 +991,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Delete this contract"
   fr="Supprimer ce contrat"
 
+[delete]
+  en="Delete"
+  fr="Supprimer"
+
 [askAnotherQuestion]
   en="Ask another question."
   fr="Poser une autre question."

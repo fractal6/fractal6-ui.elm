@@ -1,4 +1,5 @@
 {-
+
    Fractale - Self-organisation for humans.
    Copyright (C) 2023 Fractale Co
 
@@ -634,6 +635,10 @@ type alias ProjectColumn =
 
 type alias ProjectCard =
     { id : String
+
+    -- @Warning/optimisation: colid is added eitheir from its parent
+    -- either from the form.
+    , colid : String
     , pos : Int
     , card : CardKind
     }

@@ -62,6 +62,15 @@ addParam_ value maybeValues =
             Just [ value ]
 
 
+insertAt : Int -> a -> List a -> List a
+insertAt index element list =
+    let
+        ( before, after ) =
+            LE.splitAt index list
+    in
+    before ++ [ element ] ++ after
+
+
 
 -- String
 
