@@ -100,8 +100,6 @@ moveProjectCard url id_ pos colid msg =
                                     { a
                                         | pos = Present pos
                                         , pc = Input.buildProjectColumnRef (\b -> { b | id = Present (encodeId colid) }) |> Present
-
-                                        -- @todo: update cardKind (edit title / ard from separate view)
                                     }
                                 )
                                 |> Present
