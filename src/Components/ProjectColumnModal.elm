@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Error exposing (viewGqlErrors)
+import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
@@ -68,6 +69,7 @@ type alias Model =
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , colorPicker : ColorPicker
     }
 
 
@@ -84,6 +86,7 @@ initModel projectid user =
     -- Common
     , refresh_trial = 1
     , modal_confirm = ModalConfirm.init NoMsg
+    , colorPicker = ColorPicker.init
     }
 
 
@@ -175,6 +178,11 @@ setDataResult result model =
     { model | data_result = withMapData .id result }
 
 
+setColor : Maybe String -> Model -> Model
+setColor color model =
+    { model | colorPicker = ColorPicker.setColor color model.colorPicker }
+
+
 type alias ProjectColumnCommon a =
     { a | id : String }
 
@@ -227,6 +235,10 @@ type Msg
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
+      -- Color Picker
+    | OpenColor
+    | CloseColor
+    | SelectColor String
       -- Common
     | NoMsg
     | LogErr String
@@ -379,13 +391,15 @@ update_ apis message model =
                                         ]
                             }
                     in
-                    ( { data | orig_form = orig_form, form = orig_form }, noOut )
+                    ( { data | orig_form = orig_form, form = orig_form } |> setColor (Dict.get "color" orig_form.post)
+                    , noOut
+                    )
 
                 _ ->
                     ( data, noOut )
 
         OnColAdd ->
-            ( setDataResult LoadingSlowly model
+            ( setDataResult LoadingSlowly model |> setColor Nothing
             , out0 [ addProjectColumn apis model.form OnColAddAck ]
             )
 
@@ -409,6 +423,7 @@ update_ apis message model =
                         col =
                             { id = model.form.colid
                             , name = getFromDict2 "name" model.form.post model.orig_form.post |> withDefault ""
+                            , color = getFromDict2 "color" model.form.post model.orig_form.post
                             , pos = model.form.pos |> withDefault 0
                             , cards = []
                             }
@@ -428,6 +443,34 @@ update_ apis message model =
         DoModalConfirmSend ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
+        -- Color Picker
+        OpenColor ->
+            ( { model | colorPicker = ColorPicker.open model.colorPicker }
+            , if not model.colorPicker.isOpen then
+                out0 [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" ]
+
+              else
+                noOut
+            )
+
+        CloseColor ->
+            ( { model | colorPicker = ColorPicker.close model.colorPicker }, noOut )
+
+        SelectColor color ->
+            let
+                newPicker =
+                    model.colorPicker
+                        |> ColorPicker.setColor (Just color)
+                        |> ColorPicker.close
+
+                form =
+                    model.form
+
+                newForm =
+                    { form | post = Dict.insert "color" color form.post }
+            in
+            ( { model | colorPicker = newPicker, form = newForm }, out0 [ Ports.click "body" ] )
+
         -- Common
         NoMsg ->
             ( model, noOut )
@@ -440,6 +483,7 @@ subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (if model.isActive then
                 -- Extra module used when modal is active
@@ -536,6 +580,11 @@ viewModalContent op model =
                         ]
                         []
                     ]
+                ]
+            , p [ class "field is-horizontal mt-4" ]
+                [ label [ class "field-label label" ] [ text T.color ]
+                , div [ class "field-body control" ]
+                    [ ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectColor } ]
                 ]
             , div [ class "field" ]
                 [ div [ class "label" ] [ text T.description ]

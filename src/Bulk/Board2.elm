@@ -96,11 +96,11 @@ The function returns an HTML structure which displays the board with each column
 This function generates a drag-and-drop board with the ability to move card items around.
 
 -}
-viewBoard : Op msg -> (String -> String -> Maybe ProjectCard -> Html msg) -> List ( String, String ) -> Dict String (List ProjectCard) -> Html msg
+viewBoard : Op msg -> (String -> String -> Maybe String -> Maybe ProjectCard -> Html msg) -> List ( String, String, Maybe String ) -> Dict String (List ProjectCard) -> Html msg
 viewBoard op header keys_title data =
     keys_title
         |> List.indexedMap
-            (\i ( colid, name ) ->
+            (\i ( colid, name, color ) ->
                 let
                     cards =
                         Dict.get colid data |> withDefault []
@@ -127,7 +127,7 @@ viewBoard op header keys_title data =
                         [ class "subtitle is-aligned-center"
                         , onDragEnter (op.onMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
-                        [ header colid name c1 ]
+                        [ header colid name color c1 ]
                     , cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
