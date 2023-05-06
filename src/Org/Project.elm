@@ -315,6 +315,7 @@ type Msg
       -- Page
     | DoLoad
     | GotProject (GqlData ProjectData) -- Rest
+    | OpenTensionPane
       -- Board
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
@@ -411,6 +412,9 @@ update global message model =
             , Cmd.batch [ Task.attempt FitBoard (Dom.getElement "projectView") ]
             , Cmd.none
             )
+
+        OpenTensionPane ->
+            ( model, Cmd.none, Cmd.none )
 
         -- Board
         OnResize w h ->
@@ -812,7 +816,13 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | actionPanel = data }
+            , out.cmds
+                |> List.map (\m -> Cmd.map ActionPanelMsg m)
+                |> List.append cmds
+                |> Cmd.batch
+            , Cmd.batch gcmds
+            )
 
         ProjectColumnModalMsg msg ->
             let
@@ -831,7 +841,9 @@ update global message model =
                                         EditColumn ->
                                             { x
                                                 | columns =
-                                                    LE.updateIf (\c -> c.id == b.id) (\c -> { c | name = b.name, color = b.color, pos = b.pos }) x.columns
+                                                    LE.updateIf (\c -> c.id == b.id)
+                                                        (\c -> { c | name = b.name, color = b.color, pos = b.pos })
+                                                        x.columns
                                             }
 
                                         _ ->
@@ -924,12 +936,31 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
+    let
+        isAdmin =
+            case global.session.user of
+                LoggedIn uctx ->
+                    --hasAdminRole uctx (withMaybeData model.path_data)
+                    hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
+
+                LoggedOut ->
+                    False
+    in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
             [ div [ class "columns is-centered mb-0" ]
-                [ div [ class "column is-12 pb-1" ]
-                    [ viewSearchBar model ]
-                , div [ class "button s-light is-small" ] [ A.icon1 "icon-plus" "Add tensions to project" ]
+                [ div [ class "column is-tree-quarter pb-1" ]
+                    [ case model.project_data of
+                        Success p ->
+                            viewSearchBar p model
+
+                        _ ->
+                            text ""
+                    ]
+                , div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
+                    [ button [ class "button is-small is-pushed-right", onClick OpenTensionPane ]
+                        [ A.icon1 "icon-plus" "Add tensions to project" ]
+                    ]
                 ]
 
             -- User notification
@@ -946,18 +977,13 @@ view_ global model =
         ]
 
 
-viewSearchBar : Model -> Html Msg
-viewSearchBar model =
+viewSearchBar : ProjectData -> Model -> Html Msg
+viewSearchBar project model =
     div [ id "searchBarProject", class "searchBar" ]
         [ div [ class "columns mb-0" ]
-            [ case model.project_data of
-                Success p ->
-                    h2 [ class "subtitle is-strong" ] [ text p.name ]
+            [ h2 [ class "subtitle is-strong" ] [ text project.name ]
 
-                _ ->
-                    text ""
-
-            --div [ class "column is-5" ]
+            --, div [ class "column is-5" ]
             --  [ div [ class "field has-addons" ]
             --      [ div [ class "control is-expanded" ]
             --          [ input
@@ -1042,8 +1068,6 @@ viewHeader colid title color card =
             , span [ class "level-left" ]
                 [ span
                     [ class "tag is-rounded-light button-light is-w has-border mx-1"
-
-                    --, onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid)))
                     , onClick (OnAddDraft colid)
                     ]
                     [ A.icon "icon-plus" ]

@@ -124,7 +124,7 @@ viewBoard op header keys_title data =
                             []
                     )
                     [ div
-                        [ class "subtitle is-aligned-center"
+                        [ class "subtitle"
                         , onDragEnter (op.onMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
                         [ header colid name color c1 ]
