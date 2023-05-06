@@ -375,6 +375,9 @@ a:hover .is-name, a:hover .is-username {
 .has-border {
     border: 1px solid var(--grey);
 }
+.has-border-link {
+    border: 1px solid var(--link) !important;
+}
 .has-border-light {
     border: 1px solid var(--border-color-light);
 }
@@ -752,7 +755,8 @@ span[data-tooltip] {
 
 .box {
     border: 1px solid var(--border-color-light) !important;
-    box-shadow: 0 .33em .66em -0.125em rgba($scheme-invert, 0.1), 0 0px 0 1px rgba($scheme-invert, 0.02);
+    //box-shadow: 0 .33em .66em -0.125em rgba($scheme-invert, 0.1), 0 0px 0 1px rgba($scheme-invert, 0.02);
+    box-shadow: none;
     .media {
         &.is-active {
             border: solid 2px var(--link) !important;
@@ -2141,7 +2145,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
 .kb-board {
     & > .column {
-        min-width: 220px;
+        min-width: 250px;
+        max-width: 400px;
+        //width: 100% !important;
 
         @include mobile {
             padding: 1px;
@@ -3825,6 +3831,10 @@ input[type=search] {
     * {
         pointer-events: none;
     }
+}
+
+.is-dragged {
+    border: 1px solid var(--link) !important;
 }
 
 .is-growing {

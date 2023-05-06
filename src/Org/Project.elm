@@ -19,7 +19,7 @@
 -}
 
 
-module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+port module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
@@ -180,7 +180,7 @@ type alias Model =
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
     , moveFifo : Fifo ( String, Int, ProjectCard )
-    , movingHoverCol : Maybe { pos : Int, colid : String }
+    , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
     , dragCount : Int
     , draging : Bool
@@ -318,15 +318,17 @@ type Msg
       -- Board
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
-    | OnMove { pos : Int, colid : String } ProjectCard
+    | OnMove { pos : Int, colid : String, length : Int } ProjectCard
     | OnCancelHov
     | OnEndMove
-    | OnMoveEnterCol { pos : Int, colid : String } Bool
+    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool
     | OnMoveLeaveCol
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, cardid : String, colid : String }
     | OnMoveDrop String
     | GotCardMoved (GqlData IdPayload)
+    | OnCardClick (Maybe ProjectCard)
+    | OnCardClick_ (Maybe ProjectCard)
       --
     | OnAddCol
     | OnAddDraft String
@@ -405,7 +407,10 @@ update global message model =
             ( model, Cmd.batch [ getProject apis model.projectid GotProject ], Cmd.none )
 
         GotProject result ->
-            ( { model | project_data = result }, Task.attempt FitBoard (Dom.getElement "projectView"), Cmd.none )
+            ( { model | project_data = result }
+            , Cmd.batch [ Task.attempt FitBoard (Dom.getElement "projectView") ]
+            , Cmd.none
+            )
 
         -- Board
         OnResize w h ->
@@ -452,10 +457,6 @@ update global message model =
                         ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
                     else
-                        --let
-                        --    l1 =
-                        --        Debug.log "OnEndMove" ( model.moveFifo, model.board_result )
-                        --in
                         ( { newModel | moveFifo = Fifo.insert ( colid, c_hover.pos, card ) model.moveFifo, board_result = Loading }
                         , moveProjectCard apis card.id c_hover.pos colid GotCardMoved
                         , Cmd.none
@@ -467,6 +468,19 @@ update global message model =
                 |> withDefault
                     ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
+        OnCardClick c ->
+            -- Highlight the border and show ellipsis on click
+            -- or unselect.
+            case c of
+                Just _ ->
+                    ( model, sendSleep (OnCardClick_ c) 50, Cmd.none )
+
+                Nothing ->
+                    ( { model | movingCard = Nothing }, Cmd.none, Cmd.none )
+
+        OnCardClick_ c ->
+            ( { model | movingCard = c }, Cmd.none, Cmd.none )
+
         OnCancelHov ->
             --let
             --    l1 =
@@ -475,16 +489,25 @@ update global message model =
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
 
         OnMoveEnterCol hover reset ->
-            --let
-            --    l1 =
-            --        Debug.log "Enter Col" hover.pos
-            --in
-            if Just hover == model.movingHoverCol then
-                --if reset then
-                --    ( { model | movingHoverT = Nothing }, Cmd.none, Cmd.none )
+            -- @DEBUG: How to optimize / simplify that ?
+            -- Does "dragCount" still usefull ??
+            let
 
-                --else
+                ( is_last, c_h ) =
+                    Maybe.map2
+                        (\ch h ->
+                            ( ch.colid == h.colid && ch.pos == h.length - 1, Just { ch | pos = ch.pos + 1 } )
+                        )
+                        model.movingHoverT
+                        model.movingHoverCol
+                    |> withDefault (False, model.movingHoverT)
+            in
+            if Just hover == model.movingHoverCol && not reset then
+                -- ?
                 ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
+
+            else if Just hover == model.movingHoverCol && reset && is_last  then
+                ( { model | movingHoverT = c_h }, Cmd.none, Cmd.none )
 
             else
                 let
@@ -499,8 +522,15 @@ update global message model =
                             model.project_data
                             |> withDefault ( "", -1 )
 
+                    mht_ =
+                        if Maybe.map .colid model.movingHoverT /= Just hover.colid then
+                            Nothing
+
+                        else
+                            model.movingHoverT
+
                     mht =
-                        case model.movingHoverT of
+                        case mht_ of
                             Nothing ->
                                 if n_cards == 0 then
                                     Just { pos = 0, cardid = "", colid = hover.colid }
@@ -583,7 +613,10 @@ update global message model =
                             else
                                 Cmd.none
                     in
-                    ( { model | moveFifo = newfifo, project_data = project_data, board_result = NotAsked }, cmd, Cmd.none )
+                    ( { model | moveFifo = newfifo, project_data = project_data, board_result = NotAsked }
+                    , cmd
+                    , Cmd.none
+                    )
 
         --
         OnAddCol ->
@@ -812,7 +845,8 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    []
+    [ unselectCardFromJs (always (OnCardClick Nothing))
+    ]
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -823,6 +857,9 @@ subscriptions _ model =
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
         |> Sub.batch
+
+
+port unselectCardFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -853,7 +890,7 @@ view global model =
             _ ->
                 "Loading..."
     , body =
-        [ div [ class "orgPane" ]
+        [ div [ class "orgPane unselect-card-click-trigger" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ]
                 [ view_ global model
@@ -949,10 +986,10 @@ viewProject data model =
     let
         -- Computation @TODO: optimize/lazy
         keys =
-            data.columns |>  List.map .id
+            data.columns |> List.map .id
 
         names =
-            data.columns |>  List.map .name
+            data.columns |> List.map .name
 
         dict_data =
             data.columns |> List.map (\x -> ( x.id, x.cards )) |> Dict.fromList
@@ -1014,6 +1051,7 @@ viewProject data model =
             , onDraftEdit = OnDraftEdit
             , onDraftKeydown = OnDraftKeydown
             , onDraftCancel = OnDraftCancel
+            , onCardClick = OnCardClick
             }
     in
     viewBoard op header (LE.zip keys names) dict_data
@@ -1031,16 +1069,17 @@ pushCard c columns =
         (\a -> a.id == c.colid)
         (\a ->
             { a
-                | cards =
-                    insertAt c.pos c a.cards
-                        |> (\cards ->
-                                -- Increment the position of the elements to take into account the new insertion.
-                                let
-                                    ( before, after ) =
-                                        LE.splitAt (c.pos + 1) cards
-                                in
-                                before ++ List.map (\b -> { b | pos = b.pos + 1 }) after
-                           )
+                | cards = insertAt c.pos c a.cards
+
+                -- Not needed, since we work in direct position on the front.
+                --|> (\cards ->
+                --        -- Increment the position of the elements to take into account the new insertion.
+                --        let
+                --            ( before, after ) =
+                --                LE.splitAt (c.pos + 1) cards
+                --        in
+                --        before ++ List.map (\b -> { b | pos = b.pos + 1 }) after
+                --   )
             }
         )
         columns
