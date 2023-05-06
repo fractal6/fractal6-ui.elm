@@ -831,7 +831,7 @@ update global message model =
                                         EditColumn ->
                                             { x
                                                 | columns =
-                                                    LE.updateIf (\c -> c.id == b.id) (\c -> { c | name = b.name, pos = b.pos }) x.columns
+                                                    LE.updateIf (\c -> c.id == b.id) (\c -> { c | name = b.name, color = b.color, pos = b.pos }) x.columns
                                             }
 
                                         _ ->
@@ -997,40 +997,11 @@ viewProject data model =
         names =
             data.columns |> List.map .name
 
+        colors =
+            data.columns |> List.map .color
+
         dict_data =
             data.columns |> List.map (\x -> ( x.id, x.cards )) |> Dict.fromList
-
-        header : String -> String -> Maybe ProjectCard -> Html Msg
-        header colid title card =
-            span []
-                [ text title
-                , span [ class "is-pulled-right is-flex" ]
-                    [ span
-                        [ class "tag is-rounded-light button-light is-w has-border mx-1"
-
-                        --, onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid)))
-                        , onClick (OnAddDraft colid)
-                        ]
-                        [ A.icon "icon-plus" ]
-                    , div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
-                        [ div [ class "dropdown-trigger is-w is-h" ]
-                            [ div
-                                [ class "ellipsis"
-                                , attribute "aria-controls" ("edit-ellipsis-" ++ colid)
-                                , attribute "aria-haspopup" "true"
-                                ]
-                                [ A.icon "icon-more-horizontal icon-lg" ]
-                            ]
-                        , div [ id ("edit-ellipsis-" ++ colid), class "dropdown-menu", attribute "role" "menu" ]
-                            [ div [ class "dropdown-content p-0" ] <|
-                                [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit colid)) ] [ text T.edit ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div [ class "dropdown-item button-light" ] [ text T.delete ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
 
         op =
             { hasTaskMove = True
@@ -1060,7 +1031,42 @@ viewProject data model =
             , onCardClick = OnCardClick
             }
     in
-    viewBoard op header (LE.zip keys names) dict_data
+    viewBoard op viewHeader (LE.zip3 keys names colors) dict_data
+
+
+viewHeader : String -> String -> Maybe String -> Maybe ProjectCard -> Html Msg
+viewHeader colid title color card =
+    span []
+        [ div [ class "level" ]
+            [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" color) ] [ A.icon "icon-circle1 icon-lg" ], text title ]
+            , span [ class "level-left" ]
+                [ span
+                    [ class "tag is-rounded-light button-light is-w has-border mx-1"
+
+                    --, onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid)))
+                    , onClick (OnAddDraft colid)
+                    ]
+                    [ A.icon "icon-plus" ]
+                , div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
+                    [ div [ class "dropdown-trigger is-w is-h" ]
+                        [ div
+                            [ class "ellipsis"
+                            , attribute "aria-controls" ("edit-ellipsis-" ++ colid)
+                            , attribute "aria-haspopup" "true"
+                            ]
+                            [ A.icon "icon-more-horizontal icon-lg" ]
+                        ]
+                    , div [ id ("edit-ellipsis-" ++ colid), class "dropdown-menu", attribute "role" "menu" ]
+                        [ div [ class "dropdown-content p-0" ] <|
+                            [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit colid)) ] [ text T.edit ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light" ] [ text T.delete ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 
 

@@ -256,6 +256,7 @@ columnPayload =
     SelectionSet.succeed ProjectColumn
         |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.ProjectColumn.name
+        |> with Fractal.Object.ProjectColumn.color
         |> with Fractal.Object.ProjectColumn.pos
         |> with (Fractal.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
 

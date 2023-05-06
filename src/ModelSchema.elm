@@ -628,6 +628,7 @@ type alias ProjectData =
 type alias ProjectColumn =
     { id : String
     , name : String
+    , color : Maybe String
     , pos : Int
     , cards : List ProjectCard
     }
