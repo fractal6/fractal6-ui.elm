@@ -492,7 +492,6 @@ update global message model =
             -- @DEBUG: How to optimize / simplify that ?
             -- Does "dragCount" still usefull ??
             let
-
                 ( is_last, c_h ) =
                     Maybe.map2
                         (\ch h ->
@@ -500,13 +499,13 @@ update global message model =
                         )
                         model.movingHoverT
                         model.movingHoverCol
-                    |> withDefault (False, model.movingHoverT)
+                        |> withDefault ( False, model.movingHoverT )
             in
             if Just hover == model.movingHoverCol && not reset then
                 -- ?
                 ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
 
-            else if Just hover == model.movingHoverCol && reset && is_last  then
+            else if Just hover == model.movingHoverCol && reset && is_last then
                 ( { model | movingHoverT = c_h }, Cmd.none, Cmd.none )
 
             else
@@ -924,6 +923,7 @@ view_ global model =
             [ div [ class "columns is-centered mb-0" ]
                 [ div [ class "column is-12 pb-1" ]
                     [ viewSearchBar model ]
+                , div [ class "button s-light is-small" ] [ A.icon1 "icon-plus" "Add tensions to project" ]
                 ]
 
             -- User notification
@@ -1006,7 +1006,7 @@ viewProject data model =
                         , onClick (OnAddDraft colid)
                         ]
                         [ A.icon "icon-plus" ]
-                    , div [ class "dropdown mx-2 is-align-self-baseline" ]
+                    , div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
                         [ div [ class "dropdown-trigger is-w is-h" ]
                             [ div
                                 [ class "ellipsis"
