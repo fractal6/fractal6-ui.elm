@@ -828,6 +828,12 @@ update global message model =
                                         AddColumn ->
                                             { x | columns = x.columns ++ [ b ] }
 
+                                        EditColumn ->
+                                            { x
+                                                | columns =
+                                                    LE.updateIf (\c -> c.id == b.id) (\c -> { c | name = b.name, pos = b.pos }) x.columns
+                                            }
+
                                         _ ->
                                             x
                                 )
@@ -1017,7 +1023,7 @@ viewProject data model =
                             ]
                         , div [ id ("edit-ellipsis-" ++ colid), class "dropdown-menu", attribute "role" "menu" ]
                             [ div [ class "dropdown-content p-0" ] <|
-                                [ div [ class "dropdown-item button-light" ] [ text T.edit ]
+                                [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit colid)) ] [ text T.edit ]
                                 , hr [ class "dropdown-divider" ] []
                                 , div [ class "dropdown-item button-light" ] [ text T.delete ]
                                 ]

@@ -72,12 +72,12 @@ publish: $(BUILD_DIRS)
 		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
 		git push origin main && \
 		cd - && \
-		echo "-- $@ done"
+		echo "-- $@ in ../public-build/ done"
 
 # Build in public-build but don't push.
 publish_test: $(BUILD_DIRS)
 	@git rev-parse --short HEAD > ../public-build/client_version
-	echo "-- $@ done"
+	echo "-- $@ in ../public-build/ done"
 
 $(BUILD_DIRS): public-build/%:
 	@# @DEBUG: -jX option won't work as Text.elm will be overwritten...(copy in a sperate environement?)
