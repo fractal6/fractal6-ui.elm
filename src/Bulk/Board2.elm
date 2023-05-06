@@ -60,17 +60,18 @@ type alias Op msg =
     , boardId : String
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
-    , movingHoverCol : Maybe { pos : Int, colid : String }
+    , movingHoverCol : Maybe { pos : Int, colid : String, length: Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
 
     -- Board Msg
-    , onMove : { pos : Int, colid : String } -> ProjectCard -> msg
+    , onMove : { pos : Int, colid : String, length:Int } -> ProjectCard -> msg
     , onCancelHov : msg
     , onEndMove : msg
-    , onMoveEnterCol : { pos : Int, colid : String } -> Bool -> msg
+    , onMoveEnterCol : { pos : Int, colid : String , length:Int} -> Bool -> msg
     , onMoveLeaveCol : msg
     , onMoveEnterT : { pos : Int, cardid : String, colid : String } -> msg
     , onMoveDrop : String -> msg
+    , onCardClick :(Maybe ProjectCard ) -> msg
     , noMsg : msg
     , onAddCol : msg
     , onDraftEdit : String -> msg
@@ -113,7 +114,7 @@ viewBoard op header keys_title data =
                 [ div
                     (class "column is-3"
                         :: ternary op.hasTaskMove
-                            [ onDragEnter (op.onMoveEnterCol { pos = i, colid = colid } False)
+                            [ onDragEnter (op.onMoveEnterCol { pos = i, colid = colid, length=j_last+1 } False)
                             , onDragLeave op.onMoveLeaveCol
 
                             -- @DEBUG doesn't work
@@ -124,14 +125,18 @@ viewBoard op header keys_title data =
                     )
                     [ div
                         [ class "subtitle is-aligned-center mb-0 pb-3"
-                        , onDragEnter (op.onMoveEnterT { pos = unwrap 0 .pos c1, cardid = unwrap "" .id c1, colid = colid })
+                        , onDragEnter (op.onMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
                         [ header colid name c1 ]
                     , cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                         |> List.indexedMap
-                            (\j card ->
+                            (\j c ->
+                                let
+                                    -- we do not need, and don't calculate the relative position of card in the front.
+                                    card = {c|pos=j}
+                                in
                                 [ -- Elm bug#1: if you remove this empty text
                                   --  It seems to be related/caused by the function composition to set an attribute
                                   --  in addProjectCardFunction response decoder
@@ -139,21 +144,26 @@ viewBoard op header keys_title data =
                                 , div
                                     (class "box is-shrinked2 mb-2 mx-2 kb-card"
                                         :: ternary op.hasTaskMove
-                                            [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
+                                            [ classList
+                                                [ ( "is-dragging", op.movingHoverT /= Nothing )
+                                                , ( "is-dragged", Maybe.map .id op.movingCard == Just card.id )
+                                                ]
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| op.onMove { pos = i, colid = colid } card
+                                            , onDragStart <| op.onMove { pos = i, colid = colid, length=j_last+1 } card
                                             , onDragEnd op.onEndMove
                                             , onDragEnter (op.onMoveEnterT { pos = j, cardid = card.id, colid = colid })
+                                            , onClick (op.onCardClick (Just card) )
                                             ]
                                             []
                                         ++ ternary (j_last == j && op.hasTaskMove)
                                             -- reset hoverT to draw below
-                                            [ onDragLeave (op.onMoveEnterCol { pos = i, colid = colid } True) ]
+                                            [ onDragLeave (op.onMoveEnterCol { pos = i, colid = colid, length=j_last+1 } True) ]
                                             []
                                     )
                                     (case card.card of
                                         CardTension t ->
+                                            -- Does lazy will work with function in argment?
                                             [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
 
                                         CardDraft d ->
@@ -174,19 +184,25 @@ viewBoard op header keys_title data =
 
                                     Nothing ->
                                         -- Add potential draggind div
-                                        case op.movingHoverT of
-                                            Just c_hov ->
+                                        Maybe.map2
+                                            (\c c_hov ->
                                                 if
-                                                    (Maybe.map .colid op.movingHoverCol == Just colid)
-                                                        && (Maybe.map .id op.movingCard /= Just c_hov.cardid)
+                                                    -- In this col
+                                                    (c_hov.colid == colid)
+                                                        -- Not just above the dragged element
+                                                        && (c.id /= c_hov.cardid)
+                                                        -- Not just below the dragged element
+                                                        && (c.pos /= (c_hov.pos - 1) || colid /= c.colid)
                                                 then
-                                                    insertAt c_hov.pos draggingDiv x
+                                                    -- account for the extra text "" (see Elm bug#1) !
+                                                    insertAt (c_hov.pos * 2) draggingDiv x
 
                                                 else
                                                     x
-
-                                            Nothing ->
-                                                x
+                                            )
+                                            op.movingCard
+                                            op.movingHoverT
+                                            |> withDefault x
                            )
                         |> div [ id colid, class "content scrollbar-thin" ]
                     ]
@@ -218,7 +234,7 @@ viewBoard op header keys_title data =
 draggingDiv : Html msg
 draggingDiv =
     div
-        [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
+        [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing has-border-link"
         , style "opacity" "0.6"
 
         --, style "height" "0rem"
