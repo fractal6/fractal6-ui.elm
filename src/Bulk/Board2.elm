@@ -60,18 +60,18 @@ type alias Op msg =
     , boardId : String
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
-    , movingHoverCol : Maybe { pos : Int, colid : String, length: Int }
+    , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
 
     -- Board Msg
-    , onMove : { pos : Int, colid : String, length:Int } -> ProjectCard -> msg
+    , onMove : { pos : Int, colid : String, length : Int } -> ProjectCard -> msg
     , onCancelHov : msg
     , onEndMove : msg
-    , onMoveEnterCol : { pos : Int, colid : String , length:Int} -> Bool -> msg
+    , onMoveEnterCol : { pos : Int, colid : String, length : Int } -> Bool -> msg
     , onMoveLeaveCol : msg
     , onMoveEnterT : { pos : Int, cardid : String, colid : String } -> msg
     , onMoveDrop : String -> msg
-    , onCardClick :(Maybe ProjectCard ) -> msg
+    , onCardClick : Maybe ProjectCard -> msg
     , noMsg : msg
     , onAddCol : msg
     , onDraftEdit : String -> msg
@@ -114,7 +114,7 @@ viewBoard op header keys_title data =
                 [ div
                     (class "column is-3"
                         :: ternary op.hasTaskMove
-                            [ onDragEnter (op.onMoveEnterCol { pos = i, colid = colid, length=j_last+1 } False)
+                            [ onDragEnter (op.onMoveEnterCol { pos = i, colid = colid, length = j_last + 1 } False)
                             , onDragLeave op.onMoveLeaveCol
 
                             -- @DEBUG doesn't work
@@ -124,7 +124,7 @@ viewBoard op header keys_title data =
                             []
                     )
                     [ div
-                        [ class "subtitle is-aligned-center mb-0 pb-3"
+                        [ class "subtitle is-aligned-center"
                         , onDragEnter (op.onMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
                         [ header colid name c1 ]
@@ -135,7 +135,8 @@ viewBoard op header keys_title data =
                             (\j c ->
                                 let
                                     -- we do not need, and don't calculate the relative position of card in the front.
-                                    card = {c|pos=j}
+                                    card =
+                                        { c | pos = j }
                                 in
                                 [ -- Elm bug#1: if you remove this empty text
                                   --  It seems to be related/caused by the function composition to set an attribute
@@ -150,15 +151,15 @@ viewBoard op header keys_title data =
                                                 ]
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| op.onMove { pos = i, colid = colid, length=j_last+1 } card
+                                            , onDragStart <| op.onMove { pos = i, colid = colid, length = j_last + 1 } card
                                             , onDragEnd op.onEndMove
                                             , onDragEnter (op.onMoveEnterT { pos = j, cardid = card.id, colid = colid })
-                                            , onClick (op.onCardClick (Just card) )
+                                            , onClick (op.onCardClick (Just card))
                                             ]
                                             []
                                         ++ ternary (j_last == j && op.hasTaskMove)
                                             -- reset hoverT to draw below
-                                            [ onDragLeave (op.onMoveEnterCol { pos = i, colid = colid, length=j_last+1 } True) ]
+                                            [ onDragLeave (op.onMoveEnterCol { pos = i, colid = colid, length = j_last + 1 } True) ]
                                             []
                                     )
                                     (case card.card of

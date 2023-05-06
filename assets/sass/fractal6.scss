@@ -2163,9 +2163,15 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
                 margin-top: 7px;
             }
         }
-        & > .subtitle {
-            border-bottom: 1px solid var(--border-color-light);
-        }
+    }
+}
+
+.kb-board.board1 {
+    .column .subtitle {
+        //border-bottom: 1px solid var(--border-color-light);
+        //padding-top: 0.75rem;
+        padding-bottom: 0.5rem;
+        margin: 0;
     }
 }
 
@@ -2174,6 +2180,13 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         & *:hover {
             cursor: grab;
         }
+    }
+
+    .column .subtitle {
+        border-top: 1px solid var(--border-color-light);
+        padding-top: 0.75rem;
+        padding-bottom: 0.5rem;
+        margin: 0;
     }
 }
 

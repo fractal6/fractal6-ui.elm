@@ -107,7 +107,7 @@ viewBoard op header keys_title data =
                             ]
                             []
                     )
-                    [ div [ class "subtitle is-aligned-center mb-0 pb-3" ] [ header key name t_m ]
+                    [ div [ class "subtitle is-aligned-center" ] [ header key name t_m ]
                     , tensions
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -186,7 +186,7 @@ viewBoard op header keys_title data =
            )
         |> div
             [ id op.boardId
-            , class "columns is-fullwidth is-marginless is-mobile kb-board"
+            , class "columns is-fullwidth is-marginless is-mobile kb-board board1"
 
             --, onMouseLeave (OnColumnHover Nothing)
             , attribute "style" <|
