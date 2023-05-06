@@ -23,7 +23,9 @@ module Query.QueryProject exposing
     ( addProjectCard
     , addProjectColumn
     , getProject
+    , getProjectColumn
     , moveProjectCard
+    , updateProjectColumn
     )
 
 import Dict
@@ -42,6 +44,7 @@ import Fractal.Object.ProjectDraft
 import Fractal.Object.ProjectField
 import Fractal.Object.Tension
 import Fractal.Object.UpdateProjectCardPayload
+import Fractal.Object.UpdateProjectColumnPayload
 import Fractal.Object.UpdateProjectPayload
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -88,6 +91,15 @@ projectDataPayload =
                     )
             )
 
+getProjectColumn url colid msg =
+    makeGQLQuery url
+        (Query.getProjectColumn
+            { id = encodeId colid }
+            columnPayloadEdit
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
 
 
 --
@@ -124,6 +136,36 @@ moveProjectCard url id_ pos colid msg =
         )
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
 
+updateProjectColumn url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectColumn
+            { input =
+                Input.buildUpdateProjectColumnInput { filter = Input.buildProjectColumnFilter (oneId form.colid) }
+                    (\_ ->
+                        { set =
+                            Input.buildProjectColumnPatch
+                                (\a ->
+                                    { a
+                                        | name = fromMaybe (Dict.get "name" form.post)
+                                        , description = fromMaybe (Dict.get "description" form.post)
+                                        , color = fromMaybe (Dict.get "color" form.post)
+                                        , pos = fromMaybe (Dict.get "pos" form.post |> unwrap Nothing String.toInt)
+                                    }
+                                )
+                                |> Present
+                        , remove = Absent
+                        }
+                    )
+            }
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectColumnPayload.projectColumn identity
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.ProjectColumn.id)
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
 
 
 --
@@ -216,6 +258,15 @@ columnPayload =
         |> with Fractal.Object.ProjectColumn.name
         |> with Fractal.Object.ProjectColumn.pos
         |> with (Fractal.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
+
+columnPayloadEdit : SelectionSet ProjectColumnEdit Fractal.Object.ProjectColumn
+columnPayloadEdit =
+    SelectionSet.succeed ProjectColumnEdit
+        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectColumn.name
+        |> with Fractal.Object.ProjectColumn.description
+        |> with Fractal.Object.ProjectColumn.color
+        |> with Fractal.Object.ProjectColumn.pos
 
 
 projectCardPayload : SelectionSet ProjectCard Fractal.Object.ProjectCard

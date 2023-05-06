@@ -36,11 +36,11 @@ import Html.Attributes exposing (attribute, autofocus, checked, class, classList
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Post, ProjectColumn, UserCtx)
+import ModelSchema exposing (IdPayload, Post, ProjectColumn, ProjectColumnEdit, UserCtx)
 import Ports
-import Query.QueryProject exposing (addProjectColumn)
+import Query.QueryProject exposing (addProjectColumn, getProjectColumn, updateProjectColumn)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -60,8 +60,9 @@ type alias Model =
     { user : UserState
     , isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
-    , data_result : GqlData ProjectColumn -- result of any query
+    , data_result : GqlData String -- result of any query
     , form : ColumnForm -- user inputs
+    , orig_form : ColumnForm -- original form for edits
     , modal_type : ModalType
 
     -- Common
@@ -77,6 +78,7 @@ initModel projectid user =
     , isActive2 = False
     , data_result = NotAsked
     , form = initForm projectid user
+    , orig_form = initForm projectid user
     , modal_type = AddColumn
 
     -- Common
@@ -88,7 +90,7 @@ initModel projectid user =
 type ModalType
     = AddColumn
     | EditColumn
-    | DeleteColumn
+    | DeleteColumn -- @todo
 
 
 toTitle : ModalType -> String
@@ -168,9 +170,13 @@ updatePost field value model =
     { model | form = { form | post = Dict.insert field value form.post } }
 
 
-setDataResult : GqlData ProjectColumn -> Model -> Model
+setDataResult : GqlData (ProjectColumnCommon a) -> Model -> Model
 setDataResult result model =
-    { model | data_result = result }
+    { model | data_result = withMapData .id result }
+
+
+type alias ProjectColumnCommon a =
+    { a | id : String }
 
 
 
@@ -211,12 +217,12 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
       -- Data
     | OnChangePost String String
-    | OnColQuery
-    | OnColQueryAck (GqlData ProjectColumn)
     | OnColAdd
     | OnColAddAck (GqlData ProjectColumn)
+    | OnColQuery
+    | OnColQueryAck (GqlData ProjectColumnEdit)
     | OnColEdit
-    | OnColEditAck (GqlData ProjectColumn)
+    | OnColEditAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -289,7 +295,11 @@ update_ apis message model =
                     { form | colid = colid }
             in
             ( { model | isActive2 = True, modal_type = EditColumn, form = newForm }
-            , out0 [ sendSleep (SetIsActive2 True) 10, Ports.open_modal "ProjectColumnModalModal" ]
+            , out0
+                [ sendSleep (SetIsActive2 True) 10
+                , Ports.open_modal "ProjectColumnModalModal"
+                , send OnColQuery
+                ]
             )
 
         OnClose data ->
@@ -336,7 +346,7 @@ update_ apis message model =
 
         OnColQuery ->
             ( setDataResult LoadingSlowly model
-            , noOut
+            , out0 [ getProjectColumn apis model.form.colid OnColQueryAck ]
             )
 
         OnColQueryAck result ->
@@ -353,8 +363,23 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnColQuery 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
-                    ( data, noOut )
+                OkAuth d ->
+                    let
+                        form =
+                            model.form
+
+                        orig_form =
+                            { form
+                                | pos = Just d.pos
+                                , post =
+                                    Dict.fromList
+                                        [ ( "name", d.name )
+                                        , ( "description", withDefault "" d.description )
+                                        , ( "color", withDefault "" d.color )
+                                        ]
+                            }
+                    in
+                    ( { data | orig_form = orig_form, form = orig_form }, noOut )
 
                 _ ->
                     ( data, noOut )
@@ -374,11 +399,24 @@ update_ apis message model =
 
         OnColEdit ->
             ( setDataResult LoadingSlowly model
-            , noOut
+            , out0 [ updateProjectColumn apis model.form OnColEditAck ]
             )
 
         OnColEditAck result ->
-            ( setDataResult result model, noOut )
+            case result of
+                Success d ->
+                    let
+                        col =
+                            { id = model.form.colid
+                            , name = getFromDict2 "name" model.form.post model.orig_form.post |> withDefault ""
+                            , pos = model.form.pos |> withDefault 0
+                            , cards = []
+                            }
+                    in
+                    ( setDataResult result model, Out [ send (OnClose { reset = True, link = "" }) ] [] (Just ( EditColumn, col )) )
+
+                _ ->
+                    ( setDataResult result model, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -449,15 +487,15 @@ viewModal op model =
             ]
             []
         , div [ class "modal-content is-small" ]
-            [ viewModalContent op (State model)
+            [ viewModalContent op model
             ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewModalContent : Op -> State -> Html Msg
-viewModalContent op (State model) =
+viewModalContent : Op -> Model -> Html Msg
+viewModalContent op model =
     let
         name =
             Dict.get "name" model.form.post
@@ -468,8 +506,17 @@ viewModalContent op (State model) =
         isLoading =
             Loading.isLoading model.data_result
 
-        isSendable_ =
-            isSendable model
+        ( isSendable_, onSubmit ) =
+            case model.modal_type of
+                AddColumn ->
+                    ( isSendable model, OnColAdd )
+
+                EditColumn ->
+                    ( model.form /= model.orig_form, OnColEdit )
+
+                DeleteColumn ->
+                    -- @TODO
+                    ( True, NoMsg )
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
@@ -528,7 +575,7 @@ viewModalContent op (State model) =
                          , disabled (not isSendable_)
                          ]
                             ++ ternary (isSendable_ && not isLoading)
-                                [ onClick OnColAdd ]
+                                [ onClick onSubmit ]
                                 []
                         )
                         [ textH (toSubmit model.modal_type) ]
@@ -536,3 +583,19 @@ viewModalContent op (State model) =
                 ]
             ]
         ]
+
+
+
+--
+-- Utils
+--
+
+
+getFromDict2 : String -> Post -> Post -> Maybe String
+getFromDict2 key dict1 dict2 =
+    case Dict.get key dict1 of
+        Just a ->
+            Just a
+
+        Nothing ->
+            Dict.get key dict2

@@ -376,7 +376,7 @@ viewModal op model =
                             [ textH T.checkItOut_masc ]
                         ]
                 _ ->
-                    viewModalContent op (State model)
+                    viewModalContent op model
                 ]
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]

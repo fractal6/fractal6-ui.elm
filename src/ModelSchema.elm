@@ -632,6 +632,14 @@ type alias ProjectColumn =
     , cards : List ProjectCard
     }
 
+type alias ProjectColumnEdit =
+    { id : String
+    , name : String
+    , description : Maybe String
+    , color : Maybe String
+    , pos : Int
+    }
+
 
 type alias ProjectCard =
     { id : String
