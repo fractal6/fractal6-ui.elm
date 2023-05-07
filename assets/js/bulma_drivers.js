@@ -542,28 +542,38 @@ function markupRichText(e, el, app) {
         var start = el.selectionStart;
         var end = el.selectionEnd;
         var replacer;
+        var offset = 0; // bacward index to insert the replacer text
 
         if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start-1])) return
 
-        // /[^\S\r\n]/ -> all whitespace but without newline
-        var isLastLineList = (el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0)
-
-        if (isLastLineList) {
+        // Try to see if we are the begginin of list pattern
+        var backward = el.value.slice(-6, start);
+        var isLineList = backward.search(/\n\s*[-\*] $|\n\s*[-\*] \[x \]$|\n\s*[0-9]+\. $/) >= 0
+        if (isLineList) {
             // Assumes we are in a **list content**
             // 2 space for sublist indentation
+            var lastIndex = backward.lastIndexOf("\n");
+            var offset = 6 - lastIndex - 1;
             replacer = "  ";
-        //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
-        //    // Tab (4 space) for **code** indentation
-        //    replacer = "\t";
         } else {
-            return
+            // /[^\S\r\n]/ -> all whitespace but without newline
+            var isLastLineList = el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0
+            if (isLastLineList) {
+                replacer = "  ";
+            //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+            //    // Tab (4 space) for **code** indentation
+            //    replacer = "\t";
+            } else {
+                return
+            }
         }
 
 		e.preventDefault();
+        e.stopPropagation();
 
 		// set textarea value to: text before caret + tab + text after caret
-		el.value = el.value.substring(0, start) +
-			replacer + el.value.substring(end);
+		el.value = el.value.substring(0, start - offset) +
+			replacer + el.value.substring(end - offset);
 
 		// put caret at right position again
 		el.selectionStart =
