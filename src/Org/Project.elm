@@ -34,6 +34,7 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
+import Components.LinkTensionPanel as LinkTensionPanel
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.SearchBar exposing (viewSearchBar)
@@ -180,6 +181,7 @@ type alias Model =
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
     , moveFifo : Fifo ( String, Int, ProjectCard )
+    , linkTensionPanel : LinkTensionPanel.State
     , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
     , dragCount : Int
@@ -262,6 +264,7 @@ init global flags =
 
             --
             , projectColumnModal = ProjectColumnModal.init projectid global.session.user
+            , linkTensionPanel = LinkTensionPanel.init global.session.user
             , board_result = NotAsked
 
             -- Common
@@ -353,6 +356,7 @@ type Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
     | ProjectColumnModalMsg ProjectColumnModal.Msg
+    | LinkTensionPanelMsg LinkTensionPanel.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -414,7 +418,13 @@ update global message model =
             )
 
         OpenTensionPane ->
-            ( model, Cmd.none, Cmd.none )
+            ( model
+            , Cmd.batch
+                [ Cmd.map LinkTensionPanelMsg (send LinkTensionPanel.OnOpen)
+                , Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
+                ]
+            , Cmd.none
+            )
 
         -- Board
         OnResize w h ->
@@ -805,8 +815,20 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                extra_cmd =
+                    if
+                        ((out.result == Just ( True, True ))
+                            || (out.result == Just ( True, False ))
+                        )
+                            && not (LinkTensionPanel.hasTargets_ model.linkTensionPanel)
+                    then
+                        send (LinkTensionPanelMsg (LinkTensionPanel.SetTargets <| TreeMenu.getList_ model.node_focus.nameid data))
+
+                    else
+                        Cmd.none
             in
-            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd::cmds) |> Cmd.batch, Cmd.batch gcmds )
 
         ActionPanelMsg msg ->
             let
@@ -859,6 +881,16 @@ update global message model =
             in
             ( { model | projectColumnModal = data, project_data = pd }, out.cmds |> List.map (\m -> Cmd.map ProjectColumnModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        LinkTensionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    LinkTensionPanel.update apis msg model.linkTensionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | linkTensionPanel = data }, out.cmds |> List.map (\m -> Cmd.map LinkTensionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -873,6 +905,7 @@ subscriptions _ model =
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
+        ++ (LinkTensionPanel.subscriptions |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
         |> Sub.batch
 
 
@@ -898,6 +931,9 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
+
+        tree_data =
+            TreeMenu.getOrgaData_ model.treeMenu
     in
     { title =
         case model.project_data of
@@ -924,12 +960,13 @@ view global model =
             , ProjectColumnModal.view {} model.projectColumnModal |> Html.map ProjectColumnModalMsg
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { tree_data = tree_data, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+        , LinkTensionPanel.view { tree_data = tree_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
         ]
     }
 
@@ -958,7 +995,7 @@ view_ global model =
                             text ""
                     ]
                 , div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
-                    [ button [ class "button is-small is-pushed-right", onClick OpenTensionPane ]
+                    [ div [ class "button is-small is-pushed-right", onClick OpenTensionPane ]
                         [ A.icon1 "icon-plus" "Add tensions to project" ]
                     ]
                 ]

@@ -294,6 +294,14 @@ type alias Tension =
     }
 
 
+type alias TensionLight =
+    { id : String
+    , title : String
+    , type_ : TensionType.TensionType
+    , status : TensionStatus.TensionStatus
+    }
+
+
 type alias TensionsCount =
     { open : Int, closed : Int }
 
@@ -632,6 +640,7 @@ type alias ProjectColumn =
     , pos : Int
     , cards : List ProjectCard
     }
+
 
 type alias ProjectColumnEdit =
     { id : String

@@ -36,7 +36,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, NameidPayload, ProjectsCount, RoleExt, Tension, TensionsCount, User, Username)
+import ModelSchema exposing (Label, NameidPayload, ProjectsCount, RoleExt, Tension, TensionsCount, User, Username, TensionLight)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
 import Session exposing (Apis)
@@ -222,64 +222,71 @@ type alias TensionQuery =
     { targetids : List String
     , first : Int
     , offset : Int
-    , query_ : Maybe String
-    , status_ : Maybe TensionStatus.TensionStatus
+    , pattern : Maybe String
+    , status : Maybe TensionStatus.TensionStatus
+    , type_ : Maybe TensionType.TensionType
     , authors : List User
     , labels : List Label
-    , type_ : Maybe TensionType.TensionType
+    , sort : Maybe String
     }
 
 
-fetchTensionInt api targetids first offset query_ status_ authors labels type_ sort_ msg =
+initTensionQuery : TensionQuery
+initTensionQuery =
+    { targetids = []
+    , first = 10
+    , offset = 0
+    , pattern = Nothing
+    , status = Just TensionStatus.Open
+    , type_ = Nothing
+    , authors = []
+    , labels = []
+    , sort = Just "newest"
+    }
+
+
+fetchTensionsLight : Apis -> TensionQuery -> (Loading.GqlData (List TensionLight) -> msg) -> Cmd msg
+fetchTensionsLight api q msg =
+    fetchTension api "tensions_light" q.targetids q.first q.offset q.pattern q.status q.authors q.labels q.type_ q.sort msg tensionLightDecoder
+
+
+fetchTensionInt api targetids first offset pattern status authors labels type_ sort msg =
+    fetchTension api "tensions_int" targetids first offset pattern status authors labels type_ sort msg tensionDecoder
+
+
+fetchTensionExt api targetids first offset pattern status authors labels type_ sort msg =
+    fetchTension api "tensions_ext" targetids first offset pattern status authors labels type_ sort msg tensionDecoder
+
+
+fetchTensionAll api  targetids first offset pattern status authors labels type_ sort msg =
+    fetchTension api "tensions_all" targetids first offset pattern status authors labels type_ sort msg tensionDecoder
+
+fetchTension api route targetids first offset pattern status authors labels type_ sort msg decoder =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/tensions_int"
-        , body = Http.jsonBody <| JE.object <| tensionEncoder targetids first offset query_ status_ authors labels type_ sort_
-        , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
+        , url = api.rest ++ "/" ++ route
+        , body = Http.jsonBody <| JE.object <| tensionQueryEncoder targetids first offset pattern status authors labels type_ sort
+        , expect = expectJson (fromResult >> msg) <| JD.list decoder
         , timeout = Nothing
         , tracker = Nothing
         }
 
 
-fetchTensionExt api targetids first offset query_ status_ authors labels type_ sort_ msg =
-    Http.riskyRequest
-        { method = "POST"
-        , headers = setHeaders api
-        , url = api.rest ++ "/tensions_ext"
-        , body = Http.jsonBody <| JE.object <| tensionEncoder targetids first offset query_ status_ authors labels type_ sort_
-        , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-fetchTensionAll api targetids first offset query_ status_ authors labels type_ sort_ msg =
-    Http.riskyRequest
-        { method = "POST"
-        , headers = setHeaders api
-        , url = api.rest ++ "/tensions_all"
-        , body = Http.jsonBody <| JE.object <| tensionEncoder targetids first offset query_ status_ authors labels type_ sort_
-        , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-fetchTensionCount api targetids query_ authors labels type_ sort_ msg =
+fetchTensionCount api targetids pattern authors labels type_ sort msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = api.rest ++ "/tensions_count"
-        , body = Http.jsonBody <| JE.object <| tensionEncoder targetids 0 0 query_ Nothing authors labels type_ sort_
+        , body = Http.jsonBody <| JE.object <| tensionQueryEncoder targetids 0 0 pattern Nothing authors labels type_ sort
         , expect = expectJson (fromResult >> msg) <| JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int)
         , timeout = Nothing
         , tracker = Nothing
         }
 
 
-tensionEncoder : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> List User -> List Label -> Maybe TensionType.TensionType -> Maybe String -> List ( String, JD.Value )
-tensionEncoder nameids first offset query_ status_ authors labels type_ sort_ =
+tensionQueryEncoder : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> List User -> List Label -> Maybe TensionType.TensionType -> Maybe String -> List ( String, JD.Value )
+tensionQueryEncoder nameids first offset query_ status_ authors labels type_ sort_ =
     [ ( "nameids", JE.list JE.string nameids )
     , ( "first", JE.int first )
     , ( "offset", JE.int offset )
@@ -307,6 +314,14 @@ tensionDecoder =
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
         |> JDE.andMap (JD.maybe <| JD.field "assignees" (JD.list <| userDecoder))
+
+tensionLightDecoder : JD.Decoder TensionLight
+tensionLightDecoder =
+    JD.succeed TensionLight
+        |> JDE.andMap (JD.field "id" JD.string)
+        |> JDE.andMap (JD.field "title" JD.string)
+        |> JDE.andMap (JD.field "type_" TensionType.decoder)
+        |> JDE.andMap (JD.field "status" TensionStatus.decoder)
 
 
 

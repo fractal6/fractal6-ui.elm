@@ -1559,6 +1559,36 @@ figcaption {
   }
 }
 
+.side-menu {
+  z-index: 11;
+  //position: sticky;
+  position: fixed;
+  height: 100%;
+  width: 500px;
+  top: calc(#{$navbar-height});
+  right: 0;
+  transition: width .2s ease;
+  background-color: var(--orga-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none; /* for Firefox */
+  &::-webkit-scrollbar {
+      display: none; /* for Chrome, Safari, and Opera */
+  }
+
+  // Copy from mattermost ?
+  display: flex;
+  justify-content: space-around;
+  //align-items: center;
+  //flex: 1 1 auto;
+
+  &.off {
+      width: 0 !important;
+  }
+}
+
 #menuSettings {
   border-right: solid 1px var(--border-color-light) !important;
   margin-right: 2rem;
