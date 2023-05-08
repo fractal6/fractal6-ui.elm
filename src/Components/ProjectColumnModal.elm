@@ -481,13 +481,13 @@ update_ apis message model =
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
-    , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
-    , Ports.cancelColorFromJs (always CloseColor)
+    [ Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (if model.isActive then
                 -- Extra module used when modal is active
-                []
+                [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
+                , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+                ]
 
             else
                 []
@@ -591,7 +591,7 @@ viewModalContent op model =
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , rows 1
+                        , rows 3
                         , placeholder T.leaveCommentOpt
                         , value (withDefault "" description)
                         , onInput <| OnChangePost "description"

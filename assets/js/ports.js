@@ -527,6 +527,9 @@ export const actions = {
         console.warn(`Error from Elm:`, message);
     },
     'CLICK': (app, session, target) => {
+        if (target == "") {
+            target = "body";
+        }
         var elt = document.getElementById(target);
         if (elt) elt.click();
     },

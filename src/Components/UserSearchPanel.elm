@@ -415,7 +415,7 @@ view op (State model) =
 
 view_ : Op -> Model -> Html Msg
 view_ op model =
-    nav [ id "usersSearchPanel", class "panel sidePanel", classList [ ( "is-right", op.isRight ) ] ]
+    nav [ id "usersSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.assignees_data of
             Success assignees_d ->
                 let

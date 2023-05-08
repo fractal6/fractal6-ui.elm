@@ -1263,9 +1263,13 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Find a role or circle"
   fr="Rechercher un rôle ou cercle"
 
+[noResults]
+  en="No results"
+  fr="Aucun résultats"
+
 [noResultsFor]
   en="No results for"
-  fr="Pas de résultats pour"
+  fr="Aucun résultats pour"
 
 [nodeNotFound]
   en="Circle is archived, private or has moved."

@@ -19,7 +19,7 @@
 -}
 
 
-module Components.TreeMenu exposing (Msg(..), State, getList_, getOrgaData_, init, subscriptions, update, view, viewSelectorTree)
+module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaData_, init, subscriptions, update, view, viewSelectorTree)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -31,7 +31,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict
 import Dict.Extra as DE
 import Extra exposing (ternary)
-import Extra.Events exposing (onClickPD, onClickPD2)
+import Extra.Events exposing (onClickPD, onClickSafe)
 import Fractal.Enum.RoleType as RoleType
 import Global exposing (send, sendSleep)
 import Html exposing (Html, a, div, i, li, span, text, ul)
@@ -179,10 +179,20 @@ getOrgaData_ (State model) =
     model.tree_result
 
 
-getList_ : String -> State -> List String
-getList_ nameid (State model) =
+getList : String -> GqlData NodesDict -> List String
+getList nameid tree_result =
     -- Get the ordered list of nodes
     -- starting from (or below to) the given nameid
+    case tree_result of
+        Success data ->
+            next_ (Just nameid) (buildTree_ Nothing data)
+
+        _ ->
+            []
+
+
+getList_ : String -> State -> List String
+getList_ nameid (State model) =
     if isSuccess model.tree_result then
         next_ (Just nameid) model.tree
 
@@ -669,7 +679,7 @@ viewCircleLine hover focus node =
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
-                    [ span [ class "tag is-rounded has-border", onClickPD2 (Do [ DoCreateTension Nothing node.nameid ]) ] [ A.icon "icon-plus" ] ]
+                    [ span [ class "tag is-rounded has-border", onClickSafe (Do [ DoCreateTension Nothing node.nameid ]) ] [ A.icon "icon-plus" ] ]
 
               else
                 text ""

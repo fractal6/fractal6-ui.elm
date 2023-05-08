@@ -823,12 +823,12 @@ update global message model =
                         )
                             && not (LinkTensionPanel.hasTargets_ model.linkTensionPanel)
                     then
-                        send (LinkTensionPanelMsg (LinkTensionPanel.SetTargets <| TreeMenu.getList_ model.node_focus.nameid data))
+                        send (LinkTensionPanelMsg (LinkTensionPanel.SetTargets model.path_data <| TreeMenu.getList_ model.node_focus.nameid data))
 
                     else
                         Cmd.none
             in
-            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd::cmds) |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
         ActionPanelMsg msg ->
             let
@@ -905,7 +905,7 @@ subscriptions _ model =
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
-        ++ (LinkTensionPanel.subscriptions |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
+        ++ (LinkTensionPanel.subscriptions model.linkTensionPanel |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
         |> Sub.batch
 
 
@@ -966,7 +966,7 @@ view global model =
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
-        , LinkTensionPanel.view { tree_data = tree_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
+        , LinkTensionPanel.view { tree_data = tree_data, path_data = model.path_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
         ]
     }
 

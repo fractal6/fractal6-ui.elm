@@ -24,20 +24,26 @@ port module Components.LinkTensionPanel exposing (Msg(..), State, hasTargets_, i
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserState(..), uctxFromUser)
+import Bulk.Bulma as B
+import Bulk.Codecs exposing (DocType(..))
 import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (action2icon)
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary, textH, unwrap, upH)
+import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (NodesDict, Post, TensionLight, UserCtx)
+import ModelSchema exposing (FocusNode, LocalGraph, Node, NodesDict, Post, TensionLight, UserCtx, initFocusNode, node2focus)
 import Ports
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Session exposing (Apis, GlobalCmd(..))
@@ -58,14 +64,16 @@ type State
 type alias Model =
     { user : UserState
     , isOpen : Bool
+    , target : FocusNode
     , data_result : GqlData (List TensionLight)
-    , selected : List TensionLight
-    , select_all : Bool
+    , selected : List String
+    , isSelectAll : Bool
     , form : TensionQuery -- user inputs
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , labelSearchPanel : LabelSearchPanel.State
     }
 
 
@@ -73,10 +81,12 @@ initModel : UserState -> Model
 initModel user =
     { user = user
     , isOpen = False
+    , target = initFocusNode
     , data_result = NotAsked
     , selected = []
-    , select_all = False
-    , form = initTensionQuery
+    , isSelectAll = False
+    , form = initTensionQuery |> (\x -> { x | first = 100 })
+    , labelSearchPanel = LabelSearchPanel.load Nothing user
 
     -- Common
     , refresh_trial = 0
@@ -137,11 +147,17 @@ hasData model =
 type Msg
     = -- Data
       OnOpen
+    | OnOutsideClickClose
     | OnClose
-    | SetTargets (List String)
+    | OnChangeTarget (GqlData NodesDict) Node
+    | SetTargets (GqlData LocalGraph) (List String)
     | OnSubmit (Time.Posix -> Msg)
     | OnQueryData
     | OnDataAck (GqlData (List TensionLight))
+    | OnSearchInput String
+    | OnSearchKeydown Int
+    | OnSelect String
+    | OnSelectAll
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -149,6 +165,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
 
 
 type alias Out =
@@ -189,21 +206,46 @@ update_ apis message model =
         -- Data
         OnOpen ->
             ( { model | isOpen = True }
-            , out0 [ Ports.outsideClickClose "closeLinkTensionPanelFromJs" "linkTensionPanel" ]
+            , out0 [ Ports.bulma_driver "linkTensionPanel", sendSleep OnOutsideClickClose 500 ]
             )
 
-        OnClose ->
-            ( { model | isOpen = False }, noOut )
+        OnOutsideClickClose ->
+            ( model, out0 [ Ports.outsideClickClose "closeLinkTensionPanelFromJs" "linkTensionPanel" ] )
 
-        SetTargets targetids ->
+        OnClose ->
+            -- @warning: Ports.click to reset the outsideClickClose handler.
+            ( resetModel model, out0 [ Ports.click "" ] )
+
+        OnChangeTarget tree_data node ->
             let
+                target =
+                    node2focus node
+
+                targetids =
+                    TreeMenu.getList node.nameid tree_data
+
                 form =
                     model.form
 
                 newForm =
                     { form | targetids = targetids }
             in
-            ( { model | form = newForm }, out0 [ send OnQueryData ] )
+            ( { model | target = target, form = newForm }, out0 [ send OnQueryData ] )
+
+        SetTargets target_data targetids ->
+            let
+                target =
+                    withMaybeData target_data |> unwrap initFocusNode .focus
+
+                form =
+                    model.form
+
+                newForm =
+                    { form | targetids = targetids }
+            in
+            ( { model | target = target, form = newForm }
+            , out0 [ send OnQueryData ]
+            )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
@@ -228,10 +270,43 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, List.map .id d )) )
+                    ( data
+                    , Out [] [] (Just ( True, List.map .id d ))
+                    )
 
                 _ ->
                     ( data, noOut )
+
+        OnSearchInput val ->
+            let
+                form =
+                    model.form
+            in
+            ( { model | form = { form | pattern = Just val } }, noOut )
+
+        OnSearchKeydown key ->
+            case key of
+                13 ->
+                    --ENTER
+                    ( model, out0 [ send OnQueryData ] )
+
+                27 ->
+                    --ESC
+                    ( model, out0 [ send (OnSearchInput "") ] )
+
+                _ ->
+                    ( model, noOut )
+
+        OnSelect tid ->
+            case LE.elemIndex tid model.selected of
+                Just i ->
+                    ( { model | selected = LE.removeAt i model.selected }, noOut )
+
+                Nothing ->
+                    ( { model | selected = tid :: model.selected }, noOut )
+
+        OnSelectAll ->
+            ( { model | isSelectAll = not model.isSelectAll }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -250,12 +325,53 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        -- Components
+        LabelSearchPanelMsg msg ->
+            let
+                ( data, out ) =
+                    LabelSearchPanel.update apis msg model.labelSearchPanel
 
-subscriptions : List (Sub Msg)
-subscriptions =
-    [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
-    , closeLinkTensionPanelFromJs (always OnClose)
-    ]
+                labels =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                model.form.labels ++ [ Tuple.second r ]
+
+                            else
+                                List.filter (\x -> x.name /= (Tuple.second r).name) model.form.labels
+                        )
+                        out.result
+                        |> withDefault model.form.labels
+
+                form =
+                    model.form
+
+                newForm =
+                    { form | labels = labels }
+
+                cmds =
+                    if form.labels /= newForm.labels then
+                        [ send OnQueryData ]
+
+                    else
+                        []
+
+                gcmds =
+                    []
+            in
+            ( { model | labelSearchPanel = data, form = newForm }, out2 (List.map (\m -> Cmd.map LabelSearchPanelMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
+
+
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
+    if model.isOpen then
+        [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+        , closeLinkTensionPanelFromJs (always OnClose)
+        ]
+            ++ (LabelSearchPanel.subscriptions model.labelSearchPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+
+    else
+        []
 
 
 port closeLinkTensionPanelFromJs : (() -> msg) -> Sub msg
@@ -269,6 +385,7 @@ port closeLinkTensionPanelFromJs : (() -> msg) -> Sub msg
 
 type alias Op =
     { tree_data : GqlData NodesDict
+    , path_data : GqlData LocalGraph
     }
 
 
@@ -277,29 +394,100 @@ view op (State model) =
     div
         [ id "linkTensionPanel"
         , class "side-menu"
-        , classList [("off", not model.isOpen)]
+        , classList [ ( "off", not model.isOpen ) ]
         ]
-        [ case model.data_result of
-            Success data ->
-                viewData data op model
-
-            Failure err ->
-                viewGqlErrors err
-
-            LoadingSlowly ->
-                div [ class "spinner" ] []
-
-            _ ->
-                text ""
+        [ viewPanel op model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
-viewData : List TensionLight -> Op -> Model -> Html Msg
-viewData data op model =
-    div [] <|
-        List.map
-            (\t ->
-                div [] [ text t.title ]
-            )
-            data
+viewPanel : Op -> Model -> Html Msg
+viewPanel op model =
+    let
+        labelFilter_html =
+            span [ class "is-pushed-right" ]
+                [ span
+                    [ class "button is-small"
+                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
+                    ]
+                    [ ternary (model.form.labels /= []) (span [ class "badge is-link2" ] []) (text "")
+                    , text T.label
+                    , A.icon "ml-2 icon-chevron-down1 icon-tiny"
+                    ]
+                , LabelSearchPanel.view { selectedLabels = model.form.labels, targets = [ model.target.nameid ], isRight = True } model.labelSearchPanel
+                    |> Html.map LabelSearchPanelMsg
+                ]
+    in
+    div [ class "panel", style "width" "100%" ] <|
+        [ div [ class "panel-heading" ] [ text "Add tension to this project", button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+        , div [ class "panel-block no-border" ]
+            [ B.dropdown "link-circle-source"
+                "mr-2"
+                "is-small"
+                (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
+                (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
+            , div [ class "control has-icons-left" ]
+                [ input
+                    [ class "input is-small"
+                    , type_ "text"
+                    , placeholder T.searchTensions
+                    , autofocus False
+                    , value (withDefault "" model.form.pattern)
+                    , onInput OnSearchInput
+                    , onKeydown OnSearchKeydown
+                    ]
+                    []
+                , span [ class "icon is-left" ] [ A.icon "icon-search" ]
+                ]
+            ]
+        ]
+            ++ (case model.data_result of
+                    Success data ->
+                        (if List.length data /= 0 then
+                            [ div [ class "panel-block is-top" ]
+                                [ label [ class "is-h", onClickPD OnSelectAll ]
+                                    [ input [ type_ "checkbox", checked model.isSelectAll ] []
+                                    , text ((List.length data |> String.fromInt) ++ " most recent tensions")
+                                    ]
+                                , labelFilter_html
+                                ]
+                            ]
+
+                         else
+                            []
+                        )
+                            ++ List.map
+                                (\t ->
+                                    label [ class "panel-block", onClickPD (OnSelect t.id) ]
+                                        [ input [ type_ "checkbox", checked (List.member t.id model.selected || model.isSelectAll) ] []
+                                        , text t.title
+                                        ]
+                                )
+                                data
+                            ++ (if List.length data == 0 then
+                                    [ p [ class "panel-block" ] [ text T.noResults, labelFilter_html ] ]
+
+                                else
+                                    let
+                                        hasNoItem =
+                                            List.length model.selected == 0
+                                    in
+                                    [ div [ class "panel-block mt-4 is-pulled-right" ]
+                                        [ button
+                                            [ class "button is-success s-outlined s-fullwidth"
+                                            , disabled hasNoItem
+                                            ]
+                                            [ text "Add selected items" ]
+                                        ]
+                                    ]
+                               )
+
+                    Failure err ->
+                        [ viewGqlErrors err ]
+
+                    LoadingSlowly ->
+                        [ div [ class "spinner" ] [] ]
+
+                    _ ->
+                        []
+               )

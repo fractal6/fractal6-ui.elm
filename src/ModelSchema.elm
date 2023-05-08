@@ -146,6 +146,24 @@ type alias FocusNode =
     }
 
 
+initFocusNode : FocusNode
+initFocusNode =
+    { name = ""
+    , nameid = ""
+    , type_ = NodeType.Circle
+    , visibility = NodeVisibility.Private
+    , mode = NodeMode.Coordinated
+    , source = Nothing
+    , children = []
+    , pinned = NotAsked
+    }
+
+
+node2focus : Node -> FocusNode
+node2focus n =
+    FocusNode n.name n.nameid n.type_ n.visibility n.mode n.source [] NotAsked
+
+
 type alias RNode =
     { name : String
     , nameid : String

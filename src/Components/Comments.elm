@@ -28,7 +28,7 @@ import Bulk.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, view
 import Components.UserInput as UserInput
 import Dict
 import Extra exposing (ternary)
-import Extra.Events exposing (onClickPD2)
+import Extra.Events exposing (onClickSafe)
 import Form exposing (isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -417,8 +417,8 @@ viewCommentInputHeader targetid cls_tabs op form =
         [ div [ class "level-left" ]
             [ div [ class ("tabs is-boxed is-small " ++ cls_tabs) ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
+                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickSafe (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickSafe (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                     ]
                 ]
             ]
