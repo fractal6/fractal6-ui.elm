@@ -36,7 +36,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, NameidPayload, ProjectsCount, RoleExt, Tension, TensionsCount, User, Username, TensionLight)
+import ModelSchema exposing (Label, NameidPayload, ProjectsCount, RoleExt, Tension, TensionLight, TensionsCount, User, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
 import Session exposing (Apis)
@@ -258,8 +258,9 @@ fetchTensionExt api targetids first offset pattern status authors labels type_ s
     fetchTension api "tensions_ext" targetids first offset pattern status authors labels type_ sort msg tensionDecoder
 
 
-fetchTensionAll api  targetids first offset pattern status authors labels type_ sort msg =
+fetchTensionAll api targetids first offset pattern status authors labels type_ sort msg =
     fetchTension api "tensions_all" targetids first offset pattern status authors labels type_ sort msg tensionDecoder
+
 
 fetchTension api route targetids first offset pattern status authors labels type_ sort msg decoder =
     Http.riskyRequest
@@ -315,6 +316,7 @@ tensionDecoder =
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
         |> JDE.andMap (JD.maybe <| JD.field "assignees" (JD.list <| userDecoder))
 
+
 tensionLightDecoder : JD.Decoder TensionLight
 tensionLightDecoder =
     JD.succeed TensionLight
@@ -322,6 +324,7 @@ tensionLightDecoder =
         |> JDE.andMap (JD.field "title" JD.string)
         |> JDE.andMap (JD.field "type_" TensionType.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
+        |> JDE.andMap (JD.maybe <| JD.field "labels" (JD.list <| labelDecoder))
 
 
 

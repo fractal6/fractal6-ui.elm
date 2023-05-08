@@ -264,7 +264,7 @@ init global flags =
 
             --
             , projectColumnModal = ProjectColumnModal.init projectid global.session.user
-            , linkTensionPanel = LinkTensionPanel.init global.session.user
+            , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
             , board_result = NotAsked
 
             -- Common

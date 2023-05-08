@@ -39,13 +39,13 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, title)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Lazy as Lazy
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, User, UserCommon, UserRoleCommon, UserView, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
 import Session exposing (Conf)
 import String.Extra as SE
 import String.Format as Format
@@ -78,9 +78,6 @@ mediaTension_ op conf focus tension showStatus showRecip size =
     let
         n_comments =
             withDefault 0 tension.n_comments
-
-        labels_m =
-            tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div
         [ class ("media mediaBox is-hoverable " ++ size) ]
@@ -99,7 +96,7 @@ mediaTension_ op conf focus tension showStatus showRecip size =
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
-                , case labels_m of
+                , case tension.labels of
                     Just labels ->
                         viewLabels (Just focus.nameid) labels
 
@@ -158,6 +155,25 @@ mediaTension_ op conf focus tension showStatus showRecip size =
                     text ""
                 ]
             ]
+        ]
+
+
+viewTensionLight : TensionLight -> Html msg
+viewTensionLight t =
+    span []
+        [ span [ class "mr-2" ] [ tensionIcon t.type_ ]
+        , a
+            [ class "is-human discrete-link mr-2"
+            , href (Route.Tension_Dynamic_Dynamic { param1 = "", param2 = t.id } |> toHref)
+            , target "_blank"
+            ]
+            [ text t.title ]
+        , case t.labels of
+            Just labels ->
+                viewLabels Nothing labels
+
+            Nothing ->
+                text ""
         ]
 
 
@@ -263,21 +279,25 @@ used to make labels clickable.
 -}
 viewLabels : Maybe String -> List Label -> Html msg
 viewLabels nid_m labels =
-    let
-        to_link_m name =
-            Maybe.map
-                (\nid ->
-                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ name)
+    if List.length labels == 0 then
+        text ""
+
+    else
+        let
+            to_link_m name =
+                Maybe.map
+                    (\nid ->
+                        toLink TensionsBaseUri nid [] ++ ("?l=" ++ name)
+                    )
+                    nid_m
+        in
+        span [ class "labelsList" ]
+            (List.map
+                (\label ->
+                    viewLabel "" (to_link_m label.name) label
                 )
-                nid_m
-    in
-    span [ class "labelsList" ]
-        (List.map
-            (\label ->
-                viewLabel "" (to_link_m label.name) label
+                labels
             )
-            labels
-        )
 
 
 viewLabel : String -> Maybe String -> Label -> Html msg
