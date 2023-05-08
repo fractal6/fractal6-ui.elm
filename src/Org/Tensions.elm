@@ -1094,7 +1094,7 @@ update global message model =
         ChangeLabel ->
             let
                 targets =
-                    getPath model.path_data
+                    getPath model.path_data |> List.map .nameid
             in
             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets (Just True))), Cmd.none )
 
@@ -1808,7 +1808,7 @@ viewSearchBar model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
-                            , targets = model.path_data |> withMaybeMapData (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
                             , isRight = False
                             }
                             model.labelsPanel

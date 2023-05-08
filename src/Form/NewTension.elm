@@ -35,7 +35,7 @@ import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
 import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
-import Extra.Events exposing (onClickPD, onClickPD2, onEnter)
+import Extra.Events exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
@@ -1530,7 +1530,7 @@ viewTension op model =
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
-                                , targets = getPath model.path_data
+                                , targets = getPath model.path_data |> List.map .nameid
                                 , isRight = False
                                 }
                                 model.labelsPanel
@@ -1586,10 +1586,10 @@ viewCircle op model =
             isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map .purpose) /= Nothing
 
         submitTension =
-            ternary isSendable [ onClickPD2 (OnSubmit isLoading <| OnSubmitTension False) ] []
+            ternary isSendable [ onClickSafe (OnSubmit isLoading <| OnSubmitTension False) ] []
 
         submitCloseTension =
-            ternary isSendable [ onClickPD2 (OnSubmit isLoading <| OnSubmitTension True) ] []
+            ternary isSendable [ onClickSafe (OnSubmit isLoading <| OnSubmitTension True) ] []
     in
     case model.result of
         Success res ->

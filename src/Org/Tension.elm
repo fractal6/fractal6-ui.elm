@@ -1403,21 +1403,21 @@ update global message model =
         DoLabelEdit ->
             let
                 targets =
-                    getPath model.path_data
+                    getPath model.path_data |> List.map .nameid
 
                 receiver_m =
                     withMaybeData model.tension_head |> Maybe.map .receiver
             in
             case receiver_m of
                 Just receiver ->
-                    case LE.elemIndex receiver.nameid (List.map .nameid targets) of
+                    case LE.elemIndex receiver.nameid targets of
                         Just i ->
                             -- receiver is in the current focus/path
                             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)), Cmd.none )
 
                         Nothing ->
                             -- receiver does not match the current focus/path
-                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ { name = receiver.name, nameid = receiver.nameid, source = Nothing } ] (Just False))), Cmd.none )
+                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ receiver.nameid ] (Just False))), Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets Nothing)), Cmd.none )
@@ -2816,7 +2816,7 @@ viewSidePane u t model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = t.labels |> withDefault []
-                            , targets = model.path_data |> withMaybeMapData (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
                             , isRight = False
                             }
                             model.labelsPanel

@@ -238,10 +238,9 @@ $hbc: #f6f8fa;
 $bbc: white; // $white
 $chbc: $hbc;
 $background-evidence: darken($bbc, 5); // hover
+$background: $grey-lighter; // Use by bulma.
 $ph-background: $grey-lighter;
-// $background = kind of grey-lighter
 $user-emoticon-bg: #eeeeff;
-//$orga-emoticon-bg: #4596c1;
 $orga-emoticon-bg: #71beee;
 
 // Graph-packing
@@ -275,9 +274,6 @@ $subtitle-strong-color: $is-highlight;
 // Border
 $border-color: $grey-light2;
 $border-color-light: $grey-light3;
-
-// Media
-$media-border-color: $border-color-light;
 
 // Box
 $box-color: $text;
@@ -328,9 +324,12 @@ $content-heading-color: $text-strong;
 // Menu
 $menu-item-active-color: $link;
 $menu-item-active-background-color: $hbc;
-$menu-item-hover-background-color: $grey-lightest;
+$menu-item-hover-background-color: $background-evidence;
 $menu-left-background-color: $bbc;
 $menu-left-border-color: #e5e5e5;
+
+// Panel
+$panel-block-hover-background-color: $grey-lightest;
 
 // Tabs
 //$navbar-border-color: $border-color;
@@ -412,6 +411,7 @@ $logo-modal-color: $grey-light3;
   --bbc: #{$bbc};
   --chbc: #{$chbc};
   --background-evidence: #{$background-evidence};
+  --background: #{$background};
   --ph-background: #{$ph-background};
   --user-emoticon-bg: #{$user-emoticon-bg};
   --orga-emoticon-bg: #{$orga-emoticon-bg};
@@ -445,9 +445,6 @@ $logo-modal-color: $grey-light3;
   --subtitle-color: #{$subtitle-color};
   --subtitle-strong-color: #{$subtitle-strong-color};
 
-  // Media
-  --media-border-color: #{$media-border-color};
-
   // Box
   --box-color: #{$box-color};
   --box-background-color: #{$box-background-color};
@@ -463,6 +460,8 @@ $logo-modal-color: $grey-light3;
   // Border
   --border-color: #{$border-color};
   --border-color-light: #{$border-color-light};
+  --border: #{$border-color};
+  --border-light: #{$border-color-light};
 
   // Button
   --button-color: #{$button-color};
@@ -501,8 +500,13 @@ $logo-modal-color: $grey-light3;
   --menu-item-active-color: #{$menu-item-active-color};
   --menu-item-active-background-color: #{$menu-item-active-background-color};
   --menu-item-hover-background-color: #{$menu-item-hover-background-color};
+  --menu-item-color: #{$text};
+  --menu-item-hover-color: #{$text};
   --menu-left-background-color: #{$menu-left-background-color};
   --menu-left-border-color: #{$menu-left-border-color};
+
+  // Panel
+  --panel-block-hover-background-color: #{$panel-block-hover-background-color};
 
   // Tabs
   --tabs-boxed-link-active-background-color: #{$tabs-boxed-link-active-background-color};
@@ -605,7 +609,7 @@ $hbc: $dark-dimmed-top; // #37404d; // #44444d; // #24292e;
 $bbc: $dark-dimmed; // #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
 $chbc: $hbc;
 $background-evidence: lighten($bbc, 8); //hover
-$background: $grey-darker; // where it's use ?
+$background: $grey-darker; // Use by bulma.
 $ph-background: $grey-dark;
 $user-emoticon-bg: #00000052;
 $orga-emoticon-bg: #285a86;
@@ -641,9 +645,6 @@ $subtitle-strong-color: $is-highlight;
 // Border
 $border-color: $grey;
 $border-color-light: $grey-darker2;
-
-// Media
-$media-border-color: $border-color-light;
 
 // Box
 $box-color: $text;
@@ -698,9 +699,12 @@ $content-heading-color: $text-strong;
 // Menu
 $menu-item-active-color: $link;
 $menu-item-active-background-color: $hbc;
-$menu-item-hover-background-color: $grey-darker;
+$menu-item-hover-background-color: $background-evidence;
 $menu-left-background-color: #55555555;
 $menu-left-border-color: #464646;
+
+// Panel
+$panel-block-hover-background-color: $grey-darker;
 
 // Tabs
 //$navbar-border-color: $border-color;
@@ -817,9 +821,6 @@ $logo-modal-color: $grey-dark;
   --subtitle-color: #{$subtitle-color};
   --subtitle-strong-color: #{$subtitle-strong-color};
 
-  // Media
-  --media-border-color: #{$media-border-color};
-
   // Box
   --box-color: #{$box-color};
   --box-background-color: #{$box-background-color};
@@ -835,6 +836,8 @@ $logo-modal-color: $grey-dark;
   // Border
   --border-color: #{$border-color};
   --border-color-light: #{$border-color-light};
+  --border: #{$border-color};
+  --border-light: #{$border-color-light};
 
   // Button
   --button-color: #{$button-color};
@@ -876,8 +879,13 @@ $logo-modal-color: $grey-dark;
   --menu-item-active-color: #{$menu-item-active-color};
   --menu-item-active-background-color: #{$menu-item-active-background-color};
   --menu-item-hover-background-color: #{$menu-item-hover-background-color};
+  --menu-item-color: #{$text};
+  --menu-item-hover-color: #{$text};
   --menu-left-background-color: #{$menu-left-background-color};
   --menu-left-border-color: #{$menu-left-border-color};
+
+  // Panel
+  --panel-block-hover-background-color: #{$panel-block-hover-background-color};
 
   // Tabs
   --tabs-boxed-link-active-background-color: #{$tabs-boxed-link-active-background-color};

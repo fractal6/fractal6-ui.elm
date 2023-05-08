@@ -22,11 +22,12 @@
 module Extra.Events exposing (..)
 
 import Html
-import Html.Events exposing (custom, keyCode, on, preventDefaultOn)
+import Html.Events exposing (custom, keyCode, on, preventDefaultOn, stopPropagationOn)
 import Json.Decode as JD
 
 
 
+--import Svg.Events exposing (stopPropagationOn)
 --
 -- Utils
 --
@@ -43,8 +44,13 @@ onClickPD msg =
     preventDefaultOn "click" <| JD.succeed ( msg, True )
 
 
-onClickPD2 : msg -> Html.Attribute msg
-onClickPD2 message =
+onClickSP : msg -> Html.Attribute msg
+onClickSP msg =
+    stopPropagationOn "click" <| JD.succeed ( msg, True )
+
+
+onClickSafe : msg -> Html.Attribute msg
+onClickSafe message =
     custom "click" <|
         JD.map
             (\_ ->

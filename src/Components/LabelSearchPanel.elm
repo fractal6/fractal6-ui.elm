@@ -191,7 +191,7 @@ setPattern pattern data =
 
 
 type Msg
-    = OnOpen (List PNode) (Maybe Bool)
+    = OnOpen (List String) (Maybe Bool)
     | OnClose
     | OnClose_
     | OnChangePattern String
@@ -246,13 +246,12 @@ update_ apis message model =
     case message of
         OnOpen targets isDepth ->
             -- case isDepth of
-            -- Just True: fetch label recurcively in children.
-            -- Just False: fetch label in parents until root.
+            -- Just True: fetch labels recursively in children.
+            -- Just False: fetch labels in parents until root.
             -- Nothing: stick to given targets
             if not model.isOpen then
                 let
-                    nameids =
-                        List.map (\x -> x.nameid) targets
+                    nameids = targets
 
                     hasChanged =
                         nameids /= model.form.targets
@@ -427,14 +426,14 @@ subscriptions (State model) =
 
 type alias Op =
     { selectedLabels : List Label
-    , targets : List PNode
+    , targets : List String
     , isRight : Bool
     }
 
 
 view_ : Bool -> Op -> Model -> Html Msg
 view_ isInternal op model =
-    nav [ id "labelSearchPanel", class "panel sidePanel", classList [ ( "is-right", op.isRight ) ] ]
+    nav [ id "labelSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.labels_data of
             Success labels_d ->
                 let
@@ -496,7 +495,7 @@ viewLabelSelectors isInternal labels op model =
         viewEdit =
             let
                 editLink =
-                    uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "") [] ++ "?m=labels&a=new"
+                    uriFromNameid SettingsBaseUri ( op.targets |> List.head |> withDefault "") [] ++ "?m=labels&a=new"
             in
             p
                 [ class "panel-block is-md is-w discrete-link"

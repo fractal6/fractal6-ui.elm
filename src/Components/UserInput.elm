@@ -402,7 +402,7 @@ view op (State model) =
 
 viewUserSeeker : State -> Html Msg
 viewUserSeeker (State model) =
-    div [ class "panel sidePanel" ]
+    div [ class "panel dropList" ]
         [ div [ class "selectors" ] <|
             if model.lookup == [] then
                 [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.userNotFound ] ]
@@ -498,7 +498,7 @@ viewInput op model =
 
 viewUserSelectors : Op -> Model -> Html Msg
 viewUserSelectors op model =
-    div [ class "panel sidePanel" ]
+    div [ class "panel dropList" ]
         [ div [ class "selectors" ] <|
             if model.lookup == [] then
                 [ p [ class "panel-block help-label is-static", attribute "style" "cursor: default !important;" ] [ text T.enterValidUserOrEmail ] ]
@@ -519,7 +519,7 @@ viewUserSelectors op model =
 
 viewEmailSelector : Op -> Model -> Html Msg
 viewEmailSelector op model =
-    div [ class "panel sidePanel" ]
+    div [ class "panel dropList" ]
         [ div [ class "selectors has-background-info-light" ]
             [ p
                 [ class "panel-block"
