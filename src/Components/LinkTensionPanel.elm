@@ -27,24 +27,27 @@ import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..))
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon)
+import Bulk.View exposing (action2icon, viewTensionLight)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, unwrap, upH)
+import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty)
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (FocusNode, LocalGraph, Node, NodesDict, Post, TensionLight, UserCtx, initFocusNode, node2focus)
+import ModelSchema exposing (FocusNode, IdPayload, LocalGraph, Node, NodesDict, Post, ProjectColumn, TensionLight, UserCtx, initFocusNode, node2focus)
 import Ports
+import Query.QueryProject exposing (addProjectColumn, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
@@ -64,8 +67,10 @@ type State
 type alias Model =
     { user : UserState
     , isOpen : Bool
+    , projectid : String
     , target : FocusNode
     , data_result : GqlData (List TensionLight)
+    , add_result : GqlData ProjectColumn
     , selected : List String
     , isSelectAll : Bool
     , form : TensionQuery -- user inputs
@@ -77,12 +82,14 @@ type alias Model =
     }
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : String -> UserState -> Model
+initModel projectid user =
     { user = user
     , isOpen = False
+    , projectid = projectid
     , target = initFocusNode
     , data_result = NotAsked
+    , add_result = NotAsked
     , selected = []
     , isSelectAll = False
     , form = initTensionQuery |> (\x -> { x | first = 100 })
@@ -94,9 +101,9 @@ initModel user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : String -> UserState -> State
+init projectid user =
+    initModel projectid user |> State
 
 
 
@@ -114,7 +121,7 @@ hasTargets_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user
+    initModel model.projectid model.user
 
 
 setDataResult : GqlData (List TensionLight) -> Model -> Model
@@ -158,6 +165,8 @@ type Msg
     | OnSearchKeydown Int
     | OnSelect String
     | OnSelectAll
+    | OnAddToProject
+    | OnAddAck (GqlData ProjectColumn)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -171,7 +180,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, List String ) -- List of tid
+    , result : Maybe ( Bool, ProjectColumn )
     }
 
 
@@ -251,7 +260,7 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         OnQueryData ->
-            ( setDataResult LoadingSlowly model
+            ( { model | selected = [], isSelectAll = False } |> setDataResult LoadingSlowly
             , out0 [ fetchTensionsLight apis model.form OnDataAck ]
             )
 
@@ -270,9 +279,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data
-                    , Out [] [] (Just ( True, List.map .id d ))
-                    )
+                    ( data, noOut )
 
                 _ ->
                     ( data, noOut )
@@ -282,7 +289,7 @@ update_ apis message model =
                 form =
                     model.form
             in
-            ( { model | form = { form | pattern = Just val } }, noOut )
+            ( { model | form = { form | pattern = ternary (val == "") Nothing (Just val) } }, noOut )
 
         OnSearchKeydown key ->
             case key of
@@ -307,6 +314,27 @@ update_ apis message model =
 
         OnSelectAll ->
             ( { model | isSelectAll = not model.isSelectAll }, noOut )
+
+        OnAddToProject ->
+            let
+                form =
+                    { uctx = uctxFromUser model.user
+                    , projectid = model.projectid
+                    , colid = ""
+                    , col_type = Just ProjectColumnType.NoStatusColumn
+                    , pos = Nothing
+                    , post = Dict.empty
+                    }
+            in
+            ( { model | add_result = Loading }, out0 [ addProjectColumn apis form OnAddAck ] )
+
+        OnAddAck result ->
+            case result of
+                Success d ->
+                    ( model, Out [ send OnClose ] [] (Just ( True, d )) )
+
+                _ ->
+                    ( { model | add_result = result }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -417,77 +445,100 @@ viewPanel op model =
                 , LabelSearchPanel.view { selectedLabels = model.form.labels, targets = [ model.target.nameid ], isRight = True } model.labelSearchPanel
                     |> Html.map LabelSearchPanelMsg
                 ]
+
+        hasItem =
+            List.length model.selected > 0
+
+        onSubmit =
+            ternary hasItem
+                OnAddToProject
+                NoMsg
     in
-    div [ class "panel", style "width" "100%" ] <|
-        [ div [ class "panel-heading" ] [ text "Add tension to this project", button [ class "delete is-pulled-right", onClick OnClose ] [] ]
-        , div [ class "panel-block no-border" ]
-            [ B.dropdown "link-circle-source"
-                "mr-2"
-                "is-small"
-                (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
-                (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
-            , div [ class "control has-icons-left" ]
-                [ input
-                    [ class "input is-small"
-                    , type_ "text"
-                    , placeholder T.searchTensions
-                    , autofocus False
-                    , value (withDefault "" model.form.pattern)
-                    , onInput OnSearchInput
-                    , onKeydown OnSearchKeydown
+    div [ class "panel" ] <|
+        [ div [ class "header-block" ]
+            [ div [ class "panel-heading" ] [ text "Add tension to this project", button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+            , div [ class "panel-block no-border" ]
+                [ B.dropdown "link-circle-source"
+                    "mr-2"
+                    "is-small"
+                    (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
+                    (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
+                , div [ class "control has-icons-left" ]
+                    [ input
+                        [ class "input is-small"
+                        , type_ "text"
+                        , placeholder T.searchTensions
+                        , autofocus False
+                        , value (withDefault "" model.form.pattern)
+                        , onInput OnSearchInput
+                        , onKeydown OnSearchKeydown
+                        ]
+                        []
+                    , span [ class "icon is-left" ] [ A.icon "icon-search" ]
                     ]
-                    []
-                , span [ class "icon is-left" ] [ A.icon "icon-search" ]
                 ]
-            ]
-        ]
-            ++ (case model.data_result of
-                    Success data ->
-                        (if List.length data /= 0 then
-                            [ div [ class "panel-block is-top" ]
-                                [ label [ class "is-h", onClickPD OnSelectAll ]
-                                    [ input [ type_ "checkbox", checked model.isSelectAll ] []
-                                    , text ((List.length data |> String.fromInt) ++ " most recent tensions")
-                                    ]
-                                , labelFilter_html
+            , case model.data_result of
+                Success data ->
+                    if List.length data > 0 then
+                        -- @warning: height of this element manually to be able to work on relative
+                        -- height percentage for .parent-block (100% of the parent height).
+                        div [ class "panel-block is-top" ]
+                            [ label [ class "is-h", onClickPD OnSelectAll ]
+                                [ input [ type_ "checkbox", checked model.isSelectAll ] []
+                                , text ((List.length data |> String.fromInt) ++ " most recent tensions")
                                 ]
+                            , labelFilter_html
                             ]
 
-                         else
-                            []
+                    else
+                        p [ class "panel-block" ] [ text T.noResults, labelFilter_html ]
+
+                _ ->
+                    text ""
+            ]
+        , div [ class "main-block" ] <|
+            case model.data_result of
+                Success data ->
+                    List.map
+                        (\t ->
+                            Lazy.lazy3 viewLineSelect t model.selected model.isSelectAll
                         )
-                            ++ List.map
-                                (\t ->
-                                    label [ class "panel-block", onClickPD (OnSelect t.id) ]
-                                        [ input [ type_ "checkbox", checked (List.member t.id model.selected || model.isSelectAll) ] []
-                                        , text t.title
-                                        ]
-                                )
-                                data
-                            ++ (if List.length data == 0 then
-                                    [ p [ class "panel-block" ] [ text T.noResults, labelFilter_html ] ]
+                        data
 
-                                else
-                                    let
-                                        hasNoItem =
-                                            List.length model.selected == 0
-                                    in
-                                    [ div [ class "panel-block mt-4 is-pulled-right" ]
-                                        [ button
-                                            [ class "button is-success s-outlined s-fullwidth"
-                                            , disabled hasNoItem
-                                            ]
-                                            [ text "Add selected items" ]
-                                        ]
-                                    ]
-                               )
+                Failure err ->
+                    [ viewGqlErrors err ]
 
-                    Failure err ->
-                        [ viewGqlErrors err ]
+                LoadingSlowly ->
+                    [ div [ class "spinner" ] [] ]
 
-                    LoadingSlowly ->
-                        [ div [ class "spinner" ] [] ]
+                _ ->
+                    []
+        , div [ class "panel-block footer-block" ]
+            [ case model.add_result of
+                Failure err ->
+                    viewGqlErrors err
 
-                    _ ->
-                        []
-               )
+                _ ->
+                    text ""
+            , button
+                [ class "button is-small is-success s-center is-pushed-right"
+                , onClick onSubmit
+                , classList [ ( "is-loading", Loading.isLoading model.add_result ) ]
+                , disabled (not hasItem)
+                ]
+                [ text "Add selected items" ]
+            ]
+        ]
+
+
+viewLineSelect : TensionLight -> List String -> Bool -> Html Msg
+viewLineSelect t selected isSelectAll =
+    label [ class "panel-block tensionLight" ]
+        [ input
+            [ type_ "checkbox"
+            , onClickPD (OnSelect t.id)
+            , checked (List.member t.id selected || isSelectAll)
+            ]
+            []
+        , viewTensionLight t
+        ]

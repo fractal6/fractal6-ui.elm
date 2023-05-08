@@ -28,9 +28,10 @@ import Bulk.Error exposing (viewGqlErrors)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
@@ -126,6 +127,7 @@ type alias ColumnForm =
     { uctx : UserCtx
     , projectid : String
     , colid : String
+    , col_type : Maybe ProjectColumnType.ProjectColumnType
     , pos : Maybe Int
     , post : Post
     }
@@ -136,6 +138,7 @@ initForm projectid user =
     { uctx = uctxFromUser user
     , projectid = projectid
     , colid = ""
+    , col_type = Nothing
     , pos = Nothing
     , post = Dict.empty
     }

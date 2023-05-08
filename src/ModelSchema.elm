@@ -317,6 +317,7 @@ type alias TensionLight =
     , title : String
     , type_ : TensionType.TensionType
     , status : TensionStatus.TensionStatus
+    , labels : Maybe (List Label)
     }
 
 
