@@ -181,7 +181,6 @@ type alias Model =
     -- Board
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
-    , moveFifo : Fifo ( String, Int, ProjectCard )
     , linkTensionPanel : LinkTensionPanel.State
     , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
@@ -257,7 +256,6 @@ init global flags =
             -- Board
             , boardHeight = Nothing
             , movingCard = Nothing
-            , moveFifo = Fifo.empty
             , movingHoverCol = Nothing
             , movingHoverT = Nothing
             , dragCount = 0
@@ -288,6 +286,7 @@ init global flags =
             , Ports.hide "footBar"
             , Task.attempt FitBoard (Dom.getElement "projectView")
             , sendSleep PassedSlowLoadTreshold 500
+            , sendSleep (ScrollToElement "projectView") 333
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
@@ -346,6 +345,7 @@ type Msg
     | NoMsg
     | LogErr String
     | OnGoRoot
+    | ScrollToElement String
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
     | HelperBarMsg HelperBar.Msg
@@ -472,8 +472,30 @@ update global message model =
                         ( newModel, sendSleep OnCancelHov 300, Cmd.none )
 
                     else
-                        ( { newModel | moveFifo = Fifo.insert ( colid, c_hover.pos, card ) model.moveFifo, board_result = Loading }
-                        , moveProjectCard apis card.id c_hover.pos colid GotCardMoved
+                        -- Do not wait the query to success to move the column.
+                        let
+                            pj =
+                                withMapData
+                                    (\data ->
+                                        let
+                                            pos_fixed =
+                                                ternary (colid == card.colid && c_hover.pos > card.pos)
+                                                    (c_hover.pos - 1)
+                                                    c_hover.pos
+                                        in
+                                        data
+                                            -- Remove the card from old pos
+                                            |> (\d -> { d | columns = removeCard card d.columns })
+                                            -- Add the card in new pos tension to list
+                                            |> (\d -> { d | columns = pushCard { card | colid = colid, pos = pos_fixed } d.columns })
+                                    )
+                                    model.project_data
+                        in
+                        ( { newModel | project_data = pj, board_result = Loading }
+                        , Cmd.batch
+                            [ moveProjectCard apis card.id c_hover.pos colid GotCardMoved
+                            , send OnCancelHov
+                            ]
                         , Cmd.none
                         )
                 )
@@ -585,54 +607,8 @@ update global message model =
             )
 
         GotCardMoved result ->
-            case result of
-                Failure err ->
-                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
+            ( { model | board_result = withMapData .id result }, Cmd.none, Cmd.none )
 
-                NotAsked ->
-                    ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    -- Do not wait the query to success to move the column.
-                    let
-                        ( move, fifo ) =
-                            Fifo.remove model.moveFifo
-
-                        ( project_data, newfifo ) =
-                            Maybe.map2
-                                (\data ( colid, pos, c ) ->
-                                    let
-                                        pos_fixed =
-                                            ternary (colid == c.colid && pos > c.pos)
-                                                (pos - 1)
-                                                pos
-
-                                        newData =
-                                            data
-                                                -- Remove the card from old pos
-                                                |> (\d -> { d | columns = removeCard c d.columns })
-                                                -- Add the card in new pos tension to list
-                                                |> (\d -> { d | columns = pushCard { c | colid = colid, pos = pos_fixed } d.columns })
-                                    in
-                                    ( Success newData, fifo )
-                                )
-                                (withMaybeData model.project_data)
-                                move
-                                |> withDefault ( model.project_data, model.moveFifo )
-
-                        cmd =
-                            if List.length (Fifo.toList newfifo) == 0 then
-                                send OnCancelHov
-
-                            else
-                                Cmd.none
-                    in
-                    ( { model | moveFifo = newfifo, project_data = project_data, board_result = NotAsked }
-                    , cmd
-                    , Cmd.none
-                    )
-
-        --
         OnAddCol ->
             let
                 pos =
@@ -731,6 +707,9 @@ update global message model =
                     global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
             ( model, Cmd.none, send (NavigateRaw (uriFromNameid ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
+
+        ScrollToElement did ->
+            ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
