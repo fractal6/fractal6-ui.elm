@@ -24,20 +24,20 @@ module Bulk.Bulma exposing (dropdown)
 import Assets as A
 import Bulk exposing (UserState(..))
 import Html exposing (Html, div, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, id, style)
+import Html.Attributes exposing (attribute, autofocus, class, classList, id, style)
 import Html.Events exposing (onClick, onInput)
 import Maybe exposing (withDefault)
 import Text as T
 
 
-dropdown : String -> String -> String -> Html msg -> Html msg -> Html msg
-dropdown id_ dropdown_cls button_cls button_html content_html =
+dropdown : String -> String -> String -> Html msg -> msg -> Html msg -> Html msg
+dropdown id_ dropdown_cls button_cls button_html msg content_html =
     span [ class ("dropdown " ++ dropdown_cls) ]
-        [ span [ class "dropdown-trigger" ]
+        [ span [ class "dropdown-trigger", onClick msg ]
             [ span [ attribute "aria-controls" id_ ]
                 [ span
                     [ class ("button " ++ button_cls) ]
-                    [ button_html, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                    [ button_html, i [ class "ml-2 icon-chevron-down1", classList [ ( "icon-tiny", String.contains "is-small" button_cls ) ] ] [] ]
                 ]
             ]
         , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
