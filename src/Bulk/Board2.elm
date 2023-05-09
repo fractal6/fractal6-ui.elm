@@ -23,20 +23,21 @@ module Bulk.Board2 exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (NodeFocus)
-import Bulk.View exposing (mediaTension)
+import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac)
+import Bulk.View exposing (action2icon, action2str, mediaTension, statusColor, tensionIcon, tensionStatus2str, tensionType2str, viewLabels)
 import Dict exposing (Dict)
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
-import Html exposing (Html, div, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, id, style)
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html, a, br, div, i, span, text)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import Json.Encode as JE
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (CardKind(..), Post, ProjectCard, ProjectDraft, Tension, UserCtx)
+import ModelSchema exposing (CardKind(..), Post, ProjectCard, ProjectColumn, ProjectDraft, Tension, UserCtx)
 import Session exposing (Conf)
 import Text as T
 
@@ -88,7 +89,7 @@ type alias Op msg =
     2.  A potential name for that column
     3.  The column id
     4.  The potential first card of the column
-3.  `keys_title`: A list of pairs representing the ids and names of each column in the board.
+3.  `keys`: A list of ordered column's ids in the board.
 4.  `data`: representing the tensions in each column of the board.
 
 The function returns an HTML structure which displays the board with each column having its own header and list of tensions.
@@ -96,20 +97,20 @@ The function returns an HTML structure which displays the board with each column
 This function generates a drag-and-drop board with the ability to move card items around.
 
 -}
-viewBoard : Op msg -> (String -> String -> Maybe String -> Maybe ProjectCard -> Html msg) -> List ( String, String, Maybe String ) -> Dict String (List ProjectCard) -> Html msg
-viewBoard op header keys_title data =
-    keys_title
+viewBoard : Op msg -> (ProjectColumn -> Maybe ProjectCard -> Html msg) -> List ProjectColumn -> Html msg
+viewBoard op header columns =
+    columns
         |> List.indexedMap
-            (\i ( colid, name, color ) ->
+            (\i col ->
                 let
-                    cards =
-                        Dict.get colid data |> withDefault []
+                    colid =
+                        col.id
 
                     j_last =
-                        List.length cards - 1
+                        List.length col.cards - 1
 
                     c1 =
-                        List.head cards
+                        List.head col.cards
                 in
                 [ div
                     (class "column is-3"
@@ -127,8 +128,8 @@ viewBoard op header keys_title data =
                         [ class "subtitle"
                         , onDragEnter (op.onMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
-                        [ header colid name color c1 ]
-                    , cards
+                        [ header col c1 ]
+                    , col.cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                         |> List.indexedMap
@@ -165,7 +166,7 @@ viewBoard op header keys_title data =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
+                                            [ Lazy.lazy3 viewMediaTension op.conf op.node_focus t ]
 
                                         CardDraft d ->
                                             [ Lazy.lazy viewMediaDraft d ]
@@ -258,7 +259,7 @@ viewNewCol op =
 viewMediaDraft : ProjectDraft -> Html msg
 viewMediaDraft d =
     div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-content" ]
+        [ div [ class "media-content is-smaller is-human" ]
             [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ]
             , div [] [ span [ class "link-like" ] [ text d.title ] ]
             ]
@@ -285,3 +286,68 @@ viewDraftEditable op form =
 
 innerHtmlDecoder =
     JD.at [ "target", "innerHTML" ] JD.string
+
+
+viewMediaTension : Conf -> NodeFocus -> Tension -> Html msg
+viewMediaTension conf focus tension =
+    let
+        n_comments =
+            withDefault 0 tension.n_comments
+    in
+    div
+        [ class "media mediaBox is-hoverable is-size-7" ]
+        [ div [ class "media-left mr-3" ]
+            [ div
+                [ class "tooltip is-left has-tooltip-arrow"
+                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , style "width" "10px"
+                ]
+                [ tensionIcon tension.type_ ]
+            ]
+        , div [ class "media-content" ]
+            [ div [ class "content mb-1" ]
+                [ a
+                    [ class "is-human discrete-link is-size-7"
+                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                    ]
+                    [ text tension.title ]
+                , case tension.labels of
+                    Just labels ->
+                        viewLabels (Just focus.nameid) labels
+
+                    Nothing ->
+                        text ""
+                ]
+            , span [ class "level is-smaller2 is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ span
+                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                        , attribute "data-tooltip" (tensionStatus2str tension.status)
+                        ]
+                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                    ]
+                , div [ class "level-right" ] []
+                ]
+            ]
+        , div [ class "media-right wrapped-container-33" ]
+            [ br [] []
+            , span [ class "level is-mobile icons-list" ]
+                [ case tension.action of
+                    Just action ->
+                        let
+                            tc =
+                                getTensionCharac action
+                        in
+                        a
+                            [ class "level-item discrete-link tooltip has-tooltip-arrow"
+                            , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
+                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
+                            , href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                            ]
+                            [ A.icon0 (action2icon tc ++ " icon-sm") ]
+
+                    Nothing ->
+                        div [ class "level-item" ] []
+                ]
+            ]
+        ]

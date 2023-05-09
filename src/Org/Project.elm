@@ -46,6 +46,7 @@ import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -339,7 +340,7 @@ type Msg
     | OnDraftEdit String
     | OnDraftKeydown Int
     | OnDraftCancel
-    | OnAddDraftAck (GqlData ProjectCard)
+    | OnAddDraftAck (GqlData (List ProjectCard))
     | OnClearBoardResult
       -- Common
     | NoMsg
@@ -694,17 +695,17 @@ update global message model =
 
         OnAddDraftAck result ->
             case result of
-                Success c ->
+                Success cards ->
                     let
                         project_data =
                             withMapData
                                 (\d ->
-                                    { d | columns = pushCard c d.columns }
+                                    { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
                                 )
                                 model.project_data
                     in
                     ( { model | project_data = project_data, isAddingDraft = Nothing, board_result = NotAsked }
-                    , send (OnAddDraft c.colid)
+                    , send (OnAddDraft (List.head cards |> unwrap "" .colid))
                     , Cmd.none
                     )
 
@@ -886,10 +887,42 @@ update global message model =
                 ( data, out ) =
                     LinkTensionPanel.update apis msg model.linkTensionPanel
 
+                pd =
+                    case out.result of
+                        Just ( colid, cards ) ->
+                            withMapData
+                                (\x ->
+                                    case LE.findIndex (\c -> c.id == colid) x.columns of
+                                        Just i ->
+                                            { x
+                                                | columns =
+                                                    LE.updateAt i
+                                                        (\c -> { c | cards = c.cards ++ cards })
+                                                        x.columns
+                                            }
+
+                                        Nothing ->
+                                            let
+                                                noStatusCol =
+                                                    { id = colid
+                                                    , name = "No Status"
+                                                    , color = Nothing
+                                                    , pos = 0
+                                                    , col_type = ProjectColumnType.NoStatusColumn
+                                                    , cards = cards
+                                                    }
+                                            in
+                                            { x | columns = noStatusCol :: x.columns }
+                                )
+                                model.project_data
+
+                        Nothing ->
+                            model.project_data
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | linkTensionPanel = data }, out.cmds |> List.map (\m -> Cmd.map LinkTensionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | linkTensionPanel = data, project_data = pd }, out.cmds |> List.map (\m -> Cmd.map LinkTensionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1017,55 +1050,42 @@ view_ global model =
 viewSearchBar : ProjectData -> Model -> Html Msg
 viewSearchBar project model =
     div [ id "searchBarProject", class "searchBar" ]
-        [ div [ class "columns mb-0" ]
-            [ h2 [ class "subtitle is-strong" ] [ text project.name ]
+        [ h2 [ class "subtitle is-strong" ] [ text project.name ]
 
-            --, div [ class "column is-5" ]
-            --  [ div [ class "field has-addons" ]
-            --      [ div [ class "control is-expanded" ]
-            --          [ input
-            --              [ class "is-rounded input is-small pr-6"
-            --              , type_ "search"
-            --              , autocomplete False
-            --              , autofocus False
-            --              , placeholder T.searchTensions
-            --              , value model.pattern
-            --              , onInput ChangePattern
-            --              , onKeydown SearchKeyDown
-            --              ]
-            --              []
-            --          , span [ class "icon-input-flex-right" ]
-            --              [ if model.pattern_init /= "" then
-            --                  span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
-            --                else
-            --                  text ""
-            --              , span [ class "vbar has-border-color" ] []
-            --              , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
-            --                  [ A.icon "icon-search" ]
-            --              ]
-            --          ]
-            --      ]
-            --  ]
-            ]
+        --div [ class "columns mb-0" ] [
+        --  h2 [] [text title]
+        --, div [ class "column is-5" ]
+        --  [ div [ class "field has-addons" ]
+        --      [ div [ class "control is-expanded" ]
+        --          [ input
+        --              [ class "is-rounded input is-small pr-6"
+        --              , type_ "search"
+        --              , autocomplete False
+        --              , autofocus False
+        --              , placeholder T.searchTensions
+        --              , value model.pattern
+        --              , onInput ChangePattern
+        --              , onKeydown SearchKeyDown
+        --              ]
+        --              []
+        --          , span [ class "icon-input-flex-right" ]
+        --              [ if model.pattern_init /= "" then
+        --                  span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
+        --                else
+        --                  text ""
+        --              , span [ class "vbar has-border-color" ] []
+        --              , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+        --                  [ A.icon "icon-search" ]
+        --              ]
+        --          ]
+        --      ]
+        --  ]
         ]
 
 
 viewProject : ProjectData -> Model -> Html Msg
 viewProject data model =
     let
-        -- Computation @TODO: optimize/lazy
-        keys =
-            data.columns |> List.map .id
-
-        names =
-            data.columns |> List.map .name
-
-        colors =
-            data.columns |> List.map .color
-
-        dict_data =
-            data.columns |> List.map (\x -> ( x.id, x.cards )) |> Dict.fromList
-
         op =
             { hasTaskMove = True
             , hasNewCol = True
@@ -1093,38 +1113,45 @@ viewProject data model =
             , onDraftCancel = OnDraftCancel
             , onCardClick = OnCardClick
             }
+
+        columns =
+            data.columns |> List.filter (\x -> not (x.col_type == ProjectColumnType.NoStatusColumn && List.length x.cards == 0))
     in
-    viewBoard op viewHeader (LE.zip3 keys names colors) dict_data
+    viewBoard op viewHeader columns
 
 
-viewHeader : String -> String -> Maybe String -> Maybe ProjectCard -> Html Msg
-viewHeader colid title color card =
+viewHeader : ProjectColumn -> Maybe ProjectCard -> Html Msg
+viewHeader col card =
     span []
         [ div [ class "level" ]
-            [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" color) ] [ A.icon "icon-circle1 icon-lg" ], text title ]
+            [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
             , span [ class "level-left" ]
                 [ span
                     [ class "tag is-rounded-light button-light is-w has-border mx-1"
-                    , onClick (OnAddDraft colid)
+                    , onClick (OnAddDraft col.id)
                     ]
                     [ A.icon "icon-plus" ]
-                , div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
-                    [ div [ class "dropdown-trigger is-w is-h" ]
-                        [ div
-                            [ class "ellipsis"
-                            , attribute "aria-controls" ("edit-ellipsis-" ++ colid)
-                            , attribute "aria-haspopup" "true"
+                , if col.col_type /= ProjectColumnType.NoStatusColumn then
+                    div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
+                        [ div [ class "dropdown-trigger is-w is-h" ]
+                            [ div
+                                [ class "ellipsis"
+                                , attribute "aria-controls" ("edit-ellipsis-" ++ col.id)
+                                , attribute "aria-haspopup" "true"
+                                ]
+                                [ A.icon "icon-more-horizontal icon-lg" ]
                             ]
-                            [ A.icon "icon-more-horizontal icon-lg" ]
-                        ]
-                    , div [ id ("edit-ellipsis-" ++ colid), class "dropdown-menu", attribute "role" "menu" ]
-                        [ div [ class "dropdown-content p-0" ] <|
-                            [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit colid)) ] [ text T.edit ]
-                            , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light" ] [ text T.delete ]
+                        , div [ id ("edit-ellipsis-" ++ col.id), class "dropdown-menu", attribute "role" "menu" ]
+                            [ div [ class "dropdown-content p-0" ] <|
+                                [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id)) ] [ text T.edit ]
+                                , hr [ class "dropdown-divider" ] []
+                                , div [ class "dropdown-item button-light" ] [ text T.delete ]
+                                ]
                             ]
                         ]
-                    ]
+
+                  else
+                    text ""
                 ]
             ]
         ]

@@ -65,7 +65,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchTensionAll, fetchTensionCount, fetchTensionInt)
+import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
 import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Task
 import Text as T
@@ -1004,23 +1004,6 @@ update global message model =
                 nameids =
                     getTargetsHere model
 
-                pattern_m =
-                    case model.pattern of
-                        "" ->
-                            Nothing
-
-                        a ->
-                            Just a
-
-                status =
-                    statusDecoder model.statusFilter
-
-                type_ =
-                    typeDecoder model.typeFilter
-
-                sort_ =
-                    sortFilterEncoder model.sortFilter |> (\s -> ternary (s == defaultSort) Nothing (Just s))
-
                 offset =
                     -- In other words reset=True, it resets the offset (used by  panel filter (User, Label, etc)
                     ternary reset 0 model.offset
@@ -1032,13 +1015,27 @@ update global message model =
 
                     else
                         ( 1, nfirstL, offset * nfirstL )
+
+                query =
+                    { targetids = nameids
+                    , first = first
+                    , offset = skip
+                    , pattern = ternary (model.pattern == "") Nothing (Just model.pattern)
+                    , status = statusDecoder model.statusFilter
+                    , type_ = typeDecoder model.typeFilter
+                    , sort = sortFilterEncoder model.sortFilter |> (\s -> ternary (s == defaultSort) Nothing (Just s))
+                    , authors = model.authors
+                    , labels = model.labels
+                    , projectid = Nothing
+                    , inProject = False
+                    }
             in
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
 
             else if List.member model.viewMode [ CircleView, AssigneeView ] then
                 ( { model | tensions_all = LoadingSlowly }
-                , fetchTensionAll apis nameids nfirstC 0 pattern_m status model.authors model.labels type_ sort_ GotTensionsAll
+                , fetchTensionsAll apis { query | first = nfirstC, offset = 0 } GotTensionsAll
                 , Ports.hide "footBar"
                 )
 
@@ -1049,12 +1046,12 @@ update global message model =
                   else
                     model
                 , Cmd.batch
-                    [ fetchTensionInt apis nameids first skip pattern_m status model.authors model.labels type_ sort_ (GotTensionsInt inc)
+                    [ fetchTensionsInt apis query (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
-                    --, fetchTensionExt apis nameids first skip pattern_m status model.authors model.labels type_ GotTensionsExt
+                    --, fetchTensionExt apis query GotTensionsExt
                     --
-                    , fetchTensionCount apis nameids pattern_m model.authors model.labels type_ Nothing GotTensionsCount
+                    , fetchTensionsCount apis query GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )

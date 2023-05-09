@@ -5589,13 +5589,14 @@ buildProjectColumnFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, col_type = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    ProjectColumnFilter { id = optionals____.id, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    ProjectColumnFilter { id = optionals____.id, col_type = optionals____.col_type, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias ProjectColumnFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , col_type : OptionalArgument ProjectColumnType_hash
     , has : OptionalArgument (List (Maybe Fractal.Enum.ProjectColumnHasFilter.ProjectColumnHasFilter))
     , and : OptionalArgument (List (Maybe ProjectColumnFilter))
     , or : OptionalArgument (List (Maybe ProjectColumnFilter))
@@ -5610,6 +5611,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias ProjectColumnFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , col_type : OptionalArgument ProjectColumnType_hash
     , has : OptionalArgument (List (Maybe Fractal.Enum.ProjectColumnHasFilter.ProjectColumnHasFilter))
     , and : OptionalArgument (List (Maybe ProjectColumnFilter))
     , or : OptionalArgument (List (Maybe ProjectColumnFilter))
@@ -5628,7 +5630,7 @@ type ProjectColumnFilter
 encodeProjectColumnFilter : ProjectColumnFilter -> Value
 encodeProjectColumnFilter (ProjectColumnFilter input____) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "has", (Encode.enum Fractal.Enum.ProjectColumnHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeProjectColumnFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeProjectColumnFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeProjectColumnFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "col_type", encodeProjectColumnType_hash |> Encode.optional input____.col_type ), ( "has", (Encode.enum Fractal.Enum.ProjectColumnHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeProjectColumnFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeProjectColumnFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeProjectColumnFilter |> Encode.optional input____.not ) ]
 
 
 buildProjectColumnOrder :
@@ -5786,6 +5788,40 @@ encodeProjectColumnRef : ProjectColumnRef -> Value
 encodeProjectColumnRef (ProjectColumnRef input____) =
     Encode.maybeObject
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.col_type ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef |> Encode.optional input____.project ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ) ]
+
+
+buildProjectColumnType_hash :
+    (ProjectColumnType_hashOptionalFields -> ProjectColumnType_hashOptionalFields)
+    -> ProjectColumnType_hash
+buildProjectColumnType_hash fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { eq = Absent, in_ = Absent }
+    in
+    { eq = optionals____.eq, in_ = optionals____.in_ }
+
+
+type alias ProjectColumnType_hashOptionalFields =
+    { eq : OptionalArgument Fractal.Enum.ProjectColumnType.ProjectColumnType
+    , in_ : OptionalArgument (List (Maybe Fractal.Enum.ProjectColumnType.ProjectColumnType))
+    }
+
+
+{-| Type for the ProjectColumnType\_hash input object.
+-}
+type alias ProjectColumnType_hash =
+    { eq : OptionalArgument Fractal.Enum.ProjectColumnType.ProjectColumnType
+    , in_ : OptionalArgument (List (Maybe Fractal.Enum.ProjectColumnType.ProjectColumnType))
+    }
+
+
+{-| Encode a ProjectColumnType\_hash into a value that can be used as an argument.
+-}
+encodeProjectColumnType_hash : ProjectColumnType_hash -> Value
+encodeProjectColumnType_hash input____ =
+    Encode.maybeObject
+        [ ( "eq", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.eq ), ( "in", (Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.in_ ) ]
 
 
 buildProjectDraftFilter :

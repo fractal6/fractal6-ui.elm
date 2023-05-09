@@ -43,11 +43,11 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (FocusNode, IdPayload, LocalGraph, Node, NodesDict, Post, ProjectColumn, TensionLight, UserCtx, initFocusNode, node2focus)
+import ModelSchema exposing (FocusNode, IdPayload, LocalGraph, Node, NodesDict, Post, ProjectCard, ProjectColumn, TensionLight, UserCtx, initFocusNode, node2focus)
 import Ports
-import Query.QueryProject exposing (addProjectColumn, updateProjectColumn)
+import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
@@ -68,11 +68,11 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , projectid : String
+    , noStatusCol : { id : String, cards_len : Int }
     , target : FocusNode
     , data_result : GqlData (List TensionLight)
-    , add_result : GqlData ProjectColumn
+    , add_result : GqlData Bool
     , selected : List String
-    , isSelectAll : Bool
     , form : TensionQuery -- user inputs
 
     -- Common
@@ -87,12 +87,12 @@ initModel projectid user =
     { user = user
     , isOpen = False
     , projectid = projectid
+    , noStatusCol = { id = "", cards_len = 0 }
     , target = initFocusNode
     , data_result = NotAsked
     , add_result = NotAsked
     , selected = []
-    , isSelectAll = False
-    , form = initTensionQuery |> (\x -> { x | first = 100 })
+    , form = initTensionQuery |> (\x -> { x | first = 100, projectid = Just projectid, inProject = False })
     , labelSearchPanel = LabelSearchPanel.load Nothing user
 
     -- Common
@@ -161,12 +161,13 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnQueryData
     | OnDataAck (GqlData (List TensionLight))
+    | OnNoStatusColAck (GqlData (Maybe { id : String, cards_len : Int }))
     | OnSearchInput String
     | OnSearchKeydown Int
     | OnSelect String
     | OnSelectAll
     | OnAddToProject
-    | OnAddAck (GqlData ProjectColumn)
+    | OnAddAck (GqlData (List ProjectCard))
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -180,7 +181,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, ProjectColumn )
+    , result : Maybe ( String, List ProjectCard )
     }
 
 
@@ -215,7 +216,11 @@ update_ apis message model =
         -- Data
         OnOpen ->
             ( { model | isOpen = True }
-            , out0 [ Ports.bulma_driver "linkTensionPanel", sendSleep OnOutsideClickClose 500 ]
+            , out0
+                [ Ports.bulma_driver "linkTensionPanel"
+                , sendSleep OnOutsideClickClose 500
+                , getNoStatusCol apis model.projectid OnNoStatusColAck
+                ]
             )
 
         OnOutsideClickClose ->
@@ -260,7 +265,7 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         OnQueryData ->
-            ( { model | selected = [], isSelectAll = False } |> setDataResult LoadingSlowly
+            ( { model | selected = [] } |> setDataResult LoadingSlowly
             , out0 [ fetchTensionsLight apis model.form OnDataAck ]
             )
 
@@ -283,6 +288,36 @@ update_ apis message model =
 
                 _ ->
                     ( data, noOut )
+
+        OnNoStatusColAck result ->
+            -- @debug: Succedd of fail silently...
+            case result of
+                Success d ->
+                    case d of
+                        Just col ->
+                            ( { model | noStatusCol = col }, noOut )
+
+                        Nothing ->
+                            let
+                                form =
+                                    { uctx = uctxFromUser model.user
+                                    , projectid = model.projectid
+                                    , colid = ""
+                                    , col_type = Just ProjectColumnType.NoStatusColumn
+                                    , pos = Just -1
+                                    , post = Dict.fromList [ ( "name", "No Status" ) ]
+                                    }
+                            in
+                            if model.noStatusCol.id == "_" then
+                                ( model, noOut )
+
+                            else
+                                ( { model | noStatusCol = { id = "_", cards_len = 0 } }
+                                , out0 [ addProjectColumn apis form (withMapData (\x -> Just { id = x.id, cards_len = 0 }) >> OnNoStatusColAck) ]
+                                )
+
+                _ ->
+                    ( model, noOut )
 
         OnSearchInput val ->
             let
@@ -313,28 +348,34 @@ update_ apis message model =
                     ( { model | selected = tid :: model.selected }, noOut )
 
         OnSelectAll ->
-            ( { model | isSelectAll = not model.isSelectAll }, noOut )
+            if List.length model.selected == 0 then
+                ( { model | selected = withMapData (List.map .id) model.data_result |> withDefaultData [] }, noOut )
+
+            else
+                ( { model | selected = [] }, noOut )
 
         OnAddToProject ->
             let
                 form =
                     { uctx = uctxFromUser model.user
-                    , projectid = model.projectid
-                    , colid = ""
-                    , col_type = Just ProjectColumnType.NoStatusColumn
-                    , pos = Nothing
+                    , title = ""
+                    , colid = model.noStatusCol.id
+                    , pos = model.noStatusCol.cards_len
                     , post = Dict.empty
+                    , tids = List.map Just model.selected
                     }
             in
-            ( { model | add_result = Loading }, out0 [ addProjectColumn apis form OnAddAck ] )
+            ( { model | add_result = Loading }, out0 [ addProjectCard apis form OnAddAck ] )
 
         OnAddAck result ->
             case result of
                 Success d ->
-                    ( model, Out [ send OnClose ] [] (Just ( True, d )) )
+                    ( { model | add_result = Success True }
+                    , Out [ send OnClose ] [] (Just ( model.noStatusCol.id, d ))
+                    )
 
                 _ ->
-                    ( { model | add_result = result }, noOut )
+                    ( { model | add_result = withMapData (\_ -> True) result }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -482,9 +523,9 @@ viewPanel op model =
                     if List.length data > 0 then
                         -- @warning: height of this element manually to be able to work on relative
                         -- height percentage for .parent-block (100% of the parent height).
-                        div [ class "panel-block is-top" ]
+                        div [ class "panel-block is-top is-size-7" ]
                             [ label [ class "is-h", onClickPD OnSelectAll ]
-                                [ input [ type_ "checkbox", checked model.isSelectAll ] []
+                                [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
                                 ]
                             , labelFilter_html
@@ -501,7 +542,7 @@ viewPanel op model =
                 Success data ->
                     List.map
                         (\t ->
-                            Lazy.lazy3 viewLineSelect t model.selected model.isSelectAll
+                            Lazy.lazy2 viewLineSelect t model.selected
                         )
                         data
 
@@ -531,13 +572,13 @@ viewPanel op model =
         ]
 
 
-viewLineSelect : TensionLight -> List String -> Bool -> Html Msg
-viewLineSelect t selected isSelectAll =
+viewLineSelect : TensionLight -> List String -> Html Msg
+viewLineSelect t selected =
     label [ class "panel-block tensionLight" ]
         [ input
             [ type_ "checkbox"
             , onClickPD (OnSelect t.id)
-            , checked (List.member t.id selected || isSelectAll)
+            , checked (List.member t.id selected)
             ]
             []
         , viewTensionLight t
