@@ -28,6 +28,7 @@ import Bulk.View exposing (action2icon, action2str, mediaTension, statusColor, t
 import Dict exposing (Dict)
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
+import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style)
@@ -166,7 +167,7 @@ viewBoard op header columns =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ Lazy.lazy3 viewMediaTension op.conf op.node_focus t ]
+                                            [ Lazy.lazy2 viewMediaTension op.node_focus t ]
 
                                         CardDraft d ->
                                             [ Lazy.lazy viewMediaDraft d ]
@@ -259,9 +260,9 @@ viewNewCol op =
 viewMediaDraft : ProjectDraft -> Html msg
 viewMediaDraft d =
     div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-content is-smaller is-human" ]
+        [ div [ class "media-content is-smaller" ]
             [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ]
-            , div [] [ span [ class "link-like" ] [ text d.title ] ]
+            , div [] [ span [ class "link-like is-human" ] [ text d.title ] ]
             ]
         ]
 
@@ -288,66 +289,42 @@ innerHtmlDecoder =
     JD.at [ "target", "innerHTML" ] JD.string
 
 
-viewMediaTension : Conf -> NodeFocus -> Tension -> Html msg
-viewMediaTension conf focus tension =
+viewMediaTension : NodeFocus -> Tension -> Html msg
+viewMediaTension focus t =
     let
         n_comments =
-            withDefault 0 tension.n_comments
+            withDefault 0 t.n_comments
+
+        status_html =
+            case t.action of
+                Just action ->
+                    let
+                        tc =
+                            getTensionCharac action
+                    in
+                    A.icon0 (action2icon tc ++ " icon-sm")
+
+                Nothing ->
+                    case t.status of
+                        TensionStatus.Closed ->
+                            A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status)
+
+                        _ ->
+                            text ""
     in
     div
         [ class "media mediaBox is-hoverable is-size-7" ]
-        [ div [ class "media-left mr-3" ]
-            [ div
-                [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2str tension.type_)
-                , style "width" "10px"
-                ]
-                [ tensionIcon tension.type_ ]
-            ]
-        , div [ class "media-content" ]
-            [ div [ class "content mb-1" ]
-                [ a
-                    [ class "is-human discrete-link is-size-7"
-                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
-                    ]
-                    [ text tension.title ]
-                , case tension.labels of
+        [ div [ class "media-content is-smaller" ]
+            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+                [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name ], div [] [ status_html ] ]
+            , div []
+                [ span [ class "link-like is-human mr-2" ] [ text t.title ]
+                , case t.labels of
                     Just labels ->
                         viewLabels (Just focus.nameid) labels
 
                     Nothing ->
                         text ""
-                ]
-            , span [ class "level is-smaller2 is-mobile" ]
-                [ div [ class "level-left" ]
-                    [ span
-                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                        , attribute "data-tooltip" (tensionStatus2str tension.status)
-                        ]
-                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                    ]
-                , div [ class "level-right" ] []
-                ]
-            ]
-        , div [ class "media-right wrapped-container-33" ]
-            [ br [] []
-            , span [ class "level is-mobile icons-list" ]
-                [ case tension.action of
-                    Just action ->
-                        let
-                            tc =
-                                getTensionCharac action
-                        in
-                        a
-                            [ class "level-item discrete-link tooltip has-tooltip-arrow"
-                            , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
-                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
-                            , href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
-                            ]
-                            [ A.icon0 (action2icon tc ++ " icon-sm") ]
-
-                    Nothing ->
-                        div [ class "level-item" ] []
                 ]
             ]
         ]
