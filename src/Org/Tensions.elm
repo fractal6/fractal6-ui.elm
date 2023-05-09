@@ -19,7 +19,7 @@
 -}
 
 
-module Org.Tensions exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Org.Tensions exposing (Flags, Model, Msg, TypeFilter(..), defaultTypeFilter, init, page, subscriptions, typeDecoder, typeFilter2Text, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..))
@@ -236,16 +236,11 @@ type TensionDirection
 
 queryIsEmpty : Model -> Bool
 queryIsEmpty model =
-    model.statusFilter
-        == defaultStatusFilter
-        && model.typeFilter
-        == defaultTypeFilter
-        && model.depthFilter
-        == defaultDepthFilter
-        && model.authors
-        == defaultAuthorsFilter
-        && model.labels
-        == defaultLabelsFilter
+    (model.statusFilter == defaultStatusFilter)
+        && (model.typeFilter == defaultTypeFilter)
+        && (model.depthFilter == defaultDepthFilter)
+        && (model.authors == defaultAuthorsFilter)
+        && (model.labels == defaultLabelsFilter)
         && not (Dict.member "q" model.query)
 
 
@@ -1709,12 +1704,6 @@ viewCatMenu typeFilter =
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
     let
-        checked =
-            A.icon1 "icon-check has-text-success" ""
-
-        unchecked =
-            A.icon1 "icon-check has-text-success is-invisible" ""
-
         clearFilter =
             if queryIsEmpty model then
                 text ""
@@ -1759,7 +1748,7 @@ viewSearchBar model =
             , div [ class "column is-7 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
+                        [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
@@ -1768,19 +1757,19 @@ viewSearchBar model =
                             [ div
                                 [ class "dropdown-content" ]
                                 ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
-                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, text (typeFilter2Text AllTypes) ]
+                                    [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
                                  ]
                                     ++ List.map
                                         (\t ->
                                             div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
-                                                [ ternary (model.typeFilter == OneType t) checked unchecked, tensionIcon3 t ]
+                                                [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
                                         )
                                         TensionType.list
                                 )
                             ]
                         ]
                     , div [ class "control dropdown" ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
+                        [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
                             [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.status
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
@@ -1789,16 +1778,16 @@ viewSearchBar model =
                             [ div
                                 [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, text (statusFilter2Text AllStatus) ]
+                                    [ ternary (model.statusFilter == AllStatus) A.checked A.unchecked, text (statusFilter2Text AllStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
+                                    [ ternary (model.statusFilter == OpenStatus) A.checked A.unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
+                                    [ ternary (model.statusFilter == ClosedStatus) A.checked A.unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
                                 ]
                             ]
                         ]
                     , div [ class "control", onClick ChangeLabel ]
-                        [ div [ class "is-small button" ]
+                        [ div [ class "button is-small" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.label
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
@@ -1812,7 +1801,7 @@ viewSearchBar model =
                             |> Html.map LabelSearchPanelMsg
                         ]
                     , div [ class "control", onClick ChangeAuthor ]
-                        [ div [ class "is-small button" ]
+                        [ div [ class "button is-small" ]
                             [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.author
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
@@ -1826,7 +1815,7 @@ viewSearchBar model =
                             |> Html.map UserSearchPanelMsg
                         ]
                     , div [ class "control dropdown" ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
+                        [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "depth-filter" ]
                             [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text T.depth
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
@@ -1836,7 +1825,7 @@ viewSearchBar model =
                                 List.map
                                     (\t ->
                                         div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter t ]
-                                            [ ternary (model.depthFilter == t) checked unchecked, text (depthFilter2Text t) ]
+                                            [ ternary (model.depthFilter == t) A.checked A.unchecked, text (depthFilter2Text t) ]
                                     )
                                     depthFilterList
                             ]

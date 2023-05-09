@@ -27,7 +27,7 @@ import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..))
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon, viewTensionLight)
+import Bulk.View exposing (action2icon, tensionIcon3, viewTensionLight)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
@@ -36,6 +36,8 @@ import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
+import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
@@ -46,6 +48,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (FocusNode, IdPayload, LocalGraph, Node, NodesDict, Post, ProjectCard, ProjectColumn, TensionLight, UserCtx, initFocusNode, node2focus)
+import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, typeFilter2Text)
 import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
@@ -74,10 +77,15 @@ type alias Model =
     , add_result : GqlData Bool
     , selected : List String
     , form : TensionQuery -- user inputs
+    , typeFilter : TypeFilter
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+
+    -- Components
+    , isOpenTargetFilter : Bool
+    , isOpenTypeFilter : Bool
     , labelSearchPanel : LabelSearchPanel.State
     }
 
@@ -93,6 +101,11 @@ initModel projectid user =
     , add_result = NotAsked
     , selected = []
     , form = initTensionQuery |> (\x -> { x | first = 100, projectid = Just projectid, inProject = False })
+    , typeFilter = AllTypes
+
+    -- Components
+    , isOpenTargetFilter = False
+    , isOpenTypeFilter = False
     , labelSearchPanel = LabelSearchPanel.load Nothing user
 
     -- Common
@@ -127,6 +140,11 @@ resetModel model =
 setDataResult : GqlData (List TensionLight) -> Model -> Model
 setDataResult result model =
     { model | data_result = result }
+
+
+resetQuery : Model -> Model
+resetQuery model =
+    { model | selected = [], isOpenTypeFilter = False, isOpenTargetFilter = False }
 
 
 
@@ -164,6 +182,7 @@ type Msg
     | OnNoStatusColAck (GqlData (Maybe { id : String, cards_len : Int }))
     | OnSearchInput String
     | OnSearchKeydown Int
+    | OnChangeTypeFilter TypeFilter
     | OnSelect String
     | OnSelectAll
     | OnAddToProject
@@ -175,6 +194,9 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+      -- Components
+    | OnToggleTargetFilter
+    | OnToggleTypeFilter
     | LabelSearchPanelMsg LabelSearchPanel.Msg
 
 
@@ -217,8 +239,8 @@ update_ apis message model =
         OnOpen ->
             ( { model | isOpen = True }
             , out0
-                [ Ports.bulma_driver "linkTensionPanel"
-                , sendSleep OnOutsideClickClose 500
+                [ --Ports.bulma_driver "linkTensionPanel"
+                  sendSleep OnOutsideClickClose 500
                 , getNoStatusCol apis model.projectid OnNoStatusColAck
                 ]
             )
@@ -265,7 +287,7 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         OnQueryData ->
-            ( { model | selected = [] } |> setDataResult LoadingSlowly
+            ( resetQuery model |> setDataResult LoadingSlowly
             , out0 [ fetchTensionsLight apis model.form OnDataAck ]
             )
 
@@ -339,6 +361,28 @@ update_ apis message model =
                 _ ->
                     ( model, noOut )
 
+        OnChangeTypeFilter value ->
+            let
+                form =
+                    model.form
+
+                newForm =
+                    if List.member value [ OneType TensionType.Announcement, OneType TensionType.Governance, OneType TensionType.Help ] then
+                        -- Only Open+Closed tensions
+                        { form
+                            | type_ = typeDecoder value
+                            , status = Nothing
+                        }
+
+                    else
+                        -- Only Open tensions
+                        { form
+                            | type_ = typeDecoder value
+                            , status = Just TensionStatus.Open
+                        }
+            in
+            ( { model | typeFilter = value, form = newForm }, out0 [ send OnQueryData ] )
+
         OnSelect tid ->
             case LE.elemIndex tid model.selected of
                 Just i ->
@@ -395,6 +439,12 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         -- Components
+        OnToggleTargetFilter ->
+            ( { model | isOpenTargetFilter = not model.isOpenTargetFilter }, noOut )
+
+        OnToggleTypeFilter ->
+            ( { model | isOpenTypeFilter = not model.isOpenTypeFilter }, noOut )
+
         LabelSearchPanelMsg msg ->
             let
                 ( data, out ) =
@@ -473,8 +523,26 @@ view op (State model) =
 viewPanel : Op -> Model -> Html Msg
 viewPanel op model =
     let
+        typeFilter_hthml =
+            B.dropdown "type-filter-side"
+                ("is-right " ++ ternary model.isOpenTypeFilter "is-active" "")
+                "is-small"
+                (ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_))
+                OnToggleTypeFilter
+                (div [] <|
+                    [ div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter AllTypes ]
+                        [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
+                    ]
+                        ++ List.map
+                            (\t ->
+                                div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter (OneType t) ]
+                                    [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
+                            )
+                            TensionType.list
+                )
+
         labelFilter_html =
-            span [ class "is-pushed-right" ]
+            span []
                 [ span
                     [ class "button is-small"
                     , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
@@ -486,6 +554,9 @@ viewPanel op model =
                 , LabelSearchPanel.view { selectedLabels = model.form.labels, targets = [ model.target.nameid ], isRight = True } model.labelSearchPanel
                     |> Html.map LabelSearchPanelMsg
                 ]
+
+        filters_html =
+            [ typeFilter_hthml, labelFilter_html ]
 
         hasItem =
             List.length model.selected > 0
@@ -500,9 +571,10 @@ viewPanel op model =
             [ div [ class "panel-heading" ] [ text "Add tension to this project", button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
                 [ B.dropdown "link-circle-source"
-                    "mr-2"
+                    ("mr-2 " ++ ternary model.isOpenTargetFilter "is-active" "")
                     "is-small"
                     (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
+                    OnToggleTargetFilter
                     (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
                 , div [ class "control has-icons-left" ]
                     [ input
@@ -528,11 +600,11 @@ viewPanel op model =
                                 [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
                                 ]
-                            , labelFilter_html
+                            , span [ class "is-pushed-right" ] filters_html
                             ]
 
                     else
-                        p [ class "panel-block" ] [ text T.noResults, labelFilter_html ]
+                        p [ class "panel-block" ] [ text T.noResults, span [ class "is-pushed-right" ] filters_html ]
 
                 _ ->
                     text ""

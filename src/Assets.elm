@@ -78,6 +78,16 @@ icon1 cls words =
     span [] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
+checked : Html msg
+checked =
+    icon1 "icon-check has-text-success" ""
+
+
+unchecked : Html msg
+unchecked =
+    icon1 "icon-check has-text-success is-invisible" ""
+
+
 
 -- VIEWS
 
