@@ -428,6 +428,9 @@ update_ apis message model =
                             , name = getFromDict2 "name" model.form.post model.orig_form.post |> withDefault ""
                             , color = getFromDict2 "color" model.form.post model.orig_form.post
                             , pos = model.form.pos |> withDefault 0
+                            , col_type = ProjectColumnType.NormalColumn
+
+                            -- ignored
                             , cards = []
                             }
                     in

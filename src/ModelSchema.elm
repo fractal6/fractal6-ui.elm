@@ -31,6 +31,7 @@ import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -657,6 +658,7 @@ type alias ProjectColumn =
     , name : String
     , color : Maybe String
     , pos : Int
+    , col_type : ProjectColumnType.ProjectColumnType
     , cards : List ProjectCard
     }
 
@@ -1004,6 +1006,7 @@ type alias BlobId =
 --
 -- Response decoder
 --
+--decodeResponse :  Result (Graphql.Http.Error (Maybe.Maybe IdPayload)) (Maybe.Maybe IdPayload)-> msg -> ?
 
 
 decodeResponse decoder response =

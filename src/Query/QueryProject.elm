@@ -22,6 +22,7 @@
 module Query.QueryProject exposing
     ( addProjectCard
     , addProjectColumn
+    , getNoStatusCol
     , getProject
     , getProjectColumn
     , moveProjectCard
@@ -29,7 +30,7 @@ module Query.QueryProject exposing
     )
 
 import Dict
-import Extra exposing (unwrap, unwrap2)
+import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
@@ -39,6 +40,7 @@ import Fractal.Object.AddProjectCardPayload
 import Fractal.Object.AddProjectColumnPayload
 import Fractal.Object.Project
 import Fractal.Object.ProjectCard
+import Fractal.Object.ProjectCardAggregateResult
 import Fractal.Object.ProjectColumn
 import Fractal.Object.ProjectDraft
 import Fractal.Object.ProjectField
@@ -91,6 +93,7 @@ projectDataPayload =
                     )
             )
 
+
 getProjectColumn url colid msg =
     makeGQLQuery url
         (Query.getProjectColumn
@@ -99,6 +102,32 @@ getProjectColumn url colid msg =
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
+
+getNoStatusCol url projectid msg =
+    makeGQLQuery url
+        (Query.getProject
+            { id = encodeId projectid }
+            (SelectionSet.map identity
+                (Fractal.Object.Project.columns
+                    (\args ->
+                        { args
+                            | first = Present 1
+                            , filter =
+                                Input.buildProjectColumnFilter
+                                    (\x -> { x | col_type = Present { eq = Present ProjectColumnType.NoStatusColumn, in_ = Absent } })
+                                    |> Present
+                        }
+                    )
+                    (SelectionSet.map2 (\a b -> { id = a, cards_len = unwrap2 0 .count b })
+                        (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+                        (Fractal.Object.ProjectColumn.cardsAggregate identity (SelectionSet.map Count Fractal.Object.ProjectCardAggregateResult.count))
+                    )
+                    |> withDefaultSelectionMap []
+                    |> SelectionSet.map List.head
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
 
@@ -136,6 +165,7 @@ moveProjectCard url id_ pos colid msg =
         )
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
 
+
 updateProjectColumn url form msg =
     makeGQLMutation url
         (Mutation.updateProjectColumn
@@ -168,6 +198,7 @@ updateProjectColumn url form msg =
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
 
 
+
 --
 -- Add projects items
 --
@@ -180,7 +211,7 @@ addProjectColumn url form msg =
                 [ Input.buildAddProjectColumnInput
                     { name = Dict.get "name" form.post |> withDefault ""
                     , pos = form.pos |> withDefault 0
-                    , col_type = ProjectColumnType.NormalColumn
+                    , col_type = form.col_type |> withDefault ProjectColumnType.NormalColumn
                     , project = Input.buildProjectRef (\a -> { a | id = Present (encodeId form.projectid) })
                     }
                     (\x ->
@@ -204,11 +235,11 @@ addProjectCard url form msg =
         (Mutation.addProjectCard
             { input =
                 form.tids
-                    |> List.map
-                        (\tid_m ->
+                    |> List.indexedMap
+                        (\i tid_m ->
                             Input.buildAddProjectCardInput
                                 { pc = Input.buildProjectColumnRef (\a -> { a | id = Present (encodeId form.colid) })
-                                , pos = form.pos
+                                , pos = form.pos + i
                                 , card =
                                     case tid_m of
                                         Just tid ->
@@ -237,12 +268,12 @@ addProjectCard url form msg =
                                 identity
                         )
             }
-            (SelectionSet.map (unwrap2 Nothing List.head) <|
+            (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
                 Fractal.Object.AddProjectCardPayload.projectCard identity
                     projectCardPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse (withDefault Nothing >> Maybe.map (\a -> { a | colid = form.colid })) >> msg)
+        (RemoteData.fromResult >> decodeResponse (Maybe.map (List.map (\b -> { b | colid = form.colid }))) >> msg)
 
 
 
@@ -258,7 +289,9 @@ columnPayload =
         |> with Fractal.Object.ProjectColumn.name
         |> with Fractal.Object.ProjectColumn.color
         |> with Fractal.Object.ProjectColumn.pos
+        |> with Fractal.Object.ProjectColumn.col_type
         |> with (Fractal.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
+
 
 columnPayloadEdit : SelectionSet ProjectColumnEdit Fractal.Object.ProjectColumn
 columnPayloadEdit =
