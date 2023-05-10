@@ -34,7 +34,7 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
-import Components.LinkTensionPanel as LinkTensionPanel
+import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.SearchBar exposing (viewSearchBar)
@@ -63,7 +63,8 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (addProjectCard, getProject, moveProjectCard)
+import Query.QueryProject exposing (addProjectCard, getProject, moveProjectCard, removeProjectCards)
+import Requests as R
 import Scroll exposing (scrollToSubBottom)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
@@ -188,6 +189,8 @@ type alias Model =
     , draging : Bool
     , projectColumnModal : ProjectColumnModal.State
     , board_result : GqlData String -- track board remote result silently
+    , cardHover : String
+    , cardEdit : String
 
     -- Common
     , conf : Conf
@@ -265,6 +268,8 @@ init global flags =
             , projectColumnModal = ProjectColumnModal.init projectid global.session.user
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
             , board_result = NotAsked
+            , cardHover = ""
+            , cardEdit = ""
 
             -- Common
             , conf = conf
@@ -318,7 +323,7 @@ type Msg
       -- Page
     | DoLoad
     | GotProject (GqlData ProjectData) -- Rest
-    | OpenTensionPane
+    | OpenTensionPane (Maybe ColTarget)
       -- Board
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
@@ -333,6 +338,12 @@ type Msg
     | GotCardMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
     | OnCardClick_ (Maybe ProjectCard)
+    | OnCardHover String
+    | OnCardHoverLeave
+    | OnToggleCardEdit
+    | OnToggleCardEdit_
+    | OnRemoveCard
+    | OnRemoveCardAck (GqlData (List String))
       --
     | OnAddCol
     | OnAddDraft String
@@ -418,10 +429,10 @@ update global message model =
             , Cmd.none
             )
 
-        OpenTensionPane ->
+        OpenTensionPane colTarget ->
             ( model
             , Cmd.batch
-                [ Cmd.map LinkTensionPanelMsg (send LinkTensionPanel.OnOpen)
+                [ Cmd.map LinkTensionPanelMsg (send (LinkTensionPanel.OnOpen colTarget))
                 , Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
                 ]
             , Cmd.none
@@ -513,9 +524,10 @@ update global message model =
                     ( model, sendSleep (OnCardClick_ c) 50, Cmd.none )
 
                 Nothing ->
-                    ( { model | movingCard = Nothing }, Cmd.none, Cmd.none )
+                    ( { model | movingCard = Nothing, cardEdit = "" }, Cmd.none, Cmd.none )
 
         OnCardClick_ c ->
+            -- Solves concurent message sent
             ( { model | movingCard = c }, Cmd.none, Cmd.none )
 
         OnCancelHov ->
@@ -693,6 +705,62 @@ update global message model =
 
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, Cmd.none, Cmd.none )
+
+        OnCardHover cardid ->
+            ( { model | cardHover = cardid }, Cmd.none, Cmd.none )
+
+        OnCardHoverLeave ->
+            ( { model | cardHover = "" }, Cmd.none, Cmd.none )
+
+        OnToggleCardEdit ->
+            ( model, sendSleep OnToggleCardEdit_ 50, Cmd.none )
+
+        OnToggleCardEdit_ ->
+            -- Solve mesage concurrency
+            ( { model | cardEdit = ternary (model.cardEdit == "") model.cardHover "" }, Cmd.none, Cmd.none )
+
+        OnRemoveCard ->
+            case model.cardEdit of
+                "" ->
+                    -- no card dropdown open
+                    ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    let
+                        cardid =
+                            model.cardEdit
+                    in
+                    ( { model | board_result = Loading }, removeProjectCards apis [ cardid ] OnRemoveCardAck, Cmd.none )
+
+        OnRemoveCardAck result ->
+            case result of
+                Success cardids ->
+                    let
+                        pj =
+                            withMapData
+                                (\data ->
+                                    List.foldl
+                                        (\cardid project ->
+                                            case getCard cardid project of
+                                                Just card ->
+                                                    project
+                                                        |> (\d -> { d | columns = removeCard card d.columns })
+
+                                                Nothing ->
+                                                    project
+                                        )
+                                        data
+                                        cardids
+                                )
+                                model.project_data
+                    in
+                    ( { model | board_result = NotAsked, project_data = pj }, Cmd.none, Cmd.none )
+
+                Failure err ->
+                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -1007,7 +1075,7 @@ view_ global model =
                             text ""
                     ]
                 , div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
-                    [ div [ class "button is-small is-pushed-right", onClick OpenTensionPane ]
+                    [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
                         [ A.icon1 "icon-plus" "Add tensions to project" ]
                     ]
                 ]
@@ -1076,6 +1144,8 @@ viewProject data model =
             , movingCard = model.movingCard
             , movingHoverCol = model.movingHoverCol
             , movingHoverT = model.movingHoverT
+            , cardHover = model.cardHover
+            , cardEdit = model.cardEdit
 
             -- Board Msg
             , onMove = OnMove
@@ -1091,6 +1161,10 @@ viewProject data model =
             , onDraftKeydown = OnDraftKeydown
             , onDraftCancel = OnDraftCancel
             , onCardClick = OnCardClick
+            , onCardHover = OnCardHover
+            , onCardHoverLeave = OnCardHoverLeave
+            , onToggleCardEdit = OnToggleCardEdit
+            , onRemoveCard = OnRemoveCard
             }
 
         columns =
@@ -1122,9 +1196,20 @@ viewHeader col card =
                             ]
                         , div [ id ("edit-ellipsis-" ++ col.id), class "dropdown-menu", attribute "role" "menu" ]
                             [ div [ class "dropdown-content p-0" ] <|
-                                [ div [ class "dropdown-item button-light", onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id)) ] [ text T.edit ]
+                                [ div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
+                                    ]
+                                    [ A.icon1 "icon-edit-2" T.edit ]
                                 , hr [ class "dropdown-divider" ] []
-                                , div [ class "dropdown-item button-light" ] [ text T.delete ]
+                                , div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
+                                    ]
+                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
+                                , hr [ class "dropdown-divider" ] []
+                                , div [ class "dropdown-item button-light" ]
+                                    [ A.icon1 "icon-trash" T.delete ]
                                 ]
                             ]
                         ]
@@ -1170,3 +1255,8 @@ removeCard c columns =
         (\a -> a.id == c.colid)
         (\a -> { a | cards = LE.removeAt c.pos a.cards })
         columns
+
+
+getCard : String -> ProjectData -> Maybe ProjectCard
+getCard cardid data =
+    LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)

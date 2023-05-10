@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.LinkTensionPanel exposing (Msg(..), State, hasTargets_, init, subscriptions, update, view)
+port module Components.LinkTensionPanel exposing (ColTarget, Msg(..), State, hasTargets_, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -71,7 +71,7 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , projectid : String
-    , noStatusCol : { id : String, cards_len : Int }
+    , noStatusCol : ColTarget
     , target : FocusNode
     , data_result : GqlData (List TensionLight)
     , add_result : GqlData Bool
@@ -87,6 +87,12 @@ type alias Model =
     , isOpenTargetFilter : Bool
     , isOpenTypeFilter : Bool
     , labelSearchPanel : LabelSearchPanel.State
+    }
+
+
+type alias ColTarget =
+    { id : String
+    , cards_len : Int
     }
 
 
@@ -171,7 +177,7 @@ hasData model =
 
 type Msg
     = -- Data
-      OnOpen
+      OnOpen (Maybe ColTarget)
     | OnOutsideClickClose
     | OnClose
     | OnChangeTarget (GqlData NodesDict) Node
@@ -179,7 +185,7 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnQueryData
     | OnDataAck (GqlData (List TensionLight))
-    | OnNoStatusColAck (GqlData (Maybe { id : String, cards_len : Int }))
+    | OnNoStatusColAck (GqlData (Maybe ColTarget))
     | OnSearchInput String
     | OnSearchKeydown Int
     | OnChangeTypeFilter TypeFilter
@@ -236,12 +242,17 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnOpen ->
+        OnOpen colTarget ->
             ( { model | isOpen = True }
             , out0
                 [ --Ports.bulma_driver "linkTensionPanel"
                   sendSleep OnOutsideClickClose 500
-                , getNoStatusCol apis model.projectid OnNoStatusColAck
+                , case colTarget of
+                    Just c ->
+                        send (OnNoStatusColAck (Success colTarget))
+
+                    Nothing ->
+                        getNoStatusCol apis model.projectid OnNoStatusColAck
                 ]
             )
 

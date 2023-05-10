@@ -1945,6 +1945,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Role: {{role}},\nin the circle: {{circle}}\n{{since}}"
   fr="Rôle: {{role}},\ndans le cercle: {{circle}}\n{{since}}"
 
+[addTensionColumn]
+  en="Add tensions here"
+  fr="Ajouter des tensions ici"
+
 # ADDME END @next ^
 # --
 #

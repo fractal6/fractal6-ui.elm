@@ -23,16 +23,17 @@ module Bulk.Board2 exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac)
+import Bulk.Bulma as B
+import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
 import Bulk.View exposing (action2icon, action2str, mediaTension, statusColor, tensionIcon, tensionStatus2str, tensionType2str, viewLabels)
 import Dict exposing (Dict)
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style)
-import Html.Events exposing (onBlur, onClick, onInput)
+import Html exposing (Html, a, br, div, hr, i, span, text)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
+import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import Json.Encode as JE
@@ -64,6 +65,8 @@ type alias Op msg =
     , movingCard : Maybe ProjectCard
     , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
+    , cardHover : String
+    , cardEdit : String
 
     -- Board Msg
     , onMove : { pos : Int, colid : String, length : Int } -> ProjectCard -> msg
@@ -79,6 +82,10 @@ type alias Op msg =
     , onDraftEdit : String -> msg
     , onDraftKeydown : Int -> msg
     , onDraftCancel : msg
+    , onCardHover : String -> msg
+    , onCardHoverLeave : msg
+    , onToggleCardEdit : msg
+    , onRemoveCard : msg
     }
 
 
@@ -157,6 +164,8 @@ viewBoard op header columns =
                                             , onDragEnd op.onEndMove
                                             , onDragEnter (op.onMoveEnterT { pos = j, cardid = card.id, colid = colid })
                                             , onClick (op.onCardClick (Just card))
+                                            , onMouseEnter (op.onCardHover card.id)
+                                            , onMouseLeave op.onCardHoverLeave
                                             ]
                                             []
                                         ++ ternary (j_last == j && op.hasTaskMove)
@@ -167,10 +176,10 @@ viewBoard op header columns =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ Lazy.lazy2 viewMediaTension op.node_focus t ]
+                                            [ Lazy.lazy6 viewMediaTension (card.id == op.cardHover) (card.id == op.cardEdit) op.node_focus t op.onToggleCardEdit op.onRemoveCard ]
 
                                         CardDraft d ->
-                                            [ Lazy.lazy viewMediaDraft d ]
+                                            [ Lazy.lazy2 viewMediaDraft (card.id == op.cardHover) d ]
                                     )
                                 ]
                             )
@@ -257,8 +266,8 @@ viewNewCol op =
         ]
 
 
-viewMediaDraft : ProjectDraft -> Html msg
-viewMediaDraft d =
+viewMediaDraft : Bool -> ProjectDraft -> Html msg
+viewMediaDraft isHovered d =
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ]
@@ -289,9 +298,12 @@ innerHtmlDecoder =
     JD.at [ "target", "innerHTML" ] JD.string
 
 
-viewMediaTension : NodeFocus -> Tension -> Html msg
-viewMediaTension focus t =
+viewMediaTension : Bool -> Bool -> NodeFocus -> Tension -> msg -> msg -> Html msg
+viewMediaTension isHovered isEdited focus t onToggleCardEdit onRemoveCard =
     let
+        k =
+            Debug.log "hey" ""
+
         n_comments =
             withDefault 0 t.n_comments
 
@@ -311,12 +323,31 @@ viewMediaTension focus t =
 
                         _ ->
                             text ""
+
+        ellipsis =
+            if isHovered || isEdited then
+                --span [ class "px-2 has-text-text" ]
+                --    [ A.icon "icon-more-horizontal is-h icon-bg" ]
+                B.dropdownLight
+                    "card-ellipsis"
+                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
+                    (A.icon "icon-more-horizontal is-h icon-bg")
+                    onToggleCardEdit
+                    (div []
+                        [ div [ class "dropdown-item button-light" ] [ a [ class "stealth-link", href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref), target "_blank" ] [ text " 🡕 ", text "Open in a new tab" ] ]
+                        , hr [ class "dropdown-divider" ] []
+                        , div [ class "dropdown-item button-light", onClick onRemoveCard ] [ text "Remove from project" ]
+                        ]
+                    )
+
+            else
+                text ""
     in
     div
         [ class "media mediaBox is-hoverable is-size-7" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
-                [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name ], div [] [ status_html ] ]
+                [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], div [] [ status_html ] ]
             , div []
                 [ span [ class "link-like is-human mr-2" ] [ text t.title ]
                 , case t.labels of

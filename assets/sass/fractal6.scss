@@ -331,6 +331,9 @@ a.is-link {;
 .has-text-announce {
     color: var(--is-announce);
 }
+.has-text-text {
+    color: var(--text);
+}
 .has-background-announce {
     background-color: var(--is-announce);
 }
@@ -429,6 +432,9 @@ a:hover .is-name, a:hover .is-username {
     }
 }
 
+.is-flex-inline {
+	display: inline-flex !important;
+}
 .is-flex-grow {
 	flex-grow: 1 !important;
 }
@@ -576,6 +582,9 @@ strong {
 }
 .is-larger4 {
     font-size: 300% !important;
+}
+.is-bigger {
+    transform: scale(1.2);
 }
 
 .is-selectable {
@@ -3080,7 +3089,7 @@ i.is-liked {
 }
 
 .is-h:hover {
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 .is-event-badge {
@@ -3116,7 +3125,7 @@ i.is-liked {
 }
 
 .button-light {
-    &:hover {
+    &:hover, & > a:hover {
         cursor: pointer !important;
         &.is-h, &.is-w {
             color: var(--is-highlight) !important;

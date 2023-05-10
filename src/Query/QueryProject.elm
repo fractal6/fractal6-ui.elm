@@ -26,6 +26,7 @@ module Query.QueryProject exposing
     , getProject
     , getProjectColumn
     , moveProjectCard
+    , removeProjectCards
     , updateProjectColumn
     )
 
@@ -38,6 +39,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddProjectCardPayload
 import Fractal.Object.AddProjectColumnPayload
+import Fractal.Object.DeleteProjectCardPayload
 import Fractal.Object.Project
 import Fractal.Object.ProjectCard
 import Fractal.Object.ProjectCardAggregateResult
@@ -274,6 +276,20 @@ addProjectCard url form msg =
             )
         )
         (RemoteData.fromResult >> decodeResponse (Maybe.map (List.map (\b -> { b | colid = form.colid }))) >> msg)
+
+
+removeProjectCards url cardids msg =
+    makeGQLMutation url
+        (Mutation.deleteProjectCard
+            { filter =
+                Input.buildProjectCardFilter (\i -> { i | id = Present <| List.map encodeId cardids })
+            }
+            (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
+                Fractal.Object.DeleteProjectCardPayload.projectCard identity
+                    (SelectionSet.map decodedId Fractal.Object.ProjectCard.id)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
 
