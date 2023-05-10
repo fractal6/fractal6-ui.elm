@@ -295,7 +295,7 @@ update_ apis message model =
                     model.form
 
                 newForm =
-                    { form | pos = Just pos }
+                    { form | pos = Just pos, post = Dict.insert "color" ColorPicker.initColor form.post }
             in
             ( { model | isActive2 = True, modal_type = AddColumn, form = newForm }
             , out0 [ sendSleep (SetIsActive2 True) 10, Ports.open_modal "ProjectColumnModalModal" ]
@@ -402,7 +402,7 @@ update_ apis message model =
                     ( data, noOut )
 
         OnColAdd ->
-            ( setDataResult LoadingSlowly model |> setColor Nothing
+            ( setDataResult LoadingSlowly model
             , out0 [ addProjectColumn apis model.form OnColAddAck ]
             )
 
