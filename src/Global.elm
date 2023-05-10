@@ -47,7 +47,7 @@ import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
 import Html exposing (div)
-import Html.Attributes as Attr exposing (id)
+import Html.Attributes exposing (id)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, isFailure, withMapData)

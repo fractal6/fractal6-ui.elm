@@ -22,11 +22,9 @@
 module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
 import Assets as A exposing (almostThere)
-import Browser.Navigation as Nav
-import Bulk
 import Bulk.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
-import Dict exposing (Dict)
+import Dict
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)

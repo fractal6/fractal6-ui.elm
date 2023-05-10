@@ -22,7 +22,7 @@
 module Bulk exposing (..)
 
 import Array
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, memberIdCodec, nearestCircleid, nid2rootid, nodeFromFragment, voteIdCodec)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdCodec, nearestCircleid, nid2rootid, nodeFromFragment, voteIdCodec)
 import Dict
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)

@@ -1232,7 +1232,7 @@ nodeProjectsFullPayload pattern status =
                             )
                             |> Present
                     , order =
-                        Input.buildProjectOrder (\b -> { b | asc = Present ProjectOrderable.Name })
+                        Input.buildProjectOrder (\b -> { b | desc = Present ProjectOrderable.CreatedAt })
                             |> Present
                 }
             )
