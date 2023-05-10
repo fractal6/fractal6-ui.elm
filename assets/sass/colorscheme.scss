@@ -308,6 +308,8 @@ $filter-hover-background: $background-evidence;
 $modal-header-background: #e5e5e5;
 $modal-card-head-background-color: $modal-header-background;
 $modal-card-title-color: $grey;
+$modal-card-head-border-bottom: none;
+$modal-card-foot-border-top: none;
 
 // Table
 $table-color: $text;
@@ -483,6 +485,8 @@ $logo-modal-color: $grey-light3;
   --modal-header-background: #{$modal-header-background};
   --modal-card-head-background-color: #{$modal-card-head-background-color};
   --modal-card-title-color: #{$modal-card-title-color};
+  --modal-card-head-border-bottom: #{$modal-card-head-border-bottom};
+  --modal-card-foot-border-top: #{$modal-card-foot-border-top};
 
   // Table
   --table-color: #{$table-color};
@@ -679,6 +683,8 @@ $filter-hover-background: $background-evidence;
 $modal-header-background: #e5e5e5;
 $modal-card-head-background-color: $modal-header-background;
 $modal-card-title-color: $grey;
+$modal-card-head-border-bottom: none;
+$modal-card-foot-border-top: none;
 
 // Table
 $table-color: $text;
@@ -858,6 +864,8 @@ $logo-modal-color: $grey-dark;
   // Modal
   --modal-header-background: #{$modal-header-background};
   --modal-card-head-background-color: #{$modal-card-head-background-color};
+  --modal-card-head-border-bottom: #{$modal-card-head-border-bottom};
+  --modal-card-foot-border-top: #{$modal-card-foot-border-top};
 
   // Table
   --table-color: #{$table-color};
