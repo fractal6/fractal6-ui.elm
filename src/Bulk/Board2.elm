@@ -179,7 +179,7 @@ viewBoard op header columns =
                                             [ Lazy.lazy6 viewMediaTension (card.id == op.cardHover) (card.id == op.cardEdit) op.node_focus t op.onToggleCardEdit op.onRemoveCard ]
 
                                         CardDraft d ->
-                                            [ Lazy.lazy2 viewMediaDraft (card.id == op.cardHover) d ]
+                                            [ Lazy.lazy5 viewMediaDraft (card.id == op.cardHover) (card.id == op.cardEdit) d op.onToggleCardEdit op.onRemoveCard ]
                                     )
                                 ]
                             )
@@ -266,11 +266,29 @@ viewNewCol op =
         ]
 
 
-viewMediaDraft : Bool -> ProjectDraft -> Html msg
-viewMediaDraft isHovered d =
+viewMediaDraft : Bool -> Bool -> ProjectDraft -> msg -> msg -> Html msg
+viewMediaDraft isHovered isEdited d onToggleCardEdit onRemoveCard =
+    let
+        ellipsis =
+            if isHovered || isEdited then
+                B.dropdownLight
+                    "card-ellipsis"
+                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
+                    (A.icon "icon-more-horizontal is-h icon-bg")
+                    onToggleCardEdit
+                    (div []
+                        [ div [ class "dropdown-item button-light" ] [ A.icon1 "icon-exchange" "Convert draft to tension @todo" ]
+                        , hr [ class "dropdown-divider" ] []
+                        , div [ class "dropdown-item button-light", onClick onRemoveCard ] [ A.icon1 "icon-trash" "Delete draft" ]
+                        ]
+                    )
+
+            else
+                text ""
+    in
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
-            [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ]
+            [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
             , div [] [ span [ class "link-like is-human" ] [ text d.title ] ]
             ]
         ]
@@ -301,9 +319,6 @@ innerHtmlDecoder =
 viewMediaTension : Bool -> Bool -> NodeFocus -> Tension -> msg -> msg -> Html msg
 viewMediaTension isHovered isEdited focus t onToggleCardEdit onRemoveCard =
     let
-        k =
-            Debug.log "hey" ""
-
         n_comments =
             withDefault 0 t.n_comments
 
@@ -326,22 +341,23 @@ viewMediaTension isHovered isEdited focus t onToggleCardEdit onRemoveCard =
 
         ellipsis =
             if isHovered || isEdited then
-                --span [ class "px-2 has-text-text" ]
-                --    [ A.icon "icon-more-horizontal is-h icon-bg" ]
                 B.dropdownLight
                     "card-ellipsis"
                     ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
                     (A.icon "icon-more-horizontal is-h icon-bg")
                     onToggleCardEdit
                     (div []
-                        [ div [ class "dropdown-item button-light" ] [ a [ class "stealth-link", href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref), target "_blank" ] [ text " 🡕 ", text "Open in a new tab" ] ]
+                        [ div [ class "dropdown-item button-light" ] [ a [ class "stealth-link", href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref), target "_blank" ] [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ] ]
                         , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick onRemoveCard ] [ text "Remove from project" ]
+                        , div [ class "dropdown-item button-light", onClick onRemoveCard ] [ A.icon1 "icon-x" "Remove from project" ]
                         ]
                     )
 
             else
                 text ""
+
+        a1 =
+            Debug.log "hey" "lazzzyy"
     in
     div
         [ class "media mediaBox is-hoverable is-size-7" ]
