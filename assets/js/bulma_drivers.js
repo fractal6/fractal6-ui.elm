@@ -546,7 +546,7 @@ function markupRichText(e, el, app) {
 
         if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start-1])) return
 
-        // Try to see if we are the begginin of list pattern
+        // Try to see if we are the begining of list pattern
         var backward = el.value.slice(-6, start);
         var isLineList = backward.search(/\n\s*[-\*] $|\n\s*[-\*] \[x \]$|\n\s*[0-9]+\. $/) >= 0
         if (isLineList) {
