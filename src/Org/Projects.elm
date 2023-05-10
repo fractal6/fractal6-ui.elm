@@ -27,32 +27,25 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
-import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (nodeType2str, projectStatus2str)
-import Codecs exposing (QuickDoc)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.MoveTension as MoveTension
 import Components.NodeDoc exposing (viewUrlForm)
 import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
-import Dict.Extra as DE
 import Extra exposing (decap, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
-import Extra.Views exposing (showMsg)
-import Fifo exposing (Fifo)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
-import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Generated.Route as Route exposing (toHref)
@@ -68,10 +61,9 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
-import Process
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
 import Session exposing (Conf, GlobalCmd(..), Screen)
 import String.Format as Format

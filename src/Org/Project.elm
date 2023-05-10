@@ -47,7 +47,6 @@ import Form.Help as Help
 import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
@@ -64,7 +63,6 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (addProjectCard, getProject, moveProjectCard, removeProjectCards)
-import Requests as R
 import Scroll exposing (scrollToSubBottom)
 import Session exposing (Conf, GlobalCmd(..))
 import Task

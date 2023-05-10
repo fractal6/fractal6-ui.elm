@@ -22,11 +22,10 @@
 module Pages.Verification exposing (Flags, Model, Msg, page)
 
 import Assets as A exposing (almostThere)
-import Browser.Navigation as Nav
 import Bulk exposing (UserState(..))
 import Bulk.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
-import Dict exposing (Dict)
+import Dict
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)
@@ -37,18 +36,15 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Http
 import Loading exposing (RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
-import Process
-import RemoteData exposing (RemoteData)
+import RemoteData
 import Requests exposing (signupValidate)
 import Session exposing (GlobalCmd(..))
 import String.Format as Format
-import Task
 import Text as T
 
 

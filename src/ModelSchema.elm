@@ -42,7 +42,7 @@ import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Graphql.SelectionSet as SelectionSet
 import Json.Encode as JE
 import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)

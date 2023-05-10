@@ -347,7 +347,14 @@ viewMediaTension isHovered isEdited focus t onToggleCardEdit onRemoveCard =
                     (A.icon "icon-more-horizontal is-h icon-bg")
                     onToggleCardEdit
                     (div []
-                        [ div [ class "dropdown-item button-light" ] [ a [ class "stealth-link", href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref), target "_blank" ] [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ] ]
+                        [ div [ class "dropdown-item button-light" ]
+                            [ a
+                                [ class "stealth-link"
+                                , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
+                                , target "_blank"
+                                ]
+                                [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
+                            ]
                         , hr [ class "dropdown-divider" ] []
                         , div [ class "dropdown-item button-light", onClick onRemoveCard ] [ A.icon1 "icon-x" "Remove from project" ]
                         ]
