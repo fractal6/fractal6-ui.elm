@@ -139,6 +139,7 @@ type
     | DoCreateTension (Maybe NodeType.NodeType) String
     | DoJoinOrga String
     | DoOpenActionPanel String String (Maybe ( Int, Int ))
+    | DoOpenSidePanel (Maybe { id : String, cards_len : Int })
     | DoToggleTreeMenu
     | DoFetchNode String
     | DoAddNodes (List Node)

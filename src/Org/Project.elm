@@ -30,6 +30,7 @@ import Bulk.Error exposing (viewGqlErrors, viewGqlErrorsLight)
 import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
+import Components.Board as Board
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
@@ -133,6 +134,9 @@ mapGlobalOutcmds gcmds =
                     DoOpenActionPanel a b c ->
                         ( [ send <| OpenActionPanel a b c ], Cmd.none )
 
+                    DoOpenSidePanel a ->
+                        ( [ send <| OpenTensionPane a ], Cmd.none )
+
                     DoToggleTreeMenu ->
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
 
@@ -175,12 +179,12 @@ type alias Model =
     -- Page
     , projectid : String
     , project_data : GqlData ProjectData
-    , board_result : GqlData String -- track board remote result silently
     , linkTensionPanel : LinkTensionPanel.State
 
     -- Common
     , conf : Conf
     , refresh_trial : Int
+    , board : Board.State
     , empty : {}
 
     -- Components
@@ -240,8 +244,8 @@ init global flags =
                     |> withDefault Loading
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
-            , board_result = NotAsked
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
+            , board = Board.init projectid newFocus global.session.user
 
             -- Common
             , conf = conf
@@ -310,6 +314,7 @@ type Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
     | LinkTensionPanelMsg LinkTensionPanel.Msg
+    | BoardMsg Board.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -365,10 +370,16 @@ update global message model =
             ( model, Cmd.batch [ getProject apis model.projectid GotProject ], Cmd.none )
 
         GotProject result ->
-            ( { model | project_data = result }
-            , Cmd.none
-            , Cmd.none
-            )
+            case result of
+                Success data ->
+                    -- save space
+                    ( { model | project_data = Success { data | columns = [] } }
+                    , Cmd.map BoardMsg (send (Board.OnLoad data))
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | project_data = result }, Cmd.none, Cmd.none )
 
         OpenTensionPane colTarget ->
             ( model
@@ -380,7 +391,7 @@ update global message model =
             )
 
         OnClearBoardResult ->
-            ( { model | board_result = NotAsked }, Cmd.none, Cmd.none )
+            ( model, Cmd.map BoardMsg (send Board.OnClearBoardResult), Cmd.none )
 
         -- Common
         NoMsg ->
@@ -516,42 +527,31 @@ update global message model =
                 ( data, out ) =
                     LinkTensionPanel.update apis msg model.linkTensionPanel
 
-                pd =
+                cmd =
                     case out.result of
-                        Just ( colid, cards ) ->
-                            withMapData
-                                (\x ->
-                                    case LE.findIndex (\c -> c.id == colid) x.columns of
-                                        Just i ->
-                                            { x
-                                                | columns =
-                                                    LE.updateAt i
-                                                        (\c -> { c | cards = c.cards ++ cards })
-                                                        x.columns
-                                            }
-
-                                        Nothing ->
-                                            let
-                                                noStatusCol =
-                                                    { id = colid
-                                                    , name = "No Status"
-                                                    , color = Nothing
-                                                    , pos = 0
-                                                    , col_type = ProjectColumnType.NoStatusColumn
-                                                    , cards = cards
-                                                    }
-                                            in
-                                            { x | columns = noStatusCol :: x.columns }
-                                )
-                                model.project_data
+                        Just x ->
+                            Cmd.map BoardMsg (send <| Board.OnLinkTension x)
 
                         Nothing ->
-                            model.project_data
+                            send NoMsg
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | linkTensionPanel = data, project_data = pd }, out.cmds |> List.map (\m -> Cmd.map LinkTensionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | linkTensionPanel = data }
+            , out.cmds |> List.map (\m -> Cmd.map LinkTensionPanelMsg m) |> List.append (cmd :: cmds) |> Cmd.batch
+            , Cmd.batch gcmds
+            )
+
+        BoardMsg msg ->
+            let
+                ( data, out ) =
+                    Board.update apis msg model.board
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | board = data }, out.cmds |> List.map (\m -> Cmd.map BoardMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -566,6 +566,7 @@ subscriptions _ model =
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (LinkTensionPanel.subscriptions model.linkTensionPanel |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
+        ++ (Board.subscriptions model.board |> List.map (\s -> Sub.map BoardMsg s))
         |> Sub.batch
 
 
@@ -606,7 +607,7 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        viewProject data model
+                        Board.view {} model.board |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
@@ -657,7 +658,7 @@ view_ global model =
                 ]
 
             -- User notification
-            , case model.board_result of
+            , case Board.board_result model.board of
                 Failure err ->
                     div [ class "f6-notification notification is-danger is-light" ]
                         [ button [ class "delete", onClick OnClearBoardResult ] []

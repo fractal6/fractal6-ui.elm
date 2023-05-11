@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.Board exposing (Msg(..), State, init, nodeID, subscriptions, update, view)
+port module Components.Board exposing (Msg(..), State, board_result, init, nodeID, subscriptions, update, view)
 
 import Assets as A
 import Browser.Dom as Dom
@@ -135,6 +135,17 @@ init projectid focus user =
 
 
 
+--
+-- Getters
+--
+
+
+board_result : State -> GqlData String
+board_result (State model) =
+    model.board_result
+
+
+
 -- ------------------------------
 -- U P D A T E
 -- ------------------------------
@@ -145,6 +156,7 @@ type Msg
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
     | ScrollToElement String
+    | OnClearBoardResult
     | OnMove { pos : Int, colid : String, length : Int } ProjectCard
     | OnCancelHov
     | OnEndMove
@@ -171,6 +183,7 @@ type Msg
     | OnAddDraftAck (GqlData (List ProjectCard))
     | ProjectColumnModalMsg ProjectColumnModal.Msg
     | OpenTensionPane (Maybe ColTarget)
+    | OnLinkTension ( String, List ProjectCard )
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -249,6 +262,9 @@ update_ apis message model =
 
         ScrollToElement did ->
             ( model, out0 [ Scroll.scrollToElement did NoMsg ] )
+
+        OnClearBoardResult ->
+            ( { model | board_result = NotAsked }, noOut )
 
         OnMove col card ->
             ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }, noOut )
@@ -452,10 +468,10 @@ update_ apis message model =
                         d =
                             model.project
 
-                        project =
+                        pj =
                             { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
                     in
-                    ( { model | project = project, isAddingDraft = Nothing, board_result = NotAsked }
+                    ( { model | project = pj, isAddingDraft = Nothing, board_result = NotAsked }
                     , out0 [ send (OnAddDraft (List.head cards |> unwrap "" .colid)) ]
                     )
 
@@ -552,7 +568,37 @@ update_ apis message model =
 
         OpenTensionPane colTarget ->
             --@todo open panel with port
-            ( model, noOut )
+            ( model, out1 [ DoOpenSidePanel colTarget ] )
+
+        OnLinkTension ( colid, cards ) ->
+            let
+                d =
+                    model.project
+
+                pj =
+                    case LE.findIndex (\c -> c.id == colid) d.columns of
+                        Just i ->
+                            { d
+                                | columns =
+                                    LE.updateAt i
+                                        (\c -> { c | cards = c.cards ++ cards })
+                                        d.columns
+                            }
+
+                        Nothing ->
+                            let
+                                noStatusCol =
+                                    { id = colid
+                                    , name = "No Status"
+                                    , color = Nothing
+                                    , pos = 0
+                                    , col_type = ProjectColumnType.NoStatusColumn
+                                    , cards = cards
+                                    }
+                            in
+                            { d | columns = noStatusCol :: d.columns }
+            in
+            ( { model | project = pj }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -928,9 +974,6 @@ viewMediaTension isHovered isEdited focus t =
 
             else
                 text ""
-
-        a1 =
-            Debug.log "hey" "lazzzyy"
     in
     div
         [ class "media mediaBox is-hoverable is-size-7" ]
