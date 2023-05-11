@@ -114,11 +114,14 @@ html.has-modal-active, html.has-modal-active2 {
 .dropdown-content {
       .dropdown-item:hover {
           background-color: var(--dropdown-item-hover-background-color);
+          &, & > * {
+              cursor: pointer !important;
+          }
       }
       a.dropdown-item:hover {
           color: var(--link);
       }
-}
+  }
 
 .is-helper {
     .dropdown-content {
