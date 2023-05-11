@@ -293,10 +293,13 @@ update_ apis message model =
                                     |> (\d -> { d | columns = removeCard card d.columns })
                                     -- Add the card in new pos tension to list
                                     |> (\d -> { d | columns = pushCard { card | colid = colid, pos = pos_fixed } d.columns })
+
+                            f =
+                                Debug.log "drop at" pos_fixed
                         in
                         ( { newModel | project = pj, board_result = Loading }
                         , out0
-                            [ moveProjectCard apis card.id c_hover.pos colid GotCardMoved
+                            [ moveProjectCard apis card.id pos_fixed colid GotCardMoved
                             , send OnCancelHov
                             ]
                         )
@@ -332,14 +335,16 @@ update_ apis message model =
             -- @DEBUG: How to optimize / simplify that ?
             -- Does "dragCount" still usefull ??
             let
-                ( is_last, c_h ) =
+                ( c_h, is_last ) =
                     Maybe.map2
                         (\ch h ->
-                            ( ch.colid == h.colid && ch.pos == h.length - 1, Just { ch | pos = ch.pos + 1 } )
+                            ( Just { ch | pos = ch.pos + 1 }
+                            , ch.colid == h.colid && ch.pos == h.length - 1
+                            )
                         )
                         model.movingHoverT
                         model.movingHoverCol
-                        |> withDefault ( False, model.movingHoverT )
+                        |> withDefault ( model.movingHoverT, False )
             in
             if Just hover == model.movingHoverCol && not reset then
                 -- ?
@@ -678,8 +683,8 @@ viewBoard op model =
                     colid =
                         col.id
 
-                    j_last =
-                        List.length col.cards - 1
+                    cards_len =
+                        List.length col.cards
 
                     c1 =
                         List.head col.cards
@@ -687,7 +692,7 @@ viewBoard op model =
                 [ div
                     (class "column is-3"
                         :: ternary model.hasTaskMove
-                            [ onDragEnter (OnMoveEnterCol { pos = i, colid = colid, length = j_last + 1 } False)
+                            [ onDragEnter (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False)
                             , onDragLeave OnMoveLeaveCol
 
                             -- @DEBUG doesn't work
@@ -724,7 +729,7 @@ viewBoard op model =
                                                 ]
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| OnMove { pos = i, colid = colid, length = j_last + 1 } card
+                                            , onDragStart <| OnMove { pos = i, colid = colid, length = cards_len } card
                                             , onDragEnd OnEndMove
                                             , onDragEnter (OnMoveEnterT { pos = j, cardid = card.id, colid = colid })
                                             , onClick (OnCardClick (Just card))
@@ -732,9 +737,9 @@ viewBoard op model =
                                             , onMouseLeave OnCardHoverLeave
                                             ]
                                             []
-                                        ++ ternary (j_last == j && model.hasTaskMove)
+                                        ++ ternary (cards_len - 1 == j && model.hasTaskMove)
                                             -- reset hoverT to draw below
-                                            [ onDragLeave (OnMoveEnterCol { pos = i, colid = colid, length = j_last + 1 } True) ]
+                                            [ onDragLeave (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True) ]
                                             []
                                     )
                                     (case card.card of
