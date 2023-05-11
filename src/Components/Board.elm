@@ -1031,7 +1031,16 @@ removeCard : ProjectCard -> List ProjectColumn -> List ProjectColumn
 removeCard c columns =
     LE.updateIf
         (\a -> a.id == c.colid)
-        (\a -> { a | cards = LE.removeAt c.pos a.cards })
+        (\a ->
+            -- @warning; c.pos may not be consists (see how pos position are managed front/back.)
+            --{ a | cards = LE.removeAt c.pos a.cards }
+            case LE.findIndex (\b -> b.id == c.id) a.cards of
+                Just i ->
+                    { a | cards = LE.removeAt i a.cards }
+
+                Nothing ->
+                    a
+        )
         columns
 
 
