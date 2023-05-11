@@ -133,6 +133,7 @@ type
     | DoUpdatePath (Maybe LocalGraph)
     | DoUpdateTree (Maybe NodesDict)
     | DoUpdateOrgs (Maybe (List OrgaNode))
+    | DoUpdateScreen Screen
     | DoToggleWatchOrga String
       -- Components Msg
     | DoCreateTension (Maybe NodeType.NodeType) String

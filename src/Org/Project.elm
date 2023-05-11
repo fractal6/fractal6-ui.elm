@@ -19,14 +19,12 @@
 -}
 
 
-port module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
-import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Board2 exposing (DraftForm, viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewGqlErrorsLight)
 import Bulk.View exposing (viewRole, viewUserFull)
@@ -62,8 +60,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (addProjectCard, getProject, moveProjectCard, removeProjectCards)
-import Scroll exposing (scrollToSubBottom)
+import Query.QueryProject exposing (getProject)
 import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
@@ -114,6 +111,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( [], send (ToggleWatchOrga a) )
+
+                    DoUpdateScreen a ->
+                        ( [], send (UpdateSessionScreen a) )
 
                     -- Component
                     DoCreateTension ntm a ->
@@ -175,20 +175,8 @@ type alias Model =
     -- Page
     , projectid : String
     , project_data : GqlData ProjectData
-    , isAddingDraft : Maybe DraftForm
-
-    -- Board
-    , boardHeight : Maybe Float
-    , movingCard : Maybe ProjectCard
-    , linkTensionPanel : LinkTensionPanel.State
-    , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
-    , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
-    , dragCount : Int
-    , draging : Bool
-    , projectColumnModal : ProjectColumnModal.State
     , board_result : GqlData String -- track board remote result silently
-    , cardHover : String
-    , cardEdit : String
+    , linkTensionPanel : LinkTensionPanel.State
 
     -- Common
     , conf : Conf
@@ -252,22 +240,8 @@ init global flags =
                     |> withDefault Loading
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
-            , isAddingDraft = Nothing
-
-            -- Board
-            , boardHeight = Nothing
-            , movingCard = Nothing
-            , movingHoverCol = Nothing
-            , movingHoverT = Nothing
-            , dragCount = 0
-            , draging = False
-
-            --
-            , projectColumnModal = ProjectColumnModal.init projectid global.session.user
-            , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
             , board_result = NotAsked
-            , cardHover = ""
-            , cardEdit = ""
+            , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
 
             -- Common
             , conf = conf
@@ -287,9 +261,7 @@ init global flags =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
             , send DoLoad
             , Ports.hide "footBar"
-            , Task.attempt FitBoard (Dom.getElement "projectView")
             , sendSleep PassedSlowLoadTreshold 500
-            , sendSleep (ScrollToElement "projectView") 333
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
@@ -322,39 +294,11 @@ type Msg
     | DoLoad
     | GotProject (GqlData ProjectData) -- Rest
     | OpenTensionPane (Maybe ColTarget)
-      -- Board
-    | OnResize Int Int
-    | FitBoard (Result Dom.Error Dom.Element)
-    | OnMove { pos : Int, colid : String, length : Int } ProjectCard
-    | OnCancelHov
-    | OnEndMove
-    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool
-    | OnMoveLeaveCol
-    | OnMoveLeaveCol_
-    | OnMoveEnterT { pos : Int, cardid : String, colid : String }
-    | OnMoveDrop String
-    | GotCardMoved (GqlData IdPayload)
-    | OnCardClick (Maybe ProjectCard)
-    | OnCardClick_ (Maybe ProjectCard)
-    | OnCardHover String
-    | OnCardHoverLeave
-    | OnToggleCardEdit
-    | OnToggleCardEdit_
-    | OnRemoveCard
-    | OnRemoveCardAck (GqlData (List String))
-      --
-    | OnAddCol
-    | OnAddDraft String
-    | OnDraftEdit String
-    | OnDraftKeydown Int
-    | OnDraftCancel
-    | OnAddDraftAck (GqlData (List ProjectCard))
     | OnClearBoardResult
       -- Common
     | NoMsg
     | LogErr String
     | OnGoRoot
-    | ScrollToElement String
     | OpenActionPanel String String (Maybe ( Int, Int ))
       -- Components
     | HelperBarMsg HelperBar.Msg
@@ -365,7 +309,6 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
-    | ProjectColumnModalMsg ProjectColumnModal.Msg
     | LinkTensionPanelMsg LinkTensionPanel.Msg
 
 
@@ -423,7 +366,7 @@ update global message model =
 
         GotProject result ->
             ( { model | project_data = result }
-            , Cmd.batch [ Task.attempt FitBoard (Dom.getElement "projectView") ]
+            , Cmd.none
             , Cmd.none
             )
 
@@ -436,329 +379,8 @@ update global message model =
             , Cmd.none
             )
 
-        -- Board
-        OnResize w h ->
-            let
-                conf =
-                    model.conf
-
-                newScreen =
-                    { w = w, h = h }
-
-                newConf =
-                    { conf | screen = newScreen }
-            in
-            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement "projectView"), send (UpdateSessionScreen newScreen) )
-
-        FitBoard elt ->
-            case elt of
-                Ok e ->
-                    let
-                        h =
-                            if e.viewport.height - e.element.y < 511 then
-                                -- allow y-scroll here. Substract the header size.
-                                e.viewport.height - 79
-
-                            else
-                                e.viewport.height - e.element.y
-                    in
-                    ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
-
-                Err _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        OnMove col card ->
-            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }, Cmd.none, Cmd.none )
-
-        OnEndMove ->
-            let
-                newModel =
-                    { model | draging = False }
-            in
-            Maybe.map3
-                (\card { pos, colid } c_hover ->
-                    if card.id == c_hover.cardid then
-                        ( newModel, sendSleep OnCancelHov 300, Cmd.none )
-
-                    else
-                        -- Do not wait the query to success to move the column.
-                        let
-                            pj =
-                                withMapData
-                                    (\data ->
-                                        let
-                                            pos_fixed =
-                                                ternary (colid == card.colid && c_hover.pos > card.pos)
-                                                    (c_hover.pos - 1)
-                                                    c_hover.pos
-                                        in
-                                        data
-                                            -- Remove the card from old pos
-                                            |> (\d -> { d | columns = removeCard card d.columns })
-                                            -- Add the card in new pos tension to list
-                                            |> (\d -> { d | columns = pushCard { card | colid = colid, pos = pos_fixed } d.columns })
-                                    )
-                                    model.project_data
-                        in
-                        ( { newModel | project_data = pj, board_result = Loading }
-                        , Cmd.batch
-                            [ moveProjectCard apis card.id c_hover.pos colid GotCardMoved
-                            , send OnCancelHov
-                            ]
-                        , Cmd.none
-                        )
-                )
-                model.movingCard
-                model.movingHoverCol
-                model.movingHoverT
-                |> withDefault
-                    ( newModel, sendSleep OnCancelHov 300, Cmd.none )
-
-        OnCardClick c ->
-            -- Highlight the border and show ellipsis on click
-            -- or unselect.
-            case c of
-                Just _ ->
-                    ( model, sendSleep (OnCardClick_ c) 50, Cmd.none )
-
-                Nothing ->
-                    ( { model | movingCard = Nothing, cardEdit = "" }, Cmd.none, Cmd.none )
-
-        OnCardClick_ c ->
-            -- Solves concurent message sent
-            ( { model | movingCard = c }, Cmd.none, Cmd.none )
-
-        OnCancelHov ->
-            --let
-            --    l1 =
-            --        Debug.log "Cancel hov" ""
-            --in
-            ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, Cmd.none, Cmd.none )
-
-        OnMoveEnterCol hover reset ->
-            -- @DEBUG: How to optimize / simplify that ?
-            -- Does "dragCount" still usefull ??
-            let
-                ( is_last, c_h ) =
-                    Maybe.map2
-                        (\ch h ->
-                            ( ch.colid == h.colid && ch.pos == h.length - 1, Just { ch | pos = ch.pos + 1 } )
-                        )
-                        model.movingHoverT
-                        model.movingHoverCol
-                        |> withDefault ( False, model.movingHoverT )
-            in
-            if Just hover == model.movingHoverCol && not reset then
-                -- ?
-                ( { model | dragCount = 1 }, Cmd.none, Cmd.none )
-
-            else if Just hover == model.movingHoverCol && reset && is_last then
-                ( { model | movingHoverT = c_h }, Cmd.none, Cmd.none )
-
-            else
-                let
-                    -- Add a virtual card hover in empty columns in order to be able to move card there.
-                    ( last_cardid, n_cards ) =
-                        withMaybeMapData
-                            (\d ->
-                                LE.find (\x -> x.id == hover.colid) d.columns
-                                    |> unwrap ( "", -1 )
-                                        (\cols -> ( LE.last cols.cards |> unwrap "" .id, List.length cols.cards ))
-                            )
-                            model.project_data
-                            |> withDefault ( "", -1 )
-
-                    mht_ =
-                        if Maybe.map .colid model.movingHoverT /= Just hover.colid then
-                            Nothing
-
-                        else
-                            model.movingHoverT
-
-                    mht =
-                        case mht_ of
-                            Nothing ->
-                                if n_cards == 0 then
-                                    Just { pos = 0, cardid = "", colid = hover.colid }
-
-                                else if n_cards > 0 then
-                                    Just { pos = n_cards, cardid = last_cardid, colid = hover.colid }
-
-                                else
-                                    Nothing
-
-                            Just _ ->
-                                model.movingHoverT
-                in
-                ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, Cmd.none, Cmd.none )
-
-        OnMoveLeaveCol ->
-            ( { model | dragCount = model.dragCount - 1 }, sendSleep OnMoveLeaveCol_ 15, Cmd.none )
-
-        OnMoveLeaveCol_ ->
-            if model.dragCount < 0 && model.draging then
-                ( model, send OnCancelHov, Cmd.none )
-
-            else
-                ( model, Cmd.none, Cmd.none )
-
-        OnMoveEnterT hover ->
-            --let
-            --    l1 =
-            --        Debug.log "On move enter Card" hover.pos
-            --in
-            ( { model | movingHoverT = Just hover }, Cmd.none, Cmd.none )
-
-        OnMoveDrop nameid ->
-            -- @not implemented.
-            ( { model | movingCard = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        GotCardMoved result ->
-            ( { model | board_result = withMapData .id result }, Cmd.none, Cmd.none )
-
-        OnAddCol ->
-            let
-                pos =
-                    withMaybeData model.project_data |> unwrap [] .columns |> List.length
-            in
-            ( model, Cmd.map ProjectColumnModalMsg (send (ProjectColumnModal.OnOpenAdd pos)), Cmd.none )
-
-        OnAddDraft colid ->
-            let
-                title =
-                    Maybe.map .title model.isAddingDraft |> withDefault ""
-
-                pos =
-                    model.project_data
-                        |> withMaybeMapData (\a -> LE.find (\b -> b.id == colid) a.columns |> unwrap [] .cards |> List.length)
-                        |> withDefault 0
-
-                uctx =
-                    uctxFromUser global.session.user
-            in
-            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos } }
-            , Cmd.batch [ Ports.focusOn "draft-card-editable", scrollToSubBottom colid NoMsg ]
-            , Cmd.none
-            )
-
-        OnDraftEdit val ->
-            let
-                form =
-                    model.isAddingDraft
-
-                title =
-                    String.replace "<br>" "" val
-                        |> String.replace "<div>" ""
-                        |> String.replace "</div>" ""
-            in
-            ( { model | isAddingDraft = Maybe.map (\f -> { f | title = title }) form }, Cmd.none, Cmd.none )
-
-        OnDraftKeydown key ->
-            case key of
-                13 ->
-                    --ENTER
-                    case model.isAddingDraft of
-                        Just form ->
-                            ternary (form.title /= "" && not (isLoading model.board_result))
-                                ( { model | board_result = Loading }, addProjectCard apis form OnAddDraftAck, Cmd.none )
-                                ( model, Cmd.none, Cmd.none )
-
-                        Nothing ->
-                            ( model, Cmd.none, Cmd.none )
-
-                27 ->
-                    --ESC
-                    ( { model | isAddingDraft = Nothing }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        OnDraftCancel ->
-            ( { model | isAddingDraft = Nothing }, Cmd.none, Cmd.none )
-
-        OnAddDraftAck result ->
-            case result of
-                Success cards ->
-                    let
-                        project_data =
-                            withMapData
-                                (\d ->
-                                    { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
-                                )
-                                model.project_data
-                    in
-                    ( { model | project_data = project_data, isAddingDraft = Nothing, board_result = NotAsked }
-                    , send (OnAddDraft (List.head cards |> unwrap "" .colid))
-                    , Cmd.none
-                    )
-
-                Failure err ->
-                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, Cmd.none, Cmd.none )
-
-        OnCardHover cardid ->
-            ( { model | cardHover = cardid }, Cmd.none, Cmd.none )
-
-        OnCardHoverLeave ->
-            ( { model | cardHover = "" }, Cmd.none, Cmd.none )
-
-        OnToggleCardEdit ->
-            ( model, sendSleep OnToggleCardEdit_ 50, Cmd.none )
-
-        OnToggleCardEdit_ ->
-            -- Solve mesage concurrency
-            ( { model | cardEdit = ternary (model.cardEdit == "") model.cardHover "" }, Cmd.none, Cmd.none )
-
-        OnRemoveCard ->
-            case model.cardEdit of
-                "" ->
-                    -- no card dropdown open
-                    ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    let
-                        cardid =
-                            model.cardEdit
-                    in
-                    ( { model | board_result = Loading }, removeProjectCards apis [ cardid ] OnRemoveCardAck, Cmd.none )
-
-        OnRemoveCardAck result ->
-            case result of
-                Success cardids ->
-                    let
-                        pj =
-                            withMapData
-                                (\data ->
-                                    List.foldl
-                                        (\cardid project ->
-                                            case getCard cardid project of
-                                                Just card ->
-                                                    project
-                                                        |> (\d -> { d | columns = removeCard card d.columns })
-
-                                                Nothing ->
-                                                    project
-                                        )
-                                        data
-                                        cardids
-                                )
-                                model.project_data
-                    in
-                    ( { model | board_result = NotAsked, project_data = pj }, Cmd.none, Cmd.none )
-
-                Failure err ->
-                    ( { model | board_result = Failure err }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -773,9 +395,6 @@ update global message model =
                     global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
             ( model, Cmd.none, send (NavigateRaw (uriFromNameid ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
-
-        ScrollToElement did ->
-            ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -892,41 +511,6 @@ update global message model =
             , Cmd.batch gcmds
             )
 
-        ProjectColumnModalMsg msg ->
-            let
-                ( data, out ) =
-                    ProjectColumnModal.update apis msg model.projectColumnModal
-
-                pd =
-                    case out.result of
-                        Just ( a, b ) ->
-                            withMapData
-                                (\x ->
-                                    case a of
-                                        AddColumn ->
-                                            { x | columns = x.columns ++ [ b ] }
-
-                                        EditColumn ->
-                                            { x
-                                                | columns =
-                                                    LE.updateIf (\c -> c.id == b.id)
-                                                        (\c -> { c | name = b.name, color = b.color, pos = b.pos })
-                                                        x.columns
-                                            }
-
-                                        _ ->
-                                            x
-                                )
-                                model.project_data
-
-                        Nothing ->
-                            model.project_data
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | projectColumnModal = data, project_data = pd }, out.cmds |> List.map (\m -> Cmd.map ProjectColumnModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         LinkTensionPanelMsg msg ->
             let
                 ( data, out ) =
@@ -972,8 +556,7 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    [ unselectCardFromJs (always (OnCardClick Nothing))
-    ]
+    []
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -982,12 +565,8 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
-        ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
         ++ (LinkTensionPanel.subscriptions model.linkTensionPanel |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
         |> Sub.batch
-
-
-port unselectCardFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -1035,7 +614,6 @@ view global model =
                     _ ->
                         div [ class "spinner" ] []
                 ]
-            , ProjectColumnModal.view {} model.projectColumnModal |> Html.map ProjectColumnModalMsg
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
         , NTF.view { tree_data = tree_data, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
@@ -1130,131 +708,5 @@ viewSearchBar project model =
 
 viewProject : ProjectData -> Model -> Html Msg
 viewProject data model =
-    let
-        op =
-            { hasTaskMove = True
-            , hasNewCol = True
-            , isAddingDraft = model.isAddingDraft
-            , conf = model.conf
-            , node_focus = model.node_focus
-            , boardId = "projectView"
-            , boardHeight = model.boardHeight
-            , movingCard = model.movingCard
-            , movingHoverCol = model.movingHoverCol
-            , movingHoverT = model.movingHoverT
-            , cardHover = model.cardHover
-            , cardEdit = model.cardEdit
-
-            -- Board Msg
-            , onMove = OnMove
-            , onCancelHov = OnCancelHov
-            , onEndMove = OnEndMove
-            , onMoveEnterCol = OnMoveEnterCol
-            , onMoveLeaveCol = OnMoveLeaveCol
-            , onMoveEnterT = OnMoveEnterT
-            , onMoveDrop = OnMoveDrop
-            , noMsg = NoMsg
-            , onAddCol = OnAddCol
-            , onDraftEdit = OnDraftEdit
-            , onDraftKeydown = OnDraftKeydown
-            , onDraftCancel = OnDraftCancel
-            , onCardClick = OnCardClick
-            , onCardHover = OnCardHover
-            , onCardHoverLeave = OnCardHoverLeave
-            , onToggleCardEdit = OnToggleCardEdit
-            , onRemoveCard = OnRemoveCard
-            }
-
-        columns =
-            data.columns |> List.filter (\x -> not (x.col_type == ProjectColumnType.NoStatusColumn && List.length x.cards == 0))
-    in
-    viewBoard op viewHeader columns
-
-
-viewHeader : ProjectColumn -> Maybe ProjectCard -> Html Msg
-viewHeader col card =
-    span []
-        [ div [ class "level" ]
-            [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
-            , span [ class "level-left" ]
-                [ span
-                    [ class "tag is-rounded-light button-light is-w has-border mx-1"
-                    , onClick (OnAddDraft col.id)
-                    ]
-                    [ A.icon "icon-plus" ]
-                , if col.col_type /= ProjectColumnType.NoStatusColumn then
-                    div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
-                        [ div [ class "dropdown-trigger is-w is-h" ]
-                            [ div
-                                [ class "ellipsis"
-                                , attribute "aria-controls" ("edit-ellipsis-" ++ col.id)
-                                , attribute "aria-haspopup" "true"
-                                ]
-                                [ A.icon "icon-more-horizontal icon-lg" ]
-                            ]
-                        , div [ id ("edit-ellipsis-" ++ col.id), class "dropdown-menu", attribute "role" "menu" ]
-                            [ div [ class "dropdown-content p-0" ] <|
-                                [ div
-                                    [ class "dropdown-item button-light"
-                                    , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
-                                    ]
-                                    [ A.icon1 "icon-edit-2" T.edit ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div
-                                    [ class "dropdown-item button-light"
-                                    , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
-                                    ]
-                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div [ class "dropdown-item button-light" ]
-                                    [ A.icon1 "icon-trash" T.delete ]
-                                ]
-                            ]
-                        ]
-
-                  else
-                    text ""
-                ]
-            ]
-        ]
-
-
-
---
--- Utils
---
-
-
-pushCard : ProjectCard -> List ProjectColumn -> List ProjectColumn
-pushCard c columns =
-    LE.updateIf
-        (\a -> a.id == c.colid)
-        (\a ->
-            { a
-                | cards = insertAt c.pos c a.cards
-
-                -- Not needed, since we work in direct position on the front.
-                --|> (\cards ->
-                --        -- Increment the position of the elements to take into account the new insertion.
-                --        let
-                --            ( before, after ) =
-                --                LE.splitAt (c.pos + 1) cards
-                --        in
-                --        before ++ List.map (\b -> { b | pos = b.pos + 1 }) after
-                --   )
-            }
-        )
-        columns
-
-
-removeCard : ProjectCard -> List ProjectColumn -> List ProjectColumn
-removeCard c columns =
-    LE.updateIf
-        (\a -> a.id == c.colid)
-        (\a -> { a | cards = LE.removeAt c.pos a.cards })
-        columns
-
-
-getCard : String -> ProjectData -> Maybe ProjectCard
-getCard cardid data =
-    LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)
+    --viewBoard op viewHeader columns
+    text ""
