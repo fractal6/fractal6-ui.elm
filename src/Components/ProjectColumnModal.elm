@@ -203,7 +203,7 @@ canExitSafe model =
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    not (isPostEmpty [ "name", "about", "color" ] model.form.post)
+    not (isPostEmpty [ "name", "about" ] model.form.post)
 
 
 isSendable : Model -> Bool

@@ -77,7 +77,7 @@ dropdownLight id_ dropdown_cls button_html msg content_html =
             ]
         , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
             [ -- The fixed position allow the dropdown to overflow the modal
-              div [ class "dropdown-content has-border", style "position" "fixed" ]
+              div [ class "dropdown-content p-0 has-border-light", style "position" "fixed" ]
                 [ content_html ]
             ]
         ]

@@ -82,6 +82,7 @@ type alias Model =
     , board_result : GqlData String -- track board remote result silently
     , cardHover : String
     , cardEdit : String
+    , colEdit : String
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -122,6 +123,7 @@ initModel projectid focus user =
     , board_result = NotAsked
     , cardHover = ""
     , cardEdit = ""
+    , colEdit = ""
 
     -- Common
     , refresh_trial = 0
@@ -172,6 +174,7 @@ type Msg
     | OnCardHoverLeave
     | OnToggleCardEdit
     | OnToggleCardEdit_
+    | OnToggleColEdit String
     | OnRemoveCard
     | OnRemoveCardAck (GqlData (List String))
       --
@@ -293,9 +296,6 @@ update_ apis message model =
                                     |> (\d -> { d | columns = removeCard card d.columns })
                                     -- Add the card in new pos tension to list
                                     |> (\d -> { d | columns = pushCard { card | colid = colid, pos = pos_fixed } d.columns })
-
-                            f =
-                                Debug.log "drop at" pos_fixed
                         in
                         ( { newModel | project = pj, board_result = Loading }
                         , out0
@@ -318,7 +318,7 @@ update_ apis message model =
                     ( model, out0 [ sendSleep (OnCardClick_ c) 50 ] )
 
                 Nothing ->
-                    ( { model | movingCard = Nothing, cardEdit = "" }, noOut )
+                    ( { model | movingCard = Nothing, cardEdit = "", colEdit = "" }, noOut )
 
         OnCardClick_ c ->
             -- Solves concurent message sent
@@ -498,6 +498,13 @@ update_ apis message model =
         OnToggleCardEdit_ ->
             -- Solve mesage concurrency
             ( { model | cardEdit = ternary (model.cardEdit == "") model.cardHover "" }, noOut )
+
+        OnToggleColEdit colid ->
+            if colid /= model.colEdit then
+                ( { model | colEdit = colid }, noOut )
+
+            else
+                ( { model | colEdit = ternary (model.colEdit == "") colid "" }, noOut )
 
         OnRemoveCard ->
             case model.cardEdit of
@@ -705,7 +712,7 @@ viewBoard op model =
                         [ class "subtitle"
                         , onDragEnter (OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
                         ]
-                        [ viewHeader col c1 ]
+                        [ viewHeader (model.colEdit == colid) col c1 ]
                     , col.cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -812,8 +819,8 @@ viewBoard op model =
             ]
 
 
-viewHeader : ProjectColumn -> Maybe ProjectCard -> Html Msg
-viewHeader col card =
+viewHeader : Bool -> ProjectColumn -> Maybe ProjectCard -> Html Msg
+viewHeader isEdited col card =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
@@ -824,34 +831,28 @@ viewHeader col card =
                     ]
                     [ A.icon "icon-plus" ]
                 , if col.col_type /= ProjectColumnType.NoStatusColumn then
-                    div [ class "dropdown mx-2 is-align-self-baseline is-right" ]
-                        [ div [ class "dropdown-trigger is-w is-h" ]
+                    B.dropdownLight
+                        "col-ellipsis"
+                        ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
+                        (A.icon "icon-more-horizontal is-w is-h icon-lg")
+                        (OnToggleColEdit col.id)
+                        (div []
                             [ div
-                                [ class "ellipsis"
-                                , attribute "aria-controls" ("edit-ellipsis-" ++ col.id)
-                                , attribute "aria-haspopup" "true"
+                                [ class "dropdown-item button-light"
+                                , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
                                 ]
-                                [ A.icon "icon-more-horizontal icon-lg" ]
-                            ]
-                        , div [ id ("edit-ellipsis-" ++ col.id), class "dropdown-menu", attribute "role" "menu" ]
-                            [ div [ class "dropdown-content p-0" ] <|
-                                [ div
-                                    [ class "dropdown-item button-light"
-                                    , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
-                                    ]
-                                    [ A.icon1 "icon-edit-2" T.edit ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div
-                                    [ class "dropdown-item button-light"
-                                    , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
-                                    ]
-                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
-                                , hr [ class "dropdown-divider" ] []
-                                , div [ class "dropdown-item button-light" ]
-                                    [ A.icon1 "icon-trash" T.delete ]
+                                [ A.icon1 "icon-edit-2" T.edit ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div
+                                [ class "dropdown-item button-light"
+                                , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
                                 ]
+                                [ A.icon1 "icon-plus" T.addTensionColumn ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light" ]
+                                [ A.icon1 "icon-trash" T.delete ]
                             ]
-                        ]
+                        )
 
                   else
                     text ""
