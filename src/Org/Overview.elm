@@ -45,7 +45,7 @@ import Dom
 import Extra exposing (ternary, unwrap)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -123,10 +123,10 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d), Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )
@@ -835,10 +835,10 @@ subscriptions _ model =
         (\nameid ->
             case localGraphFromOrga nameid model.tree_data of
                 Just path ->
-                    NewTensionMsg <| NTF.OnOpen (FromPath path)
+                    NewTensionMsg <| NTF.OnOpen (FromPath path) Nothing
 
                 Nothing ->
-                    NewTensionMsg <| NTF.OnOpen (FromNameid nameid)
+                    NewTensionMsg <| NTF.OnOpen (FromNameid nameid) Nothing
         )
     , case model.node_hovered of
         Just node ->
@@ -1046,7 +1046,7 @@ viewSearchBar us model =
                                 [ span
                                     [ class "button is-small is-link2 is-wrapped"
                                     , attribute "data-modal" "actionModal"
-                                    , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p))
+                                    , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p) Nothing)
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
                                     , i [ class "px-1" ] []
@@ -1260,7 +1260,7 @@ viewCanvas us model =
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
                             [ div
                                 [ class "button is-success"
-                                , onClick (NewTensionMsg <| NTF.OnOpen p)
+                                , onClick (NewTensionMsg <| NTF.OnOpen p Nothing)
                                 ]
                                 [ text T.createNewTension ]
                             , div [ class "hbar", classList [ ( "is-invisible", not isAdmin ) ] ] []
@@ -1291,7 +1291,7 @@ viewCanvas us model =
                     [ div
                         [ class "button tooltip has-tooltip-arrow has-tooltip-left"
                         , attribute "data-tooltip" (T.add ++ "...")
-                        , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path))
+                        , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path) Nothing)
                         ]
                         [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs is-strong" ] ]
                     ]

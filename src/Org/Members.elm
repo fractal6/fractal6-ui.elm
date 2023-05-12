@@ -39,7 +39,7 @@ import Dict
 import Extra exposing (ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -112,10 +112,10 @@ mapGlobalOutcmds gcmds =
                         ( [], send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)) ], Cmd.none )
+                                ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d) ], Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)) ], Cmd.none )

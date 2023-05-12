@@ -344,6 +344,9 @@ draftPayload =
         |> with (Fractal.Object.ProjectDraft.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.ProjectDraft.title
         |> with Fractal.Object.ProjectDraft.message
+        |> hardcoded ""
+        |> hardcoded ""
+        |> hardcoded 0
 
 
 

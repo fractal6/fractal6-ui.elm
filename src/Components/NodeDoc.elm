@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, getNodeTextFromNodeType, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
 import Extra exposing (space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
@@ -85,10 +85,10 @@ type NodeEdit
     | EditMandate
 
 
-init : String -> NodeView -> UserState -> NodeDoc
-init tid mode user =
+init : String -> Maybe NodeType.NodeType -> NodeView -> UserState -> NodeDoc
+init tid node_type mode user =
     { node = initNodeFragment Nothing
-    , form = initTensionForm tid user
+    , form = initTensionForm tid node_type user
     , result = NotAsked
     , editMode = Nothing
     , mode = mode
@@ -573,10 +573,6 @@ viewBlob data op_m =
             -- Tension view
             case op.data.mode of
                 NodeEdit ->
-                    let
-                        txt =
-                            getNodeTextFromNodeType (unwrap NodeType.Role .type_ data.node)
-                    in
                     div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ] <|
                         (if op.data.editMode == Just EditAbout then
                             let
@@ -593,7 +589,7 @@ viewBlob data op_m =
                                 isLoading =
                                     op.data.result == LoadingSlowly
                             in
-                            [ viewAboutInput data.hasBeenPushed txt op.data.form.node op
+                            [ viewAboutInput data.hasBeenPushed op.data.form.txt op.data.form.node op
                             , viewBlobButtons BlobType.OnAbout isSendable isLoading op
                             ]
 
@@ -609,7 +605,7 @@ viewBlob data op_m =
                                         isLoading =
                                             op.data.result == LoadingSlowly
                                     in
-                                    [ viewMandateInput txt op.data.form.node.mandate op
+                                    [ viewMandateInput op.data.form.txt op.data.form.node.mandate op
                                     , viewBlobButtons BlobType.OnMandate isSendable isLoading op
                                     ]
 
@@ -989,7 +985,7 @@ viewMandateInput txt mandate op =
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
-                    , rows (min 15 (max purpose_len 5))
+                    , rows (min 15 (max purpose_len 2))
                     , placeholder txt.ph_purpose
                     , value purpose
                     , onInput <| op.onChangePost "purpose"
@@ -1000,7 +996,7 @@ viewMandateInput txt mandate op =
             ]
         , if showResponsabilities then
             let
-                responsabilities_len =
+                input_len =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
@@ -1008,7 +1004,7 @@ viewMandateInput txt mandate op =
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , rows (min 15 (max responsabilities_len 5))
+                        , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_responsabilities
                         , value responsabilities
                         , onInput <| op.onChangePost "responsabilities"
@@ -1020,12 +1016,16 @@ viewMandateInput txt mandate op =
           else
             text ""
         , if showDomains then
+            let
+                input_len =
+                    List.length <| String.lines purpose
+            in
             div [ class "field" ]
                 [ div [ class "label" ] [ text T.domains ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , rows 5
+                        , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_domains
                         , value domains
                         , onInput <| op.onChangePost "domains"
@@ -1037,12 +1037,16 @@ viewMandateInput txt mandate op =
           else
             text ""
         , if showPolicies then
+            let
+                input_len =
+                    List.length <| String.lines purpose
+            in
             div [ class "field" ]
                 [ div [ class "label" ] [ text T.policies ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , rows 5
+                        , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_policies
                         , value policies
                         , onInput <| op.onChangePost "policies"
@@ -1303,7 +1307,10 @@ updateNodeForm field value form =
 
         "name" ->
             if List.member form.action [ Just TensionAction.NewRole, Just TensionAction.NewCircle ] then
-                { form | node = { node | name = Just value, nameid = Just (nameidEncoder value) }, post = Dict.insert "title" value form.post }
+                { form
+                    | node = { node | name = Just value, nameid = Just (nameidEncoder value) }
+                    , post = Dict.insert "title" value form.post
+                }
 
             else
                 { form | node = { node | name = Just value } }

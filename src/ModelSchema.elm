@@ -334,6 +334,11 @@ type alias Count =
     { count : Maybe Int }
 
 
+type NewTensionInput
+    = FromNameid String
+    | FromPath LocalGraph
+
+
 type alias Label =
     { id : String
     , name : String
@@ -675,7 +680,7 @@ type alias ProjectColumnEdit =
 type alias ProjectCard =
     { id : String
 
-    -- @Warning/optimisation: colid is added eitheir from its parent
+    -- @Warning/optimisation: colid is added either from its parent
     -- either from the form.
     , colid : String
     , pos : Int
@@ -692,6 +697,11 @@ type alias ProjectDraft =
     { id : String
     , title : String
     , message : Maybe String
+
+    -- hardcoded / only use to track draft conversion to tension
+    , cardid : String
+    , colid : String
+    , pos : Int
     }
 
 

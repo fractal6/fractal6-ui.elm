@@ -627,7 +627,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [to_in]
   en="to"
-  fr="pour"
+  fr="dans"
 
 [for]
   en="for"
@@ -1948,6 +1948,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [addTensionColumn]
   en="Add tensions here"
   fr="Ajouter des tensions ici"
+
+[deleteDraft]
+  en="Delete draft"
+  fr="Supprimer le draft"
+
+[convertDraft]
+  en="Convert draft to tension"
+  fr="Convertir le draft en tension"
 
 # ADDME END @next ^
 # --

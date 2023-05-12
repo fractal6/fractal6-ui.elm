@@ -30,7 +30,7 @@ import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeEr
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.Comments exposing (viewComment, viewCommentInput)
+import Components.Comments exposing (viewComment, viewTensionCommentInput)
 import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
@@ -47,7 +47,7 @@ import Extra exposing (decap, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryParser)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -140,10 +140,10 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d), Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )
@@ -361,7 +361,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form (Title, Status, Comment)
-            , tension_form = initTensionForm tid global.session.user
+            , tension_form = initTensionForm tid Nothing global.session.user
 
             -- Push Comment / Change status
             , tension_patch = NotAsked
@@ -376,7 +376,7 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init tid nodeView global.session.user
+                NodeDoc.init tid Nothing nodeView global.session.user
                     |> (\x ->
                             case global.session.tension_head of
                                 Just th ->
@@ -965,7 +965,7 @@ update global message model =
                         th =
                             withMapData (\x -> { x | isPinned = v }) model.tension_head
                     in
-                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid global.session.user }
+                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid Nothing global.session.user }
                     , Cmd.none
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -1059,7 +1059,7 @@ update global message model =
                                 model.tension_comments
 
                         resetForm =
-                            initTensionForm model.tensionid global.session.user
+                            initTensionForm model.tensionid Nothing global.session.user
                     in
                     ( { model
                         | tension_head = tension_h
@@ -1156,7 +1156,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle time ->
             let
@@ -1196,7 +1196,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid global.session.user
+                            initTensionForm model.tensionid Nothing global.session.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , Ports.bulma_driver ""
@@ -1336,7 +1336,7 @@ update global message model =
                                     { th | blobs = blobs, title = r.title }
 
                                 resetForm =
-                                    initTensionForm model.tensionid global.session.user
+                                    initTensionForm model.tensionid Nothing global.session.user
                             in
                             ( { model
                                 | publish_result = result
@@ -2093,7 +2093,7 @@ viewConversation u t model =
                                 , conf = model.conf
                                 }
                         in
-                        viewCommentInput opNew uctx t model.tension_form model.tension_patch
+                        viewTensionCommentInput opNew t model.tension_form model.tension_patch
 
                     else
                         viewJoinForCommentNeeded userCanJoin

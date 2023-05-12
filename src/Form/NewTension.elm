@@ -23,11 +23,11 @@ module Form.NewTension exposing (..)
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
-import Bulk exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getPath, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
+import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Bulk.View exposing (FormText, getNodeTextFromNodeType, getTensionText, tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
-import Components.Comments exposing (viewCommentInputHeader, viewCommentTextarea)
+import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
+import Components.Comments as Comments exposing (viewCommentInputHeader, viewCommentTextarea)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
@@ -83,17 +83,19 @@ type alias Model =
     , step : TensionStep
     , isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
-    , activeTab : TensionTab
-    , activeButton : Maybe Int -- 0: creating role, 1: creating tension (no pushing blob)
     , path_data : GqlData LocalGraph
     , action_result : GqlData IdPayload
-    , doInvite : Bool
+    , draft : Maybe ProjectDraft
+
+    -- switching tab
+    , activeTab : TensionTab
+    , force_init : Bool
 
     -- Role/Circle
+    , activeButton : Maybe Int -- 0: creating role, 1: creating tension (no pushing blob)
     , nodeStep : NodeStep
-    , txt : FormText
     , roles_result : GqlData (List RoleExtFull)
-    , force_init : Bool
+    , doInvite : Bool
 
     -- Common
     , conf : Conf
@@ -125,11 +127,6 @@ type NodeStep
     | CircleVisibilityStep
     | NodeValidateStep
     | InviteStep
-
-
-type NewTensionInput
-    = FromNameid String
-    | FromPath LocalGraph
 
 
 nodeStepToString : TensionForm -> NodeStep -> String
@@ -173,16 +170,16 @@ initModel user conf =
     , isActive2 = False
     , activeTab = NewTensionTab
     , activeButton = Nothing
-    , nodeDoc = NodeDoc.init "" NodeEdit user
+    , nodeDoc = NodeDoc.init "" Nothing NodeEdit user
     , path_data = NotAsked
     , action_result = NotAsked
     , doInvite = False
-    , force_init = False
+    , draft = Nothing
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
-    , txt = getTensionText
     , roles_result = Loading
+    , force_init = False
 
     -- Common
     , conf = conf
@@ -194,69 +191,6 @@ initModel user conf =
     , inviteInput = UserInput.init [] True False user
     , userInput = UserInput.init [] False False user
     }
-
-
-initTensionTab : Model -> Model
-initTensionTab model =
-    let
-        form =
-            model.nodeDoc.form
-
-        newForm =
-            { form
-                | type_ = Just TensionType.Operational
-                , action = Nothing
-                , blob_type = Nothing
-                , users = []
-            }
-    in
-    { model
-        | activeTab = NewTensionTab
-        , nodeDoc = NodeDoc.setForm newForm model.nodeDoc
-        , result = NotAsked
-        , txt = getTensionText
-        , force_init = False
-    }
-
-
-initCircleTab : NodeType.NodeType -> Model -> Model
-initCircleTab type_ model =
-    let
-        form =
-            model.nodeDoc.form
-
-        node =
-            form.node
-
-        newForm =
-            { form
-                | type_ = Just TensionType.Governance
-                , blob_type = Just BlobType.OnNode
-                , node = { node | type_ = Just type_ }
-                , users = []
-            }
-                |> NodeDoc.updateNodeForm "name" (withDefault "" node.name)
-    in
-    case type_ of
-        NodeType.Role ->
-            { model
-                | activeTab = NewRoleTab
-                , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewRole } model.nodeDoc
-                , result = NotAsked
-                , nodeStep = RoleAuthorityStep
-                , txt = getNodeTextFromNodeType type_
-                , force_init = False
-            }
-
-        NodeType.Circle ->
-            { model
-                | activeTab = NewCircleTab
-                , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewCircle } model.nodeDoc
-                , result = NotAsked
-                , nodeStep = CircleVisibilityStep
-                , txt = getNodeTextFromNodeType type_
-                , force_init = False
-            }
 
 
 
@@ -322,15 +256,65 @@ switchTab tab model =
         model
 
     else
-        case tab of
-            NewTensionTab ->
-                initTensionTab model
+        let
+            form =
+                model.nodeDoc.form
 
-            NewRoleTab ->
-                initCircleTab NodeType.Role model
+            node =
+                form.node
 
-            NewCircleTab ->
-                initCircleTab NodeType.Circle model
+            newForm =
+                case tab of
+                    NewTensionTab ->
+                        { form
+                            | type_ = Just TensionType.Operational
+                            , action = Nothing
+                            , blob_type = Nothing
+                            , users = []
+                            , txt = initFormText Nothing
+                        }
+
+                    NewRoleTab ->
+                        { form
+                            | type_ = Just TensionType.Governance
+                            , blob_type = Just BlobType.OnNode
+                            , node = { node | type_ = Just NodeType.Role }
+                            , action = Just TensionAction.NewRole
+                            , users = []
+                            , txt = initFormText (Just NodeType.Role)
+                        }
+                            |> NodeDoc.updateNodeForm "name" (Dict.get "title" form.post |> withDefault "")
+
+                    NewCircleTab ->
+                        { form
+                            | type_ = Just TensionType.Governance
+                            , blob_type = Just BlobType.OnNode
+                            , node = { node | type_ = Just NodeType.Circle }
+                            , action = Just TensionAction.NewCircle
+                            , users = []
+                            , txt = initFormText (Just NodeType.Circle)
+                        }
+                            |> NodeDoc.updateNodeForm "name" (Dict.get "title" form.post |> withDefault "")
+
+            step =
+                case tab of
+                    NewTensionTab ->
+                        -- ignored
+                        RoleAuthorityStep
+
+                    NewRoleTab ->
+                        RoleAuthorityStep
+
+                    NewCircleTab ->
+                        CircleVisibilityStep
+        in
+        { model
+            | activeTab = tab
+            , nodeStep = step
+            , nodeDoc = NodeDoc.setForm newForm model.nodeDoc
+            , result = NotAsked
+            , force_init = False
+        }
 
 
 changeNodeStep : NodeStep -> Model -> Model
@@ -529,7 +513,7 @@ type Msg
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Modal control
     | SetIsActive2 Bool
-    | OnOpen NewTensionInput
+    | OnOpen NewTensionInput (Maybe ProjectDraft)
     | OnOpenRole NewTensionInput
     | OnOpenCircle NewTensionInput
     | OnReset
@@ -582,7 +566,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe Bool
+    , result : Maybe ( Tension, Maybe ProjectDraft )
     }
 
 
@@ -658,7 +642,7 @@ update_ apis message model =
                                 newPath =
                                     { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                             in
-                            ( model, out0 [ send (OnOpen (FromPath newPath)) ] )
+                            ( model, out0 [ send (OnOpen (FromPath newPath) Nothing) ] )
 
                         Nothing ->
                             let
@@ -684,20 +668,35 @@ update_ apis message model =
             else
                 ( { model | isActive2 = model.isActive }, noOut )
 
-        OnOpen t ->
+        OnOpen t d ->
             case model.user of
                 LoggedIn uctx ->
+                    let
+                        newModel =
+                            case d of
+                                Just draft ->
+                                    { model
+                                        | draft = d
+                                        , nodeDoc =
+                                            model.nodeDoc
+                                                |> NodeDoc.updatePost "title" draft.title
+                                                |> NodeDoc.updatePost "message" (withDefault "" draft.message)
+                                    }
+
+                                Nothing ->
+                                    model
+                    in
                     case t of
                         FromNameid nameid ->
-                            ( model, out0 [ queryLocalGraph apis nameid True (GotPath True) ] )
+                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True) ] )
 
                         FromPath p ->
                             let
                                 data =
-                                    setPath p model
+                                    setPath p newModel
                             in
                             if data.sources == [] && data.refresh_trial == 0 then
-                                ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p)) 500 ] [ DoUpdateToken ] Nothing )
+                                ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing )
 
                             else if data.sources == [] then
                                 ( { data | isActive2 = True } |> setStep TensionNotAuthorized
@@ -733,10 +732,10 @@ update_ apis message model =
                     else
                         Cmd.none
             in
-            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ send (OnOpen t), cmd ] )
+            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ send (OnOpen t Nothing), cmd ] )
 
         OnOpenCircle t ->
-            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnOpen t) ] )
+            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnOpen t Nothing) ] )
 
         OnClose data ->
             let
@@ -980,24 +979,27 @@ update_ apis message model =
 
                             else
                                 []
+
+                        output =
+                            Just ( tension, model.draft )
                     in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result data, out1 gcmds )
+                            ( setResult result data, Out [] gcmds output )
 
                         NewRoleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
-                            ( setResult result data, out1 (DoFetchNode newNameid :: gcmds) )
+                            ( setResult result data, Out [] (DoFetchNode newNameid :: gcmds) output )
 
                         NewCircleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
-                            ( setResult result data, out1 (DoFetchNode newNameid :: gcmds) )
+                            ( setResult result data, Out [] (DoFetchNode newNameid :: gcmds) output )
 
                 DuplicateErr ->
                     ( setResult (Failure [ T.duplicateNameError ]) model, noOut )
@@ -1166,7 +1168,7 @@ view op (State model) =
 viewButton : Op -> Model -> Html Msg
 viewButton op model =
     div [ class "tensionButton is-hidden-tablet", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
-        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> unwrap [] (\p -> [ onClick (OnOpen (FromPath p)) ])))
+        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> unwrap [] (\p -> [ onClick (OnOpen (FromPath p) Nothing) ])))
             [ A.icon "icon-plus icon-2x" ]
         ]
 
@@ -1234,7 +1236,7 @@ viewSuccess res model =
     div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
         , A.icon1 "icon-check icon-2x has-text-success" " "
-        , text model.txt.added
+        , text model.nodeDoc.form.txt.added
         , text " "
         , a
             [ href link
@@ -1466,9 +1468,6 @@ viewTension op model =
         title =
             Dict.get "title" form.post |> withDefault ""
 
-        message =
-            Dict.get "message" form.post |> withDefault ""
-
         isLoading =
             model.result == LoadingSlowly
 
@@ -1501,31 +1500,19 @@ viewTension op model =
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text model.txt.name_help ]
+                        , p [ class "help-label" ] [ text form.txt.name_help ]
                         , br [] []
                         ]
-                    , div [ class "message" ]
-                        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" "pl-1" { doRichText = OnRichText, doToggleMdHelp = OnToggleMdHelp, doChangeViewMode = OnChangeInputViewMode } form ]
-                        , div [ class "message-body" ]
-                            [ div [ class "field" ]
-                                [ div [ class "control" ]
-                                    [ viewCommentTextarea "textAreaModal"
-                                        True
-                                        T.leaveCommentOpt
-                                        { doChangePost = OnChangePost
-                                        , conf = model.conf
-                                        , userSearchInput = Just model.userInput
-                                        , userSearchInputMsg = Just UserInputMsg
-                                        }
-                                        form
-                                        message
-                                    ]
-                                , p [ class "help-label" ] [ text model.txt.message_help ]
-                                , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
-                                , br [ class "is-hidden-mobile" ] []
-                                ]
-                            ]
-                        ]
+                    , Comments.viewCommentInput
+                        { doChangeViewMode = OnChangeInputViewMode
+                        , doChangePost = OnChangePost
+                        , doRichText = OnRichText
+                        , doToggleMdHelp = OnToggleMdHelp
+                        , userSearchInput = Just model.userInput
+                        , userSearchInputMsg = Just UserInputMsg
+                        , conf = model.conf
+                        }
+                        form
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
@@ -1562,7 +1549,7 @@ viewTension op model =
                                      ]
                                         ++ submitTension
                                     )
-                                    [ text model.txt.submit ]
+                                    [ text form.txt.submit ]
                                 ]
                             ]
                         ]
@@ -1645,7 +1632,7 @@ viewCircle op model =
                                                      ]
                                                         ++ submitTension
                                                     )
-                                                    [ text model.txt.submit ]
+                                                    [ text form.txt.submit ]
                                                 , button
                                                     ([ class "button is-success defaultSubmit"
                                                      , classList
@@ -1654,7 +1641,7 @@ viewCircle op model =
                                                      ]
                                                         ++ submitCloseTension
                                                     )
-                                                    [ text model.txt.close_submit ]
+                                                    [ text form.txt.close_submit ]
                                                 ]
                                             ]
                                         ]
@@ -1708,25 +1695,25 @@ viewNodeValidate model =
     in
     div [ class "modal-card-body" ]
         [ viewNodeBreadcrumb form model.nodeStep
-        , viewAboutInput2 model.txt form.node op
-        , viewMandateInput model.txt form.node.mandate op
-
-        --, br [] []
-        --, br [] []
-        --, div [ class "field" ]
-        --    [ div [ class "control" ]
-        --        [ textarea
-        --            [ class "textarea"
-        --            , rows 3
-        --            , placeholder (T.leaveCommentOpt)
-        --            , value (Dict.get "message" form.post |> withDefault "")
-        --            , onInput <| OnChangePost "message"
-        --            ]
-        --            []
-        --        ]
-        --    , p [ class "help-label" ] [ text model.txt.message_help ]
-        --    ]
+        , viewAboutInput2 form.txt form.node op
+        , viewMandateInput form.txt form.node.mandate op
         , br [] []
+        , if not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ]) then
+            div [ class "mt-2" ]
+                [ Comments.viewCommentInput
+                    { doChangeViewMode = OnChangeInputViewMode
+                    , doChangePost = OnChangePost
+                    , doRichText = OnRichText
+                    , doToggleMdHelp = OnToggleMdHelp
+                    , userSearchInput = Just model.userInput
+                    , userSearchInputMsg = Just UserInputMsg
+                    , conf = model.conf
+                    }
+                    form
+                ]
+
+          else
+            text ""
         ]
 
 
@@ -1850,7 +1837,7 @@ viewInviteRole model =
     div [ class "columns is-centered mt-2" ]
         [ div [ class "column is-8" ]
             [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
-            , viewComment model
+            , viewCommentInput model
             , case model.action_result of
                 Failure err ->
                     div [ class "field" ] [ viewGqlErrors err ]
@@ -1872,8 +1859,8 @@ viewInviteRole model =
         ]
 
 
-viewComment : Model -> Html Msg
-viewComment model =
+viewCommentInput : Model -> Html Msg
+viewCommentInput model =
     let
         message =
             Dict.get "message" model.nodeDoc.form.post |> withDefault ""

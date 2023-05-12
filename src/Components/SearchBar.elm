@@ -23,7 +23,7 @@ module Components.SearchBar exposing (viewSearchBar)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm)
+import Bulk exposing (UserState(..))
 import Bulk.Error exposing (viewGqlErrors)
 import Dict
 import Extra exposing (ternary)

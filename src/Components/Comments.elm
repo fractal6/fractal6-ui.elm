@@ -32,7 +32,7 @@ import Extra.Events exposing (onClickSafe)
 import Form exposing (isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Html exposing (Html, a, button, div, hr, i, li, span, strong, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
@@ -43,6 +43,23 @@ import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCt
 import Session exposing (Conf, isMobile)
 import Text as T
 import Time
+
+
+
+-- @fix: merge these.
+--
+-- type alias CommentCommon a = { }
+
+
+type alias OpNewComment msg =
+    { doChangeViewMode : InputViewMode -> msg
+    , doChangePost : String -> String -> msg
+    , doRichText : String -> String -> msg
+    , doToggleMdHelp : String -> msg
+    , userSearchInput : Maybe UserInput.State
+    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
+    , conf : Conf
+    }
 
 
 type alias OpEditComment msg =
@@ -62,7 +79,7 @@ type alias OpEditComment msg =
     }
 
 
-type alias OpNewComment msg =
+type alias OpNewCommentTension msg =
     { doChangeViewMode : InputViewMode -> msg
     , doChangePost : String -> String -> msg
     , doSubmit : Bool -> (Time.Posix -> msg) -> msg
@@ -88,6 +105,21 @@ type alias OpNewCommentContract msg =
     }
 
 
+viewCommentInput : OpNewComment msg -> TensionForm -> Html msg
+viewCommentInput op form =
+    div [ class "message" ]
+        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" "" op form ]
+        , div [ class "message-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ] [ viewCommentTextarea "textAreaModal" True T.leaveCommentOpt op form ]
+                , p [ class "help-label" ] [ text form.txt.message_help ]
+                , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
+                , br [ class "is-hidden-mobile" ] []
+                ]
+            ]
+        ]
+
+
 viewComment : OpEditComment msg -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
 viewComment op c form result =
     let
@@ -109,7 +141,7 @@ viewComment op c form result =
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id then
-                viewUpdateInput op form.uctx c form result
+                viewUpdateInput op c form result
 
               else
                 div [ class "message" ]
@@ -222,24 +254,27 @@ viewComment op c form result =
         ]
 
 
-viewUpdateInput : OpEditComment msg -> UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
-viewUpdateInput op uctx comment form result =
+viewUpdateInput : OpEditComment msg -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
+viewUpdateInput op comment form_ result =
     let
         message =
-            Dict.get "message" form.post |> withDefault comment.message
+            Dict.get "message" form_.post |> withDefault comment.message
 
-        isLoading =
-            Loading.isLoading result
+        form =
+            { form_ | post = Dict.insert "message" message form_.post }
 
         isSendable =
             message /= comment.message
+
+        isLoading =
+            Loading.isLoading result
     in
     div [ class "message commentInput" ]
         [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "updateCommentInput" "" op form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea "updateCommentInput" False T.leaveComment op form message ]
+                    [ viewCommentTextarea "updateCommentInput" False T.leaveComment op form ]
                 ]
             , case result of
                 Failure err ->
@@ -269,8 +304,8 @@ viewUpdateInput op uctx comment form result =
         ]
 
 
-viewCommentInput : OpNewComment msg -> UserCtx -> TensionHead -> TensionForm -> GqlData PatchTensionPayloadID -> Html msg
-viewCommentInput op uctx tension form result =
+viewTensionCommentInput : OpNewCommentTension msg -> TensionHead -> TensionForm -> GqlData PatchTensionPayloadID -> Html msg
+viewTensionCommentInput op tension form result =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -301,14 +336,14 @@ viewCommentInput op uctx tension form result =
                     ternary (message == "") T.reopen T.reopenComment
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
+        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea "commentInput" False T.leaveComment op form message ]
+                            [ viewCommentTextarea "commentInput" False T.leaveComment op form ]
                         ]
                     , case result of
                         Failure err ->
@@ -347,12 +382,9 @@ viewCommentInput op uctx tension form result =
         ]
 
 
-viewContractCommentInput : OpNewCommentContract msg -> UserCtx -> CommentPatchForm -> GqlData Comment -> Html msg
-viewContractCommentInput op uctx form result =
+viewContractCommentInput : OpNewCommentContract msg -> CommentPatchForm -> GqlData Comment -> Html msg
+viewContractCommentInput op form result =
     let
-        message =
-            Dict.get "message" form.post |> withDefault ""
-
         isLoading =
             Loading.isLoading result
 
@@ -363,14 +395,14 @@ viewContractCommentInput op uctx form result =
             ternary isSendable [ onClick (op.doSubmit isLoading op.doSubmitComment) ] []
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
+        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentContractInput" "" op form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea "commentContractInput" False T.leaveComment op form message ]
+                            [ viewCommentTextarea "commentContractInput" False T.leaveComment op form ]
                         ]
                     , case result of
                         Failure err ->
@@ -453,8 +485,11 @@ viewCommentInputHeader targetid cls_tabs op form =
         ]
 
 
-viewCommentTextarea targetid isModal placeholder_txt op form message =
+viewCommentTextarea targetid isModal placeholder_txt op form =
     let
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
         line_len =
             List.length <| String.lines message
 

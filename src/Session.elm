@@ -124,6 +124,7 @@ type
     -- @FIX: Make this in Global to define the mapGlobalOutcmds only once ?!
     -- Or: use only Ports, and add Subscription in Global to trigger update from JS ! (bad for data copy)
     -- Or: use a type to return directly Global.Cmd (unsafe ! keep session update in top components...)
+    -- Or: Return the result and handle it, per App in {component}Msg.
     = -- Global Msg
       DoFocus String
     | DoNavigate String
@@ -136,7 +137,7 @@ type
     | DoUpdateScreen Screen
     | DoToggleWatchOrga String
       -- Components Msg
-    | DoCreateTension (Maybe NodeType.NodeType) String
+    | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String
     | DoOpenActionPanel String String (Maybe ( Int, Int ))
     | DoOpenSidePanel (Maybe { id : String, cards_len : Int })
