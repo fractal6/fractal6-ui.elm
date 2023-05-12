@@ -91,7 +91,7 @@ scrollToSubBottom viewport_id noop =
         (getElementOf { viewportId = viewport_id, elementId = viewport_id }
             |> Task.andThen
                 (\e ->
-                    scrollToOf viewport_id e.element.height
+                    scrollToOf viewport_id (e.element.height + e.element.y)
                 )
         )
 
