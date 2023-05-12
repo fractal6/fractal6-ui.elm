@@ -26,7 +26,6 @@ import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, uriFromNameid)
 import Bulk.View exposing (counter, viewRole)
 import Extra exposing (ternary, unwrap, unwrap2)
-import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType

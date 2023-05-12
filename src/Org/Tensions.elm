@@ -48,7 +48,7 @@ import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -122,10 +122,10 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d), Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )
@@ -1835,7 +1835,7 @@ viewSearchBar model =
                 , div
                     [ class "button is-success is-hidden-mobile"
                     , style "margin-left" "auto"
-                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid)))
+                    , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
                     ]
                     [ text T.newTension ]
                 ]
@@ -2057,7 +2057,7 @@ viewCircleTensions model =
 
                             --  It's distracting for for the eyes (works with onMouseEnter below)
                             --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]
-                            , onClick (NewTensionMsg (NTF.OnOpen (FromNameid n)))
+                            , onClick (NewTensionMsg (NTF.OnOpen (FromNameid n) Nothing))
                             ]
                             [ A.icon "icon-plus" ]
                         ]

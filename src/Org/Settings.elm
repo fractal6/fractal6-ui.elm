@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (getNodeTextFromNodeType, helperButton, viewLabel, viewRoleExt)
+import Bulk.View exposing (helperButton, viewLabel, viewRoleExt)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -43,7 +43,7 @@ import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
@@ -114,10 +114,10 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d), Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )
@@ -366,7 +366,7 @@ init global flags =
             , label_result_del = NotAsked
 
             -- Roles
-            , nodeDoc = NodeDoc.init "" NodeDoc.NoView global.session.user
+            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.user
             , showMandate = ""
             , roles = Loading
             , roles_top = RemoteData.Loading
@@ -851,7 +851,7 @@ update global message model =
                 , role_edit = Nothing
                 , role_result = NotAsked
                 , role_result_del = NotAsked
-                , nodeDoc = NodeDoc.init "" NodeDoc.NoView global.session.user
+                , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.user
               }
                 |> resetForm
             , Cmd.none
@@ -1665,7 +1665,7 @@ viewRoleAddBox model =
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
             , viewRoleExt { noMsg = NoMsg } "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
-        , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
+        , viewMandateInput (initFormText (Just NodeType.Role))
             (Just form.mandate)
             { onChangePost = UpdateNodePost
             , onAddResponsabilities = AddResponsabilities

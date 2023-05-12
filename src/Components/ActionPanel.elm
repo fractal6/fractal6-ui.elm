@@ -1093,17 +1093,17 @@ viewPanel op model =
                         case model.form.node.type_ of
                             NodeType.Circle ->
                                 [ div [ class "dropdown-item button-light is-flex right-hoverable" ]
-                                    [ div [ class "is-flex-direction-column is-flex-grow-1", onClick (Do [ DoCreateTension Nothing model.form.node.nameid ]) ]
+                                    [ div [ class "is-flex-direction-column is-flex-grow-1", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
                                         [ A.icon1 "icon-plus" (T.add ++ "...")
                                         , span [ class "is-hidden-mobile is-pulled-right" ] [ A.icon "icon-chevron-right" ]
                                         ]
                                     , div [ class "dropdown-menu", attribute "role" "menu" ]
                                         [ div [ class "dropdown-content" ]
-                                            [ div [ class "dropdown-item", onClick (Do [ DoCreateTension Nothing model.form.node.nameid ]) ]
+                                            [ div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
                                                 [ A.icon1 "icon-exchange" T.tension ]
-                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension (Just NodeType.Circle) model.form.node.nameid ]) ]
+                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Circle) Nothing ]) ]
                                                 [ A.icon1 "icon-git-branch" T.circle ]
-                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension (Just NodeType.Role) model.form.node.nameid ]) ]
+                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
                                                 [ A.icon1 "icon-leaf" T.role ]
                                             ]
                                         ]
@@ -1112,7 +1112,7 @@ viewPanel op model =
 
                             NodeType.Role ->
                                 [ div
-                                    [ class "dropdown-item button-light", onClick (Do [ DoCreateTension Nothing model.form.node.nameid ]) ]
+                                    [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
                                     [ A.icon1 "icon-plus" (T.add ++ "...") ]
                                 ]
 

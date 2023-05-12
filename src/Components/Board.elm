@@ -78,11 +78,13 @@ type alias Model =
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
     , dragCount : Int
     , draging : Bool
-    , projectColumnModal : ProjectColumnModal.State
     , board_result : GqlData String -- track board remote result silently
     , cardHover : String
     , cardEdit : String
     , colEdit : String
+
+    -- Components
+    , projectColumnModal : ProjectColumnModal.State
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -119,11 +121,13 @@ initModel projectid focus user =
     , draging = False
 
     --
-    , projectColumnModal = ProjectColumnModal.init projectid user
     , board_result = NotAsked
     , cardHover = ""
     , cardEdit = ""
     , colEdit = ""
+
+    -- Components
+    , projectColumnModal = ProjectColumnModal.init projectid user
 
     -- Common
     , refresh_trial = 0
@@ -134,6 +138,19 @@ initModel projectid focus user =
 init : String -> NodeFocus -> UserState -> State
 init projectid focus user =
     initModel projectid focus user |> State
+
+
+type alias AddCardForm =
+    { uctx : UserCtx
+    , title : String -- for draft only
+    , colid : String
+    , pos : Int
+    , post : Post
+
+    -- Nothing to add draft
+    -- Just tid, to add tension
+    , tids : List (Maybe String)
+    }
 
 
 
@@ -183,10 +200,14 @@ type Msg
     | OnDraftEdit String
     | OnDraftKeydown Int
     | OnDraftCancel
-    | OnAddDraftAck (GqlData (List ProjectCard))
-    | ProjectColumnModalMsg ProjectColumnModal.Msg
+    | OnAddCards AddCardForm
+    | OnAddCardAck (GqlData (List ProjectCard))
     | OpenTensionPane (Maybe ColTarget)
     | OnLinkTension ( String, List ProjectCard )
+    | OnConvertDraft ProjectDraft
+    | OnConvertDraftAck ProjectDraft Tension
+      -- Components
+    | ProjectColumnModalMsg ProjectColumnModal.Msg
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -325,10 +346,6 @@ update_ apis message model =
             ( { model | movingCard = c }, noOut )
 
         OnCancelHov ->
-            --let
-            --    l1 =
-            --        Debug.log "Cancel hov" ""
-            --in
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
 
         OnMoveEnterCol hover reset ->
@@ -396,10 +413,6 @@ update_ apis message model =
                 ( model, noOut )
 
         OnMoveEnterT hover ->
-            --let
-            --    l1 =
-            --        Debug.log "On move enter Card" hover.pos
-            --in
             ( { model | movingHoverT = Just hover }, noOut )
 
         OnMoveDrop nameid ->
@@ -450,7 +463,7 @@ update_ apis message model =
                     case model.isAddingDraft of
                         Just form ->
                             ternary (form.title /= "" && not (isLoading model.board_result))
-                                ( { model | board_result = Loading }, out0 [ addProjectCard apis form OnAddDraftAck ] )
+                                ( { model | board_result = Loading }, out0 [ addProjectCard apis form OnAddCardAck ] )
                                 ( model, noOut )
 
                         Nothing ->
@@ -466,10 +479,23 @@ update_ apis message model =
         OnDraftCancel ->
             ( { model | isAddingDraft = Nothing }, noOut )
 
-        OnAddDraftAck result ->
+        OnAddCardAck result ->
             case result of
                 Success cards ->
                     let
+                        cmd =
+                            case List.head cards of
+                                Just c ->
+                                    case c.card of
+                                        CardTension _ ->
+                                            OnCardClick (Just c)
+
+                                        CardDraft _ ->
+                                            OnAddDraft c.colid
+
+                                Nothing ->
+                                    NoMsg
+
                         d =
                             model.project
 
@@ -477,7 +503,7 @@ update_ apis message model =
                             { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
                     in
                     ( { model | project = pj, isAddingDraft = Nothing, board_result = NotAsked }
-                    , out0 [ send (OnAddDraft (List.head cards |> unwrap "" .colid)) ]
+                    , out0 [ send cmd ]
                     )
 
                 Failure err ->
@@ -545,6 +571,73 @@ update_ apis message model =
                 _ ->
                     ( model, noOut )
 
+        --
+        OpenTensionPane colTarget ->
+            ( model, out1 [ DoOpenSidePanel colTarget ] )
+
+        OnLinkTension ( colid, cards ) ->
+            let
+                d =
+                    model.project
+
+                pj =
+                    case LE.findIndex (\c -> c.id == colid) d.columns of
+                        Just i ->
+                            { d
+                                | columns =
+                                    LE.updateAt i
+                                        (\c -> { c | cards = c.cards ++ cards })
+                                        d.columns
+                            }
+
+                        Nothing ->
+                            let
+                                noStatusCol =
+                                    { id = colid
+                                    , name = "No Status"
+                                    , color = Nothing
+                                    , pos = 0
+                                    , col_type = ProjectColumnType.NoStatusColumn
+                                    , cards = cards
+                                    }
+                            in
+                            { d | columns = noStatusCol :: d.columns }
+            in
+            ( { model | project = pj }, noOut )
+
+        OnConvertDraft draft ->
+            case getCard model.cardEdit model.project of
+                Just c ->
+                    let
+                        d =
+                            { draft | cardid = c.id, colid = c.colid, pos = c.pos }
+                    in
+                    ( model, out1 [ DoCreateTension model.node_focus.nameid Nothing (Just d) ] )
+
+                Nothing ->
+                    ( { model | board_result = Failure [ "Draft not found" ] }, noOut )
+
+        OnConvertDraftAck draft t ->
+            let
+                form =
+                    { uctx = uctxFromUser model.user
+                    , title = ""
+                    , colid = draft.colid
+                    , pos = draft.pos
+                    , post = Dict.empty
+                    , tids = [ Just t.id ]
+                    }
+            in
+            ( model
+            , out0
+                [ removeProjectCards apis [ draft.cardid ] OnRemoveCardAck
+                , sendSleep (OnAddCards form) 333
+                ]
+            )
+
+        OnAddCards form ->
+            ( model, out0 [ addProjectCard apis form OnAddCardAck ] )
+
         -- Components
         ProjectColumnModalMsg msg ->
             let
@@ -577,40 +670,6 @@ update_ apis message model =
                             model.project
             in
             ( { model | projectColumnModal = data, project = pj }, Out (List.map (\m -> Cmd.map ProjectColumnModalMsg m) out.cmds) out.gcmds Nothing )
-
-        OpenTensionPane colTarget ->
-            --@todo open panel with port
-            ( model, out1 [ DoOpenSidePanel colTarget ] )
-
-        OnLinkTension ( colid, cards ) ->
-            let
-                d =
-                    model.project
-
-                pj =
-                    case LE.findIndex (\c -> c.id == colid) d.columns of
-                        Just i ->
-                            { d
-                                | columns =
-                                    LE.updateAt i
-                                        (\c -> { c | cards = c.cards ++ cards })
-                                        d.columns
-                            }
-
-                        Nothing ->
-                            let
-                                noStatusCol =
-                                    { id = colid
-                                    , name = "No Status"
-                                    , color = Nothing
-                                    , pos = 0
-                                    , col_type = ProjectColumnType.NoStatusColumn
-                                    , cards = cards
-                                    }
-                            in
-                            { d | columns = noStatusCol :: d.columns }
-            in
-            ( { model | project = pj }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -836,6 +895,7 @@ viewHeader isEdited col card =
                         ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
                         (A.icon "icon-more-horizontal is-w is-h icon-lg")
                         (OnToggleColEdit col.id)
+                        "p-0 has-border-light"
                         (div []
                             [ div
                                 [ class "dropdown-item button-light"
@@ -894,10 +954,11 @@ viewMediaDraft isHovered isEdited d =
                     ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
                     (A.icon "icon-more-horizontal is-h icon-bg")
                     OnToggleCardEdit
+                    "p-0 has-border-light"
                     (div []
-                        [ div [ class "dropdown-item button-light" ] [ A.icon1 "icon-exchange" "Convert draft to tension @todo" ]
+                        [ div [ class "dropdown-item button-light", onClick (OnConvertDraft d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
                         , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick OnRemoveCard ] [ A.icon1 "icon-trash" "Delete draft" ]
+                        , div [ class "dropdown-item button-light", onClick OnRemoveCard ] [ A.icon1 "icon-trash" T.deleteDraft ]
                         ]
                     )
 
@@ -906,7 +967,7 @@ viewMediaDraft isHovered isEdited d =
     in
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
-            [ div [ class "is-wrapped help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
+            [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
             , div [] [ span [ class "link-like is-human" ] [ text d.title ] ]
             ]
         ]
@@ -964,6 +1025,7 @@ viewMediaTension isHovered isEdited focus t =
                     ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
                     (A.icon "icon-more-horizontal is-h icon-bg")
                     OnToggleCardEdit
+                    "p-0 has-border-light"
                     (div []
                         [ div [ class "dropdown-item button-light" ]
                             [ a

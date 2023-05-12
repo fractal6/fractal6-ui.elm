@@ -42,6 +42,7 @@ import Loading exposing (GqlData, RequestResult(..), withMaybeData, withMaybeMap
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Set
+import Text as T
 
 
 
@@ -106,6 +107,7 @@ type alias TensionForm =
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message and Node attr...
     , viewMode : InputViewMode
+    , txt : FormText
 
     -- data
     , events : List Ev
@@ -117,8 +119,8 @@ type alias TensionForm =
     }
 
 
-initTensionForm : String -> UserState -> TensionForm
-initTensionForm tid user =
+initTensionForm : String -> Maybe NodeType.NodeType -> UserState -> TensionForm
+initTensionForm tid node_type user =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -139,9 +141,10 @@ initTensionForm tid user =
     , events = []
     , labels = []
     , blob_type = Nothing
-    , node = initNodeFragment Nothing
+    , node = initNodeFragment node_type
     , md = Nothing
     , viewMode = Write
+    , txt = initFormText node_type
     }
 
 
@@ -486,6 +489,67 @@ isSelfContract uctx users =
 type InputViewMode
     = Write
     | Preview
+
+
+type alias FormText =
+    { title : String
+    , added : String
+    , name_help : String
+    , about_help : String
+    , message_help : String
+    , ph_purpose : String
+    , ph_responsabilities : String
+    , ph_domains : String
+    , ph_policies : String
+    , submit : String
+    , close_submit : String
+    }
+
+
+initFormText : Maybe NodeType.NodeType -> FormText
+initFormText node_type =
+    case node_type of
+        Nothing ->
+            FormText
+                T.newTension
+                T.tensionAdded
+                T.tensionTitleHelp
+                ""
+                T.tensionMessageHelp
+                ""
+                ""
+                ""
+                ""
+                T.tensionSubmit
+                ""
+
+        Just NodeType.Role ->
+            FormText
+                T.newRole
+                T.roleAdded
+                T.roleNameHelp
+                T.roleAboutHelp
+                T.roleMessageHelp
+                T.phRolePurpose
+                T.phRoleResponsabilities
+                T.phRoleDomains
+                T.phRolePolicies
+                T.tensionSubmit
+                T.tensionRoleCloseSubmit
+
+        Just NodeType.Circle ->
+            FormText
+                T.newCircle
+                T.circleAdded
+                T.circleNameHelp
+                T.circleAboutHelp
+                T.circleMessageHelp
+                T.phCirclePurpose
+                T.phCircleResponsabilities
+                T.phCircleDomains
+                T.phCirclePolicies
+                T.tensionSubmit
+                T.tensionCircleCloseSubmit
 
 
 

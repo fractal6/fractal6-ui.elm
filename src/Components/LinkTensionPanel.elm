@@ -540,6 +540,7 @@ viewPanel op model =
                 "is-small"
                 (ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_))
                 OnToggleTypeFilter
+                "p-0 has-border-light"
                 (div [] <|
                     [ div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter AllTypes ]
                         [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
@@ -586,6 +587,7 @@ viewPanel op model =
                     "is-small"
                     (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
                     OnToggleTargetFilter
+                    "p-0 has-border-light"
                     (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
                 , div [ class "control has-icons-left" ]
                     [ input

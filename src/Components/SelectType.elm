@@ -70,7 +70,7 @@ initModel tid user =
     , isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionForm tid user
+    , form = initTensionForm tid Nothing user
 
     -- Common
     , refresh_trial = 0

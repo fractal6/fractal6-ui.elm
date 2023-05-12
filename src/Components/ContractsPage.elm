@@ -1044,7 +1044,7 @@ viewContractPage c op model =
                             , conf = model.conf
                             }
                     in
-                    viewContractCommentInput opNew uctx model.comment_form model.comment_result
+                    viewContractCommentInput opNew model.comment_form model.comment_result
 
                 else
                     text ""

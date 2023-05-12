@@ -45,7 +45,7 @@ import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Generated.Route as Route exposing (toHref)
@@ -58,7 +58,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, ProjectFull, ProjectsCount)
+import ModelSchema exposing (LocalGraph, NewTensionInput(..), ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
@@ -122,10 +122,10 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)), Cmd.none )
+                                ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d), Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)), Cmd.none )

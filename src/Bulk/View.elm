@@ -50,7 +50,6 @@ import Session exposing (Conf)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
-import Time
 
 
 
@@ -1233,41 +1232,6 @@ blobTypeStr btype =
 
         BlobType.OnDoc ->
             T.onDoc_blob
-
-
-type alias FormText =
-    { title : String
-    , added : String
-    , name_help : String
-    , about_help : String
-    , message_help : String
-    , ph_purpose : String
-    , ph_responsabilities : String
-    , ph_domains : String
-    , ph_policies : String
-    , submit : String
-    , close_submit : String
-    }
-
-
-emptyFormText : FormText
-emptyFormText =
-    FormText "" "" "" "" "" "" "" "" "" "" ""
-
-
-getTensionText : FormText
-getTensionText =
-    FormText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit ""
-
-
-getNodeTextFromNodeType : NodeType.NodeType -> FormText
-getNodeTextFromNodeType type_ =
-    case type_ of
-        NodeType.Circle ->
-            FormText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.tensionCircleCloseSubmit
-
-        NodeType.Role ->
-            FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit
 
 
 

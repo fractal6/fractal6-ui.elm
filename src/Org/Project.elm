@@ -43,7 +43,7 @@ import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
+import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
@@ -117,10 +117,10 @@ mapGlobalOutcmds gcmds =
                         ( [], send (UpdateSessionScreen a) )
 
                     -- Component
-                    DoCreateTension ntm a ->
+                    DoCreateTension a ntm d ->
                         case ntm of
                             Nothing ->
-                                ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a)) ], Cmd.none )
+                                ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid a) d) ], Cmd.none )
 
                             Just NodeType.Circle ->
                                 ( [ Cmd.map NewTensionMsg <| send (NTF.OnOpenCircle (FromNameid a)) ], Cmd.none )
@@ -146,17 +146,14 @@ mapGlobalOutcmds gcmds =
                     DoAddNodes nodes ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes) ], Cmd.none )
 
-                    --DoUpdateNode nameid fun ->
-                    --    ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
+                    DoUpdateNode nameid fun ->
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun) ], Cmd.none )
+
                     DoDelNodes nameids ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids) ], Cmd.none )
 
                     DoMoveNode a b c ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
-
-                    -- App
-                    DoUpdateNode nameid fun ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send DoLoad ], Cmd.none )
 
                     _ ->
                         ( [], Cmd.none )
@@ -249,9 +246,9 @@ init global flags =
 
             -- Common
             , conf = conf
-            , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
             , empty = {}
+            , tensionForm = NTF.init global.session.user conf
             , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
@@ -426,8 +423,24 @@ update global message model =
                 ( tf, out ) =
                     NTF.update apis msg model.tensionForm
 
-                ( cmds, gcmds ) =
+                convert_draft_cmd =
+                    case out.result of
+                        Just ( t, d ) ->
+                            case d of
+                                Just draft ->
+                                    Cmd.map BoardMsg (send (Board.OnConvertDraftAck draft t))
+
+                                Nothing ->
+                                    send NoMsg
+
+                        Nothing ->
+                            send NoMsg
+
+                ( cmds_, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                cmds =
+                    convert_draft_cmd :: cmds_
             in
             ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 

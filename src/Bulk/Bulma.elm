@@ -51,33 +51,32 @@ import Text as T
                 ])
 
 -}
-dropdown : String -> String -> String -> Html msg -> msg -> Html msg -> Html msg
-dropdown id_ dropdown_cls button_cls button_html msg content_html =
+dropdown : String -> String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
+dropdown id_ dropdown_cls button_cls button_html msg content_cls content_html =
     span [ class ("dropdown " ++ dropdown_cls) ]
         [ span [ class "dropdown-trigger", onClick msg ]
             [ span [ attribute "aria-controls" id_ ]
-                [ span
-                    [ class ("button " ++ button_cls) ]
+                [ span [ class ("button " ++ button_cls) ]
                     [ button_html, i [ class "ml-2 icon-chevron-down1", classList [ ( "icon-tiny", String.contains "is-small" button_cls ) ] ] [] ]
                 ]
             ]
         , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
-            [ -- The fixed position allow the dropdown to overflow the modal
-              div [ class "dropdown-content has-border", style "position" "fixed" ]
+            [ div [ class ("dropdown-content " ++ content_cls) ]
                 [ content_html ]
             ]
         ]
 
 
-dropdownLight : String -> String -> Html msg -> msg -> Html msg -> Html msg
-dropdownLight id_ dropdown_cls button_html msg content_html =
+dropdownLight : String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
+dropdownLight id_ dropdown_cls button_html msg content_cls content_html =
     span [ class ("dropdown " ++ dropdown_cls) ]
         [ span [ class "dropdown-trigger", onClick msg ]
             [ span [ attribute "aria-controls" id_ ] [ button_html ]
             ]
         , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
-            [ -- The fixed position allow the dropdown to overflow the modal
-              div [ class "dropdown-content p-0 has-border-light", style "position" "fixed" ]
+            [ div [ class ("dropdown-content " ++ content_cls) ]
+                -- The fixed position allow the dropdown to overflow the modal
+                --, style "position" "fixed" ]
                 [ content_html ]
             ]
         ]
