@@ -366,7 +366,7 @@ update_ apis message model =
             else if Just hover == model.movingHoverCol && isLast then
                 let
                     c_h =
-                        Maybe.map (\ch -> { ch | pos = ch.pos + 1 }) model.movingHoverT
+                        Maybe.map (\ch -> { ch | pos = hover.length }) model.movingHoverT
                 in
                 ( { model | movingHoverT = c_h }, noOut )
 
@@ -807,12 +807,6 @@ viewBoard op model =
                                                     , onEnd = always OnMoveEnd
                                                     , onDrag = Nothing
                                                     }
-                                                ++ (if cards_len - 1 == j && model.hasTaskMove then
-                                                        [ onDragLeave2 (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True) ]
-
-                                                    else
-                                                        []
-                                                   )
                                             )
                                             []
                                     )
@@ -838,7 +832,19 @@ viewBoard op model =
                                             x
 
                                     Nothing ->
-                                        -- Add potential draggind div
+                                        -- Add potential dragging div
+                                        let
+                                            xx =
+                                                x
+                                                    ++ [ text ""
+                                                       , div
+                                                            [ onDragLeave2 (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True)
+                                                            , class "box"
+                                                            , style "opacity" "0"
+                                                            ]
+                                                            []
+                                                       ]
+                                        in
                                         Maybe.map2
                                             (\c c_hov ->
                                                 if
@@ -850,14 +856,14 @@ viewBoard op model =
                                                         && (c.pos /= (c_hov.pos - 1) || colid /= c.colid)
                                                 then
                                                     -- account for the extra text "" (see Elm bug#1) !
-                                                    insertAt (c_hov.pos * 2) draggingDiv x
+                                                    insertAt (c_hov.pos * 2) draggingDiv xx
 
                                                 else
-                                                    x
+                                                    xx
                                             )
                                             model.movingCard
                                             model.movingHoverT
-                                            |> withDefault x
+                                            |> withDefault xx
                            )
                         |> div [ id colid, class "content scrollbar-thin" ]
                     ]
