@@ -33,8 +33,9 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
 import Dom
+import DragPorts
 import Extra exposing (insertAt, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragLeave2, onDragStart, onDrop, onKeydown)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
@@ -42,8 +43,9 @@ import Global exposing (send, sendSleep)
 import Html exposing (Html, a, br, div, hr, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
+import Html.Events.Extra.Drag as Drag
 import Html.Lazy as Lazy
-import Json.Decode as JD
+import Json.Decode as JD exposing (Value)
 import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
@@ -177,14 +179,15 @@ type Msg
     | FitBoard (Result Dom.Error Dom.Element)
     | ScrollToElement String
     | OnClearBoardResult
-    | OnMove { pos : Int, colid : String, length : Int } ProjectCard
+    | OnMove { pos : Int, colid : String, length : Int } ProjectCard Drag.EffectAllowed Value
+    | OnMoveEnd
+    | DragOver Drag.DropEffect Value
     | OnCancelHov
-    | OnEndMove
-    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool
-    | OnMoveLeaveCol
+    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool Drag.Event
+    | OnMoveLeaveCol Drag.Event
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, cardid : String, colid : String }
-    | OnMoveDrop String
+    | OnColDrop String
     | GotCardMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
     | OnCardClick_ (Maybe ProjectCard)
@@ -291,10 +294,12 @@ update_ apis message model =
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, noOut )
 
-        OnMove col card ->
-            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }, noOut )
+        OnMove col card effectAllowed value ->
+            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }
+            , out0 [ DragPorts.dragstart (Drag.startPortData effectAllowed value) ]
+            )
 
-        OnEndMove ->
+        OnMoveEnd ->
             let
                 newModel =
                     { model | draging = False }
@@ -332,6 +337,9 @@ update_ apis message model =
                 |> withDefault
                     ( newModel, out0 [ sendSleep OnCancelHov 300 ] )
 
+        DragOver dropEffect value ->
+            ( model, out0 [ DragPorts.dragover (Drag.overPortData dropEffect value) ] )
+
         OnCardClick c ->
             -- Highlight the border and show ellipsis on click
             -- or unselect.
@@ -349,26 +357,17 @@ update_ apis message model =
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
 
-        OnMoveEnterCol hover reset ->
+        OnMoveEnterCol hover isLast _ ->
             -- @DEBUG: How to optimize / simplify that ?
             -- Does "dragCount" still usefull ??
-            let
-                ( c_h, is_last ) =
-                    Maybe.map2
-                        (\ch h ->
-                            ( Just { ch | pos = ch.pos + 1 }
-                            , ch.colid == h.colid && ch.pos == h.length - 1
-                            )
-                        )
-                        model.movingHoverT
-                        model.movingHoverCol
-                        |> withDefault ( model.movingHoverT, False )
-            in
-            if Just hover == model.movingHoverCol && not reset then
-                -- ?
+            if Just hover == model.movingHoverCol && not isLast then
                 ( { model | dragCount = 1 }, noOut )
 
-            else if Just hover == model.movingHoverCol && reset && is_last then
+            else if Just hover == model.movingHoverCol && isLast then
+                let
+                    c_h =
+                        Maybe.map (\ch -> { ch | pos = ch.pos + 1 }) model.movingHoverT
+                in
                 ( { model | movingHoverT = c_h }, noOut )
 
             else
@@ -403,7 +402,7 @@ update_ apis message model =
                 in
                 ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, noOut )
 
-        OnMoveLeaveCol ->
+        OnMoveLeaveCol _ ->
             ( { model | dragCount = model.dragCount - 1 }, out0 [ sendSleep OnMoveLeaveCol_ 15 ] )
 
         OnMoveLeaveCol_ ->
@@ -416,9 +415,8 @@ update_ apis message model =
         OnMoveEnterT hover ->
             ( { model | movingHoverT = Just hover }, noOut )
 
-        OnMoveDrop nameid ->
-            -- @not implemented.
-            ( { model | movingCard = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
+        OnColDrop colid ->
+            ( model, noOut )
 
         GotCardMoved result ->
             ( { model | board_result = withMapData .id result }, noOut )
@@ -762,13 +760,14 @@ viewBoard op model =
                 [ div
                     (class "column is-3"
                         :: ternary model.hasTaskMove
-                            [ onDragEnter (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False)
-                            , onDragLeave OnMoveLeaveCol
-
-                            -- @DEBUG doesn't work
-                            --, onDrop (OnMoveDrop colid)
-                            , attribute "ondragover" "return false"
-                            ]
+                            (Drag.onDropTarget
+                                { dropEffect = Drag.MoveOnDrop
+                                , onOver = DragOver
+                                , onDrop = always NoMsg
+                                , onEnter = Just <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
+                                , onLeave = Just <| OnMoveLeaveCol
+                                }
+                            )
                             []
                     )
                     [ div
@@ -787,29 +786,34 @@ viewBoard op model =
                                         { c | pos = j }
                                 in
                                 [ -- Elm bug#1: if you remove this empty text
-                                  --  It seems to be related/caused by the function composition to set an attribute
+                                  --  It seems to be related/caused by the function composition that set an attribute
                                   --  in addProjectCardFunction response decoder
                                   text ""
                                 , div
                                     (class "box is-shrinked2 mb-2 mx-2 kb-card"
                                         :: ternary model.hasTaskMove
-                                            [ classList
+                                            ([ classList
                                                 [ ( "is-dragging", model.movingHoverT /= Nothing )
                                                 , ( "is-dragged", Maybe.map .id model.movingCard == Just card.id )
                                                 ]
-                                            , attribute "draggable" "true"
-                                            , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
-                                            , onDragStart <| OnMove { pos = i, colid = colid, length = cards_len } card
-                                            , onDragEnd OnEndMove
-                                            , onDragEnter (OnMoveEnterT { pos = j, cardid = card.id, colid = colid })
-                                            , onClick (OnCardClick (Just card))
-                                            , onMouseEnter (OnCardHover card.id)
-                                            , onMouseLeave OnCardHoverLeave
-                                            ]
-                                            []
-                                        ++ ternary (cards_len - 1 == j && model.hasTaskMove)
-                                            -- reset hoverT to draw below
-                                            [ onDragLeave (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True) ]
+                                             , onClick (OnCardClick (Just card))
+                                             , onMouseEnter (OnCardHover card.id)
+                                             , onMouseLeave OnCardHoverLeave
+                                             , onDragEnter (OnMoveEnterT { pos = j, cardid = card.id, colid = colid })
+                                             ]
+                                                ++ Drag.onSourceDrag
+                                                    { effectAllowed = { move = True, copy = False, link = False }
+                                                    , onStart = OnMove { pos = i, colid = colid, length = cards_len } card
+                                                    , onEnd = always OnMoveEnd
+                                                    , onDrag = Nothing
+                                                    }
+                                                ++ (if cards_len - 1 == j && model.hasTaskMove then
+                                                        [ onDragLeave2 (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True) ]
+
+                                                    else
+                                                        []
+                                                   )
+                                            )
                                             []
                                     )
                                     (case card.card of
