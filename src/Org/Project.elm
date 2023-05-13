@@ -614,7 +614,7 @@ view global model =
             _ ->
                 "Loading..."
     , body =
-        [ div [ class "orgPane unselect-card-click-trigger" ]
+        [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ]
                 [ view_ global model

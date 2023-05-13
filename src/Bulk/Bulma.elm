@@ -53,7 +53,7 @@ import Text as T
 -}
 dropdown : String -> String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
 dropdown id_ dropdown_cls button_cls button_html msg content_cls content_html =
-    span [ class ("dropdown " ++ dropdown_cls) ]
+    span [ class ("dropdown elm " ++ dropdown_cls) ]
         [ span [ class "dropdown-trigger", onClick msg ]
             [ span [ attribute "aria-controls" id_ ]
                 [ span [ class ("button " ++ button_cls) ]
@@ -69,7 +69,7 @@ dropdown id_ dropdown_cls button_cls button_html msg content_cls content_html =
 
 dropdownLight : String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
 dropdownLight id_ dropdown_cls button_html msg content_cls content_html =
-    span [ class ("dropdown " ++ dropdown_cls) ]
+    span [ class ("dropdown elm " ++ dropdown_cls) ]
         [ span [ class "dropdown-trigger", onClick msg ]
             [ span [ attribute "aria-controls" id_ ] [ button_html ]
             ]

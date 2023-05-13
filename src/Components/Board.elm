@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.Board exposing (Msg(..), State, board_result, init, nodeID, subscriptions, update, view)
+module Components.Board exposing (Msg(..), State, board_result, init, nodeID, subscriptions, update, view)
 
 import Assets as A
 import Browser.Dom as Dom
@@ -32,6 +32,7 @@ import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
+import Dom
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragStart, onKeydown)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
@@ -189,11 +190,11 @@ type Msg
     | OnCardClick_ (Maybe ProjectCard)
     | OnCardHover String
     | OnCardHoverLeave
-    | OnToggleCardEdit
-    | OnToggleCardEdit_
+    | OnToggleCardEdit String
     | OnToggleColEdit String
-    | OnRemoveCard
+    | OnRemoveCard String
     | OnRemoveCardAck (GqlData (List String))
+    | OnRemoveColItems String
       --
     | OnAddCol
     | OnAddDraft String
@@ -204,7 +205,7 @@ type Msg
     | OnAddCardAck (GqlData (List ProjectCard))
     | OpenTensionPane (Maybe ColTarget)
     | OnLinkTension ( String, List ProjectCard )
-    | OnConvertDraft ProjectDraft
+    | OnConvertDraft String ProjectDraft
     | OnConvertDraftAck ProjectDraft Tension
       -- Components
     | ProjectColumnModalMsg ProjectColumnModal.Msg
@@ -339,7 +340,7 @@ update_ apis message model =
                     ( model, out0 [ sendSleep (OnCardClick_ c) 50 ] )
 
                 Nothing ->
-                    ( { model | movingCard = Nothing, cardEdit = "", colEdit = "" }, noOut )
+                    ( { model | movingCard = Nothing, cardEdit = "" }, noOut )
 
         OnCardClick_ c ->
             -- Solves concurent message sent
@@ -518,32 +519,14 @@ update_ apis message model =
         OnCardHoverLeave ->
             ( { model | cardHover = "" }, noOut )
 
-        OnToggleCardEdit ->
-            ( model, out0 [ sendSleep OnToggleCardEdit_ 50 ] )
-
-        OnToggleCardEdit_ ->
-            -- Solve mesage concurrency
-            ( { model | cardEdit = ternary (model.cardEdit == "") model.cardHover "" }, noOut )
+        OnToggleCardEdit cardid ->
+            ( { model | cardEdit = ternary (model.cardEdit == "") cardid "" }, noOut )
 
         OnToggleColEdit colid ->
-            if colid /= model.colEdit then
-                ( { model | colEdit = colid }, noOut )
+            ( { model | colEdit = ternary (model.colEdit == "") colid "" }, noOut )
 
-            else
-                ( { model | colEdit = ternary (model.colEdit == "") colid "" }, noOut )
-
-        OnRemoveCard ->
-            case model.cardEdit of
-                "" ->
-                    -- no card dropdown open
-                    ( model, noOut )
-
-                _ ->
-                    let
-                        cardid =
-                            model.cardEdit
-                    in
-                    ( { model | board_result = Loading }, out0 [ removeProjectCards apis [ cardid ] OnRemoveCardAck ] )
+        OnRemoveCard cardid ->
+            ( { model | board_result = Loading }, out0 [ removeProjectCards apis [ cardid ] OnRemoveCardAck ] )
 
         OnRemoveCardAck result ->
             case result of
@@ -570,6 +553,15 @@ update_ apis message model =
 
                 _ ->
                     ( model, noOut )
+
+        OnRemoveColItems colid ->
+            let
+                cards =
+                    LE.find (\x -> x.id == colid) model.project.columns
+                        |> Maybe.map (.cards >> List.map .id)
+                        |> withDefault []
+            in
+            ( model, out0 [ removeProjectCards apis cards OnRemoveCardAck ] )
 
         --
         OpenTensionPane colTarget ->
@@ -605,8 +597,8 @@ update_ apis message model =
             in
             ( { model | project = pj }, noOut )
 
-        OnConvertDraft draft ->
-            case getCard model.cardEdit model.project of
+        OnConvertDraft cardid draft ->
+            case getCard cardid model.project of
                 Just c ->
                     let
                         d =
@@ -692,13 +684,25 @@ update_ apis message model =
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
-    , unselectCardFromJs (always (OnCardClick Nothing))
     , Events.onResize (\w h -> OnResize w h)
     ]
+        ++ (if model.colEdit /= "" then
+                [ Events.onMouseUp (JD.succeed (OnToggleColEdit ""))
+                , Events.onKeyUp (Dom.key "Escape" (OnToggleColEdit ""))
+                ]
+
+            else
+                []
+           )
+        ++ (if model.cardEdit /= "" then
+                [ Events.onMouseUp (JD.succeed (OnCardClick Nothing))
+                , Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing))
+                ]
+
+            else
+                []
+           )
         ++ (ProjectColumnModal.subscriptions model.projectColumnModal |> List.map (\s -> Sub.map ProjectColumnModalMsg s))
-
-
-port unselectCardFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -811,10 +815,10 @@ viewBoard op model =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ Lazy.lazy4 viewMediaTension (card.id == model.cardHover) (card.id == model.cardEdit) model.node_focus t ]
+                                            [ Lazy.lazy5 viewMediaTension card.id (card.id == model.cardHover) (card.id == model.cardEdit) model.node_focus t ]
 
                                         CardDraft d ->
-                                            [ Lazy.lazy3 viewMediaDraft (card.id == model.cardHover) (card.id == model.cardEdit) d ]
+                                            [ Lazy.lazy4 viewMediaDraft card.id (card.id == model.cardHover) (card.id == model.cardEdit) d ]
                                     )
                                 ]
                             )
@@ -894,7 +898,7 @@ viewHeader isEdited col card =
                         "col-ellipsis"
                         ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
                         (A.icon "icon-more-horizontal is-w is-h icon-lg")
-                        (OnToggleColEdit col.id)
+                        (OnToggleColEdit (ternary isEdited "" col.id))
                         "p-0 has-border-light"
                         (div []
                             [ div
@@ -902,15 +906,16 @@ viewHeader isEdited col card =
                                 , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
                                 ]
                                 [ A.icon1 "icon-edit-2" T.edit ]
-                            , hr [ class "dropdown-divider" ] []
                             , div
                                 [ class "dropdown-item button-light"
                                 , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
                                 ]
                                 [ A.icon1 "icon-plus" T.addTensionColumn ]
-                            , hr [ class "dropdown-divider" ] []
+                            , hr [ class "dropdown-divider my-4" ] []
                             , div [ class "dropdown-item button-light" ]
-                                [ A.icon1 "icon-trash" T.delete ]
+                                [ A.icon1 "icon-trash" "Delete column (keep items)" ]
+                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
+                                [ A.icon1 "icon-trash" "Remove items from project" ]
                             ]
                         )
 
@@ -944,8 +949,8 @@ viewNewCol =
         ]
 
 
-viewMediaDraft : Bool -> Bool -> ProjectDraft -> Html Msg
-viewMediaDraft isHovered isEdited d =
+viewMediaDraft : String -> Bool -> Bool -> ProjectDraft -> Html Msg
+viewMediaDraft cardid isHovered isEdited d =
     let
         ellipsis =
             if isHovered || isEdited then
@@ -953,12 +958,12 @@ viewMediaDraft isHovered isEdited d =
                     "card-ellipsis"
                     ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
                     (A.icon "icon-more-horizontal is-h icon-bg")
-                    OnToggleCardEdit
+                    (OnToggleCardEdit (ternary isEdited "" cardid))
                     "p-0 has-border-light"
                     (div []
-                        [ div [ class "dropdown-item button-light", onClick (OnConvertDraft d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
+                        [ div [ class "dropdown-item button-light", onClick (OnConvertDraft cardid d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
                         , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick OnRemoveCard ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-trash" T.deleteDraft ]
                         ]
                     )
 
@@ -995,8 +1000,8 @@ innerHtmlDecoder =
     JD.at [ "target", "innerHTML" ] JD.string
 
 
-viewMediaTension : Bool -> Bool -> NodeFocus -> Tension -> Html Msg
-viewMediaTension isHovered isEdited focus t =
+viewMediaTension : String -> Bool -> Bool -> NodeFocus -> Tension -> Html Msg
+viewMediaTension cardid isHovered isEdited focus t =
     let
         n_comments =
             withDefault 0 t.n_comments
@@ -1024,7 +1029,7 @@ viewMediaTension isHovered isEdited focus t =
                     "card-ellipsis"
                     ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
                     (A.icon "icon-more-horizontal is-h icon-bg")
-                    OnToggleCardEdit
+                    (OnToggleCardEdit (ternary isEdited "" cardid))
                     "p-0 has-border-light"
                     (div []
                         [ div [ class "dropdown-item button-light" ]
@@ -1036,7 +1041,7 @@ viewMediaTension isHovered isEdited focus t =
                                 [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
                             ]
                         , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick OnRemoveCard ] [ A.icon1 "icon-x" "Remove from project" ]
+                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-x" "Remove from project" ]
                         ]
                     )
 
