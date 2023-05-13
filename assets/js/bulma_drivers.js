@@ -230,11 +230,6 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    const $unselectCard = $doc.querySelectorAll('.unselect-card-click-trigger');
-    $unselectCard.forEach( el => {
-        setupHandler("click", unselectCard, el, el, app);
-    });
-
     //
     // Activate autofocus
     //
@@ -342,7 +337,7 @@ export function BulmaDriver(app, target, handlers) {
     // * stopeventpropgation (difference witn preventdefault ?)
     //
     // Get all dropdowns on the page that aren't hoverable.
-    const $dropdowns = $doc.querySelectorAll('.dropdown:not(.is-hoverable), .has-dropdown:not(.is-hoverable)');
+    const $dropdowns = $doc.querySelectorAll('.dropdown:not(.is-hoverable):not(.elm), .has-dropdown:not(.is-hoverable)');
     if ($dropdowns.length > 0) {
 
         // Toggle on click
@@ -863,10 +858,6 @@ function triggerMenuOrga(e, el, app) {
 
 function triggerMenuTree(e, el, app) {
     app.ports.triggerMenuTreeFromJs.send(null)
-}
-
-function unselectCard(e, el, app) {
-    app.ports.unselectCardFromJs.send(null)
 }
 
 function triggerTheme(e, el, app) {
