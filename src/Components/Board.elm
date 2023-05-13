@@ -190,7 +190,6 @@ type Msg
     | OnColDrop String
     | GotCardMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
-    | OnCardClick_ (Maybe ProjectCard)
     | OnCardHover String
     | OnCardHoverLeave
     | OnToggleCardEdit String
@@ -345,14 +344,10 @@ update_ apis message model =
             -- or unselect.
             case c of
                 Just _ ->
-                    ( model, out0 [ sendSleep (OnCardClick_ c) 50 ] )
+                    ( { model | movingCard = c }, noOut )
 
                 Nothing ->
                     ( { model | movingCard = Nothing, cardEdit = "" }, noOut )
-
-        OnCardClick_ c ->
-            -- Solves concurent message sent
-            ( { model | movingCard = c }, noOut )
 
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
@@ -692,7 +687,7 @@ subscriptions (State model) =
             else
                 []
            )
-        ++ (if model.cardEdit /= "" then
+        ++ (if model.cardEdit /= "" || model.movingCard /= Nothing then
                 [ Events.onMouseUp (JD.succeed (OnCardClick Nothing))
                 , Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing))
                 ]
@@ -836,7 +831,7 @@ viewBoard op model =
                                         let
                                             xx =
                                                 x
-                                                    ++ [ text ""
+                                                    ++ [ text "" -- elm bug#1
                                                        , div
                                                             [ onDragLeave2 (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True)
                                                             , class "box"
