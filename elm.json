@@ -31,6 +31,7 @@
             "justgook/elm-image": "5.0.0",
             "justinmimbs/date": "4.0.1",
             "krisajenkins/remotedata": "6.0.1",
+            "mpizenberg/elm-pointer-events": "5.0.0",
             "rtfeldman/elm-iso8601-date-strings": "1.1.4",
             "ryannhg/elm-spa": "4.1.0"
         },

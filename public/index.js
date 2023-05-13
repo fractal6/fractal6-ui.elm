@@ -1,8 +1,10 @@
 // pull in desired CSS/SASS files
 require( '../assets/sass/main.scss' );
-
 // JS entry point
 var Ports = require( '../assets/js/ports.js' )
+// DragNDrop support
+require('../assets/js/DragPorts.js')
+
 // Inject bundled Elm app into div#main
 var App = require( '../src/Main' );
 
