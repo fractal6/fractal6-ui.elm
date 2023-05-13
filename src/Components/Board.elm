@@ -52,7 +52,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withM
 import Maybe exposing (withDefault)
 import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, UserCtx)
 import Ports
-import Query.QueryProject exposing (addProjectCard, moveProjectCard, removeProjectCards)
+import Query.QueryProject exposing (addProjectCard, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
 import Session exposing (Apis, Conf, GlobalCmd(..))
 import Task

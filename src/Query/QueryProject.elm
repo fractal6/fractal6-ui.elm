@@ -26,6 +26,7 @@ module Query.QueryProject exposing
     , getProject
     , getProjectColumn
     , moveProjectCard
+    , moveProjectColumn
     , removeProjectCards
     , updateProjectColumn
     )
@@ -166,6 +167,16 @@ moveProjectCard url id_ pos colid msg =
             )
         )
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+moveProjectColumn url id_ pos msg =
+    let
+        form =
+            { colid = id_
+            , post = Dict.fromList [ ( "pos", pos ) ]
+            }
+    in
+    updateProjectColumn url form msg
 
 
 updateProjectColumn url form msg =
