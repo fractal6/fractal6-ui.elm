@@ -52,7 +52,7 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withM
 import Maybe exposing (withDefault)
 import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, UserCtx)
 import Ports
-import Query.QueryProject exposing (addProjectCard, moveProjectCard, moveProjectColumn, removeProjectCards)
+import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
 import Session exposing (Apis, Conf, GlobalCmd(..))
 import Task
@@ -197,6 +197,8 @@ type Msg
     | OnRemoveCard String
     | OnRemoveCardAck (GqlData (List String))
     | OnRemoveColItems String
+    | OnDeleteColumn String
+    | OnDeleteColumnAck (GqlData (List String))
       --
     | OnAddCol
     | OnAddDraft String
@@ -555,6 +557,34 @@ update_ apis message model =
                         |> withDefault []
             in
             ( model, out0 [ removeProjectCards apis cards OnRemoveCardAck ] )
+
+        OnDeleteColumn colid ->
+            ( model, out0 [ deleteProjectColumns apis [ colid ] OnDeleteColumnAck ] )
+
+        OnDeleteColumnAck result ->
+            case result of
+                Success uids ->
+                    let
+                        pj =
+                            List.foldl
+                                (\uid project ->
+                                    case LE.findIndex (\b -> b.id == uid) project.columns of
+                                        Just i ->
+                                            { project | columns = LE.removeAt i project.columns }
+
+                                        Nothing ->
+                                            project
+                                )
+                                model.project
+                                uids
+                    in
+                    ( { model | board_result = NotAsked, project = pj }, noOut )
+
+                Failure err ->
+                    ( { model | board_result = Failure err }, noOut )
+
+                _ ->
+                    ( model, noOut )
 
         --
         OpenTensionPane colTarget ->
@@ -917,8 +947,8 @@ viewHeader isEdited col card =
                                 ]
                                 [ A.icon1 "icon-plus" T.addTensionColumn ]
                             , hr [ class "dropdown-divider my-4" ] []
-                            , div [ class "dropdown-item button-light" ]
-                                [ A.icon1 "icon-trash" "Delete column (keep items)" ]
+                            , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
+                                [ A.icon1 "icon-trash" "Delete column" ]
                             , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
                                 [ A.icon1 "icon-trash" "Remove items from project" ]
                             ]
@@ -1104,7 +1134,7 @@ removeCard c columns =
     LE.updateIf
         (\a -> a.id == c.colid)
         (\a ->
-            -- @warning; c.pos may not be consists (see how pos position are managed front/back.)
+            -- @warning; c.pos may not be consistent (see how pos position are managed front/back.)
             --{ a | cards = LE.removeAt c.pos a.cards }
             case LE.findIndex (\b -> b.id == c.id) a.cards of
                 Just i ->
