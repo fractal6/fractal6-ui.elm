@@ -22,6 +22,7 @@
 module Query.QueryProject exposing
     ( addProjectCard
     , addProjectColumn
+    , deleteProjectColumns
     , getNoStatusCol
     , getProject
     , getProjectColumn
@@ -41,6 +42,7 @@ import Fractal.Object
 import Fractal.Object.AddProjectCardPayload
 import Fractal.Object.AddProjectColumnPayload
 import Fractal.Object.DeleteProjectCardPayload
+import Fractal.Object.DeleteProjectColumnPayload
 import Fractal.Object.Project
 import Fractal.Object.ProjectCard
 import Fractal.Object.ProjectCardAggregateResult
@@ -289,15 +291,29 @@ addProjectCard url form msg =
         (RemoteData.fromResult >> decodeResponse (Maybe.map (List.map (\b -> { b | colid = form.colid }))) >> msg)
 
 
-removeProjectCards url cardids msg =
+removeProjectCards url uids msg =
     makeGQLMutation url
         (Mutation.deleteProjectCard
             { filter =
-                Input.buildProjectCardFilter (\i -> { i | id = Present <| List.map encodeId cardids })
+                Input.buildProjectCardFilter (\i -> { i | id = Present <| List.map encodeId uids })
             }
             (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
                 Fractal.Object.DeleteProjectCardPayload.projectCard identity
                     (SelectionSet.map decodedId Fractal.Object.ProjectCard.id)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+deleteProjectColumns url uids msg =
+    makeGQLMutation url
+        (Mutation.deleteProjectColumn
+            { filter =
+                Input.buildProjectColumnFilter (\i -> { i | id = Present <| List.map encodeId uids })
+            }
+            (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
+                Fractal.Object.DeleteProjectColumnPayload.projectColumn identity
+                    (SelectionSet.map decodedId Fractal.Object.ProjectColumn.id)
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
