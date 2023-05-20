@@ -1020,7 +1020,7 @@ viewNewCol : Html Msg
 viewNewCol =
     div [ class "column is-2 ml-2" ]
         [ div
-            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
+            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5 is-hint"
             , style "width" "100%"
             , onClick OnAddCol
             ]

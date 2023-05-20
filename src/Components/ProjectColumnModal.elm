@@ -568,7 +568,7 @@ viewModalContent op model =
                     -- @TODO
                     ( True, NoMsg )
     in
-    div [ class "modal-card" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ textH (toTitle model.modal_type) ]
@@ -625,7 +625,7 @@ viewModalContent op model =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class "button is-light is-success"
+                        ([ class "button is-light is-success defaultSubmit"
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable_)
                          ]
