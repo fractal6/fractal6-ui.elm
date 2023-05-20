@@ -1050,7 +1050,7 @@ viewNewOrEditProject isNew model =
             else
                 onClick (Submit <| SubmitEditProject)
     in
-    div [ class "columns is-centered" ]
+    div [ class "columns is-centered submitFocus" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ h1 [ class "title" ] [ text title ]
             , div [ class "field" ]
@@ -1123,7 +1123,7 @@ viewNewOrEditProject isNew model =
                 , div [ class "level-right" ]
                     [ div [ class "buttons" ]
                         [ button
-                            ([ class "button has-text-weight-semibold"
+                            ([ class "button has-text-weight-semibold defaultSubmit"
                              , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                              , disabled (not isSendable)
                              ]
