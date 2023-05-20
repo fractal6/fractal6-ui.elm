@@ -1,12 +1,12 @@
 // pull in desired CSS/SASS files
 require( '../assets/sass/main.scss' );
+
 // JS entry point
 var Ports = require( '../assets/js/ports.js' )
-// DragNDrop support
-require('../assets/js/DragPorts.js')
 
 // Inject bundled Elm app into div#main
 var App = require( '../src/Main' );
+
 
 window.addEventListener('load', _ => {
 
@@ -54,8 +54,10 @@ window.addEventListener('load', _ => {
         })
     );
 
+
     // Setup Actions
     // --
+
     // Setup the layout
     if (orga_menu == true) {
         setTimeout(Ports.actions["OPEN_ORGA_MENU"], 333);
@@ -63,5 +65,6 @@ window.addEventListener('load', _ => {
     if (tree_menu == true) {
         setTimeout(Ports.actions["OPEN_TREE_MENU"], 333);
     }
+
 
 });

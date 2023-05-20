@@ -33,9 +33,8 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
 import Dom
-import DragPorts
 import Extra exposing (insertAt, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragLeave2, onDragStart, onDrop, onKeydown)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onKeydown)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
@@ -43,7 +42,6 @@ import Global exposing (send, sendSleep)
 import Html exposing (Html, a, br, div, hr, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
-import Html.Events.Extra.Drag as Drag
 import Html.Lazy as Lazy
 import Json.Decode as JD exposing (Value)
 import Json.Encode as JE
@@ -77,6 +75,7 @@ type alias Model =
     , isAddingDraft : Maybe DraftForm
     , boardHeight : Maybe Float
     , movingCard : Maybe ProjectCard
+    , movingCol : Maybe ProjectColumn
     , movingHoverCol : Maybe { pos : Int, colid : String, length : Int }
     , movingHoverT : Maybe { pos : Int, cardid : String, colid : String }
     , dragCount : Int
@@ -118,6 +117,7 @@ initModel projectid focus user =
     -- Board
     , boardHeight = Nothing
     , movingCard = Nothing
+    , movingCol = Nothing
     , movingHoverCol = Nothing
     , movingHoverT = Nothing
     , dragCount = 0
@@ -179,16 +179,20 @@ type Msg
     | FitBoard (Result Dom.Error Dom.Element)
     | ScrollToElement String
     | OnClearBoardResult
-    | OnMove { pos : Int, colid : String, length : Int } ProjectCard Drag.EffectAllowed Value
+      -- Move Column
+    | OnMoveColumn ProjectColumn
+    | OnMoveColumnEnd
+      -- Cards (move, edit, delete)
+    | OnMove { pos : Int, colid : String, length : Int } ProjectCard
     | OnMoveEnd
-    | DragOver Drag.DropEffect Value
     | OnCancelHov
-    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool Drag.Event
-    | OnMoveLeaveCol Drag.Event
+    | OnMoveEnterCol { pos : Int, colid : String, length : Int } Bool
+    | OnMoveLeaveCol
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, cardid : String, colid : String }
     | OnColDrop String
     | GotCardMoved (GqlData IdPayload)
+    | GotColMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
     | OnCardHover String
     | OnCardHoverLeave
@@ -295,9 +299,46 @@ update_ apis message model =
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, noOut )
 
-        OnMove col card effectAllowed value ->
+        -- Move Columns
+        OnMoveColumn col ->
+            ( { model | movingCol = Just col }, noOut )
+
+        OnMoveColumnEnd ->
+            let
+                newModel =
+                    { model | movingCol = Nothing, movingHoverCol = Nothing, movingHoverT = Nothing }
+            in
+            Maybe.map2
+                (\col { pos, colid, length } ->
+                    if col.id == colid then
+                        ( newModel, noOut )
+
+                    else
+                        -- Do not wait the query to success to move the column.
+                        let
+                            noStatusOffset =
+                                model.project.columns
+                                    |> List.filter (\x -> x.col_type == ProjectColumnType.NoStatusColumn && List.length x.cards == 0)
+                                    |> List.length
+
+                            pj =
+                                model.project
+                                    -- move a column to the given position
+                                    |> (\d -> { d | columns = moveColAt col.id (pos + noStatusOffset) d.columns })
+                        in
+                        ( { newModel | project = pj, board_result = Loading }
+                        , out0 [ moveProjectColumn apis col.id pos GotColMoved ]
+                        )
+                )
+                model.movingCol
+                model.movingHoverCol
+                |> withDefault
+                    ( { model | movingCol = Nothing }, noOut )
+
+        -- Cards
+        OnMove col card ->
             ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }
-            , out0 [ DragPorts.dragstart (Drag.startPortData effectAllowed value) ]
+            , noOut
             )
 
         OnMoveEnd ->
@@ -338,9 +379,6 @@ update_ apis message model =
                 |> withDefault
                     ( newModel, out0 [ sendSleep OnCancelHov 300 ] )
 
-        DragOver dropEffect value ->
-            ( model, out0 [ DragPorts.dragover (Drag.overPortData dropEffect value) ] )
-
         OnCardClick c ->
             -- Highlight the border and show ellipsis on click
             -- or unselect.
@@ -354,7 +392,7 @@ update_ apis message model =
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
 
-        OnMoveEnterCol hover isLast _ ->
+        OnMoveEnterCol hover isLast ->
             -- @DEBUG: How to optimize / simplify that ?
             -- Does "dragCount" still usefull ??
             if Just hover == model.movingHoverCol && not isLast then
@@ -399,7 +437,7 @@ update_ apis message model =
                 in
                 ( { model | dragCount = 1, movingHoverCol = Just hover, movingHoverT = mht }, noOut )
 
-        OnMoveLeaveCol _ ->
+        OnMoveLeaveCol ->
             ( { model | dragCount = model.dragCount - 1 }, out0 [ sendSleep OnMoveLeaveCol_ 15 ] )
 
         OnMoveLeaveCol_ ->
@@ -418,10 +456,13 @@ update_ apis message model =
         GotCardMoved result ->
             ( { model | board_result = withMapData .id result }, noOut )
 
+        GotColMoved result ->
+            ( { model | board_result = withMapData .id result }, noOut )
+
         OnAddCol ->
             let
                 pos =
-                    List.length model.project.columns
+                    model.project.columns |> List.filter (\x -> x.pos >= 0) |> List.length
             in
             ( model, out0 [ Cmd.map ProjectColumnModalMsg (send (ProjectColumnModal.OnOpenAdd pos)) ] )
 
@@ -785,19 +826,22 @@ viewBoard op model =
                 [ div
                     (class "column is-3"
                         :: ternary model.hasTaskMove
-                            (Drag.onDropTarget
-                                { dropEffect = Drag.MoveOnDrop
-                                , onOver = DragOver
-                                , onDrop = always NoMsg
-                                , onEnter = Just <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
-                                , onLeave = Just <| OnMoveLeaveCol
-                                }
-                            )
+                            [ onDragEnter <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
+                            , onDragLeave <| OnMoveLeaveCol
+
+                            -- prevent the "card moving back to its original place" effect
+                            , onDragOverPD NoMsg
+                            ]
                             []
                     )
                     [ div
                         [ class "subtitle"
-                        , onDragEnter (OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid })
+                        , attribute "draggable" "true"
+                        , onDragStart <| OnMoveColumn col
+                        , onDragEnd <| OnMoveColumnEnd
+
+                        -- @debug: allow move card in empty collumn
+                        , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
                         [ viewHeader (model.colEdit == colid) col c1 ]
                     , col.cards
@@ -817,22 +861,18 @@ viewBoard op model =
                                 , div
                                     (class "box is-shrinked2 mb-2 mx-2 kb-card"
                                         :: ternary model.hasTaskMove
-                                            ([ classList
+                                            [ classList
                                                 [ ( "is-dragging", model.movingHoverT /= Nothing )
                                                 , ( "is-dragged", Maybe.map .id model.movingCard == Just card.id )
                                                 ]
-                                             , onClick (OnCardClick (Just card))
-                                             , onMouseEnter (OnCardHover card.id)
-                                             , onMouseLeave OnCardHoverLeave
-                                             , onDragEnter (OnMoveEnterT { pos = j, cardid = card.id, colid = colid })
-                                             ]
-                                                ++ Drag.onSourceDrag
-                                                    { effectAllowed = { move = True, copy = False, link = False }
-                                                    , onStart = OnMove { pos = i, colid = colid, length = cards_len } card
-                                                    , onEnd = always OnMoveEnd
-                                                    , onDrag = Nothing
-                                                    }
-                                            )
+                                            , onClick (OnCardClick (Just card))
+                                            , onMouseEnter (OnCardHover card.id)
+                                            , onMouseLeave OnCardHoverLeave
+                                            , attribute "draggable" "true"
+                                            , onDragStart <| OnMove { pos = i, colid = colid, length = cards_len } card
+                                            , onDragEnd <| OnMoveEnd
+                                            , onDragEnter <| OnMoveEnterT { pos = j, cardid = card.id, colid = colid }
+                                            ]
                                             []
                                     )
                                     (case card.card of
@@ -863,9 +903,9 @@ viewBoard op model =
                                                 x
                                                     ++ [ text "" -- elm bug#1
                                                        , div
-                                                            [ onDragLeave2 (OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True)
-                                                            , class "box"
+                                                            [ class "box"
                                                             , style "opacity" "0"
+                                                            , onDragLeave <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } True
                                                             ]
                                                             []
                                                        ]
@@ -890,9 +930,13 @@ viewBoard op model =
                                             model.movingHoverT
                                             |> withDefault xx
                            )
-                        |> div [ id colid, class "content scrollbar-thin" ]
+                        |> div [ id colid, class "content scrollbar-thin", classList [ ( "fix-overflow", model.cardEdit /= "" ) ] ]
                     ]
-                , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
+                , div
+                    [ class "divider is-vertical2 is-small is-hidden-mobile"
+                    , classList [ ( "is-column-over", model.movingCol /= Nothing && Maybe.map .pos model.movingHoverCol == Just i ) ]
+                    ]
+                    []
                 ]
             )
         |> List.concat
@@ -1149,3 +1193,20 @@ removeCard c columns =
 getCard : String -> ProjectData -> Maybe ProjectCard
 getCard cardid data =
     LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)
+
+
+moveColAt : String -> Int -> List ProjectColumn -> List ProjectColumn
+moveColAt colid pos columns =
+    case LE.findIndex (\a -> a.id == colid) columns of
+        Just i ->
+            case LE.getAt i columns of
+                Just a ->
+                    columns
+                        |> LE.removeAt i
+                        |> insertAt pos a
+
+                Nothing ->
+                    columns
+
+        Nothing ->
+            columns

@@ -180,6 +180,7 @@ hr {
         flex-wrap: wrap;
         gap: 8px 0;
     }
+
 }
 
 .clearfix {
@@ -2287,6 +2288,11 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     }
 }
 
+.fix-overflow {
+    // Fix dropdown cut-off
+    overflow: visible !important;
+}
+
 /*
  *
  * Graph Pack Canvas
@@ -3945,6 +3951,14 @@ input[type=search] {
 
 .is-dragged {
     border: 1px solid var(--link) !important;
+}
+
+.is-column-over {
+    opacity: 1;
+    &::after, &::before {
+        width: 10px;
+        background-color: var(--link);
+    }
 }
 
 .is-growing {

@@ -24,7 +24,6 @@ module Extra.Events exposing (..)
 import Html
 import Html.Attributes
 import Html.Events exposing (custom, keyCode, on, preventDefaultOn, stopPropagationOn)
-import Html.Events.Extra.Drag as Drag
 import Json.Decode as JD
 import Json.Encode as JE
 
@@ -164,12 +163,8 @@ onTab message =
 
 onDragStart : msg -> Html.Attribute msg
 onDragStart message =
-    JD.succeed message
-        |> on "dragstart"
-
-
-
---|> Html.Attributes.property "dataTransfer" (JE.object [ ( "dropEffect", JE.string "move" ) ])
+    on "dragstart" <|
+        JD.succeed message
 
 
 onDragEnd : msg -> Html.Attribute msg
@@ -196,20 +191,39 @@ onDrop message =
         JD.succeed message
 
 
-onDragLeave2 : (Drag.Event -> msg) -> Html.Attribute msg
-onDragLeave2 tag =
-    Drag.eventDecoder
-        |> JD.map (\ev -> { message = tag ev, stopPropagation = True, preventDefault = True })
-        |> Html.Events.custom "dragleave"
+
+-- Prevent default
+
+
+onDragStartPD : msg -> Html.Attribute msg
+onDragStartPD msg =
+    preventDefaultOn "dragstart" <|
+        JD.succeed ( msg, True )
+
+
+onDragEndPD : msg -> Html.Attribute msg
+onDragEndPD msg =
+    preventDefaultOn "dragend" <|
+        JD.succeed ( msg, True )
+
+
+onDropPD : msg -> Html.Attribute msg
+onDropPD msg =
+    preventDefaultOn "drop" <|
+        JD.succeed ( msg, True )
+
+
+onDragOverPD : msg -> Html.Attribute msg
+onDragOverPD msg =
+    preventDefaultOn "dragover" <|
+        JD.succeed ( msg, True )
 
 
 
---custom "drop" <|
---    JD.map
---        (\_ ->
---            { message = message
---            , stopPropagation = True
---            , preventDefault = True
---            }
---        )
---        (JD.succeed message)
+--{-| Elm pointer events
+---}
+--onDragLeave2 : (Drag.Event -> msg) -> Html.Attribute msg
+--onDragLeave2 tag =
+--    Drag.eventDecoder
+--        |> JD.map (\ev -> { message = tag ev, stopPropagation = True, preventDefault = True })
+--        |> Html.Events.custom "dragleave"
