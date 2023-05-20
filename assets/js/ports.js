@@ -23,6 +23,11 @@ import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput } fr
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
+// Drag&Drop support
+// @DEBUG: how to import ?
+//import { DragPorts } from './DragPorts.js'
+
+
 /*
  *
  * Elm outgoing ports
@@ -94,9 +99,11 @@ window.addEventListener('load', _ => {
                 }
             });
 
+            // setup the dragstart and dragover ports subscriptions.
+            //DragPorts.setup( app );
+
         }
     }
-
 })
 
 // Elm outgoing Ports Actions.

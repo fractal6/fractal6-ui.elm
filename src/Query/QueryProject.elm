@@ -175,7 +175,7 @@ moveProjectColumn url id_ pos msg =
     let
         form =
             { colid = id_
-            , post = Dict.fromList [ ( "pos", pos ) ]
+            , post = Dict.fromList [ ( "pos", String.fromInt pos ) ]
             }
     in
     updateProjectColumn url form msg
