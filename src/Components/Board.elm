@@ -301,7 +301,11 @@ update_ apis message model =
 
         -- Move Columns
         OnMoveColumn col ->
-            ( { model | movingCol = Just col }, noOut )
+            if col.col_type == ProjectColumnType.NoStatusColumn then
+                ( model, noOut )
+
+            else
+                ( { model | movingCol = Just col }, noOut )
 
         OnMoveColumnEnd ->
             let
@@ -311,6 +315,9 @@ update_ apis message model =
             Maybe.map2
                 (\col { pos, colid, length } ->
                     if col.id == colid then
+                        ( newModel, noOut )
+
+                    else if (getCol colid model.project |> Maybe.map .col_type) == Just ProjectColumnType.NoStatusColumn then
                         ( newModel, noOut )
 
                     else
@@ -822,6 +829,9 @@ viewBoard op model =
 
                     c1 =
                         List.head col.cards
+
+                    isNoStatusCol =
+                        col.col_type == ProjectColumnType.NoStatusColumn
                 in
                 [ div
                     (class "column is-3"
@@ -836,7 +846,7 @@ viewBoard op model =
                     )
                     [ div
                         [ class "subtitle"
-                        , attribute "draggable" "true"
+                        , attribute "draggable" (ternary isNoStatusCol "false" "true")
                         , onDragStart <| OnMoveColumn col
                         , onDragEnd <| OnMoveColumnEnd
 
@@ -934,7 +944,7 @@ viewBoard op model =
                     ]
                 , div
                     [ class "divider is-vertical2 is-small is-hidden-mobile"
-                    , classList [ ( "is-column-over", model.movingCol /= Nothing && Maybe.map .pos model.movingHoverCol == Just i ) ]
+                    , classList [ ( "is-column-over", model.movingCol /= Nothing && Maybe.map .pos model.movingHoverCol == Just i && not isNoStatusCol ) ]
                     ]
                     []
                 ]
@@ -965,8 +975,9 @@ viewHeader : Bool -> ProjectColumn -> Maybe ProjectCard -> Html Msg
 viewHeader isEdited col card =
     span []
         [ div [ class "level" ]
-            [ div [ class "level-left ml-3" ] [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
-            , span [ class "level-left" ]
+            [ div [ class "level-left ml-3", attribute "style" "cursor:default !important;" ]
+                [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
+            , span [ class "level-right" ]
                 [ span
                     [ class "tag is-rounded-light button-light is-w has-border mx-1"
                     , onClick (OnAddDraft col.id)
@@ -978,7 +989,7 @@ viewHeader isEdited col card =
                         ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
                         (A.icon "icon-more-horizontal is-w is-h icon-lg")
                         (OnToggleColEdit (ternary isEdited "" col.id))
-                        "p-0 has-border-light"
+                        "has-border-light"
                         (div []
                             [ div
                                 [ class "dropdown-item button-light"
@@ -1151,6 +1162,16 @@ viewMediaTension cardid isHovered isEdited focus t =
 --
 
 
+getCard : String -> ProjectData -> Maybe ProjectCard
+getCard cardid data =
+    LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)
+
+
+getCol : String -> ProjectData -> Maybe ProjectColumn
+getCol colid data =
+    LE.find (\a -> a.id == colid) data.columns
+
+
 pushCard : ProjectCard -> List ProjectColumn -> List ProjectColumn
 pushCard c columns =
     LE.updateIf
@@ -1188,11 +1209,6 @@ removeCard c columns =
                     a
         )
         columns
-
-
-getCard : String -> ProjectData -> Maybe ProjectCard
-getCard cardid data =
-    LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)
 
 
 moveColAt : String -> Int -> List ProjectColumn -> List ProjectColumn
