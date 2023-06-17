@@ -148,6 +148,18 @@ initTensionForm tid node_type user =
     }
 
 
+eventFromForm : Ev -> TensionForm -> Event
+eventFromForm event form =
+    { id = ""
+    , createdAt = Dict.get "createdAt" form.post |> withDefault ""
+    , createdBy = Username form.uctx.username
+    , event_type = event.event_type
+    , old = Just event.old
+    , new = Just event.new
+    , mentioned = Nothing
+    }
+
+
 type alias UserForm =
     -- Name is optional but when get user from lookup it
     -- allow to manage two records, a User and UserForm but only one.

@@ -400,8 +400,8 @@ type alias TensionHead =
 
     --, emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
-    , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus
+    , action : Maybe TensionAction.TensionAction
 
     -- Computed
     , isSubscribed : Bool
@@ -414,6 +414,27 @@ type alias TensionHead =
 
     -- Aggregate
     , n_open_contracts : Int
+    }
+
+
+type alias TensionPanel =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , title : String
+    , type_ : TensionType.TensionType
+    , labels : Maybe (List Label)
+    , assignees : Maybe (List User)
+    , receiver : EmitterOrReceiver
+    , status : TensionStatus.TensionStatus
+    , action : Maybe TensionAction.TensionAction
+
+    -- Computed
+    , isSubscribed : Bool
+
+    -- List and Head
+    , history : Maybe (List Event)
+    , comments : Maybe (List Comment)
     }
 
 
@@ -697,11 +718,22 @@ type alias ProjectDraft =
     { id : String
     , title : String
     , message : Maybe String
+    , createdAt : String
+    , createdBy : Username
 
     -- hardcoded / only use to track draft conversion to tension
     , cardid : String
     , colid : String
     , pos : Int
+    }
+
+
+emptyCard : ProjectCard
+emptyCard =
+    { id = ""
+    , colid = ""
+    , pos = -1
+    , card = CardDraft (ProjectDraft "" "" Nothing "" (Username "") "" "" -1)
     }
 
 

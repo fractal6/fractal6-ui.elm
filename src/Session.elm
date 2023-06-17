@@ -140,7 +140,8 @@ type
     | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String
     | DoOpenActionPanel String String (Maybe ( Int, Int ))
-    | DoOpenSidePanel (Maybe { id : String, cards_len : Int })
+    | DoOpenLinkTensionPanel (Maybe { id : String, cards_len : Int })
+    | DoOpenCardPanel ProjectCard
     | DoToggleTreeMenu
     | DoFetchNode String
     | DoAddNodes (List Node)

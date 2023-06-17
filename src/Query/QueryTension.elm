@@ -26,6 +26,7 @@ module Query.QueryTension exposing
     , getTensionBlobs
     , getTensionComments
     , getTensionHead
+    , getTensionPanel
     , nodeFragmentPayload
     , queryAllTension
     , queryAssignedTensions
@@ -64,7 +65,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
 import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, userPayload)
 import RemoteData
 import String.Extra as SE
@@ -90,6 +91,14 @@ getTensionHead url uctx tensionid msg =
     makeGQLQuery url
         (Query.getTension { id = encodeId tensionid }
             (tensionHeadPayload tensionid uctx)
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+getTensionPanel url uctx tensionid msg =
+    makeGQLQuery url
+        (Query.getTension { id = encodeId tensionid }
+            (tensionPanelPayload uctx)
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -132,8 +141,8 @@ tensionHeadPayload tid uctx =
         |> with (Fractal.Object.Tension.assignees identity userPayload)
         --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity (emiterOrReceiverWithPinPayload tid))
-        |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
+        |> with Fractal.Object.Tension.action
         |> (\x ->
                 case uctx.username of
                     "" ->
@@ -203,6 +212,64 @@ tensionHeadPayload tid uctx =
             (SelectionSet.map (unwrap2 0 .count) <|
                 Fractal.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
+            )
+
+
+tensionPanelPayload : UserCtx -> SelectionSet TensionPanel Fractal.Object.Tension
+tensionPanelPayload uctx =
+    SelectionSet.succeed TensionPanel
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with (Fractal.Object.Tension.labels identity labelPayload)
+        |> with (Fractal.Object.Tension.assignees identity userPayload)
+        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with Fractal.Object.Tension.status
+        |> with Fractal.Object.Tension.action
+        |> (\x ->
+                case uctx.username of
+                    "" ->
+                        hardcoded False x
+
+                    username ->
+                        with
+                            (Fractal.Object.Tension.subscribers
+                                (\a ->
+                                    { a
+                                        | filter =
+                                            Input.buildUserFilter
+                                                (\d ->
+                                                    { d | username = Present { eq = Present username, regexp = Absent, in_ = Absent } }
+                                                )
+                                                |> Present
+                                    }
+                                )
+                                (SelectionSet.map identity Fractal.Object.User.username)
+                                |> SelectionSet.map (Maybe.map (\y -> List.length y > 0) >> withDefault False)
+                            )
+                            x
+           )
+        |> with
+            (Fractal.Object.Tension.history
+                (\args ->
+                    { args
+                        | filter =
+                            Input.buildEventFilter
+                                (\x ->
+                                    { x | not = Input.buildEventFilter (\e -> { e | event_type = Present { eq = Present TensionEvent.CommentPushed, in_ = Absent } }) |> Present }
+                                )
+                                |> Present
+                    }
+                )
+                eventPayload
+            )
+        |> with
+            (Fractal.Object.Tension.comments
+                (\args -> { args | first = Present nCommentPerTension })
+                commentPayload
             )
 
 

@@ -19,7 +19,7 @@
 -}
 
 
-module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
+module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view, viewComments)
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
@@ -30,7 +30,7 @@ import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeEr
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.Comments exposing (viewComment, viewTensionCommentInput)
+import Components.Comments exposing (viewComments, viewTensionCommentInput)
 import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
@@ -56,7 +56,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -77,7 +77,6 @@ import Scroll
 import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
 import String.Extra as SE
 import String.Format as Format
-import Task
 import Text as T
 import Time
 import Url exposing (Url)
@@ -543,7 +542,7 @@ type Msg
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
       -- New comment
-    | ChangeCommentPost String String -- {field value}
+    | ChangeCommentPost String String
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | CommentAck (GqlData PatchTensionPayloadID)
       -- Edit comment
@@ -673,7 +672,7 @@ update global message model =
                 ( model, Cmd.none, Cmd.none )
 
             else
-                ( model, Task.perform nextMsg Time.now, Cmd.none )
+                ( model, sendNow nextMsg, Cmd.none )
 
         -- Data queries
         GotPath isInit result ->
@@ -2068,18 +2067,17 @@ viewConversation u t model =
                     )
                 |> withDefault False
 
+        userCanComment =
+            -- Author or member can comment tension.
+            -- is Author
+            (uctx.username == t.createdBy.username)
+                || -- is Member
+                   (getOrgaRoles [ t.receiver.nameid ] uctx.roles /= [])
+
         userInput =
             case u of
                 LoggedIn uctx ->
-                    -- Author or member can comment tension.
-                    if
-                        -- is Author
-                        uctx.username
-                            == t.createdBy.username
-                            || -- is Member
-                               getOrgaRoles [ t.receiver.nameid ] uctx.roles
-                            /= []
-                    then
+                    if userCanComment then
                         let
                             opNew =
                                 { doChangeViewMode = ChangeInputViewMode
@@ -2106,9 +2104,16 @@ viewConversation u t model =
                         text ""
     in
     case model.tension_comments of
-        Success comments ->
+        Success t_comments ->
+            let
+                comments =
+                    withDefault [] t_comments.comments
+
+                history =
+                    withDefault [] t.history
+            in
             div [ class "comments" ]
-                [ Lazy.lazy7 viewComments model.conf t.action t.history comments model.comment_form model.comment_result model.expandedEvents
+                [ Lazy.lazy7 viewComments model.conf t.action history comments model.comment_form model.comment_result model.expandedEvents
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -2119,525 +2124,8 @@ viewConversation u t model =
         LoadingSlowly ->
             div [ class "spinner" ] []
 
-        other ->
+        _ ->
             text ""
-
-
-viewComments :
-    Conf
-    -> Maybe TensionAction.TensionAction
-    -> Maybe (List Event)
-    -> TensionComments
-    -> CommentPatchForm
-    -> GqlData Comment
-    -> List Int
-    -> Html Msg
-viewComments conf action history_m comments_m comment_form comment_result expandedEvents =
-    let
-        comments =
-            withDefault [] comments_m.comments
-
-        history =
-            withDefault [] history_m
-
-        allEvts =
-            -- When event and comment are created at the same time, show the comment first.
-            List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
-                |> List.sortBy .createdAt
-
-        viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
-        viewCommentOrEvent e =
-            case e.type_ of
-                Just _ ->
-                    case LE.getAt e.i history of
-                        Just event ->
-                            viewEvent conf (Dict.get "focusid" comment_form.post) action event
-
-                        Nothing ->
-                            text ""
-
-                Nothing ->
-                    case LE.getAt e.i comments of
-                        Just c ->
-                            let
-                                op =
-                                    { doUpdate = DoUpdateComment
-                                    , doCancelComment = CancelCommentPatch
-                                    , doChangeViewMode = ChangeUpdateViewMode
-                                    , doChangePost = ChangeCommentPatch
-                                    , doSubmit = Submit
-                                    , doEditComment = SubmitCommentPatch
-                                    , doRichText = OnRichText
-                                    , doToggleMdHelp = OnToggleMdHelp
-                                    , doAddReaction = OnAddReaction
-                                    , doDeleteReaction = OnDeleteReaction
-                                    , userSearchInput = Nothing
-                                    , userSearchInputMsg = Nothing
-                                    , conf = conf
-                                    }
-                            in
-                            viewComment op c comment_form comment_result
-
-                        Nothing ->
-                            text ""
-    in
-    allEvts
-        -- Filter events if there a above a given number.
-        -- If above, we keep track of the extra number of event
-        -- until a non-event (i.e a comment) is met.
-        |> LE.indexedFoldr
-            (\i e d ->
-                let
-                    evts =
-                        Tuple.first d
-
-                    state =
-                        Tuple.second d
-
-                    isAbove =
-                        (List.length evts > 6)
-                            && (e.type_ /= Nothing)
-                            && (evts
-                                    |> List.take 6
-                                    |> List.filter (\x -> x.type_ == Nothing)
-                                    |> List.length
-                               )
-                            == 0
-
-                    isClicked =
-                        state.isClicked || List.member i expandedEvents
-                in
-                if e.type_ == Just TensionEvent.Created then
-                    -- Ignore these type
-                    ( evts, state )
-
-                else if isAbove && state.nskip == 0 && not isClicked then
-                    ( evts, { state | nskip = 1, i = i } )
-
-                else if isAbove && state.nskip > 0 && not state.isClicked then
-                    ( evts, { state | nskip = state.nskip + 1 } )
-
-                else if state.nskip > 0 && e.type_ == Nothing && not state.isClicked then
-                    let
-                        btn =
-                            { type_ = Nothing, n = state.nskip, createdAt = "", i = state.i }
-                    in
-                    ( [ e ] ++ [ btn ] ++ evts, { state | nskip = 0, isClicked = False } )
-
-                else if e.type_ == Nothing then
-                    ( [ e ] ++ evts, { state | nskip = 0, isClicked = False } )
-
-                else
-                    ( [ e ] ++ evts, { state | isClicked = isClicked } )
-            )
-            -- The tuple.first: filterered list of events
-            -- The tuple.second: state of the fold loop. We stored the skips when a new comment is
-            -- encoutered in order to insert a button later at the current position.
-            ( [], { nskip = 0, isCollapsed = True, isClicked = False, i = 0 } )
-        |> Tuple.first
-        |> List.map
-            (\x ->
-                if x.n > 0 then
-                    div
-                        [ class "button is-small actionComment m-4"
-                        , attribute "style" "left:10%;"
-                        , onClick (ExpandEvent x.i)
-                        ]
-                        [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
-
-                else
-                    Lazy.lazy viewCommentOrEvent x
-            )
-        |> div []
-
-
-viewEvent : Conf -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent conf focusid_m action event =
-    let
-        eventView =
-            case event.event_type of
-                TensionEvent.Reopened ->
-                    viewEventStatus conf.lang conf.now event TensionStatus.Open
-
-                TensionEvent.Closed ->
-                    viewEventStatus conf.lang conf.now event TensionStatus.Closed
-
-                TensionEvent.TitleUpdated ->
-                    viewEventTitle conf.lang conf.now event
-
-                TensionEvent.TypeUpdated ->
-                    viewEventType conf.lang conf.now event
-
-                TensionEvent.Visibility ->
-                    viewEventVisibility conf.lang conf.now event
-
-                TensionEvent.Authority ->
-                    viewEventAuthority conf.lang conf.now event action
-
-                TensionEvent.AssigneeAdded ->
-                    viewEventAssignee conf.lang conf.now event True
-
-                TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee conf.lang conf.now event False
-
-                TensionEvent.LabelAdded ->
-                    viewEventLabel focusid_m conf.lang conf.now event True
-
-                TensionEvent.LabelRemoved ->
-                    viewEventLabel focusid_m conf.lang conf.now event False
-
-                TensionEvent.BlobPushed ->
-                    viewEventPushed conf.lang conf.now event action
-
-                TensionEvent.BlobArchived ->
-                    viewEventArchived conf.lang conf.now event action True
-
-                TensionEvent.BlobUnarchived ->
-                    viewEventArchived conf.lang conf.now event action False
-
-                TensionEvent.MemberLinked ->
-                    viewEventMemberLinked conf.lang conf.now event action
-
-                TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked conf.lang conf.now event action
-
-                TensionEvent.UserJoined ->
-                    viewEventUserJoined conf.lang conf.now event action
-
-                TensionEvent.UserLeft ->
-                    viewEventUserLeft conf.lang conf.now event action
-
-                TensionEvent.Moved ->
-                    viewEventMoved conf.lang conf.now event
-
-                TensionEvent.Mentioned ->
-                    viewEventMentioned conf.lang conf.now event
-
-                _ ->
-                    []
-    in
-    if eventView == [] then
-        text ""
-
-    else
-        div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
-
-
-viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
-viewEventStatus lang now event status =
-    let
-        ( actionIcon, actionText ) =
-            case status of
-                TensionStatus.Open ->
-                    ( "icon-alert-circle", T.reopened2 )
-
-                TensionStatus.Closed ->
-                    ( "icon-alert-circle", T.closed2 )
-    in
-    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
-    , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventTitle : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventTitle lang now event =
-    let
-        icon =
-            A.icon "icon-edit-2"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventType : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventType lang now event =
-    let
-        icon =
-            A.icon "icon-edit-2"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate lang now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            ]
-        ]
-    ]
-
-
-viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventVisibility lang now event =
-    let
-        icon =
-            A.icon "icon-eye"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate lang now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventAuthority : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventAuthority lang now event action =
-    let
-        ( icon, eventText ) =
-            case tensionAction2NodeType action of
-                Just NodeType.Circle ->
-                    ( A.icon "icon-shield", T.theGovernance )
-
-                Just NodeType.Role ->
-                    ( A.icon "icon-key", T.theAuthority )
-
-                _ ->
-                    ( A.icon "icon-key", "unknown action" )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate lang now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventAssignee : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventAssignee lang now event isNew =
-    let
-        icon =
-            A.icon "icon-user"
-
-        ( actionText, value ) =
-            if isNew then
-                ( T.assigned2, withDefault "" event.new )
-
-            else
-                ( T.unassigned2, withDefault "" event.old )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventLabel : Maybe String -> Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventLabel focusid_m lang now event isNew =
-    let
-        icon =
-            A.icon "icon-tag"
-
-        ( actionText, value ) =
-            if isNew then
-                ( T.addedTheLabel, withDefault "unknown" event.new )
-
-            else
-                ( T.removedTheLabel, withDefault "unknown" event.old )
-
-        label =
-            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
-
-        link =
-            Maybe.map
-                (\nid ->
-                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ label.name)
-                )
-                focusid_m
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [ class "labelsList" ] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" link label, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventPushed : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventPushed lang now event action_m =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-share" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventArchived : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
-viewEventArchived lang now event action_m isArchived =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-
-        ( icon, txt ) =
-            if isArchived then
-                ( A.icon "icon-archive", T.archived2 )
-
-            else
-                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived2 )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberLinked lang now event action_m =
-    [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.linked2 ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberUnlinked lang now event action_m =
-    let
-        action_txt =
-            case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
-                NODE NodeType.Circle ->
-                    T.toThisOrganisation
-
-                _ ->
-                    T.toThisRole
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text action_txt, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventUserJoined : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserJoined lang now event action_m =
-    let
-        action_txt =
-            T.theOrganisation
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.joined2 ], text action_txt, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventUserLeft : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserLeft lang now event action_m =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-
-        action_txt =
-            case event.new of
-                Just type_ ->
-                    case RoleType.fromString type_ of
-                        Just RoleType.Guest ->
-                            T.theOrganisation
-
-                        _ ->
-                            T.this ++ " " ++ decap T.role
-
-                Nothing ->
-                    action2str action |> decap
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.left2 ], text action_txt, text (formatDate lang now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventMoved lang now event =
-    [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
-    , div [ class "media-content" ]
-        [ span [] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username
-                , strong [] [ text T.moved2 ]
-                , text T.from
-                , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text T.to
-                , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text (formatDate lang now event.createdAt)
-                ]
-        ]
-    ]
-
-
-viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventMentioned lang now event =
-    case event.mentioned of
-        Just { id, status, title, receiverid } ->
-            let
-                goto =
-                    withDefault "" event.new
-            in
-            [ div [ class "media-left" ] [ A.icon "icon-message-square" ]
-            , div [ class "media-content" ]
-                [ span [] <|
-                    List.intersperse (text " ")
-                        [ viewUsernameLink event.createdBy.username
-                        , strong [] [ text T.mentioned2 ]
-                        , text (formatDate lang now event.createdAt)
-                        , div []
-                            [ a
-                                [ class "is-strong is-size-6 discrete-link mr-4"
-                                , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
-                                ]
-                                [ span
-                                    [ class "tooltip has-tooltip-arrow"
-                                    , attribute "data-tooltip" (tensionStatus2str status)
-                                    ]
-                                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
-                                , text title
-                                ]
-                            , a
-                                [ class "discrete-link is-discrete"
-                                , href (uriFromNameid OverviewBaseUri receiverid [])
-                                ]
-                                [ receiverid |> String.replace "#" "/" |> text ]
-                            ]
-                        ]
-                ]
-            ]
-
-        Nothing ->
-            []
-
-
-
---
--- </ View Event>
---
 
 
 viewDocument : UserState -> TensionHead -> Blob -> Model -> Html Msg
@@ -3055,19 +2543,3 @@ viewSidePane u t model =
                 else
                     []
                )
-
-
-
----- Utils
-
-
-eventFromForm : Ev -> TensionForm -> Event
-eventFromForm event form =
-    { id = ""
-    , createdAt = Dict.get "createdAt" form.post |> withDefault ""
-    , createdBy = Username form.uctx.username
-    , event_type = event.event_type
-    , old = Just event.old
-    , new = Just event.new
-    , mentioned = Nothing
-    }

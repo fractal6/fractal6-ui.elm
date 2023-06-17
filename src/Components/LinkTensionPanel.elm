@@ -580,7 +580,7 @@ viewPanel op model =
     in
     div [ class "panel" ] <|
         [ div [ class "header-block" ]
-            [ div [ class "panel-heading" ] [ text "Add tension to this project", button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+            [ div [ class "panel-heading" ] [ text T.addLinkedTensions, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
                 [ B.dropdown "link-circle-source"
                     ("mr-2 " ++ ternary model.isOpenTargetFilter "is-active" "")
@@ -652,7 +652,7 @@ viewPanel op model =
                 , classList [ ( "is-loading", Loading.isLoading model.add_result ) ]
                 , disabled (not hasItem)
                 ]
-                [ text "Add selected items" ]
+                [ text T.addSelectedItems ]
             ]
         ]
 
