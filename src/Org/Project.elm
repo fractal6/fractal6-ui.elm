@@ -31,6 +31,7 @@ import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
+import Components.CardPanel as CardPanel
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
@@ -49,7 +50,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -63,7 +64,6 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (getProject)
 import Session exposing (Conf, GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url
@@ -134,8 +134,11 @@ mapGlobalOutcmds gcmds =
                     DoOpenActionPanel a b c ->
                         ( [ send <| OpenActionPanel a b c ], Cmd.none )
 
-                    DoOpenSidePanel a ->
+                    DoOpenLinkTensionPanel a ->
                         ( [ send <| OpenTensionPane a ], Cmd.none )
+
+                    DoOpenCardPanel a ->
+                        ( [ Cmd.map CardPanelMsg (send (CardPanel.OnOpen a)) ], Cmd.none )
 
                     DoToggleTreeMenu ->
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
@@ -177,6 +180,7 @@ type alias Model =
     , projectid : String
     , project_data : GqlData ProjectData
     , linkTensionPanel : LinkTensionPanel.State
+    , cardPanel : CardPanel.State
 
     -- Common
     , conf : Conf
@@ -242,6 +246,7 @@ init global flags =
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
+            , cardPanel = CardPanel.init global.session.user
             , board = Board.init projectid newFocus global.session.user
 
             -- Common
@@ -310,8 +315,9 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
-    | LinkTensionPanelMsg LinkTensionPanel.Msg
     | BoardMsg Board.Msg
+    | LinkTensionPanelMsg LinkTensionPanel.Msg
+    | CardPanelMsg CardPanel.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -329,7 +335,7 @@ update global message model =
             ( { model | project_data = project_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         GotPath isInit result ->
             case result of
@@ -543,6 +549,7 @@ update global message model =
                 cmd =
                     case out.result of
                         Just x ->
+                            -- @TODO : link tension in other views. Data shallow copy accross views !?
                             Cmd.map BoardMsg (send <| Board.OnLinkTension x)
 
                         Nothing ->
@@ -566,6 +573,16 @@ update global message model =
             in
             ( { model | board = data }, out.cmds |> List.map (\m -> Cmd.map BoardMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        CardPanelMsg msg ->
+            let
+                ( data, out ) =
+                    CardPanel.update apis msg model.cardPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | cardPanel = data }, out.cmds |> List.map (\m -> Cmd.map CardPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -580,6 +597,7 @@ subscriptions _ model =
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (LinkTensionPanel.subscriptions model.linkTensionPanel |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
         ++ (Board.subscriptions model.board |> List.map (\s -> Sub.map BoardMsg s))
+        ++ (CardPanel.subscriptions model.cardPanel |> List.map (\s -> Sub.map CardPanelMsg s))
         |> Sub.batch
 
 
@@ -620,7 +638,7 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        Board.view {} model.board |> Html.map BoardMsg
+                        Board.view model.empty model.board |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
@@ -637,6 +655,7 @@ view global model =
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         , LinkTensionPanel.view { tree_data = tree_data, path_data = model.path_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
+        , CardPanel.view model.empty model.cardPanel |> Html.map CardPanelMsg
         ]
     }
 

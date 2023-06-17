@@ -1957,6 +1957,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Convert draft to tension"
   fr="Convertir le draft en tension"
 
+[addLinkedTensions]
+  en="Add tension to this project"
+  fr="Ajouter des tensions à ce projet"
+
+[addSelectedItems]
+  en="Add selected items"
+  fr="Ajouter les éléments sélectionnés"
+
 # ADDME END @next ^
 # --
 #

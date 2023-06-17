@@ -30,7 +30,7 @@ import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Extra exposing (ternary, unwrap)
 import Form.Help as Help
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h1, i, p, text)
 import Html.Attributes exposing (class, id)
 import Html.Lazy as Lazy
@@ -43,7 +43,6 @@ import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserProfile)
 import Session exposing (GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url exposing (Url)
@@ -194,7 +193,7 @@ update global message model =
             ( { model | user = user }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         GotNodes result ->
             case parseErr result model.refresh_trial of

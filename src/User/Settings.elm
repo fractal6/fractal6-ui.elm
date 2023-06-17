@@ -38,7 +38,7 @@ import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -52,7 +52,6 @@ import Query.QueryUser exposing (queryUserFull)
 import RemoteData
 import Requests exposing (updatePassword)
 import Session exposing (GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url exposing (Url)
@@ -285,7 +284,7 @@ update global message model =
             ( { model | user = user }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         SubmitProfile time ->
             ( { model | user_result = Loading }, patchUser apis model.form GotUserPatch, Cmd.none )

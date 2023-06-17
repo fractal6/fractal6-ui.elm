@@ -371,6 +371,8 @@ draftPayload =
         |> with (Fractal.Object.ProjectDraft.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.ProjectDraft.title
         |> with Fractal.Object.ProjectDraft.message
+        |> with (Fractal.Object.ProjectDraft.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.ProjectDraft.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> hardcoded ""
         |> hardcoded ""
         |> hardcoded 0

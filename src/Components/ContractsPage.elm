@@ -39,6 +39,7 @@ import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
+import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
@@ -277,7 +278,7 @@ type Msg
     | CancelCommentPatch
     | ChangeCommentPost String String
     | ChangeCommentPatch String String
-    | SubmitCommentPost Time.Posix
+    | SubmitCommentPost (Maybe TensionStatus.TensionStatus) Time.Posix
     | SubmitCommentPatch Time.Posix
     | CommentAck (GqlData Comment)
     | CommentPatchAck (GqlData Comment)
@@ -542,7 +543,7 @@ update_ apis message model =
             in
             ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
 
-        SubmitCommentPost time ->
+        SubmitCommentPost _ time ->
             let
                 form =
                     model.comment_form

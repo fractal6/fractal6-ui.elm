@@ -45,7 +45,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h2, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -61,7 +61,6 @@ import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
 import Requests exposing (fetchMembersSub)
 import Session exposing (Conf, GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url
@@ -332,7 +331,7 @@ update global message model =
             ( { model | members_top = members_top, members_sub = members_sub }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         GotPath isInit result ->
             case result of

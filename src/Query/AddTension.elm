@@ -113,16 +113,12 @@ addTensionInputEncoder f =
 
         inputReq =
             { createdAt = createdAt
-            , createdBy =
-                Input.buildUserRef
-                    (\x -> { x | username = Present f.uctx.username })
+            , createdBy = Input.buildUserRef (\x -> { x | username = Present f.uctx.username })
             , title = title
             , type_ = withDefault TensionType.Operational f.type_
             , status = withDefault TensionStatus.Open f.status
-            , emitter =
-                Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
-            , receiver =
-                Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
+            , emitter = Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
+            , receiver = Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
             }

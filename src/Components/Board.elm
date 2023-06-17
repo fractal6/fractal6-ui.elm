@@ -212,6 +212,7 @@ type Msg
     | OnAddCards AddCardForm
     | OnAddCardAck (GqlData (List ProjectCard))
     | OpenTensionPane (Maybe ColTarget)
+    | OpenCardPane String
     | OnLinkTension ( String, List ProjectCard )
     | OnConvertDraft String ProjectDraft
     | OnConvertDraftAck ProjectDraft Tension
@@ -636,7 +637,15 @@ update_ apis message model =
 
         --
         OpenTensionPane colTarget ->
-            ( model, out1 [ DoOpenSidePanel colTarget ] )
+            ( model, out1 [ DoOpenLinkTensionPanel colTarget ] )
+
+        OpenCardPane cardid ->
+            case getCard cardid model.project of
+                Just card ->
+                    ( model, out1 [ DoOpenCardPanel card ] )
+
+                Nothing ->
+                    ( model, noOut )
 
         OnLinkTension ( colid, cards ) ->
             let
@@ -853,7 +862,7 @@ viewBoard op model =
                         -- @debug: allow move card in empty collumn
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
-                        [ viewHeader (model.colEdit == colid) col c1 ]
+                        [ viewHeader (model.colEdit == colid) col ]
                     , col.cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -971,8 +980,8 @@ viewBoard op model =
             ]
 
 
-viewHeader : Bool -> ProjectColumn -> Maybe ProjectCard -> Html Msg
-viewHeader isEdited col card =
+viewHeader : Bool -> ProjectColumn -> Html Msg
+viewHeader isEdited col =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3", attribute "style" "cursor:default !important;" ]
@@ -1063,7 +1072,10 @@ viewMediaDraft cardid isHovered isEdited d =
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
-            , div [] [ span [ class "link-like is-human" ] [ text d.title ] ]
+            , div []
+                [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
+                    [ text d.title ]
+                ]
             ]
         ]
 
@@ -1144,7 +1156,8 @@ viewMediaTension cardid isHovered isEdited focus t =
             [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], div [] [ status_html ] ]
             , div []
-                [ span [ class "link-like is-human mr-2" ] [ text t.title ]
+                [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
+                    [ text t.title ]
                 , case t.labels of
                     Just labels ->
                         viewLabels (Just focus.nameid) labels

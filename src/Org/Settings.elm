@@ -48,7 +48,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -63,7 +63,6 @@ import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLoca
 import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
 import Session exposing (GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url exposing (Url)
@@ -522,7 +521,7 @@ update global message model =
             ( { model | labels = labels }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         -- Data queries
         GotPath isInit result ->

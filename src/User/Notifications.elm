@@ -37,7 +37,7 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, target, title)
 import Html.Events exposing (onClick)
@@ -52,7 +52,6 @@ import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
 import Session exposing (Conf, GlobalCmd(..))
-import Task
 import Text as T
 import Time
 import Url exposing (Url)
@@ -331,7 +330,7 @@ update global message model =
             ( { model | notifications_data = withMaybeSlowly model.notifications_data, assigned_data = withMaybeSlowly model.assigned_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
+            ( model, sendNow nextMsg, Cmd.none )
 
         LoadNotifications ->
             ( model
