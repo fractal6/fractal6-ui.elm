@@ -19,10 +19,22 @@
 -}
 
 
-module Components.Comments exposing (..)
+module Components.Comments exposing
+    ( Msg(..)
+    , State
+    , init
+    , subscriptions
+    , update
+    , viewCommentsContract
+    , viewCommentsTension
+    , viewContractCommentInput
+    , viewNewTensionCommentInput
+    , viewTensionCommentInput
+    )
 
 import Assets as A
-import Bulk exposing (CommentPatchForm, InputViewMode(..), TensionForm)
+import Auth exposing (ErrState(..), parseErr)
+import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
@@ -40,49 +52,104 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
+import Global exposing (sendNow)
 import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
+import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..))
+import Loading exposing (GqlData, RequestResult(..), withMapData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, TensionHead, UserCtx)
-import Session exposing (Conf, isMobile)
+import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, ReactionResponse, TensionHead, UserCtx)
+import Ports
+import Query.PatchTension exposing (patchComment, pushTensionPatch)
+import Query.Reaction exposing (addReaction, deleteReaction)
+import Session exposing (Apis, Conf, GlobalCmd, isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
 import Time
 
 
+
+-- ------------------------------
+-- M O D E L
+-- ------------------------------
+
+
+type State
+    = State Model
+
+
 type alias TensionCommon a =
     { a | status : TensionStatus.TensionStatus }
 
 
-type alias Op msg =
-    { doChangeViewMode : InputViewMode -> msg
-    , doExpandEvent : Int -> msg
-    , doChangePost : String -> String -> msg
-    , doRichText : String -> String -> msg
-    , doToggleMdHelp : String -> msg
+type alias Model =
+    { user : UserState
+    , focus : String
+    , comments : List Comment
+    , history : List Event
+    , expandedEvents : List Int
 
-    -- Submit
-    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
-    , doEditComment : Time.Posix -> msg
-    , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
+    -- Form (Title, Status, Comment)
+    , tension_form : TensionForm
+    , tension_patch : GqlData PatchTensionPayloadID
 
-    -- Edit
-    , doUpdate : Comment -> msg
-    , doCancelComment : msg
-    , doAddReaction : String -> Int -> msg
-    , doDeleteReaction : String -> Int -> msg
+    -- Comment Edit
+    , comment_form : CommentPatchForm
+    , comment_result : GqlData Comment
 
     -- Components
-    , userSearchInput : Maybe UserInput.State
-    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
-    , conf : Conf
+    , userInput : UserInput.State
+
+    -- Common
+    , refresh_trial : Int -- use to refresh user token
     }
+
+
+initModel : String -> UserState -> Model
+initModel nameid user =
+    { user = user
+    , focus = nameid
+    , comments = []
+    , history = []
+    , expandedEvents = []
+
+    -- Form (Title, Status, Comment)
+    , tension_form = initTensionForm "" Nothing user
+
+    -- Push Comment / Change status
+    , tension_patch = NotAsked
+
+    -- Comment Edit
+    , comment_form = initCommentPatchForm user [ ( "reflink", "" ), ( "focusid", nameid ) ]
+    , comment_result = NotAsked
+
+    -- Components
+    , userInput = UserInput.init [ nameid ] False False user
+
+    -- Common
+    , refresh_trial = 0
+    }
+
+
+init : String -> UserState -> State
+init nameid user =
+    initModel nameid user |> State
+
+
+
+-- Global methods
+-- not yet
+-- State Controls
+
+
+resetModel : Model -> Model
+resetModel model =
+    initModel model.focus model.user
 
 
 type alias OpNewComment msg =
@@ -139,16 +206,385 @@ type alias OpNewCommentContract msg =
     }
 
 
-viewComments :
-    Op msg
+type Msg
+    = OnSubmit Bool (Time.Posix -> Msg)
+    | ExpandEvent Int
+      -- New Comment
+    | OnChangeComment String String
+    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
+    | CommentAck (GqlData PatchTensionPayloadID)
+      -- Edit comment
+    | OnUpdateComment Comment
+    | OnCancelComment
+    | OnChangeCommentPatch String String
+    | SubmitCommentPatch Time.Posix
+    | CommentPatchAck (GqlData Comment)
+      -- Reaction
+    | OnAddReaction String Int
+    | OnAddReactionAck (GqlData ReactionResponse)
+    | OnDeleteReaction String Int
+    | OnDeleteReactionAck (GqlData ReactionResponse)
+      -- Common
+    | NoMsg
+    | LogErr String
+    | ChangeInputViewMode InputViewMode
+    | ChangeUpdateViewMode InputViewMode
+    | OnRichText String String
+    | OnToggleMdHelp String
+      -- Components
+    | UserInputMsg UserInput.Msg
+
+
+type alias Out =
+    { cmds : List (Cmd Msg)
+    , gcmds : List GlobalCmd
+    , result : Maybe (Maybe TensionStatus.TensionStatus)
+    }
+
+
+noOut : Out
+noOut =
+    Out [] [] Nothing
+
+
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
+    Out cmds [] Nothing
+
+
+out1 : List GlobalCmd -> Out
+out1 cmds =
+    Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
+
+
+update : Apis -> Msg -> State -> ( State, Out )
+update apis message (State model) =
+    update_ apis message model
+        |> Tuple.mapFirst State
+
+
+update_ apis message model =
+    case message of
+        OnSubmit isLoading next ->
+            if isLoading then
+                ( model, noOut )
+
+            else
+                ( model, out0 [ sendNow next ] )
+
+        ExpandEvent i ->
+            -- @fix/bulma: dropdown clidk handler lost during the operation
+            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, noOut )
+
+        OnChangeComment field value ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    if field == "message" && value == "" then
+                        { form | post = Dict.remove field form.post }
+
+                    else
+                        { form | post = Dict.insert field value form.post }
+            in
+            ( { model | tension_form = newForm }, noOut )
+
+        SubmitComment status_m time ->
+            let
+                form =
+                    model.tension_form
+
+                eventStatus =
+                    case status_m of
+                        Just TensionStatus.Open ->
+                            [ Ev TensionEvent.Reopened "Closed" "Open" ]
+
+                        Just TensionStatus.Closed ->
+                            [ Ev TensionEvent.Closed "Open" "Closed" ]
+
+                        Nothing ->
+                            []
+
+                newForm =
+                    { form
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , status = status_m
+                        , events = eventStatus
+                    }
+            in
+            ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
+            , out0 [ pushTensionPatch apis model.tension_form CommentAck ]
+            )
+
+        CommentAck result ->
+            case parseErr result 2 of
+                OkAuth tp ->
+                    let
+                        events =
+                            model.tension_form.events
+
+                        resetForm =
+                            initTensionForm "" Nothing model.user
+                    in
+                    ( { model
+                        | comments =
+                            if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
+                                model.comments ++ withDefault [] tp.comments
+
+                            else
+                                model.comments
+                        , history =
+                            model.history
+                                ++ (events |> List.map (\e -> eventFromForm e model.tension_form))
+                        , tension_form = resetForm
+                        , tension_patch = result
+                      }
+                    , Out [] [] (Just model.tension_form.status)
+                    )
+
+                _ ->
+                    case result of
+                        Failure _ ->
+                            let
+                                form =
+                                    model.tension_form
+
+                                resetForm =
+                                    { form | status = Nothing }
+                            in
+                            ( { model | tension_patch = result, tension_form = resetForm }, noOut )
+
+                        _ ->
+                            ( { model | tension_patch = result }, noOut )
+
+        OnUpdateComment c ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
+
+        OnCancelComment ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, noOut )
+
+        OnChangeCommentPatch field value ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+        SubmitCommentPatch time ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }
+            , out0 [ patchComment apis model.comment_form CommentPatchAck ]
+            )
+
+        CommentPatchAck result ->
+            case parseErr result 2 of
+                OkAuth comment ->
+                    let
+                        comments =
+                            let
+                                n =
+                                    model.comments
+                                        |> LE.findIndex (\c -> c.id == comment.id)
+                                        |> withDefault -1
+                            in
+                            LE.setAt n comment model.comments
+
+                        resetForm =
+                            initCommentPatchForm model.user [ ( "reflink", "" ), ( "focusid", "" ) ]
+                    in
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }, noOut )
+
+                _ ->
+                    ( { model | comment_result = result }, noOut )
+
+        -- Common
+        NoMsg ->
+            ( model, noOut )
+
+        LogErr err ->
+            ( model, out0 [ Ports.logErr err ] )
+
+        ChangeInputViewMode viewMode ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | viewMode = viewMode } }, noOut )
+
+        ChangeUpdateViewMode viewMode ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | viewMode = viewMode } }, noOut )
+
+        OnRichText targetid command ->
+            ( model, out0 [ Ports.richText targetid command ] )
+
+        OnToggleMdHelp targetid ->
+            case targetid of
+                "commentInput" ->
+                    let
+                        form =
+                            model.tension_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | tension_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+                "updateCommentInput" ->
+                    let
+                        form =
+                            model.comment_form
+
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
+        OnAddReaction cid type_ ->
+            case model.user of
+                LoggedIn uctx ->
+                    ( model, out0 [ addReaction apis uctx.username cid type_ OnAddReactionAck ] )
+
+                LoggedOut ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+
+        OnAddReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser model.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
+
+                OkAuth r ->
+                    ( { model | comments = pushCommentReaction uctx.username r model.comments }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
+        OnDeleteReaction cid type_ ->
+            case model.user of
+                LoggedIn uctx ->
+                    ( model, out0 [ deleteReaction apis uctx.username cid type_ OnDeleteReactionAck ] )
+
+                LoggedOut ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+
+        OnDeleteReactionAck result ->
+            let
+                uctx =
+                    uctxFromUser model.user
+            in
+            case parseErr result 2 of
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
+
+                OkAuth r ->
+                    ( { model | comments = removeCommentReaction uctx.username r model.comments }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
+        -- Components
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                cmd =
+                    case out.result of
+                        Just ( selected, us ) ->
+                            if selected then
+                                case us of
+                                    [ u ] ->
+                                        Ports.pushInputSelection u.username
+
+                                    _ ->
+                                        Cmd.none
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
+
+                --( cmds, gcmds ) =
+                --    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | userInput = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m))) out.gcmds )
+
+
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
+    UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+
+
+
+-- ------------------------------
+-- V I E W
+-- ------------------------------
+
+
+viewCommentsContract : Conf -> List Comment -> State -> Html Msg
+viewCommentsContract conf comments (State model) =
+    comments
+        |> List.map
+            (\c -> Lazy.lazy5 viewComment conf c model.comment_form model.comment_result model.userInput)
+        |> div []
+
+
+viewCommentsTension : Conf -> Maybe TensionAction.TensionAction -> List Event -> List Comment -> State -> Html Msg
+viewCommentsTension conf action history comments (State model) =
+    Lazy.lazy8 viewComments_ conf action history comments model.comment_form model.comment_result model.expandedEvents model.userInput
+
+
+viewComments_ :
+    Conf
     -> Maybe TensionAction.TensionAction
     -> List Event
     -> List Comment
     -> CommentPatchForm
     -> GqlData Comment
     -> List Int
-    -> Html msg
-viewComments op action history comments comment_form comment_result expandedEvents =
+    -> UserInput.State
+    -> Html Msg
+viewComments_ conf action history comments comment_form comment_result expandedEvents userInput =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -156,13 +592,13 @@ viewComments op action history comments comment_form comment_result expandedEven
                 ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
                 |> List.sortBy .createdAt
 
-        viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html msg
+        viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
         viewCommentOrEvent e =
             case e.type_ of
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent op.conf (Dict.get "focusid" comment_form.post) action event
+                            viewEvent conf (Dict.get "focusid" comment_form.post) action event
 
                         Nothing ->
                             text ""
@@ -170,7 +606,7 @@ viewComments op action history comments comment_form comment_result expandedEven
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment op c comment_form comment_result
+                            viewComment conf c comment_form comment_result userInput
 
                         Nothing ->
                             text ""
@@ -235,7 +671,7 @@ viewComments op action history comments comment_form comment_result expandedEven
                     div
                         [ class "button is-small actionComment m-4"
                         , attribute "style" "left:10%;"
-                        , onClick (op.doExpandEvent x.i)
+                        , onClick (ExpandEvent x.i)
                         ]
                         [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
 
@@ -245,23 +681,8 @@ viewComments op action history comments comment_form comment_result expandedEven
         |> div []
 
 
-viewCommentInput : Op msg -> TensionForm -> Html msg
-viewCommentInput op form =
-    div [ class "message" ]
-        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" "" op form ]
-        , div [ class "message-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea "textAreaModal" True T.leaveCommentOpt op form ]
-                , p [ class "help-label" ] [ text form.txt.message_help ]
-                , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
-                , br [ class "is-hidden-mobile" ] []
-                ]
-            ]
-        ]
-
-
-viewComment : Op msg -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
-viewComment op c form result =
+viewComment : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
+viewComment conf c form result userInput =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -281,16 +702,16 @@ viewComment op c form result =
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id then
-                viewUpdateInput op c form result
+                viewUpdateInput conf c form result userInput
 
               else
                 div [ class "message" ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
-                        , viewTensionDateAndUserC op.conf c.createdAt c.createdBy
+                        , viewTensionDateAndUserC conf c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
-                                viewUpdated op.conf updatedAt
+                                viewUpdated conf updatedAt
 
                             Nothing ->
                                 text ""
@@ -306,7 +727,7 @@ viewComment op c form result =
                                     ]
                                 , div [ id ("emoticon-" ++ c.id), class "dropdown-menu emojis", attribute "role" "menu" ]
                                     [ Extra.emojis
-                                        |> List.map (\( i, x, _ ) -> span [ onClick (op.doAddReaction c.id i) ] [ text x ])
+                                        |> List.map (\( i, x, _ ) -> span [ onClick (OnAddReaction c.id i) ] [ text x ])
                                         |> div [ class "dropdown-content" ]
                                     ]
                                 ]
@@ -324,7 +745,7 @@ viewComment op c form result =
                                         [ div [ class "dropdown-item button-light", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item button-light", onClick (op.doUpdate c) ] [ text T.edit ]
+                                                    , div [ class "dropdown-item button-light", onClick (OnUpdateComment c) ] [ text T.edit ]
                                                     ]
 
                                                 else
@@ -365,10 +786,10 @@ viewComment op c form result =
                                                     , attribute "aria-controls" elmId
                                                     , attribute "aria-haspopup" "true"
                                                     , if isSelected then
-                                                        onClick (op.doDeleteReaction c.id r.type_)
+                                                        onClick (OnDeleteReaction c.id r.type_)
 
                                                       else
-                                                        onClick (op.doAddReaction c.id r.type_)
+                                                        onClick (OnAddReaction c.id r.type_)
                                                     ]
                                                     [ text (Extra.getEmoji r.type_), span [ class "px-1" ] [], text (String.fromInt count) ]
                                                 , div [ id elmId, class "dropdown-menu", attribute "role" "menu" ]
@@ -394,8 +815,23 @@ viewComment op c form result =
         ]
 
 
-viewUpdateInput : Op msg -> Comment -> CommentPatchForm -> GqlData Comment -> Html msg
-viewUpdateInput op comment form_ result =
+viewNewTensionCommentInput : Conf -> State -> Html Msg
+viewNewTensionCommentInput conf (State model) =
+    div [ class "message" ]
+        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" model.tension_form ]
+        , div [ class "message-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ] [ viewCommentTextarea conf "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
+                , p [ class "help-label" ] [ text model.tension_form.txt.message_help ]
+                , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
+                , br [ class "is-hidden-mobile" ] []
+                ]
+            ]
+        ]
+
+
+viewUpdateInput : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
+viewUpdateInput conf comment form_ result userInput =
     let
         message =
             Dict.get "message" form_.post |> withDefault comment.message
@@ -410,11 +846,11 @@ viewUpdateInput op comment form_ result =
             Loading.isLoading result
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "updateCommentInput" "" op form ]
+        [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "updateCommentInput" form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea "updateCommentInput" False T.leaveComment op form ]
+                    [ viewCommentTextarea conf "updateCommentInput" False T.leaveComment form userInput ]
                 ]
             , case result of
                 Failure err ->
@@ -427,14 +863,14 @@ viewUpdateInput op comment form_ result =
                     [ div [ class "buttons" ]
                         [ button
                             [ class "button"
-                            , onClick op.doCancelComment
+                            , onClick OnCancelComment
                             ]
                             [ text T.cancel ]
                         , button
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (op.doSubmit isLoading op.doEditComment)
+                            , onClick (OnSubmit isLoading SubmitCommentPatch)
                             ]
                             [ text T.update ]
                         ]
@@ -444,28 +880,31 @@ viewUpdateInput op comment form_ result =
         ]
 
 
-viewTensionCommentInput : Op msg -> TensionCommon a -> TensionForm -> GqlData PatchTensionPayloadID -> Html msg
-viewTensionCommentInput op tension form result =
+viewTensionCommentInput : Conf -> TensionCommon a -> State -> Html Msg
+viewTensionCommentInput conf tension (State model) =
     let
+        form =
+            model.tension_form
+
         message =
             Dict.get "message" form.post |> withDefault ""
 
         isLoading =
-            Loading.isLoading result
+            Loading.isLoading model.tension_patch
 
         isSendable =
             isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
 
         doSubmit =
-            ternary isSendable [ onClick (op.doSubmit isLoading <| op.doSubmitComment Nothing) ] []
+            ternary isSendable [ onClick (OnSubmit isLoading <| SubmitComment Nothing) ] []
 
         submitCloseOpenTension =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (op.doSubmit isLoading <| op.doSubmitComment (Just TensionStatus.Closed)) ]
+                    [ onClick (OnSubmit isLoading <| SubmitComment (Just TensionStatus.Closed)) ]
 
                 TensionStatus.Closed ->
-                    [ onClick (op.doSubmit isLoading <| op.doSubmitComment (Just TensionStatus.Open)) ]
+                    [ onClick (OnSubmit isLoading <| SubmitComment (Just TensionStatus.Open)) ]
 
         closeOpenText =
             case tension.status of
@@ -479,13 +918,13 @@ viewTensionCommentInput op tension form result =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" "" op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea "commentInput" False T.leaveComment op form ]
+                            [ viewCommentTextarea conf "commentInput" False T.leaveComment form model.userInput ]
                         ]
-                    , case result of
+                    , case model.tension_patch of
                         Failure err ->
                             if isSendable then
                                 viewGqlErrors err
@@ -522,29 +961,32 @@ viewTensionCommentInput op tension form result =
         ]
 
 
-viewContractCommentInput : Op msg -> CommentPatchForm -> GqlData Comment -> Html msg
-viewContractCommentInput op form result =
+viewContractCommentInput : Conf -> State -> Html Msg
+viewContractCommentInput conf (State model) =
     let
+        form =
+            model.comment_form
+
         isLoading =
-            Loading.isLoading result
+            Loading.isLoading model.comment_result
 
         isSendable =
             isPostSendable [ "message" ] form.post
 
         doSubmit =
-            ternary isSendable [ onClick (op.doSubmit isLoading (op.doSubmitComment Nothing)) ] []
+            ternary isSendable [ onClick (OnSubmit isLoading (SubmitComment Nothing)) ] []
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentContractInput" "" op form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentContractInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea "commentContractInput" False T.leaveComment op form ]
+                            [ viewCommentTextarea conf "commentContractInput" False T.leaveComment form model.userInput ]
                         ]
-                    , case result of
+                    , case model.comment_result of
                         Failure err ->
                             if isSendable then
                                 viewGqlErrors err
@@ -580,34 +1022,41 @@ viewContractCommentInput op form result =
 --
 
 
-viewCommentInputHeader targetid cls_tabs op form =
+viewCommentInputHeader targetid form =
     let
         isMdHelpOpen =
             Dict.get ("isMdHelpOpen" ++ targetid) form.post == Just "true"
+
+        onChangeViewMode =
+            if String.startsWith "update" targetid then
+                ChangeUpdateViewMode
+
+            else
+                ChangeUpdateViewMode
     in
     div [ class "level commentHeader" ]
         [ div [ class "level-left" ]
-            [ div [ class ("tabs is-boxed is-small " ++ cls_tabs) ]
+            [ div [ class "tabs is-boxed is-small" ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickSafe (op.doChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickSafe (op.doChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
+                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickSafe (onChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickSafe (onChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                     ]
                 ]
             ]
         , div [ class "level-right is-hidden-mobile" ]
-            [ div [ onClick (op.doRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
-            , div [ onClick (op.doRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
-            , div [ onClick (op.doRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
-            , div [ onClick (op.doRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
-            , div [ onClick (op.doRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
-            , div [ onClick (op.doRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
-            , div [ onClick (op.doRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+            [ div [ onClick (OnRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
+            , div [ onClick (OnRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
+            , div [ onClick (OnRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
+            , div [ onClick (OnRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
+            , div [ onClick (OnRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
+            , div [ onClick (OnRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
+            , div [ onClick (OnRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
+            , div [ onClick (OnRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
+            , div [ onClick (OnRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
+            , div [ onClick (OnRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
+            , div [ onClick (OnRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
             , div
-                [ onClick (op.doToggleMdHelp targetid)
+                [ onClick (OnToggleMdHelp targetid)
                 , class "tooltip has-tooltip-bottom is-right is-h is-w"
                 , classList [ ( "is-highlight", isMdHelpOpen ) ]
                 , attribute "data-tooltip" T.markdownSupport
@@ -616,7 +1065,7 @@ viewCommentInputHeader targetid cls_tabs op form =
             ]
         , if isMdHelpOpen then
             div [ id "mdLegend", class "box" ]
-                [ button [ class "delete is-pulled-right", onClick (op.doToggleMdHelp targetid) ] []
+                [ button [ class "delete is-pulled-right", onClick (OnToggleMdHelp targetid) ] []
                 , renderMarkdown "" T.markdownHelp
                 ]
 
@@ -625,7 +1074,7 @@ viewCommentInputHeader targetid cls_tabs op form =
         ]
 
 
-viewCommentTextarea targetid isModal placeholder_txt op form =
+viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -634,7 +1083,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if isMobile op.conf.screen then
+            if isMobile conf.screen then
                 if isModal then
                     ( 4, 2 )
 
@@ -649,6 +1098,13 @@ viewCommentTextarea targetid isModal placeholder_txt op form =
 
             else
                 ( 15, 6 )
+
+        onChangePost =
+            if String.startsWith "update" targetid then
+                OnChangeCommentPatch
+
+            else
+                OnChangeComment
     in
     div []
         [ textarea
@@ -658,7 +1114,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form =
             , rows (min max_len (max line_len min_len))
             , placeholder placeholder_txt
             , value message
-            , onInput (op.doChangePost "message")
+            , onInput (onChangePost "message")
 
             --, contenteditable True
             ]
@@ -670,14 +1126,17 @@ viewCommentTextarea targetid isModal placeholder_txt op form =
           else
             text ""
         , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
-            [ Maybe.map2
-                (\userSearchInput userInputMsg ->
-                    UserInput.viewUserSeeker userSearchInput |> Html.map userInputMsg
-                )
-                op.userSearchInput
-                op.userSearchInputMsg
-                |> withDefault (text "")
-            ]
+            [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
+
+        -- @obsolete
+        --[ Maybe.map2
+        --    (\userSearchInput userSearchInputMsg ->
+        --        UserInput.viewUserSeeker userSearchInput |> Html.map userSearchInputMsg
+        --    )
+        --    userInput
+        --    UserInputMsg
+        --    |> withDefault (text "")
+        --]
         ]
 
 
@@ -688,7 +1147,7 @@ viewCommentTextarea targetid isModal placeholder_txt op form =
 --
 
 
-viewEvent : Conf -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html msg
+viewEvent : Conf -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
 viewEvent conf focusid_m action event =
     let
         eventView =
@@ -760,7 +1219,7 @@ viewEvent conf focusid_m action event =
         div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
 
 
-viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html msg)
+viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
 viewEventStatus lang now event status =
     let
         ( actionIcon, actionText ) =
@@ -778,7 +1237,7 @@ viewEventStatus lang now event status =
     ]
 
 
-viewEventTitle : Lang.Lang -> Time.Posix -> Event -> List (Html msg)
+viewEventTitle : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventTitle lang now event =
     let
         icon =
@@ -796,7 +1255,7 @@ viewEventTitle lang now event =
     ]
 
 
-viewEventType : Lang.Lang -> Time.Posix -> Event -> List (Html msg)
+viewEventType : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventType lang now event =
     let
         icon =
@@ -814,7 +1273,7 @@ viewEventType lang now event =
     ]
 
 
-viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html msg)
+viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventVisibility lang now event =
     let
         icon =
@@ -832,7 +1291,7 @@ viewEventVisibility lang now event =
     ]
 
 
-viewEventAuthority : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventAuthority : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventAuthority lang now event action =
     let
         ( icon, eventText ) =
@@ -858,7 +1317,7 @@ viewEventAuthority lang now event action =
     ]
 
 
-viewEventAssignee : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html msg)
+viewEventAssignee : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
 viewEventAssignee lang now event isNew =
     let
         icon =
@@ -880,7 +1339,7 @@ viewEventAssignee lang now event isNew =
     ]
 
 
-viewEventLabel : Maybe String -> Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html msg)
+viewEventLabel : Maybe String -> Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
 viewEventLabel focusid_m lang now event isNew =
     let
         icon =
@@ -912,7 +1371,7 @@ viewEventLabel focusid_m lang now event isNew =
     ]
 
 
-viewEventPushed : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventPushed : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventPushed lang now event action_m =
     let
         action =
@@ -925,7 +1384,7 @@ viewEventPushed lang now event action_m =
     ]
 
 
-viewEventArchived : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html msg)
+viewEventArchived : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
 viewEventArchived lang now event action_m isArchived =
     let
         action =
@@ -945,7 +1404,7 @@ viewEventArchived lang now event action_m isArchived =
     ]
 
 
-viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventMemberLinked lang now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
@@ -954,7 +1413,7 @@ viewEventMemberLinked lang now event action_m =
     ]
 
 
-viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventMemberUnlinked lang now event action_m =
     let
         action_txt =
@@ -972,7 +1431,7 @@ viewEventMemberUnlinked lang now event action_m =
     ]
 
 
-viewEventUserJoined : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventUserJoined : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserJoined lang now event action_m =
     let
         action_txt =
@@ -985,7 +1444,7 @@ viewEventUserJoined lang now event action_m =
     ]
 
 
-viewEventUserLeft : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventUserLeft : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserLeft lang now event action_m =
     let
         action =
@@ -1011,7 +1470,7 @@ viewEventUserLeft lang now event action_m =
     ]
 
 
-viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html msg)
+viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventMoved lang now event =
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]
@@ -1029,7 +1488,7 @@ viewEventMoved lang now event =
     ]
 
 
-viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html msg)
+viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
 viewEventMentioned lang now event =
     case event.mentioned of
         Just { id, status, title, receiverid } ->

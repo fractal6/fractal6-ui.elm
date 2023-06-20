@@ -28,7 +28,7 @@ import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDeco
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
-import Components.Comments exposing (viewComment, viewContractCommentInput)
+import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
@@ -53,7 +53,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
-import Query.PatchContract exposing (pushComment, sendVote)
+import Query.PatchContract exposing (pushContractComment, sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
@@ -272,7 +272,7 @@ type Msg
     | OnContractAck (GqlData ContractFull)
     | OnContractDeleteAck (GqlData IdPayload)
       -- Comments
-    | PushComment
+    | PushContractComment
     | PushCommentPatch
     | DoUpdateComment Comment
     | CancelCommentPatch
@@ -509,8 +509,8 @@ update_ apis message model =
                     ( data, noOut )
 
         -- Comments
-        PushComment ->
-            ( model, out0 [ pushComment apis model.comment_form CommentAck ] )
+        PushContractComment ->
+            ( model, out0 [ pushContractComment apis model.comment_form CommentAck ] )
 
         PushCommentPatch ->
             ( model, out0 [ patchComment apis model.comment_patch_form CommentPatchAck ] )
@@ -558,7 +558,7 @@ update_ apis message model =
                     }
                 , comment_result = LoadingSlowly
               }
-            , out0 [ send PushComment ]
+            , out0 [ send PushContractComment ]
             )
 
         SubmitCommentPatch time ->
@@ -576,7 +576,7 @@ update_ apis message model =
                     ( { model | comment_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep PushComment 500 ] [ DoUpdateToken ] )
+                    ( { model | refresh_trial = i }, out2 [ sendSleep PushContractComment 500 ] [ DoUpdateToken ] )
 
                 OkAuth data ->
                     let
@@ -1025,27 +1025,14 @@ viewContractPage c op model =
         , c.comments
             |> Maybe.map
                 (\comments ->
-                    Lazy.lazy4 viewComments model.conf comments model.comment_patch_form model.comment_result
+                    Comments.viewCommentsContract model.conf comments model.comments |> Html.map CommentsMsg
                 )
             |> withDefault (text "")
         , hr [ class "has-background-border-light is-2" ] []
         , case model.user of
-            LoggedIn uctx ->
+            LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
-                    let
-                        opNew =
-                            { doChangeViewMode = ChangeInputViewMode
-                            , doChangePost = ChangeCommentPost
-                            , doSubmit = OnSubmit
-                            , doSubmitComment = SubmitCommentPost
-                            , doRichText = OnRichText
-                            , doToggleMdHelp = OnToggleMdHelp
-                            , userSearchInput = Just model.userInput
-                            , userSearchInputMsg = Just UserInputMsg
-                            , conf = model.conf
-                            }
-                    in
-                    viewContractCommentInput opNew model.comment_form model.comment_result
+                    Comments.viewContractCommentInput model.conf model.comments
 
                 else
                     text ""
@@ -1209,28 +1196,3 @@ viewVoteBox uctx isValidator participants candidates c model =
             _ ->
                 text ""
         ]
-
-
-viewComments : Conf -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
-viewComments conf comments comment_patch_form comment_result =
-    let
-        opEdit =
-            { doUpdate = DoUpdateComment
-            , doCancelComment = CancelCommentPatch
-            , doChangeViewMode = ChangeUpdateViewMode
-            , doChangePost = ChangeCommentPatch
-            , doSubmit = OnSubmit
-            , doEditComment = SubmitCommentPatch
-            , doRichText = OnRichText
-            , doToggleMdHelp = OnToggleMdHelp
-            , doAddReaction = OnAddReaction
-            , doDeleteReaction = OnDeleteReaction
-            , userSearchInput = Nothing
-            , userSearchInputMsg = Nothing
-            , conf = conf
-            }
-    in
-    comments
-        |> List.map
-            (\c -> Lazy.lazy4 viewComment opEdit c comment_patch_form comment_result)
-        |> div []

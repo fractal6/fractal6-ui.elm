@@ -19,7 +19,7 @@
 -}
 
 
-module Query.PatchContract exposing (pushComment, sendVote)
+module Query.PatchContract exposing (pushContractComment, sendVote)
 
 import Bulk exposing (CommentPatchForm)
 import Bulk.Codecs exposing (memberIdCodec)
@@ -156,7 +156,7 @@ contractCommentDecoder data =
             Nothing
 
 
-pushComment url form msg =
+pushContractComment url form msg =
     makeGQLMutation url
         (Mutation.updateContract
             (commentInputDecoder form)
