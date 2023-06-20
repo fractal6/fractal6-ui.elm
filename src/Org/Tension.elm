@@ -19,7 +19,7 @@
 -}
 
 
-module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view, viewComments)
+module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
@@ -30,7 +30,7 @@ import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeEr
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.Comments exposing (viewComments, viewTensionCommentInput)
+import Components.Comments as Comments
 import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
@@ -2076,22 +2076,9 @@ viewConversation u t model =
 
         userInput =
             case u of
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     if userCanComment then
-                        let
-                            opNew =
-                                { doChangeViewMode = ChangeInputViewMode
-                                , doChangePost = ChangeCommentPost
-                                , doSubmit = Submit
-                                , doSubmitComment = SubmitComment
-                                , doRichText = OnRichText
-                                , doToggleMdHelp = OnToggleMdHelp
-                                , userSearchInput = Just model.userInput
-                                , userSearchInputMsg = Just UserInputMsg
-                                , conf = model.conf
-                                }
-                        in
-                        viewTensionCommentInput opNew t model.tension_form model.tension_patch
+                        Comments.viewTensionCommentInput t model.comments
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -2113,7 +2100,7 @@ viewConversation u t model =
                     withDefault [] t.history
             in
             div [ class "comments" ]
-                [ Lazy.lazy7 viewComments model.conf t.action history comments model.comment_form model.comment_result model.expandedEvents
+                [ Comments.viewComments t.action history comments model.comments
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]

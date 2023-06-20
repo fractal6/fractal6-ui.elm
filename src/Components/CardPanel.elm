@@ -28,7 +28,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), getOrgaRoles)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded)
 import Bulk.View exposing (action2icon, tensionIcon3, viewTensionLight)
-import Components.Comments exposing (viewComments, viewTensionCommentInput)
+import Components.Comments as Comments
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
@@ -83,7 +83,6 @@ type alias Model =
     , isOpen : Bool
     , card : ProjectCard
     , tension_result : GqlData TensionPanel
-    , expandedEvents : List Int
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -93,14 +92,9 @@ type alias Model =
     , isTitleEdit : Bool
     , title_result : GqlData IdPayload
 
-    -- Comment Edit
-    , comment_form : CommentPatchForm
-    , comment_result : GqlData Comment
-
     -- Components
     , assigneesPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
-    , userInput : UserInput.State
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -115,7 +109,6 @@ initModel nameid user =
     , isOpen = False
     , card = emptyCard
     , tension_result = NotAsked
-    , expandedEvents = []
 
     -- Form (Title, Status, Comment)
     , tension_form = initTensionForm "" Nothing user
@@ -127,14 +120,9 @@ initModel nameid user =
     , isTitleEdit = False
     , title_result = NotAsked
 
-    -- Comment Edit
-    , comment_form = initCommentPatchForm user [ ( "reflink", "" ), ( "focusid", nameid ) ]
-    , comment_result = NotAsked
-
     -- Components
     , assigneesPanel = UserSearchPanel.load Nothing user
     , labelsPanel = LabelSearchPanel.load Nothing user
-    , userInput = UserInput.init [ nameid ] False False user
 
     -- Common
     , refresh_trial = 0
@@ -729,7 +717,6 @@ subscriptions (State model) =
         ]
             ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
             ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
-            ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
     else
         []
@@ -819,22 +806,9 @@ viewTensionComments op t model =
 
         userInput =
             case model.user of
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     if userCanComment then
-                        let
-                            opNew =
-                                { doChangeViewMode = ChangeInputViewMode
-                                , doChangePost = ChangeComment
-                                , doSubmit = OnSubmit
-                                , doSubmitComment = SubmitComment
-                                , doRichText = OnRichText
-                                , doToggleMdHelp = OnToggleMdHelp
-                                , userSearchInput = Just model.userInput
-                                , userSearchInputMsg = Just UserInputMsg
-                                , conf = op.conf
-                                }
-                        in
-                        viewTensionCommentInput opNew t model.tension_form model.tension_patch
+                        Comments.viewTensionCommentInput t model.comments
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -853,7 +827,7 @@ viewTensionComments op t model =
             withDefault [] t.history
     in
     div [ class "comments" ]
-        [ Lazy.lazy7 viewComments op.conf t.action history comments model.comment_form model.comment_result model.expandedEvents
+        [ Comments.viewCommentsTension t.action history comments model.comments
         , hr [ class "has-background-border-light is-2" ] []
         , userInput
         ]

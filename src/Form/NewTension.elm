@@ -27,7 +27,7 @@ import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
-import Components.Comments as Comments exposing (viewCommentInputHeader, viewCommentTextarea)
+import Components.Comments as Comments
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
@@ -921,10 +921,6 @@ update_ apis message model =
             let
                 newModel =
                     if model.activeTab == NewTensionTab then
-                        let
-                            form =
-                                model.nodeDoc.form
-                        in
                         { model | nodeDoc = NodeDoc.resetNode model.nodeDoc }
 
                     else
@@ -1503,16 +1499,12 @@ viewTension op model =
                         , p [ class "help-label" ] [ text form.txt.name_help ]
                         , br [] []
                         ]
-                    , Comments.viewCommentInput
-                        { doChangeViewMode = OnChangeInputViewMode
+                    , Comments.viewNewTensionCommentInput
+                        { conf = model.conf
                         , doChangePost = OnChangePost
-                        , doRichText = OnRichText
-                        , doToggleMdHelp = OnToggleMdHelp
-                        , userSearchInput = Just model.userInput
-                        , userSearchInputMsg = Just UserInputMsg
-                        , conf = model.conf
                         }
-                        form
+                        model.comments
+                        |> Html.map CommentsMsg
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
@@ -1700,16 +1692,12 @@ viewNodeValidate model =
         , br [] []
         , if not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ]) then
             div [ class "mt-2" ]
-                [ Comments.viewCommentInput
-                    { doChangeViewMode = OnChangeInputViewMode
+                [ Comments.viewNewTensionCommentInput
+                    { conf = model.conf
                     , doChangePost = OnChangePost
-                    , doRichText = OnRichText
-                    , doToggleMdHelp = OnToggleMdHelp
-                    , userSearchInput = Just model.userInput
-                    , userSearchInputMsg = Just UserInputMsg
-                    , conf = model.conf
                     }
-                    form
+                    model.comments
+                    |> Html.map CommentsMsg
                 ]
 
           else
