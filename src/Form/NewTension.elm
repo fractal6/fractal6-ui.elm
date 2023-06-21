@@ -106,6 +106,7 @@ type alias Model =
     , labelsPanel : LabelSearchPanel.State
     , inviteInput : UserInput.State
     , userInput : UserInput.State
+    , comments : Comments.State
     }
 
 
@@ -190,6 +191,7 @@ initModel user conf =
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
     , inviteInput = UserInput.init [] True False user
     , userInput = UserInput.init [] False False user
+    , comments = Comments.init "" "" user
     }
 
 
@@ -561,6 +563,7 @@ type Msg
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | InviteInputMsg UserInput.Msg
     | UserInputMsg UserInput.Msg
+    | CommentsMsg Comments.Msg
 
 
 type alias Out =
@@ -1097,6 +1100,18 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
             )
 
+        CommentsMsg msg ->
+            let
+                ( data, out ) =
+                    Comments.update apis msg model.comments
+
+                ( cmds, _ ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | comments = data }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds) out.gcmds
+            )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -1131,6 +1146,7 @@ subscriptions (State model) =
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
                     ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+                    ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
             else
                 []
@@ -1499,12 +1515,7 @@ viewTension op model =
                         , p [ class "help-label" ] [ text form.txt.name_help ]
                         , br [] []
                         ]
-                    , Comments.viewNewTensionCommentInput
-                        { conf = model.conf
-                        , doChangePost = OnChangePost
-                        }
-                        model.comments
-                        |> Html.map CommentsMsg
+                    , Comments.viewNewTensionCommentInput model.conf model.comments |> Html.map CommentsMsg
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
@@ -1692,12 +1703,7 @@ viewNodeValidate model =
         , br [] []
         , if not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ]) then
             div [ class "mt-2" ]
-                [ Comments.viewNewTensionCommentInput
-                    { conf = model.conf
-                    , doChangePost = OnChangePost
-                    }
-                    model.comments
-                    |> Html.map CommentsMsg
+                [ Comments.viewNewTensionCommentInput model.conf model.comments |> Html.map CommentsMsg
                 ]
 
           else

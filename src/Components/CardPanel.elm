@@ -25,14 +25,13 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Bulma as B
-import Bulk.Codecs exposing (DocType(..), getOrgaRoles)
+import Bulk.Codecs exposing (DocType(..), NodeFocus, getOrgaRoles)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded)
 import Bulk.View exposing (action2icon, tensionIcon3, viewTensionLight)
 import Components.Comments as Comments
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
-import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
@@ -79,22 +78,20 @@ type State
 
 type alias Model =
     { user : UserState
-    , focus : String
+    , node_focus : NodeFocus
     , isOpen : Bool
     , card : ProjectCard
     , tension_result : GqlData TensionPanel
 
-    -- Form (Title, Status, Comment)
-    , tension_form : TensionForm
-    , tension_patch : GqlData PatchTensionPayloadID
-
-    -- Title Result
+    -- Title
     , isTitleEdit : Bool
     , title_result : GqlData IdPayload
+    , tension_form : TensionForm
 
     -- Components
     , assigneesPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
+    , comments : Comments.State
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -102,27 +99,23 @@ type alias Model =
     }
 
 
-initModel : String -> UserState -> Model
-initModel nameid user =
+initModel : NodeFocus -> UserState -> Model
+initModel focus user =
     { user = user
-    , focus = nameid
+    , node_focus = focus
     , isOpen = False
     , card = emptyCard
     , tension_result = NotAsked
 
-    -- Form (Title, Status, Comment)
-    , tension_form = initTensionForm "" Nothing user
-
-    -- Push Comment / Change status
-    , tension_patch = NotAsked
-
     -- Title Result
     , isTitleEdit = False
     , title_result = NotAsked
+    , tension_form = initTensionForm "" Nothing user
 
     -- Components
     , assigneesPanel = UserSearchPanel.load Nothing user
     , labelsPanel = LabelSearchPanel.load Nothing user
+    , comments = Comments.init focus.nameid "" user
 
     -- Common
     , refresh_trial = 0
@@ -130,9 +123,9 @@ initModel nameid user =
     }
 
 
-init : String -> UserState -> State
-init nameid user =
-    initModel nameid user |> State
+init : NodeFocus -> UserState -> State
+init focus user =
+    initModel focus user |> State
 
 
 
@@ -143,7 +136,7 @@ init nameid user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.focus model.user
+    initModel model.node_focus model.user
 
 
 
@@ -162,22 +155,11 @@ type Msg
     | OnSubmit Bool (Time.Posix -> Msg)
     | OnQueryTension String
     | OnTensionAck (GqlData TensionPanel)
-    | ExpandEvent Int
       -- Title
     | DoChangeTitle
     | CancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
-      -- New Comment
-    | ChangeComment String String
-    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
-    | CommentAck (GqlData PatchTensionPayloadID)
-      -- Edit comment
-    | DoUpdateComment Comment
-    | CancelCommentPatch
-    | ChangeCommentPatch String String
-    | SubmitCommentPatch Time.Posix
-    | CommentPatchAck (GqlData Comment)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -185,18 +167,10 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | ChangeInputViewMode InputViewMode
-    | ChangeUpdateViewMode InputViewMode
-    | OnRichText String String
-    | OnToggleMdHelp String
-    | OnAddReaction String Int
-    | OnAddReactionAck (GqlData ReactionResponse)
-    | OnDeleteReaction String Int
-    | OnDeleteReactionAck (GqlData ReactionResponse)
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
-    | UserInputMsg UserInput.Msg
+    | CommentsMsg Comments.Msg
 
 
 type alias Out =
@@ -237,17 +211,18 @@ update_ apis message model =
         -- Data
         OnOpen card ->
             ( { model | isOpen = True, card = card }
-            , out0
-                [ --Ports.bulma_driver "cardPanel"
-                  case card.card of
-                    CardTension a ->
-                        send (OnQueryTension a.id)
+            , out0 <|
+                [ sendSleep OnOutsideClickClose 500 ]
+                    ++ (case card.card of
+                            CardTension a ->
+                                [ send (OnQueryTension a.id)
+                                , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
+                                ]
 
-                    CardDraft a ->
-                        -- @todo
-                        send NoMsg
-                , sendSleep OnOutsideClickClose 500
-                ]
+                            CardDraft a ->
+                                -- @todo
+                                [ send NoMsg ]
+                       )
             )
 
         OnOutsideClickClose ->
@@ -274,11 +249,26 @@ update_ apis message model =
 
         OnTensionAck result ->
             -- @todo: get isTensionAdmin...
-            ( { model | tension_result = result }, noOut )
+            case result of
+                Success d ->
+                    -- Memory Optimization: Do no store comments twice.
+                    let
+                        comments =
+                            withDefault [] d.comments
 
-        ExpandEvent i ->
-            -- @fix/bulma: dropdown clidk handler lost during the operation
-            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, noOut )
+                        history =
+                            withDefault [] d.history
+                    in
+                    ( { model | tension_result = Success { d | comments = Maybe.map (\_ -> []) d.comments, history = Maybe.map (\_ -> []) d.history } }
+                    , out0
+                        [ Cmd.map CommentsMsg (send <| Comments.SetComments comments)
+                        , Cmd.map CommentsMsg (send <| Comments.SetHistory history)
+                        , Ports.bulma_driver "cardPanel"
+                        ]
+                    )
+
+                _ ->
+                    ( { model | tension_result = result }, noOut )
 
         DoChangeTitle ->
             -- @todo: set titleInput id
@@ -328,162 +318,6 @@ update_ apis message model =
                 _ ->
                     ( { model | title_result = result }, noOut )
 
-        ChangeComment field value ->
-            let
-                form =
-                    model.tension_form
-
-                newForm =
-                    if field == "message" && value == "" then
-                        { form | post = Dict.remove field form.post }
-
-                    else
-                        { form | post = Dict.insert field value form.post }
-            in
-            ( { model | tension_form = newForm }, noOut )
-
-        SubmitComment status_m time ->
-            let
-                form =
-                    model.tension_form
-
-                eventStatus =
-                    case status_m of
-                        Just TensionStatus.Open ->
-                            [ Ev TensionEvent.Reopened "Closed" "Open" ]
-
-                        Just TensionStatus.Closed ->
-                            [ Ev TensionEvent.Closed "Open" "Closed" ]
-
-                        Nothing ->
-                            []
-
-                newForm =
-                    { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , status = status_m
-                        , events = eventStatus
-                    }
-            in
-            ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
-            , out0 [ pushTensionPatch apis model.tension_form CommentAck ]
-            )
-
-        CommentAck result ->
-            case parseErr result 2 of
-                OkAuth tp ->
-                    let
-                        events =
-                            model.tension_form.events
-
-                        tension_r =
-                            case model.tension_result of
-                                Success t ->
-                                    Success
-                                        { t
-                                            | status = withDefault t.status model.tension_form.status
-                                            , history =
-                                                withDefault [] t.history
-                                                    ++ (events
-                                                            |> List.map (\e -> eventFromForm e model.tension_form)
-                                                       )
-                                                    |> Just
-                                            , comments =
-                                                if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
-                                                    Just (withDefault [] t.comments ++ withDefault [] tp.comments)
-
-                                                else
-                                                    t.comments
-                                        }
-
-                                other ->
-                                    other
-
-                        resetForm =
-                            initTensionForm "" Nothing model.user
-                    in
-                    ( { model
-                        | tension_result = tension_r
-                        , tension_form = resetForm
-                        , tension_patch = result
-                      }
-                    , noOut
-                    )
-
-                _ ->
-                    case result of
-                        Failure _ ->
-                            let
-                                form =
-                                    model.tension_form
-
-                                resetForm =
-                                    { form | status = Nothing }
-                            in
-                            ( { model | tension_patch = result, tension_form = resetForm }, noOut )
-
-                        _ ->
-                            ( { model | tension_patch = result }, noOut )
-
-        DoUpdateComment c ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
-
-        CancelCommentPatch ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, noOut )
-
-        ChangeCommentPatch field value ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-        SubmitCommentPatch time ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }
-            , out0 [ patchComment apis model.comment_form CommentPatchAck ]
-            )
-
-        CommentPatchAck result ->
-            case parseErr result 2 of
-                OkAuth comment ->
-                    let
-                        tension_r =
-                            case model.tension_result of
-                                Success t ->
-                                    let
-                                        comments =
-                                            withDefault [] t.comments
-
-                                        n =
-                                            comments
-                                                |> LE.findIndex (\c -> c.id == comment.id)
-                                                |> withDefault 0
-                                    in
-                                    Success { t | comments = Just (LE.setAt n comment comments) }
-
-                                other ->
-                                    other
-
-                        resetForm =
-                            initCommentPatchForm model.user [ ( "reflink", "" ), ( "focusid", "" ) ]
-                    in
-                    ( { model | tension_result = tension_r, comment_form = resetForm, comment_result = result }, noOut )
-
-                _ ->
-                    ( { model | comment_result = result }, noOut )
-
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -500,116 +334,6 @@ update_ apis message model =
 
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
-
-        ChangeInputViewMode viewMode ->
-            let
-                form =
-                    model.tension_form
-            in
-            ( { model | tension_form = { form | viewMode = viewMode } }, noOut )
-
-        ChangeUpdateViewMode viewMode ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | viewMode = viewMode } }, noOut )
-
-        OnRichText targetid command ->
-            ( model, out0 [ Ports.richText targetid command ] )
-
-        OnToggleMdHelp targetid ->
-            case targetid of
-                "commentInput" ->
-                    let
-                        form =
-                            model.tension_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | tension_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-                "updateCommentInput" ->
-                    let
-                        form =
-                            model.comment_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-                _ ->
-                    ( model, noOut )
-
-        OnAddReaction cid type_ ->
-            case model.user of
-                LoggedIn uctx ->
-                    ( model, out0 [ addReaction apis uctx.username cid type_ OnAddReactionAck ] )
-
-                LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
-
-        OnAddReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser model.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
-
-                OkAuth r ->
-                    let
-                        tension_result =
-                            model.tension_result
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (pushCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | tension_result = tension_result }, noOut )
-
-                _ ->
-                    ( model, noOut )
-
-        OnDeleteReaction cid type_ ->
-            case model.user of
-                LoggedIn uctx ->
-                    ( model, out0 [ deleteReaction apis uctx.username cid type_ OnDeleteReactionAck ] )
-
-                LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
-
-        OnDeleteReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser model.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
-
-                OkAuth r ->
-                    let
-                        tension_result =
-                            model.tension_result
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (removeCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | tension_result = tension_result }, noOut )
-
-                _ ->
-                    ( model, noOut )
 
         -- Components
         LabelSearchPanelMsg msg ->
@@ -681,32 +405,14 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds
             )
 
-        UserInputMsg msg ->
+        CommentsMsg msg ->
             let
                 ( data, out ) =
-                    UserInput.update apis msg model.userInput
-
-                cmd =
-                    case out.result of
-                        Just ( selected, us ) ->
-                            if selected then
-                                case us of
-                                    [ u ] ->
-                                        Ports.pushInputSelection u.username
-
-                                    _ ->
-                                        Cmd.none
-
-                            else
-                                Cmd.none
-
-                        Nothing ->
-                            Cmd.none
-
-                --( cmds, gcmds ) =
-                --    mapGlobalOutcmds out.gcmds
+                    Comments.update apis msg model.comments
             in
-            ( { model | userInput = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m))) out.gcmds )
+            ( { model | comments = data }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m)) out.gcmds
+            )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -717,6 +423,7 @@ subscriptions (State model) =
         ]
             ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
             ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+            ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
     else
         []
@@ -798,17 +505,22 @@ viewTensionComments op t model =
                 |> withDefault False
 
         userCanComment =
-            -- Author or member can comment tension.
-            -- is Author
-            (uctx.username == t.createdBy.username)
-                || -- is Member
-                   (getOrgaRoles [ t.receiver.nameid ] uctx.roles /= [])
+            case model.user of
+                LoggedIn uctx ->
+                    -- Author or member can comment tension.
+                    -- is Author
+                    (uctx.username == t.createdBy.username)
+                        || -- is Member
+                           (getOrgaRoles [ t.receiver.nameid ] uctx.roles /= [])
+
+                LoggedOut ->
+                    False
 
         userInput =
             case model.user of
                 LoggedIn _ ->
                     if userCanComment then
-                        Comments.viewTensionCommentInput t model.comments
+                        Comments.viewTensionCommentInput op.conf t model.comments |> Html.map CommentsMsg
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -819,15 +531,9 @@ viewTensionComments op t model =
 
                     else
                         text ""
-
-        comments =
-            withDefault [] t.comments
-
-        history =
-            withDefault [] t.history
     in
     div [ class "comments" ]
-        [ Comments.viewCommentsTension t.action history comments model.comments
+        [ Comments.viewCommentsTension op.conf t.action model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
         , userInput
         ]
