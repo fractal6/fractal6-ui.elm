@@ -469,8 +469,25 @@ update msg model =
                                     Nothing ->
                                         session.path_data
                            )
+
+                -- history is deleted to save memory in page usong the Comments components
+                tension_head =
+                    case model.session.tension_head of
+                        Just source ->
+                            Maybe.map
+                                (\th ->
+                                    if th.history == Nothing then
+                                        { th | history = source.history }
+
+                                    else
+                                        th
+                                )
+                                data
+
+                        Nothing ->
+                            data
             in
-            ( { model | session = { session | tension_head = data, path_data = pdata } }, Cmd.none )
+            ( { model | session = { session | tension_head = tension_head, path_data = pdata } }, Cmd.none )
 
         UpdateSessionProject data ->
             let

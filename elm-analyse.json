@@ -11,7 +11,7 @@
     "UnusedImport": true,
     "UnusedImportAlias": true,
     "UnusedImportedVariable": true,
-    "UnusedPatternVariable": true,
+    "UnusedPatternVariable": false,
     "UnusedTopLevel": true,
     "UnusedTypeAlias": true,
     "UnusedValueConstructor": true,

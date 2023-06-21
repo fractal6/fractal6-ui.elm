@@ -235,12 +235,12 @@ update_ apis message model =
             --
             ( resetModel model, out0 [ Ports.click "" ] )
 
-        OnSubmit isLoading next ->
-            if isLoading then
-                ( model, noOut )
+        OnSubmit isSendable next ->
+            if isSendable then
+                ( model, out0 [ sendNow next ] )
 
             else
-                ( model, out0 [ sendNow next ] )
+                ( model, noOut )
 
         OnQueryTension tid ->
             ( { model | tension_result = Loading }
@@ -259,7 +259,7 @@ update_ apis message model =
                         history =
                             withDefault [] d.history
                     in
-                    ( { model | tension_result = Success { d | comments = Maybe.map (\_ -> []) d.comments, history = Maybe.map (\_ -> []) d.history } }
+                    ( { model | tension_result = Success { d | comments = Nothing, history = Nothing } }
                     , out0
                         [ Cmd.map CommentsMsg (send <| Comments.SetComments comments)
                         , Cmd.map CommentsMsg (send <| Comments.SetHistory history)

@@ -22,7 +22,7 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
+import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
@@ -106,7 +106,7 @@ initBlob nf data =
     in
     { data
         | node = nf
-        , form = { form | node = nf }
+        , form = { form | node = nf, txt = initFormText nf.type_ }
         , result = NotAsked
     }
 
@@ -554,7 +554,7 @@ viewNodeStatus op =
                     in
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
-                        , onClick (op.onSubmit isLoading <| op.onPushBlob op.blob.id)
+                        , onClick (op.onSubmit (not isLoading) <| op.onPushBlob op.blob.id)
                         , title T.publishTitle
                         ]
                         [ A.icon1 "icon-share" T.publish
@@ -1118,7 +1118,7 @@ viewBlobButtons blob_type isSendable isLoading op =
                         [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (op.onSubmit isLoading <| op.onSubmitBlob data)
+                        , onClick (op.onSubmit (not isLoading) <| op.onSubmitBlob data)
                         ]
                         [ text T.saveChanges ]
                     ]

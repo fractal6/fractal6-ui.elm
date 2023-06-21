@@ -30,7 +30,7 @@ import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeEr
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.Comments as Comments
+import Components.Comments as Comments exposing (OutType(..))
 import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
@@ -224,7 +224,6 @@ type alias Model =
     -- Blob Edit
     , nodeDoc : NodeDoc
     , publish_result : GqlData TensionBlobFlag
-    , hasBeenPushed : Bool
 
     -- Side Pane
     , isTensionAdmin : Bool
@@ -384,13 +383,6 @@ init global flags =
                                     x
                        )
             , publish_result = NotAsked
-            , hasBeenPushed =
-                case global.session.tension_head of
-                    Just th ->
-                        th.history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
-
-                    Nothing ->
-                        False
 
             -- Side Pane
             , isTensionAdmin = withDefault False global.session.isAdmin
@@ -421,9 +413,23 @@ init global flags =
 
         refresh =
             Maybe.map (\x -> id3Changed x.id global.url) global.session.tension_head |> withDefault True
+
+        -- Memory optimization
+        ( tension_head, hist_cmd ) =
+            case model.tension_head of
+                Success th ->
+                    ( Success { th | history = Nothing }
+                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
+                    )
+
+                _ ->
+                    ( model.tension_head, Cmd.none )
     in
-    ( { model | subscribe_result = withMapData .isSubscribed model.tension_head }
-    , Cmd.batch (refresh_cmds refresh global model)
+    ( { model
+        | subscribe_result = withMapData .isSubscribed model.tension_head
+        , tension_head = tension_head
+      }
+    , Cmd.batch (hist_cmd :: refresh_cmds refresh global model)
     , if fs.menuChange || refresh then
         -- No refresh here because all the focus is not encoded in the tension URL.
         send (UpdateSessionFocus (Just newFocus))
@@ -666,12 +672,12 @@ update global message model =
             in
             ( { model | tension_head = tension_h, tension_comments = tension_c, tension_blobs = tension_b }, Cmd.none, Cmd.none )
 
-        Submit isLoading nextMsg ->
-            if isLoading then
-                ( model, Cmd.none, Cmd.none )
+        Submit isSendable nextMsg ->
+            if isSendable then
+                ( model, sendNow nextMsg, Cmd.none )
 
             else
-                ( model, sendNow nextMsg, Cmd.none )
+                ( model, Cmd.none, Cmd.none )
 
         -- Data queries
         GotPath isInit result ->
@@ -737,9 +743,6 @@ update global message model =
 
                 OkAuth th ->
                     let
-                        hasBeenPushed =
-                            th.history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
-
                         ( targetid, nodeDoc ) =
                             case th.action of
                                 Just action ->
@@ -749,7 +752,7 @@ update global message model =
                                                 node =
                                                     nodeFromTension th
                                             in
-                                            ( ternary hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
+                                            ( ternary th.hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
                                             , NodeDoc.initBlob node model.nodeDoc
                                             )
 
@@ -776,8 +779,7 @@ update global message model =
                     in
                     ( { model
                         -- Memory Optimization: Do no store history twice.
-                        | tension_head = Success { th | history = Maybe.map (\_ -> []) th.history }
-                        , hasBeenPushed = hasBeenPushed
+                        | tension_head = Success { th | history = Nothing }
                         , subscribe_result = fromMaybeData (Just th.isSubscribed) model.subscribe_result
                         , nodeDoc = nodeDoc
                         , isTensionAdmin = ternary hasLocalGraph isAdmin model.isTensionAdmin
@@ -789,21 +791,16 @@ update global message model =
                             (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
-                        , Cmd.map CommentsMsg (send <| Comments.SetHistory (withDefault [] th.history))
+                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
                         ]
                     , Cmd.batch
                         [ send (UpdateSessionTensionHead (withMaybeData result))
-                        , ternary hasLocalGraph
-                            (send (UpdateSessionAdmin (Just isAdmin)))
-                            Cmd.none
+                        , ternary hasLocalGraph (send (UpdateSessionAdmin (Just isAdmin))) Cmd.none
                         ]
                     )
 
                 _ ->
-                    ( { model | tension_head = result }
-                    , Ports.bulma_driver ""
-                    , send (UpdateSessionTensionHead (withMaybeData result))
-                    )
+                    ( { model | tension_head = result }, Cmd.none, send (UpdateSessionTensionHead (withMaybeData result)) )
 
         GotIsSubscribe result ->
             case parseErr result model.refresh_trial of
@@ -827,9 +824,9 @@ update global message model =
             case result of
                 Success d ->
                     -- Memory Optimization: Do no store comments twice.
-                    ( { model | tension_comments = Success { d | comments = Maybe.map (\_ -> []) d.comments } }
+                    ( { model | tension_comments = Success { d | comments = Nothing } }
                     , Cmd.map CommentsMsg (send <| Comments.SetComments (withDefault [] d.comments))
-                    , Ports.bulma_driver ""
+                    , Cmd.none
                     )
 
                 _ ->
@@ -1165,7 +1162,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.user, title_result = NotAsked }, Cmd.none, Cmd.none )
 
         SubmitTitle time ->
             let
@@ -1208,7 +1205,7 @@ update global message model =
                             initTensionForm model.tensionid Nothing global.session.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
-                    , Ports.bulma_driver ""
+                    , Cmd.none
                     , send (UpdateSessionTensionHead (withMaybeData tension_h))
                     )
 
@@ -1264,15 +1261,7 @@ update global message model =
                             case model.tension_head of
                                 Success t ->
                                     Success
-                                        { t
-                                            | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
-                                            , history =
-                                                withDefault [] t.history
-                                                    ++ (model.tension_form.events
-                                                            |> List.map (\e -> eventFromForm e model.tension_form)
-                                                       )
-                                                    |> Just
-                                        }
+                                        { t | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs }
 
                                 other ->
                                     other
@@ -1286,7 +1275,7 @@ update global message model =
                                     newDoc
                     in
                     ( { model | tension_head = th, nodeDoc = nd |> NodeDoc.reset }
-                    , Ports.bulma_driver ""
+                    , Cmd.batch [ Cmd.map CommentsMsg (send <| Comments.PushEvents (List.map (\e -> eventFromForm e model.tension_form) model.tension_form.events)) ]
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
 
@@ -1294,10 +1283,7 @@ update global message model =
                     ( { model | nodeDoc = newDoc }, Cmd.none, Cmd.none )
 
         CancelBlob ->
-            ( { model | nodeDoc = NodeDoc.reset model.nodeDoc }
-            , Cmd.none
-            , Ports.bulma_driver ""
-            )
+            ( { model | nodeDoc = NodeDoc.reset model.nodeDoc }, Cmd.none, Cmd.none )
 
         PushBlob bid time ->
             let
@@ -1342,18 +1328,17 @@ update global message model =
                                         |> withDefault Nothing
 
                                 newTh =
-                                    { th | blobs = blobs, title = r.title }
+                                    { th | blobs = blobs, title = r.title, hasBeenPushed = True }
 
                                 resetForm =
                                     initTensionForm model.tensionid Nothing global.session.user
                             in
                             ( { model
-                                | publish_result = result
-                                , tension_head = Success newTh
+                                | tension_head = Success newTh
                                 , tension_form = resetForm
-                                , hasBeenPushed = True
+                                , publish_result = result
                               }
-                            , Cmd.none
+                            , Cmd.batch [ Cmd.map CommentsMsg (send <| Comments.PushEvents (List.map (\e -> eventFromForm e model.tension_form) model.tension_form.events)) ]
                             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (Just newTh)) ]
                             )
 
@@ -1769,10 +1754,24 @@ update global message model =
                 ( data, out ) =
                     Comments.update apis msg model.comments
 
+                ( tension_head, gcmd ) =
+                    case out.result of
+                        Just (TensionCommentAdded status) ->
+                            let
+                                th =
+                                    withMapData (\t -> { t | status = withDefault t.status status }) model.tension_head
+                            in
+                            ( th
+                            , send (UpdateSessionTensionHead (withMaybeData th))
+                            )
+
+                        _ ->
+                            ( model.tension_head, Cmd.none )
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | comments = data }, out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | comments = data, tension_head = tension_head }, out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch (gcmd :: gcmds) )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1933,9 +1932,6 @@ viewTension u t model =
 
                             isSendable =
                                 title /= t.title
-
-                            doSubmit =
-                                ternary isSendable [ onClick (Submit isLoading SubmitTitle) ] []
                         in
                         [ div [ class "field is-grouped" ]
                             [ p [ class "control is-expanded" ]
@@ -1952,12 +1948,11 @@ viewTension u t model =
                                 ]
                             , p [ class "control buttons" ]
                                 [ button
-                                    ([ class "button is-success is-small"
-                                     , classList [ ( "is-loading", isLoading ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ doSubmit
-                                    )
+                                    [ class "button is-success is-small"
+                                    , classList [ ( "is-loading", isLoading ) ]
+                                    , disabled (not isSendable)
+                                    , onClick (Submit (isSendable && not isLoading) SubmitTitle)
+                                    ]
                                     [ text T.update ]
                                 , button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
                                 ]
@@ -2123,7 +2118,7 @@ viewDocument u t b model =
                 , leads = []
                 , isLazy = False
                 , source = model.baseUri
-                , hasBeenPushed = model.hasBeenPushed
+                , hasBeenPushed = t.hasBeenPushed
                 , receiver = t.receiver.nameid
                 , hasInnerToolbar = False
                 }
@@ -2208,7 +2203,7 @@ viewSidePane u t model =
             isAdmin || isAuthor
 
         hasBlobRight =
-            isAdmin && model.hasBeenPushed && blob_m /= Nothing
+            isAdmin && t.hasBeenPushed && blob_m /= Nothing
 
         rid =
             nid2rootid t.receiver.nameid
@@ -2362,8 +2357,8 @@ viewSidePane u t model =
                                 LoggedOut ->
                                     [ h2 [ class "subtitle" ] [ text T.document ] ]
                             )
-                                ++ [ viewNodeDescr True node tc ]
-                                ++ [ -- Node Artefact
+                                ++ [ viewNodeDescr True node tc
+                                   , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
                                             viewCircleTarget { noMsg = NoMsg } "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
@@ -2371,7 +2366,7 @@ viewSidePane u t model =
                                         NodeType.Role ->
                                             case node.role_type of
                                                 Just rt ->
-                                                    if model.hasBeenPushed then
+                                                    if t.hasBeenPushed then
                                                         viewRole "mb-2" False False Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
@@ -2379,15 +2374,13 @@ viewSidePane u t model =
 
                                                 Nothing ->
                                                     text ""
-                                   ]
-                                ++ [ Maybe.map
+                                   , Maybe.map
                                         (\fs ->
                                             div [ class "mt-2" ] [ span [ class "is-highlight" ] [ A.icon1 "icon-user" T.firstLink, text ": " ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
-                                   ]
-                                ++ [ if tc.action_type == ARCHIVE then
+                                   , if tc.action_type == ARCHIVE then
                                         div [ class "mt-2 has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
 
                                      else
@@ -2480,7 +2473,7 @@ viewSidePane u t model =
                         ++ (if isAdmin then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
-                                    , onClick (Submit False <| ternary t.isPinned UnpinTension PinTension)
+                                    , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
                                     [ A.icon "icon-pin mr-1", ternary t.isPinned (text T.unpinTension) (text T.pinTension) ]
                                 ]

@@ -27,7 +27,7 @@ import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
-import Components.Comments as Comments
+import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
@@ -621,12 +621,12 @@ update_ apis message model =
         PushTension ack ->
             ( model, out0 [ addOneTension apis model.nodeDoc.form ack ] )
 
-        OnSubmit isLoading next ->
-            if isLoading then
-                ( model, noOut )
+        OnSubmit isSendable next ->
+            if isSendable then
+                ( model, out0 [ sendNow next ] )
 
             else
-                ( model, out0 [ sendNow next ] )
+                ( model, noOut )
 
         GotPath isInit result ->
             case result of
@@ -1105,11 +1105,19 @@ update_ apis message model =
                 ( data, out ) =
                     Comments.update apis msg model.comments
 
+                cmd =
+                    case out.result of
+                        Just (PostChanged ( k, v )) ->
+                            send (OnChangePost k v)
+
+                        _ ->
+                            Cmd.none
+
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
             in
             ( { model | comments = data }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds) out.gcmds
+            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append (cmd :: cmds)) out.gcmds
             )
 
         -- Confirm Modal
@@ -1485,9 +1493,6 @@ viewTension op model =
 
         isSendable =
             isPostSendable [ "title" ] form.post
-
-        submitTension =
-            ternary isSendable [ onClick (OnSubmit isLoading <| OnSubmitTension False) ] []
     in
     case model.result of
         Success res ->
@@ -1546,12 +1551,11 @@ viewTension op model =
                         , div [ class "level-right" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button is-success defaultSubmit"
-                                     , classList [ ( "is-loading", isLoading ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ submitTension
-                                    )
+                                    [ class "button is-success defaultSubmit"
+                                    , classList [ ( "is-loading", isLoading ) ]
+                                    , disabled (not isSendable)
+                                    , onClick (OnSubmit (isSendable && not isLoading) (OnSubmitTension False))
+                                    ]
                                     [ text form.txt.submit ]
                                 ]
                             ]
@@ -1574,12 +1578,6 @@ viewCircle op model =
 
         isSendable =
             isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map .purpose) /= Nothing
-
-        submitTension =
-            ternary isSendable [ onClickSafe (OnSubmit isLoading <| OnSubmitTension False) ] []
-
-        submitCloseTension =
-            ternary isSendable [ onClickSafe (OnSubmit isLoading <| OnSubmitTension True) ] []
     in
     case model.result of
         Success res ->
@@ -1628,22 +1626,20 @@ viewCircle op model =
                                         , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
                                                 [ button
-                                                    ([ class "button is-warning"
-                                                     , classList
+                                                    [ class "button is-warning"
+                                                    , classList
                                                         [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
-                                                     , disabled (not isSendable || isLoading)
-                                                     ]
-                                                        ++ submitTension
-                                                    )
+                                                    , disabled (not isSendable || isLoading)
+                                                    , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension False)
+                                                    ]
                                                     [ text form.txt.submit ]
                                                 , button
-                                                    ([ class "button is-success defaultSubmit"
-                                                     , classList
+                                                    [ class "button is-success defaultSubmit"
+                                                    , classList
                                                         [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
-                                                     , disabled (not isSendable || isLoading)
-                                                     ]
-                                                        ++ submitCloseTension
-                                                    )
+                                                    , disabled (not isSendable || isLoading)
+                                                    , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension True)
+                                                    ]
                                                     [ text form.txt.close_submit ]
                                                 ]
                                             ]
@@ -1844,7 +1840,7 @@ viewInviteRole model =
                         [ class "button is-light is-link"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isUsersSendable form.users) || isLoading)
-                        , onClick (OnSubmit isLoading OnInvite)
+                        , onClick (OnSubmit (not isLoading) OnInvite)
                         ]
                         [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> text ]
                     ]
