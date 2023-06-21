@@ -122,15 +122,18 @@ getTensionBlobs url tensionid msg =
 tensionHeadPayload : String -> UserCtx -> SelectionSet TensionHead Fractal.Object.Tension
 tensionHeadPayload tid uctx =
     SelectionSet.succeed
-        (\a b c d e f g h i j k l m n o p ->
+        (\a b c d e f g receiver i j k l m n o history q ->
             let
                 eor =
-                    EmitterOrReceiver h.name h.nameid h.role_type h.color
+                    EmitterOrReceiver receiver.name receiver.nameid receiver.role_type receiver.color
 
                 isPinned =
-                    h.pinned == Just [ { id = tid } ]
+                    receiver.pinned == Just [ { id = tid } ]
+
+                hasBeenPushed =
+                    history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
             in
-            TensionHead a b c d e f g eor i j k isPinned m n o p
+            TensionHead a b c d e f g eor i j k hasBeenPushed isPinned n o history q
         )
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
@@ -166,6 +169,7 @@ tensionHeadPayload tid uctx =
                             )
                             x
            )
+        |> hardcoded False
         |> hardcoded False
         |> with
             (Fractal.Object.Tension.blobs

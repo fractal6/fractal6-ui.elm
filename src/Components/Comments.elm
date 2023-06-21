@@ -21,6 +21,7 @@
 
 module Components.Comments exposing
     ( Msg(..)
+    , OutType(..)
     , State
     , init
     , subscriptions
@@ -165,8 +166,12 @@ type Msg
     | SetContractid String
     | SetComments (List Comment)
     | SetHistory (List Event)
-      -- Push Comment
+    | PushEvents (List Event)
+      -- Change Post
     | OnChangeComment String String
+    | OnChangeContractComment String String
+    | OnChangeCommentPatch String String
+      -- Push Comment
     | SubmitTensionComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | TensionCommentAck (GqlData PatchTensionPayloadID)
     | SubmitContractComment Time.Posix
@@ -174,7 +179,6 @@ type Msg
       -- Edit comment
     | OnUpdateComment Comment
     | OnCancelComment String
-    | OnChangeCommentPatch String String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
       -- Reaction
@@ -187,6 +191,7 @@ type Msg
     | NoMsg
     | LogErr String
     | ChangeInputViewMode InputViewMode
+    | ChangeContractInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
     | OnToggleMdHelp String
@@ -197,8 +202,13 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe (Maybe TensionStatus.TensionStatus)
+    , result : Maybe OutType
     }
+
+
+type OutType
+    = TensionCommentAdded (Maybe TensionStatus.TensionStatus)
+    | PostChanged ( String, String )
 
 
 noOut : Out
@@ -229,12 +239,12 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnSubmit isLoading next ->
-            if isLoading then
-                ( model, noOut )
+        OnSubmit isSendable next ->
+            if isSendable then
+                ( model, out0 [ sendNow next ] )
 
             else
-                ( model, out0 [ sendNow next ] )
+                ( model, noOut )
 
         ExpandEvent i ->
             -- @fix/bulma: dropdown clidk handler lost during the operation
@@ -261,10 +271,14 @@ update_ apis message model =
             ( { model | contract_form = contract_form }, noOut )
 
         SetComments comments ->
-            ( { model | comments = comments }, noOut )
+            ( { model | comments = comments }, out0 [ Ports.bulma_driver "" ] )
 
         SetHistory history ->
             ( { model | history = history }, noOut )
+
+        PushEvents events ->
+            -- @todo: update tension_head history here (need to create a Session.Cmd to handle this.
+            ( { model | history = model.history ++ events }, noOut )
 
         OnChangeComment field value ->
             let
@@ -278,7 +292,21 @@ update_ apis message model =
                     else
                         { form | post = Dict.insert field value form.post }
             in
-            ( { model | tension_form = tension_form }, noOut )
+            ( { model | tension_form = tension_form }, Out [] [] (Just (PostChanged ( field, value ))) )
+
+        OnChangeContractComment field value ->
+            let
+                form =
+                    model.contract_form
+
+                contract_form =
+                    if field == "message" && value == "" then
+                        { form | post = Dict.remove field form.post }
+
+                    else
+                        { form | post = Dict.insert field value form.post }
+            in
+            ( { model | contract_form = contract_form }, Out [] [] (Just (PostChanged ( field, value ))) )
 
         SubmitTensionComment status_m time ->
             let
@@ -327,7 +355,7 @@ update_ apis message model =
                         , tension_form = resetForm
                         , tension_patch = result
                       }
-                    , Out [ Ports.bulma_driver "" ] [] (Just model.tension_form.status)
+                    , Out [ Ports.bulma_driver "" ] [] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -369,7 +397,7 @@ update_ apis message model =
                     in
                     ( { model
                         | comments =
-                            if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
+                            if (Dict.get "message" model.contract_form.post |> withDefault "") /= "" then
                                 model.comments ++ [ comment ]
 
                             else
@@ -388,7 +416,7 @@ update_ apis message model =
                 form =
                     model.comment_form
             in
-            ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
+            ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
 
         OnCancelComment createdAt ->
             let
@@ -450,6 +478,13 @@ update_ apis message model =
                     model.tension_form
             in
             ( { model | tension_form = { form | viewMode = viewMode } }, noOut )
+
+        ChangeContractInputViewMode viewMode ->
+            let
+                form =
+                    model.contract_form
+            in
+            ( { model | contract_form = { form | viewMode = viewMode } }, noOut )
 
         ChangeUpdateViewMode viewMode ->
             let
@@ -890,7 +925,7 @@ viewUpdateInput conf comment form_ result userInput =
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit isLoading SubmitCommentPatch)
+                            , onClick (OnSubmit (isSendable && not isLoading) SubmitCommentPatch)
                             ]
                             [ text T.update ]
                         ]
@@ -915,24 +950,20 @@ viewTensionCommentInput conf tension (State model) =
         isSendable =
             isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
 
-        doSubmit =
-            ternary isSendable [ onClick (OnSubmit isLoading <| SubmitTensionComment Nothing) ] []
+        submit =
+            onClick (OnSubmit (isSendable && not isLoading) <| SubmitTensionComment Nothing)
 
-        submitCloseOpenTension =
+        ( submitCloseOpen, closeOpenTxt ) =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (OnSubmit isLoading <| SubmitTensionComment (Just TensionStatus.Closed)) ]
+                    ( onClick (OnSubmit (not isLoading) <| SubmitTensionComment (Just TensionStatus.Closed))
+                    , ternary (message == "") T.close T.closeComment
+                    )
 
                 TensionStatus.Closed ->
-                    [ onClick (OnSubmit isLoading <| SubmitTensionComment (Just TensionStatus.Open)) ]
-
-        closeOpenText =
-            case tension.status of
-                TensionStatus.Open ->
-                    ternary (message == "") T.close T.closeComment
-
-                TensionStatus.Closed ->
-                    ternary (message == "") T.reopen T.reopenComment
+                    ( onClick (OnSubmit (not isLoading) <| SubmitTensionComment (Just TensionStatus.Open))
+                    , ternary (message == "") T.reopen T.reopenComment
+                    )
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
@@ -958,19 +989,17 @@ viewTensionCommentInput conf tension (State model) =
                         [ div [ class "control", style "max-width" "100%" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
-                                     ]
-                                        ++ submitCloseOpenTension
-                                    )
-                                    [ text closeOpenText ]
+                                    [ class "button"
+                                    , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                    , submitCloseOpen
+                                    ]
+                                    [ text closeOpenTxt ]
                                 , button
-                                    ([ class "button is-success defaultSubmit"
-                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ doSubmit
-                                    )
+                                    [ class "button is-success defaultSubmit"
+                                    , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
+                                    , disabled (not isSendable)
+                                    , submit
+                                    ]
                                     [ text T.comment ]
                                 ]
                             ]
@@ -992,9 +1021,6 @@ viewContractCommentInput conf (State model) =
 
         isSendable =
             isPostSendable [ "message" ] form.post
-
-        doSubmit =
-            ternary isSendable [ onClick (OnSubmit isLoading SubmitContractComment) ] []
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
@@ -1020,12 +1046,11 @@ viewContractCommentInput conf (State model) =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button defaultSubmit"
-                                     , classList [ ( "is-loading", isLoading ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ doSubmit
-                                    )
+                                    [ class "button defaultSubmit"
+                                    , classList [ ( "is-loading", isLoading ) ]
+                                    , disabled (not isSendable)
+                                    , onClick (OnSubmit (isSendable && not isLoading) SubmitContractComment)
+                                    ]
                                     [ text T.comment ]
                                 ]
                             ]
@@ -1051,8 +1076,11 @@ viewCommentInputHeader targetid form =
             if String.startsWith "update" targetid then
                 ChangeUpdateViewMode
 
+            else if targetid == "commentContractInput" then
+                ChangeContractInputViewMode
+
             else
-                ChangeUpdateViewMode
+                ChangeInputViewMode
     in
     div [ class "level commentHeader" ]
         [ div [ class "level-left" ]
@@ -1122,6 +1150,9 @@ viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
         onChangePost =
             if String.startsWith "update" targetid then
                 OnChangeCommentPatch
+
+            else if targetid == "commentContractInput" then
+                OnChangeContractComment
 
             else
                 OnChangeComment

@@ -392,12 +392,12 @@ update_ apis message model =
         OnChangeLabel type_ ->
             ( changeLabel type_ model, noOut )
 
-        OnSubmit isLoading next ->
-            if isLoading then
-                ( model, noOut )
+        OnSubmit isSendable next ->
+            if isSendable then
+                ( model, out0 [ sendNow next ] )
 
             else
-                ( model, out0 [ sendNow next ] )
+                ( model, noOut )
 
         PushTension form ack ->
             ( model, out0 [ addOneTension apis form.nodeDoc.form ack ] )
@@ -716,7 +716,7 @@ viewAskQuestion fromModal op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit isLoading <| OnSubmitAsk)
+                            , onClick <| OnSubmit (isSendable && not isLoading) OnSubmitAsk
                             ]
                             [ text T.send ]
                         ]
@@ -867,7 +867,7 @@ viewFeedback fromModal op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit isLoading <| OnSubmitFeedback)
+                            , onClick <| OnSubmit (isSendable && not isLoading) OnSubmitFeedback
                             ]
                             [ text T.send ]
                         ]

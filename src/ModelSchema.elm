@@ -405,6 +405,7 @@ type alias TensionHead =
 
     -- Computed
     , isSubscribed : Bool
+    , hasBeenPushed : Bool
     , isPinned : Bool
 
     -- List and Head
