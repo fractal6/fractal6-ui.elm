@@ -1703,19 +1703,6 @@ viewCatMenu typeFilter =
 
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
-    let
-        clearFilter =
-            if queryIsEmpty model then
-                text ""
-
-            else
-                span
-                    [ class "tag is-rounded is-small is-danger is-light button-light"
-                    , attribute "style" "margin: 0.35rem;"
-                    , onClick OnClearFilter
-                    ]
-                    [ text T.clearFilters ]
-    in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mb-0" ]
             [ div [ class "column is-5" ]
@@ -1831,7 +1818,7 @@ viewSearchBar model =
                             ]
                         ]
                     ]
-                , clearFilter
+                , viewClearFilterButton model
                 , div
                     [ class "button is-success is-hidden-mobile"
                     , style "margin-left" "auto"
@@ -1965,27 +1952,11 @@ viewTensionsCount counts statusFilter =
 
 viewListTensions : Model -> Html Msg
 viewListTensions model =
-    let
-        t1 =
-            model.tensions_int |> withDefaultData []
-
-        t2 =
-            model.tensions_ext |> withDefaultData []
-
-        tensions_d =
-            case t1 ++ t2 of
-                [] ->
-                    model.tensions_int
-
-                other ->
-                    --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
-                    other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
-    in
     div [ class "columns" ]
         [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
         , div [ class "column is-10" ]
             [ viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
-            , viewTensions model.conf model.node_focus model.pattern_init tensions_d ListTension
+            , viewTensions ListTension model
             ]
         ]
 
@@ -1995,12 +1966,12 @@ viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "Internal tensions" ]
-            , viewTensions model.conf model.node_focus model.pattern_init model.tensions_int InternalTension
+            , viewTensions InternalTension model
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text "External tensions" ]
-            , viewTensions model.conf model.node_focus model.pattern_init model.tensions_ext ExternalTension
+            , viewTensions ExternalTension model
             ]
         ]
 
@@ -2181,8 +2152,33 @@ viewAssigneeTensions model =
 -- viewBoard elmId data move?
 
 
-viewTensions : Conf -> NodeFocus -> String -> GqlData (List Tension) -> TensionDirection -> Html Msg
-viewTensions conf focus pattern tensionsData tensionDir =
+viewTensions : TensionDirection -> Model -> Html Msg
+viewTensions tensionDir model =
+    let
+        tensionsData =
+            case tensionDir of
+                ListTension ->
+                    let
+                        t1 =
+                            model.tensions_int |> withDefaultData []
+
+                        t2 =
+                            model.tensions_ext |> withDefaultData []
+                    in
+                    case t1 ++ t2 of
+                        [] ->
+                            model.tensions_int
+
+                        other ->
+                            --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
+                            other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
+
+                InternalTension ->
+                    model.tensions_int
+
+                ExternalTension ->
+                    model.tensions_ext
+    in
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -2192,35 +2188,43 @@ viewTensions conf focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension { noMsg = NoMsg } conf focus t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension { noMsg = NoMsg } model.conf model.node_focus t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
-                else if pattern /= "" then
-                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text pattern ]
+                else if model.pattern_init /= "" then
+                    div [ class "m-4" ] [ text T.noResultsFor, text ": ", text model.pattern_init ]
 
                 else
-                    case focus.type_ of
+                    case model.node_focus.type_ of
                         NodeType.Role ->
+                            let
+                                clearFilter =
+                                    viewClearFilterButton model
+                            in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole ]
+                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
 
                         NodeType.Circle ->
+                            let
+                                clearFilter =
+                                    viewClearFilterButton model
+                            in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle ]
+                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
 
             Failure err ->
                 viewGqlErrors err
@@ -2228,3 +2232,23 @@ viewTensions conf focus pattern tensionsData tensionDir =
             _ ->
                 div [] []
         ]
+
+
+
+--
+-- Utils
+--
+
+
+viewClearFilterButton : Model -> Html Msg
+viewClearFilterButton model =
+    if queryIsEmpty model then
+        text ""
+
+    else
+        span
+            [ class "tag is-rounded is-small is-danger is-light button-light"
+            , attribute "style" "margin: 0.35rem;"
+            , onClick OnClearFilter
+            ]
+            [ text T.clearFilters ]

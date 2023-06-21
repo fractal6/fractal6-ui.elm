@@ -40,7 +40,6 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(.
 import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
-import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (decap, ternary, textD, unwrap)
@@ -74,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
+import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -235,6 +234,7 @@ type alias Model =
     -- Common
     , refresh_trial : Int
     , conf : Conf
+    , comments : Comments.State
     , empty : {}
 
     -- Components
@@ -251,7 +251,6 @@ type alias Model =
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
-    , userInput : UserInput.State
     }
 
 
@@ -370,7 +369,7 @@ init global flags =
             , title_result = NotAsked
 
             -- Comment Edit
-            , comment_form = initCommentPatchForm global.session.user [ ( "reflink", toReflink conf.url ), ( "focusid", focusid ) ]
+            , comment_form = initCommentPatchForm global.session.user [ ( "focusid", focusid ) ]
             , comment_result = NotAsked
 
             -- Blob Edit
@@ -407,7 +406,7 @@ init global flags =
             , tensionForm = NTF.init global.session.user conf
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
-            , contractsPage = ContractsPage.init rootnameid global.session.user conf
+            , contractsPage = ContractsPage.init focusid global.session.user conf
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             , empty = {}
@@ -417,7 +416,7 @@ init global flags =
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
-            , userInput = UserInput.init [ newFocus.nameid ] False False global.session.user
+            , comments = Comments.init focusid tid global.session.user
             }
 
         refresh =
@@ -598,7 +597,7 @@ type Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
-    | UserInputMsg UserInput.Msg
+    | CommentsMsg Comments.Msg
 
 
 
@@ -776,7 +775,8 @@ update global message model =
                             getTensionRights (uctxFromUser global.session.user) result model.path_data
                     in
                     ( { model
-                        | tension_head = result
+                        -- Memory Optimization: Do no store history twice.
+                        | tension_head = Success { th | history = Maybe.map (\_ -> []) th.history }
                         , hasBeenPushed = hasBeenPushed
                         , subscribe_result = fromMaybeData (Just th.isSubscribed) model.subscribe_result
                         , nodeDoc = nodeDoc
@@ -789,6 +789,7 @@ update global message model =
                             (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
+                        , Cmd.map CommentsMsg (send <| Comments.SetHistory (withDefault [] th.history))
                         ]
                     , Cmd.batch
                         [ send (UpdateSessionTensionHead (withMaybeData result))
@@ -823,7 +824,16 @@ update global message model =
                     ( { model | subscribe_result = result }, Cmd.none, Cmd.none )
 
         GotTensionComments result ->
-            ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )
+            case result of
+                Success d ->
+                    -- Memory Optimization: Do no store comments twice.
+                    ( { model | tension_comments = Success { d | comments = Maybe.map (\_ -> []) d.comments } }
+                    , Cmd.map CommentsMsg (send <| Comments.SetComments (withDefault [] d.comments))
+                    , Ports.bulma_driver ""
+                    )
+
+                _ ->
+                    ( { model | tension_comments = result }, Cmd.none, Cmd.none )
 
         GotTensionBlobs result ->
             ( { model | tension_blobs = result }, Cmd.none, Ports.bulma_driver "" )
@@ -1144,7 +1154,7 @@ update global message model =
                             withMaybeData model.path_data |> unwrap model.node_focus.nameid (\p -> p.focus.nameid)
 
                         resetForm =
-                            initCommentPatchForm global.session.user [ ( "reflink", toReflink model.conf.url ), ( "focusid", focusid ) ]
+                            initCommentPatchForm global.session.user [ ( "focusid", focusid ) ]
                     in
                     ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
@@ -1754,32 +1764,15 @@ update global message model =
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
-        UserInputMsg msg ->
+        CommentsMsg msg ->
             let
                 ( data, out ) =
-                    UserInput.update apis msg model.userInput
-
-                cmd =
-                    case out.result of
-                        Just ( selected, us ) ->
-                            if selected then
-                                case us of
-                                    [ u ] ->
-                                        Ports.pushInputSelection u.username
-
-                                    _ ->
-                                        Cmd.none
-
-                            else
-                                Cmd.none
-
-                        Nothing ->
-                            Cmd.none
+                    Comments.update apis msg model.comments
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | userInput = data }, out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | comments = data }, out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1800,7 +1793,7 @@ subscriptions _ model =
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (case model.activeTab of
                 Conversation ->
-                    UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+                    Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s)
 
                 Document ->
                     []
@@ -2070,15 +2063,20 @@ viewConversation u t model =
         userCanComment =
             -- Author or member can comment tension.
             -- is Author
-            (uctx.username == t.createdBy.username)
-                || -- is Member
-                   (getOrgaRoles [ t.receiver.nameid ] uctx.roles /= [])
+            case u of
+                LoggedIn uctx ->
+                    (uctx.username == t.createdBy.username)
+                        || -- is Member
+                           (getOrgaRoles [ t.receiver.nameid ] uctx.roles /= [])
+
+                LoggedOut ->
+                    False
 
         userInput =
             case u of
                 LoggedIn _ ->
                     if userCanComment then
-                        Comments.viewTensionCommentInput t model.comments
+                        Comments.viewTensionCommentInput model.conf t model.comments |> Html.map CommentsMsg
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -2092,15 +2090,8 @@ viewConversation u t model =
     in
     case model.tension_comments of
         Success t_comments ->
-            let
-                comments =
-                    withDefault [] t_comments.comments
-
-                history =
-                    withDefault [] t.history
-            in
             div [ class "comments" ]
-                [ Comments.viewComments t.action history comments model.comments
+                [ Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]

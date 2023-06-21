@@ -59,14 +59,15 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withMapData)
+import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, ReactionResponse, TensionHead, UserCtx)
 import Ports
+import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Conf, GlobalCmd, isMobile)
+import Session exposing (Apis, Conf, GlobalCmd, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -87,18 +88,28 @@ type alias TensionCommon a =
     { a | status : TensionStatus.TensionStatus }
 
 
+type alias EventTracker =
+    { type_ : Maybe TensionEvent.TensionEvent
+    , createdAt : String
+    , i : Int
+    , n : Int
+    }
+
+
 type alias Model =
     { user : UserState
-    , focus : String
+    , focusid : String
+    , tensionid : String
     , comments : List Comment
     , history : List Event
     , expandedEvents : List Int
 
-    -- Form (Title, Status, Comment)
+    -- Push comment (Tension)
     , tension_form : TensionForm
+    , contract_form : CommentPatchForm
     , tension_patch : GqlData PatchTensionPayloadID
 
-    -- Comment Edit
+    -- Edit Comment (Tension & Contract)
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
 
@@ -110,22 +121,18 @@ type alias Model =
     }
 
 
-initModel : String -> UserState -> Model
-initModel nameid user =
+initModel : String -> String -> UserState -> Model
+initModel nameid tensionid user =
     { user = user
-    , focus = nameid
+    , focusid = nameid
+    , tensionid = tensionid
     , comments = []
     , history = []
     , expandedEvents = []
-
-    -- Form (Title, Status, Comment)
-    , tension_form = initTensionForm "" Nothing user
-
-    -- Push Comment / Change status
+    , tension_form = initTensionForm tensionid Nothing user
     , tension_patch = NotAsked
-
-    -- Comment Edit
-    , comment_form = initCommentPatchForm user [ ( "reflink", "" ), ( "focusid", nameid ) ]
+    , contract_form = initCommentPatchForm user []
+    , comment_form = initCommentPatchForm user [ ( "focusid", nameid ) ]
     , comment_result = NotAsked
 
     -- Components
@@ -136,9 +143,9 @@ initModel nameid user =
     }
 
 
-init : String -> UserState -> State
-init nameid user =
-    initModel nameid user |> State
+init : String -> String -> UserState -> State
+init nameid tensionid user =
+    initModel nameid tensionid user |> State
 
 
 
@@ -149,73 +156,24 @@ init nameid user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.focus model.user
-
-
-type alias OpNewComment msg =
-    { doChangeViewMode : InputViewMode -> msg
-    , doChangePost : String -> String -> msg
-    , doRichText : String -> String -> msg
-    , doToggleMdHelp : String -> msg
-    , userSearchInput : Maybe UserInput.State
-    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
-    , conf : Conf
-    }
-
-
-type alias OpEditComment msg =
-    { doUpdate : Comment -> msg
-    , doCancelComment : msg
-    , doChangeViewMode : InputViewMode -> msg
-    , doChangePost : String -> String -> msg
-    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
-    , doEditComment : Time.Posix -> msg
-    , doRichText : String -> String -> msg
-    , doToggleMdHelp : String -> msg
-    , doAddReaction : String -> Int -> msg
-    , doDeleteReaction : String -> Int -> msg
-    , userSearchInput : Maybe UserInput.State
-    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
-    , conf : Conf
-    }
-
-
-type alias OpNewCommentTension msg =
-    { doChangeViewMode : InputViewMode -> msg
-    , doChangePost : String -> String -> msg
-    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
-    , doSubmitComment : Maybe TensionStatus.TensionStatus -> Time.Posix -> msg
-    , doRichText : String -> String -> msg
-    , doToggleMdHelp : String -> msg
-    , userSearchInput : Maybe UserInput.State
-    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
-    , conf : Conf
-    }
-
-
-type alias OpNewCommentContract msg =
-    { doChangeViewMode : InputViewMode -> msg
-    , doChangePost : String -> String -> msg
-    , doSubmit : Bool -> (Time.Posix -> msg) -> msg
-    , doSubmitComment : Time.Posix -> msg
-    , doRichText : String -> String -> msg
-    , doToggleMdHelp : String -> msg
-    , userSearchInput : Maybe UserInput.State
-    , userSearchInputMsg : Maybe (UserInput.Msg -> msg)
-    , conf : Conf
-    }
+    initModel model.tensionid model.focusid model.user
 
 
 type Msg
-    = OnSubmit Bool (Time.Posix -> Msg)
-    | ExpandEvent Int
-      -- New Comment
+    = ExpandEvent Int
+    | SetTensionid String
+    | SetContractid String
+    | SetComments (List Comment)
+    | SetHistory (List Event)
+      -- Push Comment
     | OnChangeComment String String
-    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
-    | CommentAck (GqlData PatchTensionPayloadID)
+    | SubmitTensionComment (Maybe TensionStatus.TensionStatus) Time.Posix
+    | TensionCommentAck (GqlData PatchTensionPayloadID)
+    | SubmitContractComment Time.Posix
+    | ContractCommentAck (GqlData Comment)
       -- Edit comment
     | OnUpdateComment Comment
-    | OnCancelComment
+    | OnCancelComment String
     | OnChangeCommentPatch String String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
@@ -225,6 +183,7 @@ type Msg
     | OnDeleteReaction String Int
     | OnDeleteReactionAck (GqlData ReactionResponse)
       -- Common
+    | OnSubmit Bool (Time.Posix -> Msg)
     | NoMsg
     | LogErr String
     | ChangeInputViewMode InputViewMode
@@ -279,23 +238,49 @@ update_ apis message model =
 
         ExpandEvent i ->
             -- @fix/bulma: dropdown clidk handler lost during the operation
-            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, noOut )
+            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, out0 [ Ports.bulma_driver "" ] )
+
+        SetTensionid tensionid ->
+            let
+                form =
+                    model.tension_form
+
+                tension_form =
+                    { form | id = tensionid }
+            in
+            ( { model | tension_form = tension_form }, noOut )
+
+        SetContractid contractid ->
+            let
+                form =
+                    model.contract_form
+
+                contract_form =
+                    { form | post = form.post |> Dict.insert "contractid" contractid }
+            in
+            ( { model | contract_form = contract_form }, noOut )
+
+        SetComments comments ->
+            ( { model | comments = comments }, noOut )
+
+        SetHistory history ->
+            ( { model | history = history }, noOut )
 
         OnChangeComment field value ->
             let
                 form =
                     model.tension_form
 
-                newForm =
+                tension_form =
                     if field == "message" && value == "" then
                         { form | post = Dict.remove field form.post }
 
                     else
                         { form | post = Dict.insert field value form.post }
             in
-            ( { model | tension_form = newForm }, noOut )
+            ( { model | tension_form = tension_form }, noOut )
 
-        SubmitComment status_m time ->
+        SubmitTensionComment status_m time ->
             let
                 form =
                     model.tension_form
@@ -311,26 +296,23 @@ update_ apis message model =
                         Nothing ->
                             []
 
-                newForm =
+                tension_form =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
                         , status = status_m
                         , events = eventStatus
                     }
             in
-            ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
-            , out0 [ pushTensionPatch apis model.tension_form CommentAck ]
+            ( { model | tension_form = tension_form, tension_patch = LoadingSlowly }
+            , out0 [ pushTensionPatch apis tension_form TensionCommentAck ]
             )
 
-        CommentAck result ->
+        TensionCommentAck result ->
             case parseErr result 2 of
                 OkAuth tp ->
                     let
-                        events =
-                            model.tension_form.events
-
                         resetForm =
-                            initTensionForm "" Nothing model.user
+                            initTensionForm model.tensionid Nothing model.user
                     in
                     ( { model
                         | comments =
@@ -341,11 +323,11 @@ update_ apis message model =
                                 model.comments
                         , history =
                             model.history
-                                ++ (events |> List.map (\e -> eventFromForm e model.tension_form))
+                                ++ (model.tension_form.events |> List.map (\e -> eventFromForm e model.tension_form))
                         , tension_form = resetForm
                         , tension_patch = result
                       }
-                    , Out [] [] (Just model.tension_form.status)
+                    , Out [ Ports.bulma_driver "" ] [] (Just model.tension_form.status)
                     )
 
                 _ ->
@@ -363,6 +345,44 @@ update_ apis message model =
                         _ ->
                             ( { model | tension_patch = result }, noOut )
 
+        SubmitContractComment time ->
+            let
+                form =
+                    model.contract_form
+
+                contract_form =
+                    { form | post = form.post |> Dict.insert "createdAt" (fromTime time) }
+            in
+            ( { model
+                | contract_form = contract_form
+                , comment_result = LoadingSlowly
+              }
+            , out0 [ pushContractComment apis contract_form ContractCommentAck ]
+            )
+
+        ContractCommentAck result ->
+            case parseErr result 2 of
+                OkAuth comment ->
+                    let
+                        resetForm =
+                            initCommentPatchForm model.user []
+                    in
+                    ( { model
+                        | comments =
+                            if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
+                                model.comments ++ [ comment ]
+
+                            else
+                                model.comments
+                        , contract_form = resetForm
+                        , comment_result = result
+                      }
+                    , out0 [ Ports.bulma_driver "" ]
+                    )
+
+                _ ->
+                    ( { model | comment_result = result }, noOut )
+
         OnUpdateComment c ->
             let
                 form =
@@ -370,12 +390,12 @@ update_ apis message model =
             in
             ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
 
-        OnCancelComment ->
+        OnCancelComment createdAt ->
             let
                 form =
                     model.comment_form
             in
-            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, noOut )
+            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, out0 [ Ports.bulma_driver createdAt ] )
 
         OnChangeCommentPatch field value ->
             let
@@ -388,9 +408,12 @@ update_ apis message model =
             let
                 form =
                     model.comment_form
+
+                comment_form =
+                    { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
             in
-            ( { model | comment_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }
-            , out0 [ patchComment apis model.comment_form CommentPatchAck ]
+            ( { model | comment_form = comment_form, comment_result = LoadingSlowly }
+            , out0 [ patchComment apis comment_form CommentPatchAck ]
             )
 
         CommentPatchAck result ->
@@ -407,9 +430,9 @@ update_ apis message model =
                             LE.setAt n comment model.comments
 
                         resetForm =
-                            initCommentPatchForm model.user [ ( "reflink", "" ), ( "focusid", "" ) ]
+                            initCommentPatchForm model.user [ ( "focusid", model.focusid ) ]
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }, noOut )
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }, out0 [ Ports.bulma_driver comment.createdAt ] )
 
                 _ ->
                     ( { model | comment_result = result }, noOut )
@@ -561,17 +584,19 @@ subscriptions (State model) =
 -- ------------------------------
 
 
-viewCommentsContract : Conf -> List Comment -> State -> Html Msg
-viewCommentsContract conf comments (State model) =
-    comments
+viewCommentsContract : Conf -> State -> Html Msg
+viewCommentsContract conf (State model) =
+    model.comments
         |> List.map
-            (\c -> Lazy.lazy5 viewComment conf c model.comment_form model.comment_result model.userInput)
+            (\c ->
+                Lazy.lazy5 viewComment conf c model.comment_form model.comment_result model.userInput
+            )
         |> div []
 
 
-viewCommentsTension : Conf -> Maybe TensionAction.TensionAction -> List Event -> List Comment -> State -> Html Msg
-viewCommentsTension conf action history comments (State model) =
-    Lazy.lazy8 viewComments_ conf action history comments model.comment_form model.comment_result model.expandedEvents model.userInput
+viewCommentsTension : Conf -> Maybe TensionAction.TensionAction -> State -> Html Msg
+viewCommentsTension conf action (State model) =
+    Lazy.lazy8 viewComments_ conf action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.userInput
 
 
 viewComments_ :
@@ -592,7 +617,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
                 |> List.sortBy .createdAt
 
-        viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
+        viewCommentOrEvent : EventTracker -> Html Msg
         viewCommentOrEvent e =
             case e.type_ of
                 Just _ ->
@@ -688,12 +713,7 @@ viewComment conf c form result userInput =
             c.createdBy.username == form.uctx.username
 
         reflink =
-            case Dict.get "reflink" form.post of
-                Just ref ->
-                    ref ++ "?goto=" ++ c.createdAt
-
-                Nothing ->
-                    "#"
+            toReflink conf.url ++ "?goto=" ++ c.createdAt
     in
     div [ id c.createdAt, class "media section is-paddingless" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
@@ -863,7 +883,7 @@ viewUpdateInput conf comment form_ result userInput =
                     [ div [ class "buttons" ]
                         [ button
                             [ class "button"
-                            , onClick OnCancelComment
+                            , onClick (OnCancelComment comment.createdAt)
                             ]
                             [ text T.cancel ]
                         , button
@@ -896,15 +916,15 @@ viewTensionCommentInput conf tension (State model) =
             isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
 
         doSubmit =
-            ternary isSendable [ onClick (OnSubmit isLoading <| SubmitComment Nothing) ] []
+            ternary isSendable [ onClick (OnSubmit isLoading <| SubmitTensionComment Nothing) ] []
 
         submitCloseOpenTension =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (OnSubmit isLoading <| SubmitComment (Just TensionStatus.Closed)) ]
+                    [ onClick (OnSubmit isLoading <| SubmitTensionComment (Just TensionStatus.Closed)) ]
 
                 TensionStatus.Closed ->
-                    [ onClick (OnSubmit isLoading <| SubmitComment (Just TensionStatus.Open)) ]
+                    [ onClick (OnSubmit isLoading <| SubmitTensionComment (Just TensionStatus.Open)) ]
 
         closeOpenText =
             case tension.status of
@@ -965,7 +985,7 @@ viewContractCommentInput : Conf -> State -> Html Msg
 viewContractCommentInput conf (State model) =
     let
         form =
-            model.comment_form
+            model.contract_form
 
         isLoading =
             Loading.isLoading model.comment_result
@@ -974,7 +994,7 @@ viewContractCommentInput conf (State model) =
             isPostSendable [ "message" ] form.post
 
         doSubmit =
-            ternary isSendable [ onClick (OnSubmit isLoading (SubmitComment Nothing)) ] []
+            ternary isSendable [ onClick (OnSubmit isLoading SubmitContractComment) ] []
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]

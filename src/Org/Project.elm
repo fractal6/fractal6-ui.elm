@@ -246,7 +246,7 @@ init global flags =
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
-            , cardPanel = CardPanel.init global.session.user
+            , cardPanel = CardPanel.init newFocus global.session.user
             , board = Board.init projectid newFocus global.session.user
 
             -- Common
@@ -655,7 +655,7 @@ view global model =
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         , LinkTensionPanel.view { tree_data = tree_data, path_data = model.path_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
-        , CardPanel.view model.empty model.cardPanel |> Html.map CardPanelMsg
+        , CardPanel.view { conf = model.conf, path_data = model.path_data } model.cardPanel |> Html.map CardPanelMsg
         ]
     }
 

@@ -24,13 +24,12 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nodeIdCodec, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.UserInput as UserInput
 import Dict
 import Extra exposing (space_, ternary, upH)
 import Extra.Date exposing (formatDate)
@@ -57,7 +56,7 @@ import Query.PatchContract exposing (pushContractComment, sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Conf, GlobalCmd(..), toReflink)
+import Session exposing (Apis, Conf, GlobalCmd(..))
 import Text as T
 import Time
 
@@ -86,7 +85,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
-    , userInput : UserInput.State
+    , comments : Comments.State
     }
 
 
@@ -96,9 +95,9 @@ type ContractsPageView
 
 
 initModel : String -> UserState -> Conf -> Model
-initModel rootnameid user conf =
+initModel focusid user conf =
     { user = user
-    , rootnameid = rootnameid
+    , rootnameid = nid2rootid focusid
     , contracts_result = NotAsked
     , contract_result = NotAsked
     , contract_result_del = NotAsked
@@ -106,8 +105,8 @@ initModel rootnameid user conf =
     , form = initContractForm user
     , voteForm = initVoteForm user
     , activeView = ContractsView
-    , comment_form = initCommentPatchForm user [ ( "reflink", toReflink conf.url ) ]
-    , comment_patch_form = initCommentPatchForm user [ ( "reflink", toReflink conf.url ) ]
+    , comment_form = initCommentPatchForm user []
+    , comment_patch_form = initCommentPatchForm user []
     , comment_result = NotAsked
 
     -- Common
@@ -116,7 +115,7 @@ initModel rootnameid user conf =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init [ rootnameid ] False False user
+    , comments = Comments.init focusid "" user
     }
 
 
@@ -298,7 +297,7 @@ type Msg
     | UpdateUctx UserCtx
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
-    | UserInputMsg UserInput.Msg
+    | CommentsMsg Comments.Msg
 
 
 type alias Out =
@@ -432,7 +431,15 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryContract 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, [ { id = d.id } ] )) )
+                    -- Memory Optimization; Do no store comments twice.
+                    ( { data | contract_result = Success { d | comments = Maybe.map (\_ -> []) d.comments } }
+                    , Out
+                        [ Cmd.map CommentsMsg (send <| Comments.SetContractid d.id)
+                        , Cmd.map CommentsMsg (send <| Comments.SetComments (withDefault [] d.comments))
+                        ]
+                        []
+                        (Just ( True, [ { id = d.id } ] ))
+                    )
 
                 _ ->
                     ( data, noOut )
@@ -589,9 +596,13 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm model.user [ ( "reflink", toReflink model.conf.url ) ]
+                            initCommentPatchForm model.user []
                     in
-                    ( { model | contract_result = contract, comment_form = resetForm, comment_result = result }
+                    ( { model
+                        | contract_result = contract
+                        , comment_form = resetForm
+                        , comment_result = result
+                      }
                     , out0 [ Ports.bulma_driver "" ]
                     )
 
@@ -626,7 +637,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initCommentPatchForm model.user [ ( "reflink", toReflink model.conf.url ) ]
+                            initCommentPatchForm model.user []
                     in
                     ( { model | contract_result = contract, comment_patch_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver "" ]
@@ -787,32 +798,17 @@ update_ apis message model =
             ( { model | comment_patch_form = { form | viewMode = viewMode } }, noOut )
 
         -- Components
-        UserInputMsg msg ->
+        CommentsMsg msg ->
             let
                 ( data, out ) =
-                    UserInput.update apis msg model.userInput
-
-                cmd =
-                    case out.result of
-                        Just ( selected, us ) ->
-                            if selected then
-                                case us of
-                                    [ u ] ->
-                                        Ports.pushInputSelection u.username
-
-                                    _ ->
-                                        Cmd.none
-
-                            else
-                                Cmd.none
-
-                        Nothing ->
-                            Cmd.none
+                    Comments.update apis msg model.comments
 
                 ( cmds, gcmds ) =
                     ( [], [] )
             in
-            ( { model | userInput = data }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append (cmd :: cmds)) (out.gcmds ++ gcmds) )
+            ( { model | comments = data }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds) out.gcmds
+            )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -820,7 +816,7 @@ subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
-        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
 
 
@@ -1024,15 +1020,15 @@ viewContractPage c op model =
             text ""
         , c.comments
             |> Maybe.map
-                (\comments ->
-                    Comments.viewCommentsContract model.conf comments model.comments |> Html.map CommentsMsg
+                (\_ ->
+                    Comments.viewCommentsContract model.conf model.comments |> Html.map CommentsMsg
                 )
             |> withDefault (text "")
         , hr [ class "has-background-border-light is-2" ] []
         , case model.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
-                    Comments.viewContractCommentInput model.conf model.comments
+                    Comments.viewContractCommentInput model.conf model.comments |> Html.map CommentsMsg
 
                 else
                     text ""
