@@ -24,7 +24,7 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
 import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
@@ -1095,7 +1095,7 @@ viewContractBox c op model =
                                 }
 
                             baseUri =
-                                uriFromNameid MandateBaseUri role.nameid [ c.tension.id ]
+                                toLink MandateBaseUri role.nameid [ c.tension.id ]
                         in
                         div [ class "subtitle" ]
                             ([ viewUserFull 1 True True { username = user, name = Nothing } ]

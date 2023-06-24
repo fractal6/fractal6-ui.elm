@@ -24,7 +24,7 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2icon, counter)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -524,7 +524,7 @@ update_ apis message model =
             ( model
             , out2 [ Ports.send_if_mobile "triggerMenuTreeFromJs" ]
                 [ DoUpdatePath (localGraphFromOrga n.nameid model.tree_result)
-                , DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q)
+                , DoNavigate (toLink model.baseUri n.nameid [ getSourceTid n ] ++ q)
                 ]
             )
 

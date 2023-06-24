@@ -24,7 +24,7 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)

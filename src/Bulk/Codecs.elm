@@ -309,16 +309,6 @@ shortId id_ =
 -}
 
 
-uriFromNameid : FractalBaseRoute -> String -> List String -> String
-uriFromNameid loc nameid params =
-    toLink loc nameid params
-
-
-uriFromUsername : FractalBaseRoute -> String -> String
-uriFromUsername loc username =
-    toLink loc username []
-
-
 nameidFromFlags : Flags_ -> String
 nameidFromFlags flags =
     let

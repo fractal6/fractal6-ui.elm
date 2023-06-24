@@ -38,7 +38,7 @@ import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, uriFromNameid, urlToFractalRoute)
+import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
 import Codecs exposing (WindowPos)
 import Components.Navbar as Navbar
 import Dict
@@ -203,7 +203,7 @@ update msg model =
         NavigateNode nameid ->
             case urlToFractalRoute model.url of
                 Just OverviewBaseUri ->
-                    ( model, Nav.replaceUrl model.key (uriFromNameid OverviewBaseUri nameid []) )
+                    ( model, Nav.replaceUrl model.key (toLink OverviewBaseUri nameid []) )
 
                 _ ->
                     ( model, Cmd.none )

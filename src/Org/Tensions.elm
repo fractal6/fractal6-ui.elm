@@ -28,7 +28,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -1134,7 +1134,7 @@ update global message model =
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model
-            , Cmd.batch [ Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ query), send ResetData ]
+            , Cmd.batch [ Nav.pushUrl global.key (toLink TensionsBaseUri model.node_focus.nameid [] ++ query), send ResetData ]
             , Cmd.none
             )
 
@@ -1162,7 +1162,7 @@ update global message model =
                         )
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
+            ( model, Nav.pushUrl global.key (toLink TensionsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
 
         SubmitSearchReset ->
             -- Send search and reset the other results
@@ -2019,7 +2019,7 @@ viewCircleTensions model =
                                         text x
 
                                     else
-                                        a [ class "stealth-link is-w is-h", href (uriFromNameid TensionsBaseUri n [] ++ query) ]
+                                        a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ]
                                             [ text x ]
                                 )
                             |> withDefault (text "Loading...")

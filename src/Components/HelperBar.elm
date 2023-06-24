@@ -23,7 +23,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Bulk.View exposing (counter, viewRole)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.NodeType as NodeType
@@ -301,9 +301,9 @@ viewNavLevel op model =
     nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]
             ([ li [ classList [ ( "is-active", model.baseUri == OverviewBaseUri ) ] ]
-                [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
+                [ a [ href (toLink OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
-                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ]
+                [ a [ href (toLink TensionsBaseUri focusid []) ]
                     [ A.icon1 "icon-exchange" T.tensions
                     , case unwrap 0 .n_tensions op.orgaInfo of
                         0 ->
@@ -314,7 +314,7 @@ viewNavLevel op model =
                     ]
                 ]
              , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
-                [ a [ href (uriFromNameid ProjectsBaseUri focusid []) ]
+                [ a [ href (toLink ProjectsBaseUri focusid []) ]
                     [ A.icon1 "icon-layout" T.projects
                     , case unwrap 0 .n_projects op.orgaInfo of
                         0 ->
@@ -325,7 +325,7 @@ viewNavLevel op model =
                     ]
                 ]
 
-             --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
+             --[ a [ href (toLink TensionsBaseUri focusid) ]
              --    [ div [ class "dropdown is-hoverable" ]
              --        [ div [ class "dropdown-trigger", attribute "aria-haspopup" "true", attribute "aria-controls" "tension-menu" ] [ A.icon1 "icon-exchange" "Tensions" ]
              --        , div [ class "dropdown-menu", id "tension-menu", attribute "role" "menu" ]
@@ -341,7 +341,7 @@ viewNavLevel op model =
                         (\path ->
                             if path.focus.type_ /= NodeType.Role then
                                 [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
-                                    [ a [ href (uriFromNameid MembersBaseUri focusid []) ]
+                                    [ a [ href (toLink MembersBaseUri focusid []) ]
                                         [ A.icon1 "icon-user" T.members
                                         , case unwrap 0 .n_members op.orgaInfo of
                                             0 ->
@@ -364,7 +364,7 @@ viewNavLevel op model =
                             if model.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "vbar" ] []
                                 , li [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
-                                    [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
+                                    [ a [ href (toLink SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
 
                             else
@@ -382,7 +382,7 @@ viewNavLevel op model =
 
                                         --, onClick OnGoRoot
                                         ]
-                                        [ a [ href (uriFromNameid model.baseUri (nearestCircleid focusid) []) ] [ A.icon "arrow-up", text T.goRoot ]
+                                        [ a [ href (toLink model.baseUri (nearestCircleid focusid) []) ] [ A.icon "arrow-up", text T.goRoot ]
                                         ]
                                     ]
                                 ]
@@ -437,18 +437,18 @@ viewPath baseUri uriQuery maybePath =
                                     [ ternary (i == 0) icon (text "")
                                     , if List.member baseUri [ MandateBaseUri, ContractsBaseUri ] then
                                         -- Fix issue with path not updated when moving from mandate (due to the no anonuymous path change policie)
-                                        a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ "#" ++ q) ]
+                                        a [ class "is-block is-wrapped", href (toLink baseUri p.nameid [ getSourceTid p ] ++ "#" ++ q) ]
                                             [ text p.name ]
 
                                       else
-                                        a [ class "is-block is-wrapped", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
+                                        a [ class "is-block is-wrapped", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ]
                                             [ text p.name ]
                                     ]
 
                             else
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
-                                    , a [ class "is-block is-wrapped has-text-weight-semibold", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
+                                    , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                     , a
                                         [ class "stealth-link tag is-rounded ml-1 has-border-light"
                                         , attribute "style" "weight: 500 !important;padding: 10px 10px;"
