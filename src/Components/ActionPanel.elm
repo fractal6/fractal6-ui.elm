@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), getNodeRights, parseErr)
 import Browser.Events as Events
 import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nid2rootid, playsRole, uriFromNameid, userFromBaseMember)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -1068,7 +1068,7 @@ viewPanel op model =
                   if model.domid /= "actionPanelContentTooltip" then
                     div
                         [ class "dropdown-item button-light"
-                        , onClick (Navigate (uriFromNameid OverviewBaseUri model.form.node.nameid []))
+                        , onClick (Navigate (toLink OverviewBaseUri model.form.node.nameid []))
                         ]
                         [ A.icon1 "icon-disc" T.view ]
 

@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewLabel, viewLabels)
 import Codecs exposing (LookupResult)
@@ -251,7 +251,8 @@ update_ apis message model =
             -- Nothing: stick to given targets
             if not model.isOpen then
                 let
-                    nameids = targets
+                    nameids =
+                        targets
 
                     hasChanged =
                         nameids /= model.form.targets
@@ -495,7 +496,7 @@ viewLabelSelectors isInternal labels op model =
         viewEdit =
             let
                 editLink =
-                    uriFromNameid SettingsBaseUri ( op.targets |> List.head |> withDefault "") [] ++ "?m=labels&a=new"
+                    toLink SettingsBaseUri (op.targets |> List.head |> withDefault "") [] ++ "?m=labels&a=new"
             in
             p
                 [ class "panel-block is-md is-w discrete-link"

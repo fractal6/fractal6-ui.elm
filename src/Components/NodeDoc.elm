@@ -698,7 +698,7 @@ viewAboutSection data op_m =
                   --          getNodeNameid data.receiver data.node
                   --  in
                   --  a
-                  --      [ href <| uriFromNameid OverviewBaseUri nameid []
+                  --      [ href <| toLink OverviewBaseUri nameid []
                   --      , title T.viewOnMap
                   --      ]
                   --      [ text <| withDefault "" data.node.name ]

@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Components.ActionPanel as ActionPanel
@@ -2367,7 +2367,7 @@ viewSidePane u t model =
                                             case node.role_type of
                                                 Just rt ->
                                                     if t.hasBeenPushed then
-                                                        viewRole "mb-2" False False Nothing (Just <| uriFromNameid OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
+                                                        viewRole "mb-2" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
                                                         viewRoleExt { noMsg = NoMsg } "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }

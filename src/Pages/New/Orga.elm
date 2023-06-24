@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
+import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
 import Bulk.Error exposing (viewHttpErrors)
 import Bulk.View exposing (visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
@@ -279,7 +279,7 @@ update global message model =
                         [ send UpdateUserToken
                         , send (UpdateSessionOrgs Nothing)
                         , send (UpdateSessionNewOrgaData Nothing)
-                        , sendSleep (NavigateRaw (uriFromNameid OverviewBaseUri n.nameid [])) 500
+                        , sendSleep (NavigateRaw (toLink OverviewBaseUri n.nameid [])) 500
                         ]
                     )
 

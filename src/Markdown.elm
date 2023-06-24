@@ -21,7 +21,7 @@
 
 module Markdown exposing (renderMarkdown)
 
-import Bulk.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Extra exposing (regexFromString)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, input, label, li, span, table, text, u, ul)
@@ -339,7 +339,7 @@ userLink m full =
         ++ username
         ++ "]"
         ++ "("
-        ++ uriFromUsername UsersBaseUri (String.dropLeft 1 username)
+        ++ toLink UsersBaseUri (String.dropLeft 1 username) []
         ++ ")"
         ++ right
 

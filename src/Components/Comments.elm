@@ -36,7 +36,7 @@ module Components.Comments exposing
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
 import Components.UserInput as UserInput
@@ -1568,7 +1568,7 @@ viewEventMentioned lang now event =
                                 ]
                             , a
                                 [ class "discrete-link is-discrete"
-                                , href (uriFromNameid OverviewBaseUri receiverid [])
+                                , href (toLink OverviewBaseUri receiverid [])
                                 ]
                                 [ receiverid |> String.replace "#" "/" |> text ]
                             ]

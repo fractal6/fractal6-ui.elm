@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Bulma as B
-import Bulk.Codecs exposing (DocType(..), NodeFocus, getOrgaRoles)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded)
 import Bulk.View exposing (action2icon, tensionIcon3, viewTensionLight)
 import Components.Comments as Comments
@@ -481,14 +481,20 @@ view op (State model) =
 
 
 viewPanelTension : Op -> TensionPanel -> Model -> Html Msg
-viewPanelTension op tension model =
+viewPanelTension op t model =
     div [ class "panel" ]
         [ div [ class "header-block" ]
             [ div [ class "panel-heading" ]
-                [ text tension.title, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+                [ a
+                    [ class "stealth-link"
+                    , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
+                    ]
+                    [ text t.title ]
+                , button [ class "delete is-pulled-right", onClick OnClose ] []
+                ]
             ]
         , div [ class "main-block" ]
-            [ viewTensionComments op tension model
+            [ viewTensionComments op t model
             ]
         ]
 

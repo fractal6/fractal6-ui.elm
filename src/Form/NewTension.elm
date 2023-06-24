@@ -24,7 +24,7 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
 import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, ur2eor, uriFromNameid)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Components.Comments as Comments exposing (OutType(..))
@@ -1754,7 +1754,7 @@ viewRolesExt model =
                                         , span
                                             [ class "button is-small has-text-link mx-2"
                                             , title T.templateRoleHint
-                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
+                                            , onClick (OnCloseSafe (toLink SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
                                             ]
                                             [ text T.templateRole ]
                                         ]

@@ -27,7 +27,7 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (nodeType2str, projectStatus2str)
 import Components.ActionPanel as ActionPanel
@@ -570,7 +570,7 @@ update global message model =
                         ]
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Nav.pushUrl global.key (uriFromNameid ProjectsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
+            ( model, Nav.pushUrl global.key (toLink ProjectsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
 
         SubmitTextSearch pattern ->
             if (pattern |> String.trim) == model.pattern_init then
@@ -839,7 +839,7 @@ update global message model =
                 query =
                     model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, Cmd.none, send (NavigateRaw (uriFromNameid ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
+            ( model, Cmd.none, send (NavigateRaw (toLink ProjectsBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )

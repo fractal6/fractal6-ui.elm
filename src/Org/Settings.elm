@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (helperButton, viewLabel, viewRoleExt)
 import Components.ActionPanel as ActionPanel
@@ -572,7 +572,7 @@ update global message model =
                             queryBuilder
                                 [ ( "m", menuEncoder menu ) ]
                     in
-                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid [] ++ "?" ++ query) )
+                    ( model, Cmd.none, Nav.pushUrl global.key (toLink SettingsBaseUri model.node_focus.nameid [] ++ "?" ++ query) )
 
         ChangeArtefactPost field value ->
             let
@@ -1091,7 +1091,7 @@ update global message model =
                 query =
                     model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, Cmd.none, send (NavigateRaw (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)) )
+            ( model, Cmd.none, send (NavigateRaw (toLink SettingsBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -1550,7 +1550,7 @@ viewLabelsExt url txt_yes list_ext_d =
                                         List.head d.nodes
                                             |> Maybe.map
                                                 (\n ->
-                                                    uriFromNameid SettingsBaseUri n.nameid [] ++ q
+                                                    toLink SettingsBaseUri n.nameid [] ++ q
                                                 )
                                 in
                                 viewLabel "ml-2" link_m d
@@ -1823,7 +1823,7 @@ viewRolesExt url txt_yes list_ext_d =
                                         List.head d.nodes
                                             |> Maybe.map
                                                 (\n ->
-                                                    uriFromNameid SettingsBaseUri n.nameid [] ++ q
+                                                    toLink SettingsBaseUri n.nameid [] ++ q
                                                 )
                                 in
                                 viewRoleExt { noMsg = NoMsg } "ml-2 is-small" link_m d

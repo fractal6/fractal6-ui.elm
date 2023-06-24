@@ -23,7 +23,7 @@ module Bulk.View exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink, uriFromNameid, uriFromUsername)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPos)
@@ -183,7 +183,7 @@ viewCircleTarget op cls er =
             span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
-            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| uriFromNameid OverviewBaseUri er.nameid []) (\_ _ _ -> op.noMsg) (eor2ur er)
+            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> op.noMsg) (eor2ur er)
 
 
 viewCircleSimple : String -> Html msg
@@ -477,7 +477,7 @@ tensionIcon3 type_ =
 
 viewUsernameLink : String -> Html msg
 viewUsernameLink username =
-    a [ href (uriFromUsername UsersBaseUri username) ] [ text username ]
+    a [ href (toLink UsersBaseUri username []) ] [ text username ]
 
 
 viewUsers : List User -> Html msg
@@ -488,7 +488,7 @@ viewUsers users =
 viewUser0 : String -> Html msg
 viewUser0 username =
     span [ class "mr-2", title username ]
-        [ a [ href (uriFromUsername UsersBaseUri username) ]
+        [ a [ href (toLink UsersBaseUri username []) ]
             [ getAvatar0 username ]
         ]
 
@@ -497,7 +497,7 @@ viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
     if isLinked then
         span [ class "mr-2", title username ]
-            [ a [ href (uriFromUsername UsersBaseUri username) ]
+            [ a [ href (toLink UsersBaseUri username []) ]
                 [ getAvatar1 username ]
             ]
 
@@ -508,7 +508,7 @@ viewUser isLinked username =
 viewUser2 : String -> Html msg
 viewUser2 username =
     span [ class "mr-2", title username ]
-        [ a [ href (uriFromUsername UsersBaseUri username) ]
+        [ a [ href (toLink UsersBaseUri username []) ]
             [ getAvatar2 username ]
         ]
 
@@ -535,7 +535,7 @@ viewUserFull size isLinked isBoxed user =
 
         ( ob, lk ) =
             if isLinked then
-                ( a, [ href (uriFromUsername UsersBaseUri user.username) ] )
+                ( a, [ href (toLink UsersBaseUri user.username []) ] )
 
             else
                 ( span, [] )
@@ -568,7 +568,7 @@ viewOrga0 isLinked nameid =
     if isLinked then
         a
             [ class "image circleBase circle1 is-orga"
-            , href (uriFromNameid OverviewBaseUri rid [])
+            , href (toLink OverviewBaseUri rid [])
             ]
             [ getAvatarOrga rid ]
 
@@ -587,7 +587,7 @@ viewOrga isLinked nameid =
     if isLinked then
         a
             [ class "image circleBase circle2 is-orga"
-            , href (uriFromNameid OverviewBaseUri rid [])
+            , href (toLink OverviewBaseUri rid [])
             ]
             [ getAvatarOrga rid ]
 
@@ -810,7 +810,7 @@ viewNodeRef baseUri n =
                 "#"
 
             else
-                uriFromNameid baseUri n.nameid []
+                toLink baseUri n.nameid []
     in
     a [ href ref, class "is-wrapped" ] [ text n.name ]
 
@@ -819,7 +819,7 @@ viewNodeRefShort : FractalBaseRoute -> String -> Html msg
 viewNodeRefShort baseUri nid =
     let
         ref =
-            uriFromNameid baseUri nid []
+            toLink baseUri nid []
 
         name =
             nid |> String.split "#" |> LE.last |> withDefault nid
@@ -839,7 +839,7 @@ mediaOrga_ op user_m root =
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
                 [ div [ class "column is-8" ]
-                    [ a [ href (uriFromNameid OverviewBaseUri root.nameid []) ] [ text root.name ]
+                    [ a [ href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
                             renderMarkdown "is-human pt-1" ab
@@ -880,10 +880,10 @@ mediaOrga_ op user_m root =
                                     |> List.map
                                         (\r ->
                                             if r.role_type == RoleType.Guest then
-                                                viewRole "" True False Nothing (Just <| uriFromNameid MembersBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
+                                                viewRole "" True False Nothing (Just <| toLink MembersBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
 
                                             else
-                                                viewRole "" True False Nothing (Just <| uriFromNameid OverviewBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
+                                                viewRole "" True False Nothing (Just <| toLink OverviewBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
                                         )
                                 )
                             ]

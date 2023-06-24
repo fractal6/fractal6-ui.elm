@@ -28,7 +28,7 @@ import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, uriFromNameid)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
@@ -1432,9 +1432,9 @@ viewActivies model =
                             if List.length tensions > 0 then
                                 List.map (\x -> mediaTension { noMsg = NoMsg } model.conf model.node_focus x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
-                                            [ a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
+                                            [ a [ class "mx-4 discrete-link", href (toLink TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
-                                            , a [ class "mx-4 discrete-link", href (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ "?v=circle") ] [ text T.seeByCircle ]
+                                            , a [ class "mx-4 discrete-link", href (toLink TensionsBaseUri model.node_focus.nameid [] ++ "?v=circle") ] [ text T.seeByCircle ]
                                             ]
                                        ]
                                     |> div [ id "tensionsTab" ]
