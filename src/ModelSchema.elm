@@ -439,6 +439,13 @@ type alias TensionPanel =
     }
 
 
+type alias TensionAuth a =
+    { a
+        | receiver : EmitterOrReceiver
+        , assignees : Maybe (List User)
+    }
+
+
 type alias TensionComments =
     { id : String
     , comments : Maybe (List Comment)

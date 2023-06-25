@@ -58,7 +58,6 @@ type alias Model =
     , isActive : Bool
     , isActive2 : Bool
     , isHover : Bool
-    , scrollTo : Maybe String
     , focus : NodeFocus
     , tree_result : GqlData NodesDict
     , tree : Tree Node
@@ -91,7 +90,6 @@ initModel baseUri uriQuery focus isActive tree user =
     , isActive = withDefault False isActive
     , isActive2 = withDefault False isActive
     , isHover = False
-    , scrollTo = Nothing
     , focus = focus
     , tree_result =
         case tree of
@@ -532,7 +530,7 @@ update_ apis message model =
             ( model, out1 gcmds )
 
         ScrollToElement nid ->
-            ( { model | scrollTo = Just nid }, out0 [ Scroll.scrollToSubElement "tree-menu" (prefixId nid) NoMsg ] )
+            ( model, out0 [ Scroll.scrollToSubElement "tree-menu" (prefixId nid) NoMsg ] )
 
 
 subscriptions : List (Sub Msg)

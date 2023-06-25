@@ -100,7 +100,6 @@ type alias EventTracker =
 type alias Model =
     { user : UserState
     , focusid : String
-    , tensionid : String
     , comments : List Comment
     , history : List Event
     , expandedEvents : List Int
@@ -126,7 +125,6 @@ initModel : String -> String -> UserState -> Model
 initModel nameid tensionid user =
     { user = user
     , focusid = nameid
-    , tensionid = tensionid
     , comments = []
     , history = []
     , expandedEvents = []
@@ -157,7 +155,7 @@ init nameid tensionid user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.tensionid model.focusid model.user
+    initModel model.tension_form.id model.focusid model.user
 
 
 type Msg
@@ -340,7 +338,7 @@ update_ apis message model =
                 OkAuth tp ->
                     let
                         resetForm =
-                            initTensionForm model.tensionid Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.user
                     in
                     ( { model
                         | comments =
@@ -751,7 +749,11 @@ viewComment conf c form result userInput =
             toReflink conf.url ++ "?goto=" ++ c.createdAt
     in
     div [ id c.createdAt, class "media section is-paddingless" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
+        [ div
+            [ class "media-left is-hidden-mobile"
+            , classList [ ( "is-hidden", isMobile conf.screen ) ]
+            ]
+            [ viewUser2 c.createdBy.username ]
         , div
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
@@ -762,7 +764,11 @@ viewComment conf c form result userInput =
               else
                 div [ class "message" ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
-                        [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
+                        [ span
+                            [ --class "is-hidden-tablet"
+                              classList [ ( "is-hidden", not (isMobile conf.screen) ) ]
+                            ]
+                            [ viewUser0 c.createdBy.username ]
                         , viewTensionDateAndUserC conf c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
@@ -878,8 +884,14 @@ viewNewTensionCommentInput conf (State model) =
             [ div [ class "field" ]
                 [ div [ class "control" ] [ viewCommentTextarea conf "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
                 , p [ class "help-label" ] [ text model.tension_form.txt.message_help ]
-                , div [ class "is-hidden-mobile is-pulled-right help", style "font-size" "10px" ] [ text "Tips: <C+Enter> to submit" ]
-                , br [ class "is-hidden-mobile" ] []
+                , div
+                    [ class "is-hidden-mobile is-pulled-right help"
+                    , classList [ ( "is-hidden", isMobile conf.screen ) ]
+                    , style "font-size" "10px"
+                    ]
+                    [ text "Tips: <C+Enter> to submit" ]
+                , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
+                    []
                 ]
             ]
         ]
@@ -966,7 +978,8 @@ viewTensionCommentInput conf tension (State model) =
                     )
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
+        [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
+            [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" form ]
