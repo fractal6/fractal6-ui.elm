@@ -40,7 +40,7 @@ import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, Node, NodesDict, ProjectAuth, TensionHead, UserCtx, UserRole, initNode)
+import ModelSchema exposing (LocalGraph, Node, NodesDict, ProjectAuth, TensionAuth, TensionHead, UserCtx, UserRole, initNode)
 import RemoteData
 import String exposing (contains, startsWith)
 import String.Extra as SE
@@ -331,7 +331,7 @@ getNodeRights uctx target_ odata =
   - Assignee of the tension.
 
 -}
-getTensionRights : UserCtx -> GqlData TensionHead -> GqlData LocalGraph -> Bool
+getTensionRights : UserCtx -> GqlData (TensionAuth a) -> GqlData LocalGraph -> Bool
 getTensionRights uctx th_d path_d =
     case th_d of
         Success th ->

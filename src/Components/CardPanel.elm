@@ -22,12 +22,12 @@
 port module Components.CardPanel exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr)
+import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded)
-import Bulk.View exposing (action2icon, tensionIcon3, viewTensionLight)
+import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser, viewTensionLight)
 import Components.Comments as Comments
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -43,7 +43,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -57,6 +57,7 @@ import Query.PatchTension exposing (patchComment, patchLiteral, pushTensionPatch
 import Query.QueryTension exposing (getTensionPanel)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
+import Scroll
 import Session exposing (Apis, Conf, GlobalCmd(..), toReflink)
 import Text as T
 import Time
@@ -72,16 +73,14 @@ type State
     = State Model
 
 
-
--- @todo: set tensionid in TensionForm
-
-
 type alias Model =
     { user : UserState
     , node_focus : NodeFocus
     , isOpen : Bool
     , card : ProjectCard
     , tension_result : GqlData TensionPanel
+    , isTensionAdmin : Bool
+    , path_data : GqlData LocalGraph -- tensionadmin
 
     -- Title
     , isTitleEdit : Bool
@@ -99,13 +98,15 @@ type alias Model =
     }
 
 
-initModel : NodeFocus -> UserState -> Model
-initModel focus user =
+initModel : GqlData LocalGraph -> NodeFocus -> UserState -> Model
+initModel path focus user =
     { user = user
     , node_focus = focus
     , isOpen = False
     , card = emptyCard
     , tension_result = NotAsked
+    , isTensionAdmin = False
+    , path_data = path
 
     -- Title Result
     , isTitleEdit = False
@@ -123,9 +124,9 @@ initModel focus user =
     }
 
 
-init : NodeFocus -> UserState -> State
-init focus user =
-    initModel focus user |> State
+init : GqlData LocalGraph -> NodeFocus -> UserState -> State
+init path focus user =
+    initModel path focus user |> State
 
 
 
@@ -136,7 +137,7 @@ init focus user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.node_focus model.user
+    initModel model.path_data model.node_focus model.user
 
 
 
@@ -149,15 +150,17 @@ type Msg
     = OnOpen ProjectCard
     | OnOutsideClickClose
     | OnClose
+    | OnSetPath (GqlData LocalGraph)
       --
-      -- Tension action/patching (@todo componetize this, Org/Tension + Components/CardPanel)
+      -- Tension action/patching
       --
     | OnSubmit Bool (Time.Posix -> Msg)
     | OnQueryTension String
     | OnTensionAck (GqlData TensionPanel)
       -- Title
     | DoChangeTitle
-    | CancelTitle
+    | OnChangeTitle String
+    | OnCancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
       -- Confirm Modal
@@ -167,6 +170,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | ScrollToElement String
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
@@ -230,10 +234,10 @@ update_ apis message model =
 
         OnClose ->
             -- @warning: Ports.click to reset the outsideClickClose handler.
-            --
-            -- Tension action/patching (@todo componetize this, Org/Tension + Components/CardPanel)
-            --
             ( resetModel model, out0 [ Ports.click "" ] )
+
+        OnSetPath path_data ->
+            ( { model | path_data = path_data }, noOut )
 
         OnSubmit isSendable next ->
             if isSendable then
@@ -243,12 +247,15 @@ update_ apis message model =
                 ( model, noOut )
 
         OnQueryTension tid ->
-            ( { model | tension_result = Loading }
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_result = Loading, tension_form = { form | id = tid } }
             , out0 [ getTensionPanel apis (uctxFromUser model.user) tid OnTensionAck ]
             )
 
         OnTensionAck result ->
-            -- @todo: get isTensionAdmin...
             case result of
                 Success d ->
                     -- Memory Optimization: Do no store comments twice.
@@ -258,8 +265,14 @@ update_ apis message model =
 
                         history =
                             withDefault [] d.history
+
+                        isAdmin =
+                            getTensionRights (uctxFromUser model.user) result model.path_data
                     in
-                    ( { model | tension_result = Success { d | comments = Nothing, history = Nothing } }
+                    ( { model
+                        | tension_result = Success { d | comments = Nothing, history = Nothing }
+                        , isTensionAdmin = isAdmin
+                      }
                     , out0
                         [ Cmd.map CommentsMsg (send <| Comments.SetComments comments)
                         , Cmd.map CommentsMsg (send <| Comments.SetHistory history)
@@ -271,11 +284,17 @@ update_ apis message model =
                     ( { model | tension_result = result }, noOut )
 
         DoChangeTitle ->
-            -- @todo: set titleInput id
             ( { model | isTitleEdit = True }, out0 [ Ports.focusOn "titleInput" ] )
 
-        CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm "" Nothing model.user, title_result = NotAsked }, noOut )
+        OnChangeTitle value ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | post = Dict.insert "title" value form.post } }, noOut )
+
+        OnCancelTitle ->
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, title_result = NotAsked }, noOut )
 
         SubmitTitle time ->
             let
@@ -309,7 +328,7 @@ update_ apis message model =
                                     other
 
                         resetForm =
-                            initTensionForm "" Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.user
                     in
                     ( { model | tension_result = tension_r, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , noOut
@@ -334,6 +353,9 @@ update_ apis message model =
 
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
+
+        ScrollToElement did ->
+            ( model, out0 [ Scroll.scrollToSubElement "main-block" did NoMsg ] )
 
         -- Components
         LabelSearchPanelMsg msg ->
@@ -448,29 +470,36 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div
-        [ id "cardPanel"
-        , class "side-menu"
-        , classList [ ( "off", not model.isOpen ) ]
-        ]
-        [ case model.card.card of
-            CardTension _ ->
-                case model.tension_result of
-                    Success tension ->
-                        viewPanelTension op tension model
+    div []
+        [ div
+            [ id "cardPanel"
+            , class "side-menu is-large"
+            , classList [ ( "off", not model.isOpen ) ]
+            ]
+            [ case model.card.card of
+                CardTension _ ->
+                    case model.tension_result of
+                        Success tension ->
+                            viewPanelTension op tension model
 
-                    LoadingSlowly ->
-                        div [ class "spinner" ] []
+                        LoadingSlowly ->
+                            div [ class "spinner" ] []
 
-                    Failure err ->
-                        viewGqlErrors err
+                        Failure err ->
+                            viewGqlErrors err
 
-                    _ ->
-                        text ""
+                        _ ->
+                            text ""
 
-            CardDraft draft ->
-                viewPanelDraft op draft model
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+                CardDraft draft ->
+                    viewPanelDraft op draft model
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
+        , if model.isOpen then
+            div [ class "side-menu-background", onClick OnClose ] []
+
+          else
+            text ""
         ]
 
 
@@ -485,23 +514,125 @@ viewPanelTension op t model =
     div [ class "panel" ]
         [ div [ class "header-block" ]
             [ div [ class "panel-heading" ]
-                [ a
-                    [ class "stealth-link"
-                    , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
-                    ]
-                    [ text t.title ]
-                , button [ class "delete is-pulled-right", onClick OnClose ] []
+                [ if model.isTitleEdit then
+                    let
+                        newTitle =
+                            Dict.get "title" model.tension_form.post |> withDefault t.title
+                    in
+                    viewTitleEdit newTitle t.title model.title_result
+
+                  else
+                    viewTitle t model
+                , viewSubTitle op.conf t model
                 ]
             ]
-        , div [ class "main-block" ]
+        , div [ id "main-block", class "main-block" ]
             [ viewTensionComments op t model
             ]
+        ]
+
+
+viewTitle : TensionPanel -> Model -> Html Msg
+viewTitle t model =
+    let
+        uctx =
+            uctxFromUser model.user
+
+        isAuthor =
+            t.createdBy.username == uctx.username
+    in
+    div []
+        [ a
+            [ class "title tensionTitle discrete-link is-human"
+            , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
+            ]
+            [ text t.title ]
+        , div [ class "is-pulled-right" ]
+            [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
+                span
+                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
+                    , attribute "data-tooltip" T.editTitle
+                    , onClick DoChangeTitle
+                    ]
+                    [ A.icon "icon-edit-2" ]
+
+              else
+                text ""
+            , button [ class "delete", onClick OnClose ] []
+            ]
+        ]
+
+
+viewTitleEdit : String -> String -> GqlData IdPayload -> Html Msg
+viewTitleEdit new old result =
+    let
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            new /= old
+    in
+    div []
+        [ div [ class "field is-grouped" ]
+            [ p [ class "control is-expanded" ]
+                [ input
+                    [ id "titleInput"
+                    , class "input is-human"
+                    , type_ "text"
+                    , placeholder "Title*"
+                    , spellcheck True
+                    , value new
+                    , onInput OnChangeTitle
+                    ]
+                    []
+                ]
+            , p [ class "control buttons" ]
+                [ button
+                    [ class "button is-success is-small"
+                    , classList [ ( "is-loading", isLoading ) ]
+                    , disabled (not isSendable)
+                    , onClick (OnSubmit (isSendable && not isLoading) SubmitTitle)
+                    ]
+                    [ text T.update ]
+                , button [ class "button is-small", onClick OnCancelTitle ] [ text T.cancel ]
+                ]
+            ]
+        , viewMaybeErrors result
+        ]
+
+
+viewSubTitle : Conf -> TensionPanel -> Model -> Html Msg
+viewSubTitle conf t model =
+    div [ class "tensionSubtitle my-2" ]
+        [ span
+            [ class "tag is-rounded has-background-tag"
+
+            --, classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
+            --, ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+            ]
+            [ tensionIcon2 t.type_ ]
+        , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
+            -- As Governance tension get automatically closed when there are created,
+            -- there status is not relevant, I can cause confusion to user as the object exists.
+            span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
+                [ t.status |> tensionStatus2str |> text ]
+
+          else
+            text ""
+        , viewTensionDateAndUser conf "is-discrete" t.createdAt t.createdBy
+        , viewCircleTarget { noMsg = NoMsg } "is-pulled-right" t.receiver
         ]
 
 
 viewTensionComments : Op -> TensionPanel -> Model -> Html Msg
 viewTensionComments op t model =
     let
+        conf =
+            op.conf
+
+        mobileConf =
+            { conf | screen = { w = 1, h = 1 } }
+
         userCanJoin =
             withMaybeData op.path_data
                 |> Maybe.map
@@ -526,7 +657,7 @@ viewTensionComments op t model =
             case model.user of
                 LoggedIn _ ->
                     if userCanComment then
-                        Comments.viewTensionCommentInput op.conf t model.comments |> Html.map CommentsMsg
+                        Comments.viewTensionCommentInput mobileConf t model.comments |> Html.map CommentsMsg
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -539,7 +670,7 @@ viewTensionComments op t model =
                         text ""
     in
     div [ class "comments" ]
-        [ Comments.viewCommentsTension op.conf t.action model.comments |> Html.map CommentsMsg
+        [ Comments.viewCommentsTension mobileConf t.action model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
         , userInput
         ]

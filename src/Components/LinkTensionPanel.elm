@@ -523,7 +523,7 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div
         [ id "linkTensionPanel"
-        , class "side-menu"
+        , class "side-menu is-medium"
         , classList [ ( "off", not model.isOpen ) ]
         ]
         [ viewPanel op model

@@ -478,6 +478,9 @@ a:hover .is-name, a:hover .is-username {
 strong {
     color: var(--text-light);
 }
+.is-light {
+    font-weight: 300;
+}
 
 .is-text-aligned {
     vertical-align: baseline;
@@ -1578,19 +1581,22 @@ figcaption {
 }
 
 // Right side menu
+.side-menu-background {
+  z-index: 10;
+  //position: sticky;
+  position: fixed;
+  height: calc(100% - #{$navbar-height});
+  left: 0;
+  width: 100%;
+  top: calc(#{$navbar-height});
+  opacity: 0.5;
+  background-color: var(--modal-background-background-color);
+}
 .side-menu {
   z-index: 11;
   //position: sticky;
   position: fixed;
   height: calc(100% - #{$navbar-height});
-  @include tablet {
-      width: 75%;
-      min-width: 600px;
-      max-width: 1000px;
-  }
-  @include mobile {
-      width: 100%;
-  }
 
   top: calc(#{$navbar-height});
   right: 0;
@@ -1636,6 +1642,28 @@ figcaption {
   }
   .footer-block {
       flex-shrink: 0;
+  }
+}
+
+.side-menu.is-medium {
+  @include tablet {
+      width: 75%;
+      min-width: 600px;
+      max-width: 1000px;
+  }
+  @include mobile {
+      width: 100%;
+  }
+}
+
+.side-menu.is-large {
+  @include tablet {
+      width: 82%;
+      min-width: 600px;
+      max-width: 1300px;
+  }
+  @include mobile {
+      width: 100%;
   }
 }
 
@@ -1765,7 +1793,8 @@ figcaption {
 // Tension/Blob Page
 //
 
-.tensionTitle > .is-human {
+.tensionTitle > .is-human,
+.tensionTitle.is-human {
     color: var(--text);
     font-size: 2rem !important;
     // Zen font
@@ -1863,6 +1892,33 @@ figcaption {
         //    align-items: center;
         //}
     }
+}
+
+#cardPanel {
+    border-left: 1px solid var(--hbc);
+    .comments, .main-block, .header-block {
+        background: $bbc;
+    }
+
+    .media {
+        padding: 0 0.75rem !important;
+    }
+
+    .message-header {
+    }
+
+    .message-body {
+    }
+
+    // Ignore has-arrow-left
+    .has-arrow-left:after, .has-arrow-left:before {
+        display: none;
+    }
+
+}
+
+.panel-background {
+    opacity: 0.5
 }
 
 .actionComment {
@@ -2860,7 +2916,6 @@ i.is-liked {
     .modal-background {
         background-color: var(--grey-light);
     }
-
 
     justify-content: start;
     .modal-content {

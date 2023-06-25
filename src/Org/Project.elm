@@ -233,20 +233,22 @@ init global flags =
         newFocus =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
+        path_data =
+            global.session.path_data
+                |> Maybe.map (\x -> Success x)
+                |> withDefault Loading
+
         -- What has changed
         fs =
             focusState ProjectBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
-            , path_data =
-                global.session.path_data
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault Loading
+            , path_data = path_data
             , projectid = projectid
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
-            , cardPanel = CardPanel.init newFocus global.session.user
+            , cardPanel = CardPanel.init path_data newFocus global.session.user
             , board = Board.init projectid newFocus global.session.user
 
             -- Common
@@ -354,7 +356,10 @@ update global message model =
                                 newPath =
                                     { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                             in
-                            ( { model | path_data = Success newPath }, Cmd.none, send (UpdateSessionPath (Just newPath)) )
+                            ( { model | path_data = Success newPath }
+                            , Cmd.map CardPanelMsg (send (CardPanel.OnSetPath (Success newPath)))
+                            , send (UpdateSessionPath (Just newPath))
+                            )
 
                         Nothing ->
                             let
