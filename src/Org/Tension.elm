@@ -2211,7 +2211,7 @@ viewSidePane u t model =
         isRoot =
             t.receiver.nameid == rid && (unwrap Nothing .node blob_m |> unwrap Nothing .nameid) == Just ""
     in
-    div [ class "tensionSidePane" ] <|
+    div [ class "tensionSidePane mt-5 pt-3" ] <|
         [ -- Assignees/User select
           div
             [ class "media"
@@ -2234,7 +2234,7 @@ viewSidePane u t model =
                                 text ""
                             ]
                         , UserSearchPanel.view
-                            { selectedAssignees = t.assignees |> withDefault []
+                            { selectedAssignees = assignees
                             , targets = model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
                             , isRight = False
                             }
@@ -2276,7 +2276,7 @@ viewSidePane u t model =
                                 text ""
                             ]
                         , LabelSearchPanel.view
-                            { selectedLabels = t.labels |> withDefault []
+                            { selectedLabels = labels
                             , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
                             , isRight = False
                             }

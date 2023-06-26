@@ -23,12 +23,12 @@ port module Components.CardPanel exposing (Msg(..), State, init, subscriptions, 
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
-import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
+import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, getPath, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser, viewTensionLight)
-import Components.Comments as Comments
+import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewTensionLight, viewUsers)
+import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
@@ -48,12 +48,14 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (CardKind(..), Comment, FocusNode, IdPayload, LocalGraph, Node, NodesDict, PatchTensionPayloadID, Post, ProjectCard, ProjectColumn, ProjectDraft, ReactionResponse, TensionLight, TensionPanel, UserCtx, emptyCard, initFocusNode, node2focus)
 import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, typeFilter2Text)
 import Ports
 import Query.PatchTension exposing (patchComment, patchLiteral, pushTensionPatch)
+import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryTension exposing (getTensionPanel)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
@@ -77,10 +79,11 @@ type alias Model =
     { user : UserState
     , node_focus : NodeFocus
     , isOpen : Bool
-    , card : ProjectCard
-    , tension_result : GqlData TensionPanel
-    , isTensionAdmin : Bool
     , path_data : GqlData LocalGraph -- tensionadmin
+    , card : ProjectCard
+    , isTensionAdmin : Bool
+    , tension_result : GqlData TensionPanel
+    , subscribe_result : GqlData Bool -- init a GotTensionHead
 
     -- Title
     , isTitleEdit : Bool
@@ -103,10 +106,11 @@ initModel path focus user =
     { user = user
     , node_focus = focus
     , isOpen = False
-    , card = emptyCard
-    , tension_result = NotAsked
-    , isTensionAdmin = False
     , path_data = path
+    , card = emptyCard
+    , isTensionAdmin = False
+    , tension_result = NotAsked
+    , subscribe_result = NotAsked
 
     -- Title Result
     , isTitleEdit = False
@@ -157,6 +161,8 @@ type Msg
     | OnSubmit Bool (Time.Posix -> Msg)
     | OnQueryTension String
     | OnTensionAck (GqlData TensionPanel)
+    | ToggleSubscription String
+    | GotIsSubscribe (GqlData Bool)
       -- Title
     | DoChangeTitle
     | OnChangeTitle String
@@ -172,8 +178,10 @@ type Msg
     | LogErr String
     | ScrollToElement String
       -- Components
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | DoAssigneeEdit
     | UserSearchPanelMsg UserSearchPanel.Msg
+    | DoLabelEdit
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
     | CommentsMsg Comments.Msg
 
 
@@ -282,6 +290,28 @@ update_ apis message model =
 
                 _ ->
                     ( { model | tension_result = result }, noOut )
+
+        ToggleSubscription username ->
+            case model.tension_result of
+                Success th ->
+                    ( { model | subscribe_result = LoadingSlowly }
+                    , out0 [ toggleTensionSubscription apis username model.tension_form.id (not th.isSubscribed) GotIsSubscribe ]
+                    )
+
+                _ ->
+                    ( model, noOut )
+
+        GotIsSubscribe result ->
+            case result of
+                Success d ->
+                    let
+                        th =
+                            withMapData (\x -> { x | isSubscribed = d }) model.tension_result
+                    in
+                    ( { model | subscribe_result = result, tension_result = th }, noOut )
+
+                _ ->
+                    ( { model | subscribe_result = result }, noOut )
 
         DoChangeTitle ->
             ( { model | isTitleEdit = True }, out0 [ Ports.focusOn "titleInput" ] )
@@ -393,6 +423,41 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds
             )
 
+        DoAssigneeEdit ->
+            let
+                targets =
+                    getPath model.path_data |> List.map .nameid
+
+                k =
+                    Debug.log "targets" targets
+            in
+            ( model, out0 [ Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)) ] )
+
+        DoLabelEdit ->
+            let
+                targets =
+                    getPath model.path_data |> List.map .nameid
+
+                receiver_m =
+                    withMaybeData model.tension_result |> Maybe.map .receiver
+
+                k =
+                    Debug.log "lanbe" ""
+            in
+            case receiver_m of
+                Just receiver ->
+                    case LE.elemIndex receiver.nameid targets of
+                        Just i ->
+                            -- receiver is in the current focus/path
+                            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)) ] )
+
+                        Nothing ->
+                            -- receiver does not match the current focus/path
+                            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ receiver.nameid ] (Just False))) ] )
+
+                Nothing ->
+                    ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets Nothing)) ] )
+
         UserSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -431,8 +496,16 @@ update_ apis message model =
             let
                 ( data, out ) =
                     Comments.update apis msg model.comments
+
+                tension_result =
+                    case out.result of
+                        Just (TensionCommentAdded status) ->
+                            withMapData (\t -> { t | status = withDefault t.status status }) model.tension_result
+
+                        _ ->
+                            model.tension_result
             in
-            ( { model | comments = data }
+            ( { model | comments = data, tension_result = tension_result }
             , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m)) out.gcmds
             )
 
@@ -527,7 +600,10 @@ viewPanelTension op t model =
                 ]
             ]
         , div [ id "main-block", class "main-block" ]
-            [ viewTensionComments op t model
+            [ div [ class "columns m-0" ]
+                [ div [ class "column is-9" ] [ viewTensionComments op t model ]
+                , div [ class "column pl-1" ] [ viewSidePane t model ]
+                ]
             ]
         ]
 
@@ -544,6 +620,7 @@ viewTitle t model =
     div []
         [ a
             [ class "title tensionTitle discrete-link is-human"
+            , target "_blank"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
             ]
             [ text t.title ]
@@ -676,6 +753,119 @@ viewTensionComments op t model =
         ]
 
 
+viewSidePane : TensionPanel -> Model -> Html Msg
+viewSidePane t model =
+    let
+        uctx =
+            uctxFromUser model.user
+
+        isAuthor =
+            t.createdBy.username == uctx.username
+
+        isAdmin =
+            model.isTensionAdmin
+
+        hasAssigneeRight =
+            isAdmin
+
+        hasLabelRight =
+            isAdmin || isAuthor
+
+        --
+        assignees =
+            t.assignees |> withDefault []
+
+        labels =
+            t.labels |> withDefault []
+    in
+    div [ class "tensionSidePane" ] <|
+        [ -- Assignees/User select
+          div [ class "level" ]
+            [ div [ class "level-left" ] [ text T.assignees ]
+            , div
+                [ class "level-item"
+                , classList [ ( "is-w", hasAssigneeRight ) ]
+                , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
+                ]
+                [ if List.length assignees > 0 then
+                    viewUsers assignees
+
+                  else
+                    div [ class "help", classList [ ( "is-w", hasAssigneeRight ) ] ] [ text T.addAssignees ]
+                , div [ class "mt-4" ]
+                    [ UserSearchPanel.view
+                        { selectedAssignees = assignees
+                        , targets = model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
+                        , isRight = True
+                        }
+                        model.assigneesPanel
+                        |> Html.map UserSearchPanelMsg
+                    ]
+                ]
+            ]
+
+        -- Label select
+        , div
+            [ class "level"
+            ]
+            [ div [ class "level-left" ] [ text T.labels ]
+            , div
+                [ class "level-item"
+                , classList [ ( "is-w", hasLabelRight ) ]
+                , ternary hasLabelRight (onClick DoLabelEdit) (onClick NoMsg)
+                ]
+                [ if List.length labels > 0 then
+                    div [ class "tnesion-labelsList" ] [ viewLabels Nothing labels ]
+
+                  else
+                    div [ class "help", classList [ ( "is-w", hasLabelRight ) ] ] [ text T.addLabels ]
+                , div [ class "mt-4" ]
+                    [ LabelSearchPanel.view
+                        { selectedLabels = labels
+                        , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
+                        , isRight = True
+                        }
+                        model.labelsPanel
+                        |> Html.map LabelSearchPanelMsg
+                    ]
+                ]
+            ]
+        , -- Subscriptions
+          case model.user of
+            LoggedIn _ ->
+                let
+                    ( iconElt, subscribe_txt ) =
+                        case model.tension_result |> withMaybeData |> Maybe.map .isSubscribed of
+                            Just True ->
+                                ( A.icon1 "icon-bell-off icon-1x" T.unsubscribe, T.tensionSubscribeText )
+
+                            Just False ->
+                                ( A.icon1 "icon-bell icon-1x" T.subscribe, T.tensionUnsubscribeText )
+
+                            Nothing ->
+                                ( text "", "" )
+                in
+                div [ class "pb-0 mt-6" ]
+                    [ p
+                        [ class "button is-fullwidth has-background-evidence is-small "
+                        , style "border-radius" "5px"
+                        , onClick (ToggleSubscription uctx.username)
+                        ]
+                        [ iconElt, loadingSpin (model.subscribe_result == LoadingSlowly) ]
+                    , p [ class "help" ] [ text subscribe_txt ]
+                    , case model.subscribe_result of
+                        Failure err ->
+                            viewGqlErrors err
+
+                        _ ->
+                            text ""
+                    ]
+
+            LoggedOut ->
+                text ""
+        ]
+
+
 
 --
 -- Draft views
@@ -684,9 +874,51 @@ viewTensionComments op t model =
 
 viewPanelDraft : Op -> ProjectDraft -> Model -> Html Msg
 viewPanelDraft op draft model =
+    let
+        uctx =
+            uctxFromUser model.user
+
+        isAuthor =
+            draft.createdBy.username == uctx.username
+
+        -- @todo: get is draft admin
+        -- @todo: edit Draft (case on SubmitTitle + edit draft comment
+    in
     div [ class "panel" ]
         [ div [ class "header-block" ]
-            [ div [ class "panel-heading" ] [ text draft.title, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+            [ div [ class "panel-heading" ]
+                [ if model.isTitleEdit then
+                    let
+                        newTitle =
+                            Dict.get "title" model.tension_form.post |> withDefault draft.title
+                    in
+                    viewTitleEdit newTitle draft.title model.title_result
+
+                  else
+                    div []
+                        [ text draft.title
+                        , div [ class "is-pulled-right" ]
+                            [ if model.isTensionAdmin || isAuthor then
+                                span
+                                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
+                                    , attribute "data-tooltip" T.editTitle
+                                    , onClick DoChangeTitle
+                                    ]
+                                    [ A.icon "icon-edit-2" ]
+
+                              else
+                                text ""
+                            , button [ class "delete ", onClick OnClose ] []
+                            ]
+                        , div [ class "tensionSubtitle mt-3" ]
+                            [ span
+                                [ class "tag is-rounded has-background-tag"
+                                ]
+                                [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
+                            , viewTensionDateAndUser op.conf "is-discrete" draft.createdAt draft.createdBy
+                            ]
+                        ]
+                ]
             ]
         , div [ class "main-block" ]
             [ viewDraftComment draft
@@ -696,7 +928,17 @@ viewPanelDraft op draft model =
 
 viewDraftComment : ProjectDraft -> Html Msg
 viewDraftComment draft =
+    let
+        message =
+            withDefault "" draft.message
+    in
     div [ class "message" ]
-        [ div [ class "message-header" ] [ text "" ]
-        , div [ class "message-body" ] [ text "" ]
+        [ div [ class "message-body" ]
+            [ case message of
+                "" ->
+                    div [ class "help is-italic" ] [ text T.noMessageProvided ]
+
+                msg ->
+                    renderMarkdown "is-human" msg
+            ]
         ]
