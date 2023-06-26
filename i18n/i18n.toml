@@ -1139,6 +1139,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Assigned Tensions"
   fr="Tensions Assignées"
 
+[addAssignees]
+  en="Add assignees..."
+
+[addLabels]
+  en="Add labels..."
+
 [tensionSubscribeText]
   en="You’re receiving notifications because you’re subscribed to this thread."
   fr="Vous recevez des notifications car vous êtes abonné à ce fil de discussion."

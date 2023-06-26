@@ -1636,7 +1636,7 @@ figcaption {
   }
   .main-block {
       flex-grow: 1;
-      overflow: auto;
+      overflow-y: auto;
       min-height: 2em;
 
   }
@@ -1821,6 +1821,8 @@ figcaption {
     .message {
         border-radius: 8px !important;
         .message-header {
+            //padding-top: 0.5rem;
+            //padding-bottom: 0.5rem;
             border-radius: 8px 8px 0 0 !important;
             display: inherit !important;
             font-size: 14px !important;
@@ -1837,8 +1839,8 @@ figcaption {
 
             .dropdown-trigger {
                 padding-top: 3px;
-                padding-bottom: $size-small;
             }
+
             .dropdown-menu {
                 margin-top: -$size-small;
                 margin-right: -$size-small !important;
@@ -1897,14 +1899,19 @@ figcaption {
 #cardPanel {
     border-left: 1px solid var(--hbc);
     .comments, .main-block, .header-block {
-        background: $bbc;
+        background: var(--bbc);
     }
 
     .media {
-        padding: 0 0.75rem !important;
+        padding: 0 0rem !important;
     }
 
     .message-header {
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+        .dropdown-trigger {
+            padding-top: 8px;
+        }
     }
 
     .message-body {
@@ -1918,18 +1925,24 @@ figcaption {
 }
 
 .panel-background {
-    opacity: 0.5
+    opacity: 0.75;
 }
 
 .actionComment {
+    margin-left: 1rem !important;
     @include tablet {
         margin-left: 5rem !important;
     }
     font-size: 14px !important;
 }
+#cardPanel {
+    .actionComment {
+        margin-left: 1rem !important;
+    }
+}
 
 .tensionSidePane {
-    margin-top: 2.25rem !important;
+    //margin-top: 2.25rem !important;
 
     .media:first-child {
         border-top: 1px solid var(--border-color-light) !important;
@@ -1950,6 +1963,25 @@ figcaption {
             color: var(--is-discrete);
             margin-bottom: 1rem !important;
         }
+    }
+
+    .level {
+        justify-content: start;
+    }
+    .level-left {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: var(--is-hint);
+        flex-basis: 33%;
+        padding-right: var(--size-small);
+    }
+    .level-item {
+        flex-grow: 0 !important;
+        justify-content: left;
+    }
+
+    .level .help {
+        margin-top: 0;
     }
 }
 
