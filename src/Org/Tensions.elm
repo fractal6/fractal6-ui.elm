@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -633,10 +633,8 @@ init global flags =
             , tensions_all = fromMaybeData global.session.tensions_all Loading
             , query = query
             , offset = ternary fs.refresh 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
-            , authorsPanel =
-                UserSearchPanel.load global.session.authorsPanel global.session.user
-            , labelsPanel =
-                LabelSearchPanel.load global.session.labelsPanel global.session.user
+            , authorsPanel = UserSearchPanel.load global.session.authorsPanel global.session.user
+            , labelsPanel = LabelSearchPanel.load global.session.labelsPanel global.session.user
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder

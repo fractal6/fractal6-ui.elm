@@ -387,8 +387,8 @@ init global flags =
             -- Side Pane
             , isTensionAdmin = withDefault False global.session.isAdmin
             , isAssigneeOpen = False
-            , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
             , isLabelOpen = False
+            , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
             , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
 
             -- Common

@@ -60,7 +60,7 @@ import Query.QueryTension exposing (getTensionPanel)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Scroll
-import Session exposing (Apis, Conf, GlobalCmd(..), toReflink)
+import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
 import Text as T
 import Time
 
@@ -118,8 +118,8 @@ initModel path focus user =
     , tension_form = initTensionForm "" Nothing user
 
     -- Components
-    , assigneesPanel = UserSearchPanel.load Nothing user
-    , labelsPanel = LabelSearchPanel.load Nothing user
+    , assigneesPanel = UserSearchPanel.init "" AssignUser user
+    , labelsPanel = LabelSearchPanel.init "" AssignLabel user
     , comments = Comments.init focus.nameid "" user
 
     -- Common
@@ -229,6 +229,8 @@ update_ apis message model =
                             CardTension a ->
                                 [ send (OnQueryTension a.id)
                                 , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
+                                , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
+                                , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
                                 ]
 
                             CardDraft a ->
