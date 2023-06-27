@@ -194,6 +194,7 @@ type Msg
     = OnOpen (List String) (Maybe Bool)
     | OnClose
     | OnClose_
+    | SetTensionid String
     | OnChangePattern String
     | ChangeLabelLookup (LookupResult Label)
     | OnLabelClick Label Bool Time.Posix
@@ -289,6 +290,13 @@ update_ apis message model =
 
         OnClose_ ->
             ( close model, noOut )
+
+        SetTensionid tid ->
+            let
+                form =
+                    model.form
+            in
+            ( { model | form = { form | tid = tid } }, noOut )
 
         OnGotLabels result ->
             ( { model | labels_data = result }

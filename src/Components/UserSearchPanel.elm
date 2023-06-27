@@ -192,6 +192,7 @@ type Msg
     = OnOpen (List String)
     | OnClose
     | OnClose_
+    | SetTensionid String
     | OnChangePattern String
     | ChangeAssigneeLookup (LookupResult User)
     | OnAssigneeClick User Bool Time.Posix
@@ -263,6 +264,13 @@ update_ apis message model =
 
         OnClose_ ->
             ( close model, noOut )
+
+        SetTensionid tid ->
+            let
+                form =
+                    model.form
+            in
+            ( { model | form = { form | tid = tid } }, noOut )
 
         OnGotAssignees result ->
             ( { model | assignees_data = result }
