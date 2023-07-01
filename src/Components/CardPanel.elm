@@ -56,6 +56,7 @@ import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, ty
 import Ports
 import Query.PatchTension exposing (patchComment, patchLiteral, pushTensionPatch)
 import Query.PatchUser exposing (toggleTensionSubscription)
+import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
@@ -188,7 +189,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( String, ProjectCard )
+    , result : Maybe ProjectCard
     }
 
 
@@ -222,22 +223,26 @@ update_ apis message model =
     case message of
         -- Data
         OnOpen card ->
-            ( { model | isOpen = True, card = card }
-            , out0 <|
-                [ sendSleep OnOutsideClickClose 500 ]
-                    ++ (case card.card of
-                            CardTension a ->
-                                [ send (OnQueryTension a.id)
-                                , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
-                                , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
-                                , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
-                                ]
+            let
+                form =
+                    model.tension_form
+            in
+            case card.card of
+                CardTension a ->
+                    ( { model | isOpen = True, card = card, tension_form = { form | id = a.id } }
+                    , out0
+                        [ sendSleep OnOutsideClickClose 500
+                        , send (OnQueryTension a.id)
+                        , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
+                        , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
+                        , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
+                        ]
+                    )
 
-                            CardDraft a ->
-                                -- @todo
-                                [ send NoMsg ]
-                       )
-            )
+                CardDraft a ->
+                    ( { model | isOpen = True, card = card, tension_form = { form | id = a.id } }
+                    , out0 [ sendSleep OnOutsideClickClose 500 ]
+                    )
 
         OnOutsideClickClose ->
             ( model, out0 [ Ports.outsideClickClose "closeCardPanelFromJs" "cardPanel" ] )
@@ -257,11 +262,7 @@ update_ apis message model =
                 ( model, noOut )
 
         OnQueryTension tid ->
-            let
-                form =
-                    model.tension_form
-            in
-            ( { model | tension_result = Loading, tension_form = { form | id = tid } }
+            ( { model | tension_result = Loading }
             , out0 [ getTensionPanel apis (uctxFromUser model.user) tid OnTensionAck ]
             )
 
@@ -345,25 +346,58 @@ update_ apis message model =
                             ]
                     }
             in
-            ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis model.tension_form TitleAck ] )
+            case model.card.card of
+                CardTension _ ->
+                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis model.tension_form TitleAck ] )
+
+                CardDraft _ ->
+                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ updateProjectDraft apis model.tension_form TitleAck ] )
 
         TitleAck result ->
             case parseErr result 2 of
                 OkAuth _ ->
                     let
-                        tension_r =
-                            case model.tension_result of
-                                Success t ->
-                                    Success { t | title = Dict.get "title" model.tension_form.post |> withDefault "" }
+                        newTitle =
+                            Dict.get "title" model.tension_form.post |> withDefault ""
 
-                                other ->
-                                    other
+                        tension_r =
+                            case model.card.card of
+                                CardTension _ ->
+                                    case model.tension_result of
+                                        Success t ->
+                                            Success { t | title = newTitle }
+
+                                        other ->
+                                            other
+
+                                CardDraft d ->
+                                    model.tension_result
+
+                        card =
+                            model.card
+
+                        card_r =
+                            case model.card.card of
+                                CardTension t ->
+                                    CardTension { t | title = newTitle }
+
+                                CardDraft d ->
+                                    CardDraft { d | title = newTitle }
+
+                        newCard =
+                            { card | card = card_r }
 
                         resetForm =
                             initTensionForm model.tension_form.id Nothing model.user
                     in
-                    ( { model | tension_result = tension_r, tension_form = resetForm, title_result = result, isTitleEdit = False }
-                    , noOut
+                    ( { model
+                        | card = newCard
+                        , tension_result = tension_r
+                        , tension_form = resetForm
+                        , title_result = result
+                        , isTitleEdit = False
+                      }
+                    , Out [] [] (Just newCard)
                     )
 
                 _ ->
@@ -395,25 +429,32 @@ update_ apis message model =
                 ( panel, out ) =
                     LabelSearchPanel.update apis msg model.labelsPanel
 
-                t =
-                    Maybe.map
-                        (\r ->
-                            withMapData
-                                (\x ->
-                                    let
-                                        labels =
-                                            if Tuple.first r then
-                                                withDefault [] x.labels ++ [ Tuple.second r ]
+                ( tension_r, mout ) =
+                    Maybe.map2
+                        (\r x ->
+                            let
+                                card =
+                                    model.card
 
-                                            else
-                                                LE.remove (Tuple.second r) (withDefault [] x.labels)
-                                    in
-                                    { x | labels = Just labels }
-                                )
-                                model.tension_result
+                                labels =
+                                    if Tuple.first r then
+                                        withDefault [] x.labels ++ [ Tuple.second r ]
+
+                                    else
+                                        LE.remove (Tuple.second r) (withDefault [] x.labels)
+                            in
+                            ( Success { x | labels = Just labels }
+                            , case card.card of
+                                CardTension t ->
+                                    Just { card | card = CardTension { t | labels = Just labels } }
+
+                                CardDraft _ ->
+                                    Nothing
+                            )
                         )
                         out.result
-                        |> withDefault model.tension_result
+                        (withMaybeData model.tension_result)
+                        |> withDefault ( model.tension_result, Nothing )
 
                 --isLabelOpen =
                 --    LabelSearchPanel.isOpen_ panel
@@ -421,17 +462,14 @@ update_ apis message model =
                 --( cmds, gcmds ) =
                 --    mapGlobalOutcmds out.gcmds
             in
-            ( { model | labelsPanel = panel, tension_result = t }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds
+            ( { model | labelsPanel = panel, tension_result = tension_r }
+            , Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds mout
             )
 
         DoAssigneeEdit ->
             let
                 targets =
                     getPath model.path_data |> List.map .nameid
-
-                k =
-                    Debug.log "targets" targets
             in
             ( model, out0 [ Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)) ] )
 
@@ -442,9 +480,6 @@ update_ apis message model =
 
                 receiver_m =
                     withMaybeData model.tension_result |> Maybe.map .receiver
-
-                k =
-                    Debug.log "lanbe" ""
             in
             case receiver_m of
                 Just receiver ->
@@ -465,33 +500,40 @@ update_ apis message model =
                 ( panel, out ) =
                     UserSearchPanel.update apis msg model.assigneesPanel
 
-                t =
-                    Maybe.map
-                        (\r ->
-                            withMapData
-                                (\x ->
-                                    let
-                                        assignees =
-                                            if Tuple.first r then
-                                                withDefault [] x.assignees ++ [ Tuple.second r ]
+                ( tension_r, mout ) =
+                    Maybe.map2
+                        (\r x ->
+                            let
+                                card =
+                                    model.card
 
-                                            else
-                                                LE.remove (Tuple.second r) (withDefault [] x.assignees)
-                                    in
-                                    { x | assignees = Just assignees }
-                                )
-                                model.tension_result
+                                assignees =
+                                    if Tuple.first r then
+                                        withDefault [] x.assignees ++ [ Tuple.second r ]
+
+                                    else
+                                        LE.remove (Tuple.second r) (withDefault [] x.assignees)
+                            in
+                            ( Success { x | assignees = Just assignees }
+                            , case card.card of
+                                CardTension t ->
+                                    Just { card | card = CardTension { t | assignees = Just assignees } }
+
+                                CardDraft _ ->
+                                    Nothing
+                            )
                         )
                         out.result
-                        |> withDefault model.tension_result
+                        (withMaybeData model.tension_result)
+                        |> withDefault ( model.tension_result, Nothing )
 
                 --isAssigneeOpen =
                 --    UserSearchPanel.isOpen_ panel
                 --( cmds, gcmds ) =
                 --    mapGlobalOutcmds out.gcmds
             in
-            ( { model | assigneesPanel = panel, tension_result = t }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds
+            ( { model | assigneesPanel = panel, tension_result = tension_r }
+            , Out (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds mout
             )
 
         CommentsMsg msg ->
@@ -790,7 +832,7 @@ viewSidePane t model =
                 , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
                 ]
                 [ if List.length assignees > 0 then
-                    viewUsers assignees
+                    viewUsers False assignees
 
                   else
                     div [ class "help", classList [ ( "is-w", hasAssigneeRight ) ] ] [ text T.addAssignees ]
@@ -832,8 +874,10 @@ viewSidePane t model =
                     ]
                 ]
             ]
-        , -- Subscriptions
-          case model.user of
+
+        -- Subscriptions
+        , hr [ class "has-background-border-light my-5" ] []
+        , case model.user of
             LoggedIn _ ->
                 let
                     ( iconElt, subscribe_txt ) =
@@ -847,9 +891,9 @@ viewSidePane t model =
                             Nothing ->
                                 ( text "", "" )
                 in
-                div [ class "pb-0 mt-6" ]
+                div [ class "pb-0 my-5" ]
                     [ p
-                        [ class "button is-fullwidth has-background-evidence is-small "
+                        [ class "button is-fullwidth has-background-evidence is-small"
                         , style "border-radius" "5px"
                         , onClick (ToggleSubscription uctx.username)
                         ]
@@ -865,6 +909,14 @@ viewSidePane t model =
 
             LoggedOut ->
                 text ""
+
+        -- Extras
+        , hr [ class "has-background-border-light my-5" ] []
+        , div
+            [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+            , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
+            ]
+            [ A.icon "icon-external-link mr-1", text "Open in a new tab" ]
         ]
 
 
@@ -923,7 +975,10 @@ viewPanelDraft op draft model =
                 ]
             ]
         , div [ class "main-block" ]
-            [ viewDraftComment draft
+            [ div [ class "columns m-0" ]
+                [ div [ class "column is-9" ] [ viewDraftComment draft ]
+                , div [ class "column pl-1" ] []
+                ]
             ]
         ]
 

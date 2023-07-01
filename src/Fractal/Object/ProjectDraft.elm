@@ -29,6 +29,26 @@ message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
 
 
+type alias ProjectStatusOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
+
+
+project_status :
+    (ProjectStatusOptionalArguments -> ProjectStatusOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectColumn
+    -> SelectionSet decodesTo Fractal.Object.ProjectDraft
+project_status fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectColumnFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "project_status" optionalArgs____ object____ Basics.identity
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.ProjectDraft
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

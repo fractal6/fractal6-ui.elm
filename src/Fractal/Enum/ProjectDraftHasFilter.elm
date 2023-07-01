@@ -13,11 +13,12 @@ type ProjectDraftHasFilter
     | UpdatedAt
     | Message
     | Title
+    | Project_status
 
 
 list : List ProjectDraftHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Title ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Title, Project_status ]
 
 
 decoder : Decoder ProjectDraftHasFilter
@@ -40,6 +41,9 @@ decoder =
 
                     "title" ->
                         Decode.succeed Title
+
+                    "project_status" ->
+                        Decode.succeed Project_status
 
                     _ ->
                         Decode.fail ("Invalid ProjectDraftHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -65,6 +69,9 @@ toString enum____ =
 
         Title ->
             "title"
+
+        Project_status ->
+            "project_status"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -95,6 +102,9 @@ fromString enumString____ =
 
         "title" ->
             Just Title
+
+        "project_status" ->
+            Just Project_status
 
         _ ->
             Nothing

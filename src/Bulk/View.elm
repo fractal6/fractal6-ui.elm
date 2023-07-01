@@ -480,9 +480,9 @@ viewUsernameLink username =
     a [ href (toLink UsersBaseUri username []) ] [ text username ]
 
 
-viewUsers : List User -> Html msg
-viewUsers users =
-    span [ class "usersList" ] (List.map (\u -> viewUser True u.username) users)
+viewUsers : Bool -> List User -> Html msg
+viewUsers isLinked users =
+    span [ class "usersList" ] (List.map (\u -> viewUser isLinked u.username) users)
 
 
 viewUser0 : String -> Html msg

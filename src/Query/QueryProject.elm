@@ -30,6 +30,7 @@ module Query.QueryProject exposing
     , moveProjectColumn
     , removeProjectCards
     , updateProjectColumn
+    , updateProjectDraft
     )
 
 import Dict
@@ -52,6 +53,7 @@ import Fractal.Object.ProjectField
 import Fractal.Object.Tension
 import Fractal.Object.UpdateProjectCardPayload
 import Fractal.Object.UpdateProjectColumnPayload
+import Fractal.Object.UpdateProjectDraftPayload
 import Fractal.Object.UpdateProjectPayload
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -213,6 +215,36 @@ updateProjectColumn url form msg =
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
 
 
+updateProjectDraft url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectDraft
+            { input =
+                Input.buildUpdateProjectDraftInput { filter = Input.buildProjectDraftFilter (oneId form.id) }
+                    (\_ ->
+                        { set =
+                            Input.buildProjectDraftPatch
+                                (\a ->
+                                    { a
+                                        | title = fromMaybe (Dict.get "title" form.post)
+                                        , message = fromMaybe (Dict.get "message" form.post)
+                                    }
+                                )
+                                |> Present
+                        , remove = Absent
+                        }
+                    )
+            }
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
 
 --
 -- Add projects items
@@ -274,6 +306,7 @@ addProjectCard url form msg =
                                                                         , message = fromMaybe (Dict.get "message" form.post)
                                                                         , createdAt = Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime |> Present
                                                                         , createdBy = Input.buildUserRef (\u -> { u | username = Present form.uctx.username }) |> Present
+                                                                        , project_status = Input.buildProjectColumnRef (\c -> { c | id = Present (encodeId form.colid) }) |> Present
                                                                     }
                                                                 )
                                                                 |> Present
