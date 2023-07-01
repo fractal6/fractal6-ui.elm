@@ -118,6 +118,30 @@ tensions fillInOptionals____ object____ =
     Object.selectionForCompositeField "tensions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias DraftsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectDraftFilter
+    , order : OptionalArgument Fractal.InputObject.ProjectDraftOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+drafts :
+    (DraftsOptionalArguments -> DraftsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectDraft
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.ProjectColumn
+drafts fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectDraftFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeProjectDraftOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "drafts" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias CardsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ProjectCardFilter }
 
@@ -156,3 +180,23 @@ tensionsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "tensionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DraftsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ProjectDraftFilter }
+
+
+draftsAggregate :
+    (DraftsAggregateOptionalArguments -> DraftsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ProjectDraftAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.ProjectColumn
+draftsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeProjectDraftFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "draftsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

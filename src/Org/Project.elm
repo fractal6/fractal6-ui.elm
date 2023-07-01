@@ -554,7 +554,7 @@ update global message model =
                 cmd =
                     case out.result of
                         Just x ->
-                            -- @TODO : link tension in other views. Data shallow copy accross views !?
+                            -- @TODO : [multiple view] link tension in other views. Data shallow copy accross views !?
                             Cmd.map BoardMsg (send <| Board.OnLinkTension x)
 
                         Nothing ->
@@ -583,10 +583,18 @@ update global message model =
                 ( data, out ) =
                     CardPanel.update apis msg model.cardPanel
 
+                cmd =
+                    case out.result of
+                        Just x ->
+                            Cmd.map BoardMsg (send <| Board.OnUpdateCard x)
+
+                        Nothing ->
+                            send NoMsg
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | cardPanel = data }, out.cmds |> List.map (\m -> Cmd.map CardPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | cardPanel = data }, out.cmds |> List.map (\m -> Cmd.map CardPanelMsg m) |> List.append (cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg

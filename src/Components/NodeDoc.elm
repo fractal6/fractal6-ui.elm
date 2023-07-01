@@ -660,7 +660,7 @@ viewBlob data op_m =
                                     [ A.icon1 "icon-users" ""
                                     , span [ class "is-hint-2" ] [ text (String.fromInt i) ]
                                     , text (" " ++ txt ++ "  " ++ space_)
-                                    , viewUsers data.leads
+                                    , viewUsers True data.leads
                                     ]
 
                               else

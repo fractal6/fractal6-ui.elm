@@ -2247,7 +2247,7 @@ viewSidePane u t model =
                 )
                     ++ [ div []
                             [ if List.length assignees > 0 then
-                                viewUsers assignees
+                                viewUsers True assignees
 
                               else
                                 div [ class "help is-italic" ] [ text T.noneYet ]

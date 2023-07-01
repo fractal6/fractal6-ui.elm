@@ -857,9 +857,9 @@ buildAddProjectColumnInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { description = Absent, color = Absent, cards = Absent, tensions = Absent }
+                { description = Absent, color = Absent, cards = Absent, tensions = Absent, drafts = Absent }
     in
-    AddProjectColumnInput { name = required____.name, description = optionals____.description, color = optionals____.color, pos = required____.pos, col_type = required____.col_type, cards = optionals____.cards, project = required____.project, tensions = optionals____.tensions }
+    AddProjectColumnInput { name = required____.name, description = optionals____.description, color = optionals____.color, pos = required____.pos, col_type = required____.col_type, cards = optionals____.cards, project = required____.project, tensions = optionals____.tensions, drafts = optionals____.drafts }
 
 
 type alias AddProjectColumnInputRequiredFields =
@@ -875,6 +875,7 @@ type alias AddProjectColumnInputOptionalFields =
     , color : OptionalArgument String
     , cards : OptionalArgument (List ProjectCardRef)
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -892,6 +893,7 @@ type alias AddProjectColumnInputRaw =
     , cards : OptionalArgument (List ProjectCardRef)
     , project : ProjectRef
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -906,7 +908,7 @@ type AddProjectColumnInput
 encodeAddProjectColumnInput : AddProjectColumnInput -> Value
 encodeAddProjectColumnInput (AddProjectColumnInput input____) =
     Encode.maybeObject
-        [ ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int input____.pos |> Just ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString input____.col_type |> Just ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef input____.project |> Just ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ) ]
+        [ ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int input____.pos |> Just ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString input____.col_type |> Just ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef input____.project |> Just ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "drafts", (encodeProjectDraftRef |> Encode.list) |> Encode.optional input____.drafts ) ]
 
 
 buildAddProjectDraftInput :
@@ -919,13 +921,14 @@ buildAddProjectDraftInput required____ fillOptionals____ =
             fillOptionals____
                 { updatedAt = Absent, message = Absent }
     in
-    AddProjectDraftInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = required____.title }
+    AddProjectDraftInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = required____.title, project_status = required____.project_status }
 
 
 type alias AddProjectDraftInputRequiredFields =
     { createdBy : UserRef
     , createdAt : Fractal.ScalarCodecs.DateTime
     , title : String
+    , project_status : ProjectColumnRef
     }
 
 
@@ -946,6 +949,7 @@ type alias AddProjectDraftInputRaw =
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , title : String
+    , project_status : ProjectColumnRef
     }
 
 
@@ -960,7 +964,7 @@ type AddProjectDraftInput
 encodeAddProjectDraftInput : AddProjectDraftInput -> Value
 encodeAddProjectDraftInput (AddProjectDraftInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string input____.title |> Just ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string input____.title |> Just ), ( "project_status", encodeProjectColumnRef input____.project_status |> Just ) ]
 
 
 buildAddProjectFieldInput :
@@ -5685,9 +5689,9 @@ buildProjectColumnPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { name = Absent, description = Absent, color = Absent, pos = Absent, col_type = Absent, cards = Absent, project = Absent, tensions = Absent }
+                { name = Absent, description = Absent, color = Absent, pos = Absent, col_type = Absent, cards = Absent, project = Absent, tensions = Absent, drafts = Absent }
     in
-    ProjectColumnPatch { name = optionals____.name, description = optionals____.description, color = optionals____.color, pos = optionals____.pos, col_type = optionals____.col_type, cards = optionals____.cards, project = optionals____.project, tensions = optionals____.tensions }
+    ProjectColumnPatch { name = optionals____.name, description = optionals____.description, color = optionals____.color, pos = optionals____.pos, col_type = optionals____.col_type, cards = optionals____.cards, project = optionals____.project, tensions = optionals____.tensions, drafts = optionals____.drafts }
 
 
 type alias ProjectColumnPatchOptionalFields =
@@ -5699,6 +5703,7 @@ type alias ProjectColumnPatchOptionalFields =
     , cards : OptionalArgument (List ProjectCardRef)
     , project : OptionalArgument ProjectRef
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -5716,6 +5721,7 @@ type alias ProjectColumnPatchRaw =
     , cards : OptionalArgument (List ProjectCardRef)
     , project : OptionalArgument ProjectRef
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -5730,7 +5736,7 @@ type ProjectColumnPatch
 encodeProjectColumnPatch : ProjectColumnPatch -> Value
 encodeProjectColumnPatch (ProjectColumnPatch input____) =
     Encode.maybeObject
-        [ ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.col_type ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef |> Encode.optional input____.project ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ) ]
+        [ ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.col_type ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef |> Encode.optional input____.project ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "drafts", (encodeProjectDraftRef |> Encode.list) |> Encode.optional input____.drafts ) ]
 
 
 buildProjectColumnRef :
@@ -5740,9 +5746,9 @@ buildProjectColumnRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, name = Absent, description = Absent, color = Absent, pos = Absent, col_type = Absent, cards = Absent, project = Absent, tensions = Absent }
+                { id = Absent, name = Absent, description = Absent, color = Absent, pos = Absent, col_type = Absent, cards = Absent, project = Absent, tensions = Absent, drafts = Absent }
     in
-    ProjectColumnRef { id = optionals____.id, name = optionals____.name, description = optionals____.description, color = optionals____.color, pos = optionals____.pos, col_type = optionals____.col_type, cards = optionals____.cards, project = optionals____.project, tensions = optionals____.tensions }
+    ProjectColumnRef { id = optionals____.id, name = optionals____.name, description = optionals____.description, color = optionals____.color, pos = optionals____.pos, col_type = optionals____.col_type, cards = optionals____.cards, project = optionals____.project, tensions = optionals____.tensions, drafts = optionals____.drafts }
 
 
 type alias ProjectColumnRefOptionalFields =
@@ -5755,6 +5761,7 @@ type alias ProjectColumnRefOptionalFields =
     , cards : OptionalArgument (List ProjectCardRef)
     , project : OptionalArgument ProjectRef
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -5773,6 +5780,7 @@ type alias ProjectColumnRefRaw =
     , cards : OptionalArgument (List ProjectCardRef)
     , project : OptionalArgument ProjectRef
     , tensions : OptionalArgument (List TensionRef)
+    , drafts : OptionalArgument (List ProjectDraftRef)
     }
 
 
@@ -5787,7 +5795,7 @@ type ProjectColumnRef
 encodeProjectColumnRef : ProjectColumnRef -> Value
 encodeProjectColumnRef (ProjectColumnRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.col_type ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef |> Encode.optional input____.project ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "color", Encode.string |> Encode.optional input____.color ), ( "pos", Encode.int |> Encode.optional input____.pos ), ( "col_type", Encode.enum Fractal.Enum.ProjectColumnType.toString |> Encode.optional input____.col_type ), ( "cards", (encodeProjectCardRef |> Encode.list) |> Encode.optional input____.cards ), ( "project", encodeProjectRef |> Encode.optional input____.project ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions ), ( "drafts", (encodeProjectDraftRef |> Encode.list) |> Encode.optional input____.drafts ) ]
 
 
 buildProjectColumnType_hash :
@@ -5929,9 +5937,9 @@ buildProjectDraftPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, title = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, title = Absent, project_status = Absent }
     in
-    ProjectDraftPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = optionals____.title }
+    ProjectDraftPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = optionals____.title, project_status = optionals____.project_status }
 
 
 type alias ProjectDraftPatchOptionalFields =
@@ -5940,6 +5948,7 @@ type alias ProjectDraftPatchOptionalFields =
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , title : OptionalArgument String
+    , project_status : OptionalArgument ProjectColumnRef
     }
 
 
@@ -5954,6 +5963,7 @@ type alias ProjectDraftPatchRaw =
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , title : OptionalArgument String
+    , project_status : OptionalArgument ProjectColumnRef
     }
 
 
@@ -5968,7 +5978,7 @@ type ProjectDraftPatch
 encodeProjectDraftPatch : ProjectDraftPatch -> Value
 encodeProjectDraftPatch (ProjectDraftPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string |> Encode.optional input____.title ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string |> Encode.optional input____.title ), ( "project_status", encodeProjectColumnRef |> Encode.optional input____.project_status ) ]
 
 
 buildProjectDraftRef :
@@ -5978,9 +5988,9 @@ buildProjectDraftRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, title = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, title = Absent, project_status = Absent }
     in
-    ProjectDraftRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = optionals____.title }
+    ProjectDraftRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, title = optionals____.title, project_status = optionals____.project_status }
 
 
 type alias ProjectDraftRefOptionalFields =
@@ -5990,6 +6000,7 @@ type alias ProjectDraftRefOptionalFields =
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , title : OptionalArgument String
+    , project_status : OptionalArgument ProjectColumnRef
     }
 
 
@@ -6005,6 +6016,7 @@ type alias ProjectDraftRefRaw =
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , title : OptionalArgument String
+    , project_status : OptionalArgument ProjectColumnRef
     }
 
 
@@ -6019,7 +6031,7 @@ type ProjectDraftRef
 encodeProjectDraftRef : ProjectDraftRef -> Value
 encodeProjectDraftRef (ProjectDraftRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string |> Encode.optional input____.title ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "title", Encode.string |> Encode.optional input____.title ), ( "project_status", encodeProjectColumnRef |> Encode.optional input____.project_status ) ]
 
 
 buildProjectFieldFilter :

@@ -214,6 +214,7 @@ type Msg
     | OpenTensionPane (Maybe ColTarget)
     | OpenCardPane String
     | OnLinkTension ( String, List ProjectCard )
+    | OnUpdateCard ProjectCard
     | OnConvertDraft String ProjectDraft
     | OnConvertDraftAck ProjectDraft Tension
       -- Components
@@ -674,6 +675,16 @@ update_ apis message model =
                                     }
                             in
                             { d | columns = noStatusCol :: d.columns }
+            in
+            ( { model | project = pj }, noOut )
+
+        OnUpdateCard card ->
+            let
+                d =
+                    model.project
+
+                pj =
+                    { d | columns = updateCard card d.columns }
             in
             ( { model | project = pj }, noOut )
 
@@ -1220,6 +1231,16 @@ removeCard c columns =
 
                 Nothing ->
                     a
+        )
+        columns
+
+
+updateCard : ProjectCard -> List ProjectColumn -> List ProjectColumn
+updateCard c columns =
+    LE.updateIf
+        (\a -> a.id == c.colid)
+        (\a ->
+            { a | cards = LE.setIf (\b -> b.id == c.id) c a.cards }
         )
         columns
 
