@@ -96,6 +96,8 @@ type alias Model =
     , nodeStep : NodeStep
     , roles_result : GqlData (List RoleExtFull)
     , doInvite : Bool
+    , withUsers : Maybe (List String)
+    , simplifiedView : Bool
 
     -- Common
     , conf : Conf
@@ -175,6 +177,8 @@ initModel user conf =
     , path_data = NotAsked
     , action_result = NotAsked
     , doInvite = False
+    , withUsers = Nothing
+    , simplifiedView = False
     , draft = Nothing
 
     -- Role/Circle
@@ -504,8 +508,9 @@ type Msg
       -- Modal control
     | SetIsActive2 Bool
     | OnOpen NewTensionInput (Maybe ProjectDraft)
-    | OnOpenRole NewTensionInput
     | OnOpenCircle NewTensionInput
+    | OnOpenRole NewTensionInput
+    | OnOpenRoleUser NewTensionInput String
     | OnReset
     | OnClose ModalData
     | OnCloseSafe String String
@@ -711,6 +716,9 @@ update_ apis message model =
                 LoggedOut ->
                     ( { model | isActive2 = True } |> setStep AuthNeeded, out0 [ send (SetIsActive2 True) ] )
 
+        OnOpenCircle t ->
+            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnOpen t Nothing) ] )
+
         OnOpenRole t ->
             let
                 cmd =
@@ -722,8 +730,18 @@ update_ apis message model =
             in
             ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ send (OnOpen t Nothing), cmd ] )
 
-        OnOpenCircle t ->
-            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnOpen t Nothing) ] )
+        OnOpenRoleUser t u ->
+            let
+                cmd =
+                    if isSuccess model.result then
+                        send OnReset
+
+                    else
+                        Cmd.none
+            in
+            ( { model | activeTab = NewRoleTab, force_init = True, withUsers = Just [ u ], activeButton = Just 0, simplifiedView = True }
+            , out0 [ send (OnOpen t Nothing), cmd ]
+            )
 
         OnClose data ->
             let
@@ -932,11 +950,31 @@ update_ apis message model =
                 OkAuth tension ->
                     let
                         data =
-                            { model | nodeDoc = NodeDoc.setId tension.id model.nodeDoc }
+                            { model
+                                | nodeDoc =
+                                    NodeDoc.setId tension.id model.nodeDoc
+                                        |> (\nd ->
+                                                case model.withUsers of
+                                                    Just us ->
+                                                        NodeDoc.setUsers
+                                                            (List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) us)
+                                                            nd
+
+                                                    Nothing ->
+                                                        nd
+                                           )
+                            }
 
                         gcmds =
                             if tension.status == TensionStatus.Open then
                                 [ DoPushTension tension ]
+
+                            else
+                                []
+
+                        cmds =
+                            if not (List.isEmpty data.nodeDoc.form.users) then
+                                [ send (OnSubmit True OnInvite) ]
 
                             else
                                 []
@@ -946,21 +984,21 @@ update_ apis message model =
                     in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result data, Out [] gcmds output )
+                            ( setResult result data, Out cmds gcmds output )
 
                         NewRoleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
-                            ( setResult result data, Out [] (DoFetchNode newNameid :: gcmds) output )
+                            ( setResult result data, Out cmds (DoFetchNode newNameid :: gcmds) output )
 
                         NewCircleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
-                            ( setResult result data, Out [] (DoFetchNode newNameid :: gcmds) output )
+                            ( setResult result data, Out cmds (DoFetchNode newNameid :: gcmds) output )
 
                 DuplicateErr ->
                     ( setResult (Failure [ T.duplicateNameError ]) model, noOut )
@@ -1213,7 +1251,12 @@ viewSuccess : Tension -> Model -> Html Msg
 viewSuccess res model =
     let
         link =
-            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
+            case model.action_result of
+                Success c ->
+                    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
+
+                _ ->
+                    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
     div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
@@ -1462,7 +1505,11 @@ viewTension op model =
 
         other ->
             div [ class "panel modal-card submitFocus" ]
-                [ Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                [ if model.simplifiedView then
+                    text ""
+
+                  else
+                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
                 , viewHeader op model
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
@@ -1547,7 +1594,11 @@ viewCircle op model =
 
         other ->
             div [ class "panel modal-card submitFocus" ] <|
-                [ Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                [ if model.simplifiedView then
+                    text ""
+
+                  else
+                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
                 , viewHeader op model
                 ]
                     ++ (case model.nodeStep of
@@ -1587,14 +1638,18 @@ viewCircle op model =
                                             ]
                                         , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
-                                                [ button
-                                                    [ class "button is-warning"
-                                                    , classList
-                                                        [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
-                                                    , disabled (not isSendable || isLoading)
-                                                    , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension False)
-                                                    ]
-                                                    [ text form.txt.submit ]
+                                                [ if model.simplifiedView then
+                                                    text ""
+
+                                                  else
+                                                    button
+                                                        [ class "button is-warning"
+                                                        , classList
+                                                            [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
+                                                        , disabled (not isSendable || isLoading)
+                                                        , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension False)
+                                                        ]
+                                                        [ text form.txt.submit ]
                                                 , button
                                                     [ class "button is-success defaultSubmit"
                                                     , classList

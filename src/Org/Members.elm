@@ -23,8 +23,10 @@ module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
+import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
+import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
@@ -36,7 +38,8 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict
-import Extra exposing (ternary, unwrap)
+import Dom
+import Extra exposing (space_, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
@@ -50,6 +53,7 @@ import Html exposing (Html, a, div, h2, i, input, span, tbody, td, text, th, the
 import Html.Attributes exposing (class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
@@ -174,6 +178,7 @@ type alias Model =
     , pending_hover_i : Maybe Int
     , pattern : String
     , pattern_init : String
+    , row_hover : Ellipsis
 
     -- Common
     , conf : Conf
@@ -190,6 +195,17 @@ type alias Model =
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
     }
+
+
+type alias Ellipsis =
+    { hover : Maybe String
+    , isOpen : Bool
+    }
+
+
+resetEllipsis : Ellipsis
+resetEllipsis =
+    { hover = Nothing, isOpen = False }
 
 
 
@@ -237,6 +253,7 @@ init global flags =
             , pending_hover_i = Nothing
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
+            , row_hover = resetEllipsis
 
             -- Common
             , conf = conf
@@ -290,6 +307,8 @@ type Msg
     | OnPendingRowHover (Maybe Int)
     | OnGoToContract String
     | OnGoContractAck (GqlData IdPayload)
+    | OnRowHover (Maybe String)
+    | OnRowEdit Bool
       -- Search
     | ChangePattern String
     | SearchKeyDown Int
@@ -481,6 +500,24 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        OnRowHover id_m ->
+            if model.row_hover.isOpen then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                let
+                    row =
+                        model.row_hover
+                in
+                ( { model | row_hover = { row | hover = id_m } }, Cmd.none, Cmd.none )
+
+        OnRowEdit edit ->
+            let
+                row =
+                    model.row_hover
+            in
+            ( { model | row_hover = { row | isOpen = edit } }, Cmd.none, Cmd.none )
+
         -- Search
         ChangePattern value ->
             ( { model | pattern = value }, Cmd.none, Cmd.none )
@@ -637,6 +674,14 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     []
+        ++ (if model.row_hover.isOpen then
+                [ Events.onMouseUp (JD.succeed (OnRowEdit False))
+                , Events.onKeyUp (Dom.key "Escape" (OnRowEdit False))
+                ]
+
+            else
+                []
+           )
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -712,6 +757,13 @@ view_ global model =
             , id_name = "searchBarMembers"
             , placeholder_txt = T.searchMembers
             }
+
+        row_hover =
+            if isAdmin then
+                model.row_hover
+
+            else
+                resetEllipsis
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
@@ -732,11 +784,11 @@ view_ global model =
                 ]
             , div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
-                    [ div [ class "columns mb-6 px-3" ]
-                        [ Lazy.lazy4 viewMembers model.conf model.members_sub model.node_focus isPanelOpen ]
-                    , div [ class "columns mb-6 px-3" ]
+                    [ div [ class "columns mb-6 px-3", onMouseLeave (OnRowHover Nothing) ]
+                        [ Lazy.lazy5 viewMembers model.conf model.members_sub model.node_focus isPanelOpen row_hover ]
+                    , div [ class "columns mb-6 px-3", onMouseLeave (OnRowHover Nothing) ]
                         [ if isRoot then
-                            div [ class "column is-5 pl-0" ] [ Lazy.lazy4 viewGuest model.conf model.members_top model.node_focus isPanelOpen ]
+                            div [ class "column is-5 pl-0" ] [ Lazy.lazy5 viewGuest model.conf model.members_top model.node_focus isPanelOpen row_hover ]
 
                           else
                             text ""
@@ -759,8 +811,8 @@ view_ global model =
         ]
 
 
-viewMembers : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewMembers conf data focus isPanelOpen =
+viewMembers : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewMembers conf data focus isPanelOpen ell =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
@@ -786,10 +838,10 @@ viewMembers conf data focus isPanelOpen =
                                     , th [] [ text T.rolesSub ]
                                     ]
                                 ]
-                            , tbody [] <|
+                            , tbody [ class "pr-5" ] <|
                                 List.map
                                     (\m ->
-                                        Lazy.lazy4 viewMemberRow conf focus m isPanelOpen
+                                        Lazy.lazy5 viewMemberRow conf focus m isPanelOpen ell
                                     )
                                     members
                             ]
@@ -806,8 +858,8 @@ viewMembers conf data focus isPanelOpen =
             text ""
 
 
-viewGuest : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Html Msg
-viewGuest conf members_d focus isPanelOpen =
+viewGuest : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewGuest conf members_d focus isPanelOpen ell =
     let
         guests =
             members_d
@@ -833,7 +885,7 @@ viewGuest conf members_d focus isPanelOpen =
                     , tbody [] <|
                         List.indexedMap
                             (\i m ->
-                                Lazy.lazy3 viewGuestRow conf m isPanelOpen
+                                Lazy.lazy5 viewGuestRow conf focus m isPanelOpen ell
                             )
                             guests
                     ]
@@ -896,8 +948,8 @@ viewPending _ members_d focus pending_hover pending_hover_i tid =
         div [] []
 
 
-viewMemberRow : Conf -> NodeFocus -> Member -> Bool -> Html Msg
-viewMemberRow conf focus m isPanelOpen =
+viewMemberRow : Conf -> NodeFocus -> Member -> Bool -> Ellipsis -> Html Msg
+viewMemberRow conf focus m isPanelOpen ell =
     let
         ( roles_, sub_roles_ ) =
             List.foldl
@@ -912,7 +964,7 @@ viewMemberRow conf focus m isPanelOpen =
                 m.roles
                 |> (\( x, y ) -> ( List.reverse x, List.reverse y ))
     in
-    tr []
+    tr [ onMouseEnter (OnRowHover (Just ("member" ++ m.username))) ]
         [ td [] [ viewUserFull 1 True False m ]
         , td []
             [ case roles_ of
@@ -929,21 +981,67 @@ viewMemberRow conf focus m isPanelOpen =
 
                 _ ->
                     viewMemberRoles conf OverviewBaseUri sub_roles_ isPanelOpen
+            , if ell.hover == Just ("member" ++ m.username) then
+                span [ class "is-pulled-right" ]
+                    [ span [ class "outside-table" ]
+                        [ B.dropdownLight
+                            "row-ellipsis"
+                            (ternary ell.isOpen "is-active" "")
+                            (A.icon "icon-more-horizontal is-h icon-1half")
+                            (OnRowEdit (ternary ell.isOpen False True))
+                            "p-0 has-border-light"
+                            (div []
+                                [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRole (FromNameid focus.nameid))) ]
+                                    [ A.icon1 "icon-leaf" T.addUserRole ]
+
+                                --, hr [ class "dropdown-divider" ] []
+                                --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                ]
+                            )
+                        ]
+                    ]
+
+              else
+                text ""
             ]
         ]
 
 
-viewGuestRow : Conf -> Member -> Bool -> Html Msg
-viewGuestRow conf m isPanelOpen =
-    tr []
+viewGuestRow : Conf -> NodeFocus -> Member -> Bool -> Ellipsis -> Html Msg
+viewGuestRow conf focus m isPanelOpen ell =
+    tr [ onMouseEnter (OnRowHover (Just ("guest" ++ m.username))) ]
         [ td [] [ viewUserFull 1 True False m ]
-        , td [] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
+        , td []
+            [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen
+            , if ell.hover == Just ("guest" ++ m.username) then
+                span [ class "is-pulled-right" ]
+                    [ span [ class "outside-table" ]
+                        [ B.dropdownLight
+                            "row-ellipsis"
+                            (ternary ell.isOpen "is-active" "")
+                            (A.icon "icon-more-horizontal is-h icon-1half")
+                            (OnRowEdit (ternary ell.isOpen False True))
+                            "p-0 has-border-light"
+                            (div []
+                                [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
+                                    [ A.icon1 "icon-leaf" T.addUserRole ]
+
+                                --, hr [ class "dropdown-divider" ] []
+                                --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                ]
+                            )
+                        ]
+                    ]
+
+              else
+                text ""
+            ]
         ]
 
 
 viewMemberRoles : Conf -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
 viewMemberRoles conf baseUri roles isPanelOpen =
-    div [ class "buttons" ] <|
+    div [ class "buttons is-inline" ] <|
         List.map
             (\r ->
                 viewRole "" True False (Just ( conf, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r

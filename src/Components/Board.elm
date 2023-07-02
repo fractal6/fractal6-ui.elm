@@ -43,7 +43,7 @@ import Html exposing (Html, a, br, div, hr, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
-import Json.Decode as JD exposing (Value)
+import Json.Decode as JD
 import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
