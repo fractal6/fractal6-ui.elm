@@ -58,8 +58,6 @@ import Query.PatchTension exposing (patchComment, patchLiteral, pushTensionPatch
 import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
-import Query.Reaction exposing (addReaction, deleteReaction)
-import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Scroll
 import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
 import Text as T

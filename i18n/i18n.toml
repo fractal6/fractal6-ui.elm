@@ -725,6 +725,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Add a Role"
   fr="Ajouter un Rôle"
 
+[addUserRole]
+  en="add a role to this user"
+  fr="Ajouter un rôle à cette utilisateur"
+
 [invite]
   en="Invite"
   fr="Inviter"
@@ -1540,6 +1544,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [newRole]
   en="New role"
   fr="Nouveau rôle"
+
 
 [createNewTension]
   en="Create tension"
