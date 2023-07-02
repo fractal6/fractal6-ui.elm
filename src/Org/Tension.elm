@@ -209,17 +209,12 @@ type alias Model =
     , unwatch : String
     , unwatch_result : GqlData Bool
 
-    -- Form (Title, Status, Comment)
+    -- Form
     , tension_form : TensionForm
-    , tension_patch : GqlData PatchTensionPayloadID
 
     -- Title Result
     , isTitleEdit : Bool
     , title_result : GqlData IdPayload
-
-    -- Comment Edit
-    , comment_form : CommentPatchForm
-    , comment_result : GqlData Comment
 
     -- Blob Edit
     , nodeDoc : NodeDoc
@@ -357,19 +352,12 @@ init global flags =
             , unwatch = ""
             , unwatch_result = NotAsked
 
-            -- Form (Title, Status, Comment)
+            -- Form
             , tension_form = initTensionForm tid Nothing global.session.user
-
-            -- Push Comment / Change status
-            , tension_patch = NotAsked
 
             -- Title Result
             , isTitleEdit = False
             , title_result = NotAsked
-
-            -- Comment Edit
-            , comment_form = initCommentPatchForm global.session.user [ ( "focusid", focusid ) ]
-            , comment_result = NotAsked
 
             -- Blob Edit
             , nodeDoc =
@@ -510,8 +498,6 @@ type Msg
     = -- Loading
       PassedSlowLoadTreshold -- timer
     | LoadTensionHead
-    | LoadTensionComments
-    | PushCommentPatch
     | PushTitle
     | PushBlob_ TensionForm
     | PublishBlob
@@ -543,19 +529,10 @@ type Msg
     | ExpandEvent Int
       -- Edit title
     | DoChangeTitle
+    | ChangePost String String
     | CancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
-      -- New comment
-    | ChangeCommentPost String String
-    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
-    | CommentAck (GqlData PatchTensionPayloadID)
-      -- Edit comment
-    | DoUpdateComment Comment
-    | CancelCommentPatch
-    | ChangeCommentPatch String String
-    | SubmitCommentPatch Time.Posix
-    | CommentPatchAck (GqlData Comment)
       -- Blob edit
     | ChangeBlobEdit NodeEdit
     | ChangeBlobPost String String
@@ -579,14 +556,6 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
-    | ChangeInputViewMode InputViewMode
-    | ChangeUpdateViewMode InputViewMode
-    | OnRichText String String
-    | OnToggleMdHelp String
-    | OnAddReaction String Int
-    | OnAddReactionAck (GqlData ReactionResponse)
-    | OnDeleteReaction String Int
-    | OnDeleteReactionAck (GqlData ReactionResponse)
     | ScrollToElement String
     | UpdateUctx UserCtx
       -- Components
@@ -632,12 +601,6 @@ update global message model =
                             ( initUserctx, Cmd.none )
             in
             ( model, Cmd.batch [ getTensionHead apis uctx model.tensionid GotTensionHead, cmd ], Cmd.none )
-
-        LoadTensionComments ->
-            ( model, pushTensionPatch apis model.tension_form CommentAck, Cmd.none )
-
-        PushCommentPatch ->
-            ( model, patchComment apis model.comment_form CommentPatchAck, Cmd.none )
 
         PushTitle ->
             ( model, patchLiteral apis model.tension_form TitleAck, Cmd.none )
@@ -980,183 +943,15 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Page Action
-        ChangeCommentPost field value ->
+        ChangePost field value ->
             let
                 form =
                     model.tension_form
 
                 newForm =
-                    if field == "message" && value == "" then
-                        { form | post = Dict.remove field form.post }
-
-                    else
-                        { form | post = Dict.insert field value form.post }
+                    { form | post = Dict.insert field value form.post }
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
-
-        SubmitComment status_m time ->
-            let
-                form =
-                    model.tension_form
-
-                eventStatus =
-                    case status_m of
-                        Just TensionStatus.Open ->
-                            [ Ev TensionEvent.Reopened "Closed" "Open" ]
-
-                        Just TensionStatus.Closed ->
-                            [ Ev TensionEvent.Closed "Open" "Closed" ]
-
-                        Nothing ->
-                            []
-
-                newForm =
-                    { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , status = status_m
-                        , events = eventStatus
-                    }
-            in
-            ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
-            , send LoadTensionComments
-            , Cmd.none
-            )
-
-        CommentAck result ->
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | tension_patch = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep LoadTensionComments 500, send UpdateUserToken )
-
-                OkAuth tp ->
-                    let
-                        events =
-                            model.tension_form.events
-
-                        tension_h =
-                            case model.tension_head of
-                                Success t ->
-                                    Success
-                                        { t
-                                            | status = withDefault t.status model.tension_form.status
-                                            , history =
-                                                withDefault [] t.history
-                                                    ++ (events
-                                                            |> List.map (\e -> eventFromForm e model.tension_form)
-                                                       )
-                                                    |> Just
-                                        }
-
-                                other ->
-                                    other
-
-                        tension_c =
-                            if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
-                                case model.tension_comments of
-                                    Success t ->
-                                        Success { t | comments = Just (withDefault [] t.comments ++ withDefault [] tp.comments) }
-
-                                    other ->
-                                        other
-
-                            else
-                                model.tension_comments
-
-                        resetForm =
-                            initTensionForm model.tensionid Nothing global.session.user
-                    in
-                    ( { model
-                        | tension_head = tension_h
-                        , tension_comments = tension_c
-                        , tension_form = resetForm
-                        , tension_patch = result
-                      }
-                    , Ports.bulma_driver ""
-                    , send (UpdateSessionTensionHead (withMaybeData tension_h))
-                    )
-
-                _ ->
-                    case result of
-                        Failure _ ->
-                            let
-                                form =
-                                    model.tension_form
-
-                                resetForm =
-                                    { form | status = Nothing }
-                            in
-                            ( { model | tension_patch = result, tension_form = resetForm }, Cmd.none, Cmd.none )
-
-                        _ ->
-                            ( { model | tension_patch = result }, Cmd.none, Cmd.none )
-
-        DoUpdateComment c ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | id = c.id } }, Cmd.batch [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ], Cmd.none )
-
-        CancelCommentPatch ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
-
-        ChangeCommentPatch field value ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
-
-        SubmitCommentPatch time ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }, send PushCommentPatch, Cmd.none )
-
-        CommentPatchAck result ->
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | comment_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep PushCommentPatch 500, send UpdateUserToken )
-
-                OkAuth comment ->
-                    let
-                        tension_c =
-                            case model.tension_comments of
-                                Success t ->
-                                    let
-                                        comments =
-                                            withDefault [] t.comments
-
-                                        n =
-                                            comments
-                                                |> LE.findIndex (\c -> c.id == comment.id)
-                                                |> withDefault 0
-                                    in
-                                    Success { t | comments = Just (LE.setAt n comment comments) }
-
-                                other ->
-                                    other
-
-                        focusid =
-                            withMaybeData model.path_data |> unwrap model.node_focus.nameid (\p -> p.focus.nameid)
-
-                        resetForm =
-                            initCommentPatchForm global.session.user [ ( "focusid", focusid ) ]
-                    in
-                    ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
-
-                _ ->
-                    ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
@@ -1463,116 +1258,6 @@ update global message model =
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
-
-        ChangeInputViewMode viewMode ->
-            let
-                form =
-                    model.tension_form
-            in
-            ( { model | tension_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
-
-        ChangeUpdateViewMode viewMode ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
-
-        OnRichText targetid command ->
-            ( model, Ports.richText targetid command, Cmd.none )
-
-        OnToggleMdHelp targetid ->
-            case targetid of
-                "commentInput" ->
-                    let
-                        form =
-                            model.tension_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | tension_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
-
-                "updateCommentInput" ->
-                    let
-                        form =
-                            model.comment_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        OnAddReaction cid type_ ->
-            case global.session.user of
-                LoggedIn uctx ->
-                    ( model, addReaction apis uctx.username cid type_ OnAddReactionAck, Cmd.none )
-
-                LoggedOut ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
-
-        OnAddReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser global.session.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, Ports.raiseAuthModal uctx, Cmd.none )
-
-                OkAuth r ->
-                    let
-                        tension_comments =
-                            model.tension_comments
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (pushCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | tension_comments = tension_comments }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        OnDeleteReaction cid type_ ->
-            case global.session.user of
-                LoggedIn uctx ->
-                    ( model, deleteReaction apis uctx.username cid type_ OnDeleteReactionAck, Cmd.none )
-
-                LoggedOut ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
-
-        OnDeleteReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser global.session.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, Ports.raiseAuthModal uctx, Cmd.none )
-
-                OkAuth r ->
-                    let
-                        tension_comments =
-                            model.tension_comments
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (removeCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | tension_comments = tension_comments }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
 
         ScrollToElement did ->
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
@@ -1942,7 +1627,7 @@ viewTension u t model =
                                     , placeholder "Title*"
                                     , spellcheck True
                                     , value title
-                                    , onInput (ChangeCommentPost "title")
+                                    , onInput (ChangePost "title")
                                     ]
                                     []
                                 ]

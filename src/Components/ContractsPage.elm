@@ -52,7 +52,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
-import Query.PatchContract exposing (pushContractComment, sendVote)
+import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
@@ -75,11 +75,6 @@ type alias Model =
     , voteForm : VoteForm
     , vote_result : GqlData ContractResult
     , activeView : ContractsPageView
-
-    -- Comments
-    , comment_form : CommentPatchForm
-    , comment_patch_form : CommentPatchForm
-    , comment_result : GqlData Comment
 
     -- Common
     , conf : Conf
@@ -105,9 +100,6 @@ initModel focusid user conf =
     , form = initContractForm user
     , voteForm = initVoteForm user
     , activeView = ContractsView
-    , comment_form = initCommentPatchForm user []
-    , comment_patch_form = initCommentPatchForm user []
-    , comment_result = NotAsked
 
     -- Common
     , conf = conf
@@ -270,23 +262,6 @@ type Msg
     | OnContractsAck (GqlData Contracts)
     | OnContractAck (GqlData ContractFull)
     | OnContractDeleteAck (GqlData IdPayload)
-      -- Comments
-    | PushContractComment
-    | PushCommentPatch
-    | DoUpdateComment Comment
-    | CancelCommentPatch
-    | ChangeCommentPost String String
-    | ChangeCommentPatch String String
-    | SubmitCommentPost (Maybe TensionStatus.TensionStatus) Time.Posix
-    | SubmitCommentPatch Time.Posix
-    | CommentAck (GqlData Comment)
-    | CommentPatchAck (GqlData Comment)
-    | OnRichText String String
-    | OnToggleMdHelp String
-    | OnAddReaction String Int
-    | OnAddReactionAck (GqlData ReactionResponse)
-    | OnDeleteReaction String Int
-    | OnDeleteReactionAck (GqlData ReactionResponse)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -295,8 +270,6 @@ type Msg
     | NoMsg
     | LogErr String
     | UpdateUctx UserCtx
-    | ChangeInputViewMode InputViewMode
-    | ChangeUpdateViewMode InputViewMode
     | CommentsMsg Comments.Msg
 
 
@@ -465,20 +438,25 @@ update_ apis message model =
                     ( data, noOut )
 
         DoPopContract cid ->
-            let
-                result =
-                    model.contracts_result
-                        |> withMapData
-                            (\cs ->
-                                case LE.findIndex (\c -> c.id == cid) cs of
-                                    Just i ->
-                                        LE.removeAt i cs
+            case model.activeView of
+                ContractsView ->
+                    let
+                        result =
+                            model.contracts_result
+                                |> withMapData
+                                    (\cs ->
+                                        case LE.findIndex (\c -> c.id == cid) cs of
+                                            Just i ->
+                                                LE.removeAt i cs
 
-                                    Nothing ->
-                                        cs
-                            )
-            in
-            ( setContractsResult result model, noOut )
+                                            Nothing ->
+                                                cs
+                                    )
+                    in
+                    ( setContractsResult result model, noOut )
+
+                ContractView ->
+                    ( model, out1 [ DoNavigate (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.rootnameid, param2 = model.form.tid } |> toHref) ] )
 
         DoVote v time ->
             let
@@ -515,233 +493,6 @@ update_ apis message model =
                 _ ->
                     ( data, noOut )
 
-        -- Comments
-        PushContractComment ->
-            ( model, out0 [ pushContractComment apis model.comment_form CommentAck ] )
-
-        PushCommentPatch ->
-            ( model, out0 [ patchComment apis model.comment_patch_form CommentPatchAck ] )
-
-        DoUpdateComment c ->
-            let
-                form =
-                    model.comment_patch_form
-            in
-            ( { model | comment_patch_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
-
-        CancelCommentPatch ->
-            let
-                form =
-                    model.comment_patch_form
-            in
-            ( { model | comment_patch_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, out0 [ Ports.bulma_driver "" ] )
-
-        ChangeCommentPost field value ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-        ChangeCommentPatch field value ->
-            let
-                form =
-                    model.comment_patch_form
-            in
-            ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-        SubmitCommentPost _ time ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model
-                | comment_form =
-                    { form
-                        | post =
-                            form.post
-                                |> Dict.insert "createdAt" (fromTime time)
-                                |> Dict.insert "contractid" (withMaybeMapData .id model.contract_result |> withDefault "")
-                    }
-                , comment_result = LoadingSlowly
-              }
-            , out0 [ send PushContractComment ]
-            )
-
-        SubmitCommentPatch time ->
-            let
-                form =
-                    model.comment_patch_form
-            in
-            ( { model | comment_patch_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }
-            , out0 [ send PushCommentPatch ]
-            )
-
-        CommentAck result ->
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | comment_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep PushContractComment 500 ] [ DoUpdateToken ] )
-
-                OkAuth data ->
-                    let
-                        contract =
-                            case model.contract_result of
-                                Success t ->
-                                    Success { t | comments = Just (withDefault [] t.comments ++ [ data ]) }
-
-                                other ->
-                                    other
-
-                        resetForm =
-                            initCommentPatchForm model.user []
-                    in
-                    ( { model
-                        | contract_result = contract
-                        , comment_form = resetForm
-                        , comment_result = result
-                      }
-                    , out0 [ Ports.bulma_driver "" ]
-                    )
-
-                _ ->
-                    ( { model | comment_result = result }, noOut )
-
-        CommentPatchAck result ->
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | comment_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep PushCommentPatch 500 ] [ DoUpdateToken ] )
-
-                OkAuth comment ->
-                    let
-                        contract =
-                            case model.contract_result of
-                                Success t ->
-                                    let
-                                        comments =
-                                            withDefault [] t.comments
-
-                                        n =
-                                            comments
-                                                |> LE.findIndex (\c -> c.id == comment.id)
-                                                |> withDefault 0
-                                    in
-                                    Success { t | comments = Just (LE.setAt n comment comments) }
-
-                                other ->
-                                    other
-
-                        resetForm =
-                            initCommentPatchForm model.user []
-                    in
-                    ( { model | contract_result = contract, comment_patch_form = resetForm, comment_result = result }
-                    , out0 [ Ports.bulma_driver "" ]
-                    )
-
-                _ ->
-                    ( { model | comment_result = result }, noOut )
-
-        OnRichText targetid command ->
-            ( model, out0 [ Ports.richText targetid command ] )
-
-        OnToggleMdHelp targetid ->
-            case targetid of
-                "commentContractInput" ->
-                    let
-                        form =
-                            model.comment_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-                "updateCommentInput" ->
-                    let
-                        form =
-                            model.comment_patch_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
-
-                _ ->
-                    ( model, noOut )
-
-        OnAddReaction cid type_ ->
-            case model.user of
-                LoggedIn uctx ->
-                    ( model, out0 [ addReaction apis uctx.username cid type_ OnAddReactionAck ] )
-
-                LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
-
-        OnAddReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser model.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
-
-                OkAuth r ->
-                    let
-                        contract_result =
-                            model.contract_result
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (pushCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | contract_result = contract_result }, noOut )
-
-                _ ->
-                    ( model, noOut )
-
-        OnDeleteReaction cid type_ ->
-            case model.user of
-                LoggedIn uctx ->
-                    ( model, out0 [ deleteReaction apis uctx.username cid type_ OnDeleteReactionAck ] )
-
-                LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
-
-        OnDeleteReactionAck result ->
-            let
-                uctx =
-                    uctxFromUser model.user
-            in
-            case parseErr result 2 of
-                Authenticate ->
-                    ( model, out0 [ Ports.raiseAuthModal uctx ] )
-
-                OkAuth r ->
-                    let
-                        contract_result =
-                            model.contract_result
-                                |> withMapData (\tc -> { tc | comments = Maybe.map (removeCommentReaction uctx.username r) tc.comments })
-                    in
-                    ( { model | contract_result = contract_result }, noOut )
-
-                _ ->
-                    ( model, noOut )
-
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -766,36 +517,14 @@ update_ apis message model =
 
                 voteForm =
                     model.voteForm
-
-                cForm =
-                    model.comment_form
-
-                cpForm =
-                    model.comment_patch_form
             in
             ( { model
                 | user = LoggedIn uctx
                 , form = { form | uctx = uctx }
                 , voteForm = { voteForm | uctx = uctx }
-                , comment_form = { cForm | uctx = uctx }
-                , comment_patch_form = { cpForm | uctx = uctx }
               }
             , noOut
             )
-
-        ChangeInputViewMode viewMode ->
-            let
-                form =
-                    model.comment_form
-            in
-            ( { model | comment_form = { form | viewMode = viewMode } }, noOut )
-
-        ChangeUpdateViewMode viewMode ->
-            let
-                form =
-                    model.comment_patch_form
-            in
-            ( { model | comment_patch_form = { form | viewMode = viewMode } }, noOut )
 
         -- Components
         CommentsMsg msg ->
@@ -1018,12 +747,7 @@ viewContractPage c op model =
           else
             -- Close, Cancelled or no auth.
             text ""
-        , c.comments
-            |> Maybe.map
-                (\_ ->
-                    Comments.viewCommentsContract model.conf model.comments |> Html.map CommentsMsg
-                )
-            |> withDefault (text "")
+        , Comments.viewCommentsContract model.conf model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
         , case model.user of
             LoggedIn _ ->
@@ -1043,6 +767,9 @@ viewContractBox c op model =
     let
         n =
             nodeFromTension c.tension
+
+        isAuthor =
+            c.createdBy.username == model.form.uctx.username
     in
     form [ class "box form" ]
         [ div [ class "columns" ]
@@ -1130,7 +857,19 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ] ]
+        , div [ class "field pb-1 is-smaller" ]
+            [ div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
+            , hr [] []
+            , if isAuthor || op.isAdmin then
+                div
+                    [ class "is-pulled-right is-w is-h"
+                    , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                    ]
+                    [ A.icon1 "icon-trash" T.deleteThisContract ]
+
+              else
+                text ""
+            ]
         , div [ class "" ] <|
             case c.status of
                 ContractStatus.Closed ->
