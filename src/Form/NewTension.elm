@@ -432,18 +432,6 @@ post field value data =
     { data | nodeDoc = NodeDoc.setForm newForm data.nodeDoc }
 
 
-setViewMode : InputViewMode -> Model -> Model
-setViewMode viewMode data =
-    let
-        f =
-            data.nodeDoc.form
-
-        newForm =
-            { f | viewMode = viewMode }
-    in
-    { data | nodeDoc = NodeDoc.setForm newForm data.nodeDoc }
-
-
 resetPost : Model -> Model
 resetPost data =
     { data | nodeDoc = NodeDoc.resetPost data.nodeDoc }
@@ -525,9 +513,6 @@ type Msg
     | OnGotRoles (GqlData (List RoleExtFull))
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
-    | OnChangeInputViewMode InputViewMode
-    | OnRichText String String
-    | OnToggleMdHelp String
     | OnTargetClick
     | DoInvite
     | OnInvite Time.Posix
@@ -803,29 +788,6 @@ update_ apis message model =
 
         OnTensionStep step ->
             ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
-
-        OnChangeInputViewMode viewMode ->
-            ( setViewMode viewMode model, noOut )
-
-        OnRichText targetid command ->
-            ( model, out0 [ Ports.richText targetid command ] )
-
-        OnToggleMdHelp targetid ->
-            -- nodeDoc.form
-            let
-                form =
-                    model.nodeDoc.form
-
-                field =
-                    "isMdHelpOpen" ++ targetid
-
-                v =
-                    Dict.get field form.post |> withDefault "false"
-
-                value =
-                    ternary (v == "true") "false" "true"
-            in
-            ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
 
         OnTargetClick ->
             ( model, out0 [ Ports.requireTreeData ] )
