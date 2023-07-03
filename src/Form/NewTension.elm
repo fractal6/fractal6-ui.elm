@@ -1638,7 +1638,8 @@ viewCircle op model =
                                             ]
                                         , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
-                                                [ if model.simplifiedView then
+                                                -- Make this as simply at possible / to complex for user from now...
+                                                [ if model.simplifiedView || True then
                                                     text ""
 
                                                   else
@@ -1854,7 +1855,7 @@ viewInviteRole model =
             , div [ class "field" ]
                 [ div [ class "is-pulled-right" ]
                     [ button
-                        [ class "button is-light is-link"
+                        [ class "button is-link"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isUsersSendable form.users) || isLoading)
                         , onClick (OnSubmit (not isLoading) OnInvite)
