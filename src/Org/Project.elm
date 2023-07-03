@@ -181,11 +181,11 @@ type alias Model =
     , project_data : GqlData ProjectData
     , linkTensionPanel : LinkTensionPanel.State
     , cardPanel : CardPanel.State
+    , isProjectAdmin : Bool
 
     -- Common
     , conf : Conf
     , refresh_trial : Int
-    , board : Board.State
     , empty : {}
 
     -- Components
@@ -197,6 +197,7 @@ type alias Model =
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
+    , board : Board.State
     }
 
 
@@ -246,6 +247,7 @@ init global flags =
             { node_focus = newFocus
             , path_data = path_data
             , projectid = projectid
+            , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
             , cardPanel = CardPanel.init path_data newFocus global.session.user
@@ -380,9 +382,22 @@ update global message model =
         GotProject result ->
             case result of
                 Success data ->
+                    let
+                        isAdmin =
+                            case global.session.user of
+                                LoggedIn uctx ->
+                                    --hasAdminRole uctx (withMaybeData model.path_data)
+                                    hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
+
+                                LoggedOut ->
+                                    False
+                    in
                     -- save space
-                    ( { model | project_data = Success { data | columns = [] } }
-                    , Cmd.map BoardMsg (send (Board.OnLoad data))
+                    ( { model | project_data = Success { data | columns = [] }, isProjectAdmin = isAdmin }
+                    , Cmd.batch
+                        [ Cmd.map BoardMsg (send (Board.OnLoad data))
+                        , Cmd.map BoardMsg (send (Board.OnSetIsAdmin isAdmin))
+                        ]
                     , Cmd.none
                     )
 
@@ -675,16 +690,6 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    let
-        isAdmin =
-            case global.session.user of
-                LoggedIn uctx ->
-                    --hasAdminRole uctx (withMaybeData model.path_data)
-                    hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
-
-                LoggedOut ->
-                    False
-    in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
             [ div [ class "columns is-centered mb-0" ]
@@ -696,10 +701,14 @@ view_ global model =
                         _ ->
                             text ""
                     ]
-                , div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
-                    [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
-                        [ A.icon1 "icon-plus" "Add tensions to project" ]
-                    ]
+                , if model.isProjectAdmin then
+                    div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
+                        [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
+                            [ A.icon1 "icon-plus" T.addTensionToProject ]
+                        ]
+
+                  else
+                    text ""
                 ]
 
             -- User notification

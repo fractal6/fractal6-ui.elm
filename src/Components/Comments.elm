@@ -26,6 +26,7 @@ module Components.Comments exposing
     , init
     , subscriptions
     , update
+    , viewCommentInputHeader
     , viewCommentsContract
     , viewCommentsTension
     , viewContractCommentInput
@@ -63,7 +64,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, ReactionResponse, TensionHead, UserCtx)
+import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
 import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
@@ -878,8 +879,15 @@ viewComment conf c form result userInput =
 
 viewNewTensionCommentInput : Conf -> State -> Html Msg
 viewNewTensionCommentInput conf (State model) =
+    let
+        opHeader =
+            { onChangeViewMode = ChangeInputViewMode
+            , onRichText = OnRichText
+            , onToggleMdHelp = OnToggleMdHelp
+            }
+    in
     div [ class "message" ]
-        [ div [ class "message-header" ] [ viewCommentInputHeader "textAreaModal" model.tension_form ]
+        [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ] [ viewCommentTextarea conf "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
@@ -911,9 +919,15 @@ viewUpdateInput conf comment form_ result userInput =
 
         isLoading =
             Loading.isLoading result
+
+        opHeader =
+            { onChangeViewMode = ChangeUpdateViewMode
+            , onRichText = OnRichText
+            , onToggleMdHelp = OnToggleMdHelp
+            }
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "updateCommentInput" form ]
+        [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "updateCommentInput" form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
@@ -976,13 +990,19 @@ viewTensionCommentInput conf tension (State model) =
                     ( onClick (OnSubmit (not isLoading) <| SubmitTensionComment (Just TensionStatus.Open))
                     , ternary (message == "") T.reopen T.reopenComment
                     )
+
+        opHeader =
+            { onChangeViewMode = ChangeInputViewMode
+            , onRichText = OnRichText
+            , onToggleMdHelp = OnToggleMdHelp
+            }
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentInput" form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1034,12 +1054,18 @@ viewContractCommentInput conf (State model) =
 
         isSendable =
             isPostSendable [ "message" ] form.post
+
+        opHeader =
+            { onChangeViewMode = ChangeContractInputViewMode
+            , onRichText = OnRichText
+            , onToggleMdHelp = OnToggleMdHelp
+            }
     in
     div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader "commentContractInput" form ]
+                [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentContractInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1080,44 +1106,49 @@ viewContractCommentInput conf (State model) =
 --
 
 
-viewCommentInputHeader targetid form =
+type alias FormCommon a =
+    { a
+        | viewMode : InputViewMode
+        , post : Post
+    }
+
+
+type alias OpInputHeader msg =
+    { onChangeViewMode : InputViewMode -> msg
+    , onRichText : String -> String -> msg
+    , onToggleMdHelp : String -> msg
+    }
+
+
+viewCommentInputHeader : OpInputHeader msg -> String -> FormCommon a -> Html msg
+viewCommentInputHeader op targetid form =
     let
         isMdHelpOpen =
             Dict.get ("isMdHelpOpen" ++ targetid) form.post == Just "true"
-
-        onChangeViewMode =
-            if String.startsWith "update" targetid then
-                ChangeUpdateViewMode
-
-            else if targetid == "commentContractInput" then
-                ChangeContractInputViewMode
-
-            else
-                ChangeInputViewMode
     in
     div [ class "level commentHeader" ]
         [ div [ class "level-left" ]
             [ div [ class "tabs is-boxed is-small" ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickSafe (onChangeViewMode Write), target "_blank" ] [ text T.write ] ]
-                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickSafe (onChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
+                    [ li [ classList [ ( "is-active", form.viewMode == Write ) ] ] [ a [ onClickSafe (op.onChangeViewMode Write), target "_blank" ] [ text T.write ] ]
+                    , li [ classList [ ( "is-active", form.viewMode == Preview ) ] ] [ a [ onClickSafe (op.onChangeViewMode Preview), target "_blank" ] [ text T.preview ] ]
                     ]
                 ]
             ]
         , div [ class "level-right is-hidden-mobile" ]
-            [ div [ onClick (OnRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
-            , div [ onClick (OnRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
-            , div [ onClick (OnRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
-            , div [ onClick (OnRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
-            , div [ onClick (OnRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
-            , div [ onClick (OnRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
-            , div [ onClick (OnRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
-            , div [ onClick (OnRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
-            , div [ onClick (OnRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
-            , div [ onClick (OnRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
-            , div [ onClick (OnRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+            [ div [ onClick (op.onRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
+            , div [ onClick (op.onRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
+            , div [ onClick (op.onRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
+            , div [ onClick (op.onRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
+            , div [ onClick (op.onRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
+            , div [ onClick (op.onRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
             , div
-                [ onClick (OnToggleMdHelp targetid)
+                [ onClick (op.onToggleMdHelp targetid)
                 , class "tooltip has-tooltip-bottom is-right is-h is-w"
                 , classList [ ( "is-highlight", isMdHelpOpen ) ]
                 , attribute "data-tooltip" T.markdownSupport
@@ -1126,7 +1157,7 @@ viewCommentInputHeader targetid form =
             ]
         , if isMdHelpOpen then
             div [ id "mdLegend", class "box" ]
-                [ button [ class "delete is-pulled-right", onClick (OnToggleMdHelp targetid) ] []
+                [ button [ class "delete is-pulled-right", onClick (op.onToggleMdHelp targetid) ] []
                 , renderMarkdown "" T.markdownHelp
                 ]
 
@@ -1135,6 +1166,7 @@ viewCommentInputHeader targetid form =
         ]
 
 
+viewCommentTextarea : Conf -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
 viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
     let
         message =
