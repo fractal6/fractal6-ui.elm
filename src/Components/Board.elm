@@ -84,6 +84,7 @@ type alias Model =
     , cardHover : String
     , cardEdit : String
     , colEdit : String
+    , isProjectAdmin : Bool
 
     -- Components
     , projectColumnModal : ProjectColumnModal.State
@@ -128,6 +129,7 @@ initModel projectid focus user =
     , cardHover = ""
     , cardEdit = ""
     , colEdit = ""
+    , isProjectAdmin = False
 
     -- Components
     , projectColumnModal = ProjectColumnModal.init projectid user
@@ -179,6 +181,7 @@ type Msg
     | FitBoard (Result Dom.Error Dom.Element)
     | ScrollToElement String
     | OnClearBoardResult
+    | OnSetIsAdmin Bool
       -- Move Column
     | OnMoveColumn ProjectColumn
     | OnMoveColumnEnd
@@ -300,6 +303,9 @@ update_ apis message model =
 
         OnClearBoardResult ->
             ( { model | board_result = NotAsked }, noOut )
+
+        OnSetIsAdmin isAdmin ->
+            ( { model | isProjectAdmin = isAdmin }, noOut )
 
         -- Move Columns
         OnMoveColumn col ->
@@ -873,7 +879,7 @@ viewBoard op model =
                         -- @debug: allow move card in empty collumn
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
-                        [ viewHeader (model.colEdit == colid) col ]
+                        [ viewHeader model.isProjectAdmin (model.colEdit == colid) col ]
                     , col.cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -908,10 +914,10 @@ viewBoard op model =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ Lazy.lazy5 viewMediaTension card.id (card.id == model.cardHover) (card.id == model.cardEdit) model.node_focus t ]
+                                            [ Lazy.lazy5 viewMediaTension card.id (card.id == model.cardHover && model.isProjectAdmin) (card.id == model.cardEdit) model.node_focus t ]
 
                                         CardDraft d ->
-                                            [ Lazy.lazy4 viewMediaDraft card.id (card.id == model.cardHover) (card.id == model.cardEdit) d ]
+                                            [ Lazy.lazy4 viewMediaDraft card.id (card.id == model.cardHover && model.isProjectAdmin) (card.id == model.cardEdit) d ]
                                     )
                                 ]
                             )
@@ -972,7 +978,7 @@ viewBoard op model =
         |> List.concat
         |> (\x ->
                 -- View New Col Button
-                if model.hasNewCol then
+                if model.hasNewCol && model.isProjectAdmin then
                     x ++ [ viewNewCol ]
 
                 else
@@ -991,19 +997,23 @@ viewBoard op model =
             ]
 
 
-viewHeader : Bool -> ProjectColumn -> Html Msg
-viewHeader isEdited col =
+viewHeader : Bool -> Bool -> ProjectColumn -> Html Msg
+viewHeader isAdmin isEdited col =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3", attribute "style" "cursor:default !important;" ]
                 [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
             , span [ class "level-right" ]
-                [ span
-                    [ class "tag is-rounded-light button-light is-w has-border mx-1"
-                    , onClick (OnAddDraft col.id)
-                    ]
-                    [ A.icon "icon-plus" ]
-                , if col.col_type /= ProjectColumnType.NoStatusColumn then
+                [ if isAdmin then
+                    span
+                        [ class "tag is-rounded-light button-light is-w has-border mx-1"
+                        , onClick (OnAddDraft col.id)
+                        ]
+                        [ A.icon "icon-plus" ]
+
+                  else
+                    text ""
+                , if col.col_type /= ProjectColumnType.NoStatusColumn && isAdmin then
                     B.dropdownLight
                         "col-ellipsis"
                         ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")

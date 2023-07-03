@@ -28,7 +28,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewTensionLight, viewUsers)
-import Components.Comments as Comments exposing (OutType(..))
+import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
@@ -36,7 +36,7 @@ import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
-import Form exposing (isPostEmpty)
+import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -59,7 +59,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), toReflink)
+import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -84,10 +84,12 @@ type alias Model =
     , tension_result : GqlData TensionPanel
     , subscribe_result : GqlData Bool -- init a GotTensionHead
 
-    -- Title
+    -- Title / Draft Message
+    , tension_form : TensionForm
     , isTitleEdit : Bool
     , title_result : GqlData IdPayload
-    , tension_form : TensionForm
+    , isMessageEdit : Bool
+    , message_result : GqlData IdPayload
 
     -- Components
     , assigneesPanel : UserSearchPanel.State
@@ -111,10 +113,12 @@ initModel path focus user =
     , tension_result = NotAsked
     , subscribe_result = NotAsked
 
-    -- Title Result
+    -- Title / Draft message
+    , tension_form = initTensionForm "" Nothing user
     , isTitleEdit = False
     , title_result = NotAsked
-    , tension_form = initTensionForm "" Nothing user
+    , isMessageEdit = False
+    , message_result = NotAsked
 
     -- Components
     , assigneesPanel = UserSearchPanel.init "" AssignUser user
@@ -168,6 +172,12 @@ type Msg
     | OnCancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
+      -- Draft Message
+    | DoChangeMessage
+    | OnChangeMessage String
+    | OnCancelMessage
+    | SubmitMessage Time.Posix
+    | MessageAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -176,6 +186,9 @@ type Msg
     | NoMsg
     | LogErr String
     | ScrollToElement String
+    | ChangeInputViewMode InputViewMode
+    | OnRichText String String
+    | OnToggleMdHelp String
       -- Components
     | DoAssigneeEdit
     | UserSearchPanelMsg UserSearchPanel.Msg
@@ -334,9 +347,7 @@ update_ apis message model =
 
                 newForm =
                     { form
-                        | post =
-                            form.post
-                                |> Dict.insert "createdAt" (fromTime time)
+                        | post = form.post |> Dict.insert "createdAt" (fromTime time)
                         , events =
                             [ Ev TensionEvent.TitleUpdated
                                 (model.tension_result |> withMaybeMapData .title |> withDefault "")
@@ -401,6 +412,66 @@ update_ apis message model =
                 _ ->
                     ( { model | title_result = result }, noOut )
 
+        -- Draft Message
+        DoChangeMessage ->
+            ( { model | isMessageEdit = True }, out0 [ Ports.focusOn "draftInput", Ports.bulma_driver "cardPanel" ] )
+
+        OnChangeMessage value ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | post = Dict.insert "message" value form.post } }, noOut )
+
+        OnCancelMessage ->
+            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, message_result = NotAsked }, noOut )
+
+        SubmitMessage time ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form | post = form.post |> Dict.insert "createdAt" (fromTime time) }
+            in
+            ( { model | tension_form = newForm, message_result = LoadingSlowly }, out0 [ updateProjectDraft apis model.tension_form MessageAck ] )
+
+        MessageAck result ->
+            case parseErr result 2 of
+                OkAuth _ ->
+                    let
+                        newMessage =
+                            Dict.get "message" model.tension_form.post
+
+                        card =
+                            model.card
+
+                        card_r =
+                            case model.card.card of
+                                CardDraft d ->
+                                    CardDraft { d | message = newMessage }
+
+                                _ ->
+                                    model.card.card
+
+                        newCard =
+                            { card | card = card_r }
+
+                        resetForm =
+                            initTensionForm model.tension_form.id Nothing model.user
+                    in
+                    ( { model
+                        | card = newCard
+                        , tension_form = resetForm
+                        , message_result = result
+                        , isMessageEdit = False
+                      }
+                    , Out [] [] (Just newCard)
+                    )
+
+                _ ->
+                    ( { model | message_result = result }, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -420,6 +491,32 @@ update_ apis message model =
 
         ScrollToElement did ->
             ( model, out0 [ Scroll.scrollToSubElement "main-block" did NoMsg ] )
+
+        ChangeInputViewMode viewMode ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | viewMode = viewMode } }, noOut )
+
+        OnRichText targetid command ->
+            ( model, out0 [ Ports.richText targetid command ] )
+
+        OnToggleMdHelp targetid ->
+            let
+                form =
+                    model.tension_form
+
+                field =
+                    "isMdHelpOpen" ++ targetid
+
+                v =
+                    Dict.get field form.post |> withDefault "false"
+
+                value =
+                    ternary (v == "true") "false" "true"
+            in
+            ( { model | tension_form = { form | post = Dict.insert field value form.post } }, noOut )
 
         -- Components
         LabelSearchPanelMsg msg ->
@@ -963,9 +1060,7 @@ viewPanelDraft op draft model =
                             , button [ class "delete ", onClick OnClose ] []
                             ]
                         , div [ class "tensionSubtitle mt-3" ]
-                            [ span
-                                [ class "tag is-rounded has-background-tag"
-                                ]
+                            [ span [ class "tag is-rounded has-background-tag" ]
                                 [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
                             , viewTensionDateAndUser op.conf "is-discrete" draft.createdAt draft.createdBy
                             ]
@@ -974,26 +1069,107 @@ viewPanelDraft op draft model =
             ]
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
-                [ div [ class "column is-9" ] [ viewDraftComment draft ]
+                [ div [ class "column is-9" ] [ viewDraftComment op.conf model.isMessageEdit model.message_result model.tension_form draft ]
                 , div [ class "column pl-1" ] []
                 ]
             ]
         ]
 
 
-viewDraftComment : ProjectDraft -> Html Msg
-viewDraftComment draft =
+viewDraftComment : Conf -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
+viewDraftComment conf isEdit result form draft =
     let
         message =
             withDefault "" draft.message
     in
-    div [ class "message" ]
-        [ div [ class "message-body" ]
-            [ case message of
-                "" ->
-                    div [ class "help is-italic" ] [ text T.noMessageProvided ]
+    if isEdit then
+        let
+            new =
+                Dict.get "message" form.post |> withDefault message
+        in
+        viewMessageEdit conf new message form result
 
-                msg ->
-                    renderMarkdown "is-human" msg
+    else
+        div [ class "message" ]
+            [ div [ class "message-body" ]
+                [ div []
+                    [ div [ class "level mb-0", style "margin-top" "-10px" ]
+                        [ div [ class "level-left" ] []
+                        , div [ class "level-right help button-light", onClick DoChangeMessage ] [ text T.edit ]
+                        ]
+                    , case message of
+                        "" ->
+                            div [ class "help is-italic" ] [ text T.noMessageProvided ]
+
+                        msg ->
+                            renderMarkdown "is-human" msg
+                    ]
+                ]
+            ]
+
+
+viewMessageEdit : Conf -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
+viewMessageEdit conf new old form result =
+    let
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            new /= old
+
+        line_len =
+            List.length <| String.lines new
+
+        ( max_len, min_len ) =
+            if isMobile conf.screen then
+                ( 6, 4 )
+
+            else
+                ( 15, 6 )
+
+        opHeader =
+            { onChangeViewMode = ChangeInputViewMode
+            , onRichText = OnRichText
+            , onToggleMdHelp = OnToggleMdHelp
+            }
+    in
+    div []
+        [ div [ class "message" ]
+            [ div [ class "message-header pb-0" ] [ viewCommentInputHeader opHeader "draftInput" form ]
+            , div [ class "message-body" ]
+                [ textarea
+                    [ id "draftInput"
+                    , class "textarea"
+                    , rows (min max_len (max line_len min_len))
+                    , placeholder T.leaveCommentOpt
+                    , value new
+                    , onInput <| OnChangeMessage
+                    ]
+                    []
+                ]
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        , div [ class "field is-grouped is-grouped-right" ]
+            [ div [ class "control" ]
+                [ div [ class "buttons" ]
+                    [ button
+                        [ class "button"
+                        , onClick OnCancelMessage
+                        ]
+                        [ text T.cancel ]
+                    , button
+                        [ class "button is-success defaultSubmit"
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not isSendable)
+                        , onClick (OnSubmit (isSendable && not isLoading) SubmitMessage)
+                        ]
+                        [ text T.update ]
+                    ]
+                ]
             ]
         ]
