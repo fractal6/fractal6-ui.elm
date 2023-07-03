@@ -620,7 +620,7 @@ viewModalContent op model =
                             [ span [ attribute "aria-controls" "target-menu" ]
                                 [ if List.member model.form.target.nameid [ "", model.target ] then
                                     span
-                                        [ class "button is-small is-light is-inverted" ]
+                                        [ class "button is-small s-light is-inverted" ]
                                         [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
 
                                   else
@@ -661,14 +661,14 @@ viewModalContent op model =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class ("button defaultSubmit is-light is-" ++ color)
+                        [ class ("button defaultSubmit is-" ++ color)
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable || isLoading)
                         , onClick (OnSubmit <| OnMove)

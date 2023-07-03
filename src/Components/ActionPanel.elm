@@ -1346,14 +1346,14 @@ viewStep1 op model =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseModalSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class ("button defaultSubmit is-light is-" ++ color)
+                        [ class ("button defaultSubmit is-" ++ color)
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isSendable model) || isLoading)
                         , onClick (OnSubmit OnActionSubmit)
