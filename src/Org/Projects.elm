@@ -1180,7 +1180,7 @@ viewNewOrEditProject conf isNew model =
             ]
         , if isNew then
             div [ class "column is-half" ]
-                [ figure [ class "image is-fullwidth" ]
+                [ figure [ class "image is-fullwidth has-border-light is-rounded" ]
                     [ case conf.theme of
                         DarkTheme ->
                             --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
