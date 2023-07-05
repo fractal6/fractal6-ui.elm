@@ -1183,12 +1183,10 @@ viewNewOrEditProject conf isNew model =
                 [ figure [ class "image is-fullwidth has-border-light is-rounded" ]
                     [ case conf.theme of
                         DarkTheme ->
-                            --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
-                            img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-dark.png" ] []
+                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
 
                         LightTheme ->
-                            --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
-                            img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-light.png" ] []
+                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
                     ]
                 , figcaption [] [ text T.projectCaptionSimple ]
                 ]
