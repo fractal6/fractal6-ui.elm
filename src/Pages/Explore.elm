@@ -35,7 +35,7 @@ import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -118,7 +118,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         apis =
             global.session.apis

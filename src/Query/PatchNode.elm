@@ -34,6 +34,7 @@ module Query.PatchNode exposing
 import Bulk exposing (ArtefactNodeForm, ProjectForm)
 import Bulk.Codecs exposing (nid2rootid)
 import Dict
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
@@ -474,6 +475,26 @@ addProjectInputEncoder form =
             \x ->
                 { x
                     | description = fromMaybe (Dict.get "description" form.post)
+                    , columns =
+                        form.columns
+                            |> Maybe.map
+                                (\a ->
+                                    List.indexedMap
+                                        (\i c ->
+                                            Input.buildProjectColumnRef
+                                                (\b ->
+                                                    { b
+                                                        | name = Present c.name
+                                                        , description = Present c.description
+                                                        , color = fromMaybe c.color
+                                                        , pos = Present i
+                                                        , col_type = Present ProjectColumnType.NormalColumn
+                                                    }
+                                                )
+                                        )
+                                        a
+                                )
+                            |> fromMaybe
                     , nodes =
                         Present
                             [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]

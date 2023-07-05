@@ -32,7 +32,7 @@ import Extra.Url exposing (queryParser)
 import Form exposing (isSignupSendable)
 import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -104,7 +104,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         -- Query parameters
         query =

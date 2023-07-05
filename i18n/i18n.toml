@@ -733,6 +733,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Add tensions to project"
   fr="Ajouter des tensions au projet"
 
+[projectCaptionSimple]
+  en="Start with a simple board to spread your tensions across customizable columns."
+  fr="Commencez par un tableau simple pour répartir vos tensions dans des colonnes personnalisables."
+
 [invite]
   en="Invite"
   fr="Inviter"

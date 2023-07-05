@@ -252,6 +252,7 @@ type alias ProjectForm =
     , nameid : String -- use for roonameid identification
     , status : Maybe ProjectStatus.ProjectStatus
     , post : Post
+    , columns : Maybe (List { name : String, description : String, color : Maybe String })
     }
 
 
@@ -267,6 +268,7 @@ initProjectForm user nameid =
     , id = ""
     , nameid = nameid
     , status = Nothing
+    , columns = Nothing
     , post = Dict.fromList []
     }
 

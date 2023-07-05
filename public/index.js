@@ -21,8 +21,10 @@ window.addEventListener('load', _ => {
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
     // Theme
     var theme = localStorage.getItem("theme");
-    if (theme) document.documentElement.className = theme;
-    else document.documentElement.className = "dark";
+    if (!theme) {
+        theme = DEFAULT_THEME;
+    }
+    document.documentElement.className = theme;
     // Lang
     var lang = localStorage.getItem("lang");
     if (uctx && uctx.lang) {
@@ -50,6 +52,7 @@ window.addEventListener('load', _ => {
                     version: VERSION,
                 },
                 screen: { w: window.innerWidth, h: window.innerHeight },
+                theme: theme,
             }
         })
     );

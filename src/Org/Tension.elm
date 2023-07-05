@@ -55,7 +55,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -269,7 +269,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         -- Query parameters
         query =

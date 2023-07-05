@@ -50,7 +50,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -218,7 +218,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         -- Query parameters
         query =

@@ -37,7 +37,7 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, target, title)
 import Html.Events exposing (onClick)
@@ -239,7 +239,7 @@ init global flags =
 
         -- Query parameters
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         query =
             queryParser global.url

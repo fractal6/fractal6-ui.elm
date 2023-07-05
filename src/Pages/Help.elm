@@ -22,7 +22,7 @@
 module Pages.Help exposing (Flags, Model, Msg, page)
 
 import Form.Help as Help
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html
 import Page exposing (Document, Page)
 import Session exposing (GlobalCmd(..))
@@ -74,7 +74,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         model =
             { help = Help.init global.session.user conf
