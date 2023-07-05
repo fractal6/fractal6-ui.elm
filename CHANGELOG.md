@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ...
 
+## [0.8.1]
+
+### New
+- ux: Use a  default Kanban template when creating new projects.
+- ui: add an image screenschot on new project page.
+- build: Add default theme in webpack config.
+
+### Fixed 
+- URI to fetch images in the About page
+
+
 ## [0.8]
 
 ### New
