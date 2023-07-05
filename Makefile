@@ -85,7 +85,7 @@ $(BUILD_DIRS): public-build/%:
 	./i18n.py gen -w -l $* && \
 		if [ $(MAKECMDGOALS) == publish_test ]; then \
 			npm run prod -- --env lang=$* --env debug=test; \
-		else if [ $(MAKECMDGOALS) == publish_op ]; then \
+		elif [ $(MAKECMDGOALS) == publish_op ]; then \
 			npm run prod -- --env lang=$* --env theme=light; \
 		else \
 			npm run prod -- --env lang=$*; \
@@ -167,7 +167,7 @@ $(RELEASE_BUILD_DIRS): releases/%:
 	./i18n.py gen -w -l $* && \
 		if [ $(MAKECMDGOALS) == publish_test ]; then \
 			npm run prod -- --env lang=$* --env debug=test; \
-		else if [ $(MAKECMDGOALS) == publish_op ]; then \
+        elif [ $(MAKECMDGOALS) == publish_op ]; then \
 			npm run prod -- --env lang=$* --env theme=light; \
 		else \
 			npm run prod -- --env lang=$*; \

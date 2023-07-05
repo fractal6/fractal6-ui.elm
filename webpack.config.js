@@ -83,7 +83,8 @@ module.exports = (env, argv) => {
                 'REST_API': JSON.stringify(API_URL.rest),
                 'ASSETS_API': JSON.stringify(API_URL.assets),
                 'VERSION': JSON.stringify(commitHash),
-                'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG)
+                'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),
+                'DEFAULT_THEME': JSON.stringify(DEFAULT_THEME),
             }),
             new webpack.LoaderOptionsPlugin({
                 options: {

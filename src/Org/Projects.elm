@@ -515,6 +515,7 @@ update global message model =
                 --, fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
                 --, fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
                 --, fetchProjectCount apis nameids model.pattern Nothing GotProjectCount
+                , Ports.bulma_driver ""
                 ]
             , Cmd.none
             )
@@ -1177,19 +1178,23 @@ viewNewOrEditProject conf isNew model =
                 _ ->
                     text ""
             ]
-        , div [ class "column is-half" ]
-            [ figure [ class "image is-fullwidth" ]
-                [ case conf.theme of
-                    DarkTheme ->
-                        --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
-                        img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-dark.png" ] []
+        , if isNew then
+            div [ class "column is-half" ]
+                [ figure [ class "image is-fullwidth" ]
+                    [ case conf.theme of
+                        DarkTheme ->
+                            --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
+                            img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-dark.png" ] []
 
-                    LightTheme ->
-                        --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
-                        img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-light.png" ] []
+                        LightTheme ->
+                            --img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
+                            img [ src "http://localhost:8888/assets/screenshots/f6-project-base-template-light.png" ] []
+                    ]
+                , figcaption [] [ text T.projectCaptionSimple ]
                 ]
-            , figcaption [] [ text T.projectCaptionSimple ]
-            ]
+
+          else
+            text ""
         ]
 
 
