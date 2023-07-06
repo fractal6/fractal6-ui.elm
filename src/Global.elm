@@ -23,6 +23,7 @@ module Global exposing
     ( Flags
     , Model
     , Msg(..)
+    , getConf
     , init
     , navigate
     , now
@@ -61,7 +62,7 @@ import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
-import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
+import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -81,6 +82,16 @@ type alias Model =
     , key : Nav.Key
     , session : Session
     , now : Time.Posix
+    }
+
+
+getConf : Model -> Conf
+getConf global =
+    { screen = global.session.screen
+    , now = global.now
+    , lang = global.session.lang
+    , theme = global.session.theme
+    , url = global.url
     }
 
 

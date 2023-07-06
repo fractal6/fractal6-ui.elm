@@ -38,7 +38,7 @@ import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -199,7 +199,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""

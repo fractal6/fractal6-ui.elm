@@ -56,6 +56,11 @@ type alias Screen =
     { w : Int, h : Int }
 
 
+type Theme
+    = DarkTheme
+    | LightTheme
+
+
 isMobile : Screen -> Bool
 isMobile screen =
     screen.w < 769
@@ -68,6 +73,7 @@ toReflink url =
 
 type alias Conf =
     { screen : Screen
+    , theme : Theme
     , lang : Lang.Lang
     , now : Time.Posix
     , url : Url.Url
@@ -82,12 +88,18 @@ type alias SessionFlags =
     , tree_menu : Maybe Bool
     , apis : Apis
     , screen : Screen
+    , theme : Maybe JD.Value
     }
 
 
 type alias Session =
-    { user : UserState
+    { -- Conf
+      theme : Theme
+    , screen : Screen
     , lang : Lang.Lang
+
+    -- Remote Data
+    , user : UserState
     , notif : NotifCount
     , referer : Maybe Url
     , can_referer : Maybe Url
@@ -111,7 +123,6 @@ type alias Session =
     , window_pos : Maybe WindowPos
     , orga_menu : Maybe Bool
     , tree_menu : Maybe Bool
-    , screen : Screen
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
@@ -167,6 +178,7 @@ resetSession session flags =
     , can_referer = Nothing
     , user = LoggedOut
     , lang = session.lang
+    , theme = session.theme
     , notif = initNotifCount
     , token_data = RemoteData.NotAsked
     , node_focus = Nothing
@@ -237,11 +249,31 @@ fromLocalSession flags =
 
                 Nothing ->
                     ( Nothing, Cmd.none )
+
+        ( theme, cmd4 ) =
+            case flags.theme of
+                Just raw ->
+                    case JD.decodeValue JD.string raw of
+                        Ok "DARK" ->
+                            ( Just DarkTheme, Cmd.none )
+
+                        Ok "LIGHT" ->
+                            ( Just LightTheme, Cmd.none )
+
+                        Ok _ ->
+                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+
+                        Err err ->
+                            ( Nothing, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( Nothing, Cmd.none )
     in
     ( { referer = Nothing
       , can_referer = Nothing
       , user = user
       , lang = withDefault Lang.En lang
+      , theme = withDefault DarkTheme theme
       , notif = initNotifCount
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing
@@ -269,7 +301,7 @@ fromLocalSession flags =
       , newOrgaData = Nothing
       , orgaInfo = Nothing
       }
-    , [ cmd1, cmd2, cmd3 ]
+    , [ cmd1, cmd2, cmd3, cmd4 ]
     )
 
 

@@ -144,7 +144,7 @@ toLink route param params =
             toHref (Route.Tension_Dynamic_Dynamic_Contract { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
 
         ProjectBaseUri ->
-            toHref (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
+            toHref (Route.Project_Dynamic_Dynamic { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" |> shortId })
 
 
 {-| Just use to check if you are in organisation tab...

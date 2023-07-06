@@ -49,9 +49,9 @@ import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, type_, value)
+import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -65,7 +65,7 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
-import Session exposing (Conf, GlobalCmd(..), Screen)
+import Session exposing (Conf, GlobalCmd(..), Screen, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
@@ -288,6 +288,23 @@ resetForm model =
     }
 
 
+simpleKanban : List { name : String, description : String, color : Maybe String }
+simpleKanban =
+    [ { name = "Todo"
+      , description = "This item hasn't been started"
+      , color = Just "#01FF70"
+      }
+    , { name = "In Progress"
+      , description = "This is actively being worked on"
+      , color = Just "#FF851B"
+      }
+    , { name = "Todo"
+      , description = "This has been completed"
+      , color = Just "#B10DC9"
+      }
+    ]
+
+
 type Msg
     = --Loading
       PassedSlowLoadTreshold -- timer
@@ -355,7 +372,7 @@ init global flags =
             global.session.apis
 
         conf =
-            { screen = global.session.screen, now = global.now, lang = global.session.lang, url = global.url }
+            getConf global
 
         -- Query parameters
         query =
@@ -498,6 +515,7 @@ update global message model =
                 --, fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
                 --, fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
                 --, fetchProjectCount apis nameids model.pattern Nothing GotProjectCount
+                , Ports.bulma_driver ""
                 ]
             , Cmd.none
             )
@@ -573,7 +591,7 @@ update global message model =
             ( model, Nav.pushUrl global.key (toLink ProjectsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
 
         SubmitTextSearch pattern ->
-            if (pattern |> String.trim) == model.pattern_init then
+            if String.trim pattern == model.pattern_init then
                 ( model, Cmd.none, Cmd.none )
 
             else
@@ -619,11 +637,19 @@ update global message model =
 
             else
                 -- Toggle Add Project Box
+                let
+                    form =
+                        model.project_form
+
+                    newForm =
+                        { form | columns = Just simpleKanban }
+                in
                 ( { model
                     | project_add = ternary model.project_add False True
                     , project_edit = Nothing
+                    , project_form = newForm
                   }
-                , Cmd.none
+                , Cmd.batch [ Ports.bulma_driver "edit-project" ]
                 , Cmd.none
                 )
 
@@ -648,7 +674,7 @@ update global message model =
                 , project_edit = Just project
                 , project_form = newForm
               }
-            , Cmd.none
+            , Cmd.batch [ Ports.bulma_driver "edit-project" ]
             , Cmd.none
             )
 
@@ -768,10 +794,17 @@ update global message model =
                                     Nothing ->
                                         c
                                 )
+
+                        redirect =
+                            if model.project_add then
+                                send <| NavigateRaw (toLink ProjectBaseUri model.node_focus.nameid [ project.id ])
+
+                            else
+                                Cmd.none
                     in
                     ( { model | project_result = result, projects = Success new_d, projects_count = Success new_c, project_add = False, project_edit = Nothing } |> resetForm
-                    , Ports.bulma_driver ""
-                    , Cmd.none
+                    , Cmd.batch [ Ports.bulma_driver "" ]
+                    , redirect
                     )
 
                 DuplicateErr ->
@@ -999,18 +1032,22 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    if model.project_add then
-        viewNewOrEditProject True model
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+            [ if model.project_add then
+                viewNewOrEditProject model.conf True model
 
-    else if model.project_edit /= Nothing then
-        viewNewOrEditProject False model
+              else if model.project_edit /= Nothing then
+                viewNewOrEditProject model.conf False model
 
-    else
-        viewDefault global.session.user model
+              else
+                viewDefault global.session.user model
+            ]
+        ]
 
 
-viewNewOrEditProject : Bool -> Model -> Html Msg
-viewNewOrEditProject isNew model =
+viewNewOrEditProject : Conf -> Bool -> Model -> Html Msg
+viewNewOrEditProject conf isNew model =
     let
         title =
             ternary isNew T.newProject T.editProject
@@ -1049,8 +1086,8 @@ viewNewOrEditProject isNew model =
             else
                 onClick (Submit <| SubmitEditProject)
     in
-    div [ class "columns is-centered submitFocus" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+    div [ id "edit-project", class "columns submitFocus" ]
+        [ div [ class "column is-half" ]
             [ h1 [ class "title" ] [ text title ]
             , div [ class "field" ]
                 [ div [ class "label" ] [ text T.name ]
@@ -1141,6 +1178,21 @@ viewNewOrEditProject isNew model =
                 _ ->
                     text ""
             ]
+        , if isNew then
+            div [ class "column is-half" ]
+                [ figure [ class "image is-fullwidth has-border-light is-rounded" ]
+                    [ case conf.theme of
+                        DarkTheme ->
+                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
+
+                        LightTheme ->
+                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
+                    ]
+                , figcaption [] [ text T.projectCaptionSimple ]
+                ]
+
+          else
+            text ""
         ]
 
 
@@ -1164,22 +1216,20 @@ viewDefault user model =
             , placeholder_txt = T.searchProjects
             }
     in
-    div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
-            [ div [ class "columns is-centered" ]
-                [ div [ class "column is-tree-quarter" ]
-                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
-                , if isAdmin then
-                    div [ class "column is-one-quarter is-flex is-align-self-flex-start" ]
-                        [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
+    div []
+        [ div [ class "columns is-centered" ]
+            [ div [ class "column is-tree-quarter" ]
+                [ viewSearchBar opSearch model.pattern_init model.pattern ]
+            , if isAdmin then
+                div [ class "column is-one-quarter is-flex is-align-self-flex-start" ]
+                    [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]
 
-                  else
-                    text ""
-                ]
-            , div [ class "columns is-centered" ]
-                [ div [ class "column is-12" ]
-                    [ viewProjects model ]
-                ]
+              else
+                text ""
+            ]
+        , div [ class "columns is-centered" ]
+            [ div [ class "column is-12" ]
+                [ viewProjects model ]
             ]
         ]
 

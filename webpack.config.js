@@ -29,8 +29,8 @@ module.exports = (env, argv) => {
     const isDev = MODE == 'development';
     const isProd = MODE == 'production';
 
-    // @TODO: get lang from build options ?
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
+    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "DARK";
     var API_URL;
     if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
@@ -83,7 +83,8 @@ module.exports = (env, argv) => {
                 'REST_API': JSON.stringify(API_URL.rest),
                 'ASSETS_API': JSON.stringify(API_URL.assets),
                 'VERSION': JSON.stringify(commitHash),
-                'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG)
+                'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),
+                'DEFAULT_THEME': JSON.stringify(DEFAULT_THEME),
             }),
             new webpack.LoaderOptionsPlugin({
                 options: {

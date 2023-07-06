@@ -5,16 +5,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unrealeased]
 
+...
+
+## [0.8.1]
+
 ### New
+- ux: Use a  default Kanban template when creating new projects.
+- ui: add an image screenschot on new project page.
+- build: Add default theme in webpack config.
+
+### Fixed 
+- URI to fetch images in the About page
+
+
+## [0.8]
+
+### New
+- [MAJOR]: Projects management feature: https://fractale.co/tension//0x33ea36
 - Add user password reset, in user settings page.
 - Show open contracts in circle about section, in overview page.
+- New role for users can directly added in the members tab.
 
 ### Changed
 - Better title for Document and Contracts tab, in tension page .
+- data URI change from /data to /assets.
+- show #members and #watcher in the organization explore page.
 
 ### Fixed 
 - Fix navigation context when navigating from Document or Contracts, in tension page.
-- minor codefactor.
+- multiple code refactor: Comments is now a components, rename WebData -> RestData, and ++.
 
 
 
