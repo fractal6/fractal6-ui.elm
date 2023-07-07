@@ -298,7 +298,7 @@ simpleKanban =
       , description = "This is actively being worked on"
       , color = Just "#FF851B"
       }
-    , { name = "Todo"
+    , { name = "Done"
       , description = "This has been completed"
       , color = Just "#B10DC9"
       }
