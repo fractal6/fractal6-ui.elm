@@ -5,10 +5,14 @@
 	&.fix-inline > p {
 		display: inline;
 	}
-	& > ul {
+	& > ul, & > ol {
         margin-top: 0;
 		//margin-left: 1rem;
 	}
+    // Fix ol margin-top
+    ul ol {
+        margin-top: 0.5rem;
+    }
 
 	// Html
     // --
