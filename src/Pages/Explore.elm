@@ -29,12 +29,10 @@ import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
-import Components.HelperBar as HelperBar
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Fractal.Enum.NodeType as NodeType
 import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)

@@ -189,8 +189,8 @@ type alias Model =
     , empty : {}
 
     -- Components
-    , helperBar : HelperBar.State
     , actionPanel : ActionPanel.State
+    , helperBar : HelperBar.State
     , help : Help.State
     , joinOrga : JoinOrga.State
     , tensionForm : NTF.State

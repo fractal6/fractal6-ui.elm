@@ -48,6 +48,7 @@ import Form.Help as Help
 import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
+import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -200,11 +201,11 @@ type alias Model =
     , empty : {}
 
     -- Components
+    , actionPanel : ActionPanel.State
     , helperBar : HelperBar.State
     , help : Help.State
-    , tensionForm : NTF.State
-    , actionPanel : ActionPanel.State
     , joinOrga : JoinOrga.State
+    , tensionForm : NTF.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
@@ -416,9 +417,9 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
+            , tensionForm = NTF.init global.session.user conf
             , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
-            , tensionForm = NTF.init global.session.user conf
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
@@ -1009,6 +1010,13 @@ view global model =
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.orgaInfo
             }
+
+        panelData =
+            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            , isRight = True
+            , domid = "actionPanelHelper"
+            , tree_data = TreeMenu.getOrgaData_ model.treeMenu
+            }
     in
     { title =
         (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
@@ -1025,6 +1033,7 @@ view global model =
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
