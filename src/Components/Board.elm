@@ -1098,6 +1098,17 @@ viewMediaDraft cardid isHovered isEdited d =
                     [ text d.title ]
                 ]
             ]
+        , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
+            [ if d.message /= Nothing then
+                a
+                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
+                    , attribute "data-tooltip" "Has comment"
+                    ]
+                    [ A.icon "icon-message-square icon-sm" ]
+
+              else
+                text ""
+            ]
         ]
 
 
@@ -1186,6 +1197,17 @@ viewMediaTension cardid isHovered isEdited focus t =
                     Nothing ->
                         text ""
                 ]
+            ]
+        , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
+            [ if n_comments > 1 then
+                a
+                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
+                    , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                    ]
+                    [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
+
+              else
+                text ""
             ]
         ]
 

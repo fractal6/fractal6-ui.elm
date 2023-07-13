@@ -99,7 +99,7 @@ type alias Node =
     -- Only here to build LocalGraph from OrgaData
     , userCanJoin : Maybe Bool
 
-    -- Aggregate
+    -- Aggregated
     , n_open_tensions : Int
     , n_open_contracts : Int
     }
@@ -117,7 +117,7 @@ type alias NodeExt =
     , visibility : NodeVisibility.NodeVisibility
     , about : Maybe String
 
-    -- aggregate
+    -- aggregated
     , n_members : Int
     , n_watchers : Int
     }
@@ -305,7 +305,7 @@ type alias Tension =
     , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus
 
-    -- aggregate
+    -- aggregated
     , n_comments : Maybe Int
 
     -- Extra / Might be hardocded / use with TensionsAll
@@ -413,7 +413,7 @@ type alias TensionHead =
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : Maybe (List Event)
 
-    -- Aggregate
+    -- Aggregated
     , n_open_contracts : Int
     }
 

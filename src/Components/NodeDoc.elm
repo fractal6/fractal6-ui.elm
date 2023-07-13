@@ -629,19 +629,7 @@ viewBlob data op_m =
                             [ -- Node Hints
                               div [ class "columns mb-0" ]
                                 [ div [ class "column is-6 pb-0", class "is-hint" ]
-                                    [ viewNodeDescr False node (tensionCharacFromNode node)
-                                    , case unwrap 0 .n_open_contracts data.node of
-                                        0 ->
-                                            text ""
-
-                                        i ->
-                                            let
-                                                tid =
-                                                    withDefaultData "" data.tid_r
-                                            in
-                                            a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
-                                                [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
-                                    ]
+                                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
                                 ]
                             , -- Circle lead
                               if List.length data.leads > 0 then
@@ -671,6 +659,19 @@ viewBlob data op_m =
                                     )
                                     node.first_link
                                     |> withDefault (text "")
+
+                            -- Open Contracts
+                            , case unwrap 0 .n_open_contracts data.node of
+                                0 ->
+                                    text ""
+
+                                i ->
+                                    let
+                                        tid =
+                                            withDefaultData "" data.tid_r
+                                    in
+                                    a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
+                                        [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
                             ]
 
                     Nothing ->

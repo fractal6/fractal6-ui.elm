@@ -42,6 +42,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddProjectCardPayload
 import Fractal.Object.AddProjectColumnPayload
+import Fractal.Object.CommentAggregateResult
 import Fractal.Object.DeleteProjectCardPayload
 import Fractal.Object.DeleteProjectColumnPayload
 import Fractal.Object.Project
@@ -430,5 +431,9 @@ tensionPayload2 =
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
-        |> hardcoded Nothing
+        |> with
+            (SelectionSet.map (unwrap Nothing .count) <|
+                Fractal.Object.Tension.commentsAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
+            )
         |> hardcoded Nothing
