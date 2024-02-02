@@ -190,6 +190,7 @@ type alias Model =
     , activity_tab : ActivityTab
     , depth : Maybe Int
     , legend : Bool
+    , leaders : List User
 
     -- common
     , conf : Conf
@@ -282,6 +283,7 @@ init global flags =
             , activity_tab = TensionTab
             , depth = Nothing
             , legend = False
+            , leaders = []
 
             -- Common
             , conf = conf
@@ -690,8 +692,11 @@ update global message model =
 
                         p =
                             global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
+
+                        path_data =
+                            Just { path | focus = { f | pinned = p } }
                     in
-                    ( { model | path_data = Just { path | focus = { f | pinned = p } }, depth = Just maxdepth }
+                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if isPathNew || model.init_tensions then
@@ -929,7 +934,7 @@ view global model =
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = model.tree_data, path_data = path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view model.tree_data path_data model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
@@ -948,22 +953,12 @@ view_ global model =
         tid =
             focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\b -> b.tension.id)) |> withDefault Nothing |> withDefault ""
 
-        leads =
-            model.path_data
-                |> Maybe.map (.focus >> .children)
-                |> withDefault []
-                |> List.map (\x -> getNode x.nameid model.tree_data)
-                |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)
-                |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
-                |> LE.uniqueBy .username
-                |> List.sortBy .username
-
         nodeData =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
             , node = getNode model.node_focus.nameid model.tree_data
             , node_data = withDefaultData initNodeData model.node_data
-            , leads = leads
+            , leads = model.leaders
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
@@ -1506,3 +1501,15 @@ viewEventNotif conf e =
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
 nodeFragmentFromOrga node_m nodeData children_eo ndata =
     node2NodeFragment node_m (withMaybeData nodeData)
+
+
+getLeaders : Maybe LocalGraph -> GqlData NodesDict -> List User
+getLeaders path_data tree_data =
+    path_data
+        |> Maybe.map (.focus >> .children)
+        |> withDefault []
+        |> List.map (\x -> getNode x.nameid tree_data)
+        |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)
+        |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
+        |> LE.uniqueBy .username
+        |> List.sortBy .username

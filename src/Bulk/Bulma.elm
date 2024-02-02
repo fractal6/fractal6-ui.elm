@@ -30,20 +30,39 @@ import Maybe exposing (withDefault)
 import Text as T
 
 
+type alias DropdownData msg =
+    { dropdown_id : String
+    , isOpen : Bool
+    , dropdown_cls : String
+    , button_cls : String -- ignore for button light
+    , button_html : Html msg
+    , menu_cls : String
+    , content_cls : String
+    , content_html : Html msg
+    , msg : msg
+    }
+
+
 {-| Dropdown components - Snippets:
 
-        B.dropdown "object-id"
-           ("mr-2 " ++ ternary model.isOpenTargetFilter "is-active" "")
-           "is-small"
-           (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
-           OnToggleTargetFilter
-           (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
+        , B.dropdown
+            { dropdown_id = "target-menu"
+            , isOpen = model.isTargetOpen
+            , dropdown_cls = ""
+            , button_cls = "is-small is-rounded has-border is-wrapped is-inline-block"
+            , button_html = span [] [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+            , msg = OnTargetClick
+            , menu_cls = "is-right is-left-mobile"
+            , content_cls = "has-border p-0"
+            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
+            }
 
-        B.dropdown "object-id"
+        B.dropdown "object-id" isOpen
            ("mr-2 " ++ ternary model.isOpenTargetFilter "is-active" "")
            "is-small"
            (A.icon1 "icon-edit" "click me")
            OnToggleTargetFilter
+           ""
            (div []
                 [ div [ class "dropdown-item button-light" ] [ A.icon1 "icon-edit-2" T.edit ]
                 , hr [ class "dropdown-divider" ] []
@@ -51,32 +70,40 @@ import Text as T
                 ])
 
 -}
-dropdown : String -> String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
-dropdown id_ dropdown_cls button_cls button_html msg content_cls content_html =
-    span [ class ("dropdown elm " ++ dropdown_cls) ]
-        [ span [ class "dropdown-trigger", onClick msg ]
-            [ span [ attribute "aria-controls" id_ ]
-                [ span [ class ("button " ++ button_cls) ]
-                    [ button_html, i [ class "ml-2 icon-chevron-down1", classList [ ( "icon-tiny", String.contains "is-small" button_cls ) ] ] [] ]
+dropdown : DropdownData msg -> Html msg
+dropdown op =
+    span [ class ("dropdown elm " ++ op.dropdown_cls), classList [ ( "is-active", op.isOpen ) ] ]
+        [ span [ class "dropdown-trigger", onClick op.msg ]
+            [ span [ attribute "aria-controls" op.dropdown_id ]
+                [ span [ class ("button " ++ op.button_cls) ]
+                    [ op.button_html, i [ class "ml-2 icon-chevron-down1", classList [ ( "icon-tiny", String.contains "is-small" op.button_cls ) ] ] [] ]
                 ]
             ]
-        , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
-            [ div [ class ("dropdown-content " ++ content_cls) ]
-                [ content_html ]
+        , div [ id op.dropdown_id, class ("dropdown-menu " ++ op.menu_cls), attribute "role" "menu" ]
+            [ div [ class ("dropdown-content " ++ op.content_cls), style "max-height" "420px" ]
+                [ if op.isOpen then
+                    op.content_html
+
+                  else
+                    text ""
+                ]
             ]
         ]
 
 
-dropdownLight : String -> String -> Html msg -> msg -> String -> Html msg -> Html msg
-dropdownLight id_ dropdown_cls button_html msg content_cls content_html =
-    span [ class ("dropdown elm " ++ dropdown_cls) ]
-        [ span [ class "dropdown-trigger", onClick msg ]
-            [ span [ attribute "aria-controls" id_ ] [ button_html ]
-            ]
-        , div [ id id_, class "dropdown-menu", attribute "role" "menu" ]
-            [ div [ class ("dropdown-content " ++ content_cls) ]
+dropdownLight : DropdownData msg -> Html msg
+dropdownLight op =
+    span [ class ("dropdown elm " ++ op.dropdown_cls), classList [ ( "is-active", op.isOpen ) ] ]
+        [ span [ class "dropdown-trigger", onClick op.msg ] [ span [ attribute "aria-controls" op.dropdown_id ] [ op.button_html ] ]
+        , div [ id op.dropdown_id, class ("dropdown-menu " ++ op.menu_cls), attribute "role" "menu" ]
+            [ div [ class ("dropdown-content " ++ op.content_cls), style "max-height" "420px" ]
                 -- The fixed position allow the dropdown to overflow the modal
                 --, style "position" "fixed" ]
-                [ content_html ]
+                [ if op.isOpen then
+                    op.content_html
+
+                  else
+                    text ""
+                ]
             ]
         ]

@@ -657,7 +657,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent conf (Dict.get "focusid" comment_form.post) action event
+                            Lazy.lazy4 viewEvent conf (Dict.get "focusid" comment_form.post) action event
 
                         Nothing ->
                             text ""
@@ -665,7 +665,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment conf c comment_form comment_result userInput
+                            Lazy.lazy5 viewComment conf c comment_form comment_result userInput
 
                         Nothing ->
                             text ""
@@ -735,7 +735,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                         [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
 
                 else
-                    Lazy.lazy viewCommentOrEvent x
+                    viewCommentOrEvent x
             )
         |> div []
 

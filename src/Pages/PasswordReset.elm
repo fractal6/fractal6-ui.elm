@@ -89,7 +89,8 @@ type alias Model =
     , token_reset : Maybe String
     , isValid : RestData Bool
 
-    -- common
+    -- Commons
+    , empty : {}
     , help : Help.State
     }
 
@@ -129,6 +130,7 @@ init global flags =
             , reset2_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
+            , empty = {}
             , help = Help.init global.session.user conf
             }
     in
@@ -278,7 +280,7 @@ view global model =
     { title = "Password reset"
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
         ]
     }
 

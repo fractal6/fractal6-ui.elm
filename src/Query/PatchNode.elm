@@ -554,6 +554,10 @@ updateProjectInputEncoder form =
                 -- remove name to avoid making extra request due to @unique
                 form.post |> Dict.remove "name"
 
+            else if Dict.get "nameid" form.post == Dict.get "old_nameid" form.post then
+                -- remove a duplicate error when update post
+                form.post |> Dict.remove "nameid"
+
             else
                 form.post
 

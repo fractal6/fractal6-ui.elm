@@ -68,6 +68,7 @@ type alias Model =
     , decoded_type_m : Maybe NodeType.NodeType
 
     -- Common
+    , empty : {}
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , confirmContract : ConfirmContract.State
@@ -117,6 +118,7 @@ initModel user =
     , decoded_type_m = Nothing
 
     -- Common
+    , empty = {}
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , confirmContract = ConfirmContract.init user
@@ -506,7 +508,7 @@ view op (State model) =
         div []
             [ viewModal op model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
+            , ConfirmContract.view model.empty model.confirmContract |> Html.map ConfirmContractMsg
             ]
 
     else

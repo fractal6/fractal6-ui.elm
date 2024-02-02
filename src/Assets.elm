@@ -90,26 +90,29 @@ unchecked =
 
 
 -- VIEWS
+--
+-- logo* function take as their two last arguments, the heigh and width (h, w)
+--
 
 
 logo0 : Html msg
 logo0 =
-    Lazy.lazy Logo.logo_fractal { h = "30", w = "38" }
+    Lazy.lazy2 Logo.logo_fractal "30" "38"
 
 
 logo1 : Html msg
 logo1 =
-    Lazy.lazy Logo.logo_fractal { h = "38", w = "54" }
+    Lazy.lazy2 Logo.logo_fractal "38" "54"
 
 
 logo2 : Html msg
 logo2 =
-    Lazy.lazy Logo.logo_fractal { h = "96", w = "128" }
+    Lazy.lazy2 Logo.logo_fractal "96" "128"
 
 
 logo_about : Html msg
 logo_about =
-    Lazy.lazy Logo.logo_about { h = "", w = "500" }
+    Lazy.lazy2 Logo.logo_about "" "500"
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.

@@ -523,24 +523,24 @@ update global message model =
 
         ChangeProjectPost field value ->
             let
-                f =
+                form =
                     model.project_form
 
                 newForm =
                     case field of
                         "name" ->
-                            { f
+                            { form
                                 | post =
-                                    f.post
+                                    form.post
                                         |> Dict.insert field value
                                         |> Dict.insert "nameid" (nameidEncoder value)
                             }
 
                         "nameid" ->
-                            { f | post = Dict.insert field (nameidEncoder value) f.post }
+                            { form | post = Dict.insert field (nameidEncoder value) form.post }
 
                         _ ->
-                            { f | post = Dict.insert field value f.post }
+                            { form | post = Dict.insert field value form.post }
             in
             ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
 
@@ -667,6 +667,7 @@ update global message model =
                                 ([ ( "name", project.name ) ]
                                     ++ (project.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
                                     ++ [ ( "old_name", project.name ) ]
+                                    ++ [ ( "old_nameid", nameidEncoder project.name ) ]
                                 )
                     }
             in
@@ -1028,7 +1029,7 @@ view global model =
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg

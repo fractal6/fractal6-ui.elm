@@ -33,7 +33,9 @@ type alias Flags =
 
 
 type alias Model =
-    { help : Help.State }
+    { empty : {}
+    , help : Help.State
+    }
 
 
 page : Page Flags Model Msg
@@ -77,7 +79,8 @@ init global flags =
             getConf global
 
         model =
-            { help = Help.init global.session.user conf
+            { empty = {}
+            , help = Help.init global.session.user conf
             }
     in
     ( model, Cmd.none, Cmd.none )
@@ -120,6 +123,6 @@ view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Help"
     , body =
-        [ Help.viewFix {} model.help |> Html.map HelpMsg
+        [ Help.viewFix model.empty model.help |> Html.map HelpMsg
         ]
     }

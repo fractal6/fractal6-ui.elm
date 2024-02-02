@@ -31,7 +31,6 @@ import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3,
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, unwrap, unwrap2, upH)

@@ -104,6 +104,7 @@ type alias Model =
     -- Common
     , help : Help.State
     , refresh_trial : Int
+    , empty : {}
     , authModal : AuthModal.State
     }
 
@@ -127,6 +128,7 @@ init global flags =
             -- common
             , help = Help.init global.session.user conf
             , refresh_trial = 0
+            , empty = {}
             , authModal = AuthModal.init global.session.user Nothing
             }
 
@@ -262,8 +264,8 @@ view global model =
     { title = "Explore"
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

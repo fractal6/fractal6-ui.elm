@@ -114,6 +114,7 @@ type alias Model =
     , hasBeenDuplicate : Bool
     , isWriting : Maybe Bool
     , exist_result : GqlData IdPayload
+    , empty : {}
 
     -- common
     , help : Help.State
@@ -173,6 +174,7 @@ initModel user conf form_m =
     , hasBeenDuplicate = False
     , isWriting = Nothing
     , exist_result = NotAsked
+    , empty = {}
     , help = Help.init user conf
     , refresh_trial = 0
     , authModal = AuthModal.init user Nothing
@@ -434,8 +436,8 @@ view global model =
     { title = "Create your organisation"
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

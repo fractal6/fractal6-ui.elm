@@ -723,7 +723,7 @@ view global model =
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
@@ -759,6 +759,7 @@ view_ global model =
             }
 
         row_hover =
+            -- Note: For admin user, row_hover change at every hover, so the lazy function will be defeat.
             if isAdmin then
                 model.row_hover
 
@@ -985,19 +986,23 @@ viewMemberRow conf focus m isPanelOpen ell =
                 span [ class "is-pulled-right" ]
                     [ span [ class "outside-table" ]
                         [ B.dropdownLight
-                            "row-ellipsis"
-                            (ternary ell.isOpen "is-active" "")
-                            (A.icon "icon-more-horizontal is-h icon-1half")
-                            (OnRowEdit (ternary ell.isOpen False True))
-                            "p-0 has-border-light"
-                            (div []
-                                [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRole (FromNameid focus.nameid))) ]
-                                    [ A.icon1 "icon-leaf" T.addUserRole ]
+                            { dropdown_id = "row-ellipsis"
+                            , isOpen = ell.isOpen
+                            , dropdown_cls = ""
+                            , button_cls = ""
+                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
+                            , msg = OnRowEdit (ternary ell.isOpen False True)
+                            , menu_cls = ""
+                            , content_cls = "p-0 has-border-light"
+                            , content_html =
+                                div []
+                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRole (FromNameid focus.nameid))) ]
+                                        [ A.icon1 "icon-leaf" T.addUserRole ]
 
-                                --, hr [ class "dropdown-divider" ] []
-                                --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
-                                ]
-                            )
+                                    --, hr [ class "dropdown-divider" ] []
+                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                    ]
+                            }
                         ]
                     ]
 
@@ -1017,19 +1022,23 @@ viewGuestRow conf focus m isPanelOpen ell =
                 span [ class "is-pulled-right" ]
                     [ span [ class "outside-table" ]
                         [ B.dropdownLight
-                            "row-ellipsis"
-                            (ternary ell.isOpen "is-active" "")
-                            (A.icon "icon-more-horizontal is-h icon-1half")
-                            (OnRowEdit (ternary ell.isOpen False True))
-                            "p-0 has-border-light"
-                            (div []
-                                [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
-                                    [ A.icon1 "icon-leaf" T.addUserRole ]
+                            { dropdown_id = "row-ellipsis"
+                            , isOpen = ell.isOpen
+                            , dropdown_cls = ""
+                            , button_cls = ""
+                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
+                            , msg = OnRowEdit (ternary ell.isOpen False True)
+                            , menu_cls = ""
+                            , content_cls = "p-0 has-border-light"
+                            , content_html =
+                                div []
+                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
+                                        [ A.icon1 "icon-leaf" T.addUserRole ]
 
-                                --, hr [ class "dropdown-divider" ] []
-                                --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
-                                ]
-                            )
+                                    --, hr [ class "dropdown-divider" ] []
+                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                    ]
+                            }
                         ]
                     ]
 

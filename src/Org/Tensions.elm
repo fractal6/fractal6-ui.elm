@@ -28,7 +28,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, toLink)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -1606,7 +1606,7 @@ view global model =
                 ]
             ]
         , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
@@ -2006,21 +2006,24 @@ viewCircleTensions model =
                 header : String -> String -> Maybe Tension -> Html Msg
                 header n _ t_m =
                     let
-                        title_name =
-                            Maybe.map (.receiver >> .name) t_m
-                    in
-                    span []
-                        [ title_name
-                            |> Maybe.map
-                                (\x ->
-                                    if n == model.node_focus.nameid then
-                                        text x
+                        title =
+                            Maybe.map
+                                (\t ->
+                                    if isRole t.receiver.nameid then
+                                        A.icon1 "icon-leaf" t.receiver.name
 
                                     else
-                                        a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ]
-                                            [ text x ]
+                                        text t.receiver.name
                                 )
-                            |> withDefault (text "Loading...")
+                                t_m
+                                |> withDefault (text "Loading...")
+                    in
+                    span []
+                        [ if n == model.node_focus.nameid then
+                            title
+
+                          else
+                            a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ] [ title ]
                         , span
                             [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
 

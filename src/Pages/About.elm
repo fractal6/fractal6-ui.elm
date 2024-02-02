@@ -105,8 +105,9 @@ type alias Model =
     , viewMode : ViewMode
     , lang : Lang.Lang
     , isHome : Bool
+    , empty : {}
 
-    -- Components
+    -- Commons
     , help : Help.State
     }
 
@@ -147,6 +148,7 @@ init global flags =
             , viewMode = Login
             , lang = global.session.lang
             , isHome = isHome
+            , empty = {}
             , help = Help.init global.session.user conf
             }
     in
@@ -283,7 +285,7 @@ view global model =
     { title = T.welcome ++ " - " ++ T.welcome2
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
         ]
     }
 

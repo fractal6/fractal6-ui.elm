@@ -130,6 +130,16 @@ type alias Session =
     }
 
 
+{-| Use to pass model to components in order to avoid losing time to deep caopy data
+@debug: not use yet, see answer in : <https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
+-}
+type alias BigData x =
+    { x
+        | path_data : Maybe LocalGraph
+        , tree_data : GqlData NodesDict
+    }
+
+
 type
     GlobalCmd
     -- @FIX: Make this in Global to define the mapGlobalOutcmds only once ?!

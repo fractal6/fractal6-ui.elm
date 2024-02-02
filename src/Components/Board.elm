@@ -91,6 +91,7 @@ type alias Model =
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
+    , empty : {}
     , modal_confirm : ModalConfirm Msg
     }
 
@@ -136,6 +137,7 @@ initModel projectid focus user =
 
     -- Common
     , refresh_trial = 0
+    , empty = {}
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
@@ -816,7 +818,7 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div []
         [ viewBoard op model
-        , ProjectColumnModal.view {} model.projectColumnModal |> Html.map ProjectColumnModalMsg
+        , ProjectColumnModal.view model.empty model.projectColumnModal |> Html.map ProjectColumnModalMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -1015,29 +1017,33 @@ viewHeader isAdmin isEdited col =
                     text ""
                 , if col.col_type /= ProjectColumnType.NoStatusColumn && isAdmin then
                     B.dropdownLight
-                        "col-ellipsis"
-                        ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
-                        (A.icon "icon-more-horizontal is-w is-h icon-lg")
-                        (OnToggleColEdit (ternary isEdited "" col.id))
-                        "has-border-light"
-                        (div []
-                            [ div
-                                [ class "dropdown-item button-light"
-                                , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
+                        { dropdown_id = "col-ellipsis"
+                        , isOpen = isEdited
+                        , dropdown_cls = "mx-2 is-align-self-baseline is-right"
+                        , button_cls = ""
+                        , button_html = A.icon "icon-more-horizontal is-w is-h icon-lg"
+                        , msg = OnToggleColEdit (ternary isEdited "" col.id)
+                        , menu_cls = ""
+                        , content_cls = "has-border-light"
+                        , content_html =
+                            div []
+                                [ div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
+                                    ]
+                                    [ A.icon1 "icon-edit-2" T.edit ]
+                                , div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
+                                    ]
+                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
+                                , hr [ class "dropdown-divider my-4" ] []
+                                , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
+                                    [ A.icon1 "icon-trash" "Delete column" ]
+                                , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
+                                    [ A.icon1 "icon-trash" "Remove items from project" ]
                                 ]
-                                [ A.icon1 "icon-edit-2" T.edit ]
-                            , div
-                                [ class "dropdown-item button-light"
-                                , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
-                                ]
-                                [ A.icon1 "icon-plus" T.addTensionColumn ]
-                            , hr [ class "dropdown-divider my-4" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
-                                [ A.icon1 "icon-trash" "Delete column" ]
-                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
-                                [ A.icon1 "icon-trash" "Remove items from project" ]
-                            ]
-                        )
+                        }
 
                   else
                     text ""
@@ -1075,17 +1081,21 @@ viewMediaDraft cardid isHovered isEdited d =
         ellipsis =
             if isHovered || isEdited then
                 B.dropdownLight
-                    "card-ellipsis"
-                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
-                    (A.icon "icon-more-horizontal is-h icon-bg")
-                    (OnToggleCardEdit (ternary isEdited "" cardid))
-                    "p-0 has-border-light"
-                    (div []
-                        [ div [ class "dropdown-item button-light", onClick (OnConvertDraft cardid d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
-                        , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-trash" T.deleteDraft ]
-                        ]
-                    )
+                    { dropdown_id = "card-ellipsis"
+                    , isOpen = isEdited
+                    , dropdown_cls = "px-2 has-text-text"
+                    , button_cls = ""
+                    , button_html = A.icon "icon-more-horizontal is-h icon-bg"
+                    , msg = OnToggleCardEdit (ternary isEdited "" cardid)
+                    , menu_cls = ""
+                    , content_cls = "p-0 has-border-light"
+                    , content_html =
+                        div []
+                            [ div [ class "dropdown-item button-light", onClick (OnConvertDraft cardid d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                            ]
+                    }
 
             else
                 text ""
@@ -1160,24 +1170,28 @@ viewMediaTension cardid isHovered isEdited focus t =
         ellipsis =
             if isHovered || isEdited then
                 B.dropdownLight
-                    "card-ellipsis"
-                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
-                    (A.icon "icon-more-horizontal is-h icon-bg")
-                    (OnToggleCardEdit (ternary isEdited "" cardid))
-                    "p-0 has-border-light"
-                    (div []
-                        [ div [ class "dropdown-item button-light" ]
-                            [ a
-                                [ class "stealth-link"
-                                , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
-                                , target "_blank"
+                    { dropdown_id = "card-ellipsis"
+                    , isOpen = isEdited
+                    , dropdown_cls = "px-2 has-text-text"
+                    , button_cls = ""
+                    , button_html = A.icon "icon-more-horizontal is-h icon-bg"
+                    , msg = OnToggleCardEdit (ternary isEdited "" cardid)
+                    , menu_cls = ""
+                    , content_cls = "p-0 has-border-light"
+                    , content_html =
+                        div []
+                            [ div [ class "dropdown-item button-light" ]
+                                [ a
+                                    [ class "stealth-link"
+                                    , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
+                                    , target "_blank"
+                                    ]
+                                    [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
                                 ]
-                                [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-x" "Remove from project" ]
                             ]
-                        , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-x" "Remove from project" ]
-                        ]
-                    )
+                    }
 
             else
                 text ""

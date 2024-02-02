@@ -85,7 +85,8 @@ type alias Model =
     , email_token : Maybe String
     , email : Maybe String
 
-    -- common
+    -- Commons
+    , empty : {}
     , help : Help.State
     }
 
@@ -115,6 +116,7 @@ init global flags =
             , result = RemoteData.NotAsked
             , email_token = Dict.get "email_token" query |> Maybe.map List.head |> withDefault Nothing
             , email = Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
+            , empty = {}
             , help = Help.init global.session.user conf
             }
     in
@@ -192,7 +194,7 @@ view global model =
     { title = T.signup
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
         ]
     }
 
