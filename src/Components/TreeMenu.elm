@@ -592,7 +592,7 @@ viewTreeMenu model =
     div [ class "menu", onMouseLeave (OnOrgHover Nothing) ]
         [ case model.tree_result of
             Success data ->
-                Lazy.lazy4 viewSubTree 0 model.hover model.focus model.tree
+                viewSubTree 0 model.hover model.focus model.tree
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]

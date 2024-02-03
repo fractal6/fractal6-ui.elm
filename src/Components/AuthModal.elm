@@ -380,13 +380,13 @@ view op (State model) =
     div []
         [ case model.modalType of
             SigninModal ->
-                Lazy.lazy2 viewSigninModal op model
+                viewSigninModal op model
 
             SignupModal puid ->
-                Lazy.lazy2 viewSignupModal op model
+                viewSignupModal op model
 
             RefreshModal ->
-                Lazy.lazy2 viewRefreshModal op model
+                viewRefreshModal op model
 
             AuthNeeded ->
                 viewAuthNeededModal model
