@@ -37,6 +37,7 @@ import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData)
 import Maybe exposing (withDefault)
@@ -45,7 +46,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryPublicOrga)
 import RemoteData exposing (RemoteData)
-import Session exposing (GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -106,6 +107,7 @@ type alias Model =
     , refresh_trial : Int
     , empty : {}
     , authModal : AuthModal.State
+    , commonOp : CommonMsg Msg
     }
 
 
@@ -130,6 +132,7 @@ init global flags =
             , refresh_trial = 0
             , empty = {}
             , authModal = AuthModal.init global.session.user Nothing
+            , commonOp = CommonMsg NoMsg LogErr
             }
 
         cmds =
@@ -264,8 +267,8 @@ view global model =
     { title = "Explore"
     , body =
         [ view_ global model
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 
@@ -301,5 +304,5 @@ viewPublicOrgas model =
                     [ viewGqlErrors err ]
 
                 Success nodes ->
-                    List.map (\n -> mediaOrga { noMsg = NoMsg } Nothing n) nodes
+                    List.map (\n -> Lazy.lazy3 mediaOrga model.commonOp Nothing n) nodes
         ]

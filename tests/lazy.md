@@ -6,8 +6,9 @@
 - test if viewGuestRow works !? (no for admin, hover change all the time !!)
 
 
-# Problematic lazy call
+# Improving lazy
 
-- mediaTension | {noMsg = NoMsg}
-- mediaOrga | {noMsg = NoMsg}
+All components that have an Op record in input parameters will usually fit bad with lazy call...
+-> either use a `SupModel a` to use common model attribute, or pass directly the arguments.
+
 

@@ -58,7 +58,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
+import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -96,13 +96,16 @@ type alias Model =
     , comments : Comments.State
 
     -- Common
+    , conf : Conf
+    , mobileConf : Conf
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , commonOp : CommonMsg Msg
     }
 
 
-initModel : GqlData LocalGraph -> NodeFocus -> UserState -> Model
-initModel path focus user =
+initModel : Conf -> GqlData LocalGraph -> NodeFocus -> UserState -> Model
+initModel conf path focus user =
     { user = user
     , node_focus = focus
     , isOpen = False
@@ -125,14 +128,17 @@ initModel path focus user =
     , comments = Comments.init focus.nameid "" user
 
     -- Common
+    , conf = conf
+    , mobileConf = { conf | screen = { w = 1, h = 1 } }
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , commonOp = CommonMsg NoMsg LogErr
     }
 
 
-init : GqlData LocalGraph -> NodeFocus -> UserState -> State
-init path focus user =
-    initModel path focus user |> State
+init : Conf -> GqlData LocalGraph -> NodeFocus -> UserState -> State
+init conf path focus user =
+    initModel conf path focus user |> State
 
 
 
@@ -143,7 +149,7 @@ init path focus user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.path_data model.node_focus model.user
+    initModel model.conf model.path_data model.node_focus model.user
 
 
 
@@ -671,16 +677,8 @@ port closeCardPanelFromJs : (() -> msg) -> Sub msg
 -- ------------------------------
 
 
-type alias Op =
-    { conf : Conf
-
-    --tree_data : GqlData NodesDict
-    , path_data : GqlData LocalGraph
-    }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
+view : GqlData NodesDict -> GqlData LocalGraph -> State -> Html Msg
+view tree_data path_data (State model) =
     div []
         [ div
             [ id "cardPanel"
@@ -691,7 +689,7 @@ view op (State model) =
                 CardTension _ ->
                     case model.tension_result of
                         Success tension ->
-                            viewPanelTension op tension model
+                            viewPanelTension path_data tension model
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -703,7 +701,7 @@ view op (State model) =
                             text ""
 
                 CardDraft draft ->
-                    viewPanelDraft op draft model
+                    viewPanelDraft draft model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
         , if model.isOpen then
@@ -720,8 +718,8 @@ view op (State model) =
 --
 
 
-viewPanelTension : Op -> TensionPanel -> Model -> Html Msg
-viewPanelTension op t model =
+viewPanelTension : GqlData LocalGraph -> TensionPanel -> Model -> Html Msg
+viewPanelTension path_data t model =
     div [ class "panel" ]
         [ div [ class "header-block" ]
             [ div [ class "panel-heading" ]
@@ -734,12 +732,12 @@ viewPanelTension op t model =
 
                   else
                     viewTitle t model
-                , viewSubTitle op.conf t model
+                , viewSubTitle model.conf t model
                 ]
             ]
         , div [ id "main-block", class "main-block" ]
             [ div [ class "columns m-0" ]
-                [ div [ class "column is-9" ] [ viewTensionComments op t model ]
+                [ div [ class "column is-9" ] [ viewTensionComments path_data t model ]
                 , div [ class "column pl-1" ] [ viewSidePane t model ]
                 ]
             ]
@@ -835,21 +833,15 @@ viewSubTitle conf t model =
           else
             text ""
         , viewTensionDateAndUser conf "is-discrete" t.createdAt t.createdBy
-        , viewCircleTarget { noMsg = NoMsg } "is-pulled-right" t.receiver
+        , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
         ]
 
 
-viewTensionComments : Op -> TensionPanel -> Model -> Html Msg
-viewTensionComments op t model =
+viewTensionComments : GqlData LocalGraph -> TensionPanel -> Model -> Html Msg
+viewTensionComments path_data t model =
     let
-        conf =
-            op.conf
-
-        mobileConf =
-            { conf | screen = { w = 1, h = 1 } }
-
         userCanJoin =
-            withMaybeData op.path_data
+            withMaybeData path_data
                 |> Maybe.map
                     (\path ->
                         path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
@@ -872,7 +864,7 @@ viewTensionComments op t model =
             case model.user of
                 LoggedIn _ ->
                     if userCanComment then
-                        Comments.viewTensionCommentInput mobileConf t model.comments |> Html.map CommentsMsg
+                        Comments.viewTensionCommentInput model.mobileConf t model.comments |> Html.map CommentsMsg
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -885,7 +877,7 @@ viewTensionComments op t model =
                         text ""
     in
     div [ class "comments" ]
-        [ Comments.viewCommentsTension mobileConf t.action model.comments |> Html.map CommentsMsg
+        [ Comments.viewCommentsTension model.mobileConf t.action model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
         , userInput
         ]
@@ -1020,8 +1012,8 @@ viewSidePane t model =
 --
 
 
-viewPanelDraft : Op -> ProjectDraft -> Model -> Html Msg
-viewPanelDraft op draft model =
+viewPanelDraft : ProjectDraft -> Model -> Html Msg
+viewPanelDraft draft model =
     let
         uctx =
             uctxFromUser model.user
@@ -1061,14 +1053,14 @@ viewPanelDraft op draft model =
                         , div [ class "tensionSubtitle mt-3" ]
                             [ span [ class "tag is-rounded has-background-tag" ]
                                 [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
-                            , viewTensionDateAndUser op.conf "is-discrete" draft.createdAt draft.createdBy
+                            , viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy
                             ]
                         ]
                 ]
             ]
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
-                [ div [ class "column is-9" ] [ viewDraftComment op.conf model.isMessageEdit model.message_result model.tension_form draft ]
+                [ div [ class "column is-9" ] [ viewDraftComment model.conf model.isMessageEdit model.message_result model.tension_form draft ]
                 , div [ class "column pl-1" ] []
                 ]
             ]

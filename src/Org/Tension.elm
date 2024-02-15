@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -230,6 +230,7 @@ type alias Model =
     , conf : Conf
     , comments : Comments.State
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -390,6 +391,7 @@ init global flags =
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
             -- Open a signin dialog if contracts are requested
@@ -1675,7 +1677,7 @@ viewTension u t model =
                       else
                         text ""
                     , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
-                    , viewCircleTarget { noMsg = NoMsg } "is-pulled-right" t.receiver
+                    , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
                     ]
                 ]
             ]
@@ -2046,7 +2048,7 @@ viewSidePane u t model =
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
-                                            viewCircleTarget { noMsg = NoMsg } "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                            viewCircleTarget model.commonOp "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
 
                                         NodeType.Role ->
                                             case node.role_type of
@@ -2055,7 +2057,7 @@ viewSidePane u t model =
                                                         viewRole "mb-2" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
-                                                        viewRoleExt { noMsg = NoMsg } "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
+                                                        viewRoleExt model.commonOp "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
 
                                                 Nothing ->
                                                     text ""

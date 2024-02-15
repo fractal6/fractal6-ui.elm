@@ -249,7 +249,7 @@ init global flags =
             , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
-            , cardPanel = CardPanel.init path_data newFocus global.session.user
+            , cardPanel = CardPanel.init conf path_data newFocus global.session.user
             , board = Board.init projectid newFocus global.session.user
 
             -- Common
@@ -680,9 +680,9 @@ view global model =
         , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy3 LinkTensionPanel.view tree_data model.path_data model.linkTensionPanel |> Html.map LinkTensionPanelMsg
+        , Lazy.lazy3 CardPanel.view tree_data model.path_data model.cardPanel |> Html.map CardPanelMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
-        , LinkTensionPanel.view { tree_data = tree_data, path_data = model.path_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
-        , CardPanel.view { conf = model.conf, path_data = model.path_data } model.cardPanel |> Html.map CardPanelMsg
         ]
     }
 

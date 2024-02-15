@@ -42,6 +42,7 @@ import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -452,8 +453,8 @@ view global model =
     { title = model.username ++ "'s settings"
     , body =
         [ view_ model
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

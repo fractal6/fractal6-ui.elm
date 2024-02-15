@@ -174,6 +174,12 @@ type
     | DoModalAsk String String -- Safe close modal
 
 
+type alias CommonMsg msg =
+    { noMsg : msg
+    , logErr : String -> msg
+    }
+
+
 type alias NodesQuickSearch =
     { pattern : String
     , lookup : Array Node

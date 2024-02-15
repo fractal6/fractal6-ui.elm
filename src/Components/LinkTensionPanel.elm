@@ -513,26 +513,20 @@ port closeLinkTensionPanelFromJs : (() -> msg) -> Sub msg
 -- ------------------------------
 
 
-type alias Op =
-    { tree_data : GqlData NodesDict
-    , path_data : GqlData LocalGraph
-    }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
+view : GqlData NodesDict -> GqlData LocalGraph -> State -> Html Msg
+view tree_data path_data (State model) =
     div
         [ id "linkTensionPanel"
         , class "side-menu is-medium"
         , classList [ ( "off", not model.isOpen ) ]
         ]
-        [ viewPanel op model
+        [ viewPanel tree_data model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
-viewPanel : Op -> Model -> Html Msg
-viewPanel op model =
+viewPanel : GqlData NodesDict -> Model -> Html Msg
+viewPanel tree_data model =
     let
         typeFilter_hthml =
             B.dropdown
@@ -595,7 +589,7 @@ viewPanel op model =
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
                     , content_cls = "p-0 has-border-light"
-                    , content_html = viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data
+                    , content_html = viewSelectorTree (OnChangeTarget tree_data) [ model.target.nameid ] tree_data
                     }
                 , div [ class "control has-icons-left" ]
                     [ input

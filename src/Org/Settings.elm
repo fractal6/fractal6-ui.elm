@@ -63,7 +63,7 @@ import Query.PatchNode exposing (addOneLabel, addOneRole, removeOneLabel, remove
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
-import Session exposing (GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -203,6 +203,7 @@ type alias Model =
     , refresh_trial : Int
     , url : Url
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -385,6 +386,7 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
@@ -1309,8 +1311,8 @@ viewSettingsContent model =
             div []
                 [ --@todo lazy loading...
                   viewRoles model
-                , viewRolesExt model.url T.rolesTop model.roles_top
-                , viewRolesExt model.url T.rolesSub model.roles_sub
+                , viewRolesExt model.commonOp model.url T.rolesTop model.roles_top
+                , viewRolesExt model.commonOp model.url T.rolesSub model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -1663,7 +1665,7 @@ viewRoleAddBox model =
             ]
         , div [ class "field mt-2 mb-3" ]
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
-            , viewRoleExt { noMsg = NoMsg } "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
+            , viewRoleExt model.commonOp "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
         , viewMandateInput (initFormText (Just NodeType.Role))
             (Just form.mandate)
@@ -1745,7 +1747,7 @@ viewRoles model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt { noMsg = NoMsg } "button-light is-small" Nothing d ]
+                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt model.commonOp "button-light is-small" Nothing d ]
                                                 , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
@@ -1802,8 +1804,8 @@ viewRoles model =
         ]
 
 
-viewRolesExt : Url -> String -> RestData (List RoleExt) -> Html Msg
-viewRolesExt url txt_yes list_ext_d =
+viewRolesExt : CommonMsg Msg -> Url -> String -> RestData (List RoleExt) -> Html Msg
+viewRolesExt commonOp url txt_yes list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
@@ -1827,7 +1829,7 @@ viewRolesExt url txt_yes list_ext_d =
                                                     toLink SettingsBaseUri n.nameid [] ++ q
                                                 )
                                 in
-                                viewRoleExt { noMsg = NoMsg } "ml-2 is-small" link_m d
+                                viewRoleExt commonOp "ml-2 is-small" link_m d
                             )
                         |> span []
                     ]

@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
-import Bulk.View exposing (action2icon, action2str, mediaTension, statusColor, tensionIcon, tensionStatus2str, tensionType2str, viewLabels)
+import Bulk.View exposing (action2icon, statusColor, tensionIcon, viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))

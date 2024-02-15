@@ -56,14 +56,14 @@ import Html.Attributes exposing (attribute, autocomplete, class, classList, href
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
-import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
 import String
 import Text as T
 import Time
@@ -177,7 +177,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { node_focus : NodeFocus
-    , path_data : Maybe LocalGraph
+    , path_data : GqlData LocalGraph
     , tree_data : GqlData NodesDict
     , tensions_data : GqlData (List Tension)
     , journal_data : GqlData (List EventNotif)
@@ -197,6 +197,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -261,7 +262,7 @@ init global flags =
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = ternary fs.orgChange Nothing session.path_data -- Loaded from GraphPack
+            , path_data = ternary fs.orgChange Loading (fromMaybeData session.path_data Loading) -- Loaded from GraphPack
             , tree_data = fromMaybeData session.tree_data Loading
             , tensions_data = fromMaybeData session.tensions_data Loading
             , journal_data = NotAsked
@@ -290,6 +291,7 @@ init global flags =
             , conf = conf
             , refresh_trial = 0
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
             , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus global.session.user
@@ -472,7 +474,7 @@ update global message model =
             ( { model | legend = val }, Cmd.none, Cmd.none )
 
         UpdatePath ->
-            ( { model | path_data = global.session.path_data }, Cmd.none, Cmd.none )
+            ( { model | path_data = fromMaybeData global.session.path_data Loading }, Cmd.none, Cmd.none )
 
         -- Data queries
         GotOrga result ->
@@ -528,7 +530,7 @@ update global message model =
             case pattern of
                 "" ->
                     case model.path_data of
-                        Just path ->
+                        Success path ->
                             case model.tree_data of
                                 Success data ->
                                     let
@@ -542,7 +544,7 @@ update global message model =
                                 _ ->
                                     ( model, Cmd.none, Cmd.none )
 
-                        Nothing ->
+                        _ ->
                             ( model, Cmd.none, Cmd.none )
 
                 _ ->
@@ -695,7 +697,7 @@ update global message model =
                             global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
 
                         path_data =
-                            Just { path | focus = { f | pinned = p } }
+                            Success { path | focus = { f | pinned = p } }
                     in
                     ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data }
                     , Cmd.batch
@@ -909,11 +911,8 @@ port sendToggleGraphReverse : () -> Cmd msg
 view : Global.Model -> Model -> Document Msg
 view global model =
     let
-        path_data =
-            Maybe.map (\x -> Success x) model.path_data |> withDefault Loading
-
         helperData =
-            { path_data = model.path_data
+            { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.orgaInfo
             }
@@ -935,7 +934,7 @@ view global model =
             , div [ id "mainPane" ] [ view_ global model ]
             ]
         , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
-        , Lazy.lazy3 NTF.view model.tree_data path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy3 NTF.view model.tree_data model.path_data model.tensionForm |> Html.map NewTensionMsg
         , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
@@ -976,7 +975,7 @@ view_ global model =
                 "activities" ->
                     div []
                         [ model.path_data
-                            |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
+                            |> withMaybeMapData (.focus >> .pinned >> withDefaultData Nothing)
                             |> withDefault Nothing
                             |> Maybe.map
                                 (\x ->
@@ -1032,7 +1031,7 @@ viewSearchBar us model =
                 ]
              ]
                 ++ (case model.path_data of
-                        Just p ->
+                        Success p ->
                             let
                                 node =
                                     getNode p.focus.nameid model.tree_data |> withDefault initNode
@@ -1181,7 +1180,7 @@ viewCanvas us model =
         isAdmin =
             case us of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx (unwrap Nothing (\p -> Maybe.map .mode p.root) model.path_data) model.node_focus.rootnameid
+                    hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
@@ -1246,10 +1245,10 @@ viewCanvas us model =
                         let
                             p =
                                 case model.path_data of
-                                    Just path ->
+                                    Success path ->
                                         FromPath path
 
-                                    Nothing ->
+                                    _ ->
                                         FromNameid model.node_focus.rootnameid
                         in
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
@@ -1281,7 +1280,7 @@ viewCanvas us model =
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            ((Maybe.map
+            ((withMaybeMapData
                 (\path ->
                     [ div
                         [ class "button tooltip has-tooltip-arrow has-tooltip-left"
@@ -1326,14 +1325,14 @@ viewCanvas us model =
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
                             , attribute "data-tooltip" T.goParent
                             , case model.path_data of
-                                Just g ->
+                                Success g ->
                                     LE.getAt 1 (List.reverse g.path)
                                         |> Maybe.map .nameid
                                         |> withDefault g.focus.nameid
                                         |> NodeClicked
                                         |> onClick
 
-                                Nothing ->
+                                _ ->
                                     onClick NoMsg
                             ]
                             [ A.icon "icon-chevron-up" ]
@@ -1396,10 +1395,10 @@ viewActivies model =
                     [ div
                         [ class "tooltip has-tooltip-arrow"
                         , case model.path_data of
-                            Just p ->
+                            Success p ->
                                 attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
 
-                            Nothing ->
+                            _ ->
                                 class ""
                         ]
                         [ span [ class "help" ] [ text T.recentActivities, text ":" ] ]
@@ -1426,7 +1425,7 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension { noMsg = NoMsg } model.conf model.node_focus x False True "is-size-6") tensions
+                                List.map (\x -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (toLink TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
@@ -1452,7 +1451,7 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> viewEventNotif model.conf x) events
+                            List.map (\x -> Lazy.lazy2 viewEventNotif model.conf x) events
                                 |> div [ id "journalTab" ]
 
                         Failure err ->
@@ -1504,10 +1503,10 @@ nodeFragmentFromOrga node_m nodeData children_eo ndata =
     node2NodeFragment node_m (withMaybeData nodeData)
 
 
-getLeaders : Maybe LocalGraph -> GqlData NodesDict -> List User
+getLeaders : GqlData LocalGraph -> GqlData NodesDict -> List User
 getLeaders path_data tree_data =
     path_data
-        |> Maybe.map (.focus >> .children)
+        |> withMaybeMapData (.focus >> .children)
         |> withDefault []
         |> List.map (\x -> getNode x.nameid tree_data)
         |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)

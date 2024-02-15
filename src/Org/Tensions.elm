@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -208,6 +208,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -660,6 +661,7 @@ init global flags =
             , conf = conf
             , refresh_trial = 0
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
@@ -919,7 +921,7 @@ update global message model =
 
         GotTensionsInt inc result ->
             let
-                newTensions =
+                newTensions_ =
                     case model.tensions_int of
                         Success tsOld ->
                             case result of
@@ -931,12 +933,17 @@ update global message model =
 
                         _ ->
                             result
+
+                newTensions =
+                    withMapData
+                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        newTensions_
             in
             ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
 
         GotTensionsExt result ->
             let
-                newTensions =
+                newTensions_ =
                     case model.tensions_ext of
                         Success tsOld ->
                             case result of
@@ -948,6 +955,11 @@ update global message model =
 
                         _ ->
                             result
+
+                newTensions =
+                    withMapData
+                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        newTensions_
             in
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
 
@@ -1042,6 +1054,7 @@ update global message model =
                     [ fetchTensionsInt apis query (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
+                    -- @DEBUG: tension_ext obsolete. SortBy broken for ListTension direction view...
                     --, fetchTensionExt apis query GotTensionsExt
                     --
                     , fetchTensionsCount apis query GotTensionsCount
@@ -2054,7 +2067,6 @@ viewCircleTensions model =
                     , onMoveLeaveCol = OnMoveLeaveCol
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , noMsg = NoMsg
 
                     -- Board Project Msg
                     , onAddCol = NoMsg
@@ -2069,7 +2081,7 @@ viewCircleTensions model =
                     ]
 
             else
-                viewBoard op header (LE.zip keys keys) data
+                viewBoard op model.commonOp header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err
@@ -2127,7 +2139,6 @@ viewAssigneeTensions model =
                     , onMoveLeaveCol = OnMoveLeaveCol
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , noMsg = NoMsg
                     , onAddCol = NoMsg
                     }
             in
@@ -2140,7 +2151,7 @@ viewAssigneeTensions model =
                     ]
 
             else
-                viewBoard op header (LE.zip keys keys) data
+                viewBoard op model.commonOp header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err
@@ -2159,20 +2170,7 @@ viewTensions tensionDir model =
         tensionsData =
             case tensionDir of
                 ListTension ->
-                    let
-                        t1 =
-                            model.tensions_int |> withDefaultData []
-
-                        t2 =
-                            model.tensions_ext |> withDefaultData []
-                    in
-                    case t1 ++ t2 of
-                        [] ->
-                            model.tensions_int
-
-                        other ->
-                            --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
-                            other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
+                    model.tensions_int
 
                 InternalTension ->
                     model.tensions_int
@@ -2189,7 +2187,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension { noMsg = NoMsg } model.conf model.node_focus t True True "is-size-6 t-o")
+                        |> List.map (\t -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

@@ -64,7 +64,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
-import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
+import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
 
@@ -109,6 +109,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
+    , commonOp : CommonMsg Msg
 
     -- Components
     , labelsPanel : LabelSearchPanel.State
@@ -198,6 +199,7 @@ initModel user conf =
     , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , commonOp = CommonMsg NoMsg LogErr
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
@@ -1758,7 +1760,7 @@ viewRolesExt model =
                             , attribute "style" "min-width: 150px;"
                             ]
                             [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
-                                [ h2 [ class "mb-3" ] [ viewRoleExt { noMsg = NoMsg } "" Nothing role ]
+                                [ h2 [ class "mb-3" ] [ viewRoleExt model.commonOp "" Nothing role ]
                                 , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
                                 ]
                             ]

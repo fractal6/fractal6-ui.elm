@@ -34,7 +34,7 @@ import Html.Events exposing (onClick)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Tension)
-import Session exposing (Conf)
+import Session exposing (CommonMsg, Conf)
 import Text as T
 
 
@@ -58,7 +58,6 @@ type alias Op msg =
     , onMoveLeaveCol : msg
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
-    , noMsg : msg
     , onAddCol : msg
     }
 
@@ -78,8 +77,8 @@ The function returns an HTML structure which displays the board with each column
 This function generates a drag-and-drop board with the ability to move tension items around.
 
 -}
-viewBoard : Op msg -> (String -> String -> Maybe Tension -> Html msg) -> List ( String, String ) -> Dict String (List Tension) -> Html msg
-viewBoard op header keys_title data =
+viewBoard : Op msg -> CommonMsg msg -> (String -> String -> Maybe Tension -> Html msg) -> List ( String, String ) -> Dict String (List Tension) -> Html msg
+viewBoard op commonOp header keys_title data =
     keys_title
         |> List.indexedMap
             (\i ( key, name ) ->
@@ -165,7 +164,7 @@ viewBoard op header keys_title data =
                                             [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
                                             []
                                     )
-                                    [ mediaTension { noMsg = op.noMsg } op.conf op.node_focus t True False "is-size-6" ]
+                                    [ mediaTension commonOp op.conf op.node_focus.nameid t True False "is-size-6" ]
                                 , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )
