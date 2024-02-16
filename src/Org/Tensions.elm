@@ -1057,7 +1057,7 @@ update global message model =
                     -- @DEBUG: tension_ext obsolete. SortBy broken for ListTension direction view...
                     --, fetchTensionExt apis query GotTensionsExt
                     --
-                    , fetchTensionsCount apis query GotTensionsCount
+                    , fetchTensionsCount apis { query | status = Nothing } GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
