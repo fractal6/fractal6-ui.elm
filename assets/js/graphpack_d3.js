@@ -1622,8 +1622,18 @@ export const GraphPack = {
                     }
                 }
 
-                if (isUpdated)
-                    this.nodeClickedFromJs(node);
+                if (isUpdated) {
+                    // Go to the clicked node
+                    if (this.focusedNode.data.type_ == NodeType.Role) {
+                        this.nodeClickedFromJs(node);
+                    } else {
+                        // Do not dive more that one level down.
+                        while (node.parent !== this.focusedNode && node.parent) {
+                            node = node.parent;
+                        };
+                        this.nodeClickedFromJs(node);
+                    }
+                }
 
             } else if (e.button === 2) {
                 //this.sendNodeRightClickFromJs(this.hoveredNode);
