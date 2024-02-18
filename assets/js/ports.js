@@ -37,6 +37,17 @@ import { sleep } from './custom.js'
 // @TODO/future: user  {username} in key to support multiple session
 export const UCTX_KEY = "user_ctx";
 
+// Items that will be removed from localstorage when sign-out.
+export const VOLATILE_SESSION_ITEMS = [
+    UCTX_KEY,
+    "window_pos",
+    "recent_activity_tab",
+    "orga_menu",
+    // "tree_menu",
+    // "lang",
+    // "theme",
+];
+
 function initQuickSearch(qs, data) {
     qs.removeAll();
     qs.addAll(data);
@@ -122,6 +133,7 @@ export const actions = {
             app.ports.openAuthModalFromJs.send({uctx:uctx, refresh:true});
         }
     },
+
     //
     // Modal
     //
@@ -338,6 +350,7 @@ export const actions = {
             gp.clearNodeTooltip();
         }
     },
+
     //
     // User Ctx -- Localstorage
     //
@@ -359,27 +372,33 @@ export const actions = {
         app.ports.reloadNotifFromJs.send(null);
     },
     'SAVE_SESSION_ITEM' : (app, session, data) => {
-        localStorage.setItem(data.key, JSON.stringify(data.val));
+        if (data.val == null) {
+            localStorage.removeItem(data.key);
+        } else {
+            localStorage.setItem(data.key, JSON.stringify(data.val));
+        }
+
+        // Update Page/Components accordingly
+        var resizePage = false;
         if (data.key == "orga_menu") {
             app.ports.updateMenuOrgaFromJs.send(data.val);
+            resizePage = true;
         } else if (data.key == "tree_menu") {
             app.ports.updateMenuTreeFromJs.send(data.val);
+            resizePage = true;
         }
-        setTimeout(() => session.gp.resizeMe(), 333);
+
+        if (resizePage)
+            setTimeout(() => session.gp.resizeMe(), 333);
     },
     'REMOVE_SESSION' : (app, session, _) => {
-        // @TODO: make a list of item to delete instead !
-        // see also static/index.js
-        localStorage.removeItem(UCTX_KEY);
-        localStorage.removeItem("window_pos");
-        //localStorage.removeItem("theme");
-        // --
+        // Remove volatile items
+        for (var i=0; i<VOLATILE_SESSION_ITEMS.length; i++) {
+            localStorage.removeItem(VOLATILE_SESSION_ITEMS[i]);
+        }
         // Remove classes available only if logged-in.
         // i.e. tree_menu do not depend of a session.
-        //localStorage.removeItem("tree_menu");
-        localStorage.removeItem("orga_menu");
-        var $t;
-        $t = document.getElementById("body");
+        var $t = document.getElementById("body");
         if ($t) {
             $t.classList.remove('has-orga-menu');
         }
@@ -396,6 +415,7 @@ export const actions = {
     'PROPAGATE_PATH' : (app, session, data) => {
         app.ports.propagatePathFromJs.send(data.data);
     },
+
     //
     // Popups
     //
@@ -466,6 +486,7 @@ export const actions = {
         }, 50);
 
     },
+
     //
     // Menus
     //
@@ -512,6 +533,7 @@ export const actions = {
     'REQUIRE_TREE_DATA': (app, session, _) => {
         app.ports.requireTreeDataFromJs.send(null);
     },
+
     //
     // Utils
     //

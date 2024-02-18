@@ -267,11 +267,11 @@ fr="Enregister votre mot de passe"
   fr="Vous avez des contrats en attente"
 
 [showOrgaMenu]
-  en="Show/hide your organizations"
-  fr="Afficher/masquer vos organisations"
+  en="Show your organizations"
+  fr="Afficher vos organisations"
 [showCircleMenu]
-  en="Show/hide the circles tree"
-  fr="Afficher/masquer l'arbre des cercles"
+  en="Show the circles tree"
+  fr="Afficher l'arbre des cercles"
 
 
 [gotIt]

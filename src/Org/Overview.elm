@@ -32,7 +32,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRou
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
-import Codecs exposing (LookupResult, WindowPos)
+import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -183,12 +183,13 @@ type alias Model =
     , journal_data : GqlData (List EventNotif)
     , node_data : GqlData NodeData
     , init_tensions : Bool
+    , init_journal : Bool
     , init_data : Bool
     , node_quickSearch : NodesQuickSearch
     , window_pos : WindowPos
     , node_hovered : Maybe Node
     , next_focus : Maybe String
-    , activity_tab : ActivityTab
+    , recent_activity_tab : RecentActivityTab
     , depth : Maybe Int
     , legend : Bool
     , leaders : List User
@@ -209,11 +210,6 @@ type alias Model =
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
     }
-
-
-type ActivityTab
-    = TensionTab
-    | JournalTab
 
 
 nfirstTensions : Int
@@ -268,6 +264,7 @@ init global flags =
             , journal_data = NotAsked
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
+            , init_journal = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
@@ -282,7 +279,7 @@ init global flags =
                        )
             , node_hovered = Nothing
             , next_focus = Nothing
-            , activity_tab = TensionTab
+            , recent_activity_tab = global.session.recent_activity_tab |> withDefault TensionTab
             , depth = Nothing
             , legend = False
             , leaders = []
@@ -344,7 +341,15 @@ init global flags =
                 []
 
         model2 =
-            ternary (cmds_ == []) { model | init_tensions = False, init_data = False } model
+            -- if nothing changed, assumes side data are already loaded,
+            -- else they will be loaded in the NodeFocused message.
+            ternary (cmds_ == [])
+                { model
+                    | init_tensions = not (model.recent_activity_tab == TensionTab)
+                    , init_journal = not (model.recent_activity_tab == JournalTab)
+                    , init_data = False
+                }
+                model
 
         cmds =
             cmds_
@@ -389,7 +394,7 @@ type Msg
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
-    | ChangeActivityTab ActivityTab
+    | ChangeActivityTab RecentActivityTab
     | GotJournal (GqlData (List EventNotif))
       -- Node Action
     | OpenActionPanel String String (Maybe ( Int, Int ))
@@ -468,7 +473,7 @@ update global message model =
                 newWin =
                     { win | bottomLeft = win.topRight, topRight = win.bottomLeft }
             in
-            ( { model | window_pos = newWin }, Ports.saveWindowpos newWin, send (UpdateSessionWindow (Just newWin)) )
+            ( { model | window_pos = newWin }, Cmd.none, send (UpdateSessionWindow (Just newWin)) )
 
         SetLegend val ->
             ( { model | legend = val }, Cmd.none, Cmd.none )
@@ -643,17 +648,50 @@ update global message model =
 
         ChangeActivityTab tab ->
             let
-                cmd =
-                    if withMaybeData model.journal_data == Nothing then
-                        queryJournal apis model.node_focus.nameid GotJournal
+                ( tensions_data, journal_data, cmd ) =
+                    case tab of
+                        TensionTab ->
+                            if withMaybeData model.tensions_data == Nothing then
+                                let
+                                    nameids =
+                                        withMaybeMapData
+                                            (\path ->
+                                                path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                                            )
+                                            model.path_data
+                                            |> withDefault []
+                                in
+                                ( LoadingSlowly
+                                , model.journal_data
+                                , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                                )
 
-                    else
-                        Cmd.none
+                            else
+                                ( model.tensions_data
+                                , model.journal_data
+                                , Cmd.none
+                                )
+
+                        JournalTab ->
+                            if withMaybeData model.journal_data == Nothing then
+                                ( model.tensions_data
+                                , LoadingSlowly
+                                , queryJournal apis model.node_focus.nameid GotJournal
+                                )
+
+                            else
+                                ( model.tensions_data
+                                , model.journal_data
+                                , Cmd.none
+                                )
             in
-            ( { model | activity_tab = tab, journal_data = LoadingSlowly }, cmd, Cmd.none )
+            ( { model | recent_activity_tab = tab, tensions_data = tensions_data, journal_data = journal_data }
+            , cmd
+            , send (UpdateSessionRecentActivityTab (Just tab))
+            )
 
         GotJournal result ->
-            ( { model | journal_data = result }, Cmd.none, Cmd.none )
+            ( { model | journal_data = result, init_journal = False }, Cmd.none, Cmd.none )
 
         -- Node Action
         OpenActionPanel domid nameid pos ->
@@ -690,20 +728,23 @@ update global message model =
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
 
-                        f =
+                        focus =
                             path.focus
 
-                        p =
+                        pinned =
                             global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
 
                         path_data =
-                            Success { path | focus = { f | pinned = p } }
+                            Success { path | focus = { focus | pinned = pinned } }
                     in
                     ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
-                        , if isPathNew || model.init_tensions then
+                        , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
                             queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+
+                          else if model.recent_activity_tab == JournalTab && (isPathNew || model.init_journal) then
+                            queryJournal apis model.node_focus.nameid GotJournal
 
                           else
                             Cmd.none
@@ -1406,12 +1447,12 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ classList [ ( "is-active", model.activity_tab == TensionTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= TensionTab ) ] ]
+                            [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= TensionTab ) ] ]
                                     [ A.icon1 "icon-exchange icon-sm" T.tensions ]
                                 ]
-                            , li [ classList [ ( "is-active", model.activity_tab == JournalTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= JournalTab ) ] ]
+                            , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= JournalTab ) ] ]
                                     [ A.icon1 "icon-history icon-sm" T.journal ]
                                 ]
                             ]
@@ -1419,8 +1460,8 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ class "content is-size-7", classList [ ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
-            [ case model.activity_tab of
+        , div [ class "content is-size-7", classList [ ( "spinner", isRecentTabLoading model ), ( "is-lazy", isRecentTabLazy model ) ] ]
+            [ case model.recent_activity_tab of
                 TensionTab ->
                     case model.tensions_data of
                         Success tensions ->
@@ -1513,3 +1554,23 @@ getLeaders path_data tree_data =
         |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
         |> LE.uniqueBy .username
         |> List.sortBy .username
+
+
+isRecentTabLoading : Model -> Bool
+isRecentTabLoading model =
+    case model.recent_activity_tab of
+        TensionTab ->
+            model.tensions_data == LoadingSlowly
+
+        JournalTab ->
+            model.journal_data == LoadingSlowly
+
+
+isRecentTabLazy : Model -> Bool
+isRecentTabLazy model =
+    case model.recent_activity_tab of
+        TensionTab ->
+            model.init_tensions
+
+        JournalTab ->
+            model.init_journal

@@ -14,13 +14,13 @@ window.addEventListener('load', _ => {
     // --
     // User session
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
-    // Window pos
+    // UX contexts
+    var theme = localStorage.getItem("theme");
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
-    // Menu
+    var recent_activity_tab = JSON.parse(localStorage.getItem("recent_activity_tab"));
+    // Menu data
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
-    // Theme
-    var theme = localStorage.getItem("theme");
     if (!theme) {
         theme = DEFAULT_THEME;
     }
@@ -42,6 +42,7 @@ window.addEventListener('load', _ => {
                 uctx: uctx,
                 lang: lang,
                 window_pos: window_pos,
+                recent_activity_tab: recent_activity_tab,
                 orga_menu: orga_menu,
                 tree_menu: tree_menu,
                 apis: {
