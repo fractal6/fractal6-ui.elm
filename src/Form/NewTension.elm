@@ -689,10 +689,18 @@ update_ apis message model =
 
                                 Nothing ->
                                     model
+
+                        cmd =
+                            case Dict.get "message" newModel.nodeDoc.form.post of
+                                Just m ->
+                                    send (Comments.OnChangeComment "message" m) |> Cmd.map CommentsMsg
+
+                                Nothing ->
+                                    Cmd.none
                     in
                     case t of
                         FromNameid nameid ->
-                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True) ] )
+                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True), cmd ] )
 
                         FromPath p ->
                             let
