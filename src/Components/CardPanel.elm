@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.CardPanel exposing (Msg(..), State, init, subscriptions, update, view)
+port module Components.CardPanel exposing (CardPanelResult(..), Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
@@ -183,6 +183,8 @@ type Msg
     | OnCancelMessage
     | SubmitMessage Time.Posix
     | MessageAck (GqlData IdPayload)
+    | DoConvertDraft String ProjectDraft
+    | DoRemoveDraft String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -205,8 +207,14 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ProjectCard
+    , result : Maybe CardPanelResult
     }
+
+
+type CardPanelResult
+    = UpdateCard ProjectCard
+    | ConvertDraft String ProjectDraft
+    | DeleteDraft String
 
 
 noOut : Out
@@ -411,7 +419,7 @@ update_ apis message model =
                         , title_result = result
                         , isTitleEdit = False
                       }
-                    , Out [] [] (Just newCard)
+                    , Out [] [] (Just (UpdateCard newCard))
                     )
 
                 _ ->
@@ -471,11 +479,17 @@ update_ apis message model =
                         , message_result = result
                         , isMessageEdit = False
                       }
-                    , Out [] [] (Just newCard)
+                    , Out [] [] (Just (UpdateCard newCard))
                     )
 
                 _ ->
                     ( { model | message_result = result }, noOut )
+
+        DoConvertDraft cardid d ->
+            ( model, Out [ send OnClose ] [] (Just <| ConvertDraft cardid d) )
+
+        DoRemoveDraft cardid ->
+            ( model, Out [ send OnClose ] [] (Just <| DeleteDraft cardid) )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -546,7 +560,7 @@ update_ apis message model =
                             ( Success { x | labels = Just labels }
                             , case card.card of
                                 CardTension t ->
-                                    Just { card | card = CardTension { t | labels = Just labels } }
+                                    Just <| UpdateCard { card | card = CardTension { t | labels = Just labels } }
 
                                 CardDraft _ ->
                                     Nothing
@@ -617,7 +631,7 @@ update_ apis message model =
                             ( Success { x | assignees = Just assignees }
                             , case card.card of
                                 CardTension t ->
-                                    Just { card | card = CardTension { t | assignees = Just assignees } }
+                                    Just <| UpdateCard { card | card = CardTension { t | assignees = Just assignees } }
 
                                 CardDraft _ ->
                                     Nothing
@@ -738,7 +752,7 @@ viewPanelTension path_data t model =
         , div [ id "main-block", class "main-block" ]
             [ div [ class "columns m-0" ]
                 [ div [ class "column is-9" ] [ viewTensionComments path_data t model ]
-                , div [ class "column pl-1" ] [ viewSidePane t model ]
+                , div [ class "column pl-1" ] [ viewTensionSidePane t model ]
                 ]
             ]
         ]
@@ -883,8 +897,8 @@ viewTensionComments path_data t model =
         ]
 
 
-viewSidePane : TensionPanel -> Model -> Html Msg
-viewSidePane t model =
+viewTensionSidePane : TensionPanel -> Model -> Html Msg
+viewTensionSidePane t model =
     let
         uctx =
             uctxFromUser model.user
@@ -908,7 +922,7 @@ viewSidePane t model =
         labels =
             t.labels |> withDefault []
     in
-    div [ class "tensionSidePane" ] <|
+    div [ class "tensionSidePane" ]
         [ -- Assignees/User select
           div [ class "level" ]
             [ div [ class "level-left" ] [ text T.assignees ]
@@ -1061,7 +1075,7 @@ viewPanelDraft draft model =
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
                 [ div [ class "column is-9" ] [ viewDraftComment model.conf model.isMessageEdit model.message_result model.tension_form draft ]
-                , div [ class "column pl-1" ] []
+                , div [ class "column pl-1" ] [ viewDraftSidePane draft model ]
                 ]
             ]
         ]
@@ -1164,3 +1178,41 @@ viewMessageEdit conf new old form result =
                 ]
             ]
         ]
+
+
+viewDraftSidePane : ProjectDraft -> Model -> Html Msg
+viewDraftSidePane d model =
+    let
+        card =
+            model.card
+
+        uctx =
+            uctxFromUser model.user
+
+        isAuthor =
+            d.createdBy.username == uctx.username
+
+        isAdmin =
+            model.isTensionAdmin
+    in
+    div [ class "tensionSidePane" ]
+        ([ -- Extras
+           hr [ class "has-background-border-light my-5" ] []
+         ]
+            ++ (if isAdmin || isAuthor then
+                    [ div
+                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        , onClick (DoConvertDraft card.id d)
+                        ]
+                        [ A.icon1 "icon-exchange" T.convertDraft ]
+                    , div
+                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        , onClick (DoRemoveDraft card.id)
+                        ]
+                        [ A.icon1 "icon-trash" T.deleteDraft ]
+                    ]
+
+                else
+                    []
+               )
+        )

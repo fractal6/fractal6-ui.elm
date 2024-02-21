@@ -31,7 +31,7 @@ import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
-import Components.CardPanel as CardPanel
+import Components.CardPanel as CardPanel exposing (CardPanelResult(..))
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
@@ -599,8 +599,14 @@ update global message model =
 
                 cmd =
                     case out.result of
-                        Just x ->
+                        Just (UpdateCard x) ->
                             Cmd.map BoardMsg (send <| Board.OnUpdateCard x)
+
+                        Just (ConvertDraft cardid d) ->
+                            Cmd.map BoardMsg (send <| Board.OnConvertDraft cardid d)
+
+                        Just (DeleteDraft cardid) ->
+                            Cmd.map BoardMsg (send <| Board.OnRemoveCard cardid)
 
                         Nothing ->
                             send NoMsg
