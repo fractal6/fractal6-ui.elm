@@ -665,7 +665,7 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        Board.view model.empty model.board |> Html.map BoardMsg
+                        Lazy.lazy2 Board.view model.empty model.board |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
