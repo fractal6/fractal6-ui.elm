@@ -96,27 +96,9 @@ toLink route param params =
     case route of
         -- User  url
         UsersBaseUri ->
-            if
-                -- Those name are reserved in the backend though.
-                List.member param
-                    [ "explore"
-                    , "login"
-                    , "logout"
-                    , "notifications"
-                    , "signup"
-                    , "verification"
-                    , "new"
-                    , "tension"
-                    , "tensions"
-                    , "user"
-                    , "users"
-                    , "org"
-                    ]
-            then
-                "/user/" ++ param
-
-            else
-                "/" ++ param
+            -- Reserved name (URI) are protected in the backend.
+            --"/user/" ++ param
+            "/" ++ param
 
         -- Org Url
         OverviewBaseUri ->
