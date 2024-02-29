@@ -826,10 +826,10 @@ viewComment conf c form result highlightedCommentId userInput =
                                     ]
                                 , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ] <|
-                                        [ div [ class "dropdown-item button-light", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
+                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item button-light", onClick (OnUpdateComment c) ] [ text T.edit ]
+                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ text T.edit ]
                                                     ]
 
                                                 else

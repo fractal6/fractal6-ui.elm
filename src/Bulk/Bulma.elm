@@ -64,9 +64,9 @@ type alias DropdownData msg =
            OnToggleTargetFilter
            ""
            (div []
-                [ div [ class "dropdown-item button-light" ] [ A.icon1 "icon-edit-2" T.edit ]
+                [ div [ class "dropdown-item" ] [ A.icon1 "icon-edit-2" T.edit ]
                 , hr [ class "dropdown-divider" ] []
-                , div [ class "dropdown-item button-light" ] [ A.icon1 "icon-plus" T.addTensionColumn ]
+                , div [ class "dropdown-item" ] [ A.icon1 "icon-plus" T.addTensionColumn ]
                 ])
 
 -}

@@ -1176,6 +1176,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                     div
                         [ class "tooltip has-tooltip-left has-tooltip-arrow"
                         , attribute "data-tooltip" (action2str tc.action)
+                        , style "left" "15px"
                         ]
                         [ A.icon0 (action2icon tc ++ " icon-sm") ]
 
@@ -1185,6 +1186,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                             div
                                 [ class "tooltip has-tooltip-left has-tooltip-arrow"
                                 , attribute "data-tooltip" T.closedTension
+                                , style "left" "15px"
                                 ]
                                 [ A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status) ]
 
