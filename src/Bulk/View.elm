@@ -40,13 +40,12 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
-import Html.Lazy as Lazy
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
-import Session exposing (Conf)
+import Session exposing (CommonMsg, Conf)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -61,22 +60,14 @@ import Text as T
 --
 
 
-type alias Op msg =
-    { -- @improves: pass onClickRole message directly instead of assuming what the message will be in functions.
-      noMsg : msg
-    }
-
-
-mediaTension : Op msg -> Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension op conf focus tension showStatus showRecip size =
-    Lazy.lazy7 mediaTension_ op conf focus tension showStatus showRecip size
-
-
-mediaTension_ : Op msg -> Conf -> NodeFocus -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension_ op conf focus tension showStatus showRecip size =
+mediaTension : CommonMsg msg -> Conf -> String -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension commonOp conf focusid tension showStatus showRecip size =
     let
         n_comments =
             withDefault 0 tension.n_comments
+
+        rootnameid =
+            nid2rootid tension.receiver.nameid
     in
     div
         [ class ("media mediaBox is-hoverable " ++ size) ]
@@ -92,12 +83,12 @@ mediaTension_ op conf focus tension showStatus showRecip size =
             [ div [ class "content mb-1" ]
                 [ a
                     [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
-                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                    , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
                 , case tension.labels of
                     Just labels ->
-                        viewLabels (Just focus.nameid) labels
+                        viewLabels (Just focusid) labels
 
                     Nothing ->
                         text ""
@@ -123,7 +114,7 @@ mediaTension_ op conf focus tension showStatus showRecip size =
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
-            [ ternary showRecip (viewCircleTarget op "is-small" tension.receiver) (text "")
+            [ ternary showRecip (viewCircleTarget commonOp "is-small" tension.receiver) (text "")
             , br [] []
             , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
@@ -136,7 +127,7 @@ mediaTension_ op conf focus tension showStatus showRecip size =
                             [ class "level-item discrete-link tooltip has-tooltip-arrow"
                             , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
                             , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
-                            , href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                            , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
                             ]
                             [ A.icon0 (action2icon tc ++ " icon-sm") ]
 
@@ -146,7 +137,7 @@ mediaTension_ op conf focus tension showStatus showRecip size =
                     a
                         [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
                         , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
-                        , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                        , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                         ]
                         [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
 
@@ -176,14 +167,14 @@ viewTensionLight t =
         ]
 
 
-viewCircleTarget : Op msg -> String -> EmitterOrReceiver -> Html msg
-viewCircleTarget op cls er =
+viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
+viewCircleTarget commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
             span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
         NodeType.Role ->
-            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> op.noMsg) (eor2ur er)
+            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
 
 
 viewCircleSimple : String -> Html msg
@@ -597,9 +588,9 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewRoleExt : Op msg -> String -> Maybe String -> RoleExtCommon a -> Html msg
-viewRoleExt op cls link_m r =
-    viewRole cls False False Nothing link_m (\_ _ _ -> op.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
+viewRoleExt : CommonMsg msg -> String -> Maybe String -> RoleExtCommon a -> Html msg
+viewRoleExt commonOp cls link_m r =
+    viewRole cls False False Nothing link_m (\_ _ _ -> commonOp.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
 
 
 viewRole : String -> Bool -> Bool -> Maybe ( Conf, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
@@ -827,13 +818,8 @@ viewNodeRefShort baseUri nid =
     a [ href ref ] [ text name ]
 
 
-mediaOrga : Op msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
-mediaOrga op user_m root =
-    Lazy.lazy3 mediaOrga_ op user_m root
-
-
-mediaOrga_ : Op msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
-mediaOrga_ op user_m root =
+mediaOrga : CommonMsg msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
+mediaOrga commonOp user_m root =
     div [ class "media mediaBox box pb-3" ]
         [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
@@ -880,10 +866,10 @@ mediaOrga_ op user_m root =
                                     |> List.map
                                         (\r ->
                                             if r.role_type == RoleType.Guest then
-                                                viewRole "" True False Nothing (Just <| toLink MembersBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
+                                                viewRole "" True False Nothing (Just <| toLink MembersBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
 
                                             else
-                                                viewRole "" True False Nothing (Just <| toLink OverviewBaseUri r.nameid []) (\_ _ _ -> op.noMsg) r
+                                                viewRole "" True False Nothing (Just <| toLink OverviewBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
                                         )
                                 )
                             ]

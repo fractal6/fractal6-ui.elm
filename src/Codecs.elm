@@ -317,6 +317,21 @@ windowEncoder w =
         ]
 
 
+type RecentActivityTab
+    = TensionTab
+    | JournalTab
+
+
+recentActivityTabToString : RecentActivityTab -> String
+recentActivityTabToString tab =
+    case tab of
+        TensionTab ->
+            "TensionTab"
+
+        JournalTab ->
+            "JournalTab"
+
+
 
 {-
    QuickDoc Decoder

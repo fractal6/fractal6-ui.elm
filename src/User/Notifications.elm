@@ -51,7 +51,7 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -117,6 +117,7 @@ type alias Model =
     , help : Help.State
     , refresh_trial : Int
     , empty : {}
+    , commonOp : CommonMsg Msg
     , authModal : AuthModal.State
     }
 
@@ -278,6 +279,7 @@ init global flags =
             , help = Help.init global.session.user conf
             , refresh_trial = 0
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , authModal = AuthModal.init global.session.user Nothing
             }
     in
@@ -539,8 +541,8 @@ view global model =
     { title = T.notifications
     , body =
         [ view_ global model
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 
@@ -593,7 +595,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noAssignedYet ]
 
                             else
-                                viewAssigned model.conf assigned
+                                viewAssigned model.commonOp model.conf assigned
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -792,8 +794,8 @@ editableEvent event =
             True
 
 
-viewAssigned : Conf -> Dict String (List Tension) -> Html Msg
-viewAssigned conf tensions_d =
+viewAssigned : CommonMsg Msg -> Conf -> Dict String (List Tension) -> Html Msg
+viewAssigned commonOp conf tensions_d =
     Dict.keys tensions_d
         |> List.map
             (\rootid ->
@@ -807,7 +809,7 @@ viewAssigned conf tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> mediaTension { noMsg = NoMsg } conf (focusFromNameid t.receiver.nameid) t True True "is-size-6 t-o")
+                        |> List.map (\t -> Lazy.lazy7 mediaTension commonOp conf (nid2rootid t.receiver.nameid) t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

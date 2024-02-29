@@ -71,10 +71,6 @@ circles =
         ]
 
 
-type alias LogoInput =
-    { h : String, w : String }
-
-
 logo : Html msg
 logo =
     svg
@@ -108,15 +104,15 @@ logo =
         ]
 
 
-logo_fractal : LogoInput -> Html msg
-logo_fractal s =
+logo_fractal : String -> String -> Html msg
+logo_fractal h w =
     svg
         [ class "logo-f6"
         , viewBox "0 0 223.44353478444896 240"
 
         --, Attr.attribute "style" "background:white;"
-        , height s.h
-        , width s.w
+        , height h
+        , width w
         ]
         [ circle [ cx "109.78968302877287", cy "99.15668163926206", r "1.0797695846263342" ] []
         , circle [ cx "111.52334028825763", cy "101.64814282932058", r "2.09924686902379" ] []
@@ -301,15 +297,15 @@ logo_fractal s =
         ]
 
 
-logo_about : LogoInput -> Html msg
-logo_about s =
+logo_about : String -> String -> Html msg
+logo_about h w =
     svg
         [ class "logo-f6"
         , viewBox "0 0 328.72559444463604 262"
 
         --, Attr.attribute "style" "background:white;"
         --, height s.h
-        , width s.w
+        , width w
         ]
         [ circle [ cx "148.66716490150546", cy "144.22895109025092", r "2.403593924125163" ] []
         , circle [ cx "158.49371198367024", cy "162.8112207065188", r "4.331348702389003" ] []

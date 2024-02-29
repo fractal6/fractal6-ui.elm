@@ -31,7 +31,7 @@ import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
-import Components.CardPanel as CardPanel
+import Components.CardPanel as CardPanel exposing (CardPanelResult(..))
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
@@ -39,7 +39,6 @@ import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
-import Dict
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -189,8 +188,8 @@ type alias Model =
     , empty : {}
 
     -- Components
-    , helperBar : HelperBar.State
     , actionPanel : ActionPanel.State
+    , helperBar : HelperBar.State
     , help : Help.State
     , joinOrga : JoinOrga.State
     , tensionForm : NTF.State
@@ -250,7 +249,7 @@ init global flags =
             , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
-            , cardPanel = CardPanel.init path_data newFocus global.session.user
+            , cardPanel = CardPanel.init conf path_data newFocus global.session.user
             , board = Board.init projectid newFocus global.session.user
 
             -- Common
@@ -600,8 +599,14 @@ update global message model =
 
                 cmd =
                     case out.result of
-                        Just x ->
+                        Just (UpdateCard x) ->
                             Cmd.map BoardMsg (send <| Board.OnUpdateCard x)
+
+                        Just (ConvertDraft cardid d) ->
+                            Cmd.map BoardMsg (send <| Board.OnConvertDraft cardid d)
+
+                        Just (DeleteDraft cardid) ->
+                            Cmd.map BoardMsg (send <| Board.OnRemoveCard cardid)
 
                         Nothing ->
                             send NoMsg
@@ -666,7 +671,7 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        Board.view model.empty model.board |> Html.map BoardMsg
+                        Lazy.lazy2 Board.view model.empty model.board |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
@@ -675,15 +680,15 @@ view global model =
                         div [ class "spinner" ] []
                 ]
             ]
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = tree_data, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy3 NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy3 LinkTensionPanel.view tree_data model.path_data model.linkTensionPanel |> Html.map LinkTensionPanelMsg
+        , Lazy.lazy3 CardPanel.view tree_data model.path_data model.cardPanel |> Html.map CardPanelMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
-        , LinkTensionPanel.view { tree_data = tree_data, path_data = model.path_data } model.linkTensionPanel |> Html.map LinkTensionPanelMsg
-        , CardPanel.view { conf = model.conf, path_data = model.path_data } model.cardPanel |> Html.map CardPanelMsg
         ]
     }
 

@@ -47,6 +47,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess)
 import Maybe exposing (withDefault)
@@ -1011,8 +1012,8 @@ view op (State model) =
               else
                 text ""
             , viewModal op model
+            , Lazy.lazy2 MoveTension.view op.tree_data model.moveTension |> Html.map MoveTensionMsg
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            , MoveTension.view { tree_data = op.tree_data } model.moveTension |> Html.map MoveTensionMsg
             ]
 
     else

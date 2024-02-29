@@ -592,7 +592,7 @@ viewTreeMenu model =
     div [ class "menu", onMouseLeave (OnOrgHover Nothing) ]
         [ case model.tree_result of
             Success data ->
-                Lazy.lazy4 viewSubTree 0 model.hover model.focus model.tree
+                viewSubTree 0 model.hover model.focus model.tree
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]
@@ -730,7 +730,7 @@ viewSelectorTree onTargetClick selected odata =
                 tree =
                     buildTree_ Nothing data
             in
-            div [ id "tree-selector", class "menu" ] [ Lazy.lazy4 viewSubTree2 onTargetClick 0 selected tree ]
+            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick 0 selected tree ]
 
         _ ->
             div [ class "spinner" ] []
@@ -753,10 +753,10 @@ viewSubTree2 onTargetClick depth selected (Tree { node, children }) =
             )
         , ul [ class "menu-list pl-0" ]
             ((List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children
-                |> List.map (\(Tree c) -> li [] [ viewNodeLine onTargetClick selected c.node ])
+                |> List.map (\(Tree c) -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected c.node ])
              )
                 ++ (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Bot ]) children
-                        |> List.map (\(Tree c) -> li [] [ viewNodeLine onTargetClick selected c.node ])
+                        |> List.map (\(Tree c) -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected c.node ])
                    )
             )
         ]

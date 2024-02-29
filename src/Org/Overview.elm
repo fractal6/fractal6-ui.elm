@@ -32,7 +32,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRou
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
-import Codecs exposing (LookupResult, WindowPos)
+import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -54,15 +54,16 @@ import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
-import Session exposing (Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
 import String
 import Text as T
 import Time
@@ -176,25 +177,28 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { node_focus : NodeFocus
-    , path_data : Maybe LocalGraph
+    , path_data : GqlData LocalGraph
     , tree_data : GqlData NodesDict
     , tensions_data : GqlData (List Tension)
     , journal_data : GqlData (List EventNotif)
     , node_data : GqlData NodeData
     , init_tensions : Bool
+    , init_journal : Bool
     , init_data : Bool
     , node_quickSearch : NodesQuickSearch
     , window_pos : WindowPos
     , node_hovered : Maybe Node
     , next_focus : Maybe String
-    , activity_tab : ActivityTab
+    , recent_activity_tab : RecentActivityTab
     , depth : Maybe Int
     , legend : Bool
+    , leaders : List User
 
     -- common
     , conf : Conf
     , refresh_trial : Int
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -206,11 +210,6 @@ type alias Model =
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
     }
-
-
-type ActivityTab
-    = TensionTab
-    | JournalTab
 
 
 nfirstTensions : Int
@@ -259,12 +258,13 @@ init global flags =
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = ternary fs.orgChange Nothing session.path_data -- Loaded from GraphPack
+            , path_data = ternary fs.orgChange Loading (fromMaybeData session.path_data Loading) -- Loaded from GraphPack
             , tree_data = fromMaybeData session.tree_data Loading
             , tensions_data = fromMaybeData session.tensions_data Loading
             , journal_data = NotAsked
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
+            , init_journal = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
@@ -279,14 +279,16 @@ init global flags =
                        )
             , node_hovered = Nothing
             , next_focus = Nothing
-            , activity_tab = TensionTab
+            , recent_activity_tab = global.session.recent_activity_tab |> withDefault TensionTab
             , depth = Nothing
             , legend = False
+            , leaders = []
 
             -- Common
             , conf = conf
             , refresh_trial = 0
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
             , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus global.session.user
@@ -339,7 +341,15 @@ init global flags =
                 []
 
         model2 =
-            ternary (cmds_ == []) { model | init_tensions = False, init_data = False } model
+            -- if nothing changed, assumes side data are already loaded,
+            -- else they will be loaded in the NodeFocused message.
+            ternary (cmds_ == [])
+                { model
+                    | init_tensions = not (model.recent_activity_tab == TensionTab)
+                    , init_journal = not (model.recent_activity_tab == JournalTab)
+                    , init_data = False
+                }
+                model
 
         cmds =
             cmds_
@@ -384,7 +394,7 @@ type Msg
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
-    | ChangeActivityTab ActivityTab
+    | ChangeActivityTab RecentActivityTab
     | GotJournal (GqlData (List EventNotif))
       -- Node Action
     | OpenActionPanel String String (Maybe ( Int, Int ))
@@ -463,13 +473,13 @@ update global message model =
                 newWin =
                     { win | bottomLeft = win.topRight, topRight = win.bottomLeft }
             in
-            ( { model | window_pos = newWin }, Ports.saveWindowpos newWin, send (UpdateSessionWindow (Just newWin)) )
+            ( { model | window_pos = newWin }, Cmd.none, send (UpdateSessionWindow (Just newWin)) )
 
         SetLegend val ->
             ( { model | legend = val }, Cmd.none, Cmd.none )
 
         UpdatePath ->
-            ( { model | path_data = global.session.path_data }, Cmd.none, Cmd.none )
+            ( { model | path_data = fromMaybeData global.session.path_data Loading }, Cmd.none, Cmd.none )
 
         -- Data queries
         GotOrga result ->
@@ -525,7 +535,7 @@ update global message model =
             case pattern of
                 "" ->
                     case model.path_data of
-                        Just path ->
+                        Success path ->
                             case model.tree_data of
                                 Success data ->
                                     let
@@ -539,7 +549,7 @@ update global message model =
                                 _ ->
                                     ( model, Cmd.none, Cmd.none )
 
-                        Nothing ->
+                        _ ->
                             ( model, Cmd.none, Cmd.none )
 
                 _ ->
@@ -638,17 +648,50 @@ update global message model =
 
         ChangeActivityTab tab ->
             let
-                cmd =
-                    if withMaybeData model.journal_data == Nothing then
-                        queryJournal apis model.node_focus.nameid GotJournal
+                ( tensions_data, journal_data, cmd ) =
+                    case tab of
+                        TensionTab ->
+                            if withMaybeData model.tensions_data == Nothing then
+                                let
+                                    nameids =
+                                        withMaybeMapData
+                                            (\path ->
+                                                path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                                            )
+                                            model.path_data
+                                            |> withDefault []
+                                in
+                                ( LoadingSlowly
+                                , model.journal_data
+                                , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                                )
 
-                    else
-                        Cmd.none
+                            else
+                                ( model.tensions_data
+                                , model.journal_data
+                                , Cmd.none
+                                )
+
+                        JournalTab ->
+                            if withMaybeData model.journal_data == Nothing then
+                                ( model.tensions_data
+                                , LoadingSlowly
+                                , queryJournal apis model.node_focus.nameid GotJournal
+                                )
+
+                            else
+                                ( model.tensions_data
+                                , model.journal_data
+                                , Cmd.none
+                                )
             in
-            ( { model | activity_tab = tab, journal_data = LoadingSlowly }, cmd, Cmd.none )
+            ( { model | recent_activity_tab = tab, tensions_data = tensions_data, journal_data = journal_data }
+            , cmd
+            , send (UpdateSessionRecentActivityTab (Just tab))
+            )
 
         GotJournal result ->
-            ( { model | journal_data = result }, Cmd.none, Cmd.none )
+            ( { model | journal_data = result, init_journal = False }, Cmd.none, Cmd.none )
 
         -- Node Action
         OpenActionPanel domid nameid pos ->
@@ -685,17 +728,23 @@ update global message model =
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
 
-                        f =
+                        focus =
                             path.focus
 
-                        p =
+                        pinned =
                             global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
+
+                        path_data =
+                            Success { path | focus = { focus | pinned = pinned } }
                     in
-                    ( { model | path_data = Just { path | focus = { f | pinned = p } }, depth = Just maxdepth }
+                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
-                        , if isPathNew || model.init_tensions then
+                        , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
                             queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+
+                          else if model.recent_activity_tab == JournalTab && (isPathNew || model.init_journal) then
+                            queryJournal apis model.node_focus.nameid GotJournal
 
                           else
                             Cmd.none
@@ -903,11 +952,8 @@ port sendToggleGraphReverse : () -> Cmd msg
 view : Global.Model -> Model -> Document Msg
 view global model =
     let
-        path_data =
-            Maybe.map (\x -> Success x) model.path_data |> withDefault Loading
-
         helperData =
-            { path_data = model.path_data
+            { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.orgaInfo
             }
@@ -928,12 +974,12 @@ view global model =
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ global model ]
             ]
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = model.tree_data, path_data = path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy3 NTF.view model.tree_data model.path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
@@ -948,22 +994,12 @@ view_ global model =
         tid =
             focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\b -> b.tension.id)) |> withDefault Nothing |> withDefault ""
 
-        leads =
-            model.path_data
-                |> Maybe.map (.focus >> .children)
-                |> withDefault []
-                |> List.map (\x -> getNode x.nameid model.tree_data)
-                |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)
-                |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
-                |> LE.uniqueBy .username
-                |> List.sortBy .username
-
         nodeData =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
             , node = getNode model.node_focus.nameid model.tree_data
             , node_data = withDefaultData initNodeData model.node_data
-            , leads = leads
+            , leads = model.leaders
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
@@ -980,7 +1016,7 @@ view_ global model =
                 "activities" ->
                     div []
                         [ model.path_data
-                            |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
+                            |> withMaybeMapData (.focus >> .pinned >> withDefaultData Nothing)
                             |> withDefault Nothing
                             |> Maybe.map
                                 (\x ->
@@ -1036,7 +1072,7 @@ viewSearchBar us model =
                 ]
              ]
                 ++ (case model.path_data of
-                        Just p ->
+                        Success p ->
                             let
                                 node =
                                     getNode p.focus.nameid model.tree_data |> withDefault initNode
@@ -1185,7 +1221,7 @@ viewCanvas us model =
         isAdmin =
             case us of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx (unwrap Nothing (\p -> Maybe.map .mode p.root) model.path_data) model.node_focus.rootnameid
+                    hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
 
                 LoggedOut ->
                     False
@@ -1250,10 +1286,10 @@ viewCanvas us model =
                         let
                             p =
                                 case model.path_data of
-                                    Just path ->
+                                    Success path ->
                                         FromPath path
 
-                                    Nothing ->
+                                    _ ->
                                         FromNameid model.node_focus.rootnameid
                         in
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
@@ -1285,7 +1321,7 @@ viewCanvas us model =
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            ((Maybe.map
+            ((withMaybeMapData
                 (\path ->
                     [ div
                         [ class "button tooltip has-tooltip-arrow has-tooltip-left"
@@ -1330,14 +1366,14 @@ viewCanvas us model =
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
                             , attribute "data-tooltip" T.goParent
                             , case model.path_data of
-                                Just g ->
+                                Success g ->
                                     LE.getAt 1 (List.reverse g.path)
                                         |> Maybe.map .nameid
                                         |> withDefault g.focus.nameid
                                         |> NodeClicked
                                         |> onClick
 
-                                Nothing ->
+                                _ ->
                                     onClick NoMsg
                             ]
                             [ A.icon "icon-chevron-up" ]
@@ -1400,10 +1436,10 @@ viewActivies model =
                     [ div
                         [ class "tooltip has-tooltip-arrow"
                         , case model.path_data of
-                            Just p ->
+                            Success p ->
                                 attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
 
-                            Nothing ->
+                            _ ->
                                 class ""
                         ]
                         [ span [ class "help" ] [ text T.recentActivities, text ":" ] ]
@@ -1411,12 +1447,12 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ classList [ ( "is-active", model.activity_tab == TensionTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= TensionTab ) ] ]
+                            [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= TensionTab ) ] ]
                                     [ A.icon1 "icon-exchange icon-sm" T.tensions ]
                                 ]
-                            , li [ classList [ ( "is-active", model.activity_tab == JournalTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= JournalTab ) ] ]
+                            , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= JournalTab ) ] ]
                                     [ A.icon1 "icon-history icon-sm" T.journal ]
                                 ]
                             ]
@@ -1424,13 +1460,13 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ class "content is-size-7", classList [ ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
-            [ case model.activity_tab of
+        , div [ class "content is-size-7", classList [ ( "spinner", isRecentTabLoading model ), ( "is-lazy", isRecentTabLazy model ) ] ]
+            [ case model.recent_activity_tab of
                 TensionTab ->
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> mediaTension { noMsg = NoMsg } model.conf model.node_focus x False True "is-size-6") tensions
+                                List.map (\x -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (toLink TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
@@ -1456,7 +1492,7 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> viewEventNotif model.conf x) events
+                            List.map (\x -> Lazy.lazy2 viewEventNotif model.conf x) events
                                 |> div [ id "journalTab" ]
 
                         Failure err ->
@@ -1506,3 +1542,35 @@ viewEventNotif conf e =
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
 nodeFragmentFromOrga node_m nodeData children_eo ndata =
     node2NodeFragment node_m (withMaybeData nodeData)
+
+
+getLeaders : GqlData LocalGraph -> GqlData NodesDict -> List User
+getLeaders path_data tree_data =
+    path_data
+        |> withMaybeMapData (.focus >> .children)
+        |> withDefault []
+        |> List.map (\x -> getNode x.nameid tree_data)
+        |> List.filter (\x -> unwrap Nothing .role_type x /= Just RoleType.Owner)
+        |> List.filterMap (Maybe.map .first_link >> withDefault Nothing)
+        |> LE.uniqueBy .username
+        |> List.sortBy .username
+
+
+isRecentTabLoading : Model -> Bool
+isRecentTabLoading model =
+    case model.recent_activity_tab of
+        TensionTab ->
+            model.tensions_data == LoadingSlowly
+
+        JournalTab ->
+            model.journal_data == LoadingSlowly
+
+
+isRecentTabLazy : Model -> Bool
+isRecentTabLazy model =
+    case model.recent_activity_tab of
+        TensionTab ->
+            model.init_tensions
+
+        JournalTab ->
+            model.init_journal

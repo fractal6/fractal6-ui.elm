@@ -291,7 +291,7 @@ view op (State model) =
             , classList [ ( "off", not model.isActive ) ]
             , onMouseLeave (OnOrgHover Nothing)
             ]
-            [ Lazy.lazy4 viewOrgaMenu model.hover model.focus model.orgs_result op
+            [ viewOrgaMenu model.hover model.focus model.orgs_result op
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
 

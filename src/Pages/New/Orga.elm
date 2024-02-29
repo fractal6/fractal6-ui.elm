@@ -47,6 +47,7 @@ import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Lazy as Lazy
 import Http
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, HttpError(..), RequestResult(..), RestData)
@@ -114,6 +115,7 @@ type alias Model =
     , hasBeenDuplicate : Bool
     , isWriting : Maybe Bool
     , exist_result : GqlData IdPayload
+    , empty : {}
 
     -- common
     , help : Help.State
@@ -173,6 +175,7 @@ initModel user conf form_m =
     , hasBeenDuplicate = False
     , isWriting = Nothing
     , exist_result = NotAsked
+    , empty = {}
     , help = Help.init user conf
     , refresh_trial = 0
     , authModal = AuthModal.init user Nothing
@@ -434,8 +437,8 @@ view global model =
     { title = "Create your organisation"
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

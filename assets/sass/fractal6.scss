@@ -442,6 +442,9 @@ a:hover .is-name, a:hover .is-username {
 .is-flex-grow {
 	flex-grow: 1 !important;
 }
+.is-fixed {
+    position: fixed !important;
+}
 
 .is-aligned-center {
     text-align: center !important;
@@ -1036,6 +1039,9 @@ figcaption {
     border-radius: 6px !important;
 }
 
+.is-absolute {
+    position: absolute !important;
+}
 
 // END FIX BULMA
 
@@ -2376,10 +2382,6 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     }
 }
 
-.fix-overflow {
-    // Fix dropdown cut-off
-    overflow: visible !important;
-}
 
 /*
  *
@@ -2412,13 +2414,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     right: 0;
     top:40px;
     overflow: hidden;
-
     z-index: 2;
-
-    //.content {
-    //    //max-height: 275px;
-    //    overflow: auto;
-    //}
 }
 
 // Tooltip: http://www.cssarrowplease.com/
@@ -2541,6 +2537,10 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 //
 
 .tension-modal-dropdown {
+    vertical-align: unset;
+
+    //{dropdown-trigger -> button-light
+
     .dropdown-content {
         //max-height: 90vh !important;
     }
@@ -4041,7 +4041,7 @@ input[type=search] {
     }
 }
 
-.is-dragged {
+.is-focusing, .message.is-focusing {
     border: 1px solid var(--link) !important;
 }
 

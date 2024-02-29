@@ -23,7 +23,9 @@ module Form.NewTension exposing (..)
 
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
+import Browser.Events as Events
 import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
+import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
@@ -34,6 +36,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutI
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
+import Dom
 import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
@@ -52,6 +55,7 @@ import Html.Attributes exposing (attribute, autofocus, class, classList, disable
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -60,7 +64,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
-import Session exposing (Apis, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
+import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
 
@@ -86,6 +90,8 @@ type alias Model =
     , path_data : GqlData LocalGraph
     , action_result : GqlData IdPayload
     , draft : Maybe ProjectDraft
+    , isTargetOpen : String
+    , isTypeOpen : String
 
     -- switching tab
     , activeTab : TensionTab
@@ -103,6 +109,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
+    , commonOp : CommonMsg Msg
 
     -- Components
     , labelsPanel : LabelSearchPanel.State
@@ -174,12 +181,14 @@ initModel user conf =
     , activeTab = NewTensionTab
     , activeButton = Nothing
     , nodeDoc = NodeDoc.init "" Nothing NodeEdit user
-    , path_data = NotAsked
+    , path_data = NotAsked -- may be different than the current path_data (op.path_data)
     , action_result = NotAsked
     , doInvite = False
     , withUsers = Nothing
     , simplifiedView = False
     , draft = Nothing
+    , isTargetOpen = ""
+    , isTypeOpen = ""
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
@@ -190,6 +199,7 @@ initModel user conf =
     , conf = conf
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , commonOp = CommonMsg NoMsg LogErr
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
@@ -518,7 +528,8 @@ type Msg
     | OnGotRoles (GqlData (List RoleExtFull))
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
-    | OnTargetClick
+    | OnTargetClick String
+    | OnTypeClick String
     | DoInvite
     | OnInvite Time.Posix
     | PushAck (GqlData IdPayload)
@@ -678,10 +689,18 @@ update_ apis message model =
 
                                 Nothing ->
                                     model
+
+                        cmd =
+                            case Dict.get "message" newModel.nodeDoc.form.post of
+                                Just m ->
+                                    send (Comments.OnChangeComment "message" m) |> Cmd.map CommentsMsg
+
+                                Nothing ->
+                                    Cmd.none
                     in
                     case t of
                         FromNameid nameid ->
-                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True) ] )
+                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True), cmd ] )
 
                         FromPath p ->
                             let
@@ -807,8 +826,11 @@ update_ apis message model =
         OnTensionStep step ->
             ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
-        OnTargetClick ->
-            ( model, out0 [ Ports.requireTreeData ] )
+        OnTargetClick id_ ->
+            ( { model | isTargetOpen = ternary (model.isTargetOpen == "") id_ "" }, out0 [ Ports.requireTreeData ] )
+
+        OnTypeClick id_ ->
+            ( { model | isTypeOpen = ternary (model.isTypeOpen == "") id_ "" }, noOut )
 
         DoInvite ->
             ( { model | doInvite = True }, noOut )
@@ -1105,19 +1127,20 @@ update_ apis message model =
                 ( data, out ) =
                     Comments.update apis msg model.comments
 
-                cmd =
+                nodeDoc =
                     case out.result of
                         Just (PostChanged ( k, v )) ->
-                            send (OnChangePost k v)
+                            --send (OnChangePost k v)
+                            NodeDoc.updatePost k v model.nodeDoc
 
                         _ ->
-                            Cmd.none
+                            model.nodeDoc
 
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | comments = data }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append (cmd :: cmds)) out.gcmds
+            ( { model | comments = data, nodeDoc = nodeDoc }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds) out.gcmds
             )
 
         -- Confirm Modal
@@ -1159,6 +1182,22 @@ subscriptions (State model) =
             else
                 []
            )
+        ++ (if model.isTargetOpen /= "" then
+                [ Events.onMouseUp (JD.succeed (OnTargetClick ""))
+                , Events.onKeyUp (Dom.key "Escape" (OnTargetClick ""))
+                ]
+
+            else
+                []
+           )
+        ++ (if model.isTypeOpen /= "" then
+                [ Events.onMouseUp (JD.succeed (OnTypeClick ""))
+                , Events.onKeyUp (Dom.key "Escape" (OnTypeClick ""))
+                ]
+
+            else
+                []
+           )
 
 
 
@@ -1167,34 +1206,28 @@ subscriptions (State model) =
 -- ------------------------------
 
 
-type alias Op =
-    { path_data : GqlData LocalGraph
-    , tree_data : GqlData NodesDict
-    }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
+view : GqlData NodesDict -> GqlData LocalGraph -> State -> Html Msg
+view tree_data path_data (State model) =
     if model.isActive2 then
         div []
-            [ viewModal op (State model)
+            [ viewModal tree_data (State model)
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
 
     else
-        viewButton op model
+        viewButton path_data model
 
 
-viewButton : Op -> Model -> Html Msg
-viewButton op model =
-    div [ class "tensionButton is-hidden-tablet", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
-        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> unwrap [] (\p -> [ onClick (OnOpen (FromPath p) Nothing) ])))
+viewButton : GqlData LocalGraph -> Model -> Html Msg
+viewButton path_data model =
+    div [ class "tensionButton is-hidden-tablet", classList [ ( "is-invisible", not (isSuccess path_data) || model.isActive ) ] ]
+        [ button ([ class "button is-success" ] ++ (withMaybeData path_data |> unwrap [] (\p -> [ onClick (OnOpen (FromPath p) Nothing) ])))
             [ A.icon "icon-plus icon-2x" ]
         ]
 
 
-viewModal : Op -> State -> Html Msg
-viewModal op (State model) =
+viewModal : GqlData NodesDict -> State -> Html Msg
+viewModal tree_data (State model) =
     div
         [ id "tensionModal"
         , class "modal is-light modal-fx-slideTop"
@@ -1208,14 +1241,14 @@ viewModal op (State model) =
             ]
             []
         , div [ class "modal-content" ]
-            [ viewStep op (State model) ]
+            [ viewStep tree_data (State model) ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewStep : Op -> State -> Html Msg
-viewStep op (State model) =
+viewStep : GqlData NodesDict -> State -> Html Msg
+viewStep tree_data (State model) =
     case model.step of
         TensionSource ->
             text "not implemented; remove in commit 7169bad"
@@ -1223,13 +1256,13 @@ viewStep op (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    viewTension op model
+                    viewTension tree_data model
 
                 NewRoleTab ->
-                    viewCircle op model
+                    viewCircle tree_data model
 
                 NewCircleTab ->
-                    viewCircle op model
+                    viewCircle tree_data model
 
         TensionNotAuthorized ->
             let
@@ -1307,8 +1340,8 @@ viewSuccess res model =
         ]
 
 
-viewHeader : Op -> Model -> Html Msg
-viewHeader op model =
+viewHeader : GqlData NodesDict -> Model -> Html Msg
+viewHeader tree_data model =
     div [ class "panel-heading pt-2 pb-2", style "border-radius" "0" ]
         [ div [ class "level modal-card-title is-size-6" ]
             [ -- div [ class "level-left is-hidden" ]
@@ -1316,7 +1349,7 @@ viewHeader op model =
               div [ class "level-left" ]
                 [ viewTensionType model ]
             , div [ class "level-right" ]
-                [ viewRecipients op model ]
+                [ viewRecipients tree_data model ]
             ]
         ]
 
@@ -1362,65 +1395,70 @@ viewTensionType model =
 
         tension_type =
             withDefault TensionType.Operational form.type_
+
+        isOpen =
+            model.isTypeOpen /= ""
     in
     div []
         [ span [ class "has-text-grey-light" ] [ text ("Type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
-            span [ class "dropdown tension-modal-dropdown", style "vertical-align" "unset" ]
-                [ span [ class "dropdown-trigger button-light" ]
-                    [ span [ attribute "aria-controls" "type-menu" ]
-                        [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                            [ tensionIcon2 tension_type ]
-                        , span [ class "ml-2 arrow down" ] []
+            B.dropdownLight
+                { dropdown_id = "type-menu"
+                , isOpen = isOpen
+                , dropdown_cls = "tension-modal-dropdown"
+                , button_cls = ""
+                , button_html =
+                    span [ class "button-light" ]
+                        [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ] [ tensionIcon2 tension_type ]
+                        , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                         ]
-                    ]
-                , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
-                    [ div [ class "dropdown-content has-border-light", style "max-height" "420px" ]
-                        [ div [ class "dropdown-item" ]
-                            [ [ TensionType.Operational, TensionType.Governance, TensionType.Help ]
-                                |> List.map
-                                    (\x ->
-                                        let
-                                            isActive =
-                                                x == tension_type
-                                        in
-                                        div
-                                            [ class "card has-border column is-paddingless m-3 is-h"
-                                            , classList [ ( "is-selected", isActive ) ]
-                                            , onClick (OnChangeTensionType x)
+                , menu_cls = ""
+                , content_cls = "has-border-light"
+                , msg = OnTypeClick (ternary isOpen "" "something")
+                , content_html =
+                    div [ class "dropdown-item" ]
+                        [ [ TensionType.Operational, TensionType.Governance, TensionType.Help ]
+                            |> List.map
+                                (\x ->
+                                    let
+                                        isActive =
+                                            x == tension_type
+                                    in
+                                    div
+                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        , classList [ ( "is-selected", isActive ) ]
+                                        , onClick (OnChangeTensionType x)
+                                        ]
+                                        [ div [ class "card-content p-3" ]
+                                            [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
+                                            , div [ class "content is-small" ]
+                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
                                             ]
-                                            [ div [ class "card-content p-3" ]
-                                                [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                                , div [ class "content is-small" ]
-                                                    [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
-                                                ]
+                                        ]
+                                )
+                            |> div [ class "columns" ]
+                        , [ TensionType.Alert, TensionType.Announcement ]
+                            |> List.map
+                                (\x ->
+                                    let
+                                        isActive =
+                                            x == tension_type
+                                    in
+                                    div
+                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        , classList [ ( "is-selected", isActive ) ]
+                                        , onClick (OnChangeTensionType x)
+                                        ]
+                                        [ div [ class "card-content p-3" ]
+                                            [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
+                                            , div [ class "content is-small" ]
+                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
                                             ]
-                                    )
-                                |> div [ class "columns" ]
-                            , [ TensionType.Alert, TensionType.Announcement ]
-                                |> List.map
-                                    (\x ->
-                                        let
-                                            isActive =
-                                                x == tension_type
-                                        in
-                                        div
-                                            [ class "card has-border column is-paddingless m-3 is-h"
-                                            , classList [ ( "is-selected", isActive ) ]
-                                            , onClick (OnChangeTensionType x)
-                                            ]
-                                            [ div [ class "card-content p-3" ]
-                                                [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                                , div [ class "content is-small" ]
-                                                    [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
-                                                ]
-                                            ]
-                                    )
-                                |> div [ class "columns mt-mobile" ]
-                            ]
+                                        ]
+                                )
+                            |> div [ class "columns mt-mobile" ]
                         ]
-                    ]
-                ]
+                }
 
           else
             span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
@@ -1428,50 +1466,33 @@ viewTensionType model =
         ]
 
 
-viewRecipients : Op -> Model -> Html Msg
-viewRecipients op model =
+viewRecipients : GqlData NodesDict -> Model -> Html Msg
+viewRecipients tree_data model =
     let
         form =
             model.nodeDoc.form
+
+        isOpen =
+            model.isTargetOpen /= ""
     in
-    div []
+    div [ attribute "style" "max-width: 285px;" ]
         [ -- @DEBUG: emitter is ignored now...
-          --span [ class "has-text-grey-light" ] [ textH (T.from ++ space_) ]
-          --, span [ class "dropdown" ]
-          --    [ span [ class "dropdown-trigger " ]
-          --        [ span [ attribute "aria-controls" "source-menu" ]
-          --            [ span
-          --                [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
-          --                [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-          --            ]
-          --        ]
-          --    , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
-          --        [ div [ class "dropdown-content" ] <|
-          --            List.map
-          --                (\t ->
-          --                    div
-          --                        [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
-          --                        , onClick (OnChangeTensionSource t)
-          --                        ]
-          --                        [ A.icon1 "icon-user" t.name ]
-          --                )
-          --                (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
-          --        ]
-          --    ]
           span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
-        , span [ class "dropdown " ]
-            [ span [ class "dropdown-trigger", onClick OnTargetClick, attribute "style" "max-width: 280px;" ]
-                [ span [ class "is-wrapped-33", attribute "aria-controls" "target-menu" ]
-                    [ span [ class "button is-small is-rounded has-border is-wrapped", style "display" "inline-block" ]
-                        [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+        , B.dropdownLight
+            { dropdown_id = "target-menu"
+            , isOpen = isOpen
+            , dropdown_cls = ""
+            , button_cls = ""
+            , button_html =
+                span [ class "is-wrapped-33" ]
+                    [ span [ class "button is-small is-rounded has-border is-wrapped is-inline-block" ]
+                        [ text form.target.name, i [ class "ml-2 icon-chevron-down1 icon-tiny" ] [] ]
                     ]
-                ]
-            , div [ id "target-menu", class "dropdown-menu is-right is-left-mobile", attribute "role" "menu" ]
-                --, div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
-                [ div [ class "dropdown-content has-border", style "max-height" "420px" ]
-                    [ viewSelectorTree (OnChangeTensionTarget op.tree_data) [ model.nodeDoc.form.target.nameid ] op.tree_data ]
-                ]
-            ]
+            , menu_cls = "is-right is-left-mobile"
+            , content_cls = "has-border p-0"
+            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
+            , msg = OnTargetClick (ternary isOpen "" "something")
+            }
         ]
 
 
@@ -1481,8 +1502,8 @@ viewRecipients op model =
 ---
 
 
-viewTension : Op -> Model -> Html Msg
-viewTension op model =
+viewTension : GqlData NodesDict -> Model -> Html Msg
+viewTension tree_data model =
     let
         form =
             model.nodeDoc.form
@@ -1510,7 +1531,7 @@ viewTension op model =
 
                   else
                     Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
-                , viewHeader op model
+                , Lazy.lazy2 viewHeader tree_data model
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1573,8 +1594,8 @@ viewTension op model =
                 ]
 
 
-viewCircle : Op -> Model -> Html Msg
-viewCircle op model =
+viewCircle : GqlData NodesDict -> Model -> Html Msg
+viewCircle tree_data model =
     let
         form =
             model.nodeDoc.form
@@ -1599,7 +1620,7 @@ viewCircle op model =
 
                   else
                     Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
-                , viewHeader op model
+                , Lazy.lazy2 viewHeader tree_data model
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->
@@ -1747,7 +1768,7 @@ viewRolesExt model =
                             , attribute "style" "min-width: 150px;"
                             ]
                             [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
-                                [ h2 [ class "mb-3" ] [ viewRoleExt { noMsg = NoMsg } "" Nothing role ]
+                                [ h2 [ class "mb-3" ] [ viewRoleExt model.commonOp "" Nothing role ]
                                 , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
                                 ]
                             ]
@@ -1758,10 +1779,10 @@ viewRolesExt model =
                                 ++ [ br [ class "clearfix" ] []
                                    , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-4" ] [], text T.youCanMake ]
+                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [] [], text T.youCanMake ]
 
                                           else
-                                            span [ class "content is-small" ] [ text T.needNewRole ]
+                                            span [ class "content is-small" ] [ text T.needNewRole, br [] [], text T.makeA ]
                                         , span
                                             [ class "button is-small has-text-link mx-2"
                                             , title T.adhocRoleHint

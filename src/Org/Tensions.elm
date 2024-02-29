@@ -28,7 +28,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, toLink)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -38,7 +38,6 @@ import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
-import Components.SearchBar as SearchBar
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
@@ -57,6 +56,7 @@ import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Lazy as Lazy
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..))
 import Task
 import Text as T
 import Time
@@ -208,6 +208,7 @@ type alias Model =
     , conf : Conf
     , refresh_trial : Int
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -660,6 +661,7 @@ init global flags =
             , conf = conf
             , refresh_trial = 0
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
@@ -919,7 +921,7 @@ update global message model =
 
         GotTensionsInt inc result ->
             let
-                newTensions =
+                newTensions_ =
                     case model.tensions_int of
                         Success tsOld ->
                             case result of
@@ -931,12 +933,17 @@ update global message model =
 
                         _ ->
                             result
+
+                newTensions =
+                    withMapData
+                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        newTensions_
             in
             ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
 
         GotTensionsExt result ->
             let
-                newTensions =
+                newTensions_ =
                     case model.tensions_ext of
                         Success tsOld ->
                             case result of
@@ -948,6 +955,11 @@ update global message model =
 
                         _ ->
                             result
+
+                newTensions =
+                    withMapData
+                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        newTensions_
             in
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
 
@@ -1042,9 +1054,10 @@ update global message model =
                     [ fetchTensionsInt apis query (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
+                    -- @DEBUG: tension_ext obsolete. SortBy broken for ListTension direction view...
                     --, fetchTensionExt apis query GotTensionsExt
                     --
-                    , fetchTensionsCount apis query GotTensionsCount
+                    , fetchTensionsCount apis { query | status = Nothing } GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
@@ -1605,12 +1618,12 @@ view global model =
                     text ""
                 ]
             ]
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy3 NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
@@ -2006,21 +2019,24 @@ viewCircleTensions model =
                 header : String -> String -> Maybe Tension -> Html Msg
                 header n _ t_m =
                     let
-                        title_name =
-                            Maybe.map (.receiver >> .name) t_m
-                    in
-                    span []
-                        [ title_name
-                            |> Maybe.map
-                                (\x ->
-                                    if n == model.node_focus.nameid then
-                                        text x
+                        title =
+                            Maybe.map
+                                (\t ->
+                                    if isRole t.receiver.nameid then
+                                        A.icon1 "icon-leaf" t.receiver.name
 
                                     else
-                                        a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ]
-                                            [ text x ]
+                                        text t.receiver.name
                                 )
-                            |> withDefault (text "Loading...")
+                                t_m
+                                |> withDefault (text "Loading...")
+                    in
+                    span []
+                        [ if n == model.node_focus.nameid then
+                            title
+
+                          else
+                            a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ] [ title ]
                         , span
                             [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
 
@@ -2051,7 +2067,6 @@ viewCircleTensions model =
                     , onMoveLeaveCol = OnMoveLeaveCol
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , noMsg = NoMsg
 
                     -- Board Project Msg
                     , onAddCol = NoMsg
@@ -2066,7 +2081,7 @@ viewCircleTensions model =
                     ]
 
             else
-                viewBoard op header (LE.zip keys keys) data
+                viewBoard op model.commonOp header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err
@@ -2124,7 +2139,6 @@ viewAssigneeTensions model =
                     , onMoveLeaveCol = OnMoveLeaveCol
                     , onMoveEnterT = OnMoveEnterT
                     , onMoveDrop = OnMoveDrop
-                    , noMsg = NoMsg
                     , onAddCol = NoMsg
                     }
             in
@@ -2137,7 +2151,7 @@ viewAssigneeTensions model =
                     ]
 
             else
-                viewBoard op header (LE.zip keys keys) data
+                viewBoard op model.commonOp header (LE.zip keys keys) data
 
         Failure err ->
             viewGqlErrors err
@@ -2156,20 +2170,7 @@ viewTensions tensionDir model =
         tensionsData =
             case tensionDir of
                 ListTension ->
-                    let
-                        t1 =
-                            model.tensions_int |> withDefaultData []
-
-                        t2 =
-                            model.tensions_ext |> withDefaultData []
-                    in
-                    case t1 ++ t2 of
-                        [] ->
-                            model.tensions_int
-
-                        other ->
-                            --other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l) ) |> Success
-                            other |> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l)) |> Success
+                    model.tensions_int
 
                 InternalTension ->
                     model.tensions_int
@@ -2186,7 +2187,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension { noMsg = NoMsg } model.conf model.node_focus t True True "is-size-6 t-o")
+                        |> List.map (\t -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

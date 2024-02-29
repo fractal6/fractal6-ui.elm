@@ -40,7 +40,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
-import Codecs exposing (WindowPos)
+import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
 import Extra exposing (ternary, unwrap2)
@@ -151,6 +151,7 @@ type Msg
     | UpdateSessionProject (Maybe ProjectData)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
+    | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
     | UpdateSessionMenuOrga (Maybe Bool)
     | UpdateSessionMenuTree (Maybe Bool)
     | UpdateSessionScreen Screen
@@ -561,7 +562,14 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | window_pos = data } }, Cmd.none )
+            ( { model | session = { session | window_pos = data } }, Ports.saveWindowpos data )
+
+        UpdateSessionRecentActivityTab data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | recent_activity_tab = data } }, Ports.saveRecentActivityTab data )
 
         UpdateSessionMenuOrga data ->
             let

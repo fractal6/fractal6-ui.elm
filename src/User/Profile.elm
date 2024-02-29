@@ -42,7 +42,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserProfile)
-import Session exposing (GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -104,6 +104,7 @@ type alias Model =
     , refresh_trial : Int
     , authModal : AuthModal.State
     , empty : {}
+    , commonOp : CommonMsg Msg
     }
 
 
@@ -133,6 +134,7 @@ init global flags =
             , help = Help.init global.session.user conf
             , authModal = AuthModal.init global.session.user Nothing
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             }
 
         cmds =
@@ -356,7 +358,7 @@ viewProfileRight user_s user model =
           else
             case model.orgas of
                 Success orgas ->
-                    viewUserOrgas user orgas
+                    viewUserOrgas model.commonOp user orgas
 
                 Failure err ->
                     viewGqlErrors err
@@ -397,8 +399,8 @@ viewProfileRight user_s user model =
         ]
 
 
-viewUserOrgas : UserCommon a -> List NodeExt -> Html Msg
-viewUserOrgas user orgas =
+viewUserOrgas : CommonMsg Msg -> UserCommon a -> List NodeExt -> Html Msg
+viewUserOrgas commonOp user orgas =
     orgas
-        |> List.map (\root -> mediaOrga { noMsg = NoMsg } (Just user) root)
+        |> List.map (\root -> mediaOrga commonOp (Just user) root)
         |> div [ class "nodesList" ]

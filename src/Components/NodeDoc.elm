@@ -536,6 +536,52 @@ viewToolbar mode data =
         ]
 
 
+viewToolbarDropdown : NodeView -> OrgaNodeData -> Html msg
+viewToolbarDropdown mode data =
+    let
+        tid =
+            withDefaultData "" data.tid_r
+
+        iconOpts =
+            ternary data.hasInnerToolbar "icon-xs" ""
+    in
+    div [ class "dropdown is-right has-text-weight-normal" ]
+        [ div [ class "dropdown-trigger is-w is-h" ]
+            [ div
+                [ class "ellipsis"
+                , attribute "aria-controls" "edit-ellipsis-card"
+                , attribute "aria-haspopup" "true"
+                ]
+                [ A.icon "icon-more-vertical icon-lg" ]
+            ]
+        , div [ id "edit-ellipsis-card", class "dropdown-menu", attribute "role" "menu" ]
+            [ div [ class "dropdown-content p-0" ] <|
+                [ div [ class "dropdown-item" ]
+                    [ a
+                        [ class "stealth-link"
+
+                        --, classList [ ( "is-active", mode == NodeEdit ) ]
+                        , href
+                            (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
+                        ]
+                        [ A.icon1 ("icon-edit-2 " ++ iconOpts) T.edit ]
+                    ]
+                , hr [ class "dropdown-divider" ] []
+                , div [ class "dropdown-item" ]
+                    [ a
+                        [ class "stealth-link"
+
+                        --, classList [ ( "is-active", mode == NodeVersions ) ]
+                        , href
+                            ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
+                        ]
+                        [ A.icon1 ("icon-history " ++ iconOpts) T.revisions ]
+                    ]
+                ]
+            ]
+        ]
+
+
 viewNodeStatus : Op msg -> Html msg
 viewNodeStatus op =
     case op.blob.pushedFlag of
@@ -629,19 +675,7 @@ viewBlob data op_m =
                             [ -- Node Hints
                               div [ class "columns mb-0" ]
                                 [ div [ class "column is-6 pb-0", class "is-hint" ]
-                                    [ viewNodeDescr False node (tensionCharacFromNode node)
-                                    , case unwrap 0 .n_open_contracts data.node of
-                                        0 ->
-                                            text ""
-
-                                        i ->
-                                            let
-                                                tid =
-                                                    withDefaultData "" data.tid_r
-                                            in
-                                            a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
-                                                [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
-                                    ]
+                                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
                                 ]
                             , -- Circle lead
                               if List.length data.leads > 0 then
@@ -671,6 +705,19 @@ viewBlob data op_m =
                                     )
                                     node.first_link
                                     |> withDefault (text "")
+
+                            -- Open Contracts
+                            , case unwrap 0 .n_open_contracts data.node of
+                                0 ->
+                                    text ""
+
+                                i ->
+                                    let
+                                        tid =
+                                            withDefaultData "" data.tid_r
+                                    in
+                                    a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
+                                        [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
                             ]
 
                     Nothing ->
@@ -716,7 +763,8 @@ viewAboutSection data op_m =
                   span [ class "is-name" ] [ unwrap "" .name data.node |> text ]
                 ]
             , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member (unwrap Nothing .role_type data.node) (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
-                div [ class "level-right is-marginless is-small is-hidden-mobile" ] [ viewToolbar NoView data ]
+                div [ class "level-right is-marginless is-small is-hidden-mobile" ]
+                    [ viewToolbarDropdown NoView data ]
 
               else
                 Maybe.map

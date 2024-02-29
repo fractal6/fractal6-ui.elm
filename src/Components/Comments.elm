@@ -36,12 +36,14 @@ module Components.Comments exposing
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
 import Components.UserInput as UserInput
 import Dict
+import Dom
 import Extra exposing (decap, ternary, textD)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickSafe)
@@ -60,6 +62,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown)
@@ -104,6 +107,7 @@ type alias Model =
     , comments : List Comment
     , history : List Event
     , expandedEvents : List Int
+    , highlightedCommentId : String
 
     -- Push comment (Tension)
     , tension_form : TensionForm
@@ -129,6 +133,7 @@ initModel nameid tensionid user =
     , comments = []
     , history = []
     , expandedEvents = []
+    , highlightedCommentId = ""
     , tension_form = initTensionForm tensionid Nothing user
     , tension_patch = NotAsked
     , contract_form = initCommentPatchForm user []
@@ -164,8 +169,9 @@ type Msg
     | SetTensionid String
     | SetContractid String
     | SetComments (List Comment)
-    | SetHistory (List Event)
+    | SetHistory (List Event) (Maybe String)
     | PushEvents (List Event)
+    | OnHighlight String
       -- Change Post
     | OnChangeComment String String
     | OnChangeContractComment String String
@@ -272,12 +278,15 @@ update_ apis message model =
         SetComments comments ->
             ( { model | comments = comments }, out0 [ Ports.bulma_driver "" ] )
 
-        SetHistory history ->
-            ( { model | history = history }, noOut )
+        SetHistory history eltid ->
+            ( { model | history = history, highlightedCommentId = withDefault "" eltid }, noOut )
 
         PushEvents events ->
             -- @todo: update tension_head history here (need to create a Session.Cmd to handle this.
             ( { model | history = model.history ++ events }, noOut )
+
+        OnHighlight id ->
+            ( { model | highlightedCommentId = id }, noOut )
 
         OnChangeComment field value ->
             let
@@ -609,7 +618,16 @@ update_ apis message model =
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+    []
+        ++ (if model.highlightedCommentId /= "" then
+                [ Events.onMouseUp (JD.succeed (OnHighlight ""))
+                , Events.onKeyUp (Dom.key "Escape" (OnHighlight ""))
+                ]
+
+            else
+                []
+           )
+        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
 
 
 
@@ -623,14 +641,14 @@ viewCommentsContract conf (State model) =
     model.comments
         |> List.map
             (\c ->
-                Lazy.lazy5 viewComment conf c model.comment_form model.comment_result model.userInput
+                Lazy.lazy6 viewComment conf c model.comment_form model.comment_result model.highlightedCommentId model.userInput
             )
         |> div []
 
 
 viewCommentsTension : Conf -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension conf action (State model) =
-    Lazy.lazy8 viewComments_ conf action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.userInput
+    viewComments_ conf action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
 
 
 viewComments_ :
@@ -641,9 +659,10 @@ viewComments_ :
     -> CommentPatchForm
     -> GqlData Comment
     -> List Int
+    -> String
     -> UserInput.State
     -> Html Msg
-viewComments_ conf action history comments comment_form comment_result expandedEvents userInput =
+viewComments_ conf action history comments comment_form comment_result expandedEvents highlightedCommentId userInput =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -657,7 +676,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            viewEvent conf (Dict.get "focusid" comment_form.post) action event
+                            Lazy.lazy4 viewEvent conf (Dict.get "focusid" comment_form.post) action event
 
                         Nothing ->
                             text ""
@@ -665,7 +684,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment conf c comment_form comment_result userInput
+                            Lazy.lazy6 viewComment conf c comment_form comment_result highlightedCommentId userInput
 
                         Nothing ->
                             text ""
@@ -735,19 +754,22 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                         [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
 
                 else
-                    Lazy.lazy viewCommentOrEvent x
+                    viewCommentOrEvent x
             )
         |> div []
 
 
-viewComment : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
-viewComment conf c form result userInput =
+viewComment : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
+viewComment conf c form result highlightedCommentId userInput =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
 
         reflink =
             toReflink conf.url ++ "?goto=" ++ c.createdAt
+
+        isFocused =
+            c.createdAt == highlightedCommentId
     in
     div [ id c.createdAt, class "media section is-paddingless" ]
         [ div
@@ -763,7 +785,7 @@ viewComment conf c form result userInput =
                 viewUpdateInput conf c form result userInput
 
               else
-                div [ class "message" ]
+                div [ class "message", classList [ ( "is-focusing", isFocused ) ] ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span
                             [ --class "is-hidden-tablet"
@@ -804,10 +826,10 @@ viewComment conf c form result userInput =
                                     ]
                                 , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ] <|
-                                        [ div [ class "dropdown-item button-light", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
+                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item button-light", onClick (OnUpdateComment c) ] [ text T.edit ]
+                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ text T.edit ]
                                                     ]
 
                                                 else

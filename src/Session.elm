@@ -24,7 +24,7 @@ module Session exposing (..)
 import Array exposing (Array)
 import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
-import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
+import Codecs exposing (RecentActivityTab(..), WindowPos, userCtxDecoder, windowDecoder)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
@@ -43,6 +43,26 @@ import Url exposing (Url)
 --
 
 
+{-|
+
+    A general config usally set in main page's model.
+    It is extracted from the global model and session
+
+-}
+type alias Conf =
+    { screen : Screen
+    , theme : Theme
+    , lang : Lang.Lang
+    , now : Time.Posix
+    , url : Url.Url
+    }
+
+
+{-|
+
+        API endpoints
+
+-}
 type alias Apis =
     { auth : String
     , gql : String
@@ -71,19 +91,18 @@ toReflink url =
     Url.toString url |> String.split "?" |> List.head |> withDefault ""
 
 
-type alias Conf =
-    { screen : Screen
-    , theme : Theme
-    , lang : Lang.Lang
-    , now : Time.Posix
-    , url : Url.Url
-    }
+{-|
 
+    Persistent session data.
+    They are stored and restored from the localstorage cache.
+    (-> see public/index.js)
 
+-}
 type alias SessionFlags =
     { uctx : Maybe JD.Value
     , lang : Maybe JD.Value
     , window_pos : Maybe JD.Value
+    , recent_activity_tab : Maybe JD.Value
     , orga_menu : Maybe Bool
     , tree_menu : Maybe Bool
     , apis : Apis
@@ -92,6 +111,11 @@ type alias SessionFlags =
     }
 
 
+{-|
+
+    Shared session data stored in global model
+
+-}
 type alias Session =
     { -- Conf
       theme : Theme
@@ -121,12 +145,23 @@ type alias Session =
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
+    , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
     , tree_menu : Maybe Bool
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
+    }
+
+
+{-| Use to pass model to components in order to avoid losing time to deep caopy data
+@debug: not use yet, see answer in : <https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
+-}
+type alias BigData x =
+    { x
+        | path_data : Maybe LocalGraph
+        , tree_data : GqlData NodesDict
     }
 
 
@@ -164,6 +199,12 @@ type
     | DoModalAsk String String -- Safe close modal
 
 
+type alias CommonMsg msg =
+    { noMsg : msg
+    , logErr : String -> msg
+    }
+
+
 type alias NodesQuickSearch =
     { pattern : String
     , lookup : Array Node
@@ -197,6 +238,7 @@ resetSession session flags =
     , isAdmin = Nothing
     , node_quickSearch = Nothing
     , window_pos = Nothing
+    , recent_activity_tab = Nothing
     , orga_menu = Nothing
     , tree_menu = session.tree_menu
     , apis = flags.apis
@@ -237,7 +279,26 @@ fromLocalSession flags =
                 Nothing ->
                     ( Nothing, Cmd.none )
 
-        ( lang, cmd3 ) =
+        ( recent_activity_tab, cmd3 ) =
+            case flags.recent_activity_tab of
+                Just raw ->
+                    case JD.decodeValue JD.string raw of
+                        Ok "TensionTab" ->
+                            ( Just TensionTab, Cmd.none )
+
+                        Ok "JournalTab" ->
+                            ( Just JournalTab, Cmd.none )
+
+                        Ok _ ->
+                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+
+                        Err err ->
+                            ( Nothing, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( Nothing, Cmd.none )
+
+        ( lang, cmd4 ) =
             case flags.lang of
                 Just raw ->
                     case JD.decodeValue Lang.decoder raw of
@@ -250,7 +311,7 @@ fromLocalSession flags =
                 Nothing ->
                     ( Nothing, Cmd.none )
 
-        ( theme, cmd4 ) =
+        ( theme, cmd5 ) =
             case flags.theme of
                 Just raw ->
                     case JD.decodeValue JD.string raw of
@@ -292,6 +353,7 @@ fromLocalSession flags =
       , isAdmin = Nothing
       , node_quickSearch = Nothing
       , window_pos = window_pos
+      , recent_activity_tab = recent_activity_tab
       , orga_menu = flags.orga_menu
       , tree_menu = flags.tree_menu
       , apis = flags.apis
@@ -301,7 +363,7 @@ fromLocalSession flags =
       , newOrgaData = Nothing
       , orgaInfo = Nothing
       }
-    , [ cmd1, cmd2, cmd3, cmd4 ]
+    , [ cmd1, cmd2, cmd3, cmd4, cmd5 ]
     )
 
 

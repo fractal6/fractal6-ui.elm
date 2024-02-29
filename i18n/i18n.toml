@@ -267,11 +267,11 @@ fr="Enregister votre mot de passe"
   fr="Vous avez des contrats en attente"
 
 [showOrgaMenu]
-  en="Show/hide your organizations"
-  fr="Afficher/masquer vos organisations"
+  en="Show your organizations"
+  fr="Afficher vos organisations"
 [showCircleMenu]
-  en="Show/hide the circles tree"
-  fr="Afficher/masquer l'arbre des cercles"
+  en="Show the circles tree"
+  fr="Afficher l'arbre des cercles"
 
 
 [gotIt]
@@ -1722,9 +1722,13 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="or add an"
   fr="ou ajouter un"
 
+[makeA]
+  en="Make a"
+  fr="Créer un"
+
 [needNewRole]
-  en="Need a new role? Make a"
-  fr="Besoin d'un nouveau rôle ? Créer un"
+  en="Need a new role?"
+  fr="Besoin d'un nouveau rôle ?"
 
 [templateRole]
   en="Role template"

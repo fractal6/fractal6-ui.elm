@@ -877,7 +877,7 @@ function triggerTheme(e, el, app) {
 }
 
 function triggerLang(e, el, app) {
-    // Toggle theme color
+    // Toggle system language
     var lang = el.dataset.lang;
     if (!lang) return
     updateLang(app, lang);

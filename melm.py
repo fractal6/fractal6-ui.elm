@@ -179,10 +179,10 @@ ${module_basename}Msg msg ->
                 reg =  r"\s+body\s*=\s*\[.*?\]",
                 pos = 0,
             ),
-            dict(
+            dict( # model.empty should be defined in the base model in order to be Lazy.lazy compatible
                 reg =  r"\]",
                 pos = -1,
-                t = ", ${module_basename}.view {} model.${module_basename_lower1} |> Html.map ${module_basename}Msg",
+                t = ", ${module_basename}.view model.empty model.${module_basename_lower1} |> Html.map ${module_basename}Msg",
                 before= True,
             )
         ]

@@ -513,45 +513,43 @@ port closeLinkTensionPanelFromJs : (() -> msg) -> Sub msg
 -- ------------------------------
 
 
-type alias Op =
-    { tree_data : GqlData NodesDict
-    , path_data : GqlData LocalGraph
-    }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
+view : GqlData NodesDict -> GqlData LocalGraph -> State -> Html Msg
+view tree_data path_data (State model) =
     div
         [ id "linkTensionPanel"
         , class "side-menu is-medium"
         , classList [ ( "off", not model.isOpen ) ]
         ]
-        [ viewPanel op model
+        [ viewPanel tree_data model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
-viewPanel : Op -> Model -> Html Msg
-viewPanel op model =
+viewPanel : GqlData NodesDict -> Model -> Html Msg
+viewPanel tree_data model =
     let
         typeFilter_hthml =
-            B.dropdown "type-filter-side"
-                ("is-right " ++ ternary model.isOpenTypeFilter "is-active" "")
-                "is-small"
-                (ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_))
-                OnToggleTypeFilter
-                "p-0 has-border-light"
-                (div [] <|
-                    [ div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter AllTypes ]
-                        [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
-                    ]
-                        ++ List.map
-                            (\t ->
-                                div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter (OneType t) ]
-                                    [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
-                            )
-                            TensionType.list
-                )
+            B.dropdown
+                { dropdown_id = "type-filter-side"
+                , isOpen = model.isOpenTypeFilter
+                , dropdown_cls = "is-right"
+                , button_cls = "is-small"
+                , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_)
+                , msg = OnToggleTypeFilter
+                , menu_cls = ""
+                , content_cls = "p-0 has-border-light"
+                , content_html =
+                    div [] <|
+                        [ div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter AllTypes ]
+                            [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
+                        ]
+                            ++ List.map
+                                (\t ->
+                                    div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter (OneType t) ]
+                                        [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
+                                )
+                                TensionType.list
+                }
 
         labelFilter_html =
             span []
@@ -582,13 +580,17 @@ viewPanel op model =
         [ div [ class "header-block" ]
             [ div [ class "panel-heading" ] [ text T.addLinkedTensions, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
-                [ B.dropdown "link-circle-source"
-                    ("mr-2 " ++ ternary model.isOpenTargetFilter "is-active" "")
-                    "is-small"
-                    (A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name)
-                    OnToggleTargetFilter
-                    "p-0 has-border-light"
-                    (viewSelectorTree (OnChangeTarget op.tree_data) [ model.target.nameid ] op.tree_data)
+                [ B.dropdown
+                    { dropdown_id = "link-circle-source"
+                    , isOpen = model.isOpenTargetFilter
+                    , dropdown_cls = "mr-2"
+                    , button_cls = "is-small"
+                    , button_html = A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name
+                    , msg = OnToggleTargetFilter
+                    , menu_cls = ""
+                    , content_cls = "p-0 has-border-light"
+                    , content_html = viewSelectorTree (OnChangeTarget tree_data) [ model.target.nameid ] tree_data
+                    }
                 , div [ class "control has-icons-left" ]
                     [ input
                         [ class "input is-small"

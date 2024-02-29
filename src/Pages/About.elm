@@ -31,9 +31,10 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
+import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), getConf, send, sendSleep)
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick, onInput)
@@ -47,6 +48,7 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Requests exposing (login, signup)
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
 
@@ -69,6 +71,30 @@ type alias Flags =
     ()
 
 
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoNavigate link ->
+                        ( Cmd.none, send (NavigateRaw link) )
+
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
+
+                    DoUpdateToken ->
+                        ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
+            )
+        |> List.unzip
+
+
 
 ---- MODEL ----
 
@@ -79,6 +105,10 @@ type alias Model =
     , viewMode : ViewMode
     , lang : Lang.Lang
     , isHome : Bool
+    , empty : {}
+
+    -- Commons
+    , help : Help.State
     }
 
 
@@ -94,6 +124,9 @@ type ViewMode
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        conf =
+            getConf global
+
         isHome =
             global.url.path == "/"
 
@@ -115,6 +148,8 @@ init global flags =
             , viewMode = Login
             , lang = global.session.lang
             , isHome = isHome
+            , empty = {}
+            , help = Help.init global.session.user conf
             }
     in
     ( model
@@ -134,6 +169,7 @@ type Msg
     | GotSignup (RestData Bool)
     | ChangeViewMode ViewMode
     | SubmitEnter Int
+    | HelpMsg Help.Msg
 
 
 
@@ -141,12 +177,12 @@ type Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         ChangeUserPost field value ->
             let
                 form =
@@ -226,16 +262,31 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        HelpMsg msg ->
+            let
+                ( data, out ) =
+                    Help.update apis msg model.help
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | help = data }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions global model =
-    Sub.none
+subscriptions _ _ =
+    []
+        ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        |> Sub.batch
 
 
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = T.welcome ++ " - " ++ T.welcome2
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        ]
     }
 
 

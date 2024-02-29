@@ -52,6 +52,7 @@ import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, target, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Lazy as Lazy
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
@@ -62,7 +63,7 @@ import Query.PatchNode exposing (addOneLabel, addOneRole, removeOneLabel, remove
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
-import Session exposing (GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -202,6 +203,7 @@ type alias Model =
     , refresh_trial : Int
     , url : Url
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -384,6 +386,7 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus global.session.user
             , help = Help.init global.session.user conf
             , tensionForm = NTF.init global.session.user conf
@@ -1246,14 +1249,14 @@ view global model =
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ model ]
             ]
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy3 NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
 
@@ -1308,8 +1311,8 @@ viewSettingsContent model =
             div []
                 [ --@todo lazy loading...
                   viewRoles model
-                , viewRolesExt model.url T.rolesTop model.roles_top
-                , viewRolesExt model.url T.rolesSub model.roles_sub
+                , viewRolesExt model.commonOp model.url T.rolesTop model.roles_top
+                , viewRolesExt model.commonOp model.url T.rolesSub model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -1662,7 +1665,7 @@ viewRoleAddBox model =
             ]
         , div [ class "field mt-2 mb-3" ]
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
-            , viewRoleExt { noMsg = NoMsg } "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
+            , viewRoleExt model.commonOp "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
         , viewMandateInput (initFormText (Just NodeType.Role))
             (Just form.mandate)
@@ -1744,7 +1747,7 @@ viewRoles model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt { noMsg = NoMsg } "button-light is-small" Nothing d ]
+                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt model.commonOp "button-light is-small" Nothing d ]
                                                 , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
@@ -1801,8 +1804,8 @@ viewRoles model =
         ]
 
 
-viewRolesExt : Url -> String -> RestData (List RoleExt) -> Html Msg
-viewRolesExt url txt_yes list_ext_d =
+viewRolesExt : CommonMsg Msg -> Url -> String -> RestData (List RoleExt) -> Html Msg
+viewRolesExt commonOp url txt_yes list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
@@ -1826,7 +1829,7 @@ viewRolesExt url txt_yes list_ext_d =
                                                     toLink SettingsBaseUri n.nameid [] ++ q
                                                 )
                                 in
-                                viewRoleExt { noMsg = NoMsg } "ml-2 is-small" link_m d
+                                viewRoleExt commonOp "ml-2 is-small" link_m d
                             )
                         |> span []
                     ]

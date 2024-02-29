@@ -46,6 +46,7 @@ gen:
 
 review:
 	# Setup: elm-review init --template jfmengels/elm-review-config/application
+	mkdir -p review
 	elm-review --ignore-dirs src/Fractal/ --compiler node_modules/.bin/elm > review/reviews.json
 
 #

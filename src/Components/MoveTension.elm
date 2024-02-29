@@ -68,6 +68,7 @@ type alias Model =
     , decoded_type_m : Maybe NodeType.NodeType
 
     -- Common
+    , empty : {}
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , confirmContract : ConfirmContract.State
@@ -117,6 +118,7 @@ initModel user =
     , decoded_type_m = Nothing
 
     -- Common
+    , empty = {}
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , confirmContract = ConfirmContract.init user
@@ -496,25 +498,21 @@ subscriptions (State model) =
 -- ------------------------------
 
 
-type alias Op =
-    { tree_data : GqlData NodesDict }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
+view : GqlData NodesDict -> State -> Html Msg
+view tree_data (State model) =
     if model.isActive2 then
         div []
-            [ viewModal op model
+            [ viewModal tree_data model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
+            , ConfirmContract.view model.empty model.confirmContract |> Html.map ConfirmContractMsg
             ]
 
     else
         text ""
 
 
-viewModal : Op -> Model -> Html Msg
-viewModal op model =
+viewModal : GqlData NodesDict -> Model -> Html Msg
+viewModal tree_data model =
     div
         [ id "MoveTensionModal"
         , class "modal is-light modal-fx-fadeIn"
@@ -555,15 +553,15 @@ viewModal op model =
                         ]
 
                 _ ->
-                    viewModalContent op model
+                    viewModalContent tree_data model
             ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewModalContent : Op -> Model -> Html Msg
-viewModalContent op model =
+viewModalContent : GqlData NodesDict -> Model -> Html Msg
+viewModalContent tree_data model =
     let
         color =
             "warning"
@@ -632,7 +630,7 @@ viewModalContent op model =
                         , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
                             [ -- The fixed position allow the dropdown to overflow the modal
                               div [ class "dropdown-content has-border", style "position" "fixed" ]
-                                [ viewSelectorTree OnChangeTarget [ model.form.target.nameid, model.target, decoded_nid ] op.tree_data ]
+                                [ viewSelectorTree OnChangeTarget [ model.form.target.nameid, model.target, decoded_nid ] tree_data ]
                             ]
                         ]
                     ]

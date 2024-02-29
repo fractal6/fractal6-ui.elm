@@ -21,9 +21,10 @@
 
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, WindowPos, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
+import Codecs exposing (LookupResult, RecentActivityTab, WindowPos, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
 import Json.Decode as JD
 import Json.Encode as JE
+import Json.Encode.Extra as JEE
 import Loading exposing (ModalData)
 import Maybe exposing (withDefault)
 import ModelSchema
@@ -267,14 +268,26 @@ removeSession uctx =
         }
 
 
-saveWindowpos : WindowPos -> Cmd msg
+saveWindowpos : Maybe WindowPos -> Cmd msg
 saveWindowpos x =
     outgoing
         { action = "SAVE_SESSION_ITEM"
         , data =
             JE.object
                 [ ( "key", JE.string "window_pos" )
-                , ( "val", windowEncoder x )
+                , ( "val", JEE.maybe windowEncoder x )
+                ]
+        }
+
+
+saveRecentActivityTab : Maybe RecentActivityTab -> Cmd msg
+saveRecentActivityTab x =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "recent_activity_tab" )
+                , ( "val", JEE.maybe (JE.string << recentActivityTabToString) x )
                 ]
         }
 

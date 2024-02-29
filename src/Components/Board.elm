@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
-import Bulk.View exposing (action2icon, action2str, mediaTension, statusColor, tensionIcon, tensionStatus2str, tensionType2str, viewLabels)
+import Bulk.View exposing (action2icon, action2str, statusColor, tensionIcon, viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
@@ -69,6 +69,7 @@ type alias Model =
     { user : UserState
     , node_focus : NodeFocus
     , projectid : String
+    , isProjectAdmin : Bool
     , project : ProjectData
     , hasTaskMove : Bool
     , hasNewCol : Bool
@@ -84,13 +85,16 @@ type alias Model =
     , cardHover : String
     , cardEdit : String
     , colEdit : String
-    , isProjectAdmin : Bool
+    , cardEditDropdown : Maybe ProjectCard
+    , cardEditDropdownX : Float
+    , cardEditDropdownY : Float
 
     -- Components
     , projectColumnModal : ProjectColumnModal.State
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
+    , empty : {}
     , modal_confirm : ModalConfirm Msg
     }
 
@@ -114,6 +118,7 @@ initModel projectid focus user =
     , hasTaskMove = True
     , hasNewCol = True
     , isAddingDraft = Nothing
+    , isProjectAdmin = False
 
     -- Board
     , boardHeight = Nothing
@@ -129,13 +134,16 @@ initModel projectid focus user =
     , cardHover = ""
     , cardEdit = ""
     , colEdit = ""
-    , isProjectAdmin = False
+    , cardEditDropdown = Nothing
+    , cardEditDropdownX = 0
+    , cardEditDropdownY = 0
 
     -- Components
     , projectColumnModal = ProjectColumnModal.init projectid user
 
     -- Common
     , refresh_trial = 0
+    , empty = {}
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
@@ -206,6 +214,7 @@ type Msg
     | OnRemoveColItems String
     | OnDeleteColumn String
     | OnDeleteColumnAck (GqlData (List String))
+    | OnSetCardEditDropdown String (Result Dom.Error Dom.Element)
       --
     | OnAddCol
     | OnAddDraft String
@@ -571,7 +580,11 @@ update_ apis message model =
             ( { model | cardHover = "" }, noOut )
 
         OnToggleCardEdit cardid ->
-            ( { model | cardEdit = ternary (model.cardEdit == "") cardid "" }, noOut )
+            let
+                cmds =
+                    [ Task.attempt (OnSetCardEditDropdown cardid) (Dom.getElement (cardid ++ "-ellipsis")) ]
+            in
+            ( { model | cardEdit = ternary (model.cardEdit == "") cardid "" }, out0 cmds )
 
         OnToggleColEdit colid ->
             ( { model | colEdit = ternary (model.colEdit == "") colid "" }, noOut )
@@ -641,6 +654,18 @@ update_ apis message model =
 
                 _ ->
                     ( model, noOut )
+
+        OnSetCardEditDropdown cardid elt ->
+            case elt of
+                Ok e ->
+                    let
+                        card =
+                            getCard cardid model.project
+                    in
+                    ( { model | cardEditDropdown = getCard cardid model.project, cardEditDropdownX = e.element.x, cardEditDropdownY = e.element.y }, noOut )
+
+                Err _ ->
+                    ( { model | cardEditDropdown = Nothing }, noOut )
 
         --
         OpenTensionPane colTarget ->
@@ -816,7 +841,12 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div []
         [ viewBoard op model
-        , ProjectColumnModal.view {} model.projectColumnModal |> Html.map ProjectColumnModalMsg
+        , if model.cardEdit /= "" then
+            viewCardDropdown model
+
+          else
+            text ""
+        , ProjectColumnModal.view model.empty model.projectColumnModal |> Html.map ProjectColumnModalMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -895,11 +925,13 @@ viewBoard op model =
                                   --  in addProjectCardFunction response decoder
                                   text ""
                                 , div
-                                    (class "box is-shrinked2 mb-2 mx-2 kb-card"
-                                        :: ternary model.hasTaskMove
+                                    ([ id card.id
+                                     , class "box is-shrinked2 mb-2 mx-2 kb-card"
+                                     ]
+                                        ++ ternary model.hasTaskMove
                                             [ classList
                                                 [ ( "is-dragging", model.movingHoverT /= Nothing )
-                                                , ( "is-dragged", Maybe.map .id model.movingCard == Just card.id )
+                                                , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id )
                                                 ]
                                             , onClick (OnCardClick (Just card))
                                             , onMouseEnter (OnCardHover card.id)
@@ -966,7 +998,7 @@ viewBoard op model =
                                             model.movingHoverT
                                             |> withDefault xx
                            )
-                        |> div [ id colid, class "content scrollbar-thin", classList [ ( "fix-overflow", model.cardEdit /= "" ) ] ]
+                        |> div [ id colid, class "content scrollbar-thin" ]
                     ]
                 , div
                     [ class "divider is-vertical2 is-small is-hidden-mobile"
@@ -1015,29 +1047,33 @@ viewHeader isAdmin isEdited col =
                     text ""
                 , if col.col_type /= ProjectColumnType.NoStatusColumn && isAdmin then
                     B.dropdownLight
-                        "col-ellipsis"
-                        ("mx-2 is-align-self-baseline is-right " ++ ternary isEdited "is-active" "")
-                        (A.icon "icon-more-horizontal is-w is-h icon-lg")
-                        (OnToggleColEdit (ternary isEdited "" col.id))
-                        "has-border-light"
-                        (div []
-                            [ div
-                                [ class "dropdown-item button-light"
-                                , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
+                        { dropdown_id = "col-ellipsis"
+                        , isOpen = isEdited
+                        , dropdown_cls = "mx-2 is-align-self-baseline is-right"
+                        , button_cls = ""
+                        , button_html = A.icon "icon-more-horizontal is-w is-h icon-lg"
+                        , msg = OnToggleColEdit (ternary isEdited "" col.id)
+                        , menu_cls = ""
+                        , content_cls = "has-border-light"
+                        , content_html =
+                            div []
+                                [ div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (ProjectColumnModalMsg (ProjectColumnModal.OnOpenEdit col.id))
+                                    ]
+                                    [ A.icon1 "icon-edit-2" T.edit ]
+                                , div
+                                    [ class "dropdown-item button-light"
+                                    , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
+                                    ]
+                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
+                                , hr [ class "dropdown-divider my-4" ] []
+                                , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
+                                    [ A.icon1 "icon-trash" "Delete column" ]
+                                , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
+                                    [ A.icon1 "icon-trash" "Remove items from project" ]
                                 ]
-                                [ A.icon1 "icon-edit-2" T.edit ]
-                            , div
-                                [ class "dropdown-item button-light"
-                                , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
-                                ]
-                                [ A.icon1 "icon-plus" T.addTensionColumn ]
-                            , hr [ class "dropdown-divider my-4" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
-                                [ A.icon1 "icon-trash" "Delete column" ]
-                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
-                                [ A.icon1 "icon-trash" "Remove items from project" ]
-                            ]
-                        )
+                        }
 
                   else
                     text ""
@@ -1074,18 +1110,8 @@ viewMediaDraft cardid isHovered isEdited d =
     let
         ellipsis =
             if isHovered || isEdited then
-                B.dropdownLight
-                    "card-ellipsis"
-                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
-                    (A.icon "icon-more-horizontal is-h icon-bg")
-                    (OnToggleCardEdit (ternary isEdited "" cardid))
-                    "p-0 has-border-light"
-                    (div []
-                        [ div [ class "dropdown-item button-light", onClick (OnConvertDraft cardid d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
-                        , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-trash" T.deleteDraft ]
-                        ]
-                    )
+                span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
+                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
 
             else
                 text ""
@@ -1097,6 +1123,17 @@ viewMediaDraft cardid isHovered isEdited d =
                 [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
                     [ text d.title ]
                 ]
+            ]
+        , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
+            [ if d.message /= Nothing then
+                a
+                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
+                    , attribute "data-tooltip" "Has comment"
+                    ]
+                    [ A.icon "icon-message-square icon-sm" ]
+
+              else
+                text ""
             ]
         ]
 
@@ -1136,37 +1173,30 @@ viewMediaTension cardid isHovered isEdited focus t =
                         tc =
                             getTensionCharac action
                     in
-                    A.icon0 (action2icon tc ++ " icon-sm")
+                    div
+                        [ class "tooltip has-tooltip-left has-tooltip-arrow"
+                        , attribute "data-tooltip" (action2str tc.action)
+                        , style "left" "15px"
+                        ]
+                        [ A.icon0 (action2icon tc ++ " icon-sm") ]
 
                 Nothing ->
                     case t.status of
                         TensionStatus.Closed ->
-                            A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status)
+                            div
+                                [ class "tooltip has-tooltip-left has-tooltip-arrow"
+                                , attribute "data-tooltip" T.closedTension
+                                , style "left" "15px"
+                                ]
+                                [ A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status) ]
 
                         _ ->
                             text ""
 
         ellipsis =
             if isHovered || isEdited then
-                B.dropdownLight
-                    "card-ellipsis"
-                    ("px-2 has-text-text " ++ ternary isEdited "is-active" "")
-                    (A.icon "icon-more-horizontal is-h icon-bg")
-                    (OnToggleCardEdit (ternary isEdited "" cardid))
-                    "p-0 has-border-light"
-                    (div []
-                        [ div [ class "dropdown-item button-light" ]
-                            [ a
-                                [ class "stealth-link"
-                                , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
-                                , target "_blank"
-                                ]
-                                [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
-                            ]
-                        , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-x" "Remove from project" ]
-                        ]
-                    )
+                span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
+                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
 
             else
                 text ""
@@ -1175,7 +1205,7 @@ viewMediaTension cardid isHovered isEdited focus t =
         [ class "media mediaBox is-hoverable is-size-7" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
-                [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], div [] [ status_html ] ]
+                [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div []
                 [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
                     [ text t.title ]
@@ -1187,7 +1217,55 @@ viewMediaTension cardid isHovered isEdited focus t =
                         text ""
                 ]
             ]
+        , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
+            [ if n_comments > 1 then
+                a
+                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
+                    , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                    ]
+                    [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
+
+              else
+                text ""
+            ]
         ]
+
+
+viewCardDropdown : Model -> Html Msg
+viewCardDropdown model =
+    case model.cardEditDropdown of
+        Just card ->
+            div
+                [ class "dropdown-menu is-block"
+                , attribute "role" "menu"
+                , style "top" (String.fromFloat (model.cardEditDropdownY + 18) ++ "px")
+                , style "left" (String.fromFloat model.cardEditDropdownX ++ "px")
+                ]
+                [ case card.card of
+                    CardTension t ->
+                        div [ class "dropdown-content has-border-light p-0" ]
+                            [ div [ class "dropdown-item button-light" ]
+                                [ a
+                                    [ class "stealth-link"
+                                    , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
+                                    , target "_blank"
+                                    ]
+                                    [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
+                                ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" "Remove from project" ]
+                            ]
+
+                    CardDraft d ->
+                        div [ class "dropdown-content has-border-light p-0" ]
+                            [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                            ]
+                ]
+
+        Nothing ->
+            text ""
 
 
 

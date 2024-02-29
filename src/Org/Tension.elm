@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -230,6 +230,7 @@ type alias Model =
     , conf : Conf
     , comments : Comments.State
     , empty : {}
+    , commonOp : CommonMsg Msg
 
     -- Components
     , helperBar : HelperBar.State
@@ -390,6 +391,7 @@ init global flags =
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             , empty = {}
+            , commonOp = CommonMsg NoMsg LogErr
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
 
             -- Open a signin dialog if contracts are requested
@@ -407,7 +409,7 @@ init global flags =
             case model.tension_head of
                 Success th ->
                     ( Success { th | history = Nothing }
-                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
+                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
                     )
 
                 _ ->
@@ -754,7 +756,7 @@ update global message model =
                             (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
-                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
+                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
                         ]
                     , Cmd.batch
                         [ send (UpdateSessionTensionHead (withMaybeData result))
@@ -1528,14 +1530,14 @@ view global model =
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ] [ view_ global model ]
             ]
-        , Help.view model.empty model.help |> Html.map HelpMsg
-        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , MoveTension.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu } model.moveTension |> Html.map MoveTensionMsg
-        , SelectType.view model.empty model.selectType |> Html.map SelectTypeMsg
-        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy3 NTF.view (TreeMenu.getOrgaData_ model.treeMenu) model.path_data model.tensionForm |> Html.map NewTensionMsg
+        , Lazy.lazy2 MoveTension.view (TreeMenu.getOrgaData_ model.treeMenu) model.moveTension |> Html.map MoveTensionMsg
+        , Lazy.lazy2 SelectType.view model.empty model.selectType |> Html.map SelectTypeMsg
+        , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
@@ -1675,7 +1677,7 @@ viewTension u t model =
                       else
                         text ""
                     , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
-                    , viewCircleTarget { noMsg = NoMsg } "is-pulled-right" t.receiver
+                    , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
                     ]
                 ]
             ]
@@ -1771,7 +1773,7 @@ viewConversation u t model =
     case model.tension_comments of
         Success t_comments ->
             div [ class "comments" ]
-                [ Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
+                [ Lazy.lazy3 Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -2046,7 +2048,7 @@ viewSidePane u t model =
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
-                                            viewCircleTarget { noMsg = NoMsg } "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                            viewCircleTarget model.commonOp "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
 
                                         NodeType.Role ->
                                             case node.role_type of
@@ -2055,7 +2057,7 @@ viewSidePane u t model =
                                                         viewRole "mb-2" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
-                                                        viewRoleExt { noMsg = NoMsg } "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
+                                                        viewRoleExt model.commonOp "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
 
                                                 Nothing ->
                                                     text ""
