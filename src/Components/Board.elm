@@ -931,7 +931,7 @@ viewBoard op model =
                                         ++ ternary model.hasTaskMove
                                             [ classList
                                                 [ ( "is-dragging", model.movingHoverT /= Nothing )
-                                                , ( "is-dragged", Maybe.map .id model.movingCard == Just card.id )
+                                                , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id )
                                                 ]
                                             , onClick (OnCardClick (Just card))
                                             , onMouseEnter (OnCardHover card.id)

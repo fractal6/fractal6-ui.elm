@@ -409,7 +409,7 @@ init global flags =
             case model.tension_head of
                 Success th ->
                     ( Success { th | history = Nothing }
-                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
+                    , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
                     )
 
                 _ ->
@@ -756,7 +756,7 @@ update global message model =
                             (queryLocalGraph apis focusid True (GotPath True))
                         , Ports.bulma_driver ""
                         , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid targetid)))
-                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history)))
+                        , Cmd.map CommentsMsg (send (Comments.SetHistory (withDefault [] th.history) model.jumpTo))
                         ]
                     , Cmd.batch
                         [ send (UpdateSessionTensionHead (withMaybeData result))
@@ -1773,7 +1773,7 @@ viewConversation u t model =
     case model.tension_comments of
         Success t_comments ->
             div [ class "comments" ]
-                [ Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
+                [ Lazy.lazy3 Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]

@@ -4041,7 +4041,7 @@ input[type=search] {
     }
 }
 
-.is-dragged {
+.is-focusing, .message.is-focusing {
     border: 1px solid var(--link) !important;
 }
 
