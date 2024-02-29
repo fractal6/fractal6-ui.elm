@@ -7,6 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ...
 
+## [0.8.2]
+
+### New
+- ux: add 'convert to tension' and 'remove draft' in the draft panel.
+
+### Fixed
+- tensions: Show again the number of closed tensions in the tensions view.
+- tensions: Show again the tensions in the "By assignees" tab.
+- board: fix the scroll position when clicking on a card option in long column.
+- board: draft comment was not transfered to new tension form when converting.
+- ui: usee 3-dot dropdown button in the circle card.
+- ui: highlight the answer/comment in tension page when redirected from notification page.
+- ui: stay on the selection view for tensions (Tensions|Jounal) in the overview page when navigating the organization.
+
+### Changed
+- ux: Improve the graphpack UX by zooming one circle at a time.
+- ui: better rendering optimization with lazy module.
+- upgrade dependencies.
+
+
 ## [0.8.1]
 
 ### New

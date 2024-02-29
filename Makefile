@@ -14,6 +14,14 @@ RELEASE_DIR := releases/$(BRANCH_NAME)/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
+# To publish {prod}
+# - git tag vXXX
+# - git checkout prod
+# - git merge dev
+# - eventually patch prod/**
+# - make publish_prod
+#
+
 #.PHONY: $(BUILD_DIRS)
 .PHONY: review
 
