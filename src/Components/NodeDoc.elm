@@ -556,27 +556,23 @@ viewToolbarDropdown mode data =
             ]
         , div [ id "edit-ellipsis-card", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content p-0" ] <|
-                [ div [ class "dropdown-item" ]
-                    [ a
-                        [ class "stealth-link"
+                [ a
+                    [ class "dropdown-item stealth-link"
 
-                        --, classList [ ( "is-active", mode == NodeEdit ) ]
-                        , href
-                            (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
-                        ]
-                        [ A.icon1 ("icon-edit-2 " ++ iconOpts) T.edit ]
+                    --, classList [ ( "is-active", mode == NodeEdit ) ]
+                    , href
+                        (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
                     ]
+                    [ A.icon1 ("icon-edit-2 " ++ iconOpts) T.edit ]
                 , hr [ class "dropdown-divider" ] []
-                , div [ class "dropdown-item" ]
-                    [ a
-                        [ class "stealth-link"
+                , a
+                    [ class "dropdown-item stealth-link"
 
-                        --, classList [ ( "is-active", mode == NodeVersions ) ]
-                        , href
-                            ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
-                        ]
-                        [ A.icon1 ("icon-history " ++ iconOpts) T.revisions ]
+                    --, classList [ ( "is-active", mode == NodeVersions ) ]
+                    , href
+                        ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
                     ]
+                    [ A.icon1 ("icon-history " ++ iconOpts) T.revisions ]
                 ]
             ]
         ]
