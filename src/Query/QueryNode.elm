@@ -1465,7 +1465,7 @@ notifEventPayload =
 
 
 --
--- Get an organization info/stats
+-- Get an organisation info/stats
 --
 
 

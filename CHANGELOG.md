@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - board: draft comment was not transfered to new tension form when converting.
 - ui: usee 3-dot dropdown button in the circle card.
 - ui: highlight the answer/comment in tension page when redirected from notification page.
-- ui: stay on the selection view for tensions (Tensions|Jounal) in the overview page when navigating the organization.
+- ui: stay on the selection view for tensions (Tensions|Jounal) in the overview page when navigating the organisation.
 
 ### Changed
 - ux: Improve the graphpack UX by zooming one circle at a time.
@@ -49,7 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Better title for Document and Contracts tab, in tension page .
 - data URI change from /data to /assets.
-- show #members and #watcher in the organization explore page.
+- show #members and #watcher in the organisation explore page.
 
 ### Fixed 
 - Fix navigation context when navigating from Document or Contracts, in tension page.
@@ -158,9 +158,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - improve error message for non authorized tensions creation.
-- improve error message for duplicate name for new organization.
-- improve dark theme for emoticon and graph packing (organization circles colors).
-- improve message when leaving an organization.
+- improve error message for duplicate name for new organisation.
+- improve dark theme for emoticon and graph packing (organisation circles colors).
+- improve message when leaving an organisation.
 - inverse close and comment button position.
 
 ### Fixed
@@ -353,7 +353,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - description (optional) of the labels
     - labels are linked to circles and offer the set of labels accessible for tensions inside a circle.
     - The labels are inherited in the child circles
-- Small navigation facilitation added in the header where the current path in the organization is displayed.
+- Small navigation facilitation added in the header where the current path in the organisation is displayed.
 
 ### Changed
 - Only the roles of coordinators can edit tensions.
@@ -367,7 +367,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### New
 - Quick Help in top menu
 - Collect user feedback directly in the platform (top menu)
-- Users can create new (personal) organization
+- Users can create new (personal) organisation
 - Users can leave their roles
 - Circle/role can be archived by user with correct rights.
 - Many bug fixes

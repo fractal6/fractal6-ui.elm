@@ -230,10 +230,10 @@ viewPathLevel op model =
 
         ( watch_icon, watch_txt, watch_title ) =
             if unwrap2 False .isWatching op.orgaInfo then
-                ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganization )
+                ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganisation )
 
             else
-                ( "icon-eye", T.watch, T.watchThisOrganization )
+                ( "icon-eye", T.watch, T.watchThisOrganisation )
     in
     nav [ class "level" ]
         [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]

@@ -29,7 +29,7 @@ import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
 
 /*
  *
- * Graph Packing for Fractale Organization
+ * Graph Packing for Fractale Organisation
  *
  */
 

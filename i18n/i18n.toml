@@ -3,7 +3,7 @@
 #
 
 [heroTitle]
-  en="""Your organization
+  en="""Your organisation
         is a living thing,
         Give it a home."""
   fr="""Votre organisation
@@ -11,7 +11,7 @@
         Donnez-lui un toit."""
 
 [heroSubtitle]
-  en="""Design your organization,
+  en="""Design your organisation,
       Invite your collaborators,
       Identify and collect [tensions](https://doc.fractale.co/tension/ "Tasks, issues, Q&A, announcements, etc "),
       Share, discuss and solve them,
@@ -24,12 +24,12 @@
 
 
 [aboutHero]
-  en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organizations."
+  en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organisations."
   fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective qui favorise la transparence, accompagne l'évolution et renforce la résilience des organisations."
 
 [npoHero]
-  en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make governance structures transparent while providing a memory to the organization."
-  fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs (Non-Profit Organization) de faciliter la coordination d'équipes, rendre transparentes les structures de gouvernance et fluidifier l'information tout en fournissant une mémoire à l'organisation."
+  en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make governance structures transparent while providing a memory to the organisation."
+  fr="De quelques membres à plusieurs milliers de collaborateurs, Fractale permet aux NPOs (Non-Profit Organisation) de faciliter la coordination d'équipes, rendre transparentes les structures de gouvernance et fluidifier l'information tout en fournissant une mémoire à l'organisation."
 
 [corpHero]
   en="From _**Agile**_ methods to _**Holacracy**_, Fractale allows you to implement management and project tracking methods, in a easy and intuitive way. Boost the engagement of your teams around clear objectives while making your communication more fluid."
@@ -63,7 +63,7 @@
   fr="Bienvenue sur Fractale"
 
 [welcome2]
-  en="Self-organization platform for Humans"
+  en="Self-organisation platform for Humans"
   fr="Plateforme d'auto-organisation pour les Humains"
 
 [welcomeSub]
@@ -147,11 +147,11 @@
   fr="pour réinitialiser votre mot de passe"
 
 [gotItCreateOrga]
-  en="Got it, let's create my first organization."
+  en="Got it, let's create my first organisation."
   fr="Compris, je veux créer ma première organisation"
 
 [explorePublicOrga]
-  en="Explore public organizations."
+  en="Explore public organisations."
   fr="Explorer les organisations publiques."
 
 [failedCaptcha]
@@ -205,7 +205,7 @@ fr="Enregister votre mot de passe"
   en="Asynchronous Communication"
   fr="Communication Asynchrone"
 [asyncComAbout]
-  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A tension is a general communication object that is akin to an email and can be sent to any circle in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. The recipients of the notifications are naturally determined by the members of the targeted circle and the type of tension. Tensions can be searched and filtered based directly on the structure of the organization."
+  en="Twitter use tweets, Gmail use e-mails, Fractale use tensions. A tension is a general communication object that is akin to an email and can be sent to any circle in Fractale. Tensions comes with general categories to distinguish the type of problem to deal with, **Operational**, **Governance**, **Help** or **Alert**, along with user-defined labels to help you organize your data. The recipients of the notifications are naturally determined by the members of the targeted circle and the type of tension. Tensions can be searched and filtered based directly on the structure of the organisation."
   fr="Twitter utilise des tweets, Gmail utilise des e-mails, Fractale utilise des tensions. Une tension est un objet de communication général qui s'apparente à un e-mail et qui peut être envoyé à n'importe quel cercle dans Fractale. Les tensions sont fournies avec des catégories générales pour distinguer le type de problème à traiter, **Opérationnel**, **Gouvernance**, **Aide** ou **Alerte**, ainsi que des étiquettes définies par l'utilisateur pour vous aider à organiser vos données. Les destinataires des notifications sont naturellement déterminés par les membres du cercle ciblé et le type de tension. Les tensions peuvent être recherchées et filtrées en se basant directement sur la structure de l'organisation."
 
 [asyncFeat1]
@@ -267,7 +267,7 @@ fr="Enregister votre mot de passe"
   fr="Vous avez des contrats en attente"
 
 [showOrgaMenu]
-  en="Show your organizations"
+  en="Show your organisations"
   fr="Afficher vos organisations"
 [showCircleMenu]
   en="Show the circles tree"
@@ -284,7 +284,7 @@ fr="Enregister votre mot de passe"
 
 [welcomeNoOrga]
   en="""Welcome,
-You can [Explore](/explore) public organizations or create your [First Organization](/new/orga).
+You can [Explore](/explore) public organisations or create your [First Organisation](/new/orga).
   """
   fr="""Bienvenue,
 Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Première Organisation](/new/orga).
@@ -387,7 +387,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Ecrivez votre feedback ici..."
 
 [yourOrg]
-  en="Organizations"
+  en="Organisations"
   fr="Organisations"
 
 [home]
@@ -395,15 +395,15 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Home"
 
 [createYourOrganisation]
-  en="Create your organization"
+  en="Create your organisation"
   fr="Creer votre organisation"
 
 [organisationVisibility]
-  en="Organization visibility"
+  en="Organisation visibility"
   fr="Visibilité de l’organisation"
 
 [organisationSettings]
-  en="Organization settings"
+  en="Organisation settings"
   fr="Paramètres de l’organisation"
 
 [loading]
@@ -431,15 +431,15 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Voir par assignés"
 
 [organisation]
-  en="Organization"
+  en="Organisation"
   fr="Organisation"
 
 [organisations]
-  en="Organizations"
+  en="Organisations"
   fr="Organisations"
 
 [joinOrga]
-  en="Join this organization"
+  en="Join this organisation"
   fr="Rejoindre cette organisation"
 
 [joinUs]
@@ -466,7 +466,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Retirer l'utilisateur"
 
 [leaveOrga]
-  en="Leave organization"
+  en="Leave organisation"
   fr="Quitter cette organisation"
 
 [checkItOut_fem]
@@ -486,11 +486,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Tableau de bord"
 
 [exploreOrganisations]
-  en="Explore organizations"
+  en="Explore organisations"
   fr="Explorer les organisations"
 
 [newOrganisation]
-  en="New organization"
+  en="New organisation"
   fr="Nouvelle organisation"
 
 [toggleLightMode]
@@ -990,8 +990,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
 
 [confirmLeaveOrga]
-  en="""Are you sure you want to leave this organization ?
-- You will be unassigned to any tensions in this organization.
+  en="""Are you sure you want to leave this organisation ?
+- You will be unassigned to any tensions in this organisation.
 - You will be able to join again by invitation only.
   """
   fr="""Etes-vous sûr de vouloir quitter cette organisation ?
@@ -1016,7 +1016,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Donnez un autre feedback."
 
 [theOrganisation]
-  en="the organization"
+  en="the organisation"
   fr="l’organisation"
 
 [moveTension]
@@ -1135,12 +1135,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Unwatch"
   fr="Ne plus suivre"
 
-[watchThisOrganization]
-  en="Watch this organization to receive\nannouncements from this organization."
+[watchThisOrganisation]
+  en="Watch this organisation to receive\nannouncements from this organisation."
   fr="Suivre cette organisation"
 
-[unwatchThisOrganization]
-  en="Unwatch this organization to stop receiving\nannouncements from this organization."
+[unwatchThisOrganisation]
+  en="Unwatch this organisation to stop receiving\nannouncements from this organisation."
   fr="Ne plus suivre cette organisation"
 
 [assigned]
@@ -1395,7 +1395,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [duplicateOrgHint]
   en="""
-**Tips**: To experiment with Fractale's features or as a personal organization, you can use your own username as a suffix, for example `{{}}-{{}}`.
+**Tips**: To experiment with Fractale's features or as a personal organisation, you can use your own username as a suffix, for example `{{}}-{{}}`.
   """
   fr="""
 **Tips** : Pour expérimenter les fonctionnalités de Fractale ou en tant qu'organisation personnelle, vous pouvez utiliser votre propre nom d'utilisateur comme suffix, par exemple `{{}}-{{}}`.
@@ -1426,8 +1426,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="dans ce cercle"
 
 [toThisOrganisation]
-  en="to this organization"
-  fr="de cette organization"
+  en="to this organisation"
+  fr="de cette organisation"
 
 [enterValidUserOrEmail]
   en="Please, enter a valid email address or username"
@@ -1603,15 +1603,15 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Nom de l’étiquette"
 
 [orgaNameHelp]
-  en="Organization name."
+  en="Organisation name."
   fr="Nom de l’organisation"
 
 [aboutHelp]
-  en="Short description for this organization."
+  en="Short description for this organisation."
   fr="Brève description de cette organisation."
 
 [purposeHelpOrga]
-  en="Purpose of this organization."
+  en="Purpose of this organisation."
   fr="Raison d’être de cette organisation."
 
 [roleAboutHelp]
@@ -1764,11 +1764,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Seuls les membres de cette organisation peuvent participer à cette conversation."
 
 [joinForTension]
-  en="this organization to be able to create"
-  fr="cette organization pour pouvoir créer des"
+  en="this organisation to be able to create"
+  fr="cette organisation pour pouvoir créer des"
 
 [thisOrgaToParticipate]
-  en="this organization to participate to this conversation."
+  en="this organisation to participate to this conversation."
   fr="cette organisation pour participer à cette conversation."
 
 [nodeNotExist]
@@ -1916,7 +1916,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Réinitialiser le mot de passe"
 
 [reverseTooltip]
-  en="Reverse the organization graph."
+  en="Reverse the organisation graph."
   fr="Inverser le graphe de l’organisation."
 
 [tensionsListTooltip]
@@ -2135,7 +2135,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Les invités peuvent créer des tensions"
 
 [guestCanCreateTensionHelp]
-  en="Guests are users who have been invited but do not yet have a role in the organization."
+  en="Guests are users who have been invited but do not yet have a role in the organisation."
   fr="Les invités sont des utilisateurs qui ont été invités mais qui n'ont pas encore de rôle dans l'organisation."
 
 [notifyByEmail]
@@ -2147,8 +2147,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Vous avez été désabonné de cette tension."
 
 [beenUnwatch]
-  en="You’ve been unsubscribed from this organization."
-  fr="Vous avez été désabonné de cette organization."
+  en="You’ve been unsubscribed from this organisation."
+  fr="Vous avez été désabonné de cette organisation."
 
 [markAsRead]
   en="Mark as read."
@@ -2330,7 +2330,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Félicitations, vous avez été détaché de ce rôle."
 
 [userJoined_contract_success]
-  en="Congratulations, you've joined this organization."
+  en="Congratulations, you've joined this organisation."
   fr="Félicitations, vous avez rejoint cette organisation."
 
 [memberLinked_contract_success_ext]
@@ -2338,7 +2338,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Félicitations, un utilisateur a été lié."
 
 [userJoined_contract_success_ext]
-  en="Congratulations, an user has joined the organization."
+  en="Congratulations, an user has joined the organisation."
   fr="Félicitations, un utilisateur a rejoint l'organisation."
 
 
@@ -2386,7 +2386,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
 """
 
 [rolesInfoHeader]
-  en="Creating new roles template help you to manage your organization"
+  en="Creating new roles template help you to manage your organisation"
   fr="La création de nouveaux modèles de rôles vous aide à gérer votre organisation"
 
 [rolesInfoDoc]
@@ -2430,7 +2430,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
   fr="Les étiquettes présentes dans d’autres cercles et utilisés dans les tensions étiquetées ne seront pas supprimées."
 
 [roleDeleteInfoHeader]
-  en="Roles in other circles and those created in your organization won’t be deleted."
+  en="Roles in other circles and those created in your organisation won’t be deleted."
   fr="Les rôles présents dans d’autres cercles et ceux créés dans votre organisation ne seront pas supprimés."
 
 [contractInfoHeader]
@@ -2438,7 +2438,7 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
   fr="Une validation par les pairs est nécessaire pour compléter cette action."
 
 [contractInfo]
-  en="When you do not have the authority to modify a ressource, you can create a contract. It will notify the organization roles with the authority level able to validate your request. The action will be performed if the contract is accepted."
+  en="When you do not have the authority to modify a ressource, you can create a contract. It will notify the organisation roles with the authority level able to validate your request. The action will be performed if the contract is accepted."
   fr="Lorsque vous n'avez pas l'autorité nécessaire pour modifier une ressource, vous pouvez créer un contrat. Il notifiera les rôles de l'organisation avec le niveau d'autorité capable de valider votre demande. L'action sera exécutée si le contrat est accepté."
 
 [tensionTypeHeader]
@@ -2449,8 +2449,8 @@ Lorsque vous créez des étiquettes ici, vous pouvez ensuite les attacher à vos
   en="""
 You can change a tension type to the following categories:
 
-- **Operational**: A general category, it can be task, an issue or whatever that need to be shared or tracked in the organization.
-- **Governance**: Concerning the structure of the organization, the mandates etc.
+- **Operational**: A general category, it can be task, an issue or whatever that need to be shared or tracked in the organisation.
+- **Governance**: Concerning the structure of the organisation, the mandates etc.
 - **Help**: For help requests, questions or clarifications.
 
 Alert and Annoucement tension can only be set when you create a new tension.
@@ -2470,7 +2470,7 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   fr="Pour le travail quotidien. Tâches, problèmes, articles, etc."
 
 [governanceHint]
-  en="For topics related to governance, organizational structure, mandates, etc."
+  en="For topics related to governance, organisational structure, mandates, etc."
   fr="Pour les sujets relatifs à la gouvernance, la structure de l'organisation, les mandats, etc."
 
 [helpHint]
@@ -2503,7 +2503,7 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   fr="Pour les annonces, communication externe."
 
 [announcementNotif]
-  en="Notifies all users watching this organization."
+  en="Notifies all users watching this organisation."
   fr="Notifie tous les utilisateurs qui suivent cette organisation"
 
 [visibilityInfoHeader]
@@ -2515,7 +2515,7 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   fr="Le monde entier peut la voir."
 
 [visibilityPrivate]
-  en="Only members of the organization can see it."
+  en="Only members of the organisation can see it."
   fr="Visible uniquement par les membres de l’organisation."
 
 [visibilitySeccret]
@@ -2531,7 +2531,7 @@ Les tensions d'Alerte et d'Annonce ne peuvent être définies que lorsque vous c
   fr="Les utilisateurs doivent être invités pour collaborer avec vous."
 
 [visibilityRestriction]
-  en="Users will be able to join this organization by invitation only."
+  en="Users will be able to join this organisation by invitation only."
   fr="Les utilisateurs pourront rejoindre cette organisation sur invitation uniquement."
 
 [authCoordinated]
@@ -2563,11 +2563,11 @@ Mais d'abord, vous devez **configurer votre compte** :
   fr="a été invité à jouer le rôle suivant:"
 
 [youHaveBeenInvitedOrga]
-  en="You have been invited to this organization."
+  en="You have been invited to this organisation."
   fr="Vous avez été invité dans cette organisation."
 
 [userHasBeenInvitedOrga]
-  en="has been invited to this organization."
+  en="has been invited to this organisation."
   fr="a été invité dans cette organisation."
 
 [invitationRejected]
