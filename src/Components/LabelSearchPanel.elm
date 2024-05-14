@@ -452,7 +452,7 @@ view_ isInternal op model =
                     --    { op_ | selectedLabels = List.filter (\x -> List.member x.name selection) labels_d }
                     labels =
                         if model.pattern == "" then
-                            List.sortBy .name op.selectedLabels
+                            op.selectedLabels
                                 ++ List.sortBy .name (List.take 42 labels_d)
                                 |> LE.uniqueBy .name
 
