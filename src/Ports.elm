@@ -37,6 +37,7 @@ import ModelSchema
         , UserCtx
         , notifCountEncoder
         )
+import Schemas.TreeMenu as TreeMenuSchema
 
 
 
@@ -80,7 +81,7 @@ port propagatePathFromJs : (List String -> msg) -> Sub msg
 port updateMenuOrgaFromJs : (Maybe Bool -> msg) -> Sub msg
 
 
-port updateMenuTreeFromJs : (Maybe Bool -> msg) -> Sub msg
+port updateMenuTreeFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port updateLangFromJs : (String -> msg) -> Sub msg
@@ -304,14 +305,14 @@ saveMenuOrga x =
         }
 
 
-saveMenuTree : Bool -> Cmd msg
+saveMenuTree : TreeMenuSchema.PersistentModel -> Cmd msg
 saveMenuTree x =
     outgoing
         { action = "SAVE_SESSION_ITEM"
         , data =
             JE.object
                 [ ( "key", JE.string "tree_menu" )
-                , ( "val", JE.bool x )
+                , ( "val", TreeMenuSchema.encode x )
                 ]
         }
 
@@ -671,6 +672,24 @@ graphPackEncoder data focus =
 --
 -- Decoder
 --
+
+
+pd : ((JD.Value -> msg) -> Sub msg) -> JD.Decoder a -> (String -> msg) -> (a -> msg) -> Sub msg
+pd sub decoder messageErr message =
+    sub
+        ((\x ->
+            case x of
+                Ok n ->
+                    message n
+
+                Err err ->
+                    messageErr (JD.errorToString err)
+         )
+            << JD.decodeValue decoder
+        )
+
+
+
 -- Modal data decoder
 
 

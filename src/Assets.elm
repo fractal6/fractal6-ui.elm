@@ -78,6 +78,11 @@ icon1 cls words =
     span [] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
+icon1_sm : String -> String -> Html msg
+icon1_sm cls words =
+    span [] [ icon (cls ++ " icon-sm"), text (space_ ++ space_ ++ words) ]
+
+
 checked : Html msg
 checked =
     icon1 "icon-check has-text-success" ""

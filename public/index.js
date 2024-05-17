@@ -66,7 +66,7 @@ window.addEventListener('load', _ => {
     if (orga_menu == true) {
         setTimeout(Ports.actions["OPEN_ORGA_MENU"], 333);
     }
-    if (tree_menu == true) {
+    if (tree_menu && tree_menu.isActive) {
         setTimeout(Ports.actions["OPEN_TREE_MENU"], 333);
     }
 

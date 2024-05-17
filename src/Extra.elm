@@ -289,3 +289,16 @@ colorToTextColor color =
 
     else
         "#fff"
+
+
+
+-- HTML
+
+
+showIf : Bool -> Html msg -> Html msg
+showIf a v =
+    if a then
+        v
+
+    else
+        text ""

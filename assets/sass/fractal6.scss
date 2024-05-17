@@ -1479,6 +1479,15 @@ figcaption {
                 padding-bottom: 5px !important;
             }
         }
+
+        &.is-boxed, > .is-boxed {
+            li:not(:first-child) {
+                font-size: 0.95em;
+                padding-left: 0.5em;
+                margin-right: 0.75em;
+                border-right: 1px solid var(--border-color);
+            }
+        }
     }
 
     .bottom-button {
@@ -1493,6 +1502,10 @@ figcaption {
 .treeMenu {
     padding: .6em .5em !important;
     transition: top,height .2s ease;
+
+    &.pt-0 {
+        padding-top: 0.25em !important;
+    }
 
     &.is-active {
         background-color: var(--bbc) !important;
@@ -1546,6 +1559,7 @@ figcaption {
         a.is-active:hover {
             cursor: default;
         }
+
     }
 }
 

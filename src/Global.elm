@@ -62,6 +62,7 @@ import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
+import Schemas.TreeMenu as TreeMenuSchema
 import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
 import Task
 import Time
@@ -153,7 +154,7 @@ type Msg
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
     | UpdateSessionMenuOrga (Maybe Bool)
-    | UpdateSessionMenuTree (Maybe Bool)
+    | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
     | UpdateSessionNotif NotifCount
@@ -164,11 +165,13 @@ type Msg
     | GotIsWatching (GqlData Bool)
     | RefreshPinTension String
     | AckPinTension (GqlData (Maybe (List PinTension)))
-    | VOID
       -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
+      -- utils
+    | VOID
+    | LogErr String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -710,6 +713,9 @@ update msg model =
         VOID ->
             ( model, Cmd.none )
 
+        LogErr err ->
+            ( model, Ports.logErr err )
+
         UpdateSessionAuthorsPanel data ->
             let
                 session =
@@ -741,7 +747,7 @@ subscriptions _ =
     Sub.batch
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
-        , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
+        , Ports.pd Ports.updateMenuTreeFromJs TreeMenuSchema.decode LogErr UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         ]

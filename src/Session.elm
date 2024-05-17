@@ -29,10 +29,11 @@ import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
 import Loading exposing (GqlData, RestData)
-import Maybe exposing (withDefault)
+import Maybe exposing (andThen, withDefault)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
+import Schemas.TreeMenu as TreeMenuSchema
 import Time
 import Url exposing (Url)
 
@@ -91,6 +92,17 @@ toReflink url =
     Url.toString url |> String.split "?" |> List.head |> withDefault ""
 
 
+{-| Use to pass model to components in order to avoid losing time to deep caopy data
+@deprecated: This structure might not be usesull, see this discussion for more context :
+<https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
+-}
+type alias BigData x =
+    { x
+        | path_data : Maybe LocalGraph
+        , tree_data : GqlData NodesDict
+    }
+
+
 {-|
 
     Persistent session data.
@@ -104,7 +116,7 @@ type alias SessionFlags =
     , window_pos : Maybe JD.Value
     , recent_activity_tab : Maybe JD.Value
     , orga_menu : Maybe Bool
-    , tree_menu : Maybe Bool
+    , tree_menu : Maybe JD.Value
     , apis : Apis
     , screen : Screen
     , theme : Maybe JD.Value
@@ -147,21 +159,11 @@ type alias Session =
     , window_pos : Maybe WindowPos
     , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
-    , tree_menu : Maybe Bool
+    , tree_menu : Maybe TreeMenuSchema.PersistentModel
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
-    }
-
-
-{-| Use to pass model to components in order to avoid losing time to deep caopy data
-@debug: not use yet, see answer in : <https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
--}
-type alias BigData x =
-    { x
-        | path_data : Maybe LocalGraph
-        , tree_data : GqlData NodesDict
     }
 
 
@@ -355,7 +357,10 @@ fromLocalSession flags =
       , window_pos = window_pos
       , recent_activity_tab = recent_activity_tab
       , orga_menu = flags.orga_menu
-      , tree_menu = flags.tree_menu
+      , tree_menu =
+            flags.tree_menu
+                |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
+                |> withDefault Nothing
       , apis = flags.apis
       , screen = flags.screen
       , authorsPanel = Nothing

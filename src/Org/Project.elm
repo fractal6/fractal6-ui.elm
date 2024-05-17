@@ -262,7 +262,7 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
 
