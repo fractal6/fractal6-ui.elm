@@ -1482,7 +1482,7 @@ update global message model =
 
                 extra_cmd =
                     if
-                        (out.result == Just ( True, True ))
+                        (out.result == Just ( True, True ) && getTargetsHere model == [])
                             || (out.result == Just ( True, False ) && dataNeedLoad model)
                     then
                         send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
