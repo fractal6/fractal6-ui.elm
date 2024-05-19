@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull)
-import Codecs exposing (LookupResult)
+import Codecs exposing (LookupResult, userDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -37,6 +37,7 @@ import Html exposing (Html, div, i, input, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData)
 import Maybe exposing (withDefault)
@@ -194,13 +195,16 @@ type Msg
     | OnClose_
     | SetTensionid String
     | OnChangePattern String
-    | ChangeAssigneeLookup (LookupResult User)
+    | ChangeAssigneeLookup (List User)
     | OnAssigneeClick User Bool Time.Posix
     | OnAssigneeAck (GqlData IdPayload)
     | OnSubmit (Time.Posix -> Msg)
     | OnGotAssignees (GqlData (List User))
     | SetAssignee AssigneeForm
     | ResetClickResult
+      -- Common
+    | NoMsg
+    | LogErr String
 
 
 type alias Out =
@@ -288,12 +292,7 @@ update_ apis message model =
             )
 
         ChangeAssigneeLookup data ->
-            case data of
-                Ok d ->
-                    ( { model | lookup = d }, noOut )
-
-                Err err ->
-                    ( model, out0 [ Ports.logErr err ] )
+            ( { model | lookup = data }, noOut )
 
         OnAssigneeClick assignee isNew time ->
             if model.click_result == LoadingSlowly then
@@ -375,11 +374,18 @@ update_ apis message model =
         ResetClickResult ->
             ( setClickResult NotAsked model, noOut )
 
+        -- Common
+        NoMsg ->
+            ( model, noOut )
+
+        LogErr err ->
+            ( model, out0 [ Ports.logErr err ] )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     if model.isOpen then
-        [ Ports.lookupUserFromJs ChangeAssigneeLookup
+        [ Ports.pd Ports.lookupUserFromJs (JD.list userDecoder) LogErr ChangeAssigneeLookup
         , Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
         , Events.onKeyUp (Dom.key "Escape" OnClose)
         ]

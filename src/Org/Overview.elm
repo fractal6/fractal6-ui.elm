@@ -32,7 +32,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRou
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
-import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos)
+import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -55,6 +55,7 @@ import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tb
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -392,7 +393,7 @@ type Msg
     | LookupBlur
     | LookupBlur_
     | ChangePattern String
-    | ChangeNodeLookup (LookupResult Node)
+    | ChangeNodeLookup (List Node)
     | SearchKeyDown Int
     | ChangeActivityTab RecentActivityTab
     | GotJournal (GqlData (List EventNotif))
@@ -582,17 +583,12 @@ update global message model =
             , Cmd.none
             )
 
-        ChangeNodeLookup nodes_ ->
+        ChangeNodeLookup nodes ->
             let
                 qs =
                     model.node_quickSearch
             in
-            case nodes_ of
-                Ok nodes ->
-                    ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
+            ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }, Cmd.none, Cmd.none )
 
         SearchKeyDown key ->
             let
@@ -902,7 +898,7 @@ subscriptions _ model =
         Sub.none
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
-    , Ports.lookupNodeFromJs ChangeNodeLookup
+    , Ports.pd Ports.lookupNodeFromJs (JD.list nodeDecoder) LogErr ChangeNodeLookup
     , Ports.reloadPathFromJs (always UpdatePath)
     ]
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))

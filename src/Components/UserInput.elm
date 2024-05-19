@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull)
-import Codecs exposing (LookupResult)
+import Codecs exposing (LookupResult, userDecoder)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Extra exposing (space_, ternary)
 import Extra.Events exposing (onMousedownPD)
@@ -34,6 +34,7 @@ import Global exposing (send, sendSleep)
 import Html exposing (Html, a, div, i, label, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, id, name, placeholder, rows, style, value)
 import Html.Events exposing (onClick, onInput)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, loadingSpinRight, withDefaultData)
 import Maybe exposing (withDefault)
@@ -190,7 +191,7 @@ type Msg
     | DoQueryUser
     | OnUsersAck (GqlData (List User))
       -- Lookup
-    | ChangeUserLookup (LookupResult User)
+    | ChangeUserLookup (List User)
     | ChangePath (List String)
     | ChangePattern String
       -- Confirm Modal
@@ -314,16 +315,11 @@ update_ apis message model =
                     ( data, noOut )
 
         ChangeUserLookup data ->
-            case data of
-                Ok d ->
-                    if model.pattern == "" && not model.isInvite then
-                        ( { model | lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
+            if model.pattern == "" && not model.isInvite then
+                ( { model | lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
 
-                    else
-                        ( { model | lookup = d }, noOut )
-
-                Err err ->
-                    ( model, out0 [ Ports.logErr err ] )
+            else
+                ( { model | lookup = data }, noOut )
 
         ChangePath targets ->
             ( { model | targets = targets }, noOut )
@@ -356,7 +352,7 @@ subscriptions (State model) =
         ++ (if (model.isOpen && not model.isInvite) || model.isInvite then
                 -- Prevent for user mention search box to trigger msg when not open.
                 -- For invite, the "open" status is handled in the parents components...
-                [ Ports.lookupUserFromJs ChangeUserLookup ]
+                [ Ports.pd Ports.lookupUserFromJs (JD.list userDecoder) LogErr ChangeUserLookup ]
 
             else
                 []

@@ -139,13 +139,13 @@ port requireTreeDataFromJs : (() -> msg) -> Sub msg
 -- Lookup and Quicksearch
 
 
-port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
+port lookupNodeFromJs : (JD.Value -> a) -> Sub a
 
 
-port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
+port lookupUserFromJs : (JD.Value -> a) -> Sub a
 
 
-port lookupLabelFromJs_ : (JD.Value -> a) -> Sub a
+port lookupLabelFromJs : (JD.Value -> a) -> Sub a
 
 
 
@@ -695,17 +695,7 @@ pd sub decoder messageErr message =
 
 mcPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (ModalData -> msg) -> Sub msg
 mcPD sub messageErr message =
-    sub
-        ((\x ->
-            case x of
-                Ok n ->
-                    message n
-
-                Err err ->
-                    messageErr (JD.errorToString err)
-         )
-            << JD.decodeValue modalDataDecoder
-        )
+    pd sub modalDataDecoder messageErr message
 
 
 
@@ -714,17 +704,7 @@ mcPD sub messageErr message =
 
 uctxPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (UserCtx -> msg) -> Sub msg
 uctxPD sub messageErr message =
-    sub
-        ((\x ->
-            case x of
-                Ok n ->
-                    message n
-
-                Err err ->
-                    messageErr (JD.errorToString err)
-         )
-            << JD.decodeValue userCtxDecoder
-        )
+    pd sub userCtxDecoder messageErr message
 
 
 uctxPD2 : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (Bool -> UserCtx -> msg) -> Sub msg
@@ -746,56 +726,4 @@ uctxPD2 sub messageErr message =
                     (JD.field "uctx" userCtxDecoder)
                     (JD.maybe <| JD.field "refresh" JD.bool)
                 )
-        )
-
-
-
--- Quicksearch/lookup decoder
-
-
-lookupNodeFromJs : (LookupResult Node -> msg) -> Sub msg
-lookupNodeFromJs object =
-    lookupNodeFromJs_
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue (JD.list nodeDecoder)
-        )
-
-
-lookupUserFromJs : (LookupResult User -> msg) -> Sub msg
-lookupUserFromJs object =
-    lookupUserFromJs_
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue (JD.list userDecoder)
-        )
-
-
-lookupLabelFromJs : (LookupResult Label -> msg) -> Sub msg
-lookupLabelFromJs object =
-    lookupLabelFromJs_
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue (JD.list labelDecoder)
         )
