@@ -1012,11 +1012,12 @@ viewTensionSidePane t model =
 
         -- Extras
         , hr [ class "has-background-border-light my-5" ] []
-        , div
-            [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+        , a
+            [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 stealth-link"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
+            , target "_blank"
             ]
-            [ A.icon "icon-external-link mr-1", text "Open in a new tab" ]
+            [ A.icon1 "icon-external-link" T.openNewTab ]
         ]
 
 

@@ -2159,10 +2159,10 @@ viewSidePane u t model =
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ (if isAdmin then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon "icon-pin mr-1", ternary t.isPinned (text T.unpinTension) (text T.pinTension) ]
+                                    [ A.icon1 "icon-pin" <| ternary t.isPinned T.unpinTension T.pinTension ]
                                 ]
 
                             else
@@ -2170,10 +2170,10 @@ viewSidePane u t model =
                            )
                         ++ (if not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], text T.moveTension ]
+                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text T.moveTension ]
                                 ]
 
                             else
@@ -2181,17 +2181,17 @@ viewSidePane u t model =
                            )
                         ++ (if isAdmin && not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
-                                    [ A.icon "icon-disc mr-1", text T.updateType ]
+                                    [ A.icon1 "icon-disc" T.updateType ]
                                 ]
 
                             else
                                 []
                            )
                         ++ (if isAdmin then
-                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock conversation" ]
+                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4" ] [ A.icon1 "icon-lock icon-sm" "Lock conversation" ]
                                 ]
 
                             else

@@ -534,7 +534,7 @@ viewPanel tree_data model =
                 , isOpen = model.isOpenTypeFilter
                 , dropdown_cls = "is-right"
                 , button_cls = "is-small"
-                , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_)
+                , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link-back" ] [], text T.type_ ]) (text T.type_)
                 , msg = OnToggleTypeFilter
                 , menu_cls = ""
                 , content_cls = "p-0 has-border-light"
@@ -557,7 +557,7 @@ viewPanel tree_data model =
                     [ class "button is-small"
                     , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
                     ]
-                    [ ternary (model.form.labels /= []) (span [ class "badge is-link2" ] []) (text "")
+                    [ ternary (model.form.labels /= []) (span [ class "badge is-link-back" ] []) (text "")
                     , text T.label
                     , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                     ]

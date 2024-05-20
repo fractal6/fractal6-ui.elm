@@ -284,13 +284,9 @@ input[type="checkbox"] {
 .is-hint-2 {
     color: var(--is-hint2) !important;
 }
-.is-link2 {
-    color: var(--white) !important;
+.is-link-back {
+    color: var(--text) !important;
     background-color: var(--link2) !important;
-    &.is-light {
-        color: var(--link2) !important;
-        background-color: initial !important;
-    }
 }
 a.is-link {;
     color: var(--link2) !important;
@@ -418,6 +414,7 @@ a:hover .is-name, a:hover .is-username {
 }
 .discrete-link {
     color: inherit;
+    text-decoration: none !important;
     &:visited {
         color: inherit;
     }
@@ -427,8 +424,8 @@ a:hover .is-name, a:hover .is-username {
 }
 
 .stealth-link {
-    text-decoration: none !important;
     color: var(--text) !important;
+    text-decoration: none !important;
 }
 .underlined-link {
     &:hover {

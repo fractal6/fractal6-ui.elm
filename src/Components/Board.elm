@@ -1069,9 +1069,9 @@ viewHeader isAdmin isEdited col =
                                     [ A.icon1 "icon-plus" T.addTensionColumn ]
                                 , hr [ class "dropdown-divider my-4" ] []
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
-                                    [ A.icon1 "icon-trash" "Delete column" ]
+                                    [ A.icon1 "icon-trash" T.deleteColumn ]
                                 , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
-                                    [ A.icon1 "icon-trash" "Remove items from project" ]
+                                    [ A.icon1 "icon-trash" T.removeItemsProject ]
                                 ]
                         }
 
@@ -1244,16 +1244,14 @@ viewCardDropdown model =
                 [ case card.card of
                     CardTension t ->
                         div [ class "dropdown-content has-border-light p-0" ]
-                            [ div [ class "dropdown-item button-light" ]
-                                [ a
-                                    [ class "stealth-link"
-                                    , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
-                                    , target "_blank"
-                                    ]
-                                    [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
+                            [ a
+                                [ class "dropdown-item button-light stealth-link"
+                                , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
+                                , target "_blank"
                                 ]
+                                [ A.icon1 "icon-external-link" T.openNewTab ]
                             , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" "Remove from project" ]
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" T.removeFromProject ]
                             ]
 
                     CardDraft d ->

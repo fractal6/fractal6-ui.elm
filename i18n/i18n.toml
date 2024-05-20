@@ -1980,6 +1980,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Convert draft to tension"
   fr="Convertir le draft en tension"
 
+[deleteColumn]
+  en="Delete column"
+  fr="Supprimer la colonne"
+
 [addLinkedTensions]
   en="Add tension to this project"
   fr="Ajouter des tensions à ce projet"
@@ -1987,6 +1991,19 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [addSelectedItems]
   en="Add selected items"
   fr="Ajouter les éléments sélectionnés"
+
+[removeFromProject]
+  en="Remove from project"
+  fr="Retirer du projet"
+
+[removeItemsProject]
+  en="Remove items from project"
+  fr="Retirer les éléments du projet"
+
+[openNewTab]
+  en="Open in a new tab"
+  fr="Ouvrir dans un nouvel onglet"
+
 
 # ADDME END @next ^
 # --

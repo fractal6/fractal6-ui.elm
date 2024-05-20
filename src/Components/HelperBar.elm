@@ -394,20 +394,6 @@ viewNavLevel op model =
                         |> withDefault []
                    )
             )
-
-        -- "Create tension" button in the tab bar.
-        --, div
-        --    ([ class "button is-small is-link2 is-rounded is-pulled-right"
-        --     , attribute "style" "bottom:-5px;"
-        --     ]
-        --        ++ (case op.path_data of
-        --                Just p ->
-        --                    [ onClick (op.onCreateTension p) ]
-        --                Nothing ->
-        --                    []
-        --           )
-        --    )
-        --    [ A.icon1 "icon-send" "Create tension" ]
         ]
 
 

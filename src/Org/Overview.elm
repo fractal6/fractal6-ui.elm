@@ -1075,7 +1075,7 @@ viewSearchBar us model =
                             in
                             [ div [ class "control controlButtons" ]
                                 [ span
-                                    [ class "button is-small is-link2 is-wrapped"
+                                    [ class "button is-small is-wrapped"
                                     , attribute "data-modal" "actionModal"
                                     , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p) Nothing)
                                     ]
