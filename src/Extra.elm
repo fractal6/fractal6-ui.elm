@@ -302,3 +302,13 @@ showIf a v =
 
     else
         text ""
+
+
+showMaybe : Maybe a -> (a -> Html msg) -> Html msg
+showMaybe a f =
+    case a of
+        Just x ->
+            f x
+
+        Nothing ->
+            text ""

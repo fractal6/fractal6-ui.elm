@@ -135,6 +135,9 @@ port cancelLookupFsFromJs : (() -> msg) -> Sub msg
 port requireTreeDataFromJs : (() -> msg) -> Sub msg
 
 
+port closeTreeSelFromJs : (() -> msg) -> Sub msg
+
+
 
 -- Lookup and Quicksearch
 

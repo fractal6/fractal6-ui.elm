@@ -64,6 +64,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -92,6 +93,8 @@ type alias Model =
     , draft : Maybe ProjectDraft
     , isTargetOpen : String
     , isTypeOpen : String
+    , expanded_lines : ExpandedLines
+    , freezeOutsideClick : Bool
 
     -- switching tab
     , activeTab : TensionTab
@@ -189,6 +192,8 @@ initModel user conf =
     , draft = Nothing
     , isTargetOpen = ""
     , isTypeOpen = ""
+    , expanded_lines = Dict.empty
+    , freezeOutsideClick = False
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
@@ -515,6 +520,8 @@ type Msg
       PushTension (GqlData Tension -> Msg)
     | OnSubmit Bool (Time.Posix -> Msg)
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
+    | OnOutsideTreeClickClose
+    | UnfreezeOutsideClick
       -- Modal control
     | SetIsActive2 Bool
     | OnOpen NewTensionInput (Maybe ProjectDraft)
@@ -533,6 +540,7 @@ type Msg
     | DoInvite
     | OnInvite Time.Posix
     | PushAck (GqlData IdPayload)
+    | OnToggleDropdownRoles String
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource EmitterOrReceiver
@@ -664,6 +672,16 @@ update_ apis message model =
                 _ ->
                     ( { model | path_data = result }, noOut )
 
+        OnOutsideTreeClickClose ->
+            if model.freezeOutsideClick then
+                ( model, noOut )
+
+            else
+                ( { model | freezeOutsideClick = True }, out0 [ Ports.outsideClickClose "closeTreeSelFromJs" "tree-selector", sendSleep UnfreezeOutsideClick 250 ] )
+
+        UnfreezeOutsideClick ->
+            ( { model | freezeOutsideClick = False }, noOut )
+
         -- Modal control
         SetIsActive2 v ->
             if v then
@@ -708,7 +726,9 @@ update_ apis message model =
                                     setPath p newModel
                             in
                             if data.sources == [] && data.refresh_trial == 0 then
-                                ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing )
+                                ( { data | refresh_trial = 1 }
+                                , Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing
+                                )
 
                             else if data.sources == [] then
                                 ( { data | isActive2 = True } |> setStep TensionNotAuthorized
@@ -729,7 +749,11 @@ update_ apis message model =
                                                 send (OnSwitchTab NewCircleTab)
                                 in
                                 ( { data | isActive2 = True } |> setUctx uctx
-                                , out0 [ sendSleep (SetIsActive2 True) 10, switch_cmd, Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path)) ]
+                                , out0
+                                    [ sendSleep (SetIsActive2 True) 10
+                                    , switch_cmd
+                                    , Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path))
+                                    ]
                                 )
 
                 LoggedOut ->
@@ -827,7 +851,18 @@ update_ apis message model =
             ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnTargetClick id_ ->
-            ( { model | isTargetOpen = ternary (model.isTargetOpen == "") id_ "" }, out0 [ Ports.requireTreeData ] )
+            case model.isTargetOpen of
+                "" ->
+                    if id_ /= "" then
+                        ( { model | isTargetOpen = id_ }
+                        , out0 [ Ports.requireTreeData, sendSleep OnOutsideTreeClickClose 250 ]
+                        )
+
+                    else
+                        ( model, noOut )
+
+                _ ->
+                    ( { model | isTargetOpen = "" }, out0 [ Ports.click "" ] )
 
         OnTypeClick id_ ->
             ( { model | isTypeOpen = ternary (model.isTypeOpen == "") id_ "" }, noOut )
@@ -889,6 +924,17 @@ update_ apis message model =
                 _ ->
                     ( { model | action_result = result }, noOut )
 
+        OnToggleDropdownRoles nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, noOut )
+
         -- Doc change
         OnChangeTensionType type_ ->
             ( setTensionType type_ model, noOut )
@@ -899,10 +945,10 @@ update_ apis message model =
         OnChangeTensionTarget odata target ->
             case localGraphFromOrga target.nameid odata of
                 Just path ->
-                    ( setPath path model, noOut )
+                    ( setPath path model, out0 [ send (OnTargetClick "") ] )
 
                 Nothing ->
-                    ( setTarget (shrinkNode target) model, noOut )
+                    ( setTarget (shrinkNode target) model, out0 [ send (OnTargetClick "") ] )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
@@ -1183,7 +1229,7 @@ subscriptions (State model) =
                 []
            )
         ++ (if model.isTargetOpen /= "" then
-                [ Events.onMouseUp (JD.succeed (OnTargetClick ""))
+                [ Ports.closeTreeSelFromJs (always (OnTargetClick ""))
                 , Events.onKeyUp (Dom.key "Escape" (OnTargetClick ""))
                 ]
 
@@ -1490,8 +1536,8 @@ viewRecipients tree_data model =
                     ]
             , menu_cls = "is-right is-left-mobile"
             , content_cls = "has-border p-0"
-            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
-            , msg = OnTargetClick (ternary isOpen "" "something")
+            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) OnToggleDropdownRoles [ model.nodeDoc.form.target.nameid ] model.expanded_lines tree_data
+            , msg = ternary isOpen (OnTargetClick "") (OnTargetClick "something")
             }
         ]
 

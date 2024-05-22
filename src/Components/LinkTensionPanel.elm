@@ -52,6 +52,7 @@ import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, ty
 import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -78,6 +79,7 @@ type alias Model =
     , selected : List String
     , form : TensionQuery -- user inputs
     , typeFilter : TypeFilter
+    , expanded_lines : ExpandedLines
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -108,6 +110,7 @@ initModel projectid user =
     , selected = []
     , form = initTensionQuery |> (\x -> { x | first = 100, projectid = Just projectid, inProject = False })
     , typeFilter = AllTypes
+    , expanded_lines = Dict.empty
 
     -- Components
     , isOpenTargetFilter = False
@@ -193,6 +196,7 @@ type Msg
     | OnSelectAll
     | OnAddToProject
     | OnAddAck (GqlData (List ProjectCard))
+    | OnToggleDropdownRoles String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -432,6 +436,17 @@ update_ apis message model =
                 _ ->
                     ( { model | add_result = withMapData (\_ -> True) result }, noOut )
 
+        OnToggleDropdownRoles nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -589,7 +604,7 @@ viewPanel tree_data model =
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
                     , content_cls = "p-0 has-border-light"
-                    , content_html = viewSelectorTree (OnChangeTarget tree_data) [ model.target.nameid ] tree_data
+                    , content_html = viewSelectorTree (OnChangeTarget tree_data) OnToggleDropdownRoles [ model.target.nameid ] model.expanded_lines tree_data
                     }
                 , div [ class "control has-icons-left" ]
                     [ input
