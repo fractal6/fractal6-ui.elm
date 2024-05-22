@@ -40,15 +40,15 @@ import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
 })();
 
 const d3 = Object.assign(
-	{},
-	{
-		select,
-		timer,
-		interpolateZoom,
-		easePolyInOut,
-		hierarchy, pack
-		//scaleOrdinal,
-	},
+    {},
+    {
+        select,
+        timer,
+        interpolateZoom,
+        easePolyInOut,
+        hierarchy, pack
+        //scaleOrdinal,
+    },
 )
 
 const NodeType = {
@@ -75,19 +75,19 @@ const NodeVisibility = {
 
 // Flat list of nodes (unordered) to nested tree structure
 // from: https://stackoverflow.com/questions/18017869/build-tree-array-from-flat-array-in-javascript/40732240#40732240
-const formatGraph = dataset =>  {
+const formatGraph = dataset => {
     var dataTree = [];
     var dataDict = Object.create(null);
 
     dataset.forEach((aData, i) => {
         dataDict[aData.nameid] = {
             ...aData,
-            children : [],
-            depth : 0
+            children: [],
+            depth: 0
         }
     });
 
-    dataset.forEach( aData => {
+    dataset.forEach(aData => {
         // Filter Speciale Role nodes
         if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner) {
             delete dataDict[aData.nameid]
@@ -100,7 +100,7 @@ const formatGraph = dataset =>  {
         //    return
         //}
 
-        if(aData.parent) {
+        if (aData.parent) {
             // If private date contains public, some parent may be
             // hidden here.
             if (!dataDict[aData.parent.nameid]) {
@@ -142,18 +142,18 @@ const computeDepth = (obj, depth, neigbor) => {
         var n_bots = obj.children.filter(x => x.role_type == RoleType.Bot).length
         var n_roles = obj.children.filter(x => x.type_ == NodeType.Role && x.role_type != RoleType.Bot).length
         var n_circles = obj.children.filter(x => x.type_ == NodeType.Circle).length
-        var bot_to_add = 6 - n_bots - n_roles * 3 - n_circles*3;
-        for (var i=0; i < bot_to_add; i++) {
+        var bot_to_add = 6 - n_bots - n_roles * 3 - n_circles * 3;
+        for (var i = 0; i < bot_to_add; i++) {
             obj.children.push({
                 type_: "Hidden",
                 role_type: RoleType.Bot,
-                name:"",
+                name: "",
             })
         }
 
         // Compute cumchild and maxdepth
-        obj.children.forEach((d, i) =>  {
-            var d = computeDepth(d, currentdepth+1, obj.children.length-1);
+        obj.children.forEach((d, i) => {
+            var d = computeDepth(d, currentdepth + 1, obj.children.length - 1);
             var tmpDepth = d.maxdepth;
             cumchild += d.cumchild;
             if (tmpDepth > maxdepth) {
@@ -164,7 +164,7 @@ const computeDepth = (obj, depth, neigbor) => {
     maxdepth = maxdepth + 1;
     cumchild = cumchild + 1;
     obj.cumchild = cumchild;
-    return {maxdepth, cumchild}
+    return { maxdepth, cumchild }
 }
 
 export const GraphPack = {
@@ -236,14 +236,14 @@ export const GraphPack = {
     nodeOffsetY: 0,
 
     // State
-    colToCircle : {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
-    nextCol     : 1,
-    colorCircle : null,
-    rootNode    : null, // The root node of the graph
-    focusedNode : null, // The node that has the active focus
-    zoomedNode  : null, // The node that has is centered
-    hoveredNode : null, // The node that is curently hoovered
-    isFrozen    : false, // Tooltip click state
+    colToCircle: {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
+    nextCol: 1,
+    colorCircle: null,
+    rootNode: null, // The root node of the graph
+    focusedNode: null, // The node that has the active focus
+    zoomedNode: null, // The node that has is centered
+    hoveredNode: null, // The node that is curently hoovered
+    isFrozen: false, // Tooltip click state
     isFrozenMenu: false, // Tooltip right click state
     handlers: [],
 
@@ -317,15 +317,15 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
 
         // Draw canvas buttons
-        this.$canvasButtons.style.height = this.height-20 +"px";
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
-        this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
+        this.$canvasButtons.style.height = this.height - 20 + "px";
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - 8 - scrollLeft + "px";
+        this.$canvasButtons.style.top = r.top + 13 - scrollTop + "px";
         this.$canvasButtons.classList.remove("is-invisible");
 
         // Draw welcome buttons
         if (this.$welcomeButtons) {
-            this.$welcomeButtons.style.left = r.left + r.width/2 - this.$welcomeButtons.offsetWidth/2 +8 -scrollLeft +"px";
-            this.$welcomeButtons.style.top = r.top + this.$welcomeButtons.offsetHeight*0.75 -scrollTop +"px";
+            this.$welcomeButtons.style.left = r.left + r.width / 2 - this.$welcomeButtons.offsetWidth / 2 + 8 - scrollLeft + "px";
+            this.$welcomeButtons.style.top = r.top + this.$welcomeButtons.offsetHeight * 0.75 - scrollTop + "px";
             this.$welcomeButtons.classList.remove("is-invisible");
         }
 
@@ -336,16 +336,16 @@ export const GraphPack = {
     // Size the canvas
     computeGeometry() {
         this.computedWidth = this.$canvasParent.offsetWidth; //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
-        this.computedHeight = (window.innerHeight)/2;
+        this.computedHeight = (window.innerHeight) / 2;
 
         // Canvas settings
         this.width = Math.max(this.computedWidth, this.minWidth);
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
-        this.rayon = (Math.min(this.width*0.97, this.height*0.97)) / 2;
-        this.centerX = this.width/2;
-        this.centerY = this.height/2;
+        this.rayon = (Math.min(this.width * 0.97, this.height * 0.97)) / 2;
+        this.centerX = this.width / 2;
+        this.centerY = this.height / 2;
         this.zoomCtx = {
             // Init at CenterX, centerY
             centerX: this.centerX,
@@ -365,7 +365,7 @@ export const GraphPack = {
         }
 
         // Size Element next to the canvas
-        this.$nextToChart.style.minHeight = 1.5*this.height+"px";
+        this.$nextToChart.style.minHeight = 1.5 * this.height + "px";
     },
 
     //The draw function of the canvas that gets called on each frame
@@ -382,7 +382,6 @@ export const GraphPack = {
 
         //Select our dummy nodes and draw the data to canvas.
         this.drawCurrent(isHidden, ctx2d)
-
     },
 
     drawCurrent(isHidden, ctx) {
@@ -398,7 +397,6 @@ export const GraphPack = {
         if (!isHidden)
             // Draw names when zooming in/out
             this.drawNodeNames(this.zoomedNode)
-
     },
 
     // Not ready...Doesn't work.
@@ -457,7 +455,7 @@ export const GraphPack = {
             var color = this.focusCircleColor;
             // Draw border
             ctx.beginPath();
-            ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon+0.1+ w*0.5,
+            ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon + 0.1 + w * 0.5,
                 0, 2 * Math.PI, true);
             ctx.lineWidth = w;
             ctx.strokeStyle = color;
@@ -473,7 +471,7 @@ export const GraphPack = {
         else this.addNodeCtx(node);
 
         // Get the circle Color
-        if(isHidden) {
+        if (isHidden) {
             // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.colorid;
         } else if (opac && (opac[0] == "#" || !opac.length)) {
@@ -521,9 +519,9 @@ export const GraphPack = {
             ctx.beginPath();
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon- w*0.5,
+            ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon - w * 0.5,
                 0, 2 * Math.PI, true);
-            ctx.lineWidth   = w;
+            ctx.lineWidth = w;
             ctx.strokeStyle = color;
             ctx.stroke();
             ctx.setLineDash([]);
@@ -538,9 +536,9 @@ export const GraphPack = {
             // Do not print names in cercle too many child
             return
         }
-        for (var i=0; i < node.data.children.length; i++) {
+        for (var i = 0; i < node.data.children.length; i++) {
             n = node.children[i];
-            if (!n.ctx || node.depth !== n.depth-1) continue
+            if (!n.ctx || node.depth !== n.depth - 1) continue
 
             // Draw names
             if (defOpac) {
@@ -568,10 +566,10 @@ export const GraphPack = {
         // Name
         text = node.data.name;
         textWidth = ctx2d.measureText(text).width;
-        if (textWidth > node.ctx.rayon*2.5) {
+        if (textWidth > node.ctx.rayon * 2.5) {
             text = text.split(" ").map(s => s.substring(0, 3)).join("·")
             textWidth = ctx2d.measureText(text).width;
-            if (textWidth > node.ctx.rayon*2.5) {
+            if (textWidth > node.ctx.rayon * 2.5) {
                 text = text.split("·").map(s => s.substring(0, 1)).join("·")
             }
         }
@@ -597,8 +595,8 @@ export const GraphPack = {
                 text = "\ue95f " + text;
             }
         }
-        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
-        ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
+        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
+        ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
         ctx2d.fill();
         ctx2d.stroke();
 
@@ -621,10 +619,10 @@ export const GraphPack = {
         // Name
         text = node.data.name;
         var textWidth = ctx2d.measureText(text).width;
-        if (textWidth+textHeight/2 > node.ctx.rayon*2) {
+        if (textWidth + textHeight / 2 > node.ctx.rayon * 2) {
             text = text.split(" ").map(s => s.substring(0, 3)).join("·")
             textWidth = ctx2d.measureText(text).width;
-            if (textWidth+textHeight/2 > node.ctx.rayon*2) {
+            if (textWidth + textHeight / 2 > node.ctx.rayon * 2) {
                 text = text.split("·").map(s => s.substring(0, 1)).join("·")
             }
         }
@@ -648,15 +646,15 @@ export const GraphPack = {
             ctx2d.fillStyle = this.nameColor + "99";
             if (node.data.role_type == RoleType.Bot) {
                 //ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.5);
-                ctx2d.fillText('\ue962', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                ctx2d.fillText('\ue962', node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.45);
             } else if (node.data.type_ == NodeType.Role) {
                 // Role type icon
                 if (node.data.role_type == RoleType.Coordinator) {
-                    ctx2d.fillText('\ue963', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                    ctx2d.fillText('\ue963', node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.45);
                 } else if (node.data.role_type == RoleType.Owner) {
-                    ctx2d.fillText('\ue964', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                    ctx2d.fillText('\ue964', node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.45);
                 } else {
-                    ctx2d.fillText('\uf06c', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+                    ctx2d.fillText('\uf06c', node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.45);
                 }
             }
             ctx2d.fill();
@@ -664,15 +662,15 @@ export const GraphPack = {
             // Username
             if (node.data.first_link) {
                 var text_username = null;
-                ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
-                text_username = "@"+node.data.first_link.username;
+                ctx2d.font = fontSize - 7 + "px " + this.fontstyleCircle;
+                text_username = "@" + node.data.first_link.username;
                 textWidth = ctx2d.measureText(text_username).width;
-                if (textWidth > node.ctx.rayon*2)
+                if (textWidth > node.ctx.rayon * 2)
                     text_username = "@"
 
                 ctx2d.beginPath();
                 ctx2d.fillStyle = this.usernameColor;
-                ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + node.ctx.rayon*0.4);
+                ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + node.ctx.rayon * 0.4);
                 ctx2d.fill();
             }
         }
@@ -707,7 +705,7 @@ export const GraphPack = {
             ctx2d.beginPath();
             ctx2d.lineWidth = w;
             ctx2d.strokeStyle = color;
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon+0.1+ w/2, 0, 2 * Math.PI, true);
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
             ctx2d.stroke();
             //ctx2d.save();
 
@@ -734,9 +732,9 @@ export const GraphPack = {
         if (node == this.focusedNode) w = this.focusCircleWidth;
         else w = this.hoverCircleWidth;
         //this.ctx2d.restore();
-        this.ctx2d.lineWidth = w*1.5;
+        this.ctx2d.lineWidth = w * 1.5;
         this.ctx2d.strokeStyle = this.getNodeColor(node.parent || this.rootNode);
-        this.ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon+0.1 + w/2, 0, 2 * Math.PI, true);
+        this.ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
         this.ctx2d.stroke();
 
         // Fix canvas alteration (text cutted and opacity stacked)
@@ -749,7 +747,7 @@ export const GraphPack = {
             // First reset the node colors
             this.drawNode(this.zoomedNode, false, this.ctx2d, this.backgroundColor);
             //2) Then redraw the inner circle with its parents colors.
-            for (var j=0; j < this.zoomedNode.depth; j++) {
+            for (var j = 0; j < this.zoomedNode.depth; j++) {
                 var color = this.getNodeColor(p, this.outsideZoomOpacity);
                 this.drawNode(this.zoomedNode, false, this.ctx2d, color);
                 parent = p.parent;
@@ -797,25 +795,25 @@ export const GraphPack = {
         var scrollTop = bodyRect.top;
         var r = this.$canvas.getBoundingClientRect();
         var tw = $tooltip.clientWidth;
-        var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
+        var l = (node.ctx.centerX + r.left - scrollLeft - (tw / 2 + 1));
         if (node == this.focusedNode == this.zoomedNode) {
             // below the circle
-            var hw = (-$tooltip.clientHeight + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+            var hw = (-$tooltip.clientHeight + 2 * node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
         } else {
             // above the circle
-            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+            var hw = ($tooltip.clientHeight + 2 * node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
         }
 
-        if (l+tw/2-r.left < 0 || r.left+r.width-tw/2-l < 0 ) {
+        if (l + tw / 2 - r.left < 0 || r.left + r.width - tw / 2 - l < 0) {
             // the tooltip overflow "too much" outside the canvas. (left/right
             this.clearNodeTooltip();
             return
-        } else if ( t+$tooltip.clientHeight/3-r.top < 0) {
+        } else if (t + $tooltip.clientHeight / 3 - r.top < 0) {
             // Overflow on top
-            var hw = (-$tooltip.clientHeight/2 + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+            var hw = (-$tooltip.clientHeight / 2 + 2 * node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
         }
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";
@@ -845,7 +843,7 @@ export const GraphPack = {
         //http://bl.ocks.org/smoli/d7e4f9199c15d71258b5
         if (this.isZooming) return false
 
-        if (focus && typeof(focus) === 'string') {
+        if (focus && typeof (focus) === 'string') {
             var maybeFocus = this.nodesDict[unescape(focus)];
             if (!maybeFocus) {
                 console.warn("Unknown node:", focus);
@@ -872,12 +870,12 @@ export const GraphPack = {
         // Configre interpolator
         var zoomFactor = this.getZoomFactor(zoomTo);
         var vp = [zoomTo.x, zoomTo.y, zoomTo.r * zoomFactor]; //The center and width of the new "viewport"
-        delay = (delay === undefined ? 0 : delay*this.minZoomDuration);
-        var maxDuration = this.minZoomDuration*2;
+        delay = (delay === undefined ? 0 : delay * this.minZoomDuration);
+        var maxDuration = this.minZoomDuration * 2;
         var interpolator = d3.interpolateZoom(this.vpOld, vp); //Create interpolation between current and new "viewport"
         var duration = Math.min(interpolator.duration, maxDuration) || delay; //Interpolation gives back a suggested duration
-        duration = (duration < 0) ?  maxDuration : duration;
-        var timeElapsed = 0+delay; //Set the time elapsed for the interpolateZoom function to 0
+        duration = (duration < 0) ? maxDuration : duration;
+        var timeElapsed = 0 + delay; //Set the time elapsed for the interpolateZoom function to 0
         //console.log("old", this.vpOld, "new", vp, "delay", delay)
         this.vpOld = vp; //Save the "viewport" of the next state as the next "old" state
 
@@ -901,7 +899,7 @@ export const GraphPack = {
             return true
         };
 
-        var	dt = 0;
+        var dt = 0;
         var t = d3.timer((elapsed) => {
             //stats.begin();
             this.isZooming = true;
@@ -930,7 +928,7 @@ export const GraphPack = {
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
     nodeSizeTopDown_orig(n, stats) {
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        return 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
+        return 10000 / (stats.maxdepth) ** (Math.max(1.5, n.depth)) / dvd
     },
     nodeSizeTopDown2(n, stats) {
         var t = 0;
@@ -944,8 +942,8 @@ export const GraphPack = {
         }
 
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        var v = t+rt;
-        return Math.log(1/n.depth**v+1) / dvd
+        var v = t + rt;
+        return Math.log(1 / n.depth ** v + 1) / dvd
     },
     nodeSizeTopDown(n, stats) {
         //var dvd = 1;
@@ -966,13 +964,13 @@ export const GraphPack = {
             }
         }
 
-        return v / (n.depth+1)**3
+        return v / (n.depth + 1) ** 3
     },
 
     nodeSizeBottomUp(n, stats) {
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
-        return 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
+        return 10000 / (stats.maxdepth) ** (Math.max(0, sizeDefault - n.depth)) / dvd
         //return v ** (n.depth+1)
     },
 
@@ -998,12 +996,12 @@ export const GraphPack = {
         //.domain(Array.from({length:this.colorCircleRange.length},(v,k)=>k%this.colorCircleRange.length))
         //.range(this.colorCircleRange)
         //.unknown(this.backgroundColor);
-        return this.colorCircleRange[k%this.colorCircleRange.length]
+        return this.colorCircleRange[k % this.colorCircleRange.length]
     },
 
     colorToTextColor(color) { // @duplicate: exists as elm function.
         var c;
-        if (["#7FDBFF" ,"#39CCCC" ,"#01FF70" ,"#FFDC00" ,"#AAAAAA" ,"#DDDDDD" ].includes(color.toUpperCase())) {
+        if (["#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#AAAAAA", "#DDDDDD"].includes(color.toUpperCase())) {
             c = "#000";
         } else {
             c = "#fff";
@@ -1018,20 +1016,20 @@ export const GraphPack = {
         opac = opac || "";
 
         // See doc here: https://www.w3resource.com/html5-canvas/html5-canvas-gradients-patterns.php
-        var grd = this.ctx2d.createRadialGradient(node.ctx.centerX-node.ctx.rayon/4, node.ctx.centerY-node.ctx.rayon/2, 0,
+        var grd = this.ctx2d.createRadialGradient(node.ctx.centerX - node.ctx.rayon / 4, node.ctx.centerY - node.ctx.rayon / 2, 0,
             node.ctx.centerX, node.ctx.centerY, node.ctx.rayon);
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
             grd.addColorStop(0, shadeColor(color, 10) + opac);
             grd.addColorStop(0.2, color + opac);
-            grd.addColorStop(1, this.colorCircle(depth+1) + opac);
+            grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
             if (color.substring(0, 1) == "r") {
                 grd = color;
             } else {
-                grd.addColorStop(0, color+opac);
-                grd.addColorStop(1, shadeColor(color, -20)+opac);
+                grd.addColorStop(0, color + opac);
+                grd.addColorStop(1, shadeColor(color, -20) + opac);
             }
         } else {
             console.warn("Node type unknonw", node.data.type_);
@@ -1048,9 +1046,9 @@ export const GraphPack = {
             } else {
                 zoomFactor = this.zoomFactorRole;
             }
-        } else if (node.data.parent == undefined ) {
+        } else if (node.data.parent == undefined) {
             zoomFactor = this.zoomFactorRoot;
-        } else if (node.children && node.children.length >= 10 ) {
+        } else if (node.children && node.children.length >= 10) {
             zoomFactor = this.zoomFactorRoot;
         } else {
             zoomFactor = this.zoomFactorCircle;
@@ -1165,14 +1163,14 @@ export const GraphPack = {
         // Compute circle packing
         this.gPack = d3.pack()
             .padding(this.circlesPadding)
-            .size([this.rayon*2, this.rayon*2])
-        (d3.hierarchy(graph)
-            .sum(d => this.nodeSize(d, this.gStats))
-            //.sort(nodeNewestOrder)
-            //.sort(nodeNameOrder)
-            //.sort(nodeTypeOrder)
-            .sort(nodeNameTypeOrder)
-        );
+            .size([this.rayon * 2, this.rayon * 2])
+            (d3.hierarchy(graph)
+                .sum(d => this.nodeSize(d, this.gStats))
+                //.sort(nodeNewestOrder)
+                //.sort(nodeNameOrder)
+                //.sort(nodeTypeOrder)
+                .sort(nodeNameTypeOrder)
+            );
 
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants(graph);
@@ -1197,7 +1195,7 @@ export const GraphPack = {
         if (!n) {
             // focus on root node by default
             this.focusedNode = this.rootNode;
-        } else if (typeof(n) === 'string') {
+        } else if (typeof (n) === 'string') {
             // Whit it doesnt works ?
             //this.focusedNode = this.nodes.find(n => {n.data.nameid === n });
             this.focusedNode = this.nodesDict[n];
@@ -1223,7 +1221,7 @@ export const GraphPack = {
     setZoomed() {
         var zoomTo;
         var focus = this.focusedNode;
-        if (focus.parent && (focus.data.children === null || focus.data.children.length == 0)) {
+        if (focus.parent && (focus.data.children === null || focus.data.children.filter(x => x.type_ !== "Hidden").length == 0)) {
             zoomTo = focus.parent;
         } else {
             zoomTo = focus;
@@ -1241,7 +1239,7 @@ export const GraphPack = {
     genColor() {
         var ret = [];
         // via http://stackoverflow.com/a/15804183
-        if(this.nextCol < 16777215) {
+        if (this.nextCol < 16777215) {
             ret.push(this.nextCol & 0xff); // R
             ret.push((this.nextCol & 0xff00) >> 8); // G
             ret.push((this.nextCol & 0xff0000) >> 16); // B
@@ -1255,7 +1253,7 @@ export const GraphPack = {
     // Get the mouse coordinate whithin the canvas reference.
     getPointerCtx(e) {
         var r = this.$canvas.getBoundingClientRect();
-        return {mouseX: (e.clientX - r.left) , mouseY: (e.clientY - r.top)}
+        return { mouseX: (e.clientX - r.left), mouseY: (e.clientY - r.top) }
     },
 
     // Get the node under cursor in the canvas
@@ -1268,7 +1266,7 @@ export const GraphPack = {
         // This will return that pixel's color
         var pixel = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
         //Our map uses these rgb strings as keys to nodes.
-        var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ")";
+        var color = "rgb(" + pixel[0] + "," + pixel[1] + "," + pixel[2] + ")";
         var node = this.colToCircle[color];
         return node;
     },
@@ -1298,7 +1296,7 @@ export const GraphPack = {
         }
         rayon *= (zoomCtx.scale);
         //rayon = node.r * (zoomCtx.scale);
-        node.ctx = {centerX, centerY, rayon};
+        node.ctx = { centerX, centerY, rayon };
         return
     },
 
@@ -1308,7 +1306,7 @@ export const GraphPack = {
     // cond: what to test
     checkIf(p, cond, n) {
         var test = false;
-        switch(cond) {
+        switch (cond) {
             case 'InCanvas':
                 if (!this.$canvas) break
                 var r = this.$canvas.getBoundingClientRect();
@@ -1344,32 +1342,32 @@ export const GraphPack = {
                 // --
 
                 var h = this.$tooltip.clientHeight;
-                var w = this.$tooltip.clientWidth/2 + h;
+                var w = this.$tooltip.clientWidth / 2 + h;
                 var r = n.ctx.rayon;
-                var x = {x: p.mouseX, y: p.mouseY}
-                var a = {x: n.ctx.centerX, y: n.ctx.centerY + r}
-                var b = {x: n.ctx.centerX - w, y: n.ctx.centerY - r - h}
-                var c = {x: n.ctx.centerX + w, y: n.ctx.centerY - r - h}
+                var x = { x: p.mouseX, y: p.mouseY }
+                var a = { x: n.ctx.centerX, y: n.ctx.centerY + r }
+                var b = { x: n.ctx.centerX - w, y: n.ctx.centerY - r - h }
+                var c = { x: n.ctx.centerX + w, y: n.ctx.centerY - r - h }
                 // First verify that the pointer is bear the border circle
-                test = ((p.mouseX-n.ctx.centerX)**2 + (p.mouseY-n.ctx.centerY)**2 >= r**2)
+                test = ((p.mouseX - n.ctx.centerX) ** 2 + (p.mouseY - n.ctx.centerY) ** 2 >= r ** 2)
                     && ptInTriangle(x, a, b, c)
                 break
             case 'InFocus':
                 var x = p.mouseX - this.focusedNode.ctx.centerX;
                 var y = p.mouseY - this.focusedNode.ctx.centerY;
-                test = x**2 + y**2 <= (this.focusedNode.ctx.rayon)**2 ;
+                test = x ** 2 + y ** 2 <= (this.focusedNode.ctx.rayon) ** 2;
                 break
             case 'InZoomed':
                 var x = p.mouseX - this.zoomedNode.ctx.centerX;
                 var y = p.mouseY - this.zoomedNode.ctx.centerY;
-                test = x**2 + y**2 <= (this.zoomedNode.ctx.rayon)**2 ;
+                test = x ** 2 + y ** 2 <= (this.zoomedNode.ctx.rayon) ** 2;
                 break
             case 'InVoid':
                 if (!this.rootNode.ctx) break
                 var x = p.mouseX - this.rootNode.ctx.centerX;
                 var y = p.mouseY - this.rootNode.ctx.centerY;
                 // Security margin when movin to a tooltip that is outside the anchor
-                test = x**2 + y**2 > (this.rootNode.ctx.rayon+10)**2 ;
+                test = x ** 2 + y ** 2 > (this.rootNode.ctx.rayon + 10) ** 2;
                 break
             default:
                 console.error("Unknown condition: %s", cond)
@@ -1469,7 +1467,7 @@ export const GraphPack = {
         // First
         var x = canvas.width / 2;
         var y = canvas.height / 2;
-        var r = canvas.height/2.1 ;
+        var r = canvas.height / 2.1;
 
         ctx.lineWidth = 5;
         ctx.strokeStyle = this.hoverCircleColor;
@@ -1478,10 +1476,10 @@ export const GraphPack = {
         ctx.shadowBlur = 3;
         ctx.shadowColor = '#656565';
         //ctx.fillStyle = this.colorCircle(0);
-        ctx.fillStyle = shadeColor(this.colorCircle(0), -radius)+"55";
+        ctx.fillStyle = shadeColor(this.colorCircle(0), -radius) + "55";
 
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2*Math.PI, false);
+        ctx.arc(x, y, r, 0, 2 * Math.PI, false);
         //ctx.stroke();
         ctx.fill();
     },
@@ -1490,30 +1488,30 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
 
         var canvas = this.$canvas;
-		var ctx = this.ctx2d;
-		var x = canvas.width / 2;
-		var y = canvas.height / 2;
-		var radius = canvas.height/2.1;
+        var ctx = this.ctx2d;
+        var x = canvas.width / 2;
+        var y = canvas.height / 2;
+        var radius = canvas.height / 2.1;
 
-		ctx.lineWidth = 10;
-		ctx.strokeStyle = this.hoverCircleColor;
-		ctx.shadowOffsetX = 0;
-		ctx.shadowOffsetY = 0;
-		ctx.shadowBlur = 3;
-		ctx.shadowColor = '#656565';
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = this.hoverCircleColor;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 3;
+        ctx.shadowColor = '#656565';
 
         var isLoading = this.isLoading;
-		function animate(r) {
-			ctx.beginPath();
-			ctx.arc(x, y, r, 0, 2*Math.PI, false);
-			ctx.stroke();
-			r--;
+        function animate(r) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI, false);
+            ctx.stroke();
+            r--;
             // @Debug, can't we stopt it !?
             if (r <= 0) {
-                r = canvas.height/2.1;
+                r = canvas.height / 2.1;
             }
             if (isLoading) {
-                requestAnimationFrame(function () {
+                requestAnimationFrame(function() {
                     animate(radius)
                 });
             }
@@ -1551,13 +1549,13 @@ export const GraphPack = {
 
         // Create a hidden canvas in which each circle will have a different color.
         // We use this to capture the clicked on circle
-        var hiddenCanvas = d3.select("#"+this.canvasParentId).append("canvas")
+        var hiddenCanvas = d3.select("#" + this.canvasParentId).append("canvas")
             .attr("id", this.hiddenCanvasId)
             .attr("width", this.width)
             .attr("height", this.height)
-            .style("display","none");
+            .style("display", "none");
         this.$hiddenCanvas = hiddenCanvas.node();
-        this.hiddenCtx2d = this.$hiddenCanvas.getContext("2d", {willReadFrequently: true});
+        this.hiddenCtx2d = this.$hiddenCanvas.getContext("2d", { willReadFrequently: true });
 
         //this.hiddenCtx2d.clearRect(0, 0,this.width, this.height);
 
@@ -1612,27 +1610,29 @@ export const GraphPack = {
                 var isUpdated = false;
                 if (node) {
                     isUpdated = true;
-                    if (node === this.focusedNode) {
-                        // go to the parent node
-                        if (node !== this.rootNode) {
-                            node = node.parent;
-                        } else {
-                            isUpdated = false;
-                        }
+                    if (node === this.focusedNode && node === this.rootNode) {
+                        isUpdated = false;
                     }
                 }
 
                 if (isUpdated) {
-                    // Go to the clicked node
-                    if (this.focusedNode.data.type_ == NodeType.Role) {
-                        this.nodeClickedFromJs(node);
-                    } else {
+                    if (node.depth > this.focusedNode.depth) {
+                        // Goes down
+                        // --
                         // Do not dive more that one level down.
-                        while (node.parent !== this.focusedNode && node.parent) {
+                        while (node.parent && (node.parent !== this.focusedNode)) {
                             node = node.parent;
                         };
-                        this.nodeClickedFromJs(node);
+                    } else if (node.depth < this.focusedNode.depth || node.data.nameid === this.focusedNode.data.nameid) {
+                        // Goes up
+                        // --
+                        // go to the parent node
+                        node = node.parent;
+                    } else if (node.depth === this.focusedNode.depth) {
+                        // pass
                     }
+
+                    this.nodeClickedFromJs(node);
                 }
 
             } else if (e.button === 2) {
@@ -1642,7 +1642,7 @@ export const GraphPack = {
             return false;
         };
 
-        // Listen for mouse moves/hooverin on the main canvas
+        // Listen for mouse moves/hoovering on the main canvas
         var canvasMouseMoveEvent = e => {
             if (this.isZooming) return false
             if (this.isFrozen) return false
@@ -1732,7 +1732,7 @@ export const GraphPack = {
         };
 
         // Mouse wheel To study
-		//canvasMouseWheelEvent =  e => {
+        //canvasMouseWheelEvent =  e => {
         //    if (this.isZooming || this.isFrozen) { return e.preventDefault() }
         //    if (e.deltaY < 0){
         //        // upscroll code
@@ -1741,22 +1741,22 @@ export const GraphPack = {
         //            e.preventDefault()
         //            nodeClickEvent(e)
         //        }
-		//	} else if (e.deltaY > 0) {
-		//		// downscroll code
+        //	} else if (e.deltaY > 0) {
+        //		// downscroll code
         //        if (this.focusedNode && this.focusedNode.parent) {
         //            e.preventDefault()
         //            var node = this.focusedNode.parent;
         //            this.nodeClickedFromJs(node);
         //        }
-		//	}
-		//}
+        //	}
+        //}
 
         // Canvas button events redirection
         // Review -- Better implementation ?
         var canvasButtonsClick = e => {
             var p = this.getPointerCtx(e);
             var isInButtons = false;
-            this.$canvasButtons.childNodes.forEach( o => {
+            this.$canvasButtons.childNodes.forEach(o => {
                 isInButtons |= this.checkIf(p, 'InButtons', o);
             });
             if (!isInButtons) {
@@ -1767,7 +1767,7 @@ export const GraphPack = {
         var canvasButtonsMove = e => {
             var p = this.getPointerCtx(e);
             var isInButtons = false;
-            this.$canvasButtons.childNodes.forEach( o => {
+            this.$canvasButtons.childNodes.forEach(o => {
                 isInButtons |= this.checkIf(p, 'InButtons', o);
             });
             if (!isInButtons) {
@@ -1814,7 +1814,7 @@ export const GraphPack = {
         this.isFrozen = false;
         this.isFrozenMenu = false;
 
-		this.drawCanvas(true); // to add node.ctx
+        this.drawCanvas(true); // to add node.ctx
 
         //
         // Event listeners
@@ -1824,7 +1824,7 @@ export const GraphPack = {
         var $subTooltipAction = document.getElementById(this.$tooltip.dataset.eventAction);
 
         // Cleanup old handlers to avoid dragons !
-        for (var i=0; i<this.handlers.length; i++) {
+        for (var i = 0; i < this.handlers.length; i++) {
             this.handlers[i][0].removeEventListener(this.handlers[i][1], this.handlers[i][2]);
         }
 
@@ -1845,7 +1845,7 @@ export const GraphPack = {
         ];
 
         // Setup handlers
-        for (var i=0; i<this.handlers.length; i++) {
+        for (var i = 0; i < this.handlers.length; i++) {
             this.handlers[i][0].addEventListener(this.handlers[i][1], this.handlers[i][2]);
         }
 

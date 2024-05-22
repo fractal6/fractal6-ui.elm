@@ -2250,7 +2250,10 @@ tr.mediaBox {
 
     .tag {
         border: 1px solid transparent;
-        &:hover { border-color: var(--link2); }
+        &:hover {
+            border-color: var(--link2);
+            cursor: pointer !important;
+        }
     }
 }
 .tension-labelsList {
