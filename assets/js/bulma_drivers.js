@@ -583,11 +583,25 @@ function markupRichText(e, el, app) {
 
         // /[^\S\r\n]/ -> all whitespace but without newline
         var subvalue = el.value.slice(Math.max(0, start - 500), start);
-        var currentLineList = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
+
+        // Extract the cursor previous line
+        //var previousLine = null
+        //var previousLineEnd = subvalue.lastIndexOf("\n");
+        //if (previousLineEnd != -1) {
+        //    var previousLineStart = subvalue.slice(0, previousLineEnd).lastIndexOf("\n");
+        //    if (previousLineStart == -1) {
+        //        previousLineStart = 0;
+        //    }
+        //    previousLine = subvalue.slice(previousLineStart + 1, previousLineEnd);
+        //}
+
+        // Extract thre cursor line
+        var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
         var replacer;
 
-        if (currentLineList >= 0) {
-            var s = subvalue.slice(currentLineList, currentLineList + 10).trimLeft().slice(0, 3)
+        if (currentLineStart >= 0) {
+            var currentLine = subvalue.slice(currentLineStart)
+            var s = currentLine.trimLeft().slice(0, 3)
             if (s == "- [") {
                 replacer = "\n" + "- [ ] ";
             } else if (parseInt(s)) {
@@ -596,14 +610,17 @@ function markupRichText(e, el, app) {
             } else {
                 replacer = "\n" + s[0] + " ";
             }
-            //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
-            //    // Tab (4 space) for **code** indentation
-            //    var replacer = "\t";
+
+            if (currentLine.trimLeft() == replacer.trimLeft()) {
+                start -= replacer.length;
+                replacer = "\n\n";
+            }
         } else {
             return
         }
 
         e.preventDefault();
+
 
         // set textarea value to: text before caret + tab + text after caret
         el.value = el.value.substring(0, start) +
