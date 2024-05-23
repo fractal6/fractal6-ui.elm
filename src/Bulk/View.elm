@@ -395,6 +395,16 @@ statusColor s =
             "danger"
 
 
+statusColorReverse : TensionStatus.TensionStatus -> String
+statusColorReverse s =
+    case s of
+        TensionStatus.Open ->
+            "danger"
+
+        TensionStatus.Closed ->
+            "success"
+
+
 tensionTypeColor : String -> TensionType.TensionType -> String
 tensionTypeColor elt tt =
     case tt of

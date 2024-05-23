@@ -30,12 +30,13 @@ const closeOnClickBurger = ['userMenu']; // data-target of burger
 export function InitBulma(app, session, eltId) {
     var handlers = session.bulmaHandlers;
     if (!eltId) console.log(`Activate Bulma driver (%d)...`, handlers.length);
+    else console.log(".")
 
     // This timeout is needed when bulma driver is called by elm Cmd,
     // to wait for the Html Msg to be updated by elm in order
     // to have new node accessible by Javascript.
     //document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(BulmaDriver, 333, app, eltId, handlers);
+    setTimeout(BulmaDriver, 333, app, eltId, handlers);
     //});
 }
 
@@ -59,20 +60,20 @@ export function updateLang(app, lang) {
     setTimeout(() => {
         var loc = window.location;
         window.location.replace(
-            loc.protocol + '//' + loc.host + "/"+lang.toLowerCase() + loc.pathname + loc.search
+            loc.protocol + '//' + loc.host + "/" + lang.toLowerCase() + loc.pathname + loc.search
         );
-		// Maybe try this to force reoload ?
+        // Maybe try this to force reoload ?
         // https://itecnote.com/tecnote/javascript-force-a-reload-of-page-in-chrome-using-javascript-no-cache/
-		//$.ajax({
-		//	url: window.location.href,
-		//	headers: {
-		//		"Pragma": "no-cache",
-		//		"Expires": -1,
-		//		"Cache-Control": "no-cache"
-		//	}
-		//}).done(function () {
-		//	window.location.reload(true);
-		//});
+        //$.ajax({
+        //	url: window.location.href,
+        //	headers: {
+        //		"Pragma": "no-cache",
+        //		"Expires": -1,
+        //		"Cache-Control": "no-cache"
+        //	}
+        //}).done(function () {
+        //	window.location.reload(true);
+        //});
     }, 333);
 }
 
@@ -127,10 +128,10 @@ export function BulmaDriver(app, target, handlers) {
             // Apply the handler to the first given object
             var _hdl_;
             if (evt === "esc") {
-                evt = "keydown" ;
+                evt = "keydown";
                 _hdl_ = e => catchEsc(e, hdl, ...objs);
             } else if (evt === "enter") {
-                evt = "keydown" ;
+                evt = "keydown";
                 _hdl_ = e => catchEnter(e, hdl, ...objs);
             } else {
                 _hdl_ = e => hdl(e, ...objs);
@@ -147,7 +148,7 @@ export function BulmaDriver(app, target, handlers) {
     // @DEBUG: use a HashMap instead!
     function hasHandler(evt, hdl, elt) {
         // Check if the object is already in the list of handler return true
-        for (var i=0; i < handlers.length; i++) {
+        for (var i = 0; i < handlers.length; i++) {
             if (evt === handlers[i][0] && hdl.name === handlers[i][1].name && elt === handlers[i][2]) {
                 return true
             }
@@ -157,7 +158,7 @@ export function BulmaDriver(app, target, handlers) {
 
     // Remove handlers of document and not connected elements.
     var idxToRemove = [];
-    for (var i=0; i < handlers.length; i++) {
+    for (var i = 0; i < handlers.length; i++) {
         var evt = handlers[i][0];
         var elt = handlers[i][2];
         var func = handlers[i][3];
@@ -166,8 +167,8 @@ export function BulmaDriver(app, target, handlers) {
             idxToRemove.push(i)
         }
     }
-    for (var i = idxToRemove.length -1; i >= 0; i--)
-        handlers.splice(idxToRemove[i],1);
+    for (var i = idxToRemove.length - 1; i >= 0; i--)
+        handlers.splice(idxToRemove[i], 1);
 
 
     //////////////////// Setup Bulma Components ////////////////////
@@ -176,56 +177,56 @@ export function BulmaDriver(app, target, handlers) {
 
     const $themeTrigger = $doc.querySelectorAll('#themeTrigger');
     if ($themeTrigger.length > 0) {
-        $themeTrigger.forEach( el => {
+        $themeTrigger.forEach(el => {
             setupHandler("click", triggerTheme, el, el, app);
         });
     }
 
     const $langTrigger = $doc.querySelectorAll('.langTrigger');
     if ($langTrigger.length > 0) {
-        $langTrigger.forEach( el => {
+        $langTrigger.forEach(el => {
             setupHandler("click", triggerLang, el, el, app);
         });
     }
 
     const $helpTrigger = $doc.querySelectorAll('.helpTrigger');
     if ($helpTrigger.length > 0) {
-        $helpTrigger.forEach( el => {
+        $helpTrigger.forEach(el => {
             setupHandler("click", triggerHelp, el, el, app);
         });
     }
 
     const $joinTrigger = $doc.querySelectorAll('.joinTrigger');
     if ($joinTrigger.length > 0) {
-        $joinTrigger.forEach( el => {
+        $joinTrigger.forEach(el => {
             setupHandler("click", triggerJoin, el, el, app);
         });
     }
 
     const $joinTrigger2 = $doc.querySelectorAll('.joinPendingTrigger');
     if ($joinTrigger2.length > 0) {
-        $joinTrigger2.forEach( el => {
+        $joinTrigger2.forEach(el => {
             setupHandler("click", triggerJoin2, el, el, app);
         });
     }
 
     const $inviteTrigger = $doc.querySelectorAll('.inviteTrigger');
     if ($inviteTrigger.length > 0) {
-        $inviteTrigger.forEach( el => {
+        $inviteTrigger.forEach(el => {
             setupHandler("click", triggerInvite, el, el, app);
         });
     }
 
     const $menuOrgaTrigger = $doc.querySelectorAll('.menuOrgaTrigger');
     if ($menuOrgaTrigger.length > 0) {
-        $menuOrgaTrigger.forEach( el => {
+        $menuOrgaTrigger.forEach(el => {
             setupHandler("click", triggerMenuOrga, el, el, app);
         });
     }
 
     const $menuTreeTrigger = $doc.querySelectorAll('.menuTreeTrigger');
     if ($menuTreeTrigger.length > 0) {
-        $menuTreeTrigger.forEach( el => {
+        $menuTreeTrigger.forEach(el => {
             setupHandler("click", triggerMenuTree, el, el, app);
         });
     }
@@ -237,7 +238,7 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $autofocuses = $doc.querySelectorAll('.autofocus');
     if ($autofocuses.length > 0) {
-        $autofocuses.forEach( el => {
+        $autofocuses.forEach(el => {
             el.focus();
             return true
         });
@@ -250,7 +251,7 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $submitFocuses = $doc.querySelectorAll('.submitFocus');
     if ($submitFocuses.length > 0) {
-        $submitFocuses.forEach( el => {
+        $submitFocuses.forEach(el => {
             // /!\ keypress won't capture TAB and some other keys.
             setupHandler("keydown", submitFocus, el, el);
         });
@@ -263,7 +264,7 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $followFocuses = $doc.querySelectorAll('.followFocus');
     if ($followFocuses.length > 0) {
-        $followFocuses.forEach( el => {
+        $followFocuses.forEach(el => {
             setupHandler("keydown", moveFocus, el, el);
         });
     }
@@ -275,7 +276,7 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $clips = $doc.querySelectorAll('[data-clipboard]');
     if ($clips.length > 0) {
-        $clips.forEach( el => {
+        $clips.forEach(el => {
             setupHandler("click", copyToClipboard, el, el);
         });
     }
@@ -286,8 +287,8 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $checkboxes = $doc.querySelectorAll('.checkbox_readonly');
     if ($checkboxes.length > 0) {
-        $checkboxes.forEach( el => {
-            setupHandler("click", (a,b) => {a.preventDefault(); return false} , el, el);
+        $checkboxes.forEach(el => {
+            setupHandler("click", (a, b) => { a.preventDefault(); return false }, el, el);
         });
     }
 
@@ -298,7 +299,7 @@ export function BulmaDriver(app, target, handlers) {
     //
     const $textareas = $doc.querySelectorAll('.textarea');
     if ($textareas.length > 0) {
-        $textareas.forEach( el => {
+        $textareas.forEach(el => {
             setupHandler("keydown", markupRichText, el, el, app);
         });
     }
@@ -314,7 +315,7 @@ export function BulmaDriver(app, target, handlers) {
     const $burgers = $doc.querySelectorAll('.burger');
     if ($burgers.length > 0) {
         // For each burger, add event handler to toggle on click.
-        $burgers.forEach( el => {
+        $burgers.forEach(el => {
             setupHandler("click", burgerToggleHandler, el, el);
         });
 
@@ -406,12 +407,12 @@ export function BulmaDriver(app, target, handlers) {
     // * close when pressing ESC
     //
     if ($modal_triggers.length > 0) {
-        $modal_triggers.forEach( el => {
+        $modal_triggers.forEach(el => {
             setupHandler("mousedown", triggerModal, el, el);
         });
     }
     if ($modal_esc.length > 0) {
-        $modal_esc.forEach( el => {
+        $modal_esc.forEach(el => {
             var $modal = document.getElementById(el.dataset.modal);
             setupHandler("esc", closeModal, document, $modal, app);
         });
@@ -494,7 +495,7 @@ function markupRichText(e, el, app) {
 
         // Handle update patter/input
         //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
-        if (e.key === "Backspace" && el.value[start-1] == "@") { // Check if @ keyword has been deleted
+        if (e.key === "Backspace" && el.value[start - 1] == "@") { // Check if @ keyword has been deleted
             // Hide tooltip
             hideSearchInput(userTooltip, app);
         } else {
@@ -503,14 +504,14 @@ function markupRichText(e, el, app) {
             var extra = "";
             var m = null;
             if (e.key === "Backspace") {
-                m = el.value.slice(Math.max(0, start-50), start-1).match(/@[\w-\.]*$/);
+                m = el.value.slice(Math.max(0, start - 50), start - 1).match(/@[\w-\.]*$/);
             } else if (e.key.match(/[\w-\.]/)) {
-                m = el.value.slice(Math.max(0, start-50), start).match(/@[\w-\.]*$/);
+                m = el.value.slice(Math.max(0, start - 50), start).match(/@[\w-\.]*$/);
                 extra = e.key;
             }
 
             if (m) {
-                pattern = m[m.length -1] + extra;
+                pattern = m[m.length - 1] + extra;
                 pattern = pattern.slice(1);
                 app.ports.changePatternFromJs.send(pattern);
             }
@@ -519,7 +520,7 @@ function markupRichText(e, el, app) {
 
     // Handle toggle up tooltip
     if (e.key == "@" &&
-        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart-1]))) {
+        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart - 1]))) {
         // Show user search input
         showSearchInput(el, userTooltip, app);
     }
@@ -539,7 +540,7 @@ function markupRichText(e, el, app) {
         var replacer;
         var offset = 0; // bacward index to insert the replacer text
 
-        if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start-1])) return
+        if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start - 1])) return
 
         // Try to see if we are the begining of list pattern
         var backward = el.value.slice(-6, start);
@@ -552,27 +553,27 @@ function markupRichText(e, el, app) {
             replacer = "  ";
         } else {
             // /[^\S\r\n]/ -> all whitespace but without newline
-            var isLastLineList = el.value.slice(Math.max(0, start-500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0
+            var isLastLineList = el.value.slice(Math.max(0, start - 500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0
             if (isLastLineList) {
                 replacer = "  ";
-            //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
-            //    // Tab (4 space) for **code** indentation
-            //    replacer = "\t";
+                //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+                //    // Tab (4 space) for **code** indentation
+                //    replacer = "\t";
             } else {
                 return
             }
         }
 
-		e.preventDefault();
+        e.preventDefault();
         e.stopPropagation();
 
-		// set textarea value to: text before caret + tab + text after caret
-		el.value = el.value.substring(0, start - offset) +
-			replacer + el.value.substring(end - offset);
+        // set textarea value to: text before caret + tab + text after caret
+        el.value = el.value.substring(0, start - offset) +
+            replacer + el.value.substring(end - offset);
 
-		// put caret at right position again
-		el.selectionStart =
-			el.selectionEnd = start + replacer.length;
+        // put caret at right position again
+        el.selectionStart =
+            el.selectionEnd = start + replacer.length;
     } else if (e.key == "Enter" && !e.ctrlKey && !e.shiftKey) {
         // Insert list if inside list
         var start = el.selectionStart;
@@ -581,36 +582,36 @@ function markupRichText(e, el, app) {
         if (el.value.length < 3 || start == 0) return
 
         // /[^\S\r\n]/ -> all whitespace but without newline
-        var subvalue = el.value.slice(Math.max(0, start-500), start);
+        var subvalue = el.value.slice(Math.max(0, start - 500), start);
         var currentLineList = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
         var replacer;
 
         if (currentLineList >= 0) {
-            var s = subvalue.slice(currentLineList, currentLineList+10).trimLeft().slice(0, 3)
+            var s = subvalue.slice(currentLineList, currentLineList + 10).trimLeft().slice(0, 3)
             if (s == "- [") {
                 replacer = "\n" + "- [ ] ";
             } else if (parseInt(s)) {
                 var i = parseInt(s)
-                replacer = "\n" + (i+1) + ". ";
+                replacer = "\n" + (i + 1) + ". ";
             } else {
                 replacer = "\n" + s[0] + " ";
             }
-        //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
-        //    // Tab (4 space) for **code** indentation
-        //    var replacer = "\t";
+            //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+            //    // Tab (4 space) for **code** indentation
+            //    var replacer = "\t";
         } else {
             return
         }
 
-		e.preventDefault();
+        e.preventDefault();
 
-		// set textarea value to: text before caret + tab + text after caret
-		el.value = el.value.substring(0, start) +
-			replacer + el.value.substring(end);
+        // set textarea value to: text before caret + tab + text after caret
+        el.value = el.value.substring(0, start) +
+            replacer + el.value.substring(end);
 
-		// put caret at right position again
-		el.selectionStart =
-			el.selectionEnd = start + replacer.length;
+        // put caret at right position again
+        el.selectionStart =
+            el.selectionEnd = start + replacer.length;
     }
     // Do not allow non-breaking space
     else if (e.key == " ") {
@@ -688,7 +689,7 @@ export function showSearchInput(content, input, app) {
     if (!input) return
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
-    input.setAttribute( "style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+    input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
 
     app.ports.openMembersFromJs.send(null);
 }
@@ -818,7 +819,7 @@ function closeModal(e, modal, app) {
             return
         }
         // Do not reset modal when is quitted with ESC.
-        app.ports[closeMsg].send({reset:false, link:""});
+        app.ports[closeMsg].send({ reset: false, link: "" });
     } else {
         modal.classList.remove('is-active');
         // Fix block scrolling

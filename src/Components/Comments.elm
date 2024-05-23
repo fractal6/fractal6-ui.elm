@@ -40,7 +40,7 @@ import Browser.Events as Events
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
+import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -1045,10 +1045,10 @@ viewTensionCommentInput conf tension (State model) =
                             [ div [ class "buttons" ]
                                 [ button
                                     [ class "button"
-                                    , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                    , classList [ ( "is-loading", isLoading && form.status /= Nothing ) ]
                                     , submitCloseOpen
                                     ]
-                                    [ text closeOpenTxt ]
+                                    [ A.icon1 ("icon-alert-circle has-text-" ++ statusColorReverse tension.status) closeOpenTxt ]
                                 , button
                                     [ class "button is-success defaultSubmit"
                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
@@ -1340,15 +1340,15 @@ viewEvent conf focusid_m action event =
 viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
 viewEventStatus lang now event status =
     let
-        ( actionIcon, actionText ) =
+        actionText =
             case status of
                 TensionStatus.Open ->
-                    ( "icon-alert-circle", T.reopened2 )
+                    T.reopened2
 
                 TensionStatus.Closed ->
-                    ( "icon-alert-circle", T.closed2 )
+                    T.closed2
     in
-    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
+    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon ("icon-alert-circle icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate lang now event.createdAt) ]
         ]

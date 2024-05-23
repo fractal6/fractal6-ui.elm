@@ -1139,7 +1139,7 @@ viewMessageEdit conf new old form result =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div []
+    div [ class "submitFocus" ]
         [ div [ class "message" ]
             [ div [ class "message-header pb-0" ] [ viewCommentInputHeader opHeader "draftInput" form ]
             , div [ class "message-body" ]
