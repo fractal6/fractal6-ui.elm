@@ -1885,6 +1885,12 @@ figcaption {
     }
 }
 
+.panel .message-body {
+    // Draft Card
+    padding: 1rem 0.9rem !important;
+    font-size: 15px;
+}
+
 .commentInput {
     .message-header {
         border: 0 !important;
