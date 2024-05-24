@@ -482,7 +482,7 @@ function markupRichText(e, el, app) {
 
     const userTooltip = document.getElementById(el.id + "searchInput");
 
-    // Handle backspace/removing charater
+    // Handle backspace/removing character
     if (!isHidden(userTooltip)) {
 
         // Handle toggle down tooltip
@@ -495,7 +495,7 @@ function markupRichText(e, el, app) {
 
         // Handle update patter/input
         //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
-        if (e.key === "Backspace" && el.value[start - 1] == "@") { // Check if @ keyword has been deleted
+        if (e.key === "Backspace" && el.value[start-1] == "@") { // Check if @ keyword has been deleted
             // Hide tooltip
             hideSearchInput(userTooltip, app);
         } else {

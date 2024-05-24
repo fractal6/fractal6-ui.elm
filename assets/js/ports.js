@@ -184,7 +184,7 @@ export const actions = {
         initQuickSearch(qs, data.users);
         // And return a search result
         var res = qs.search(data.pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupUserFromJs_.send(res);
+        app.ports.lookupUserFromJs.send(res);
     },
     'INIT_LABELSEARCH': (app, session, data) => {
         // Setup User quickSearch
@@ -216,17 +216,17 @@ export const actions = {
                 return undefined
             }
         });
-        app.ports.lookupNodeFromJs_.send(res.filter(x => x));
+        app.ports.lookupNodeFromJs.send(res.filter(x => x));
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupUserFromJs_.send(res);
+        app.ports.lookupUserFromJs.send(res);
     },
     'SEARCH_LABELS': (app, session, pattern) => {
         var qs = session.qsl;
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupLabelFromJs_.send(res);
+        app.ports.lookupLabelFromJs.send(res);
     },
     'PUSH_INPUT_SELECTION': (app, session, name) => {
         var $i = document.activeElement;

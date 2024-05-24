@@ -1245,16 +1245,6 @@ viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
             text ""
         , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
-
-        -- @obsolete
-        --[ Maybe.map2
-        --    (\userSearchInput userSearchInputMsg ->
-        --        UserInput.viewUserSeeker userSearchInput |> Html.map userSearchInputMsg
-        --    )
-        --    userInput
-        --    UserInputMsg
-        --    |> withDefault (text "")
-        --]
         ]
 
 
