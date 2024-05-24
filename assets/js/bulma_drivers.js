@@ -469,8 +469,9 @@ function copyToClipboard(e, el) {
     navigator.clipboard.writeText(text);
 }
 
+
 //
-// """ Markup Rich Text"""
+// """ Markup Rich Text (On Input)"""
 //
 
 function markupRichText(e, el, app) {
@@ -527,7 +528,7 @@ function markupRichText(e, el, app) {
 
 
     /*
-     * Tabulations and
+     * List Tabulations and
      * List completion on newline
      *
      */
@@ -584,22 +585,12 @@ function markupRichText(e, el, app) {
         // /[^\S\r\n]/ -> all whitespace but without newline
         var subvalue = el.value.slice(Math.max(0, start - 500), start);
 
-        // Extract the cursor previous line
-        //var previousLine = null
-        //var previousLineEnd = subvalue.lastIndexOf("\n");
-        //if (previousLineEnd != -1) {
-        //    var previousLineStart = subvalue.slice(0, previousLineEnd).lastIndexOf("\n");
-        //    if (previousLineStart == -1) {
-        //        previousLineStart = 0;
-        //    }
-        //    previousLine = subvalue.slice(previousLineStart + 1, previousLineEnd);
-        //}
-
         // Extract thre cursor line
         var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
         var replacer;
 
         if (currentLineStart >= 0) {
+            // list begins template
             var currentLine = subvalue.slice(currentLineStart)
             var s = currentLine.trimLeft().slice(0, 3)
             if (s == "- [") {
@@ -611,9 +602,25 @@ function markupRichText(e, el, app) {
                 replacer = "\n" + s[0] + " ";
             }
 
-            if (currentLine.trimLeft() == replacer.trimLeft()) {
-                start -= replacer.length;
-                replacer = "\n\n";
+            // remove if empty
+            if ((currentLine.trim() == replacer.trim()) && start == end) {
+                // Extract the cursor previous line
+                var previousLine = null
+                var previousLineEnd = subvalue.lastIndexOf("\n");
+                if (previousLineEnd != -1) {
+                    var previousLineStart = subvalue.slice(0, previousLineEnd).lastIndexOf("\n");
+                    if (previousLineStart == -1) {
+                        previousLineStart = 0;
+                    }
+                    previousLine = subvalue.slice(previousLineStart + 1, previousLineEnd);
+                }
+
+                if (previousLine && previousLine.substring(0, replacer.trim().length) == replacer.trim()) {
+                    start -= replacer.length;
+                    replacer = "\n\n";
+                } else {
+                    replacer = "\n";
+                }
             }
         } else {
             return
