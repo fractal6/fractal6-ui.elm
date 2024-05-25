@@ -65,6 +65,9 @@ port triggerMenuOrgaFromJs : (() -> msg) -> Sub msg
 port triggerMenuTreeFromJs : (() -> msg) -> Sub msg
 
 
+port arrowFromJs : (String -> msg) -> Sub msg
+
+
 
 -- User
 

@@ -504,10 +504,14 @@ function markupRichText(e, el, app) {
     const userTooltip = document.getElementById(el.id + "searchInput");
 
     // Handle backspace/removing character
-    if (!isHidden(userTooltip)) {
+    if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
 
         // Handle toggle down tooltip
-        if (e.key == " " || e.key == "\n" || e.key == "Enter" || e.key == "Escape") {
+        if (e.key == " " ||
+            e.key == "Escape" ||
+            // Check if @ keyword has been deleted
+            e.key == "Backspace" && el.value[start - 1] == "@"
+        ) {
             hideSearchInput(userTooltip, app);
             return
         }
@@ -515,12 +519,20 @@ function markupRichText(e, el, app) {
         var start = el.selectionStart;
 
         // Handle update patter/input
-        //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
-        if (e.key === "Backspace" && el.value[start - 1] == "@") { // Check if @ keyword has been deleted
-            // Hide tooltip
-            hideSearchInput(userTooltip, app);
+        if (e.key === "Enter") {
+            // Send selected item
+            e.preventDefault();
+            app.ports.selectActiveItemFromJs.send(null);
+        } else if (e.key === 'ArrowUp') {
+            // Catch UP/DOWN arrows
+            e.preventDefault();
+            app.ports.arrowFromJs.send("up");
+        } else if (e.key === 'ArrowDown') {
+            // Catch UP/DOWN arrows
+            e.preventDefault();
+            app.ports.arrowFromJs.send("down");
         } else {
-            // update pattern
+            // Update pattern
             var pattern = "";
             var extra = "";
             var m = null;
@@ -545,7 +557,6 @@ function markupRichText(e, el, app) {
         // Show user search input
         showSearchInput(el, userTooltip, app);
     }
-
 
     /*
      * List Tabulations and

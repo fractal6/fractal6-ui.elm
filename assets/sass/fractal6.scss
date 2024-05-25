@@ -2083,6 +2083,10 @@ figcaption {
     position: absolute;
     top: 0;
     left: 0;
+
+    & .panel-block.is-active {
+        background-color: var(--bbc) !important;
+    }
 }
 .searchInput::after {
     content: " ";

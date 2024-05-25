@@ -63,6 +63,7 @@ type alias Model =
     , lastTime : Time.Posix -- last time data were fetch
     , isOpen : Bool -- state of the selectors panel
     , targets : List String
+    , activePos : Int
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -83,6 +84,7 @@ initModel targets isInvite multiSelect user =
     , lastTime = Time.millisToPosix 0
     , isOpen = False
     , targets = targets
+    , activePos = 0
 
     -- Common
     , refresh_trial = 0
@@ -190,6 +192,8 @@ type Msg
     | OnUnselect Int
     | DoQueryUser
     | OnUsersAck (GqlData (List User))
+    | OnArrowMove String
+    | OnSelectActive
       -- Lookup
     | ChangeUserLookup (List User)
     | ChangePath (List String)
@@ -259,7 +263,7 @@ update_ apis message model =
                 ( model, noOut )
 
         OnCloseMembers ->
-            ( close model, noOut )
+            ( close { model | activePos = 0 }, noOut )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
@@ -314,6 +318,44 @@ update_ apis message model =
                 _ ->
                     ( data, noOut )
 
+        OnArrowMove dir ->
+            if model.isOpen then
+                let
+                    newPos =
+                        case dir of
+                            "up" ->
+                                model.activePos - 1
+
+                            "down" ->
+                                model.activePos + 1
+
+                            _ ->
+                                model.activePos
+                                    |> (\x ->
+                                            -- Compute boundary
+                                            if x >= List.length model.lookup then
+                                                0
+
+                                            else if x < 0 then
+                                                0
+
+                                            else
+                                                x
+                                       )
+                in
+                ( { model | activePos = newPos }, noOut )
+
+            else
+                ( model, noOut )
+
+        OnSelectActive ->
+            case LE.getAt model.activePos model.lookup of
+                Just u ->
+                    ( model, out0 [ send (OnClickUser u) ] )
+
+                Nothing ->
+                    ( model, noOut )
+
         ChangeUserLookup data ->
             if model.pattern == "" && not model.isInvite then
                 ( { model | lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
@@ -349,6 +391,12 @@ subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+        ++ (if model.isOpen then
+                [ Ports.arrowFromJs OnArrowMove ]
+
+            else
+                []
+           )
         ++ (if (model.isOpen && not model.isInvite) || model.isInvite then
                 -- Prevent for user mention search box to trigger msg when not open.
                 -- For invite, the "open" status is handled in the parents components...
@@ -362,6 +410,7 @@ subscriptions (State model) =
                 , openMembersFromJs (always OnOpenMembers)
                 , closeMembersFromJs (always OnCloseMembers)
                 , changePatternFromJs ChangePattern
+                , selectActiveItemFromJs (always OnSelectActive)
                 ]
 
             else
@@ -376,6 +425,9 @@ port closeMembersFromJs : (() -> msg) -> Sub msg
 
 
 port changePatternFromJs : (String -> msg) -> Sub msg
+
+
+port selectActiveItemFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -405,10 +457,11 @@ viewUserSeeker (State model) =
 
             else
                 model.lookup
-                    |> List.map
-                        (\u ->
+                    |> List.indexedMap
+                        (\i u ->
                             p
                                 [ class "panel-block pt-1 pb-1"
+                                , classList [ ( "is-active", model.activePos == i ) ]
                                 , onMousedownPD (OnClickUser u)
                                 ]
                                 [ viewUserFull 1 False False u ]
