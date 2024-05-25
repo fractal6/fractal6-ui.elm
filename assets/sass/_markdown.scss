@@ -54,6 +54,10 @@
 		width: 15px;
 		height: 15px;
 		//cursor: pointer;
+
+        &:not(:checked) {
+            opacity: 0.75;
+        }
 	}
 	li p {
 		// checkbox are defined before <p> (dillonkeans,)

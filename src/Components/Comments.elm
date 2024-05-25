@@ -56,7 +56,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (sendNow)
+import Global exposing (send, sendNow)
 import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, value)
 import Html.Events exposing (onClick, onInput)
@@ -65,7 +65,7 @@ import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
-import Markdown exposing (renderMarkdown)
+import Markdown exposing (renderMarkdown, setMdCheckbox)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
 import Ports
@@ -191,6 +191,8 @@ type Msg
     | OnAddReactionAck (GqlData ReactionResponse)
     | OnDeleteReaction String Int
     | OnDeleteReactionAck (GqlData ReactionResponse)
+      -- Markdown
+    | OnCheckbox Checkbox
       -- Common
     | OnSubmit Bool (Time.Posix -> Msg)
     | NoMsg
@@ -468,7 +470,9 @@ update_ apis message model =
                         resetForm =
                             initCommentPatchForm model.user [ ( "focusid", model.focusid ) ]
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }, out0 [ Ports.bulma_driver comment.createdAt ] )
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }
+                    , out0 [ Ports.bulma_driver comment.createdAt ]
+                    )
 
                 _ ->
                     ( { model | comment_result = result }, noOut )
@@ -587,6 +591,35 @@ update_ apis message model =
                 _ ->
                     ( model, noOut )
 
+        -- Markdown
+        OnCheckbox checkbox ->
+            case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
+                Just c ->
+                    let
+                        -- Simulate comment updated
+                        --
+                        form =
+                            model.comment_form
+
+                        comment_form =
+                            { form
+                                | id = c.id
+                                , post =
+                                    form.post
+                                        |> Dict.insert "message" (setMdCheckbox checkbox c.message)
+                                        |> Dict.insert "stealth" "true"
+                            }
+
+                        --
+                        -- send SubmitCommentPatch
+                    in
+                    ( { model | comment_form = comment_form }
+                    , out0 [ send (OnSubmit True SubmitCommentPatch) ]
+                    )
+
+                Nothing ->
+                    ( model, noOut )
+
         -- Components
         UserInputMsg msg ->
             let
@@ -616,9 +649,24 @@ update_ apis message model =
             ( { model | userInput = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m))) out.gcmds )
 
 
+type alias Checkbox =
+    { isChecked : Bool
+    , position : Int
+    , cid : String
+    }
+
+
+checkboxDecoder : JD.Decoder Checkbox
+checkboxDecoder =
+    JD.map3 Checkbox
+        (JD.field "isChecked" JD.bool)
+        (JD.field "position" JD.int)
+        (JD.field "cid" JD.string)
+
+
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    []
+    [ Ports.pd Ports.checkboxFromJs checkboxDecoder LogErr OnCheckbox ]
         ++ (if model.highlightedCommentId /= "" then
                 [ Events.onMouseUp (JD.succeed (OnHighlight ""))
                 , Events.onKeyUp (Dom.key "Escape" (OnHighlight ""))
@@ -781,11 +829,11 @@ viewComment conf c form result highlightedCommentId userInput =
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
             ]
-            [ if form.id == c.id then
+            [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
                 viewUpdateInput conf c form result userInput
 
               else
-                div [ class "message", classList [ ( "is-focusing", isFocused ) ] ]
+                div [ id c.id, class "message", classList [ ( "is-focusing", isFocused ) ] ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span
                             [ --class "is-hidden-tablet"

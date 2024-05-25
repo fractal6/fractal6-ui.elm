@@ -288,7 +288,27 @@ export function BulmaDriver(app, target, handlers) {
     const $checkboxes = $doc.querySelectorAll('.checkbox_readonly');
     if ($checkboxes.length > 0) {
         $checkboxes.forEach(el => {
-            setupHandler("click", (a, b) => { a.preventDefault(); return false }, el, el);
+            setupHandler("click", (e, el, app) => {
+
+                // Find the first parent with the class "message"
+                let parentMessage = el.closest('.message');
+                if (parentMessage) {
+                    // Extract the ID of the parent element
+                    let cid = parentMessage.id;
+
+                    // Get all checkboxes within the parent element
+                    let checkboxes = parentMessage.querySelectorAll('input[type="checkbox"]');
+
+                    // Find the position of the clicked checkbox
+                    let position = Array.from(checkboxes).indexOf(el);
+                    let isChecked = el.checked;
+
+                    app.ports.checkboxFromJs.send({ isChecked: isChecked, position: position, cid: cid });
+                }
+
+                e.preventDefault();
+                return
+            }, el, el, app);
         });
     }
 
@@ -496,7 +516,7 @@ function markupRichText(e, el, app) {
 
         // Handle update patter/input
         //var m = el.value.slice(Math.max(0, start-50), start).search(/(^|\n| )@[\w-\.]*$/)
-        if (e.key === "Backspace" && el.value[start-1] == "@") { // Check if @ keyword has been deleted
+        if (e.key === "Backspace" && el.value[start - 1] == "@") { // Check if @ keyword has been deleted
             // Hide tooltip
             hideSearchInput(userTooltip, app);
         } else {

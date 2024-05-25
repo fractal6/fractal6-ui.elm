@@ -19,7 +19,7 @@
 -}
 
 
-module Markdown exposing (renderMarkdown)
+module Markdown exposing (renderMarkdown, setMdCheckbox)
 
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Extra exposing (regexFromString)
@@ -136,7 +136,8 @@ frac6Renderer style recursive =
                                                                     [ type_ "checkbox"
                                                                     , checked False
                                                                     , class "checkbox_readonly"
-                                                                    , disabled True
+
+                                                                    --, disabled True
                                                                     ]
                                                                     []
                                                                 ]
@@ -148,8 +149,6 @@ frac6Renderer style recursive =
                                                                     [ type_ "checkbox"
                                                                     , checked True
                                                                     , class "checkbox_readonly"
-
-                                                                    --, disabled True
                                                                     ]
                                                                     []
                                                                 ]
@@ -387,3 +386,74 @@ circleLink m full =
         -- TODO: split on / to know which route to use
         --++ (Route.Org { param1 = "", param2 = tid } |> toHref)
         ++ ")"
+
+
+
+--
+-- Parsing
+--
+
+
+{-| Function to set checkbox at the checkbox posisiont (checkbox count)
+-}
+setMdCheckbox : { position : Int, isChecked : Bool, cid : String } -> String -> String
+setMdCheckbox cb markdown =
+    let
+        -- Split the markdown into lines
+        markdownLines =
+            String.lines markdown
+
+        -- Checkbox value based on shouldCheck
+        checkboxValue =
+            if cb.isChecked then
+                "- [x]"
+
+            else
+                "- [ ]"
+
+        -- Function to update the line containing the nth checkbox
+        updateLines : List String -> Int -> Int -> List String -> List String
+        updateLines remainingLines currentIndex targetIndex updatedLines =
+            case remainingLines of
+                [] ->
+                    updatedLines
+
+                lineContent :: rest ->
+                    let
+                        -- Trim leading spaces from the line
+                        trimmedLine =
+                            String.trimLeft lineContent
+
+                        -- Check if this line contains a checkbox
+                        updatedLine =
+                            if (String.startsWith "- [ ]" trimmedLine || String.startsWith "- [x]" trimmedLine) && currentIndex == targetIndex then
+                                let
+                                    -- Calculate the leading spaces from the line
+                                    leadingSpacesCount =
+                                        String.length lineContent - String.length trimmedLine
+
+                                    leadingSpaces =
+                                        String.left leadingSpacesCount lineContent
+                                in
+                                String.append leadingSpaces (String.replace (String.left 5 trimmedLine) checkboxValue trimmedLine)
+
+                            else
+                                lineContent
+
+                        nextUpdatedLines =
+                            updatedLines ++ [ updatedLine ]
+
+                        nextIndex =
+                            if String.startsWith "- [ ]" trimmedLine || String.startsWith "- [x]" trimmedLine then
+                                currentIndex + 1
+
+                            else
+                                currentIndex
+                    in
+                    updateLines rest nextIndex targetIndex nextUpdatedLines
+
+        -- Update the markdown lines
+        updatedMarkdownLines =
+            updateLines markdownLines 0 cb.position []
+    in
+    String.join "\n" updatedMarkdownLines

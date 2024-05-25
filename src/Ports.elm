@@ -152,6 +152,13 @@ port lookupLabelFromJs : (JD.Value -> a) -> Sub a
 
 
 
+-- Markdown
+
+
+port checkboxFromJs : (JD.Value -> a) -> Sub a
+
+
+
 -- Utils
 
 
