@@ -22,7 +22,7 @@
 module Markdown exposing (renderMarkdown, setMdCheckbox)
 
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Extra exposing (regexFromString)
+import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, input, label, li, span, table, text, u, ul)
 import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
@@ -404,12 +404,12 @@ setMdCheckbox cb markdown =
             String.lines markdown
 
         -- Checkbox value based on shouldCheck
-        checkboxValue =
+        checkboxValue c =
             if cb.isChecked then
-                "- [x]"
+                c ++ " [x]"
 
             else
-                "- [ ]"
+                c ++ " [ ]"
 
         -- Function to update the line containing the nth checkbox
         updateLines : List String -> Int -> Int -> List String -> List String
@@ -420,13 +420,16 @@ setMdCheckbox cb markdown =
 
                 lineContent :: rest ->
                     let
+                        cbPattern =
+                            "^(\\-|\\*|\\+)\\s+\\[[ x]\\]"
+
                         -- Trim leading spaces from the line
                         trimmedLine =
                             String.trimLeft lineContent
 
                         -- Check if this line contains a checkbox
                         updatedLine =
-                            if (String.startsWith "- [ ]" trimmedLine || String.startsWith "- [x]" trimmedLine) && currentIndex == targetIndex then
+                            if regexContains cbPattern trimmedLine && currentIndex == targetIndex then
                                 let
                                     -- Calculate the leading spaces from the line
                                     leadingSpacesCount =
@@ -434,8 +437,13 @@ setMdCheckbox cb markdown =
 
                                     leadingSpaces =
                                         String.left leadingSpacesCount lineContent
+
+                                    match_len =
+                                        regexfirstMatchLength cbPattern trimmedLine |> withDefault 0
                                 in
-                                String.append leadingSpaces (String.replace (String.left 5 trimmedLine) checkboxValue trimmedLine)
+                                String.append
+                                    leadingSpaces
+                                    (String.replace (String.left match_len trimmedLine) (checkboxValue (String.left 1 trimmedLine)) trimmedLine)
 
                             else
                                 lineContent
@@ -444,7 +452,7 @@ setMdCheckbox cb markdown =
                             updatedLines ++ [ updatedLine ]
 
                         nextIndex =
-                            if String.startsWith "- [ ]" trimmedLine || String.startsWith "- [x]" trimmedLine then
+                            if regexContains cbPattern trimmedLine then
                                 currentIndex + 1
 
                             else
