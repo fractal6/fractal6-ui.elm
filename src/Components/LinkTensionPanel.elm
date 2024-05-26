@@ -342,7 +342,7 @@ update_ apis message model =
                                     , colid = ""
                                     , col_type = Just ProjectColumnType.NoStatusColumn
                                     , pos = Just -1
-                                    , post = Dict.fromList [ ( "name", "No Status" ) ]
+                                    , post = Dict.fromList [ ( "name", "Triage" ) ]
                                     }
                             in
                             if model.noStatusCol.id == "_" then

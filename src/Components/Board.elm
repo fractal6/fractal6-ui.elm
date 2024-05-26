@@ -340,18 +340,26 @@ update_ apis message model =
                     else
                         -- Do not wait the query to success to move the column.
                         let
-                            noStatusOffset =
-                                model.project.columns
-                                    |> List.filter (\x -> x.col_type == ProjectColumnType.NoStatusColumn && List.length x.cards == 0)
+                            noStatusCols =
+                                List.filter (\x -> x.col_type == ProjectColumnType.NoStatusColumn) model.project.columns
+
+                            noStatusOffsetLocal =
+                                noStatusCols
+                                    |> List.filter (\x -> List.length x.cards == 0)
+                                    |> List.length
+
+                            noStatusOffsetRemote =
+                                noStatusCols
+                                    |> List.filter (\x -> List.length x.cards /= 0)
                                     |> List.length
 
                             pj =
                                 model.project
                                     -- move a column to the given position
-                                    |> (\d -> { d | columns = moveColAt col.id (pos + noStatusOffset) d.columns })
+                                    |> (\d -> { d | columns = moveColAt col.id (pos + noStatusOffsetLocal) d.columns })
                         in
                         ( { newModel | project = pj, board_result = Loading }
-                        , out0 [ moveProjectColumn apis col.id pos GotColMoved ]
+                        , out0 [ moveProjectColumn apis col.id (pos - noStatusOffsetRemote) GotColMoved ]
                         )
                 )
                 model.movingCol
@@ -698,7 +706,7 @@ update_ apis message model =
                             let
                                 noStatusCol =
                                     { id = colid
-                                    , name = "No Status"
+                                    , name = "Triage"
                                     , color = Nothing
                                     , pos = 0
                                     , col_type = ProjectColumnType.NoStatusColumn
