@@ -729,6 +729,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="add a role to this user"
   fr="Ajouter un rôle à cette utilisateur"
 
+[makeOwner]
+  en="Make this member an Owner"
+  fr="Rendre ce membre Propriétaire"
+
 [addTensionToProject]
   en="Add tensions to project"
   fr="Ajouter des tensions au projet"
