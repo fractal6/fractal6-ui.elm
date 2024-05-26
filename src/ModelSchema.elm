@@ -262,6 +262,7 @@ type alias OrgaInfo =
       n_watchers : Int
     , -- is logged user watching the orga
       isWatching : Maybe Bool
+    , client_version : String
     }
 
 

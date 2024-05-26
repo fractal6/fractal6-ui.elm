@@ -50,7 +50,7 @@ window.addEventListener('load', _ => {
                     gql: GRAPHQL_API,
                     rest: REST_API,
                     assets: ASSETS_API,
-                    version: VERSION,
+                    client_version: VERSION,
                 },
                 screen: { w: window.innerWidth, h: window.innerHeight },
                 theme: theme,

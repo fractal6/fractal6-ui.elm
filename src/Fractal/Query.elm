@@ -19,6 +19,50 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
+type alias QueryBuildInfoOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.BuildInfoFilter
+    , order : OptionalArgument Fractal.InputObject.BuildInfoOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryBuildInfo :
+    (QueryBuildInfoOptionalArguments -> QueryBuildInfoOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.BuildInfo
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryBuildInfo fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeBuildInfoFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeBuildInfoOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryBuildInfo" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateBuildInfoOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.BuildInfoFilter }
+
+
+aggregateBuildInfo :
+    (AggregateBuildInfoOptionalArguments -> AggregateBuildInfoOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.BuildInfoAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateBuildInfo fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeBuildInfoFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateBuildInfo" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetNodeOptionalArguments =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , nameid : OptionalArgument String

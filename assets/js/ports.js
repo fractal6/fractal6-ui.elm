@@ -358,14 +358,15 @@ export const actions = {
         // Save session
         localStorage.setItem(UCTX_KEY, JSON.stringify(user_ctx.data));
 
+        // @deprecated: done in {getOrgaInfo} now
         // If version is outdated, reload.
-        if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
-            // Prevent bad redirection because /new/orga send a navigate redirection with a timeout.
-            // @debug: catch redirection here.
-            if (window.location.pathname != "/new/orga") {
-                window.location.reload(true);
-            }
-        }
+        //if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
+        //    // Prevent bad redirection because /new/orga send a navigate redirection with a timeout.
+        //    // @debug: catch redirection here.
+        //    if (window.location.pathname != "/new/orga") {
+        //        window.location.reload(true);
+        //    }
+        //}
 
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);

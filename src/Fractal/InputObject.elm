@@ -7,6 +7,8 @@ module Fractal.InputObject exposing (..)
 import Fractal.Enum.BlobHasFilter
 import Fractal.Enum.BlobOrderable
 import Fractal.Enum.BlobType
+import Fractal.Enum.BuildInfoHasFilter
+import Fractal.Enum.BuildInfoOrderable
 import Fractal.Enum.CardKindType
 import Fractal.Enum.CommentHasFilter
 import Fractal.Enum.CommentOrderable
@@ -150,6 +152,31 @@ encodeAddBlobInput : AddBlobInput -> Value
 encodeAddBlobInput (AddBlobInput input____) =
     Encode.maybeObject
         [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef input____.tension |> Just ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString input____.blob_type |> Just ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ), ( "md", Encode.string |> Encode.optional input____.md ) ]
+
+
+buildAddBuildInfoInput :
+    AddBuildInfoInputRequiredFields
+    -> AddBuildInfoInput
+buildAddBuildInfoInput required____ =
+    { client_version = required____.client_version }
+
+
+type alias AddBuildInfoInputRequiredFields =
+    { client_version : String }
+
+
+{-| Type for the AddBuildInfoInput input object.
+-}
+type alias AddBuildInfoInput =
+    { client_version : String }
+
+
+{-| Encode a AddBuildInfoInput into a value that can be used as an argument.
+-}
+encodeAddBuildInfoInput : AddBuildInfoInput -> Value
+encodeAddBuildInfoInput input____ =
+    Encode.maybeObject
+        [ ( "client_version", Encode.string input____.client_version |> Just ) ]
 
 
 buildAddCommentInput :
@@ -1868,6 +1895,158 @@ encodeBlobType_hash : BlobType_hash -> Value
 encodeBlobType_hash input____ =
     Encode.maybeObject
         [ ( "eq", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input____.eq ), ( "in", (Encode.enum Fractal.Enum.BlobType.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.in_ ) ]
+
+
+buildBuildInfoFilter :
+    (BuildInfoFilterOptionalFields -> BuildInfoFilterOptionalFields)
+    -> BuildInfoFilter
+buildBuildInfoFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    BuildInfoFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias BuildInfoFilterOptionalFields =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.BuildInfoHasFilter.BuildInfoHasFilter))
+    , and : OptionalArgument (List (Maybe BuildInfoFilter))
+    , or : OptionalArgument (List (Maybe BuildInfoFilter))
+    , not : OptionalArgument BuildInfoFilter
+    }
+
+
+{-| Type alias for the `BuildInfoFilter` attributes. Note that this type
+needs to use the `BuildInfoFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias BuildInfoFilterRaw =
+    { has : OptionalArgument (List (Maybe Fractal.Enum.BuildInfoHasFilter.BuildInfoHasFilter))
+    , and : OptionalArgument (List (Maybe BuildInfoFilter))
+    , or : OptionalArgument (List (Maybe BuildInfoFilter))
+    , not : OptionalArgument BuildInfoFilter
+    }
+
+
+{-| Type for the BuildInfoFilter input object.
+-}
+type BuildInfoFilter
+    = BuildInfoFilter BuildInfoFilterRaw
+
+
+{-| Encode a BuildInfoFilter into a value that can be used as an argument.
+-}
+encodeBuildInfoFilter : BuildInfoFilter -> Value
+encodeBuildInfoFilter (BuildInfoFilter input____) =
+    Encode.maybeObject
+        [ ( "has", (Encode.enum Fractal.Enum.BuildInfoHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeBuildInfoFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeBuildInfoFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeBuildInfoFilter |> Encode.optional input____.not ) ]
+
+
+buildBuildInfoOrder :
+    (BuildInfoOrderOptionalFields -> BuildInfoOrderOptionalFields)
+    -> BuildInfoOrder
+buildBuildInfoOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    BuildInfoOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias BuildInfoOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.BuildInfoOrderable.BuildInfoOrderable
+    , desc : OptionalArgument Fractal.Enum.BuildInfoOrderable.BuildInfoOrderable
+    , then_ : OptionalArgument BuildInfoOrder
+    }
+
+
+{-| Type alias for the `BuildInfoOrder` attributes. Note that this type
+needs to use the `BuildInfoOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias BuildInfoOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.BuildInfoOrderable.BuildInfoOrderable
+    , desc : OptionalArgument Fractal.Enum.BuildInfoOrderable.BuildInfoOrderable
+    , then_ : OptionalArgument BuildInfoOrder
+    }
+
+
+{-| Type for the BuildInfoOrder input object.
+-}
+type BuildInfoOrder
+    = BuildInfoOrder BuildInfoOrderRaw
+
+
+{-| Encode a BuildInfoOrder into a value that can be used as an argument.
+-}
+encodeBuildInfoOrder : BuildInfoOrder -> Value
+encodeBuildInfoOrder (BuildInfoOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.BuildInfoOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.BuildInfoOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeBuildInfoOrder |> Encode.optional input____.then_ ) ]
+
+
+buildBuildInfoPatch :
+    (BuildInfoPatchOptionalFields -> BuildInfoPatchOptionalFields)
+    -> BuildInfoPatch
+buildBuildInfoPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { client_version = Absent }
+    in
+    { client_version = optionals____.client_version }
+
+
+type alias BuildInfoPatchOptionalFields =
+    { client_version : OptionalArgument String }
+
+
+{-| Type for the BuildInfoPatch input object.
+-}
+type alias BuildInfoPatch =
+    { client_version : OptionalArgument String }
+
+
+{-| Encode a BuildInfoPatch into a value that can be used as an argument.
+-}
+encodeBuildInfoPatch : BuildInfoPatch -> Value
+encodeBuildInfoPatch input____ =
+    Encode.maybeObject
+        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ) ]
+
+
+buildBuildInfoRef :
+    (BuildInfoRefOptionalFields -> BuildInfoRefOptionalFields)
+    -> BuildInfoRef
+buildBuildInfoRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { client_version = Absent }
+    in
+    { client_version = optionals____.client_version }
+
+
+type alias BuildInfoRefOptionalFields =
+    { client_version : OptionalArgument String }
+
+
+{-| Type for the BuildInfoRef input object.
+-}
+type alias BuildInfoRef =
+    { client_version : OptionalArgument String }
+
+
+{-| Encode a BuildInfoRef into a value that can be used as an argument.
+-}
+encodeBuildInfoRef : BuildInfoRef -> Value
+encodeBuildInfoRef input____ =
+    Encode.maybeObject
+        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ) ]
 
 
 buildCardKindFilter :
@@ -7763,6 +7942,55 @@ encodeUpdateBlobInput : UpdateBlobInput -> Value
 encodeUpdateBlobInput (UpdateBlobInput input____) =
     Encode.maybeObject
         [ ( "filter", encodeBlobFilter input____.filter |> Just ), ( "set", encodeBlobPatch |> Encode.optional input____.set ), ( "remove", encodeBlobPatch |> Encode.optional input____.remove ) ]
+
+
+buildUpdateBuildInfoInput :
+    UpdateBuildInfoInputRequiredFields
+    -> (UpdateBuildInfoInputOptionalFields -> UpdateBuildInfoInputOptionalFields)
+    -> UpdateBuildInfoInput
+buildUpdateBuildInfoInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateBuildInfoInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateBuildInfoInputRequiredFields =
+    { filter : BuildInfoFilter }
+
+
+type alias UpdateBuildInfoInputOptionalFields =
+    { set : OptionalArgument BuildInfoPatch
+    , remove : OptionalArgument BuildInfoPatch
+    }
+
+
+{-| Type alias for the `UpdateBuildInfoInput` attributes. Note that this type
+needs to use the `UpdateBuildInfoInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateBuildInfoInputRaw =
+    { filter : BuildInfoFilter
+    , set : OptionalArgument BuildInfoPatch
+    , remove : OptionalArgument BuildInfoPatch
+    }
+
+
+{-| Type for the UpdateBuildInfoInput input object.
+-}
+type UpdateBuildInfoInput
+    = UpdateBuildInfoInput UpdateBuildInfoInputRaw
+
+
+{-| Encode a UpdateBuildInfoInput into a value that can be used as an argument.
+-}
+encodeUpdateBuildInfoInput : UpdateBuildInfoInput -> Value
+encodeUpdateBuildInfoInput (UpdateBuildInfoInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeBuildInfoFilter input____.filter |> Just ), ( "set", encodeBuildInfoPatch |> Encode.optional input____.set ), ( "remove", encodeBuildInfoPatch |> Encode.optional input____.remove ) ]
 
 
 buildUpdateCommentInput :

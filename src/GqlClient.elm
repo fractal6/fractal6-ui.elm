@@ -42,7 +42,7 @@ setAuthHeader token =
 
 setVersionHeader : Apis -> (Graphql.Http.Request decodesTo -> Graphql.Http.Request decodesTo)
 setVersionHeader api =
-    Graphql.Http.withHeader "X-Client-Version" api.version
+    Graphql.Http.withHeader "X-Client-Version" api.client_version
 
 
 makeGQLQuery : Apis -> SelectionSet decodesTo RootQuery -> (Result (Graphql.Http.Error decodesTo) decodesTo -> msg) -> Cmd msg

@@ -69,7 +69,7 @@ type alias Apis =
     , gql : String
     , rest : String
     , assets : String
-    , version : String
+    , client_version : String
     }
 
 

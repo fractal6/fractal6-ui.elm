@@ -19,6 +19,42 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
+type alias AddBuildInfoRequiredArguments =
+    { input : List Fractal.InputObject.AddBuildInfoInput }
+
+
+addBuildInfo :
+    AddBuildInfoRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddBuildInfoPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addBuildInfo requiredArgs____ object____ =
+    Object.selectionForCompositeField "addBuildInfo" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddBuildInfoInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateBuildInfoRequiredArguments =
+    { input : Fractal.InputObject.UpdateBuildInfoInput }
+
+
+updateBuildInfo :
+    UpdateBuildInfoRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateBuildInfoPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateBuildInfo requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateBuildInfo" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateBuildInfoInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteBuildInfoRequiredArguments =
+    { filter : Fractal.InputObject.BuildInfoFilter }
+
+
+deleteBuildInfo :
+    DeleteBuildInfoRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteBuildInfoPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteBuildInfo requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteBuildInfo" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeBuildInfoFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddNodeOptionalArguments =
     { upsert : OptionalArgument Bool }
 

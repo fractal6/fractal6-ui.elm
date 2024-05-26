@@ -40,6 +40,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
+import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
@@ -47,8 +48,8 @@ import Extra exposing (ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
-import Html exposing (div)
-import Html.Attributes exposing (id)
+import Html exposing (button, div, p, text)
+import Html.Attributes exposing (class, id)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, isFailure, withMapData)
@@ -136,6 +137,7 @@ type Msg
     | LoggedOutUser
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
+    | OnCloseOutdatedVersion String
     | UpdateSessionFocus (Maybe NodeFocus)
     | UpdateSessionFocusOnly (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
@@ -302,6 +304,20 @@ update msg model =
                             sendSleep RedirectOnLoggedIn 333
             in
             ( model, cmd )
+
+        OnCloseOutdatedVersion _ ->
+            let
+                session =
+                    model.session
+
+                orgaInfo =
+                    Maybe.map
+                        (\oi ->
+                            { oi | client_version = session.apis.client_version }
+                        )
+                        session.orgaInfo
+            in
+            ( { model | session = { session | orgaInfo = orgaInfo } }, Cmd.none )
 
         LoggedOutUser ->
             case model.session.user of
@@ -758,22 +774,23 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg } -> Document msg
-view { page, global, url, msg1 } =
+view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : String -> msg } -> Document msg
+view { page, global, url, msg1, msg2 } =
     layout
         { page = page
         , url = url
         , session = global.session
         , msg1 = msg1
+        , msg2 = msg2
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg } -> Document msg
-layout { page, url, session, msg1 } =
+layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : String -> msg } -> Document msg
+layout { page, url, session, msg1, msg2 } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Lazy.lazy4 Navbar.view session.user session.notif url msg1
+            [ Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
             , div [ id "body" ] page.body
             , Footbar.view
             ]

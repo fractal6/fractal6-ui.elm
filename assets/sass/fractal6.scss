@@ -971,8 +971,12 @@ span[data-tooltip] {
 
 // Notification
 .notification {
-    & > a {
+    & > a:not(.stealth-link) {
         color: var(--link) !important;
+        text-decoration: none !important;
+    }
+    & > a.stealth-link {
+        color: inherit !important;
         text-decoration: none !important;
     }
 }
@@ -990,6 +994,7 @@ span[data-tooltip] {
         max-height: 200px;
         overflow: scroll;
     }
+
 }
 
 

@@ -85,6 +85,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
+import Fractal.Object.BuildInfo
 import Fractal.Object.Contract
 import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
@@ -1471,14 +1472,15 @@ notifEventPayload =
 
 getOrgaInfo url username nameid msg =
     makeGQLQuery url
-        (SelectionSet.map2
-            (\x y ->
-                Maybe.map (\oi -> { oi | n_projects = unwrap2 0 .count y }) x
+        (SelectionSet.map3
+            (\x y versions ->
+                Maybe.map (\oi -> { oi | n_projects = unwrap2 0 .count y, client_version = versions |> withDefault [] |> List.head |> withDefault Nothing |> withDefault "" }) x
             )
             (Query.getNode (nidFilter nameid) (orgaInfoPayload username))
             (Query.aggregateProject (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | rootnameid = Present { eq = Present nameid, in_ = Absent }, status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) })
                 (SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count)
             )
+            (Query.queryBuildInfo identity (SelectionSet.map identity Fractal.Object.BuildInfo.client_version))
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -1504,3 +1506,4 @@ orgaInfoPayload username =
                     (SelectionSet.map NameidPayload Fractal.Object.User.username)
                 )
             )
+        |> hardcoded ""
