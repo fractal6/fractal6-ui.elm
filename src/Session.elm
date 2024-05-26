@@ -191,7 +191,7 @@ type
     | DoOpenLinkTensionPanel (Maybe { id : String, cards_len : Int })
     | DoOpenCardPanel ProjectCard
     | DoToggleTreeMenu
-    | DoFetchNode String
+    | DoFetchNode String -- A delay is applied in page global update to wait for backend potential processing (like user first-link)
     | DoAddNodes (List Node)
     | DoUpdateNode String (Node -> Node)
     | DoDelNodes (List String)

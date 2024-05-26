@@ -136,18 +136,18 @@ mapGlobalOutcmds gcmds =
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, sendSleep DoLoad 333 ], Cmd.none )
 
                     DoAddNodes nodes ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), send DoLoad ], Cmd.none )
 
                     --DoUpdateNode nameid fun ->
                     --    ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
                     DoDelNodes nameids ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), send DoLoad ], Cmd.none )
 
                     DoMoveNode a b c ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), send DoLoad ], Cmd.none )
 
                     -- App
                     DoUpdateNode nameid fun ->
@@ -996,11 +996,12 @@ viewMemberRow conf focus m isPanelOpen ell =
                             , content_cls = "p-0 has-border-light"
                             , content_html =
                                 div []
-                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRole (FromNameid focus.nameid))) ]
+                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
                                         [ A.icon1 "icon-leaf" T.addUserRole ]
 
                                     --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ]
+                                    --    [ A.icon1 "icon-queen" T.makeOwner ]
                                     ]
                             }
                         ]
@@ -1036,7 +1037,8 @@ viewGuestRow conf focus m isPanelOpen ell =
                                         [ A.icon1 "icon-leaf" T.addUserRole ]
 
                                     --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
+                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ]
+                                    --    [ A.icon1 "icon-queen" T.makeOwner ]
                                     ]
                             }
                         ]

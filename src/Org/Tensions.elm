@@ -143,7 +143,7 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+                        ( Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, Cmd.none )
 
                     DoAddNodes nodes ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
