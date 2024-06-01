@@ -2008,8 +2008,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Open in a new tab"
   fr="Ouvrir dans un nouvel onglet"
 
+[ownerPromotion]
+  en="This member has been successfully promoted to Owner"
+  fr="Ce membre a été promu Owner avec succès"
 
-# ADDME END @next ^
+
+# ADDME NEW END @next ^
 # --
 #
 # Legend

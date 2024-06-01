@@ -28,7 +28,7 @@ import Codecs exposing (RecentActivityTab(..), WindowPos, userCtxDecoder, window
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
-import Loading exposing (GqlData, RestData)
+import Loading exposing (GqlData, RequestResult(..), RestData)
 import Maybe exposing (andThen, withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -56,6 +56,7 @@ type alias Conf =
     , lang : Lang.Lang
     , now : Time.Posix
     , url : Url.Url
+    , user : UserState
     }
 
 
@@ -164,6 +165,7 @@ type alias Session =
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
+    , system_notification : RestData String
     }
 
 
@@ -249,6 +251,7 @@ resetSession session flags =
     , labelsPanel = Nothing
     , newOrgaData = Nothing
     , orgaInfo = Nothing
+    , system_notification = RemoteData.NotAsked
     }
 
 
@@ -367,6 +370,7 @@ fromLocalSession flags =
       , labelsPanel = Nothing
       , newOrgaData = Nothing
       , orgaInfo = Nothing
+      , system_notification = RemoteData.NotAsked
       }
     , [ cmd1, cmd2, cmd3, cmd4, cmd5 ]
     )

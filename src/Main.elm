@@ -57,7 +57,8 @@ type alias Model =
     , global : Global.Model
     , page : Pages.Model
     , nvt_msg1 : String -> Msg
-    , nvt_msg2 : String -> Msg
+    , nvt_msg2 : Msg
+    , onClearNotif : Msg
     }
 
 
@@ -70,7 +71,7 @@ init flags url key =
         ( page, pageCmd, pageGlobalCmd ) =
             Pages.init (fromUrl url) global
     in
-    ( Model key url global page (Global << ReplaceUrl) (Global << OnCloseOutdatedVersion)
+    ( Model key url global page (Global << ReplaceUrl) (Global OnCloseOutdatedVersion) (Global OnClearSystemNotif)
     , Cmd.batch
         [ Cmd.map Global globalCmd
         , Cmd.map Global pageGlobalCmd
@@ -190,6 +191,7 @@ view model =
         , url = model.url -- @debug url change in global is not passed to Global.view. Why ?
         , msg1 = model.nvt_msg1
         , msg2 = model.nvt_msg2
+        , onClearNotif = model.onClearNotif
         }
 
 

@@ -39,7 +39,7 @@ import Text as T
 import Url exposing (Url)
 
 
-view : UserState -> NotifCount -> Maybe OrgaInfo -> Apis -> Url -> (String -> msg) -> (String -> msg) -> Html msg
+view : UserState -> NotifCount -> Maybe OrgaInfo -> Apis -> Url -> (String -> msg) -> msg -> Html msg
 view user notif orga_info apis url replaceUrl onCloseOutdated =
     let
         orgUrl =
@@ -90,7 +90,7 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                 )
             , showIf hasVersionOutdated <|
                 div [ class "f6-notification notification is-warning is-light" ]
-                    [ button [ class "delete", onClick (onCloseOutdated "") ] []
+                    [ button [ class "delete", onClick onCloseOutdated ] []
                     , a [ class "stealth-link" ]
                         -- https://github.com/surprisetalk/elm-bulma/issues/17
                         [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]

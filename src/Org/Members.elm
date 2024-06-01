@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Bulma as B
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, toLink)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -39,7 +39,7 @@ import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
-import Extra exposing (space_, ternary, unwrap)
+import Extra exposing (showIf, space_, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
@@ -49,13 +49,13 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
-import Html exposing (Html, a, div, h2, i, input, span, tbody, td, text, th, thead, tr)
+import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), RestData, withDefaultData, withMapData, withMapDataRest, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -63,7 +63,8 @@ import Ports
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
-import Requests exposing (fetchMembersSub)
+import RemoteData
+import Requests exposing (fetchMembersSub, makeOwner)
 import Session exposing (Conf, GlobalCmd(..))
 import Text as T
 import Time
@@ -309,6 +310,8 @@ type Msg
     | OnGoContractAck (GqlData IdPayload)
     | OnRowHover (Maybe String)
     | OnRowEdit Bool
+    | OnMakeOwner String String
+    | GotMakeOwner (RestData Bool)
       -- Search
     | ChangePattern String
     | SearchKeyDown Int
@@ -448,6 +451,20 @@ update global message model =
         GotMembersSub result ->
             case result of
                 Success mbs ->
+                    let
+                        reorderByMembership roles =
+                            roles
+                                |> List.foldl
+                                    (\role ( membershipRoles, otherRoles ) ->
+                                        if role.role_type == RoleType.Owner then
+                                            ( role :: membershipRoles, otherRoles )
+
+                                        else
+                                            ( membershipRoles, role :: otherRoles )
+                                    )
+                                    ( [], [] )
+                                |> (\( a, b ) -> a ++ b)
+                    in
                     ( { model
                         | members_sub =
                             List.filterMap
@@ -457,7 +474,7 @@ update global message model =
                                             Nothing
 
                                         roles ->
-                                            Just { m | roles = roles }
+                                            Just { m | roles = reorderByMembership roles }
                                 )
                                 mbs
                                 |> Success
@@ -517,6 +534,20 @@ update global message model =
                     model.row_hover
             in
             ( { model | row_hover = { row | isOpen = edit } }, Cmd.none, Cmd.none )
+
+        OnMakeOwner nameid username ->
+            ( model, makeOwner apis nameid username GotMakeOwner, Cmd.none )
+
+        GotMakeOwner result ->
+            ( model
+            , case result of
+                RemoteData.Success ok ->
+                    send DoLoad
+
+                _ ->
+                    Cmd.none
+            , send (OnPushSystemNotif (withMapDataRest (\ok -> ternary ok T.ownerPromotion "not implemented") result))
+            )
 
         -- Search
         ChangePattern value ->
@@ -982,33 +1013,8 @@ viewMemberRow conf focus m isPanelOpen ell =
 
                 _ ->
                     viewMemberRoles conf OverviewBaseUri sub_roles_ isPanelOpen
-            , if ell.hover == Just ("member" ++ m.username) then
-                span [ class "is-pulled-right" ]
-                    [ span [ class "outside-table" ]
-                        [ B.dropdownLight
-                            { dropdown_id = "row-ellipsis"
-                            , isOpen = ell.isOpen
-                            , dropdown_cls = ""
-                            , button_cls = ""
-                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
-                            , msg = OnRowEdit (ternary ell.isOpen False True)
-                            , menu_cls = ""
-                            , content_cls = "p-0 has-border-light"
-                            , content_html =
-                                div []
-                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
-                                        [ A.icon1 "icon-leaf" T.addUserRole ]
-
-                                    --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ]
-                                    --    [ A.icon1 "icon-queen" T.makeOwner ]
-                                    ]
-                            }
-                        ]
-                    ]
-
-              else
-                text ""
+            , showIf (ell.hover == Just ("member" ++ m.username)) <|
+                viewUserEllipsis conf focus m roles_ ell
             ]
         ]
 
@@ -1019,33 +1025,8 @@ viewGuestRow conf focus m isPanelOpen ell =
         [ td [] [ viewUserFull 1 True False m ]
         , td []
             [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen
-            , if ell.hover == Just ("guest" ++ m.username) then
-                span [ class "is-pulled-right" ]
-                    [ span [ class "outside-table" ]
-                        [ B.dropdownLight
-                            { dropdown_id = "row-ellipsis"
-                            , isOpen = ell.isOpen
-                            , dropdown_cls = ""
-                            , button_cls = ""
-                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
-                            , msg = OnRowEdit (ternary ell.isOpen False True)
-                            , menu_cls = ""
-                            , content_cls = "p-0 has-border-light"
-                            , content_html =
-                                div []
-                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
-                                        [ A.icon1 "icon-leaf" T.addUserRole ]
-
-                                    --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ]
-                                    --    [ A.icon1 "icon-queen" T.makeOwner ]
-                                    ]
-                            }
-                        ]
-                    ]
-
-              else
-                text ""
+            , showIf (ell.hover == Just ("guest" ++ m.username)) <|
+                viewUserEllipsis conf focus m m.roles ell
             ]
         ]
 
@@ -1058,6 +1039,42 @@ viewMemberRoles conf baseUri roles isPanelOpen =
                 viewRole "" True False (Just ( conf, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
             )
             roles
+
+
+viewUserEllipsis conf focus m roles ell =
+    let
+        isOwner_ =
+            isOwner (uctxFromUser conf.user) focus.nameid
+    in
+    span [ class "is-pulled-right" ]
+        [ span [ class "outside-table" ]
+            [ B.dropdownLight
+                { dropdown_id = "row-ellipsis"
+                , isOpen = ell.isOpen
+                , dropdown_cls = ""
+                , button_cls = ""
+                , button_html = A.icon "icon-more-horizontal is-h icon-1half"
+                , msg = OnRowEdit (ternary ell.isOpen False True)
+                , menu_cls = ""
+                , content_cls = "p-0 has-border-light"
+                , content_html =
+                    div []
+                        ([ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
+                            [ A.icon1 "icon-leaf" T.addUserRole ]
+                         ]
+                            ++ (if isOwner_ && not (List.any (\x -> x.role_type == RoleType.Owner) roles) then
+                                    [ hr [ class "dropdown-divider" ] []
+                                    , div [ class "dropdown-item button-light is-warning", onClick (OnMakeOwner (nid2rootid focus.nameid) m.username) ]
+                                        [ A.icon1 "icon-queen" T.makeOwner ]
+                                    ]
+
+                                else
+                                    []
+                               )
+                        )
+                }
+            ]
+        ]
 
 
 

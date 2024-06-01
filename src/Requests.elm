@@ -359,6 +359,24 @@ projectEncoder nameids first offset query_ status_ sort_ =
 
 
 --
+-- User management
+--
+
+
+makeOwner api nameid username msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/makeowner"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "username", JE.string username ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+--
 -- Organisation management
 --
 
