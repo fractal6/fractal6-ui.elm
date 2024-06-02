@@ -458,8 +458,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Fonctionnalités à venir"
 
 [leaveRole]
-  en="Leave role"
+  en="Leave this role"
   fr="Quitter ce rôle"
+
 
 [removeUser]
   en="Remove user"
@@ -726,8 +727,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Ajouter un Rôle"
 
 [addUserRole]
-  en="add a role to this user"
-  fr="Ajouter un rôle à cette utilisateur"
+  en="add a role to this member"
+  fr="Ajouter un rôle à ce membre"
 
 [makeOwner]
   en="Make this member an Owner"
@@ -1108,8 +1109,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Merci pour votre retour, nous vous répondrons dans les plus brefs délais."
 
 [add]
-  en="Add"
-  fr="Ajouter"
+  en="New"
+  fr="Créer"
+
+[addTension]
+  en="New tension"
+  fr="Créer une tension"
 
 [remove]
   en="Remove"
@@ -1718,12 +1723,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="You can make a"
   fr="Vous pouvez créer un"
 
-[orCreate]
-  en="or make an"
-  fr="ou créer un"
-
 [orAdd]
-  en="or add an"
+  en="or add a"
   fr="ou ajouter un"
 
 [makeA]

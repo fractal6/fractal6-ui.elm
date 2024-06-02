@@ -1875,7 +1875,7 @@ figcaption {
             }
 
             .dropdown-menu {
-                margin-top: -$size-small;
+                margin-top: -3px;
                 margin-right: -$size-small !important;
             }
 
@@ -1886,7 +1886,6 @@ figcaption {
         }
 
         .message-body {
-            padding: 1rem 0.9rem !important;
             font-size: 15px;
         }
     }
@@ -2885,7 +2884,7 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
             }
         }
         .message-body {
-            padding: 0;
+            padding: 0 !important;
         }
     }
 }

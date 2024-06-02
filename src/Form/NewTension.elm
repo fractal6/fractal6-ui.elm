@@ -1825,7 +1825,7 @@ viewRolesExt model =
                                 ++ [ br [ class "clearfix" ] []
                                    , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [] [], text T.youCanMake ]
+                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-5" ] [], text T.youCanMake ]
 
                                           else
                                             span [ class "content is-small" ] [ text T.needNewRole, br [] [], text T.makeA ]

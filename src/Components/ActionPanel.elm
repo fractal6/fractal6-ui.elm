@@ -1114,7 +1114,7 @@ viewPanel op model =
                             NodeType.Role ->
                                 [ div
                                     [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                    [ A.icon1 "icon-plus" (T.add ++ "...") ]
+                                    [ A.icon1 "icon-plus" T.addTension ]
                                 ]
 
                     else
@@ -1180,7 +1180,7 @@ viewPanel op model =
                 -- LINK/LEAVE ACTION
                 ++ (if hasRole && not isCircle then
                         [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
-                            [ if isBaseMember_ then
+                            [ if isBaseMember_ && not isOwner_ then
                                 A.icon1 "icon-log-out" T.leaveOrga
 
                               else
