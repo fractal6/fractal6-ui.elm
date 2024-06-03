@@ -1024,6 +1024,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="the organisation"
   fr="l’organisation"
 
+[theOwnerRole]
+  en="its Owner role"
+  fr="son rôle de propriétaire"
+
 [moveTension]
   en="Move tension"
   fr="Déplacer la tension"
@@ -2298,9 +2302,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="An user left his role"
   fr="Un utilisateur à quitté son rôle"
 
+[userLeft_owner_event]
+  en="An user left his Owner role"
+  fr="Un utilisateur a quitté son rôle de propriétaire"
+
 [userLeft_orga_event]
   en="An user left us"
   fr="Un utilisateur nous a quitté"
+
 
 
 #

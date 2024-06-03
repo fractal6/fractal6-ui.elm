@@ -109,6 +109,15 @@ getContractId url contractid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
+
+--getPendingInvitations url form msg =
+--    makeGQLQuery url
+--        (Query.queryContract { id = encodeId form.tid }
+--            (tensionContractsOpenPayload form)
+--        )
+--        (RemoteData.fromResult >> decodeResponse contractsDecoder >> msg)
+
+
 {-| tensionContractsOpenPayload : SelectionSet TensionContracts Fractal.Object.Tension
 -}
 tensionContractsOpenPayload form =

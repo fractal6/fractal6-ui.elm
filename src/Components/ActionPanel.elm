@@ -409,7 +409,7 @@ setActionForm data =
 
                 UnLinkAction user ->
                     -- see (1)
-                    [ Ev TensionEvent.MemberUnlinked user.username "" ]
+                    [ Ev TensionEvent.MemberUnlinked user.username (data.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "") ]
 
                 ArchiveAction ->
                     [ Ev TensionEvent.BlobArchived "" "" ]
@@ -556,7 +556,6 @@ type Msg
     | OnGetNode (GqlData Node)
     | OnClose
     | OnReset
-    | PushAction ActionForm PanelState
     | OnSubmit (Time.Posix -> Msg)
     | OnOpenModal PanelState
     | OnCloseModal ModalData
@@ -566,12 +565,12 @@ type Msg
     | OnChangeMode NodeMode.NodeMode
     | OnChangeRoleType RoleType.RoleType
     | OnActionSubmit Time.Posix
-    | OnActionMove
-      --
-      --| ActionStep1 xxx
-    | GotTensionToMove (GqlData TensionHead)
+      -- Actions
+    | PushAction ActionForm PanelState
     | PushAck (GqlData IdPayload)
-      -- Autonomous action (components)
+    | OnActionMove
+    | GotTensionToMove (GqlData TensionHead)
+      -- Autonomous Action (components)
     | DoMove TensionHead
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -774,6 +773,12 @@ update_ apis message model =
                                         in
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
+                            ArchiveAction ->
+                                [ DoDelNodes [ model.form.node.nameid ] ]
+
+                            UnarchiveAction ->
+                                []
+
                             LinkAction ->
                                 if isSelfContract model.form.uctx model.form.users then
                                     let
@@ -783,23 +788,15 @@ update_ apis message model =
                                     [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
 
                                 else
-                                    --Contract based event...
-                                    []
+                                    --Contract based event (DoLoad for pendings nodes)...
+                                    [ DoUpdateNode model.form.node.nameid identity ]
 
                             UnLinkAction _ ->
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
 
-                            ArchiveAction ->
-                                [ DoDelNodes [ model.form.node.nameid ] ]
-
-                            UnarchiveAction ->
-                                []
-
                             LeaveAction ->
                                 -- Ignore Guest deletion (either non visible or very small)
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing })
-
-                                --, DoFocus (nearestCircleid model.form.node.nameid)
                                 ]
 
                     else

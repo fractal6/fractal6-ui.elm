@@ -29,8 +29,8 @@ const closeOnClickBurger = ['userMenu']; // data-target of burger
 
 export function InitBulma(app, session, eltId) {
     var handlers = session.bulmaHandlers;
-    if (!eltId) console.log(`Activate Bulma driver (%d)...`, handlers.length);
-    else console.log(".")
+    if (!eltId)
+        console.log(`Activate Bulma driver (%d)...`, handlers.length);
 
     // This timeout is needed when bulma driver is called by elm Cmd,
     // to wait for the Html Msg to be updated by elm in order

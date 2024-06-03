@@ -1428,6 +1428,7 @@ tensionEventPayload =
                     Fractal.Object.Tension.title
                 )
             )
+        |> with Fractal.Object.Event.new
 
 
 contractEventPayload : SelectionSet ContractNotif Fractal.Object.Contract

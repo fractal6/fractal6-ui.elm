@@ -114,6 +114,7 @@ init flags url key =
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
          , now
+         , send UpdateUserToken
          , sendSleep RefreshNotifCount 1000
          ]
             ++ cmds

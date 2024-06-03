@@ -296,15 +296,19 @@ update_ apis message model =
                     )
 
                 LoggedIn uctx ->
-                    if method == JoinOne && not (isMember uctx rootnameid || isPending uctx rootnameid) then
+                    let
+                        isPndg =
+                            isPending uctx rootnameid
+                    in
+                    if method == JoinOne && not (isMember uctx rootnameid || isPndg) then
                         -- Join
-                        ( { model | step = method } |> open
+                        ( { model | step = method, isPending = isPndg } |> open
                         , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
                         )
 
                     else if method == InviteOne then
                         -- Invite
-                        ( { model | step = method } |> open
+                        ( { model | step = method, isPending = isPndg } |> open
                         , out0
                             [ Ports.open_modal "JoinOrgaModal"
                             , fetchNode apis rootnameid OnGetNode
@@ -313,7 +317,7 @@ update_ apis message model =
                         )
 
                     else
-                        ( model, noOut )
+                        ( { model | isPending = isPndg }, noOut )
 
         OnClose data ->
             let
@@ -438,12 +442,23 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( { model | join_result = result }
-                      --, out1 [ DoFetchNode (memberIdCodec model.form.node.nameid model.form.uctx.username) ]
-                    , out1 [ DoUpdateToken ]
+                    , out1
+                        [ DoUpdateToken
+
+                        --Contract based event (DoLoad for pendings nodes)...
+                        , DoUpdateNode model.form.node.nameid identity
+                        ]
                     )
 
                 DuplicateErr ->
-                    ( { model | join_result = result, isPending = True }, noOut )
+                    ( { model | join_result = result, isPending = True }
+                    , case model.step of
+                        JoinOne ->
+                            out1 [ DoUpdateToken ]
+
+                        _ ->
+                            noOut
+                    )
 
                 _ ->
                     ( { model | join_result = result }, noOut )
@@ -466,7 +481,7 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx }, noOut )
+            ( { model | user = LoggedIn uctx, isPending = isPending uctx model.nameid }, noOut )
 
         -- Components
         UserInputMsg msg ->

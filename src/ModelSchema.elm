@@ -882,6 +882,7 @@ type alias EventNotif =
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
     , tension : { id : String, emitterid : String, receiver : PNode, title : String }
+    , new : Maybe String
     }
 
 

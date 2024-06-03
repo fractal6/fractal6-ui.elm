@@ -992,7 +992,7 @@ span[data-tooltip] {
     & > div {
         // do not hide delete button when there is overflow.
         max-height: 200px;
-        overflow: scroll;
+        overflow: auto;
     }
 
     z-index: 9999; // Ensure a high z-index value to place the element on top
@@ -2003,23 +2003,24 @@ figcaption {
         }
     }
 
-    .level {
-        justify-content: start;
-    }
-    .level-left {
-        font-size: 0.75rem;
-        font-weight: bold;
-        color: var(--is-hint);
-        flex-basis: 33%;
-        padding-right: var(--size-small);
-    }
-    .level-item {
-        flex-grow: 0 !important;
-        justify-content: left;
-    }
 
-    .level .help {
-        margin-top: 0;
+    > .level {
+        justify-content: start;
+        .level-left {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--is-hint);
+            flex-basis: 33%;
+            padding-right: var(--size-small);
+        }
+        .level-item {
+            flex-grow: 0 !important;
+            justify-content: left;
+        }
+
+        .help {
+            margin-top: 0;
+        }
     }
 }
 

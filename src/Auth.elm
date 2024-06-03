@@ -95,6 +95,7 @@ messageToErrState message_ trial =
 
     else if
         startsWith "access denied" message
+            || contains "silent error" message
             || contains "refresh token" message
             || contains "authorization failed" message
             || contains "mutation failed because authorization failed" message

@@ -1613,6 +1613,9 @@ viewEventUserLeft lang now event action_m =
                         Just RoleType.Guest ->
                             T.theOrganisation
 
+                        Just RoleType.Owner ->
+                            T.theOwnerRole
+
                         _ ->
                             T.this ++ " " ++ decap T.role
 
