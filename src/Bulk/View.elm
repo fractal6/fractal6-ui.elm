@@ -495,7 +495,15 @@ viewUser0 username =
 
 
 viewUser : Bool -> String -> Html msg
-viewUser isLinked username =
+viewUser isLinked_ username =
+    let
+        isLinked =
+            if String.contains "@" username then
+                False
+
+            else
+                isLinked_
+    in
     if isLinked then
         span [ class "mr-2", title username ]
             [ a [ href (toLink UsersBaseUri username []) ]
@@ -515,8 +523,15 @@ viewUser2 username =
 
 
 viewUserFull : Int -> Bool -> Bool -> UserView a -> Html msg
-viewUserFull size isLinked isBoxed user =
+viewUserFull size isLinked_ isBoxed user =
     let
+        isLinked =
+            if String.contains "@" user.username then
+                False
+
+            else
+                isLinked_
+
         ( pad, avatar ) =
             case size of
                 0 ->
