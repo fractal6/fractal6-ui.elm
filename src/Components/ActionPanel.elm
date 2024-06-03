@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), getNodeRights, parseErr)
 import Browser.Events as Events
 import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -33,7 +33,7 @@ import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (mor, ternary)
+import Extra exposing (mor, showIf, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -424,7 +424,8 @@ setActionForm data =
                         (data.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
                     ]
 
-        -- (1) for membership node, as their is no blob, role_type need to be passed to the backend to avoid extra database request
+        -- (1) for membership node, as they have no blob,
+        -- role_type need to be passed to the backend to avoid extra database request.
         -- Note: This only work if the membersip node is not present in the tree (ie. not for Owner node...)
         -- (see QueryNode.nodeOrgaFilter)
     in
@@ -1038,45 +1039,44 @@ viewPanel op model =
                 Nothing ->
                     attribute "style" ""
 
+        -- Node related
+        isCircle =
+            model.role_type == Nothing
+
+        isRoot =
+            nid2rootid model.form.node.nameid == model.form.node.nameid
+
+        ownerRole =
+            model.role_type == Just RoleType.Owner
+
+        isBaseMember_ =
+            isBaseMember model.targetid
+
+        isMembershipRole =
+            isMembershipNode model.form.node
+
+        -- User related
         hasRole =
             playsRole model.form.uctx model.targetid
 
         isOwner_ =
             isOwner model.form.uctx model.targetid
 
-        ownerRole =
-            model.role_type == Just RoleType.Owner
-
         isAdmin =
             isOwner_
                 || (List.length (getNodeRights model.form.uctx model.form.node op.tree_data) > 0 && not ownerRole)
-
-        isBaseMember_ =
-            isBaseMember model.targetid
-
-        isCircle =
-            model.role_type == Nothing
     in
     div [ class "actionPanelStyle", pos ]
-        [ div
-            [ class "dropdown-content"
-            , classList [ ( "is-right", op.isRight ) ]
-            ]
-          <|
-            (-- SHORTCUT ACTION
-             if not (List.member model.form.node.role_type [ Just RoleType.Guest, Just RoleType.Owner ]) then
-                [ -- View Action
-                  if model.domid /= "actionPanelContentTooltip" then
-                    div
-                        [ class "dropdown-item button-light"
-                        , onClick (Navigate (toLink OverviewBaseUri model.form.node.nameid []))
-                        ]
-                        [ A.icon1 "icon-disc" T.view ]
-
-                  else
-                    text ""
-                , -- Edit Action
-                  div
+        [ ([ -- View Action
+             showIf (not isMembershipRole && model.domid /= "actionPanelContentTooltip") <|
+                div
+                    [ class "dropdown-item button-light"
+                    , onClick (Navigate (toLink OverviewBaseUri model.form.node.nameid []))
+                    ]
+                    [ A.icon1 "icon-disc" T.view ]
+           , -- Edit Action
+             showIf (not isMembershipRole && isAdmin) <|
+                div
                     [ class "dropdown-item button-light"
                     , onClick
                         (Navigate
@@ -1084,135 +1084,114 @@ viewPanel op model =
                         )
                     ]
                     [ A.icon1 "icon-edit-2" T.edit ]
-                ]
-
-             else
-                []
-            )
-                ++ (-- ADD ACTION
-                    if model.form.node.role_type /= Just RoleType.Guest then
-                        case model.form.node.type_ of
-                            NodeType.Circle ->
-                                [ div [ class "dropdown-item button-light is-flex right-hoverable" ]
-                                    [ div [ class "is-flex-direction-column is-flex-grow-1", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                        [ A.icon1 "icon-plus" (T.add ++ "...")
-                                        , span [ class "is-hidden-mobile is-pulled-right" ] [ A.icon "icon-chevron-right" ]
-                                        ]
-                                    , div [ class "dropdown-menu", attribute "role" "menu" ]
-                                        [ div [ class "dropdown-content" ]
-                                            [ div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                                [ A.icon1 "icon-exchange" T.tension ]
-                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Circle) Nothing ]) ]
-                                                [ A.icon1 "icon-git-branch" T.circle ]
-                                            , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
-                                                [ A.icon1 "icon-leaf" T.role ]
-                                            ]
-                                        ]
+           , -- ADD ACTION
+             showIf (not isMembershipRole) <|
+                case model.form.node.type_ of
+                    NodeType.Circle ->
+                        div [ class "dropdown-item button-light is-flex right-hoverable" ]
+                            [ div [ class "is-flex-direction-column is-flex-grow-1", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
+                                [ A.icon1 "icon-plus" (T.add ++ "...")
+                                , span [ class "is-hidden-mobile is-pulled-right" ] [ A.icon "icon-chevron-right" ]
+                                ]
+                            , div [ class "dropdown-menu", attribute "role" "menu" ]
+                                [ div [ class "dropdown-content" ]
+                                    [ div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
+                                        [ A.icon1 "icon-exchange" T.tension ]
+                                    , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Circle) Nothing ]) ]
+                                        [ A.icon1 "icon-git-branch" T.circle ]
+                                    , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
+                                        [ A.icon1 "icon-leaf" T.role ]
                                     ]
                                 ]
+                            ]
 
-                            NodeType.Role ->
-                                [ div
-                                    [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                    [ A.icon1 "icon-plus" T.addTension ]
+                    NodeType.Role ->
+                        div
+                            [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
+                            [ A.icon1 "icon-plus" T.addTension ]
+           ]
+            -- ACTION
+            ++ (if isAdmin && not isBaseMember_ then
+                    [ hr [ class "dropdown-divider" ] []
+                    , -- Move Action
+                      showIf (not isRoot) <|
+                        div [ class "dropdown-item button-light", onClick OnActionMove ]
+                            [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (panelAction2str MoveAction) ]
+                    , -- Authority Action
+                      div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
+                        [ A.icon1 (auth2icon op.tc) (auth2str op.tc) ]
+                    , -- Visibility Action
+                      showIf isCircle <|
+                        div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
+                            [ A.icon1 "icon-lock" (panelAction2str VisibilityAction) ]
+                    ]
+                        ++ -- ARCHIVE ACTION
+                           (if not isRoot then
+                                [ case op.tc.action_type of
+                                    EDIT ->
+                                        div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
+                                            [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
+
+                                    ARCHIVE ->
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
+                                            [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
+
+                                    NEW ->
+                                        div [] [ text T.notImplemented ]
                                 ]
 
-                    else
-                        []
-                   )
-                -- ACTION
-                ++ (if isAdmin && not isBaseMember_ then
-                        let
-                            isRoot =
-                                nid2rootid model.form.node.nameid == model.form.node.nameid
-                        in
-                        [ hr [ class "dropdown-divider" ] []
+                            else
+                                []
+                           )
+                        |> (\l ->
+                                ternary isCircle l (l ++ [ hr [ class "dropdown-divider" ] [] ])
+                           )
 
-                        -- Move Action
-                        , if not isRoot then
-                            div [ class "dropdown-item button-light", onClick OnActionMove ]
-                                [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (panelAction2str MoveAction) ]
+                else
+                    []
+               )
+            -- LINK/LEAVE ACTION
+            ++ (if hasRole && not isCircle then
+                    [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
+                        [ if isBaseMember_ && not isOwner_ then
+                            A.icon1 "icon-log-out" T.leaveOrga
 
                           else
-                            text ""
-
-                        -- Authority Action
-                        , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
-                            [ A.icon1 (auth2icon op.tc) (auth2str op.tc) ]
-                        , case model.form.node.type_ of
-                            -- Visibility Action
-                            NodeType.Circle ->
-                                div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
-                                    [ A.icon1 "icon-lock" (panelAction2str VisibilityAction) ]
-
-                            NodeType.Role ->
-                                text ""
+                            A.icon1 "icon-log-out" (panelAction2str LeaveAction)
                         ]
-                            ++ -- ARCHIVE ACTION
-                               (if not isRoot then
-                                    [ case op.tc.action_type of
-                                        EDIT ->
-                                            div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                                [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
+                    ]
 
-                                        ARCHIVE ->
-                                            div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                                [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
+                else if isAdmin && not isBaseMember_ && not isCircle then
+                    -- Link/Unlink Action
+                    [ case model.form.node.first_link of
+                        Just user ->
+                            div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
+                                [ A.icon1 "icon-user-x" (panelAction2str (UnLinkAction user)) ]
 
-                                        NEW ->
-                                            div [] [ text T.notImplemented ]
-                                    ]
+                        Nothing ->
+                            div [ class "dropdown-item button-light is-success", onClick (OnOpenModal LinkAction) ]
+                                [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
+                    ]
 
-                                else
-                                    []
-                               )
-                            |> (\l ->
-                                    if isCircle then
-                                        l
+                else if isAdmin && (isBaseMember_ && not ownerRole) && not isCircle then
+                    --  Remove User (Assume Guest)
+                    let
+                        user =
+                            userFromBaseMember model.targetid |> withDefault "" |> (\u -> { username = u, name = Nothing })
+                    in
+                    [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
+                        [ A.icon1 "icon-user-plus" T.removeUser ]
+                    ]
 
-                                    else
-                                        l ++ [ hr [ class "dropdown-divider" ] [] ]
-                               )
-
-                    else
-                        []
-                   )
-                -- LINK/LEAVE ACTION
-                ++ (if hasRole && not isCircle then
-                        [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
-                            [ if isBaseMember_ && not isOwner_ then
-                                A.icon1 "icon-log-out" T.leaveOrga
-
-                              else
-                                A.icon1 "icon-log-out" (panelAction2str LeaveAction)
-                            ]
-                        ]
-
-                    else if isAdmin && not isBaseMember_ && not isCircle then
-                        -- Link/Unlink Action
-                        [ case model.form.node.first_link of
-                            Just user ->
-                                div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
-                                    [ A.icon1 "icon-user-x" (panelAction2str (UnLinkAction user)) ]
-
-                            Nothing ->
-                                div [ class "dropdown-item button-light is-success", onClick (OnOpenModal LinkAction) ]
-                                    [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
-                        ]
-
-                    else if isAdmin && (isBaseMember_ && not ownerRole) && not isCircle then
-                        --  Remove User (Assume Guest)
-                        let
-                            user =
-                                userFromBaseMember model.targetid |> withDefault "" |> (\u -> { username = u, name = Nothing })
-                        in
-                        [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal (UnLinkAction user)) ]
-                            [ A.icon1 "icon-user-plus" T.removeUser ]
-                        ]
-
-                    else
-                        []
-                   )
+                else
+                    []
+               )
+          )
+            |> List.filter (\x -> x /= text "" && x /= hr [ class "dropdown-divider" ] [])
+            |> (\x ->
+                    showIf (List.length x > 0) <|
+                        div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] x
+               )
         ]
 
 

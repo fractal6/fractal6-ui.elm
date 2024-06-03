@@ -588,6 +588,18 @@ isOwner uctx nameid =
         |> List.any (\r -> r.role_type == RoleType.Owner)
 
 
+isMembershipNode : { a | role_type : Maybe RoleType.RoleType } -> Bool
+isMembershipNode n =
+    -- related to isBaseMember
+    List.member n.role_type
+        [ Just RoleType.Owner
+        , Just RoleType.Member
+        , Just RoleType.Guest
+        , Just RoleType.Retired
+        , Just RoleType.Pending
+        ]
+
+
 isPending : UserCtx -> String -> Bool
 isPending uctx nameid =
     uctx.roles
