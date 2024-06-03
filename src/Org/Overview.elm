@@ -993,7 +993,7 @@ view_ global model =
         nodeData =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
-            , node = getNode model.node_focus.nameid model.tree_data
+            , node = focus_m
             , node_data = withDefaultData initNodeData model.node_data
             , leads = model.leaders
             , isLazy = model.init_data
@@ -1001,6 +1001,7 @@ view_ global model =
             , hasBeenPushed = True
             , receiver = nearestCircleid model.node_focus.nameid
             , hasInnerToolbar = True
+            , isAdmin = Maybe.map2 (\node uctx -> List.length (getNodeRights uctx node model.tree_data) > 0) focus_m (maybeUctx global.session.user) |> withDefault False
             }
 
         viewFromPos : String -> Html Msg

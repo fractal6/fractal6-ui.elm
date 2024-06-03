@@ -75,6 +75,16 @@ uctxFromUser user =
             initUserctx
 
 
+maybeUctx : UserState -> Maybe UserCtx
+maybeUctx user =
+    case user of
+        LoggedIn uctx ->
+            Just uctx
+
+        LoggedOut ->
+            Nothing
+
+
 
 --
 -- Forms

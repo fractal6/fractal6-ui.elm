@@ -1808,6 +1808,7 @@ viewDocument u t b model =
                 , hasBeenPushed = t.hasBeenPushed
                 , receiver = t.receiver.nameid
                 , hasInnerToolbar = False
+                , isAdmin = model.isTensionAdmin
                 }
 
             op =
@@ -1816,7 +1817,6 @@ viewDocument u t b model =
                 , result = NotAsked
                 , publish_result = model.publish_result
                 , blob = b
-                , isAdmin = model.isTensionAdmin
                 , tension_blobs = model.tension_blobs
                 , onSubmit = Submit
                 , onSubmitBlob = CommitBlob
@@ -2084,7 +2084,6 @@ viewSidePane u t model =
                                     , result = NotAsked
                                     , publish_result = model.publish_result
                                     , blob = blob
-                                    , isAdmin = model.isTensionAdmin
                                     , tension_blobs = model.tension_blobs
                                     , onSubmit = Submit
                                     , onSubmitBlob = CommitBlob
@@ -2097,7 +2096,7 @@ viewSidePane u t model =
                                     , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            NodeDoc.viewNodeStatus op
+                            NodeDoc.viewNodeStatus model.isTensionAdmin op
                         ]
                     ]
             )

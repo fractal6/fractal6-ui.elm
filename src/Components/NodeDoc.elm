@@ -426,6 +426,7 @@ type alias OrgaNodeData =
     , hasBeenPushed : Bool
     , receiver : String
     , hasInnerToolbar : Bool
+    , isAdmin : Bool
     }
 
 
@@ -435,7 +436,6 @@ type alias Op msg =
     , result : GqlData Tension -- result from new tension components
     , publish_result : GqlData TensionBlobFlag
     , blob : Blob
-    , isAdmin : Bool
     , tension_blobs : GqlData TensionBlobs
 
     -- Blob control
@@ -471,7 +471,7 @@ view_ data op_m =
                                     [ div [ class "level-left" ]
                                         [ viewToolbar op.data.mode data ]
                                     , div [ class "level-right" ]
-                                        [ viewNodeStatus op ]
+                                        [ viewNodeStatus data.isAdmin op ]
                                     ]
                                 , case op.publish_result of
                                     Failure err ->
@@ -578,8 +578,8 @@ viewToolbarDropdown mode data =
         ]
 
 
-viewNodeStatus : Op msg -> Html msg
-viewNodeStatus op =
+viewNodeStatus : Bool -> Op msg -> Html msg
+viewNodeStatus isAdmin op =
     case op.blob.pushedFlag of
         Just flag ->
             div [ class "has-text-success is-italic" ]
@@ -589,7 +589,7 @@ viewNodeStatus op =
             div [ class "field has-addons" ]
                 [ div [ class "has-text-warning is-italic mr-3" ]
                     [ text T.revisionNotPublished ]
-                , if op.isAdmin then
+                , if isAdmin then
                     let
                         isLoading =
                             op.publish_result == LoadingSlowly
@@ -703,17 +703,21 @@ viewBlob data op_m =
                                     |> withDefault (text "")
 
                             -- Open Contracts
-                            , case unwrap 0 .n_open_contracts data.node of
-                                0 ->
-                                    text ""
+                            , if data.isAdmin then
+                                case unwrap 0 .n_open_contracts data.node of
+                                    0 ->
+                                        text ""
 
-                                i ->
-                                    let
-                                        tid =
-                                            withDefaultData "" data.tid_r
-                                    in
-                                    a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
-                                        [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
+                                    i ->
+                                        let
+                                            tid =
+                                                withDefaultData "" data.tid_r
+                                        in
+                                        a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
+                                            [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
+
+                              else
+                                text ""
                             ]
 
                     Nothing ->
