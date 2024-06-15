@@ -220,6 +220,7 @@ $is-announce: #bfb40c;
 
 // Hover case
 $primary-hover: lighten($primary, 10);
+$success-hover: lighten($success, 10);
 $link-hover: lighten($link, 10);
 $danger-hover: lighten($danger, 10);
 $orange-hover: lighten($orange, 10);
@@ -395,6 +396,7 @@ $logo-modal-color: $grey-light3;
 
   // Hover case
   --primary-hover: #{$primary-hover};
+  --success-hover: #{$success-hover};
   --link-hover: #{$link-hover};
   --danger-hover: #{$danger-hover};
   --orange-hover: #{$orange-hover};
@@ -594,6 +596,7 @@ $warning-light: lighten($yellow, 30);
 
 // Hover case
 $primary-hover: darken($primary, 5);
+$success-hover: darken($success, 5);
 $link-hover: darken($link, 18);
 $danger-hover: darken($danger, 5);
 $orange-hover: darken($orange, 5);
@@ -775,6 +778,7 @@ $logo-modal-color: $grey-dark;
 
   // Hover case
   --primary-hover: #{$primary-hover};
+  --success-hover: #{$success-hover};
   --link-hover: #{$link-hover};
   --danger-hover: #{$danger-hover};
   --orange-hover: #{$orange-hover};

@@ -478,7 +478,16 @@ update_ apis message model =
         OnVoteAck result ->
             let
                 data =
-                    { model | vote_result = result }
+                    { model
+                        | vote_result = result
+                        , contract_result =
+                            withMaybeMapData
+                                (\v ->
+                                    withMapData (\c -> { c | status = v.status }) model.contract_result
+                                )
+                                result
+                                |> withDefault model.contract_result
+                    }
             in
             case parseErr result data.refresh_trial of
                 Authenticate ->
@@ -857,29 +866,32 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-1 is-smaller" ]
-            [ div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
-            , hr [] []
-            , if isAuthor || op.isAdmin then
-                div
-                    [ class "is-pulled-right is-w is-h"
-                    , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
-                    ]
-                    [ A.icon1 "icon-trash" T.deleteThisContract ]
+        , div [ class "is-smaller pb-2" ]
+            ([ div [ class "is-pulled-left" ] <|
+                case c.status of
+                    ContractStatus.Closed ->
+                        [ span [ class "has-text-success" ] [ text T.closedContract ] ]
 
-              else
-                text ""
-            ]
-        , div [ class "" ] <|
-            case c.status of
-                ContractStatus.Closed ->
-                    [ span [ class "has-text-success" ] [ text T.closedContract ] ]
+                    ContractStatus.Canceled ->
+                        [ span [ class "has-text-warning" ] [ text T.canceledContract ] ]
 
-                ContractStatus.Canceled ->
-                    [ span [ class "has-text-warning" ] [ text T.canceledContract ] ]
+                    ContractStatus.Open ->
+                        []
+             , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
+             ]
+                ++ (if c.status == ContractStatus.Open && (isAuthor || op.isAdmin) then
+                        [ hr [] []
+                        , div
+                            [ class "is-pulled-right button-light is-danger"
+                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                            ]
+                            [ A.icon1 "icon-trash" T.deleteThisContract ]
+                        ]
 
-                ContractStatus.Open ->
-                    []
+                    else
+                        []
+                   )
+            )
         ]
 
 

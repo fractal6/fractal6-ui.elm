@@ -1013,7 +1013,7 @@ viewTensionSidePane t model =
         -- Extras
         , hr [ class "has-background-border-light my-5" ] []
         , a
-            [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 stealth-link"
+            [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
             , target "_blank"
             ]
@@ -1067,7 +1067,7 @@ viewPanelDraft draft model =
                             ]
                         , div [ class "tensionSubtitle mt-3" ]
                             [ span [ class "tag is-rounded has-background-tag" ]
-                                [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
+                                [ div [ class "help my-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
                             , viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy
                             ]
                         ]
@@ -1202,12 +1202,12 @@ viewDraftSidePane d model =
          ]
             ++ (if isAdmin || isAuthor then
                     [ div
-                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
                         [ A.icon1 "icon-exchange" T.convertDraft ]
                     , div
-                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoRemoveDraft card.id)
                         ]
                         [ A.icon1 "icon-trash" T.deleteDraft ]

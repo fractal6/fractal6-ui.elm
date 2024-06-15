@@ -24,7 +24,7 @@ module Assets exposing (..)
 import Assets.Logo as Logo
 import Extra exposing (space_)
 import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
-import Html.Attributes exposing (attribute, class, href)
+import Html.Attributes exposing (attribute, class, classList, href)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T
@@ -75,12 +75,19 @@ icon0 cls =
 
 icon1 : String -> String -> Html msg
 icon1 cls words =
+    span [ classList [ ( "is-flex is-align-items-center", String.trim words /= "" ) ] ] [ icon cls, text (space_ ++ space_ ++ words) ]
+
+
+{-| Debug case where inline flex break the ui
+-}
+icon1_ : String -> String -> Html msg
+icon1_ cls words =
     span [] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
 icon1_sm : String -> String -> Html msg
 icon1_sm cls words =
-    span [] [ icon (cls ++ " icon-sm"), text (space_ ++ space_ ++ words) ]
+    span [ classList [ ( "is-flex is-align-items-center", String.trim words /= "" ) ] ] [ icon (cls ++ " icon-sm"), text (space_ ++ space_ ++ words) ]
 
 
 checked : Html msg

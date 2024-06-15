@@ -591,13 +591,25 @@ isOwner uctx nameid =
 isMembershipNode : { a | role_type : Maybe RoleType.RoleType } -> Bool
 isMembershipNode n =
     -- related to isBaseMember
-    List.member n.role_type
-        [ Just RoleType.Owner
-        , Just RoleType.Member
-        , Just RoleType.Guest
-        , Just RoleType.Retired
-        , Just RoleType.Pending
-        ]
+    List.member n.role_type (List.map Just membershipRoleTypes)
+
+
+membershipRoleTypes : List RoleType.RoleType
+membershipRoleTypes =
+    [ RoleType.Owner
+    , RoleType.Member
+    , RoleType.Guest
+    , RoleType.Pending
+    , RoleType.Retired
+    ]
+
+
+activeMembershipRoleTypes : List RoleType.RoleType
+activeMembershipRoleTypes =
+    [ RoleType.Owner
+    , RoleType.Member
+    , RoleType.Guest
+    ]
 
 
 isPending : UserCtx -> String -> Bool

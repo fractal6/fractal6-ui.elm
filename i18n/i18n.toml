@@ -1081,16 +1081,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Fermer"
 
 [closeComment]
-  en="Comment and Close"
-  fr="Commenter et Fermer"
+  en="Comment and close"
+  fr="Commenter et fermer"
 
 [reopen]
   en="Reopen"
   fr="Réouvrir"
 
 [reopenComment]
-  en="Comment and Reopen"
-  fr="Commenter et Réouvrir"
+  en="Comment and reopen"
+  fr="Commenter et réouvrir"
 
 [noMessageProvided]
   en="Empty message"

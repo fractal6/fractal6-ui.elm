@@ -655,6 +655,7 @@ update_ apis message model =
                         ( { model | pos = pos, targetid = nameid, role_type = node.role_type }, out0 (send (OnOpen_ domid tid bid node) :: cmds) )
 
                     Nothing ->
+                        -- Membersip or Hidden node
                         ( { model | pos = pos, targetid = nameid, domid = domid }, out0 (fetchNode2 apis nameid OnGetNode :: cmds) )
 
             else
@@ -668,6 +669,7 @@ update_ apis message model =
                             node.source
                                 |> Maybe.map (\b -> ( b.tension.id, b.id ))
                                 |> withDefault
+                                    -- @debug: how to merge that with the same code in OnOpen to puth it insde OnOpen_ ?
                                     (node.parent
                                         |> Maybe.map (\n -> n.source)
                                         |> withDefault Nothing
@@ -1087,7 +1089,7 @@ viewPanel op model =
                     NodeType.Circle ->
                         div [ class "dropdown-item button-light is-flex right-hoverable" ]
                             [ div [ class "is-flex-direction-column is-flex-grow-1", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                [ A.icon1 "icon-plus" (T.add ++ "...")
+                                [ A.icon1_ "icon-plus" (T.add ++ "...")
                                 , span [ class "is-hidden-mobile is-pulled-right" ] [ A.icon "icon-chevron-right" ]
                                 ]
                             , div [ class "dropdown-menu", attribute "role" "menu" ]

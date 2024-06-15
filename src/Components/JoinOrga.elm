@@ -443,10 +443,8 @@ update_ apis message model =
                 OkAuth _ ->
                     ( { model | join_result = result }
                     , out1
-                        [ DoUpdateToken
-
-                        --Contract based event (DoLoad for pendings nodes)...
-                        , DoUpdateNode model.form.node.nameid identity
+                        [ --Contract based event (DoLoad for pendings nodes)...
+                          DoUpdateNode model.form.node.nameid identity
                         ]
                     )
 

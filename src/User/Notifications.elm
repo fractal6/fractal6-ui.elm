@@ -618,8 +618,17 @@ viewMenu model =
                 |> List.concatMap
                     (\x ->
                         [ li []
-                            [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
-                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first), menuToCount x model.notif ]
+                            [ a
+                                [ classList [ ( "is-active", x == model.menuFocus ) ]
+                                , target "_blank"
+                                , onClickPD
+                                    (ChangeMenuFocus x)
+                                ]
+                                [ div [ class "is-inline-flex" ]
+                                    [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first)
+                                    , menuToCount x model.notif
+                                    ]
+                                ]
                             ]
                         ]
                     )

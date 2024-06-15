@@ -2063,7 +2063,7 @@ viewSidePane u t model =
                                                     text ""
                                    , Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-highlight" ] [ A.icon1 "icon-user" T.firstLink, text ": " ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-highlight is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
@@ -2096,7 +2096,9 @@ viewSidePane u t model =
                                     , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            NodeDoc.viewNodeStatus model.isTensionAdmin op
+                            div [ class "is-flex mt-3" ]
+                                [ NodeDoc.viewNodeStatus model.isTensionAdmin op
+                                ]
                         ]
                     ]
             )

@@ -106,6 +106,7 @@ type alias DraftForm =
     , pos : Int
     , post : Post
     , tids : List (Maybe String)
+    , blur_safe : Bool
     }
 
 
@@ -238,6 +239,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | OnUpdateModel (Model -> Model)
 
 
 type alias Out =
@@ -509,8 +511,12 @@ update_ apis message model =
                 uctx =
                     uctxFromUser model.user
             in
-            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos } }
-            , out0 [ Ports.focusOn "draft-card-editable", scrollToSubBottom colid NoMsg ]
+            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True } }
+            , out0
+                [ Ports.focusOn "draft-card-editable"
+                , scrollToSubBottom colid NoMsg
+                , sendSleep (OnUpdateModel (\m -> { m | isAddingDraft = Maybe.map (\draft -> { draft | blur_safe = False }) m.isAddingDraft })) 1000
+                ]
             )
 
         OnDraftEdit val ->
@@ -546,7 +552,11 @@ update_ apis message model =
                     ( model, noOut )
 
         OnDraftCancel ->
-            ( { model | isAddingDraft = Nothing }, noOut )
+            if Maybe.map .blur_safe model.isAddingDraft == Just True then
+                ( model, noOut )
+
+            else
+                ( { model | isAddingDraft = Nothing }, noOut )
 
         OnAddCardAck result ->
             case result of
@@ -565,13 +575,20 @@ update_ apis message model =
                                 Nothing ->
                                     NoMsg
 
+                        isAD =
+                            Maybe.map
+                                (\draft ->
+                                    { draft | blur_safe = True }
+                                )
+                                model.isAddingDraft
+
                         d =
                             model.project
 
                         pj =
                             { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
                     in
-                    ( { model | project = pj, isAddingDraft = Nothing, board_result = NotAsked }
+                    ( { model | project = pj, board_result = NotAsked, isAddingDraft = isAD }
                     , out0 [ send cmd ]
                     )
 
@@ -809,6 +826,9 @@ update_ apis message model =
 
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
+
+        OnUpdateModel f ->
+            ( f model, noOut )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -1059,7 +1079,7 @@ viewHeader isAdmin isEdited col =
                         , isOpen = isEdited
                         , dropdown_cls = "mx-2 is-align-self-baseline is-right"
                         , button_cls = ""
-                        , button_html = A.icon "icon-more-horizontal is-w is-h icon-lg"
+                        , button_html = A.icon "button-light icon-more-horizontal icon-lg"
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)
                         , menu_cls = ""
                         , content_cls = "has-border-light"
@@ -1119,14 +1139,15 @@ viewMediaDraft cardid isHovered isEdited d =
         ellipsis =
             if isHovered || isEdited then
                 span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
-                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
+                    [ A.icon "button-light icon-more-horizontal icon-bg" ]
 
             else
                 text ""
     in
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
-            [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
+            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+                [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div []
                 [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
                     [ text d.title ]
@@ -1204,7 +1225,7 @@ viewMediaTension cardid isHovered isEdited focus t =
         ellipsis =
             if isHovered || isEdited then
                 span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
-                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
+                    [ A.icon "button-light icon-more-horizontal icon-bg" ]
 
             else
                 text ""
@@ -1213,7 +1234,7 @@ viewMediaTension cardid isHovered isEdited focus t =
         [ class "media mediaBox is-hoverable is-size-7" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
-                [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
+                [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div []
                 [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
                     [ text t.title ]
@@ -1253,7 +1274,7 @@ viewCardDropdown model =
                     CardTension t ->
                         div [ class "dropdown-content has-border-light p-0" ]
                             [ a
-                                [ class "dropdown-item button-light stealth-link"
+                                [ class "dropdown-item button-light discrete-link"
                                 , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
                                 , target "_blank"
                                 ]

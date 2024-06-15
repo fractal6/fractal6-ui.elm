@@ -1339,26 +1339,28 @@ viewSuccess res model =
     in
     div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-        , A.icon1 "icon-check icon-2x has-text-success" " "
-        , text model.nodeDoc.form.txt.added
-        , text " "
-        , a
-            [ href link
-            , onClickPD (OnClose { reset = True, link = link })
-            , target "_blank"
-            ]
-            [ case model.activeTab of
-                NewTensionTab ->
-                    text T.checkItOut_fem
+        , div [ class "is-flex is-align-items-center" ]
+            [ A.icon1 "icon-check icon-2x has-text-success" ""
+            , text model.nodeDoc.form.txt.added
+            , text space_
+            , a
+                [ href link
+                , onClickPD (OnClose { reset = True, link = link })
+                , target "_blank"
+                ]
+                [ case model.activeTab of
+                    NewTensionTab ->
+                        text T.checkItOut_fem
 
-                _ ->
-                    text T.checkItOut_masc
+                    _ ->
+                        text T.checkItOut_masc
+                ]
             ]
         , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
             case model.action_result of
                 Success _ ->
-                    div []
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                    div [ class "is-flex is-align-items-center" ]
+                        [ A.icon1 "icon-check icon-2x has-text-success" ""
                         , if isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users then
                             text T.self_link_action_success
 

@@ -796,7 +796,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 if x.n > 0 then
                     div
                         [ class "button is-small actionComment m-4"
-                        , attribute "style" "left:10%;"
+                        , attribute "style" "left: 4%;"
                         , onClick (ExpandEvent x.i)
                         ]
                         [ text (T.showOlderEvents |> Format.value (String.fromInt x.n)) ]
@@ -1067,11 +1067,11 @@ viewTensionCommentInput conf tension (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
+    div [ id "tensionCommentInput", class "media section is-paddingless" ]
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message" ]
+            [ div [ class "message commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
@@ -1131,10 +1131,10 @@ viewContractCommentInput conf (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ id "tensionCommentInput", class "media section is-paddingless commentInput" ]
+    div [ id "tensionCommentInput", class "media section is-paddingless" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message" ]
+            [ div [ class "message commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentContractInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]

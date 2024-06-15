@@ -68,7 +68,7 @@ module Query.QueryNode exposing
     , userPayload
     )
 
-import Bulk.Codecs exposing (nid2rootid)
+import Bulk.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -326,7 +326,7 @@ nodeOrgaDecoder data =
 queryOrgaTree url rootid msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeOrgaFilter rootid [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ])
+            (nodeOrgaFilter rootid membershipRoleTypes)
             nodeOrgaPayload
         )
         (RemoteData.fromResult >> decodeResponse nodeOrgaDecoder >> msg)
@@ -850,7 +850,7 @@ membersFilter rootid a =
                 (\c ->
                     { c
                         | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
-                        , and = matchAnyRoleType [ RoleType.Member, RoleType.Owner, RoleType.Guest ]
+                        , and = matchAnyRoleType activeMembershipRoleTypes
 
                         -- @todo pending members
                     }
@@ -1492,7 +1492,7 @@ orgaInfoPayload username =
         |> hardcoded 0
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| [ RoleType.Owner, RoleType.Member, RoleType.Guest ], eq = Absent } }) }) <|
+                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| activeMembershipRoleTypes, eq = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
             )
         |> hardcoded 0

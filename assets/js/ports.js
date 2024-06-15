@@ -309,14 +309,18 @@ export const actions = {
         if ($canvas) {
             var gp = session.gp;
             var focusid = gp.focusedNode ? gp.focusedNode.data.nameid : null;
-            gp.resetGraphPack(data.data, true, focusid);
+            try {
+                gp.resetGraphPack(data.data, true, focusid);
+            } catch {
+                console.warn("Webpack bad initialization -- probably due to dev env, please report.")
+                return
+            }
             gp.drawCanvas();
             gp.drawCanvas(true);
 
             // Fix bad drawing... (observed when adding, moving or removing node)
             gp.resizeMe();
-        } // else
-        // Some hidden data here...
+        }
     },
     'REMOVEDRAW_GRAPHPACK' : (app, session, data) => {
         var $canvas = document.getElementById("canvasOrga");

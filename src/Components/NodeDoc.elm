@@ -546,9 +546,9 @@ viewToolbarDropdown mode data =
             ternary data.hasInnerToolbar "icon-xs" ""
     in
     div [ class "dropdown is-right has-text-weight-normal" ]
-        [ div [ class "dropdown-trigger is-w is-h" ]
+        [ div [ class "dropdown-trigger" ]
             [ div
-                [ class "ellipsis"
+                [ class "ellipsis button-light"
                 , attribute "aria-controls" "edit-ellipsis-card"
                 , attribute "aria-haspopup" "true"
                 ]
@@ -697,7 +697,7 @@ viewBlob data op_m =
                                 -- Role Lead link Maybe.map
                                 Maybe.map
                                     (\fs ->
-                                        div [ class "is-hint" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
+                                        div [ class "is-hint is-inline-flex" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
                                     )
                                     node.first_link
                                     |> withDefault (text "")
@@ -713,8 +713,10 @@ viewBlob data op_m =
                                             tid =
                                                 withDefaultData "" data.tid_r
                                         in
-                                        a [ class "has-text-warning", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
-                                            [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
+                                        div [ class "is-flex mt-2" ]
+                                            [ a [ class "has-text-warning is-size-7", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
+                                                [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
+                                            ]
 
                               else
                                 text ""
@@ -1233,7 +1235,7 @@ viewSelectGovernance op =
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
                         (\mode ->
-                            div [ class "dropdown-item button-light ", onClick <| op.onChangePost "mode" (NodeMode.toString mode) ]
+                            div [ class "dropdown-item button-light", onClick <| op.onChangePost "mode" (NodeMode.toString mode) ]
                                 [ ternary (mode_selected == mode) (checked "") unchecked, text (NodeMode.toString mode) ]
                         )
                         NodeMode.list

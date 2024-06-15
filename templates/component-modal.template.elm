@@ -25,7 +25,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Global exposing (send, sendNow, sendSleep)
@@ -365,15 +365,17 @@ viewModal op model =
                     in
                     div [ class "notification is-success-light"]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-                        , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "data queried..."
-                        , text " "
-                        , a
-                            [ href link
-                            , onClickPD (OnClose { reset = True, link = link })
-                            , target "_blank"
+                        , div [ class "is-flex is-align-items-center" ] [
+                              A.icon1 "icon-check icon-2x has-text-success" " "
+                            , text "data queried..."
+                            , text space_
+                            , a
+                                [ href link
+                                , onClickPD (OnClose { reset = True, link = link })
+                                , target "_blank"
+                                ]
+                                [ textH T.checkItOut_masc ]
                             ]
-                            [ textH T.checkItOut_masc ]
                         ]
                 _ ->
                     viewModalContent op model
