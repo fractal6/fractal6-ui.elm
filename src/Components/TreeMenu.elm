@@ -740,9 +740,7 @@ viewCircleLine hover focus node =
                         text ""
 
                     i ->
-                        span
-                            [ class "is-contract-badge-bg" ]
-                            [ counter i ]
+                        span [ class "is-contract-badge-bg" ] [ counter i ]
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
@@ -769,15 +767,21 @@ viewRolesLine type_txt hover roles nid expanded_lines =
         ]
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left", attribute "style" "width:82%;" ]
-                [ span [ class "tag is-smaller2 has-background-tag has-text-text" ]
+                [ span [ class "tag has-background-tag has-text-text" ]
                     [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                 , case List.sum <| List.map .n_open_tensions roles of
                     0 ->
                         text ""
 
                     i ->
-                        counter i
-                            |> showIf (not isExpanded)
+                        showIf (not isExpanded) (counter i)
+                , case List.sum <| List.map .n_open_contracts roles of
+                    0 ->
+                        text ""
+
+                    i ->
+                        showIf (not isExpanded)
+                            (span [ class "is-contract-badge-bg" ] [ counter i ])
                 ]
             , if isExpanded then
                 A.icon "icon-chevron-up"

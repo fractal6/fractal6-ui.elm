@@ -1498,6 +1498,10 @@ figcaption {
                 border-right: 1px solid var(--border-color);
             }
         }
+
+        .tag {
+            font-size: 80% !important;
+        }
     }
 
     .bottom-button {
@@ -1574,6 +1578,8 @@ figcaption {
                 border-right: 1px solid var(--border-color-light);
             }
         }
+
+
 
         a.is-active:hover {
             cursor: default;
