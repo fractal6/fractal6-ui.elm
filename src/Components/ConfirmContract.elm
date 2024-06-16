@@ -502,7 +502,7 @@ showContractForm f =
                         [ div [ class "field is-narrow" ]
                             [ input [ class "input", value (contractEventToText f.node_type f.event.event_type), disabled True ] []
                             ]
-                        , viewTensionArrow "is-pulled-right" emitter receiver
+                        , viewTensionArrow True "is-pulled-right" emitter receiver
                         ]
 
                     _ ->

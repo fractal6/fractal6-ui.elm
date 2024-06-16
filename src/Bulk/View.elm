@@ -171,7 +171,7 @@ viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
 viewCircleTarget commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
@@ -182,25 +182,14 @@ viewCircleSimple nameid =
     span [ class "tag has-border-light is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
 
 
-viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
-viewTensionArrow cls emitter receiver =
+viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
+viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
         [ span [ class "is-small is-light is-inverted is-static has-text-weight-light" ]
-            [ viewNodeRef OverviewBaseUri emitter ]
+            [ viewNodeRef t_blank OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-light is-inverted is-static" ]
-            [ viewNodeRef OverviewBaseUri receiver ]
-        ]
-
-
-viewTensionArrowB : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
-viewTensionArrowB cls emitter receiver =
-    span [ class cls ]
-        [ span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
-            [ viewNodeRef OverviewBaseUri emitter ]
-        , span [ class "arrow-right" ] []
-        , span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
-            [ viewNodeRef OverviewBaseUri receiver ]
+            [ viewNodeRef t_blank OverviewBaseUri receiver ]
         ]
 
 
@@ -806,8 +795,8 @@ viewNodeDescr inPanel node tc =
                 [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
 
 
-viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg
-viewNodeRef baseUri n =
+viewNodeRef : Bool -> FractalBaseRoute -> EmitterOrReceiver -> Html msg
+viewNodeRef t_blank baseUri n =
     let
         ref =
             if n.role_type == Just RoleType.Member then
@@ -815,8 +804,15 @@ viewNodeRef baseUri n =
 
             else
                 toLink baseUri n.nameid []
+
+        more =
+            if t_blank then
+                [ target "_blank" ]
+
+            else
+                []
     in
-    a [ href ref, class "is-wrapped" ] [ text n.name ]
+    a ([ href ref, class "is-wrapped" ] ++ more) [ text n.name ]
 
 
 viewNodeRefShort : FractalBaseRoute -> String -> Html msg

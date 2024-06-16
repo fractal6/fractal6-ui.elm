@@ -804,7 +804,7 @@ viewContractBox c op model =
                             receiver =
                                 c.event.new |> withDefault "unkown" |> nid2eor
                         in
-                        viewTensionArrow "margin-left-25" emitter receiver
+                        viewTensionArrow False "margin-left-25" emitter receiver
 
                     TensionEvent.MemberLinked ->
                         let
