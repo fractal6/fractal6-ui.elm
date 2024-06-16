@@ -528,6 +528,18 @@ type alias EventFragment =
     }
 
 
+type alias ContractLight =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , tension : TensionNodeBlob
+    , event : EventFragment
+    , status : ContractStatus.ContractStatus
+    , contract_type : ContractType.ContractType
+    , candidates : List Username
+    }
+
+
 type alias Contract =
     { id : String
     , createdAt : String
@@ -651,6 +663,15 @@ nodeFragmentUpdate n_m n =
 type alias PatchTensionPayloadID =
     { comments : Maybe (List Comment)
     , blobs : Maybe (List Blob)
+    }
+
+
+type alias NodeFragmentLight =
+    -- should be RoleFragmentLight
+    { name : Maybe String
+    , nameid : Maybe String
+    , type_ : Maybe NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
     }
 
 
@@ -1051,6 +1072,13 @@ type alias TensionId =
 type alias BlobId =
     { id : String
     , tension : IdPayload
+    }
+
+
+type alias TensionNodeBlob =
+    { id : String
+    , receiverid : String
+    , node : Maybe NodeFragmentLight
     }
 
 

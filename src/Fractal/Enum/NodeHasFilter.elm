@@ -41,11 +41,12 @@ type NodeHasFilter
     | First_link
     | Contracts
     | Events_history
+    | Cascade_directive
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -152,6 +153,9 @@ decoder =
 
                     "events_history" ->
                         Decode.succeed Events_history
+
+                    "cascade_directive" ->
+                        Decode.succeed Cascade_directive
 
                     _ ->
                         Decode.fail ("Invalid NodeHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -261,6 +265,9 @@ toString enum____ =
 
         Events_history ->
             "events_history"
+
+        Cascade_directive ->
+            "cascade_directive"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -375,6 +382,9 @@ fromString enumString____ =
 
         "events_history" ->
             Just Events_history
+
+        "cascade_directive" ->
+            Just Cascade_directive
 
         _ ->
             Nothing

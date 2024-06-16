@@ -69,7 +69,7 @@ type alias Model =
     { user : UserState
     , rootnameid : String
     , form : ContractForm -- user inputs
-    , contracts_result : GqlData Contracts -- result of any query
+    , contracts_result : GqlData (List Contract) -- result of any query
     , contract_result : GqlData ContractFull
     , contract_result_del : GqlData IdPayload
     , voteForm : VoteForm
@@ -109,10 +109,6 @@ initModel focusid user conf =
     -- Components
     , comments = Comments.init focusid "" user
     }
-
-
-type alias Contracts =
-    List Contract
 
 
 type alias ContractForm =
@@ -196,7 +192,7 @@ updatePost field value model =
     { model | form = { form | post = Dict.insert field value form.post } }
 
 
-setContractsResult : GqlData Contracts -> Model -> Model
+setContractsResult : GqlData (List Contract) -> Model -> Model
 setContractsResult result model =
     { model | contracts_result = result }
 
@@ -259,7 +255,7 @@ type Msg
     | DoVote Int Time.Posix
     | OnVoteAck (GqlData ContractResult)
     | OnSubmit Bool (Time.Posix -> Msg)
-    | OnContractsAck (GqlData Contracts)
+    | OnContractsAck (GqlData (List Contract))
     | OnContractAck (GqlData ContractFull)
     | OnContractDeleteAck (GqlData IdPayload)
       -- Confirm Modal
@@ -613,7 +609,7 @@ headers =
     [ T.contractEvent, "Validation", T.author, upH T.opened, "" ]
 
 
-viewContractsTable : Contracts -> Op -> Model -> Html Msg
+viewContractsTable : List Contract -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]

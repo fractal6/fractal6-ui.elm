@@ -27,6 +27,7 @@ module Query.QueryTension exposing
     , getTensionComments
     , getTensionHead
     , getTensionPanel
+    , nodeFragmentLightPayload
     , nodeFragmentPayload
     , queryAllTension
     , queryAssignedTensions
@@ -65,7 +66,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
 import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, userPayload)
 import RemoteData
 import String.Extra as SE
@@ -392,6 +393,15 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.about
         |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
         |> with (Fractal.Object.NodeFragment.first_link |> SelectionSet.map (Maybe.map (\x -> ternary (x == "") Nothing (Just x)) >> withDefault Nothing))
+
+
+nodeFragmentLightPayload : SelectionSet NodeFragmentLight Fractal.Object.NodeFragment
+nodeFragmentLightPayload =
+    SelectionSet.succeed NodeFragmentLight
+        |> with Fractal.Object.NodeFragment.name
+        |> with Fractal.Object.NodeFragment.nameid
+        |> with Fractal.Object.NodeFragment.type_
+        |> with Fractal.Object.NodeFragment.role_type
 
 
 

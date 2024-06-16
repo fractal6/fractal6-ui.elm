@@ -922,7 +922,7 @@ roleColor rt =
             "purple"
 
 
-colorFromRole : RoleExtCommon a -> String
+colorFromRole : { r | role_type : RoleType.RoleType } -> String
 colorFromRole r =
     case r.role_type of
         RoleType.Owner ->
@@ -950,7 +950,7 @@ colorFromRole r =
             "var(--warning)"
 
 
-role2icon : RoleExtCommon a -> String
+role2icon : { r | role_type : RoleType.RoleType } -> String
 role2icon r =
     case r.role_type of
         RoleType.Coordinator ->

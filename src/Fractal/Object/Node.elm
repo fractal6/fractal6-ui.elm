@@ -458,6 +458,11 @@ events_history fillInOptionals____ object____ =
     Object.selectionForCompositeField "events_history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+cascade_directive : SelectionSet (Maybe Bool) Fractal.Object.Node
+cascade_directive =
+    Object.selectionForField "(Maybe Bool)" "cascade_directive" [] (Decode.bool |> Decode.nullable)
+
+
 type alias TensionsOutAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

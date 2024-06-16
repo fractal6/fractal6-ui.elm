@@ -26,10 +26,16 @@ module Query.QueryContract exposing
     , getContractComments
     , getContractId
     , getContracts
+    , queryOpenInvitation
     )
 
+import Bulk.Codecs exposing (nid2rootid)
+import Fractal.Enum.BlobHasFilter as BlobHasFilter
+import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.ContractOrderable as ContractOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
@@ -46,7 +52,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload)
-import Query.QueryTension exposing (commentPayload, nodeFragmentPayload)
+import Query.QueryTension exposing (commentPayload, nodeFragmentLightPayload, nodeFragmentPayload)
 import RemoteData
 
 
@@ -233,3 +239,137 @@ cidPayload : SelectionSet IdPayload Fractal.Object.Contract
 cidPayload =
     SelectionSet.map IdPayload
         (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+
+
+
+--
+-- Query Open contracts
+--
+
+
+type alias NodeContracts =
+    { contracts : Maybe (List { contract : ContractLight }) }
+
+
+nodeContractsDecoder : Maybe (List (Maybe NodeContracts)) -> Maybe (List ContractLight)
+nodeContractsDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.concatMap (\x -> withDefault [] x.contracts)
+                        |> List.map .contract
+                        |> Just
+            )
+        |> withDefault Nothing
+
+
+nodeContractsFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeContractsFilter rootid a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
+                        , type_ = Present { eq = Present NodeType.Role, in_ = Absent }
+                    }
+                )
+                |> Present
+    }
+
+
+openContractFilter a =
+    { a
+        | filter =
+            Input.buildContractFilter
+                (\b ->
+                    { b
+                        | status = Present { eq = Present ContractStatus.Open, in_ = Absent }
+                    }
+                )
+                |> Present
+    }
+
+
+invitationFilter a =
+    { a
+        | filter =
+            Input.buildEventFragmentFilter
+                (\b ->
+                    { b
+                        | event_type =
+                            Present
+                                { eq = Absent
+                                , in_ = Present [ Just TensionEvent.UserJoined, Just TensionEvent.MemberLinked ]
+                                }
+                    }
+                )
+                |> Present
+    }
+
+
+lastBlobFilter a =
+    { a
+        | first = Present 1
+        , order =
+            Input.buildBlobOrder
+                (\x -> { x | desc = Present BlobOrderable.CreatedAt })
+                |> Present
+        , filter =
+            Input.buildBlobFilter
+                (\x -> { x | has = Present [ Just BlobHasFilter.PushedFlag ] })
+                |> Present
+    }
+
+
+queryOpenInvitation url nameid msg =
+    let
+        -- Work with the root for now since there is no easy way to recurse in GQL
+        rootid =
+            nid2rootid nameid
+    in
+    makeGQLQuery url
+        (Query.queryNode (nodeContractsFilter rootid) nodeContractsPayload)
+        (RemoteData.fromResult >> decodeResponse nodeContractsDecoder >> msg)
+
+
+nodeContractsPayload =
+    -- @warning : adding potential/oftent null value in the Nodefragment (such as color, role_ext etc) might lead
+    -- to empty response due to the cascade_directive parameter.
+    SelectionSet.succeed (\a b -> NodeContracts b)
+        |> with Fractal.Object.Node.cascade_directive
+        |> with
+            (Fractal.Object.Node.contracts identity
+                (SelectionSet.map (\x -> { contract = x })
+                    (Fractal.Object.Vote.contract openContractFilter contractLightPayload)
+                )
+            )
+
+
+contractLightPayload =
+    SelectionSet.succeed ContractLight
+        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Contract.tension identity tensionNodeBlobPayload)
+        |> with (Fractal.Object.Contract.event invitationFilter eventFragmentPayload)
+        |> with Fractal.Object.Contract.status
+        |> with Fractal.Object.Contract.contract_type
+        |> with (SelectionSet.map (withDefault []) <| Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
+
+
+tensionNodeBlobPayload =
+    SelectionSet.succeed TensionNodeBlob
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Tension.receiverid
+        |> with
+            (SelectionSet.map (withDefault [] >> List.head >> withDefault Nothing) <|
+                Fractal.Object.Tension.blobs lastBlobFilter <|
+                    Fractal.Object.Blob.node identity nodeFragmentLightPayload
+            )

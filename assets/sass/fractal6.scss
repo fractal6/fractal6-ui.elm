@@ -1774,11 +1774,21 @@ figcaption {
         }
     }
     // Border transparency get overwirtten somewhere.
-    border: 1px solid transparent !important;
+    border: 2px solid transparent !important;
     &:hover {
         background-color: var(--hover-color) !important;
         //filter: brightness(1.2);
     }
+
+    // fix alignement default introduced by
+    // .flex.align-center in icon bellow buttonRole
+    padding-top: 4px;
+    padding-bottom: 6px;
+
+}
+
+.pending-border {
+    border: 2px dashed var(--border-color-light) !important;
 }
 
 .docToolbar {
@@ -2594,7 +2604,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
     .button {
         margin-right: 0;
-        background: var(--border-color);
+        background: $grey-light3;
+        color: $dark;
+        border-color: $dark;
     }
 }
 
@@ -3596,9 +3608,9 @@ i.is-liked {
     }
 }
 
-.outside-table {
+.outside-table:not(.is-mobile) {
     position: absolute !important;
-    margin-left: 20px;
+    margin-left: -12px;
 }
 
 /*
