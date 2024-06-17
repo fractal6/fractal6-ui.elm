@@ -1005,6 +1005,16 @@ span[data-tooltip] {
 
 }
 
+.f6-help-message {
+
+    .is-light {
+        .message-header {
+            //opacity: 0.8;
+            // please check of bulma native dark mode can fix this !?
+        }
+    }
+}
+
 
 .ml--1 {
     margin-left: -6px;

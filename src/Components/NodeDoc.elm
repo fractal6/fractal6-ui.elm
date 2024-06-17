@@ -27,7 +27,7 @@ import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, na
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
-import Extra exposing (showMaybe, space_, ternary, unwrap)
+import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -755,10 +755,11 @@ viewAboutSection node data op_m =
                     )
             ]
         , -- Node Hints
-          div [ class "columns mt-1 mb-3" ]
-            [ div [ class "column is-6 py-0" ]
-                [ viewNodeDescr False node (tensionCharacFromNode node) ]
-            ]
+          showIf (op_m == Nothing) <|
+            div [ class "columns mt-1 mb-3" ]
+                [ div [ class "column is-6 py-0" ]
+                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
+                ]
         , -- Node About
           showMaybe data.node_data.about
             (\about -> renderMarkdown "is-human" about)

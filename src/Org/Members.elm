@@ -30,7 +30,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (role2icon, roleColor, viewRole, viewUserFull)
-import Components.ActionPanel as ActionPanel
+import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
 import Components.HelperBar as HelperBar
@@ -1106,6 +1106,12 @@ viewUserEllipsis conf focus m roles ell =
 
         isOpen_ =
             ell.isOpen && String.endsWith m.username (withDefault "" ell.hover)
+
+        isMemberOwner =
+            List.any (\x -> x.role_type == RoleType.Owner) roles
+
+        isMemberGuest =
+            List.any (\x -> x.role_type == RoleType.Guest) roles
     in
     span [ class "is-pulled-right" ]
         [ span [ class "outside-table", classList [ ( "is-mobile", isMobile_ ) ] ]
@@ -1123,10 +1129,20 @@ viewUserEllipsis conf focus m roles ell =
                         ([ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
                             [ A.icon1 "icon-leaf" T.addUserRole ]
                          ]
-                            ++ (if isOwner_ && not (List.any (\x -> x.role_type == RoleType.Owner) roles) then
+                            ++ (if isOwner_ && not isMemberOwner then
                                     [ hr [ class "dropdown-divider" ] []
                                     , div [ class "dropdown-item button-light is-warning", onClick (ConfirmOwnerMsg (ConfirmOwner.OnOpen m.username)) ]
                                         [ A.icon1 "icon-queen" T.makeOwner ]
+                                    ]
+
+                                else
+                                    []
+                               )
+                            ++ (if isOwner_ && isMemberGuest then
+                                    [ hr [ class "dropdown-divider" ] []
+                                    , div [ class "dropdown-item button-light is-danger", onClick (ActionPanelMsg (ActionPanel.OnOpenModal (UnLinkAction { username = m.username, name = Nothing }))) ]
+                                        [ A.icon1 "icon-user-plus" T.removeUser
+                                        ]
                                     ]
 
                                 else

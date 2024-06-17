@@ -19,7 +19,7 @@
 -}
 
 
-module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscriptions, update, view)
+module Components.ActionPanel exposing (Msg(..), PanelState(..), State, init, isOpen_, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), getNodeRights, parseErr)
