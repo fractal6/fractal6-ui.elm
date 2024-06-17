@@ -1329,10 +1329,17 @@ viewStep tree_data (State model) =
 viewSuccess : Tension -> Model -> Html Msg
 viewSuccess res model =
     let
+        isSelfContract_ =
+            isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users
+
         link =
             case model.action_result of
                 Success c ->
-                    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
+                    if isSelfContract_ then
+                        Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
+
+                    else
+                        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
 
                 _ ->
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
@@ -1361,7 +1368,7 @@ viewSuccess res model =
                 Success _ ->
                     div [ class "is-flex is-align-items-center" ]
                         [ A.icon1 "icon-check icon-2x has-text-success" ""
-                        , if isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users then
+                        , if isSelfContract_ then
                             text T.self_link_action_success
 
                           else
