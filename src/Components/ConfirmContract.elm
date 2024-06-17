@@ -426,8 +426,8 @@ viewModalContent op (State model) =
             True
     in
     div [ class "modal-card submitFocus" ]
-        [ div [ class "modal-card-head has-background-warning" ]
-            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+        [ div [ class "modal-card-head is-warning" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
                 [ text T.newContract ]
             ]
         , div [ class "modal-card-body" ]

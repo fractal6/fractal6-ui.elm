@@ -814,8 +814,8 @@ layout { page, url, session, msg1, msg2, onClearNotif } =
     let
         ( notif_msg, notif_ok ) =
             case session.system_notification of
-                RemoteData.Success ok ->
-                    ( ok, Just True )
+                RemoteData.Success msg ->
+                    ( msg, Just True )
 
                 RemoteData.Failure err ->
                     ( errorHttpToString err, Just False )

@@ -21,6 +21,7 @@
 
 module Requests exposing (..)
 
+import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
 import Fractal.Enum.ProjectStatus as ProjectStatus
@@ -364,11 +365,15 @@ projectEncoder nameids first offset query_ status_ sort_ =
 
 
 makeOwner api nameid username msg =
+    let
+        rootnameid =
+            nid2rootid nameid
+    in
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.auth ++ "/makeowner"
-        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "username", JE.string username ) ]
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string rootnameid ), ( "username", JE.string username ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
         , timeout = Nothing
         , tracker = Nothing

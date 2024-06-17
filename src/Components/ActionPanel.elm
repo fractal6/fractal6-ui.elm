@@ -1262,8 +1262,8 @@ viewStep1 op model =
             model.action_result == LoadingSlowly
     in
     div [ class "modal-card submitFocus" ]
-        [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+        [ div [ class ("modal-card-head is-" ++ color) ]
+            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ action2header model.state model.form.node.type_
                     |> Format.namedValue "type" (NodeType.toString model.form.node.type_)
                     |> text

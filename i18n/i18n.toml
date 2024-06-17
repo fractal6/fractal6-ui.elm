@@ -1964,6 +1964,13 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Markdown formatting is supported"
   fr="Le formatage Markdown est pris en charge"
 
+[confirmAction]
+  en="Confirm action"
+  fr="Confirmer l'action"
+
+[confirmOwner]
+  en="Add new owner"
+  fr="Ajouter un nouveau propriétaire"
 
 [lockMenu]
   en="Lock menu open"
@@ -2781,4 +2788,23 @@ See [the documentation](https://doc.fractale.co/circle/#authority) to learn more
 - **Agile** : Tout les rôles d'un cercle ont les droits d'édition/modification, sans distinction.
 
 Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
+"""
+
+
+[newOwnerMessageWarning]
+  en="""You are about to add a new owner.
+
+This action is irreversible. Once added, an owner can only be removed if they choose to leave the role themselves.
+
+Additionally, an owner has the highest level of read and write access within the organization.
+
+Are you sure you want to continue?
+"""
+  fr="""Vous êtes sur le point d'ajouter **un nouveau propriétaire**.
+
+Cette action est irréversible. Une fois ajouté, un propriétaire ne peut être retiré que s'il décide de quitter ce rôle lui-même.
+
+De plus, un propriétaire dispose du niveau de droit et d'accès en lecture et écriture le plus élevé dans l'organisation.
+
+Êtes-vous sûr de vouloir continuer ?
 """

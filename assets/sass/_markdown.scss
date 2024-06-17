@@ -65,7 +65,6 @@
 	}
 	strong {
 		font-weight: 700;
-		color: var(--is-highlight);
 	}
 	.table-container {
 		overflow: auto !important;
@@ -105,3 +104,9 @@
     }
 }
 
+// Fix highlight color in human mardown
+.markdown-body.is-human {
+	strong {
+		color: var(--is-highlight);
+    }
+}

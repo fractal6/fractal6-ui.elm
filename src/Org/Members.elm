@@ -32,6 +32,7 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (role2icon, roleColor, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
+import Components.ConfirmOwner as ConfirmOwner
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
@@ -65,7 +66,7 @@ import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
 import RemoteData
-import Requests exposing (fetchMembersSub, makeOwner)
+import Requests exposing (fetchMembersSub)
 import Session exposing (Conf, GlobalCmd(..), isMobile)
 import String.Format as Format
 import Text as T
@@ -116,6 +117,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( [], send (ToggleWatchOrga a) )
+
+                    DoPushSystemNotif a ->
+                        ( [], send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -198,6 +202,7 @@ type alias Model =
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
+    , confirmOwner : ConfirmOwner.State
     }
 
 
@@ -272,6 +277,7 @@ init global flags =
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
             , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , confirmOwner = ConfirmOwner.init global.session.user newFocus
             }
 
         cmds =
@@ -315,8 +321,6 @@ type Msg
     | OnGoContractAck (GqlData IdPayload)
     | OnRowHover (Maybe String)
     | OnRowEdit Bool
-    | OnMakeOwner String String
-    | GotMakeOwner (RestData Bool)
       -- Search
     | ChangePattern String
     | SearchKeyDown Int
@@ -338,6 +342,7 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | ConfirmOwnerMsg ConfirmOwner.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -544,20 +549,6 @@ update global message model =
             in
             ( { model | row_hover = { row | isOpen = edit } }, Cmd.none, Cmd.none )
 
-        OnMakeOwner nameid username ->
-            ( model, makeOwner apis nameid username GotMakeOwner, Cmd.none )
-
-        GotMakeOwner result ->
-            ( model
-            , case result of
-                RemoteData.Success ok ->
-                    send DoLoad
-
-                _ ->
-                    Cmd.none
-            , send (OnPushSystemNotif (withMapDataRest (\ok -> ternary ok T.ownerPromotion "not implemented") result))
-            )
-
         -- Search
         ChangePattern value ->
             ( { model | pattern = value }, Cmd.none, Cmd.none )
@@ -710,6 +701,16 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ConfirmOwnerMsg msg ->
+            let
+                ( data, out ) =
+                    ConfirmOwner.update apis msg model.confirmOwner
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | confirmOwner = data }, out.cmds |> List.map (\m -> Cmd.map ConfirmOwnerMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -730,6 +731,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (ConfirmOwner.subscriptions model.confirmOwner |> List.map (\s -> Sub.map ConfirmOwnerMsg s))
         |> Sub.batch
 
 
@@ -769,6 +771,7 @@ view global model =
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+        , ConfirmOwner.view model.empty model.confirmOwner |> Html.map ConfirmOwnerMsg
         ]
     }
 
@@ -1092,6 +1095,7 @@ viewMemberRoles conf baseUri roles isPanelOpen =
             roles
 
 
+viewUserEllipsis : Conf -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
 viewUserEllipsis conf focus m roles ell =
     let
         isOwner_ =
@@ -1121,7 +1125,7 @@ viewUserEllipsis conf focus m roles ell =
                          ]
                             ++ (if isOwner_ && not (List.any (\x -> x.role_type == RoleType.Owner) roles) then
                                     [ hr [ class "dropdown-divider" ] []
-                                    , div [ class "dropdown-item button-light is-warning", onClick (OnMakeOwner (nid2rootid focus.nameid) m.username) ]
+                                    , div [ class "dropdown-item button-light is-warning", onClick (ConfirmOwnerMsg (ConfirmOwner.OnOpen m.username)) ]
                                         [ A.icon1 "icon-queen" T.makeOwner ]
                                     ]
 

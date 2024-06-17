@@ -149,8 +149,8 @@ viewAuthNeeded onClose =
 viewJoinForTensionNeeded : Bool -> (ModalData -> msg) -> Html msg
 viewJoinForTensionNeeded userCanJoin onClose =
     div [ class "modal-card" ]
-        [ div [ class "modal-card-head has-background-warning" ]
-            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+        [ div [ class "modal-card-head is-warning" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
                 [ text T.authorizationNeeded
                 , button [ class "delete is-pulled-right", onClickPD (onClose { reset = True, link = "" }) ] []
                 ]

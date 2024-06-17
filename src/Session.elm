@@ -186,6 +186,7 @@ type
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoUpdateScreen Screen
     | DoToggleWatchOrga String
+    | DoPushSystemNotif (RestData String)
       -- Components Msg
     | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String

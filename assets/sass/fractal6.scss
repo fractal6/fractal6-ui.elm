@@ -2988,6 +2988,18 @@ i.is-liked {
         border-radius: 10px;
     }
 
+    //.modal-card-head, .panel-heading,
+    .modal-card-head {
+        @each $name, $pair in $colors {
+            &.is-#{$name} {
+                background: var(--#{$name});
+                .modal-card-title {
+                    color: var(--grey-dark);
+                }
+            }
+        }
+    }
+
     .modal-card-body {
         @include mobile {
             padding-left: 0.75rem;
@@ -2999,22 +3011,28 @@ i.is-liked {
         }
     }
 
-    .modal-close {
-        background-color: #952222b8 !important;
-        &:hover { background-color: #952222 !important;}
-    }
-
-    //.modal-card-title, .panel-heading,
-    //.modal-card-head,
-    .modal-card-foot, {
+    .modal-card-foot {
         padding-top: 15px;
         padding-bottom: 15px;
         @include mobile {
             padding-top: 3px;
             padding-bottom: 3px;
         }
+
+        .button.is-light {
+            //color: var(--white-ter);
+            background: var(--light);
+            &:hover {
+                background: var(--white-light);
+            }
+        }
+
     }
 
+    .modal-close {
+        background-color: #952222b8 !important;
+        &:hover { background-color: #952222 !important;}
+    }
 }
 
 #authModal {

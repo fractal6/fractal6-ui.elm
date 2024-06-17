@@ -644,8 +644,8 @@ viewModalContent tree_data model =
             model.isTargetOpen /= ""
     in
     div [ class "modal-card submitFocus", style "min-height" "450px" ]
-        [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+        [ div [ class ("modal-card-head is-" ++ color) ]
+            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
                         text T.moveTension
