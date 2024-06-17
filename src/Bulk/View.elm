@@ -778,16 +778,21 @@ viewNodeDescr inPanel node tc =
         case tc.doc_type of
             NODE NodeType.Circle ->
                 [ div [ class "is-mobile mb-3", classList [ ( cls, True ) ] ] <|
-                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                    , span [ class "level-item mr-4" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                    , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
+                    [ span [ class "level-left mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                    , span [ class "level-item mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
+                    , span [ class "level-right" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ] ]
                     ]
                 ]
 
             NODE NodeType.Role ->
                 [ div [ class "is-mobile mb-3 is-flex" ] <|
-                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                    [ span [ class "level-left mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                    , span [ class "level-item" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
                     ]
                 ]
 

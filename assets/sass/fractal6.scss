@@ -1053,6 +1053,12 @@ figcaption {
     position: absolute !important;
 }
 
+.button {
+    &:focus:not(:active) {
+        box-shadow: none;
+    }
+}
+
 // END FIX BULMA
 
 /*
@@ -1785,6 +1791,12 @@ figcaption {
     padding-top: 4px;
     padding-bottom: 6px;
 
+}
+
+.tagHint {
+    border-radius: 9999px !important;
+    color: var(--is-hint2) !important;
+    background-color: var(--tag-author) !important;
 }
 
 .pending-border {
@@ -4064,7 +4076,7 @@ input:checked + section.acc .acc-title:before {
     }
 
     .message.is-light {
-        opacity: 0.7;
+        //opacity: 0.7; ///nop find a code colors for light
     }
 }
 

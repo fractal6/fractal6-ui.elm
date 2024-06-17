@@ -26,6 +26,7 @@ import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), nid2rootid)
 import Bulk.View exposing (byAt, statusColor, viewCircleSimple)
 import Dict exposing (Dict)
+import Extra exposing (space_)
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -86,11 +87,11 @@ viewEventMedia conf inline ev =
     div [ class "content" ]
         [ p [] <|
             [ a
-                [ class "discrete-link"
+                [ class "discrete-link is-inline-flex is-align-items-center"
                 , href (Dict.get "link" ev |> withDefault "#")
                 ]
               <|
-                List.intersperse (text " ") <|
+                List.intersperse (text space_) <|
                     [ A.icon (Dict.get "icon" ev |> withDefault "")
                     , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]

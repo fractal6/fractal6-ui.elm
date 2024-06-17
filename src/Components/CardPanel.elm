@@ -1065,10 +1065,12 @@ viewPanelDraft draft model =
                                 text ""
                             , button [ class "delete ", onClick OnClose ] []
                             ]
-                        , div [ class "tensionSubtitle mt-3" ]
-                            [ span [ class "tag is-rounded has-background-tag" ]
-                                [ div [ class "help my-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
-                            , viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy
+                        , div [ class "tensionSubtitle mt-3 level" ]
+                            [ div [ class "level-left" ]
+                                [ span [ class "level-item tag is-rounded has-background-tag" ]
+                                    [ div [ class "help my-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
+                                , div [ class "level-item" ] [ viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy ]
+                                ]
                             ]
                         ]
                 ]

@@ -1661,23 +1661,29 @@ viewTension u t model =
                           else
                             text ""
                         ]
-                , div [ class "tensionSubtitle" ]
-                    [ span
-                        [ class "tag is-rounded has-background-tag"
-                        , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
-                        , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
-                        ]
-                        [ tensionIcon2 t.type_ ]
-                    , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
-                        -- As Governance tension get automatically closed when there are created,
-                        -- there status is not relevant, I can cause confusion to user as the object exists.
-                        span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                            [ t.status |> tensionStatus2str |> text ]
+                , div [ class "tensionSubtitle level" ]
+                    [ div [ class "level-left" ] <|
+                        List.map (div [ class "level-item" ] << List.singleton) <|
+                            [ span
+                                [ class "tag is-rounded has-background-tag"
+                                , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
+                                , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+                                ]
+                                [ tensionIcon2 t.type_ ]
+                            , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
+                                -- As Governance tension get automatically closed when there are created,
+                                -- there status is not relevant, I can cause confusion to user as the object exists.
+                                span [ class ("tag is-rounded is-w  is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
+                                    [ t.status |> tensionStatus2str |> text ]
 
-                      else
-                        text ""
-                    , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
-                    , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
+                              else
+                                text ""
+                            , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
+                            ]
+                    , div [ class "level-right" ] <|
+                        List.map (div [ class "level-item" ] << List.singleton) <|
+                            [ viewCircleTarget model.commonOp "" t.receiver
+                            ]
                     ]
                 ]
             ]

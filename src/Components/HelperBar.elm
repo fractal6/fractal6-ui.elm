@@ -24,7 +24,7 @@ module Components.HelperBar exposing (Msg(..), State, init, subscriptions, updat
 import Assets as A
 import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
-import Bulk.View exposing (counter, viewRole)
+import Bulk.View exposing (counter, viewRole, visibility2icon)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -436,8 +436,9 @@ viewPath baseUri uriQuery maybePath =
                                     [ ternary (i == 0) icon (text "")
                                     , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                     , a
-                                        [ class "stealth-link tag is-rounded ml-1 has-border-light"
-                                        , attribute "style" "weight: 500 !important;padding: 10px 10px;"
+                                        [ class "discrete-link"
+
+                                        --, attribute "style" "weight: 500 !important;padding: 10px 10px;"
                                         , case nid2type p.nameid of
                                             NodeType.Circle ->
                                                 title T.editThisCircle
@@ -446,7 +447,7 @@ viewPath baseUri uriQuery maybePath =
                                                 title T.editThisRole
                                         , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
                                         ]
-                                        [ text (NodeVisibility.toString g.focus.visibility) ]
+                                        [ A.icon (visibility2icon g.focus.visibility) ]
                                     ]
                         )
                     |> ul []

@@ -27,7 +27,7 @@ import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, na
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
 import Dict
-import Extra exposing (space_, ternary, unwrap)
+import Extra exposing (showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -636,7 +636,7 @@ viewBlob data op_m =
                             ]
 
                          else
-                            [ viewAboutSection data (Just op.onChangeEdit) ]
+                            [ showMaybe data.node (\node -> viewAboutSection node data (Just op.onChangeEdit)) ]
                         )
                             ++ [ hr [ class "has-background-border-light" ] [] ]
                             ++ (if op.data.editMode == Just EditMandate then
@@ -664,15 +664,11 @@ viewBlob data op_m =
         Nothing ->
             -- Overview view
             div [ class "box doc-container", classList [ ( "is-lazy", data.isLazy ) ] ]
-                [ viewAboutSection data Nothing
-                , case data.node of
-                    Just node ->
-                        div [ class "mt-4" ]
-                            [ -- Node Hints
-                              div [ class "columns mb-0" ]
-                                [ div [ class "column is-6 pb-0", class "is-hint" ]
-                                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
-                                ]
+                [ showMaybe data.node
+                    (\node ->
+                        div []
+                            [ -- About
+                              viewAboutSection node data Nothing
                             , -- Circle lead
                               if List.length data.leads > 0 then
                                 let
@@ -686,7 +682,7 @@ viewBlob data op_m =
                                         else
                                             String.toLower T.firstLinks
                                 in
-                                div [ class "is-hint" ]
+                                div [ class "is-hint mt-3" ]
                                     [ A.icon1 "icon-users" ""
                                     , span [ class "is-hint-2" ] [ text (String.fromInt i) ]
                                     , text (" " ++ txt ++ "  " ++ space_)
@@ -695,12 +691,10 @@ viewBlob data op_m =
 
                               else
                                 -- Role Lead link Maybe.map
-                                Maybe.map
+                                showMaybe node.first_link
                                     (\fs ->
-                                        div [ class "is-hint is-inline-flex" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
+                                        div [ class "is-hint is-inline-flex mt-3" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
                                     )
-                                    node.first_link
-                                    |> withDefault (text "")
 
                             -- Open Contracts
                             , if data.isAdmin then
@@ -713,7 +707,7 @@ viewBlob data op_m =
                                             tid =
                                                 withDefaultData "" data.tid_r
                                         in
-                                        div [ class "is-flex mt-2" ]
+                                        div [ class "is-flex mt-3" ]
                                             [ a [ class "has-text-warning is-size-7", href (Route.Tension_Dynamic_Dynamic_Contract { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ]
                                                 [ strong [] [ text (String.fromInt i) ], text " open contracts" ]
                                             ]
@@ -721,9 +715,7 @@ viewBlob data op_m =
                               else
                                 text ""
                             ]
-
-                    Nothing ->
-                        text ""
+                    )
                 , hr [ class "has-background-border-light" ] []
                 , viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
@@ -733,43 +725,27 @@ viewBlob data op_m =
 --- Template view
 
 
-viewAboutSection : OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
-viewAboutSection data op_m =
+viewAboutSection : Node -> OrgaNodeData -> Maybe (NodeEdit -> msg) -> Html msg
+viewAboutSection node data op_m =
     div []
-        [ div [ class "level subtitle" ]
+        [ -- Node title
+          div [ class "level subtitle" ]
             [ div [ class "level-left", style "max-width" "90%" ]
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ text T.about ]
                 , text space_
-                , --if isTensionBaseUri data.source && data.hasBeenPushed then
-                  --  let
-                  --      nameid =
-                  --          getNodeNameid data.receiver data.node
-                  --  in
-                  --  a
-                  --      [ href <| toLink OverviewBaseUri nameid []
-                  --      , title T.viewOnMap
-                  --      ]
-                  --      [ text <| withDefault "" data.node.name ]
-                  --else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
-                  --  a
-                  --      [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r }
-                  --      , case nid2type nameid of
-                  --          NodeType.Circle ->
-                  --              title T.editThisCircle
-                  --          NodeType.Role ->
-                  --              title T.editThisRole
-                  --      ]
-                  --      [ text <| withDefault "" data.node.name ]
-                  --else
-                  span [ class "is-name" ] [ unwrap "" .name data.node |> text ]
+                , span [ class "is-name" ] [ text node.name ]
                 ]
-            , if data.hasInnerToolbar && isSuccess data.tid_r && not (List.member (unwrap Nothing .role_type data.node) (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ])) then
+            , if
+                data.hasInnerToolbar
+                    && isSuccess data.tid_r
+                    && not (List.member node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ]))
+              then
                 div [ class "level-right is-marginless is-small is-hidden-mobile" ]
                     [ viewToolbarDropdown NoView data ]
 
               else
-                Maybe.map
+                showMaybe op_m
                     (\onChangeEdit ->
                         div
                             [ class "button has-text-weight-normal is-pulled-right is-small"
@@ -777,15 +753,15 @@ viewAboutSection data op_m =
                             ]
                             [ A.icon "icon-edit-2" ]
                     )
-                    op_m
-                    |> withDefault (text "")
             ]
-        , case data.node_data.about of
-            Just ab ->
-                renderMarkdown "is-human" ab
-
-            Nothing ->
-                text ""
+        , -- Node Hints
+          div [ class "columns mt-1 mb-3" ]
+            [ div [ class "column is-6 py-0" ]
+                [ viewNodeDescr False node (tensionCharacFromNode node) ]
+            ]
+        , -- Node About
+          showMaybe data.node_data.about
+            (\about -> renderMarkdown "is-human" about)
         ]
 
 
