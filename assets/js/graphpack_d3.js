@@ -1599,6 +1599,7 @@ export const GraphPack = {
             }
 
             if (e.button === 0) {
+                // Left click
                 var p = this.getPointerCtx(e);
                 if (!this.checkIf(p, "InZoomed")) {
                     // Go to parent
@@ -1609,8 +1610,10 @@ export const GraphPack = {
                 var node = this.getNodeUnderPointer(e, p);
                 var isUpdated = false;
                 if (node) {
+                    // A node has been clicked
                     isUpdated = true;
                     if (node === this.focusedNode && node === this.rootNode) {
+                        // ignore click on the anchor node when focused on it
                         isUpdated = false;
                     }
                 }
@@ -1627,15 +1630,25 @@ export const GraphPack = {
                         // Goes up
                         // --
                         // go to the parent node
-                        node = node.parent;
+                        node = this.focusedNode.parent;
                     } else if (node.depth === this.focusedNode.depth) {
-                        // pass
+                        // Equal depth outside
+                        // go to the parent node
+                        if (node.parent !== this.focusedNode.parent) {
+                            // go to the parent node
+                            node = this.focusedNode.parent;
+                        } else {
+                            // Navigate through same depth node
+                        }
+                    } else {
+                        console.log("click-node-event: this case should not happend, check me")
                     }
 
                     this.nodeClickedFromJs(node);
                 }
 
             } else if (e.button === 2) {
+                // Left click
                 //this.sendNodeRightClickFromJs(this.hoveredNode);
             }
 
@@ -1718,7 +1731,7 @@ export const GraphPack = {
                 this.isFrozenMenu = true;
                 return false
             } else {
-                // do not works well
+                // does not work well
                 e.preventDefault();
                 this.isFrozenMenu = false;
                 this.isFrozen = false;

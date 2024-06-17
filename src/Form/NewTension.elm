@@ -1416,7 +1416,7 @@ viewTensionTabs isAdmin tab targ =
         type_ =
             nid2type targ.nameid
     in
-    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
+    div [ id "tensionTabTop", class "tabs bulma-issue-33" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
                 [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]

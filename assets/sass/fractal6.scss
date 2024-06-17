@@ -2710,6 +2710,15 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         }
     }
 
+    .modal-card-head, #tensionTabTop {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    .modal-card-foot {
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
     .modal-content, .modal-card {
         @include mobile {
             width: 98%;
