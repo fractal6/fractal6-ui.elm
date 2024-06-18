@@ -42,7 +42,6 @@
 		padding-right: 0;
 		background: inherit;
 		font-weight: 600;
-		font-style: italic;
 		border-color: var(--is-discrete);
 		//filter: invert(25%);
 	}
@@ -66,6 +65,9 @@
 	strong {
 		font-weight: 700;
 	}
+    em {
+        font-style: italic !important;
+    }
 	.table-container {
 		overflow: auto !important;
 	}
@@ -108,5 +110,9 @@
 .markdown-body.is-human {
 	strong {
 		color: var(--is-highlight);
+    }
+
+    em {
+        font-variation-settings: initial !important;
     }
 }

@@ -928,7 +928,7 @@ function triggerTheme(e, el, app) {
         theme = "light"
     }
     document.documentElement.className = theme;
-    localStorage.setItem('theme', theme);
+    localStorage.setItem('theme', theme.toUpperCase());
     app.ports.flushGraphPackFromJs.send(null)
 }
 

@@ -296,7 +296,7 @@ fromLocalSession flags =
                             ( Just JournalTab, Cmd.none )
 
                         Ok _ ->
-                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+                            ( Nothing, Ports.logErr "Unknown activity tab" )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )
@@ -324,11 +324,21 @@ fromLocalSession flags =
                         Ok "DARK" ->
                             ( Just DarkTheme, Cmd.none )
 
+                        Ok "dark" ->
+                            ( Just DarkTheme, Cmd.none )
+
                         Ok "LIGHT" ->
                             ( Just LightTheme, Cmd.none )
 
-                        Ok _ ->
-                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+                        Ok "light" ->
+                            ( Just LightTheme, Cmd.none )
+
+                        Ok l ->
+                            let
+                                d =
+                                    Debug.log "e" l
+                            in
+                            ( Nothing, Ports.logErr "Unknown theme string" )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )

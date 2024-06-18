@@ -436,7 +436,7 @@ viewPath baseUri uriQuery maybePath =
                                     [ ternary (i == 0) icon (text "")
                                     , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                     , a
-                                        [ class "discrete-link"
+                                        [ class "discrete-link stealth-link"
 
                                         --, attribute "style" "weight: 500 !important;padding: 10px 10px;"
                                         , case nid2type p.nameid of
