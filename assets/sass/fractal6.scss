@@ -1503,9 +1503,7 @@ figcaption {
             margin: 0;
             margin-left: 1em;
             a {
-                padding-left: 1em !important;
-                padding-top: 5px !important;
-                padding-bottom: 5px !important;
+                padding: 8px 3px 8px 1rem !important;
             }
         }
 
@@ -1519,7 +1517,7 @@ figcaption {
         }
 
         .tag {
-            font-size: 80% !important;
+            font-size: 70% !important;
         }
     }
 
