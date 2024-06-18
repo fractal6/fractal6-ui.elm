@@ -52,6 +52,7 @@ import Org.Tensions exposing (TypeFilter(..), defaultTypeFilter, typeDecoder, ty
 import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -78,6 +79,7 @@ type alias Model =
     , selected : List String
     , form : TensionQuery -- user inputs
     , typeFilter : TypeFilter
+    , expanded_lines : ExpandedLines
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -108,6 +110,7 @@ initModel projectid user =
     , selected = []
     , form = initTensionQuery |> (\x -> { x | first = 100, projectid = Just projectid, inProject = False })
     , typeFilter = AllTypes
+    , expanded_lines = Dict.empty
 
     -- Components
     , isOpenTargetFilter = False
@@ -193,6 +196,7 @@ type Msg
     | OnSelectAll
     | OnAddToProject
     | OnAddAck (GqlData (List ProjectCard))
+    | OnToggleDropdownRoles String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -338,7 +342,7 @@ update_ apis message model =
                                     , colid = ""
                                     , col_type = Just ProjectColumnType.NoStatusColumn
                                     , pos = Just -1
-                                    , post = Dict.fromList [ ( "name", "No Status" ) ]
+                                    , post = Dict.fromList [ ( "name", "Triage" ) ]
                                     }
                             in
                             if model.noStatusCol.id == "_" then
@@ -431,6 +435,17 @@ update_ apis message model =
 
                 _ ->
                     ( { model | add_result = withMapData (\_ -> True) result }, noOut )
+
+        OnToggleDropdownRoles nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -534,7 +549,7 @@ viewPanel tree_data model =
                 , isOpen = model.isOpenTypeFilter
                 , dropdown_cls = "is-right"
                 , button_cls = "is-small"
-                , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link2" ] [], text T.type_ ]) (text T.type_)
+                , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link-back" ] [], text T.type_ ]) (text T.type_)
                 , msg = OnToggleTypeFilter
                 , menu_cls = ""
                 , content_cls = "p-0 has-border-light"
@@ -557,7 +572,7 @@ viewPanel tree_data model =
                     [ class "button is-small"
                     , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
                     ]
-                    [ ternary (model.form.labels /= []) (span [ class "badge is-link2" ] []) (text "")
+                    [ ternary (model.form.labels /= []) (span [ class "badge is-link-back" ] []) (text "")
                     , text T.label
                     , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                     ]
@@ -589,7 +604,7 @@ viewPanel tree_data model =
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
                     , content_cls = "p-0 has-border-light"
-                    , content_html = viewSelectorTree (OnChangeTarget tree_data) [ model.target.nameid ] tree_data
+                    , content_html = viewSelectorTree (OnChangeTarget tree_data) OnToggleDropdownRoles [ model.target.nameid ] model.expanded_lines tree_data
                     }
                 , div [ class "control has-icons-left" ]
                     [ input

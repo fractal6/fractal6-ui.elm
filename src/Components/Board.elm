@@ -106,6 +106,7 @@ type alias DraftForm =
     , pos : Int
     , post : Post
     , tids : List (Maybe String)
+    , blur_safe : Bool
     }
 
 
@@ -238,6 +239,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | OnUpdateModel (Model -> Model)
 
 
 type alias Out =
@@ -340,18 +342,26 @@ update_ apis message model =
                     else
                         -- Do not wait the query to success to move the column.
                         let
-                            noStatusOffset =
-                                model.project.columns
-                                    |> List.filter (\x -> x.col_type == ProjectColumnType.NoStatusColumn && List.length x.cards == 0)
+                            noStatusCols =
+                                List.filter (\x -> x.col_type == ProjectColumnType.NoStatusColumn) model.project.columns
+
+                            noStatusOffsetLocal =
+                                noStatusCols
+                                    |> List.filter (\x -> List.length x.cards == 0)
+                                    |> List.length
+
+                            noStatusOffsetRemote =
+                                noStatusCols
+                                    |> List.filter (\x -> List.length x.cards /= 0)
                                     |> List.length
 
                             pj =
                                 model.project
                                     -- move a column to the given position
-                                    |> (\d -> { d | columns = moveColAt col.id (pos + noStatusOffset) d.columns })
+                                    |> (\d -> { d | columns = moveColAt col.id (pos + noStatusOffsetLocal) d.columns })
                         in
                         ( { newModel | project = pj, board_result = Loading }
-                        , out0 [ moveProjectColumn apis col.id pos GotColMoved ]
+                        , out0 [ moveProjectColumn apis col.id (pos - noStatusOffsetRemote) GotColMoved ]
                         )
                 )
                 model.movingCol
@@ -501,8 +511,12 @@ update_ apis message model =
                 uctx =
                     uctxFromUser model.user
             in
-            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos } }
-            , out0 [ Ports.focusOn "draft-card-editable", scrollToSubBottom colid NoMsg ]
+            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True } }
+            , out0
+                [ Ports.focusOn "draft-card-editable"
+                , scrollToSubBottom colid NoMsg
+                , sendSleep (OnUpdateModel (\m -> { m | isAddingDraft = Maybe.map (\draft -> { draft | blur_safe = False }) m.isAddingDraft })) 1000
+                ]
             )
 
         OnDraftEdit val ->
@@ -538,7 +552,11 @@ update_ apis message model =
                     ( model, noOut )
 
         OnDraftCancel ->
-            ( { model | isAddingDraft = Nothing }, noOut )
+            if Maybe.map .blur_safe model.isAddingDraft == Just True then
+                ( model, noOut )
+
+            else
+                ( { model | isAddingDraft = Nothing }, noOut )
 
         OnAddCardAck result ->
             case result of
@@ -557,13 +575,20 @@ update_ apis message model =
                                 Nothing ->
                                     NoMsg
 
+                        isAD =
+                            Maybe.map
+                                (\draft ->
+                                    { draft | blur_safe = True }
+                                )
+                                model.isAddingDraft
+
                         d =
                             model.project
 
                         pj =
                             { d | columns = List.foldl (\c cols -> pushCard c cols) d.columns cards }
                     in
-                    ( { model | project = pj, isAddingDraft = Nothing, board_result = NotAsked }
+                    ( { model | project = pj, board_result = NotAsked, isAddingDraft = isAD }
                     , out0 [ send cmd ]
                     )
 
@@ -698,7 +723,7 @@ update_ apis message model =
                             let
                                 noStatusCol =
                                     { id = colid
-                                    , name = "No Status"
+                                    , name = "Triage"
                                     , color = Nothing
                                     , pos = 0
                                     , col_type = ProjectColumnType.NoStatusColumn
@@ -801,6 +826,9 @@ update_ apis message model =
 
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
+
+        OnUpdateModel f ->
+            ( f model, noOut )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -1051,7 +1079,7 @@ viewHeader isAdmin isEdited col =
                         , isOpen = isEdited
                         , dropdown_cls = "mx-2 is-align-self-baseline is-right"
                         , button_cls = ""
-                        , button_html = A.icon "icon-more-horizontal is-w is-h icon-lg"
+                        , button_html = A.icon "button-light icon-more-horizontal icon-lg"
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)
                         , menu_cls = ""
                         , content_cls = "has-border-light"
@@ -1069,9 +1097,9 @@ viewHeader isAdmin isEdited col =
                                     [ A.icon1 "icon-plus" T.addTensionColumn ]
                                 , hr [ class "dropdown-divider my-4" ] []
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
-                                    [ A.icon1 "icon-trash" "Delete column" ]
+                                    [ A.icon1 "icon-trash" T.deleteColumn ]
                                 , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
-                                    [ A.icon1 "icon-trash" "Remove items from project" ]
+                                    [ A.icon1 "icon-trash" T.removeItemsProject ]
                                 ]
                         }
 
@@ -1111,14 +1139,15 @@ viewMediaDraft cardid isHovered isEdited d =
         ellipsis =
             if isHovered || isEdited then
                 span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
-                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
+                    [ A.icon "button-light icon-more-horizontal icon-bg" ]
 
             else
                 text ""
     in
     div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-content is-smaller" ]
-            [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ]
+            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+                [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div []
                 [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
                     [ text d.title ]
@@ -1196,7 +1225,7 @@ viewMediaTension cardid isHovered isEdited focus t =
         ellipsis =
             if isHovered || isEdited then
                 span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
-                    [ A.icon "icon-more-horizontal is-h icon-bg" ]
+                    [ A.icon "button-light icon-more-horizontal icon-bg" ]
 
             else
                 text ""
@@ -1205,7 +1234,7 @@ viewMediaTension cardid isHovered isEdited focus t =
         [ class "media mediaBox is-hoverable is-size-7" ]
         [ div [ class "media-content is-smaller" ]
             [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
-                [ div [ class "is-flex-inline" ] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
+                [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div []
                 [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
                     [ text t.title ]
@@ -1244,16 +1273,14 @@ viewCardDropdown model =
                 [ case card.card of
                     CardTension t ->
                         div [ class "dropdown-content has-border-light p-0" ]
-                            [ div [ class "dropdown-item button-light" ]
-                                [ a
-                                    [ class "stealth-link"
-                                    , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
-                                    , target "_blank"
-                                    ]
-                                    [ A.icon1 "" "", text " Open in a new tab", text " 🡕 " ]
+                            [ a
+                                [ class "dropdown-item button-light discrete-link"
+                                , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
+                                , target "_blank"
                                 ]
+                                [ A.icon1 "icon-external-link" T.openNewTab ]
                             , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" "Remove from project" ]
+                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-x" T.removeFromProject ]
                             ]
 
                     CardDraft d ->

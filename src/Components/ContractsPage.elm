@@ -69,7 +69,7 @@ type alias Model =
     { user : UserState
     , rootnameid : String
     , form : ContractForm -- user inputs
-    , contracts_result : GqlData Contracts -- result of any query
+    , contracts_result : GqlData (List Contract) -- result of any query
     , contract_result : GqlData ContractFull
     , contract_result_del : GqlData IdPayload
     , voteForm : VoteForm
@@ -109,10 +109,6 @@ initModel focusid user conf =
     -- Components
     , comments = Comments.init focusid "" user
     }
-
-
-type alias Contracts =
-    List Contract
 
 
 type alias ContractForm =
@@ -196,7 +192,7 @@ updatePost field value model =
     { model | form = { form | post = Dict.insert field value form.post } }
 
 
-setContractsResult : GqlData Contracts -> Model -> Model
+setContractsResult : GqlData (List Contract) -> Model -> Model
 setContractsResult result model =
     { model | contracts_result = result }
 
@@ -259,7 +255,7 @@ type Msg
     | DoVote Int Time.Posix
     | OnVoteAck (GqlData ContractResult)
     | OnSubmit Bool (Time.Posix -> Msg)
-    | OnContractsAck (GqlData Contracts)
+    | OnContractsAck (GqlData (List Contract))
     | OnContractAck (GqlData ContractFull)
     | OnContractDeleteAck (GqlData IdPayload)
       -- Confirm Modal
@@ -478,7 +474,16 @@ update_ apis message model =
         OnVoteAck result ->
             let
                 data =
-                    { model | vote_result = result }
+                    { model
+                        | vote_result = result
+                        , contract_result =
+                            withMaybeMapData
+                                (\v ->
+                                    withMapData (\c -> { c | status = v.status }) model.contract_result
+                                )
+                                result
+                                |> withDefault model.contract_result
+                    }
             in
             case parseErr result data.refresh_trial of
                 Authenticate ->
@@ -604,7 +609,7 @@ headers =
     [ T.contractEvent, "Validation", T.author, upH T.opened, "" ]
 
 
-viewContractsTable : Contracts -> Op -> Model -> Html Msg
+viewContractsTable : List Contract -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]
@@ -799,7 +804,7 @@ viewContractBox c op model =
                             receiver =
                                 c.event.new |> withDefault "unkown" |> nid2eor
                         in
-                        viewTensionArrow "margin-left-25" emitter receiver
+                        viewTensionArrow False "margin-left-25" emitter receiver
 
                     TensionEvent.MemberLinked ->
                         let
@@ -857,29 +862,32 @@ viewContractBox c op model =
                         text T.notImplemented
                 ]
             ]
-        , div [ class "field pb-1 is-smaller" ]
-            [ div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
-            , hr [] []
-            , if isAuthor || op.isAdmin then
-                div
-                    [ class "is-pulled-right is-w is-h"
-                    , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
-                    ]
-                    [ A.icon1 "icon-trash" T.deleteThisContract ]
+        , div [ class "is-smaller pb-2" ]
+            ([ div [ class "is-pulled-left" ] <|
+                case c.status of
+                    ContractStatus.Closed ->
+                        [ span [ class "has-text-success" ] [ text T.closedContract ] ]
 
-              else
-                text ""
-            ]
-        , div [ class "" ] <|
-            case c.status of
-                ContractStatus.Closed ->
-                    [ span [ class "has-text-success" ] [ text T.closedContract ] ]
+                    ContractStatus.Canceled ->
+                        [ span [ class "has-text-warning" ] [ text T.canceledContract ] ]
 
-                ContractStatus.Canceled ->
-                    [ span [ class "has-text-warning" ] [ text T.canceledContract ] ]
+                    ContractStatus.Open ->
+                        []
+             , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
+             ]
+                ++ (if c.status == ContractStatus.Open && (isAuthor || op.isAdmin) then
+                        [ hr [] []
+                        , div
+                            [ class "is-pulled-right button-light is-danger"
+                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                            ]
+                            [ A.icon1 "icon-trash" T.deleteThisContract ]
+                        ]
 
-                ContractStatus.Open ->
-                    []
+                    else
+                        []
+                   )
+            )
         ]
 
 

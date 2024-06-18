@@ -32,7 +32,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRou
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
-import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos)
+import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -55,6 +55,7 @@ import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tb
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -144,7 +145,7 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+                        ( Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, Cmd.none )
 
                     DoAddNodes nodes ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
@@ -298,7 +299,7 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
             , authModal = AuthModal.init session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             }
 
         cmds_ =
@@ -392,7 +393,7 @@ type Msg
     | LookupBlur
     | LookupBlur_
     | ChangePattern String
-    | ChangeNodeLookup (LookupResult Node)
+    | ChangeNodeLookup (List Node)
     | SearchKeyDown Int
     | ChangeActivityTab RecentActivityTab
     | GotJournal (GqlData (List EventNotif))
@@ -582,17 +583,12 @@ update global message model =
             , Cmd.none
             )
 
-        ChangeNodeLookup nodes_ ->
+        ChangeNodeLookup nodes ->
             let
                 qs =
                     model.node_quickSearch
             in
-            case nodes_ of
-                Ok nodes ->
-                    ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
+            ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }, Cmd.none, Cmd.none )
 
         SearchKeyDown key ->
             let
@@ -902,7 +898,7 @@ subscriptions _ model =
         Sub.none
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
-    , Ports.lookupNodeFromJs ChangeNodeLookup
+    , Ports.pd Ports.lookupNodeFromJs (JD.list nodeDecoder) LogErr ChangeNodeLookup
     , Ports.reloadPathFromJs (always UpdatePath)
     ]
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
@@ -997,7 +993,7 @@ view_ global model =
         nodeData =
             { focus = model.node_focus
             , tid_r = withMapData (\_ -> tid) model.node_data
-            , node = getNode model.node_focus.nameid model.tree_data
+            , node = focus_m
             , node_data = withDefaultData initNodeData model.node_data
             , leads = model.leaders
             , isLazy = model.init_data
@@ -1005,6 +1001,7 @@ view_ global model =
             , hasBeenPushed = True
             , receiver = nearestCircleid model.node_focus.nameid
             , hasInnerToolbar = True
+            , isAdmin = Maybe.map2 (\node uctx -> List.length (getNodeRights uctx node model.tree_data) > 0) focus_m (maybeUctx global.session.user) |> withDefault False
             }
 
         viewFromPos : String -> Html Msg
@@ -1079,7 +1076,7 @@ viewSearchBar us model =
                             in
                             [ div [ class "control controlButtons" ]
                                 [ span
-                                    [ class "button is-small is-link2 is-wrapped"
+                                    [ class "button is-small is-wrapped"
                                     , attribute "data-modal" "actionModal"
                                     , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p) Nothing)
                                     ]

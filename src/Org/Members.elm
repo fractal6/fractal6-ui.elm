@@ -27,11 +27,12 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Bulma as B
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, toLink)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewRole, viewUserFull)
-import Components.ActionPanel as ActionPanel
+import Bulk.View exposing (role2icon, roleColor, viewRole, viewUserFull)
+import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
+import Components.ConfirmOwner as ConfirmOwner
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
@@ -39,7 +40,8 @@ import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
-import Extra exposing (space_, ternary, unwrap)
+import Extra exposing (colorAttr, showIf, space_, ternary, unwrap, unwrap2, upH)
+import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
@@ -49,22 +51,24 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
-import Html exposing (Html, a, div, h2, i, input, span, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (class, classList, href, id, style, type_)
+import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, RequestResult(..), RestData, withDefaultData, withMapData, withMapDataRest, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryContract exposing (getContractId)
+import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
+import RemoteData
 import Requests exposing (fetchMembersSub)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (Conf, GlobalCmd(..), isMobile)
+import String.Format as Format
 import Text as T
 import Time
 import Url
@@ -114,6 +118,9 @@ mapGlobalOutcmds gcmds =
                     DoToggleWatchOrga a ->
                         ( [], send (ToggleWatchOrga a) )
 
+                    DoPushSystemNotif a ->
+                        ( [], send (OnPushSystemNotif a) )
+
                     -- Component
                     DoCreateTension a ntm d ->
                         case ntm of
@@ -136,18 +143,18 @@ mapGlobalOutcmds gcmds =
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, sendSleep DoLoad 333 ], Cmd.none )
 
                     DoAddNodes nodes ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), send DoLoad ], Cmd.none )
 
                     --DoUpdateNode nameid fun ->
                     --    ( Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), Cmd.none )
                     DoDelNodes nameids ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.DelNodes nameids), send DoLoad ], Cmd.none )
 
                     DoMoveNode a b c ->
-                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
+                        ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), send DoLoad ], Cmd.none )
 
                     -- App
                     DoUpdateNode nameid fun ->
@@ -174,6 +181,7 @@ type alias Model =
     -- Page
     , members_top : GqlData (List Member)
     , members_sub : GqlData (List Member)
+    , open_invitations : GqlData (List ContractLight)
     , pending_hover : Bool
     , pending_hover_i : Maybe Int
     , pattern : String
@@ -194,6 +202,7 @@ type alias Model =
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
+    , confirmOwner : ConfirmOwner.State
     }
 
 
@@ -249,6 +258,7 @@ init global flags =
                     |> withDefault Loading
             , members_top = Loading
             , members_sub = Loading
+            , open_invitations = Loading
             , pending_hover = False
             , pending_hover_i = Nothing
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
@@ -265,8 +275,9 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , confirmOwner = ConfirmOwner.init global.session.user newFocus
             }
 
         cmds =
@@ -298,10 +309,11 @@ type Msg
       PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | DoLoad
-    | GotPath Bool (GqlData LocalGraph) -- GraphQL
-    | GotMembers (GqlData (List Member)) -- GraphQL
+    | GotPath Bool (GqlData LocalGraph)
+    | GotMembers (GqlData (List Member))
       --| GotUserRoles (GqlData (List Member))
-    | GotMembersSub (GqlData (List Member)) -- Rest
+    | GotMembersSub (GqlData (List Member))
+    | GotOpenContracts (GqlData (List ContractLight))
       -- Page
     | OnPendingHover Bool
     | OnPendingRowHover (Maybe Int)
@@ -330,6 +342,7 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | ConfirmOwnerMsg ConfirmOwner.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -398,8 +411,9 @@ update global message model =
             , Cmd.batch
                 [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
 
-                -- @deprecated : we use gql queryUserRoles now.
+                -- @deprecated : we use gql queryUserRoles now (allow to search users too..to be tested)
                 , fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                , queryOpenInvitation apis model.node_focus.nameid GotOpenContracts
                 ]
             , Cmd.none
             )
@@ -448,6 +462,20 @@ update global message model =
         GotMembersSub result ->
             case result of
                 Success mbs ->
+                    let
+                        reorderByMembership roles =
+                            roles
+                                |> List.foldl
+                                    (\role ( membershipRoles, otherRoles ) ->
+                                        if role.role_type == RoleType.Owner then
+                                            ( role :: membershipRoles, otherRoles )
+
+                                        else
+                                            ( membershipRoles, role :: otherRoles )
+                                    )
+                                    ( [], [] )
+                                |> (\( a, b ) -> a ++ b)
+                    in
                     ( { model
                         | members_sub =
                             List.filterMap
@@ -457,7 +485,7 @@ update global message model =
                                             Nothing
 
                                         roles ->
-                                            Just { m | roles = roles }
+                                            Just { m | roles = reorderByMembership roles }
                                 )
                                 mbs
                                 |> Success
@@ -468,6 +496,9 @@ update global message model =
 
                 _ ->
                     ( { model | members_sub = result }, Cmd.none, Cmd.none )
+
+        GotOpenContracts result ->
+            ( { model | open_invitations = result }, Cmd.none, Cmd.none )
 
         OnPendingHover b ->
             ( { model | pending_hover = b }, Cmd.none, Cmd.none )
@@ -670,6 +701,16 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ConfirmOwnerMsg msg ->
+            let
+                ( data, out ) =
+                    ConfirmOwner.update apis msg model.confirmOwner
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | confirmOwner = data }, out.cmds |> List.map (\m -> Cmd.map ConfirmOwnerMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -690,6 +731,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (ConfirmOwner.subscriptions model.confirmOwner |> List.map (\s -> Sub.map ConfirmOwnerMsg s))
         |> Sub.batch
 
 
@@ -729,6 +771,7 @@ view global model =
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+        , ConfirmOwner.view model.empty model.confirmOwner |> Html.map ConfirmOwnerMsg
         ]
     }
 
@@ -765,6 +808,27 @@ view_ global model =
 
             else
                 resetEllipsis
+
+        ( guests, pendings ) =
+            model.members_top
+                |> withDefaultData []
+                |> (\x ->
+                        ( List.filter
+                            (\u ->
+                                u.roles
+                                    |> List.map .role_type
+                                    |> List.member RoleType.Guest
+                            )
+                            x
+                        , List.filter
+                            (\u ->
+                                u.roles
+                                    |> List.map .role_type
+                                    |> List.member RoleType.Pending
+                            )
+                            x
+                        )
+                   )
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
@@ -783,51 +847,60 @@ view_ global model =
                   else
                     text ""
                 ]
-            , div [ class "columns is-centered" ]
-                [ div [ class "column is-four-fifth" ]
-                    [ div [ class "columns mb-6 px-3", onMouseLeave (OnRowHover Nothing) ]
-                        [ Lazy.lazy5 viewMembers model.conf model.members_sub model.node_focus isPanelOpen row_hover ]
-                    , div [ class "columns mb-6 px-3", onMouseLeave (OnRowHover Nothing) ]
-                        [ if isRoot then
-                            div [ class "column is-5 pl-0" ] [ Lazy.lazy5 viewGuest model.conf model.members_top model.node_focus isPanelOpen row_hover ]
-
-                          else
-                            text ""
-                        ]
-                    ]
-                , div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
-                    [ if isRoot then
-                        let
-                            rtid =
-                                tidFromPath model.path_data |> withDefault ""
-                        in
-                        div [ class "is-pushed-right" ]
-                            [ viewPending model.conf model.members_top model.node_focus model.pending_hover model.pending_hover_i rtid ]
-
-                      else
-                        text ""
+            , div [ class "columns mb-6" ]
+                [ div [ class "column is-four-fifth", onMouseLeave (OnRowHover Nothing) ]
+                    [ Lazy.lazy6 viewMembers model.conf model.members_sub model.open_invitations model.node_focus isPanelOpen row_hover
                     ]
                 ]
+            , if isRoot then
+                let
+                    rtid =
+                        tidFromPath model.path_data |> withDefault ""
+                in
+                div [ class "columns mb-6" ]
+                    [ showIf (List.length guests > 0) <|
+                        div [ class "column is-5", onMouseLeave (OnRowHover Nothing) ]
+                            [ Lazy.lazy6 viewGuest model.conf guests model.open_invitations model.node_focus isPanelOpen row_hover
+                            ]
+                    , showIf (List.length pendings > 0) <|
+                        div [ class "column is-2 is-flex is-align-self-flex-start", classList [ ( "is-offset-2", List.length guests > 0 ) ] ]
+                            [ viewPending model.conf pendings model.node_focus model.pending_hover model.pending_hover_i rtid
+                            ]
+                    ]
+
+              else
+                text ""
             ]
         ]
 
 
-viewMembers : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
-viewMembers conf data focus isPanelOpen ell =
+viewMembers : Conf -> GqlData (List Member) -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewMembers conf members_d invitations_d focus isPanelOpen ell =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
-                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                span [ class "help-label button-light is-goroot", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""
     in
-    case data of
+    case members_d of
         Success members ->
             if List.length members == 0 then
                 div [] [ text T.noMemberYet, goToParent ]
 
             else
+                let
+                    invitations =
+                        withDefaultData [] invitations_d
+                            |> List.filter
+                                (\c ->
+                                    List.any (\u -> List.member u (List.map .username members)) (List.map .username c.candidates)
+                                )
+
+                    hasInvitation =
+                        invitations /= []
+                in
                 div []
                     [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.members, goToParent ]
                     , div [ class "table-container" ]
@@ -837,12 +910,14 @@ viewMembers conf data focus isPanelOpen ell =
                                     [ th [] [ text T.user ]
                                     , th [] [ text T.rolesHere ]
                                     , th [] [ text T.rolesSub ]
+                                    , showIf (invitations /= []) <| th [] [ text T.pendingRoles ]
+                                    , th [] [] -- for the ellipsis
                                     ]
                                 ]
                             , tbody [ class "pr-5" ] <|
                                 List.map
                                     (\m ->
-                                        Lazy.lazy5 viewMemberRow conf focus m isPanelOpen ell
+                                        Lazy.lazy7 viewMemberRow conf focus m invitations_d hasInvitation isPanelOpen ell
                                     )
                                     members
                             ]
@@ -859,98 +934,81 @@ viewMembers conf data focus isPanelOpen ell =
             text ""
 
 
-viewGuest : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
-viewGuest conf members_d focus isPanelOpen ell =
+viewGuest : Conf -> List Member -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewGuest conf guests invitations_d focus isPanelOpen ell =
     let
-        guests =
-            members_d
-                |> withDefaultData []
+        invitations =
+            withDefaultData [] invitations_d
                 |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map .role_type
-                            |> List.member RoleType.Guest
+                    (\c ->
+                        List.any (\u -> List.member u (List.map .username guests)) (List.map .username c.candidates)
                     )
+
+        hasInvitation =
+            invitations /= []
     in
-    if List.length guests > 0 then
-        div []
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.guest ]
-            , div [ class "table-container" ]
-                [ div [ class "table is-fullwidth" ]
-                    [ thead []
-                        [ tr []
-                            [ th [] [ text T.user ]
-                            , th [] [ text T.roles ]
-                            ]
+    div []
+        [ h2 [ class "subtitle has-text-weight-semibold" ] [ text T.guests ]
+        , div [ class "table-container" ]
+            [ div [ class "table is-fullwidth" ]
+                [ thead []
+                    [ tr []
+                        [ th [] [ text T.user ]
+                        , th [] [ text T.roles ]
+                        , showIf (invitations /= []) <| th [] [ text T.pendingRoles ]
+                        , th [] [] -- for the ellipsis
                         ]
-                    , tbody [] <|
-                        List.indexedMap
-                            (\i m ->
-                                Lazy.lazy5 viewGuestRow conf focus m isPanelOpen ell
-                            )
-                            guests
                     ]
+                , tbody [] <|
+                    List.indexedMap
+                        (\i m ->
+                            Lazy.lazy7 viewGuestRow conf focus m invitations_d hasInvitation isPanelOpen ell
+                        )
+                        guests
                 ]
             ]
-
-    else
-        div [] []
+        ]
 
 
-viewPending : Conf -> GqlData (List Member) -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
-viewPending _ members_d focus pending_hover pending_hover_i tid =
-    let
-        guests =
-            members_d
-                |> withDefaultData []
-                |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map .role_type
-                            |> List.member RoleType.Pending
-                    )
-    in
-    if List.length guests > 0 then
-        div []
-            [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
-                [ text T.pending
-                , a
-                    [ class "button is-small is-primary ml-3"
-                    , classList [ ( "is-invisible", not pending_hover ) ]
-                    , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
-                    ]
-                    [ text T.goContracts ]
+viewPending : Conf -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending _ pendings focus pending_hover pending_hover_i tid =
+    div []
+        [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
+            [ text T.pending
+            , a
+                [ class "button is-small is-primary ml-3"
+                , classList [ ( "is-invisible", not pending_hover ) ]
+                , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
                 ]
-            , div [ class "table-container", style "min-width" "375px" ]
-                [ div [ class "table is-fullwidth" ]
-                    [ thead []
-                        [ tr []
-                            [ th [] [ text T.user ]
-                            ]
+                [ text T.goContracts ]
+            ]
+        , div [ class "table-container", style "min-width" "375px" ]
+            [ div [ class "table is-fullwidth" ]
+                [ thead []
+                    [ tr []
+                        [ th [] [ text T.user ]
                         ]
-                    , tbody [] <|
-                        List.indexedMap
-                            (\i m ->
-                                tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                    [ td [] [ viewUserFull 1 True False m ]
-                                    , if Just i == pending_hover_i then
-                                        td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
-
-                                      else
-                                        text ""
-                                    ]
-                            )
-                            guests
                     ]
+                , tbody [] <|
+                    List.indexedMap
+                        (\i m ->
+                            tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
+                                [ td [] [ viewUserFull 1 True False m ]
+                                , if Just i == pending_hover_i then
+                                    td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text T.goContract ] ]
+
+                                  else
+                                    text ""
+                                ]
+                        )
+                        pendings
                 ]
             ]
-
-    else
-        div [] []
+        ]
 
 
-viewMemberRow : Conf -> NodeFocus -> Member -> Bool -> Ellipsis -> Html Msg
-viewMemberRow conf focus m isPanelOpen ell =
+viewMemberRow : Conf -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewMemberRow conf focus m invitations_d hasInvitation isPanelOpen ell =
     let
         ( roles_, sub_roles_ ) =
             List.foldl
@@ -964,6 +1022,10 @@ viewMemberRow conf focus m isPanelOpen ell =
                 ( [], [] )
                 m.roles
                 |> (\( x, y ) -> ( List.reverse x, List.reverse y ))
+
+        user_invitations =
+            withDefaultData [] invitations_d
+                |> List.filter (\i -> List.member m.username (List.map .username i.candidates))
     in
     tr [ onMouseEnter (OnRowHover (Just ("member" ++ m.username))) ]
         [ td [] [ viewUserFull 1 True False m ]
@@ -982,68 +1044,43 @@ viewMemberRow conf focus m isPanelOpen ell =
 
                 _ ->
                     viewMemberRoles conf OverviewBaseUri sub_roles_ isPanelOpen
-            , if ell.hover == Just ("member" ++ m.username) then
-                span [ class "is-pulled-right" ]
-                    [ span [ class "outside-table" ]
-                        [ B.dropdownLight
-                            { dropdown_id = "row-ellipsis"
-                            , isOpen = ell.isOpen
-                            , dropdown_cls = ""
-                            , button_cls = ""
-                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
-                            , msg = OnRowEdit (ternary ell.isOpen False True)
-                            , menu_cls = ""
-                            , content_cls = "p-0 has-border-light"
-                            , content_html =
-                                div []
-                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRole (FromNameid focus.nameid))) ]
-                                        [ A.icon1 "icon-leaf" T.addUserRole ]
+            ]
+        , if not hasInvitation then
+            text ""
 
-                                    --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
-                                    ]
-                            }
-                        ]
-                    ]
+          else if user_invitations == [] then
+            td [] [ text "--" ]
 
-              else
-                text ""
+          else
+            td [] [ viewPendingRoles conf user_invitations ]
+        , td []
+            [ showIf (ell.hover == Just ("member" ++ m.username) || isMobile conf.screen) <|
+                viewUserEllipsis conf focus m roles_ ell
             ]
         ]
 
 
-viewGuestRow : Conf -> NodeFocus -> Member -> Bool -> Ellipsis -> Html Msg
-viewGuestRow conf focus m isPanelOpen ell =
+viewGuestRow : Conf -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewGuestRow conf focus m invitations_d hasInvitation isPanelOpen ell =
+    let
+        user_invitations =
+            withDefaultData [] invitations_d
+                |> List.filter (\i -> List.member m.username (List.map .username i.candidates))
+    in
     tr [ onMouseEnter (OnRowHover (Just ("guest" ++ m.username))) ]
         [ td [] [ viewUserFull 1 True False m ]
+        , td [] [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen ]
+        , if not hasInvitation then
+            text ""
+
+          else if user_invitations == [] then
+            td [] [ text "--" ]
+
+          else
+            td [] [ viewPendingRoles conf user_invitations ]
         , td []
-            [ viewMemberRoles conf OverviewBaseUri m.roles isPanelOpen
-            , if ell.hover == Just ("guest" ++ m.username) then
-                span [ class "is-pulled-right" ]
-                    [ span [ class "outside-table" ]
-                        [ B.dropdownLight
-                            { dropdown_id = "row-ellipsis"
-                            , isOpen = ell.isOpen
-                            , dropdown_cls = ""
-                            , button_cls = ""
-                            , button_html = A.icon "icon-more-horizontal is-h icon-1half"
-                            , msg = OnRowEdit (ternary ell.isOpen False True)
-                            , menu_cls = ""
-                            , content_cls = "p-0 has-border-light"
-                            , content_html =
-                                div []
-                                    [ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
-                                        [ A.icon1 "icon-leaf" T.addUserRole ]
-
-                                    --, hr [ class "dropdown-divider" ] []
-                                    --, div [ class "dropdown-item button-light", onClick (OnRemoveCard cardid) ] [ A.icon1 "icon-queen" "Make this member an Owner" ]
-                                    ]
-                            }
-                        ]
-                    ]
-
-              else
-                text ""
+            [ showIf (ell.hover == Just ("guest" ++ m.username) || isMobile conf.screen) <|
+                viewUserEllipsis conf focus m m.roles ell
             ]
         ]
 
@@ -1056,6 +1093,105 @@ viewMemberRoles conf baseUri roles isPanelOpen =
                 viewRole "" True False (Just ( conf, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
             )
             roles
+
+
+viewUserEllipsis : Conf -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
+viewUserEllipsis conf focus m roles ell =
+    let
+        isOwner_ =
+            isOwner (uctxFromUser conf.user) focus.nameid
+
+        isMobile_ =
+            isMobile conf.screen
+
+        isOpen_ =
+            ell.isOpen && String.endsWith m.username (withDefault "" ell.hover)
+
+        isMemberOwner =
+            List.any (\x -> x.role_type == RoleType.Owner) roles
+
+        isMemberGuest =
+            List.any (\x -> x.role_type == RoleType.Guest) roles
+    in
+    span [ class "is-pulled-right" ]
+        [ span [ class "outside-table", classList [ ( "is-mobile", isMobile_ ) ] ]
+            [ B.dropdownLight
+                { dropdown_id = "row-ellipsis"
+                , isOpen = isOpen_
+                , dropdown_cls = ternary isMobile_ "is-right" ""
+                , button_cls = ""
+                , button_html = A.icon "icon-more-vertical is-h icon-1half"
+                , msg = OnRowEdit (ternary ell.isOpen False True)
+                , menu_cls = ""
+                , content_cls = "p-0 has-border-light"
+                , content_html =
+                    div []
+                        ([ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]
+                            [ A.icon1 "icon-leaf" T.addUserRole ]
+                         ]
+                            ++ (if isOwner_ && not isMemberOwner then
+                                    [ hr [ class "dropdown-divider" ] []
+                                    , div [ class "dropdown-item button-light is-warning", onClick (ConfirmOwnerMsg (ConfirmOwner.OnOpen m.username)) ]
+                                        [ A.icon1 "icon-queen" T.makeOwner ]
+                                    ]
+
+                                else
+                                    []
+                               )
+                            ++ (if isOwner_ && isMemberGuest then
+                                    [ hr [ class "dropdown-divider" ] []
+                                    , div [ class "dropdown-item button-light is-danger", onClick (ActionPanelMsg (ActionPanel.OnOpenModal (UnLinkAction { username = m.username, name = Nothing }))) ]
+                                        [ A.icon1 "icon-user-plus" T.removeUser
+                                        ]
+                                    ]
+
+                                else
+                                    []
+                               )
+                        )
+                }
+            ]
+        ]
+
+
+viewPendingRoles : Conf -> List ContractLight -> Html Msg
+viewPendingRoles conf invitations =
+    div [ class "buttons is-inline" ] <|
+        List.map (\c -> viewPendingRole conf c) invitations
+
+
+viewPendingRole : Conf -> ContractLight -> Html Msg
+viewPendingRole conf c =
+    let
+        tooltip_cls =
+            String.split " " "tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
+
+        since =
+            T.createdThe ++ " " ++ formatDate conf.lang conf.now c.createdAt
+
+        role =
+            { name = c.tension.node |> unwrap2 "" .name
+            , role_type = c.tension.node |> unwrap2 RoleType.Pending .role_type
+            , nameid = c.tension.receiverid
+            }
+
+        link =
+            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid role.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
+    in
+    a
+        [ class "button buttonRole is-small pending-border"
+        , classList (List.map (\x -> ( x, True )) tooltip_cls)
+        , attribute "data-tooltip"
+            (T.theyPlay
+                |> Format.namedValue "role" (upH role.name)
+                |> Format.namedValue "circle" (getParentFragmentFromRole role)
+                |> Format.namedValue "since" since
+            )
+        , href link
+        , colorAttr (roleColor role.role_type)
+        , style "opacity" "0.75"
+        ]
+        [ A.icon1 (role2icon role) (upH role.name) ]
 
 
 

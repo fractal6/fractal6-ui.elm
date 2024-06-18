@@ -23,7 +23,9 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Bulk exposing (Ev, UserState(..))
+import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2icon)
@@ -31,7 +33,8 @@ import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Dict
-import Extra exposing (ternary)
+import Dom
+import Extra exposing (space_, ternary)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -45,6 +48,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -61,6 +65,9 @@ type alias Model =
     , move_result : GqlData TensionId
     , target : String -- keep origin target (receiverid)
     , form : MoveForm
+    , expanded_lines : ExpandedLines
+    , isTargetOpen : String
+    , freezeOutsideClick : Bool
 
     -- Blob
     , blob : Maybe Blob
@@ -116,6 +123,9 @@ initModel user =
     , blob = Nothing
     , encoded_nid = ""
     , decoded_type_m = Nothing
+    , expanded_lines = Dict.empty
+    , isTargetOpen = ""
+    , freezeOutsideClick = False
 
     -- Common
     , empty = {}
@@ -243,6 +253,9 @@ type Msg
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
+    | OnTargetClick String
+    | OnOutsideTreeClickClose
+    | UnfreezeOutsideClick
       -- Data
     | OnChangePost String String
     | OnChangeTarget Node
@@ -250,6 +263,7 @@ type Msg
     | OnMove Time.Posix
     | OnMoveRaw String String String
     | OnMoveAck (GqlData TensionId)
+    | OnToggleDropdownRoles String
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -347,12 +361,36 @@ update_ apis message model =
                 , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
+        OnTargetClick id_ ->
+            case model.isTargetOpen of
+                "" ->
+                    if id_ /= "" then
+                        ( { model | isTargetOpen = id_ }
+                        , out0 [ sendSleep OnOutsideTreeClickClose 250 ]
+                        )
+
+                    else
+                        ( model, noOut )
+
+                _ ->
+                    ( { model | isTargetOpen = "" }, out0 [ Ports.click "" ] )
+
+        OnOutsideTreeClickClose ->
+            if model.freezeOutsideClick then
+                ( model, noOut )
+
+            else
+                ( { model | freezeOutsideClick = True }, out0 [ Ports.outsideClickClose "closeTreeSelFromJs" "tree-selector", sendSleep UnfreezeOutsideClick 250 ] )
+
+        UnfreezeOutsideClick ->
+            ( { model | freezeOutsideClick = False }, noOut )
+
         -- Data
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
         OnChangeTarget node ->
-            ( setTarget node model, noOut )
+            ( setTarget node model, out0 [ send (OnTargetClick "") ] )
 
         DoMoveTension ->
             ( setMoveResult LoadingSlowly model, out0 [ moveTension apis model.form OnMoveAck ] )
@@ -440,6 +478,17 @@ update_ apis message model =
                 _ ->
                     ( data, noOut )
 
+        OnToggleDropdownRoles nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -486,6 +535,14 @@ subscriptions (State model) =
     ]
         ++ (if model.isActive then
                 ConfirmContract.subscriptions |> List.map (\s -> Sub.map ConfirmContractMsg s)
+
+            else
+                []
+           )
+        ++ (if model.isTargetOpen /= "" then
+                [ Ports.closeTreeSelFromJs (always (OnTargetClick ""))
+                , Events.onKeyUp (Dom.key "Escape" (OnTargetClick ""))
+                ]
 
             else
                 []
@@ -582,10 +639,13 @@ viewModalContent tree_data model =
 
                 Nothing ->
                     ""
+
+        isTargetOpen =
+            model.isTargetOpen /= ""
     in
-    div [ class "modal-card submitFocus" ]
-        [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-grey-dark has-text-weight-semibold" ]
+    div [ class "modal-card submitFocus", style "min-height" "450px" ]
+        [ div [ class ("modal-card-head is-" ++ color) ]
+            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
                         text T.moveTension
@@ -613,26 +673,26 @@ viewModalContent tree_data model =
             [ div [ class "field" ]
                 [ div [ class "control" ]
                     [ span [] [ text (T.newReceiver ++ ": ") ]
-                    , span [ class "dropdown" ]
-                        [ span [ class "dropdown-trigger" ]
-                            [ span [ attribute "aria-controls" "target-menu" ]
-                                [ if List.member model.form.target.nameid [ "", model.target ] then
-                                    span
-                                        [ class "button is-small s-light is-inverted" ]
-                                        [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                    , B.dropdownLight
+                        { dropdown_id = "target-menu"
+                        , isOpen = isTargetOpen
+                        , dropdown_cls = ""
+                        , button_cls = ""
+                        , button_html =
+                            if List.member model.form.target.nameid [ "", model.target ] then
+                                span
+                                    [ class "button is-small s-light is-inverted" ]
+                                    [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
 
-                                  else
-                                    span
-                                        [ class "button is-small is-rounded has-border" ]
-                                        [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-                                ]
-                            ]
-                        , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
-                            [ -- The fixed position allow the dropdown to overflow the modal
-                              div [ class "dropdown-content has-border", style "position" "fixed" ]
-                                [ viewSelectorTree OnChangeTarget [ model.form.target.nameid, model.target, decoded_nid ] tree_data ]
-                            ]
-                        ]
+                            else
+                                span
+                                    [ class "button is-small is-rounded has-border" ]
+                                    [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                        , menu_cls = ""
+                        , content_cls = "p-0 has-border-light"
+                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, model.target, decoded_nid ] model.expanded_lines tree_data
+                        , msg = ternary isTargetOpen (OnTargetClick "") (OnTargetClick "something")
+                        }
                     ]
                 ]
             , div [ class "field" ]
@@ -695,7 +755,7 @@ viewNodeSelect n onChangeTarget =
                     [ A.icon1 (action2icon { doc_type = NODE NodeType.Role }) n.name
                     , case n.first_link of
                         Just f ->
-                            span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
+                            span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ]
 
                         Nothing ->
                             text ""

@@ -159,7 +159,7 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+                        ( Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, Cmd.none )
 
                     DoAddNodes nodes ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
@@ -397,7 +397,7 @@ init global flags =
             -- Open a signin dialog if contracts are requested
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             , comments = Comments.init focusid tid global.session.user
             }
 
@@ -1661,23 +1661,28 @@ viewTension u t model =
                           else
                             text ""
                         ]
-                , div [ class "tensionSubtitle" ]
-                    [ span
-                        [ class "tag is-rounded has-background-tag"
-                        , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
-                        , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
-                        ]
-                        [ tensionIcon2 t.type_ ]
-                    , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
-                        -- As Governance tension get automatically closed when there are created,
-                        -- there status is not relevant, I can cause confusion to user as the object exists.
-                        span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                            [ t.status |> tensionStatus2str |> text ]
+                , div [ class "tensionSubtitle level" ]
+                    [ div [ class "level-left" ] <|
+                        List.map (div [ class "level-item" ] << List.singleton) <|
+                            [ span
+                                [ class "tag is-rounded has-background-tag"
+                                , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
+                                , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+                                ]
+                                [ tensionIcon2 t.type_ ]
+                            , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
+                                -- As Governance tension get automatically closed when there are created,
+                                -- there status is not relevant, I can cause confusion to user as the object exists.
+                                span [ class ("tag is-rounded is-w  is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
+                                    [ t.status |> tensionStatus2str |> text ]
 
-                      else
-                        text ""
-                    , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
-                    , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
+                              else
+                                text ""
+                            , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
+                            ]
+                    , div [ class "level-right" ] <|
+                        List.map (div [ class "level-item" ] << List.singleton) <|
+                            [ viewCircleTarget model.commonOp "" t.receiver ]
                     ]
                 ]
             ]
@@ -1808,6 +1813,7 @@ viewDocument u t b model =
                 , hasBeenPushed = t.hasBeenPushed
                 , receiver = t.receiver.nameid
                 , hasInnerToolbar = False
+                , isAdmin = model.isTensionAdmin
                 }
 
             op =
@@ -1816,7 +1822,6 @@ viewDocument u t b model =
                 , result = NotAsked
                 , publish_result = model.publish_result
                 , blob = b
-                , isAdmin = model.isTensionAdmin
                 , tension_blobs = model.tension_blobs
                 , onSubmit = Submit
                 , onSubmitBlob = CommitBlob
@@ -2063,7 +2068,7 @@ viewSidePane u t model =
                                                     text ""
                                    , Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-highlight" ] [ A.icon1 "icon-user" T.firstLink, text ": " ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-highlight is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
@@ -2084,7 +2089,6 @@ viewSidePane u t model =
                                     , result = NotAsked
                                     , publish_result = model.publish_result
                                     , blob = blob
-                                    , isAdmin = model.isTensionAdmin
                                     , tension_blobs = model.tension_blobs
                                     , onSubmit = Submit
                                     , onSubmitBlob = CommitBlob
@@ -2097,7 +2101,9 @@ viewSidePane u t model =
                                     , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            NodeDoc.viewNodeStatus op
+                            div [ class "is-flex mt-3" ]
+                                [ NodeDoc.viewNodeStatus model.isTensionAdmin op
+                                ]
                         ]
                     ]
             )
@@ -2159,10 +2165,10 @@ viewSidePane u t model =
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ (if isAdmin then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon "icon-pin mr-1", ternary t.isPinned (text T.unpinTension) (text T.pinTension) ]
+                                    [ A.icon1 "icon-pin" <| ternary t.isPinned T.unpinTension T.pinTension ]
                                 ]
 
                             else
@@ -2170,10 +2176,10 @@ viewSidePane u t model =
                            )
                         ++ (if not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], text T.moveTension ]
+                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text T.moveTension ]
                                 ]
 
                             else
@@ -2181,17 +2187,17 @@ viewSidePane u t model =
                            )
                         ++ (if isAdmin && not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
-                                    [ A.icon "icon-disc mr-1", text T.updateType ]
+                                    [ A.icon1 "icon-disc" T.updateType ]
                                 ]
 
                             else
                                 []
                            )
                         ++ (if isAdmin then
-                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock conversation" ]
+                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4" ] [ A.icon1 "icon-lock icon-sm" "Lock conversation" ]
                                 ]
 
                             else

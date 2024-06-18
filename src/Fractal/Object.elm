@@ -9,6 +9,10 @@ type AddBlobPayload
     = AddBlobPayload
 
 
+type AddBuildInfoPayload
+    = AddBuildInfoPayload
+
+
 type AddCommentPayload
     = AddCommentPayload
 
@@ -113,6 +117,14 @@ type BlobAggregateResult
     = BlobAggregateResult
 
 
+type BuildInfo
+    = BuildInfo
+
+
+type BuildInfoAggregateResult
+    = BuildInfoAggregateResult
+
+
 type Comment
     = Comment
 
@@ -131,6 +143,10 @@ type ContractAggregateResult
 
 type DeleteBlobPayload
     = DeleteBlobPayload
+
+
+type DeleteBuildInfoPayload
+    = DeleteBuildInfoPayload
 
 
 type DeleteCommentPayload
@@ -403,6 +419,10 @@ type TensionAggregateResult
 
 type UpdateBlobPayload
     = UpdateBlobPayload
+
+
+type UpdateBuildInfoPayload
+    = UpdateBuildInfoPayload
 
 
 type UpdateCommentPayload

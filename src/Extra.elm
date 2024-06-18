@@ -134,6 +134,21 @@ regexFromString =
     Regex.fromString >> Maybe.withDefault Regex.never
 
 
+regexContains : String -> String -> Bool
+regexContains pattern text =
+    Regex.contains (regexFromString pattern) text
+
+
+regexfirstMatchLength : String -> String -> Maybe Int
+regexfirstMatchLength pattern text =
+    case Regex.findAtMost 1 (regexFromString pattern) text of
+        [] ->
+            Nothing
+
+        firstMatch :: _ ->
+            Just (String.length firstMatch.match)
+
+
 cleanDup : String -> String -> String
 cleanDup c s =
     -- Remove any repetition of the character c in string s
@@ -289,3 +304,26 @@ colorToTextColor color =
 
     else
         "#fff"
+
+
+
+-- HTML
+
+
+showIf : Bool -> Html msg -> Html msg
+showIf a v =
+    if a then
+        v
+
+    else
+        text ""
+
+
+showMaybe : Maybe a -> (a -> Html msg) -> Html msg
+showMaybe a f =
+    case a of
+        Just x ->
+            f x
+
+        Nothing ->
+            text ""

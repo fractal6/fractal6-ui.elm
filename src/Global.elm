@@ -40,18 +40,20 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
+import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
-import Extra exposing (ternary, unwrap2)
+import Extra exposing (showIf, ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
-import Html exposing (div)
-import Html.Attributes exposing (id)
+import Html exposing (Html, a, button, div, p, text)
+import Html.Attributes exposing (class, classList, id)
+import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, isFailure, withMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorHttpToString, isFailure, withMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -62,6 +64,7 @@ import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
+import Schemas.TreeMenu as TreeMenuSchema
 import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
 import Task
 import Time
@@ -92,6 +95,7 @@ getConf global =
     , lang = global.session.lang
     , theme = global.session.theme
     , url = global.url
+    , user = global.session.user
     }
 
 
@@ -105,11 +109,12 @@ init flags url key =
         ( session, cmds ) =
             fromLocalSession flags
     in
-    ( Model flags url key session (Time.millisToPosix 0)
+    ( Model flags url key { session | system_notification = RemoteData.NotAsked } (Time.millisToPosix 0)
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
          , now
+         , send UpdateUserToken
          , sendSleep RefreshNotifCount 1000
          ]
             ++ cmds
@@ -128,13 +133,7 @@ type Msg
     | SetTime Time.Posix
     | UpdateReferer Url
     | UpdateCanReferer (Maybe Url)
-    | NavigateNode String
-    | UpdateUserSession UserCtx -- user is logged In !
-    | UpdateUserTokenAck (RestData UserCtx)
-    | UpdateUserToken
-    | LoggedOutUser
-    | LoggedOutUserOk
-    | RedirectOnLoggedIn -- user is logged In !
+      -- Update Session Data
     | UpdateSessionFocus (Maybe NodeFocus)
     | UpdateSessionFocusOnly (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
@@ -153,7 +152,7 @@ type Msg
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
     | UpdateSessionMenuOrga (Maybe Bool)
-    | UpdateSessionMenuTree (Maybe Bool)
+    | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
     | UpdateSessionNotif NotifCount
@@ -164,7 +163,20 @@ type Msg
     | GotIsWatching (GqlData Bool)
     | RefreshPinTension String
     | AckPinTension (GqlData (Maybe (List PinTension)))
+      -- Global utils msg
+    | NavigateNode String
+    | UpdateUserSession UserCtx -- user is logged In !
+    | UpdateUserTokenAck (RestData UserCtx)
+    | UpdateUserToken
+    | LoggedOutUser
+    | LoggedOutUserOk
+    | RedirectOnLoggedIn -- user is logged In !
+    | OnCloseOutdatedVersion
+    | OnPushSystemNotif (RestData String)
+    | OnClearSystemNotif
+      -- utils
     | VOID
+    | LogErr String
       -- Components data update
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -211,105 +223,6 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | can_referer = referer } }, Cmd.none )
-
-        NavigateNode nameid ->
-            case urlToFractalRoute model.url of
-                Just OverviewBaseUri ->
-                    ( model, Nav.replaceUrl model.key (toLink OverviewBaseUri nameid []) )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        UpdateUserSession uctx ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | user = LoggedIn uctx } }
-              -- Update Components when Uctx change !
-            , [ Ports.saveUserCtx uctx
-              , case session.node_focus of
-                    Just n ->
-                        getOrgaInfo apis uctx.username n.rootnameid GotOrgaInfo
-
-                    Nothing ->
-                        Cmd.none
-              ]
-                ++ (case model.session.tree_data of
-                        Just ndata ->
-                            [ Ports.redrawGraphPack ndata ]
-
-                        Nothing ->
-                            []
-                   )
-                |> Cmd.batch
-            )
-
-        UpdateUserToken ->
-            ( model
-            , tokenack apis UpdateUserTokenAck
-            )
-
-        UpdateUserTokenAck result ->
-            let
-                session =
-                    model.session
-
-                newModel =
-                    { model | session = { session | token_data = result } }
-            in
-            case result of
-                RemoteData.Success uctx ->
-                    ( newModel
-                    , sendSleep (UpdateUserSession uctx) 300
-                    )
-
-                _ ->
-                    if parseErr2 result 1 == Auth.Authenticate then
-                        case model.session.user of
-                            LoggedIn uctx ->
-                                ( newModel, Ports.raiseAuthModal uctx )
-
-                            LoggedOut ->
-                                ( newModel, Cmd.none )
-
-                    else
-                        ( newModel, Cmd.none )
-
-        RedirectOnLoggedIn ->
-            let
-                cmd =
-                    case model.session.user of
-                        LoggedIn uctx ->
-                            let
-                                home =
-                                    toLink UsersBaseUri uctx.username []
-                            in
-                            case model.session.referer of
-                                Just referer ->
-                                    referer
-                                        |> Url.toString
-                                        |> NavigateRaw
-                                        |> send
-
-                                Nothing ->
-                                    send (NavigateRaw home)
-
-                        LoggedOut ->
-                            sendSleep RedirectOnLoggedIn 333
-            in
-            ( model, cmd )
-
-        LoggedOutUser ->
-            case model.session.user of
-                LoggedIn uctx ->
-                    ( { model | session = resetSession model.session model.flags }, Ports.removeSession uctx )
-
-                LoggedOut ->
-                    ( model, Cmd.none )
-
-        LoggedOutUserOk ->
-            ( model, navigate Route.Top )
 
         --
         -- Update Session Data
@@ -707,8 +620,140 @@ update msg model =
             in
             ( { model | session = { session | path_data = new_path } }, Ports.pathChanged )
 
+        --Global Utils Msg
+        NavigateNode nameid ->
+            case urlToFractalRoute model.url of
+                Just OverviewBaseUri ->
+                    ( model, Nav.replaceUrl model.key (toLink OverviewBaseUri nameid []) )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        UpdateUserSession uctx ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx } }
+              -- Update Components when Uctx change !
+            , [ Ports.saveUserCtx uctx
+              , case session.node_focus of
+                    Just n ->
+                        getOrgaInfo apis uctx.username n.rootnameid GotOrgaInfo
+
+                    Nothing ->
+                        Cmd.none
+              ]
+                ++ (case model.session.tree_data of
+                        Just ndata ->
+                            [ Ports.redrawGraphPack ndata ]
+
+                        Nothing ->
+                            []
+                   )
+                |> Cmd.batch
+            )
+
+        UpdateUserToken ->
+            ( model
+            , tokenack apis UpdateUserTokenAck
+            )
+
+        UpdateUserTokenAck result ->
+            let
+                session =
+                    model.session
+
+                newModel =
+                    { model | session = { session | token_data = result } }
+            in
+            case result of
+                RemoteData.Success uctx ->
+                    ( newModel
+                    , sendSleep (UpdateUserSession uctx) 300
+                    )
+
+                _ ->
+                    if parseErr2 result 1 == Auth.Authenticate then
+                        case model.session.user of
+                            LoggedIn uctx ->
+                                ( newModel, Ports.raiseAuthModal uctx )
+
+                            LoggedOut ->
+                                ( newModel, Cmd.none )
+
+                    else
+                        ( newModel, Cmd.none )
+
+        RedirectOnLoggedIn ->
+            let
+                cmd =
+                    case model.session.user of
+                        LoggedIn uctx ->
+                            let
+                                home =
+                                    toLink UsersBaseUri uctx.username []
+                            in
+                            case model.session.referer of
+                                Just referer ->
+                                    referer
+                                        |> Url.toString
+                                        |> NavigateRaw
+                                        |> send
+
+                                Nothing ->
+                                    send (NavigateRaw home)
+
+                        LoggedOut ->
+                            sendSleep RedirectOnLoggedIn 333
+            in
+            ( model, cmd )
+
+        LoggedOutUser ->
+            case model.session.user of
+                LoggedIn uctx ->
+                    ( { model | session = resetSession model.session model.flags }, Ports.removeSession uctx )
+
+                LoggedOut ->
+                    ( model, Cmd.none )
+
+        LoggedOutUserOk ->
+            ( model, navigate Route.Top )
+
+        OnCloseOutdatedVersion ->
+            let
+                session =
+                    model.session
+
+                orgaInfo =
+                    Maybe.map
+                        (\oi ->
+                            { oi | client_version = session.apis.client_version }
+                        )
+                        session.orgaInfo
+            in
+            ( { model | session = { session | orgaInfo = orgaInfo } }, Cmd.none )
+
+        OnPushSystemNotif result ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | system_notification = result } }, sendSleep OnClearSystemNotif 4000 )
+
+        OnClearSystemNotif ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | system_notification = RemoteData.NotAsked } }, Cmd.none )
+
+        -- Utils
         VOID ->
             ( model, Cmd.none )
+
+        LogErr err ->
+            ( model, Ports.logErr err )
 
         UpdateSessionAuthorsPanel data ->
             let
@@ -741,7 +786,7 @@ subscriptions _ =
     Sub.batch
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
-        , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
+        , Ports.pd Ports.updateMenuTreeFromJs TreeMenuSchema.decode LogErr UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         ]
@@ -752,27 +797,61 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg } -> Document msg
-view { page, global, url, msg1 } =
+view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
+view { page, global, url, msg1, msg2, onClearNotif } =
     layout
         { page = page
         , url = url
         , session = global.session
         , msg1 = msg1
+        , msg2 = msg2
+        , onClearNotif = onClearNotif
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg } -> Document msg
-layout { page, url, session, msg1 } =
+layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
+layout { page, url, session, msg1, msg2, onClearNotif } =
+    let
+        ( notif_msg, notif_ok ) =
+            case session.system_notification of
+                RemoteData.Success msg ->
+                    ( msg, Just True )
+
+                RemoteData.Failure err ->
+                    ( errorHttpToString err, Just False )
+
+                _ ->
+                    ( "", Nothing )
+    in
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Lazy.lazy4 Navbar.view session.user session.notif url msg1
+            [ Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
+            , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
             , div [ id "body" ] page.body
             , Footbar.view
             ]
         ]
     }
+
+
+viewNotif : String -> Bool -> msg -> Html msg
+viewNotif msg isOk closeMsg =
+    let
+        color =
+            ternary isOk "is-success" "is-error"
+    in
+    div
+        [ class "f6-notification notification is-light"
+        , classList [ ( color, True ) ]
+        ]
+        [ button [ class "delete", onClick closeMsg ] []
+        , div [ class "stealth-link" ]
+            -- https://github.com/surprisetalk/elm-bulma/issues/17
+            [ -- p [ class "title is-6 mb-2" ] [ text msg ]
+              viewGqlErrorsLight [ msg ]
+            ]
+        ]
 
 
 

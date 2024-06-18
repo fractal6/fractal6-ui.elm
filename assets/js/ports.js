@@ -184,7 +184,7 @@ export const actions = {
         initQuickSearch(qs, data.users);
         // And return a search result
         var res = qs.search(data.pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupUserFromJs_.send(res);
+        app.ports.lookupUserFromJs.send(res);
     },
     'INIT_LABELSEARCH': (app, session, data) => {
         // Setup User quickSearch
@@ -216,17 +216,17 @@ export const actions = {
                 return undefined
             }
         });
-        app.ports.lookupNodeFromJs_.send(res.filter(x => x));
+        app.ports.lookupNodeFromJs.send(res.filter(x => x));
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupUserFromJs_.send(res);
+        app.ports.lookupUserFromJs.send(res);
     },
     'SEARCH_LABELS': (app, session, pattern) => {
         var qs = session.qsl;
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
-        app.ports.lookupLabelFromJs_.send(res);
+        app.ports.lookupLabelFromJs.send(res);
     },
     'PUSH_INPUT_SELECTION': (app, session, name) => {
         var $i = document.activeElement;
@@ -309,14 +309,18 @@ export const actions = {
         if ($canvas) {
             var gp = session.gp;
             var focusid = gp.focusedNode ? gp.focusedNode.data.nameid : null;
-            gp.resetGraphPack(data.data, true, focusid);
+            try {
+                gp.resetGraphPack(data.data, true, focusid);
+            } catch {
+                console.warn("Webpack bad initialization -- probably due to dev env, please report.")
+                return
+            }
             gp.drawCanvas();
             gp.drawCanvas(true);
 
             // Fix bad drawing... (observed when adding, moving or removing node)
             gp.resizeMe();
-        } // else
-        // Some hidden data here...
+        }
     },
     'REMOVEDRAW_GRAPHPACK' : (app, session, data) => {
         var $canvas = document.getElementById("canvasOrga");
@@ -358,14 +362,15 @@ export const actions = {
         // Save session
         localStorage.setItem(UCTX_KEY, JSON.stringify(user_ctx.data));
 
+        // @deprecated: done in {getOrgaInfo} now
         // If version is outdated, reload.
-        if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
-            // Prevent bad redirection because /new/orga send a navigate redirection with a timeout.
-            // @debug: catch redirection here.
-            if (window.location.pathname != "/new/orga") {
-                window.location.reload(true);
-            }
-        }
+        //if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
+        //    // Prevent bad redirection because /new/orga send a navigate redirection with a timeout.
+        //    // @debug: catch redirection here.
+        //    if (window.location.pathname != "/new/orga") {
+        //        window.location.reload(true);
+        //    }
+        //}
 
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);

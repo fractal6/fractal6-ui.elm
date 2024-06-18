@@ -171,7 +171,7 @@ viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
 viewCircleTarget commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
+            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
@@ -182,25 +182,14 @@ viewCircleSimple nameid =
     span [ class "tag has-border-light is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
 
 
-viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
-viewTensionArrow cls emitter receiver =
+viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
+viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
         [ span [ class "is-small is-light is-inverted is-static has-text-weight-light" ]
-            [ viewNodeRef OverviewBaseUri emitter ]
+            [ viewNodeRef t_blank OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-light is-inverted is-static" ]
-            [ viewNodeRef OverviewBaseUri receiver ]
-        ]
-
-
-viewTensionArrowB : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
-viewTensionArrowB cls emitter receiver =
-    span [ class cls ]
-        [ span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
-            [ viewNodeRef OverviewBaseUri emitter ]
-        , span [ class "arrow-right" ] []
-        , span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
-            [ viewNodeRef OverviewBaseUri receiver ]
+            [ viewNodeRef t_blank OverviewBaseUri receiver ]
         ]
 
 
@@ -395,6 +384,16 @@ statusColor s =
             "danger"
 
 
+statusColorReverse : TensionStatus.TensionStatus -> String
+statusColorReverse s =
+    case s of
+        TensionStatus.Open ->
+            "danger"
+
+        TensionStatus.Closed ->
+            "success"
+
+
 tensionTypeColor : String -> TensionType.TensionType -> String
 tensionTypeColor elt tt =
     case tt of
@@ -435,29 +434,17 @@ tensionTypeIcon tt =
 
 tensionIcon : TensionType.TensionType -> Html msg
 tensionIcon type_ =
-    let
-        cls =
-            ""
-    in
-    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
+    span [ class <| String.join " " <| [ "is-inline-flex", tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
 
 
 tensionIcon2 : TensionType.TensionType -> Html msg
 tensionIcon2 type_ =
-    let
-        cls =
-            ""
-    in
-    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2str type_) ]
+    span [ class <| String.join " " <| [ "is-inline-flex", tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (tensionType2str type_) ]
 
 
 tensionIcon3 : TensionType.TensionType -> Html msg
 tensionIcon3 type_ =
-    let
-        cls =
-            ""
-    in
-    span [ class <| String.join " " <| [ cls ] ] [ A.icon1 (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
+    span [ class "is-inline-flex" ] [ A.icon1 (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
 
 
 
@@ -485,7 +472,15 @@ viewUser0 username =
 
 
 viewUser : Bool -> String -> Html msg
-viewUser isLinked username =
+viewUser isLinked_ username =
+    let
+        isLinked =
+            if String.contains "@" username then
+                False
+
+            else
+                isLinked_
+    in
     if isLinked then
         span [ class "mr-2", title username ]
             [ a [ href (toLink UsersBaseUri username []) ]
@@ -505,8 +500,15 @@ viewUser2 username =
 
 
 viewUserFull : Int -> Bool -> Bool -> UserView a -> Html msg
-viewUserFull size isLinked isBoxed user =
+viewUserFull size isLinked_ isBoxed user =
     let
+        isLinked =
+            if String.contains "@" user.username then
+                False
+
+            else
+                isLinked_
+
         ( pad, avatar ) =
             case size of
                 0 ->
@@ -776,16 +778,21 @@ viewNodeDescr inPanel node tc =
         case tc.doc_type of
             NODE NodeType.Circle ->
                 [ div [ class "is-mobile mb-3", classList [ ( cls, True ) ] ] <|
-                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                    , span [ class "level-item mr-4" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                    , span [ class "level-right" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ]
+                    [ span [ class "level-left mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                    , span [ class "level-item mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
+                    , span [ class "level-right" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ] ]
                     ]
                 ]
 
             NODE NodeType.Role ->
                 [ div [ class "is-mobile mb-3 is-flex" ] <|
-                    [ span [ class "level-left mr-4" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                    [ span [ class "level-left mr-4" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                    , span [ class "level-item" ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
                     ]
                 ]
 
@@ -793,8 +800,8 @@ viewNodeDescr inPanel node tc =
                 [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
 
 
-viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg
-viewNodeRef baseUri n =
+viewNodeRef : Bool -> FractalBaseRoute -> EmitterOrReceiver -> Html msg
+viewNodeRef t_blank baseUri n =
     let
         ref =
             if n.role_type == Just RoleType.Member then
@@ -802,8 +809,15 @@ viewNodeRef baseUri n =
 
             else
                 toLink baseUri n.nameid []
+
+        more =
+            if t_blank then
+                [ target "_blank" ]
+
+            else
+                []
     in
-    a [ href ref, class "is-wrapped" ] [ text n.name ]
+    a ([ href ref, class "is-wrapped" ] ++ more) [ text n.name ]
 
 
 viewNodeRefShort : FractalBaseRoute -> String -> Html msg
@@ -909,7 +923,7 @@ roleColor rt =
             "purple"
 
 
-colorFromRole : RoleExtCommon a -> String
+colorFromRole : { r | role_type : RoleType.RoleType } -> String
 colorFromRole r =
     case r.role_type of
         RoleType.Owner ->
@@ -937,7 +951,7 @@ colorFromRole r =
             "var(--warning)"
 
 
-role2icon : RoleExtCommon a -> String
+role2icon : { r | role_type : RoleType.RoleType } -> String
 role2icon r =
     case r.role_type of
         RoleType.Coordinator ->

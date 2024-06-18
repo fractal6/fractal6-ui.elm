@@ -68,7 +68,7 @@ module Query.QueryNode exposing
     , userPayload
     )
 
-import Bulk.Codecs exposing (nid2rootid)
+import Bulk.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
 import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -85,6 +85,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
+import Fractal.Object.BuildInfo
 import Fractal.Object.Contract
 import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
@@ -325,7 +326,7 @@ nodeOrgaDecoder data =
 queryOrgaTree url rootid msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeOrgaFilter rootid [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ])
+            (nodeOrgaFilter rootid membershipRoleTypes)
             nodeOrgaPayload
         )
         (RemoteData.fromResult >> decodeResponse nodeOrgaDecoder >> msg)
@@ -849,7 +850,7 @@ membersFilter rootid a =
                 (\c ->
                     { c
                         | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
-                        , and = matchAnyRoleType [ RoleType.Member, RoleType.Owner, RoleType.Guest ]
+                        , and = matchAnyRoleType activeMembershipRoleTypes
 
                         -- @todo pending members
                     }
@@ -1427,6 +1428,7 @@ tensionEventPayload =
                     Fractal.Object.Tension.title
                 )
             )
+        |> with Fractal.Object.Event.new
 
 
 contractEventPayload : SelectionSet ContractNotif Fractal.Object.Contract
@@ -1465,20 +1467,21 @@ notifEventPayload =
 
 
 --
--- Get an organization info/stats
+-- Get an organisation info/stats
 --
 
 
 getOrgaInfo url username nameid msg =
     makeGQLQuery url
-        (SelectionSet.map2
-            (\x y ->
-                Maybe.map (\oi -> { oi | n_projects = unwrap2 0 .count y }) x
+        (SelectionSet.map3
+            (\x y versions ->
+                Maybe.map (\oi -> { oi | n_projects = unwrap2 0 .count y, client_version = versions |> withDefault [] |> List.head |> withDefault Nothing |> withDefault "" }) x
             )
             (Query.getNode (nidFilter nameid) (orgaInfoPayload username))
             (Query.aggregateProject (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | rootnameid = Present { eq = Present nameid, in_ = Absent }, status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) })
                 (SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count)
             )
+            (Query.queryBuildInfo identity (SelectionSet.map identity Fractal.Object.BuildInfo.client_version))
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -1489,7 +1492,7 @@ orgaInfoPayload username =
         |> hardcoded 0
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| [ RoleType.Owner, RoleType.Member, RoleType.Guest ], eq = Absent } }) }) <|
+                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| activeMembershipRoleTypes, eq = Absent } }) }) <|
                     SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
             )
         |> hardcoded 0
@@ -1504,3 +1507,4 @@ orgaInfoPayload username =
                     (SelectionSet.map NameidPayload Fractal.Object.User.username)
                 )
             )
+        |> hardcoded ""

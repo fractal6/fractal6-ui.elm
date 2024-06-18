@@ -25,23 +25,30 @@ import Assets as A
 import Assets.Logo as Logo
 import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toLink)
+import Bulk.Error exposing (viewGqlErrorsLight)
 import Bulk.View exposing (lang2str)
-import Extra exposing (ternary)
+import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
-import Html exposing (Html, a, div, header, hr, nav, span, strong, text)
+import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, title)
 import Html.Events exposing (onClick)
-import ModelSchema exposing (NotifCount)
+import ModelSchema exposing (NotifCount, OrgaInfo)
+import Session exposing (Apis)
 import Text as T
 import Url exposing (Url)
 
 
-view : UserState -> NotifCount -> Url -> (String -> msg) -> Html msg
-view user notif url replaceUrl =
+view : UserState -> NotifCount -> Maybe OrgaInfo -> Apis -> Url -> (String -> msg) -> msg -> Html msg
+view user notif orga_info apis url replaceUrl onCloseOutdated =
     let
         orgUrl =
             isOrgUrl url
+
+        -- @debug: make it work even when orgaInfo is Nothing !
+        hasVersionOutdated =
+            (Maybe.map .client_version orga_info /= Just apis.client_version)
+                && (orga_info /= Nothing)
     in
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
@@ -81,6 +88,15 @@ view user notif url replaceUrl =
                        , A.burger "userMenu"
                        ]
                 )
+            , showIf hasVersionOutdated <|
+                div [ class "f6-notification notification is-warning is-light" ]
+                    [ button [ class "delete", onClick onCloseOutdated ] []
+                    , a [ class "stealth-link" ]
+                        -- https://github.com/surprisetalk/elm-bulma/issues/17
+                        [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]
+                        , viewGqlErrorsLight [ "Refresh now for new features and improvements" ]
+                        ]
+                    ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
                     (case user of

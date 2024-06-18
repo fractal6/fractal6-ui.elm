@@ -28,7 +28,7 @@ import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewLabel, viewLabels)
-import Codecs exposing (LookupResult)
+import Codecs exposing (LookupResult, labelDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -38,6 +38,7 @@ import Html exposing (Html, div, i, input, label, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withDefaultData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -196,7 +197,7 @@ type Msg
     | OnClose_
     | SetTensionid String
     | OnChangePattern String
-    | ChangeLabelLookup (LookupResult Label)
+    | ChangeLabelLookup (List Label)
     | OnLabelClick Label Bool Time.Posix
     | OnLabelClickInt Label Bool
     | OnLabelAck (GqlData IdPayload)
@@ -207,6 +208,9 @@ type Msg
       --
     | Navigate String
     | OnModalAsk String String
+      -- Common
+    | NoMsg
+    | LogErr String
 
 
 type alias Out =
@@ -314,12 +318,7 @@ update_ apis message model =
             )
 
         ChangeLabelLookup data ->
-            case data of
-                Ok d ->
-                    ( { model | lookup = d }, noOut )
-
-                Err err ->
-                    ( model, out0 [ Ports.logErr err ] )
+            ( { model | lookup = data }, noOut )
 
         OnLabelClick label isNew time ->
             if model.click_result == LoadingSlowly then
@@ -414,11 +413,18 @@ update_ apis message model =
         OnModalAsk link onCloseTxt ->
             ( model, out1 [ DoModalAsk link onCloseTxt ] )
 
+        -- Common
+        NoMsg ->
+            ( model, noOut )
+
+        LogErr err ->
+            ( model, out0 [ Ports.logErr err ] )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     if model.isOpen then
-        [ Ports.lookupLabelFromJs ChangeLabelLookup
+        [ Ports.pd Ports.lookupLabelFromJs (JD.list labelDecoder) LogErr ChangeLabelLookup
         , Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
         , Events.onKeyUp (Dom.key "Escape" OnClose)
         ]
@@ -452,7 +458,7 @@ view_ isInternal op model =
                     --    { op_ | selectedLabels = List.filter (\x -> List.member x.name selection) labels_d }
                     labels =
                         if model.pattern == "" then
-                            List.sortBy .name op.selectedLabels
+                            op.selectedLabels
                                 ++ List.sortBy .name (List.take 42 labels_d)
                                 |> LE.uniqueBy .name
 

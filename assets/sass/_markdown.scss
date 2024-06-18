@@ -42,7 +42,6 @@
 		padding-right: 0;
 		background: inherit;
 		font-weight: 600;
-		font-style: italic;
 		border-color: var(--is-discrete);
 		//filter: invert(25%);
 	}
@@ -54,6 +53,10 @@
 		width: 15px;
 		height: 15px;
 		//cursor: pointer;
+
+        &:not(:checked) {
+            opacity: 0.75;
+        }
 	}
 	li p {
 		// checkbox are defined before <p> (dillonkeans,)
@@ -61,8 +64,10 @@
 	}
 	strong {
 		font-weight: 700;
-		color: var(--is-highlight);
 	}
+    em {
+        font-style: italic !important;
+    }
 	.table-container {
 		overflow: auto !important;
 	}
@@ -101,3 +106,13 @@
     }
 }
 
+// Fix highlight color in human mardown
+.markdown-body.is-human {
+	strong {
+		color: var(--is-highlight);
+    }
+
+    em {
+        font-variation-settings: initial !important;
+    }
+}

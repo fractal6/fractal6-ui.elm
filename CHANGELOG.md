@@ -3,9 +3,69 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unrealeased]
 
-...
+## [0.8.3] - 2024-06-18
+
+### ⛰️  Features
+
+- [ui] make roles accessible with dropdown menu in the tree left menu
+- [ux] add a notification box if client version is outdated.
+- [ux/edition] allow to check/uncheck chekboxes in messages (Markdown) by clicking.
+- [ux/edition] use arrows to navigate in the user mention selection (@...).
+- [members view] new option for Owner to grant user Owner.
+- [members view] Show pending roles in user row if any.
+- [members view] Use a modal confirmation before adding new owner
+
+### 🐛 Bug Fixes
+
+- [ui] Improves alignements and size and colors of various items
+- [ui] fix order of selected labels in the filter box.
+- [ui] make "open contracts hints" in Overview page only visible by circle coordos.
+- [ui] Improve node tag descriptors view + improve tag alignement.
+- [ux] Redirect to valid link when user link himself to a role from the members page.
+- [ux] Add "Remove guest" entry in the ellipsis menu.
+- [ux] fix duplicate tensions if tree menu open.
+- [ux] Disable clickability for email-invited users without accounts in contract view
+- [ux] Improve contract duplicate error messages and redirection + better user context reload on page refresh.
+- [ux] Open link in a new tab in the contract confirm modal.
+- [ux/orga map] Fix Graphpack navigation.
+- [tree view] Show open contracts when roles are collapsed.
+- [ux/edition] when entering <enter> after en empty list, exit the list (markdown).
+- [ui/edition] Parse and decode url automatically in markdown text.
+- [project view] open tension in new tab link + i18n.
+- [project view] Fix moving column in project board.
+- [project view] Keep adding draft after typing enter.
+- [members view] Fix adding role to users from members page.
+
+### 🚜 Refactor
+
+- [codefactor] simplify the modular port decoder
+- Action panel + no new tension action for membersipNode.
+
+### 🎨 Styling
+
+- [tree view] Increase the menu width and item spacing.
+- Choose organisation, with a 's'
+
+## [0.8.2]
+
+### New
+- ux: add 'convert to tension' and 'remove draft' in the draft panel.
+
+### Fixed
+- tensions: Show again the number of closed tensions in the tensions view.
+- tensions: Show again the tensions in the "By assignees" tab.
+- board: fix the scroll position when clicking on a card option in long column.
+- board: draft comment was not transfered to new tension form when converting.
+- ui: usee 3-dot dropdown button in the circle card.
+- ui: highlight the answer/comment in tension page when redirected from notification page.
+- ui: stay on the selection view for tensions (Tensions|Jounal) in the overview page when navigating the organisation.
+
+### Changed
+- ux: Improve the graphpack UX by zooming one circle at a time.
+- ui: better rendering optimization with lazy module.
+- upgrade dependencies.
+
 
 ## [0.8.1]
 
@@ -29,7 +89,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Better title for Document and Contracts tab, in tension page .
 - data URI change from /data to /assets.
-- show #members and #watcher in the organization explore page.
+- show #members and #watcher in the organisation explore page.
 
 ### Fixed 
 - Fix navigation context when navigating from Document or Contracts, in tension page.
@@ -138,9 +198,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - improve error message for non authorized tensions creation.
-- improve error message for duplicate name for new organization.
-- improve dark theme for emoticon and graph packing (organization circles colors).
-- improve message when leaving an organization.
+- improve error message for duplicate name for new organisation.
+- improve dark theme for emoticon and graph packing (organisation circles colors).
+- improve message when leaving an organisation.
 - inverse close and comment button position.
 
 ### Fixed
@@ -333,7 +393,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - description (optional) of the labels
     - labels are linked to circles and offer the set of labels accessible for tensions inside a circle.
     - The labels are inherited in the child circles
-- Small navigation facilitation added in the header where the current path in the organization is displayed.
+- Small navigation facilitation added in the header where the current path in the organisation is displayed.
 
 ### Changed
 - Only the roles of coordinators can edit tensions.
@@ -347,7 +407,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### New
 - Quick Help in top menu
 - Collect user feedback directly in the platform (top menu)
-- Users can create new (personal) organization
+- Users can create new (personal) organisation
 - Users can leave their roles
 - Circle/role can be archived by user with correct rights.
 - Many bug fixes

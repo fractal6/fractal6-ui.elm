@@ -24,13 +24,13 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, toLink)
+import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2icon, counter)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Dict
+import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (ternary)
+import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onClickSafe)
 import Fractal.Enum.RoleType as RoleType
 import Global exposing (send, sendSleep)
@@ -43,6 +43,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
+import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
 import Session exposing (Apis, GlobalCmd(..))
 import String
@@ -59,10 +60,11 @@ type alias Model =
     , isActive2 : Bool
     , isHover : Bool
     , focus : NodeFocus
+    , next_focus : Maybe String
     , tree_result : GqlData NodesDict
     , tree : Tree Node
     , hover : Maybe String
-    , next_focus : Maybe String
+    , expanded_lines : ExpandedLines
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -84,13 +86,34 @@ prefixId did =
     "treeMenu_" ++ did
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> Model
-initModel baseUri uriQuery focus isActive tree user =
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> Model
+initModel baseUri uriQuery focus user persistent tree =
+    let
+        m =
+            persistent
+                |> withDefault
+                    { isActive = False
+                    , hover = Nothing
+                    , expanded_lines = Dict.empty
+                    }
+
+        expanded_lines =
+            if isRole focus.nameid then
+                let
+                    nid =
+                        nearestCircleid focus.nameid |> (++) "-/§roles§/"
+                in
+                Dict.insert nid False m.expanded_lines
+
+            else
+                m.expanded_lines
+    in
     { user = user
-    , isActive = withDefault False isActive
-    , isActive2 = withDefault False isActive
+    , isActive = m.isActive
+    , isActive2 = m.isActive
     , isHover = False
     , focus = focus
+    , next_focus = Nothing
     , tree_result =
         case tree of
             Just o ->
@@ -104,8 +127,8 @@ initModel baseUri uriQuery focus isActive tree user =
                     LoggedOut ->
                         NotAsked
     , tree = Tree { node = initNode, children = [] }
-    , hover = Nothing
-    , next_focus = Nothing
+    , hover = m.hover
+    , expanded_lines = expanded_lines
 
     -- Common
     , refresh_trial = 0
@@ -116,9 +139,9 @@ initModel baseUri uriQuery focus isActive tree user =
         |> setTree
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> State
-init baseUri uriQuery focus isActive tree user =
-    initModel baseUri uriQuery focus isActive tree user |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> State
+init baseUri uriQuery focus user persistent data =
+    initModel baseUri uriQuery focus user persistent data |> State
 
 
 setTree : Model -> Model
@@ -227,7 +250,7 @@ next_ nameid_m (Tree { node, children }) =
 
 reset : Model -> Model
 reset model =
-    initModel model.baseUri Nothing model.focus (Just model.isActive) (withMaybeData model.tree_result) model.user
+    initModel model.baseUri Nothing model.focus model.user (Just (toPersistant model)) (withMaybeData model.tree_result)
 
 
 setDataResult : GqlData NodesDict -> Model -> Model
@@ -253,7 +276,8 @@ type Msg
     | OnToggle
     | OnToggleHover Bool
     | SetIsActive2 Bool
-    | OnOrgHover (Maybe String)
+    | OnNodeHover (Maybe String)
+    | OnToggleDropdowLine String
       --
     | OnUpdateFocus NodeFocus
       -- Tree Data Edit
@@ -325,7 +349,9 @@ update_ apis message model =
 
             else
                 -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane when navigating from non orgs pages.
-                ( model, out0 [ sendSleep (ScrollToElement model.focus.nameid) 333, ternary (model.isActive2 && not model.isHover) Ports.openTreeMenu Cmd.none ] )
+                ( model
+                , out0 [ sendSleep (ScrollToElement model.focus.nameid) 333, ternary (model.isActive2 && not model.isHover) Ports.openTreeMenu Cmd.none ]
+                )
 
         OnReload uctx ->
             if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
@@ -369,12 +395,12 @@ update_ apis message model =
         OnToggle ->
             if model.isActive then
                 ( { model | isActive = False }
-                , out0 [ Ports.saveMenuTree False, Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 500 ]
+                , out0 [ Ports.saveMenuTree (toPersistant { model | isActive = False }), Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 500 ]
                 )
 
             else
                 ( { model | isActive2 = True }
-                , out0 [ Ports.saveMenuTree True, send OnLoad, sendSleep (SetIsActive2 True) 10 ]
+                , out0 [ Ports.saveMenuTree (toPersistant { model | isActive = True }), send OnLoad, sendSleep (SetIsActive2 True) 10 ]
                 )
 
         OnToggleHover v ->
@@ -392,15 +418,42 @@ update_ apis message model =
             else
                 ( { model | isActive2 = model.isActive }, noOut )
 
-        OnOrgHover v ->
-            ( { model | hover = v }, noOut )
+        OnNodeHover v ->
+            let
+                newModel =
+                    { model | hover = v }
+            in
+            ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
+
+        OnToggleDropdowLine nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, out0 [ Ports.saveMenuTree (toPersistant newModel) ] )
 
         OnUpdateFocus focus ->
             if isSuccess model.tree_result && model.focus.rootnameid == focus.rootnameid then
                 ( { model | focus = focus }, noOut )
 
             else
-                ( { model | focus = focus }, out0 [ send OnLoad ] )
+                let
+                    expanded_lines =
+                        if isRole model.focus.nameid then
+                            let
+                                nid =
+                                    nearestCircleid model.focus.nameid |> (++) "-/§roles§/"
+                            in
+                            Dict.insert nid False model.expanded_lines
+
+                        else
+                            model.expanded_lines
+                in
+                ( { model | focus = focus, expanded_lines = expanded_lines }, out0 [ send OnLoad ] )
 
         -- Data Tree Edit
         FetchNewNode nameid focus ->
@@ -589,10 +642,10 @@ view op (State model) =
 
 viewTreeMenu : Model -> Html Msg
 viewTreeMenu model =
-    div [ class "menu", onMouseLeave (OnOrgHover Nothing) ]
+    div [ class "menu", onMouseLeave (OnNodeHover Nothing) ]
         [ case model.tree_result of
             Success data ->
-                viewSubTree 0 model.hover model.focus model.tree
+                viewSubTree 0 model.hover model.focus model.tree model.expanded_lines
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]
@@ -622,28 +675,42 @@ viewTreeMenu model =
         ]
 
 
-viewSubTree : Int -> Maybe String -> NodeFocus -> Tree Node -> Html Msg
-viewSubTree depth hover focus (Tree { node, children }) =
-    ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnOrgHover Nothing) ] [])
+viewSubTree : Int -> Maybe String -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
+viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
+    let
+        roles =
+            children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
+
+        nid =
+            node.nameid |> (++) "-/§roles§/"
+
+        isExpanded =
+            Dict.member nid expanded_lines
+    in
+    ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnNodeHover Nothing) ] [])
         [ li []
             (Lazy.lazy3 viewCircleLine hover focus node
                 :: List.map
                     (\(Tree c) ->
-                        if c.node.role_type == Nothing then
-                            viewSubTree (depth + 1) hover focus (Tree c)
-
-                        else
-                            text ""
+                        showIf (c.node.role_type == Nothing) <|
+                            viewSubTree (depth + 1) hover focus (Tree c) expanded_lines
                     )
                     children
             )
         , ul [ class "menu-list pl-0" ]
-            [ li []
-                -- @TODO : add tag (3 roles) that is clickable and will open the roles list.
-                [ viewRoleLine "roles" focus (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children |> List.map (\(Tree c) -> c.node))
-                , viewRoleLine "collectors" focus (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Bot ]) children |> List.map (\(Tree c) -> c.node))
-                ]
+            [ div [ class "is-boxed" ] <|
+                ([ showIf (List.length roles > 0) <|
+                    li [] [ viewRolesLine "roles" hover roles nid expanded_lines ]
+                 ]
+                    ++ (if isExpanded then
+                            List.map (\n -> li [] [ Lazy.lazy3 viewCircleLine hover focus n ]) roles
+
+                        else
+                            []
+                       )
+                )
             ]
+            |> showIf (List.length roles > 0)
         ]
 
 
@@ -653,13 +720,15 @@ viewCircleLine hover focus node =
         [ class "treeMenu"
         , id (prefixId node.nameid)
         , classList [ ( "is-active", focus.nameid == node.nameid ) ]
-        , onMouseEnter (OnOrgHover (Just node.nameid))
+        , onMouseEnter (OnNodeHover (Just node.nameid))
         , onClickPD (NavigateNode node)
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left", attribute "style" "width:82%;" ]
-                [ text node.name
+                [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
+                , showMaybe node.first_link
+                    (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
                 , case node.n_open_tensions of
                     0 ->
                         text ""
@@ -671,9 +740,7 @@ viewCircleLine hover focus node =
                         text ""
 
                     i ->
-                        span
-                            [ class "is-contract-badge-bg" ]
-                            [ counter i ]
+                        span [ class "is-contract-badge-bg" ] [ counter i ]
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
@@ -685,35 +752,47 @@ viewCircleLine hover focus node =
         ]
 
 
-viewRoleLine : String -> NodeFocus -> List Node -> Html Msg
-viewRoleLine type_txt focus roles =
-    if List.length roles > 0 then
-        div
-            [ class "treeMenu"
+viewRolesLine : String -> Maybe String -> List Node -> String -> ExpandedLines -> Html Msg
+viewRolesLine type_txt hover roles nid expanded_lines =
+    let
+        isExpanded =
+            Dict.member nid expanded_lines
+    in
+    a
+        [ class "treeMenu pt-0 pr-1"
+        , id nid
+        , onMouseEnter (OnNodeHover (Just nid))
+        , onClickPD (OnToggleDropdowLine nid)
+        , target "_blank"
+        ]
+        [ div [ class "level is-mobile" ]
+            [ div [ class "level-left", attribute "style" "width:82%;" ]
+                [ span [ class "tag has-background-tag has-text-text" ]
+                    [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
+                , case List.sum <| List.map .n_open_tensions roles of
+                    0 ->
+                        text ""
 
-            --, id "TODO"
-            , classList [ ( "is-active", List.member focus.nameid (List.map .nameid roles) ) ]
+                    i ->
+                        showIf (not isExpanded) (counter i)
+                , case List.sum <| List.map .n_open_contracts roles of
+                    0 ->
+                        text ""
 
-            --, onMouseEnter (OnOrgHover (Just node.nameid))
-            --, onClickPD (NavigateNode node)
-            --, target "_blank"
-            ]
-            [ div [ class "level is-mobile" ]
-                [ div [ class "level-left", attribute "style" "width:82%;" ]
-                    [ span [ class "tag is-small has-background-tag" ]
-                        [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
-                    , case List.sum <| List.map .n_open_tensions roles of
-                        0 ->
-                            text ""
-
-                        i ->
-                            counter i
-                    ]
+                    i ->
+                        showIf (not isExpanded)
+                            (span [ class "is-contract-badge-bg" ] [ counter i ])
                 ]
-            ]
+            , if isExpanded then
+                A.icon "icon-chevron-up"
 
-    else
-        text ""
+              else if hover == Just nid then
+                A.icon "icon-chevron-down"
+
+              else
+                text ""
+            ]
+        ]
 
 
 
@@ -722,43 +801,56 @@ viewRoleLine type_txt focus roles =
 --
 
 
-viewSelectorTree : (Node -> msg) -> List String -> GqlData NodesDict -> Html msg
-viewSelectorTree onTargetClick selected odata =
+viewSelectorTree : (Node -> msg) -> (String -> msg) -> List String -> ExpandedLines -> GqlData NodesDict -> Html msg
+viewSelectorTree onTargetClick onDropdownClick selected expanded_lines odata =
     case odata of
         Success data ->
             let
                 tree =
                     buildTree_ Nothing data
             in
-            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick 0 selected tree ]
+            div [ id "tree-selector", class "menu" ] [ viewSubTree2 onTargetClick onDropdownClick 0 selected tree expanded_lines ]
 
         _ ->
             div [ class "spinner" ] []
 
 
-viewSubTree2 : (Node -> msg) -> Int -> List String -> Tree Node -> Html msg
-viewSubTree2 onTargetClick depth selected (Tree { node, children }) =
+viewSubTree2 : (Node -> msg) -> (String -> msg) -> Int -> List String -> Tree Node -> ExpandedLines -> Html msg
+viewSubTree2 onTargetClick onDropdownClick depth selected (Tree { node, children }) expanded_lines =
+    let
+        roles =
+            children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
+
+        nid =
+            node.nameid |> (++) "-/§roles§/"
+
+        isExpanded =
+            Dict.member nid expanded_lines
+    in
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [] [])
         [ li []
             (Lazy.lazy3 viewNodeLine onTargetClick selected node
                 :: List.map
                     (\(Tree c) ->
-                        if c.node.role_type == Nothing then
-                            viewSubTree2 onTargetClick (depth + 1) selected (Tree c)
-
-                        else
-                            text ""
+                        showIf (c.node.role_type == Nothing) <|
+                            viewSubTree2 onTargetClick onDropdownClick (depth + 1) selected (Tree c) expanded_lines
                     )
                     children
             )
         , ul [ class "menu-list pl-0" ]
-            ((List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Peer, Just RoleType.Coordinator ]) children
-                |> List.map (\(Tree c) -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected c.node ])
-             )
-                ++ (List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Bot ]) children
-                        |> List.map (\(Tree c) -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected c.node ])
-                   )
-            )
+            [ div [ class "is-boxed" ] <|
+                ([ showIf (List.length roles > 0) <|
+                    li [] [ viewRolesLine2 onDropdownClick "roles" (Just nid) roles nid expanded_lines ]
+                 ]
+                    ++ (if isExpanded then
+                            List.map (\n -> li [] [ Lazy.lazy3 viewNodeLine onTargetClick selected n ]) roles
+
+                        else
+                            []
+                       )
+                )
+            ]
+            |> showIf (List.length roles > 0)
         ]
 
 
@@ -781,11 +873,39 @@ viewNodeLine onTargetClick selected node =
                     []
                )
         )
-        [ A.icon1 (action2icon { doc_type = NODE node.type_ }) node.name
-        , case node.first_link of
-            Just f ->
-                span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
+        [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
+        , showMaybe node.first_link
+            (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
+        ]
 
-            Nothing ->
+
+{-| This is a copy (just a few changes) of viewRoleLines just with msg instead of MSG
+@CODEFACTOR: how to factorize those functions in elm ?
+-}
+viewRolesLine2 : (String -> msg) -> String -> Maybe String -> List Node -> String -> ExpandedLines -> Html msg
+viewRolesLine2 onDropdownClick type_txt hover roles nid expanded_lines =
+    let
+        isExpanded =
+            Dict.member nid expanded_lines
+    in
+    a
+        [ class "treeMenu pt-0 pr-1"
+        , id nid
+        , onClickPD (onDropdownClick nid)
+        , target "_blank"
+        ]
+        [ div [ class "level is-mobile" ]
+            [ div [ class "level-left", attribute "style" "width:82%;" ]
+                [ span [ class "tag is-smaller2 has-background-tag has-text-text" ]
+                    [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
+                ]
+            , if isExpanded then
+                A.icon "icon-chevron-up"
+
+              else if hover == Just nid then
+                A.icon "icon-chevron-down"
+
+              else
                 text ""
+            ]
         ]

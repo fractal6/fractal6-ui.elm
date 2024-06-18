@@ -305,8 +305,8 @@ viewHero model =
                 [ h1 [ class "title top-title" ]
                     [ renderMarkdown "is-huma" T.heroTitle ]
 
-                --[ text "Build unstoppable organizations" ]
-                --[ text "Self-organization", br [] [], text "for humans" ]
+                --[ text "Build unstoppable organisations" ]
+                --[ text "Self-organisation", br [] [], text "for humans" ]
                 --[ text "Collective Intelligence", br [] [], text "at Work" ]
                 , div [ class "columns is-vcentered" ]
                     [ div [ class "column is-7", style "min-width" "300px" ]

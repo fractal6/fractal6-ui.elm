@@ -19,28 +19,31 @@
 -}
 
 
-module ${module_name} exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.ConfirmOwner exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserState(..), uctxFromUser)
+import Bulk.Codecs exposing (NodeFocus)
 import Bulk.Error exposing (viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
-import Form exposing (isPostEmpty, isPostSendable)
+import Extra.Views exposing (showMsg)
+import Form exposing (isPostEmpty)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isFailure, isSuccess, withMapDataRest, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (MyData, Post, UserCtx)
+import ModelSchema exposing (Post, UserCtx)
 import Ports
-import Query.AddData exposing (getData)
+import RemoteData
+import Requests exposing (makeOwner)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T
 import Time
@@ -60,8 +63,9 @@ type alias Model =
     { user : UserState
     , isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
-    , data_result : GqlData MyData -- result of any query
-    , form : MyForm -- user inputs
+    , focus : NodeFocus
+    , target_username : String
+    , owner_result : RestData Bool
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -69,13 +73,14 @@ type alias Model =
     }
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> NodeFocus -> Model
+initModel user focus =
     { user = user
     , isActive = False
     , isActive2 = False
-    , data_result = NotAsked
-    , form = initForm user
+    , focus = focus
+    , target_username = ""
+    , owner_result = RemoteData.NotAsked
 
     -- Common
     , refresh_trial = 0
@@ -83,32 +88,9 @@ initModel user =
     }
 
 
-type alias MyData =
-    String
-
-
-type alias MyForm =
-    { uctx : UserCtx
-    , tid : String
-    , target : String
-    , events_type : Maybe (List TensionEvent.TensionEvent)
-    , post : Post
-    }
-
-
-initForm : UserState -> MyForm
-initForm user =
-    { uctx = uctxFromUser user
-    , tid = "" -- example
-    , target = "" -- example
-    , events_type = Nothing
-    , post = Dict.empty
-    }
-
-
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> NodeFocus -> State
+init user focus =
+    initModel user focus |> State
 
 
 
@@ -126,21 +108,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user
-
-
-updatePost : String -> String -> Model -> Model
-updatePost field value model =
-    let
-        form =
-            model.form
-    in
-    { model | form = { form | post = Dict.insert field value form.post } }
-
-
-setDataResult : GqlData MyData -> Model -> Model
-setDataResult result model =
-    { model | data_result = result }
+    initModel model.user model.focus
 
 
 
@@ -150,13 +118,7 @@ setDataResult result model =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    not (hasData model && withMaybeData model.data_result == Nothing)
-
-
-hasData : Model -> Bool
-hasData model =
-    -- When you can commit (e.g. empty form data)
-    not (isPostEmpty [ "message" ] model.form.post)
+    True
 
 
 
@@ -167,16 +129,14 @@ hasData model =
 
 type Msg
     = SetIsActive2 Bool
-    | OnOpen
+    | OnOpen String
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
     | OnSubmit Bool (Time.Posix -> Msg)
       -- Data
-    | OnChangePost String String
-    | DoDataQuery Time.Posix
-    | OnQueryData
-    | OnDataAck (GqlData MyData)
+    | OnMakeOwner Time.Posix
+    | GotMakeOwner (RestData Bool)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -189,7 +149,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, MyData ) -- define what data is to be returned
+    , result : Maybe ( Bool, () ) -- define what data is to be returned
     }
 
 
@@ -223,14 +183,14 @@ update_ apis message model =
     case message of
         SetIsActive2 v ->
             if v then
-                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "${module_basename}Modal" ] )
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "ConfirmOwnerModal" ] )
 
             else
                 ( { model | isActive2 = model.isActive }, noOut )
 
-        OnOpen ->
-            ( { model | isActive2 = True }
-            , out0 [ sendSleep (SetIsActive2 True) 10, Ports.open_modal "${module_basename}Modal" ]
+        OnOpen username ->
+            ( { model | isActive2 = True, target_username = username }
+            , out0 [ sendSleep (SetIsActive2 True) 10, Ports.open_modal "ConfirmOwnerModal" ]
             )
 
         OnClose data ->
@@ -269,9 +229,6 @@ update_ apis message model =
                 )
 
         -- Data
-        OnChangePost field value ->
-            ( updatePost field value model, noOut )
-
         OnSubmit isSendable next ->
             if isSendable then
                 ( model, out0 [ sendNow next ] )
@@ -279,34 +236,32 @@ update_ apis message model =
             else
                 ( model, noOut )
 
-        DoDataQuery time ->
-            ( model, out0 [ send OnQueryData ] )
+        OnMakeOwner time ->
+            ( model, out0 [ makeOwner apis model.focus.nameid model.target_username GotMakeOwner ] )
 
-        OnQueryData ->
-            -- Adapt your query
-            ( setDataResult LoadingSlowly model
-            , out0 [ getData apis model.form OnDataAck ]
-            )
-
-        OnDataAck result ->
+        GotMakeOwner result ->
             let
-                data =
-                    setDataResult result model
+                closeMsg =
+                    send (OnClose { reset = True, link = "" })
             in
-            case parseErr result data.refresh_trial of
-                Authenticate ->
-                    ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+            case result of
+                RemoteData.Success _ ->
+                    ( { model | owner_result = result }
+                    , out2 [ closeMsg ]
+                        [ DoPushSystemNotif (withMapDataRest (\ok -> ternary ok T.ownerPromotion "not implemented") result)
+
+                        -- do the Doload !
+                        , DoUpdateNode model.focus.nameid identity
+                        ]
                     )
 
-                RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
-
-                OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                RemoteData.Failure err ->
+                    ( { model | owner_result = result }
+                    , out2 [ closeMsg ] [ DoPushSystemNotif (RemoteData.Failure err) ]
+                    )
 
                 _ ->
-                    ( data, noOut )
+                    ( { model | owner_result = result }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -365,44 +320,19 @@ view op (State model) =
 viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
-        [ id "${module_basename}Modal"
+        [ id "ConfirmOwnerModal"
         , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
-            , attribute "data-modal" "${module_basename}Modal"
+            , attribute "data-modal" "ConfirmOwnerModal"
             , onClick (OnCloseSafe "" "")
             ]
             []
         , div [ class "modal-content" ]
-            [ case model.data_result of
-                Success data ->
-                    let
-                        link =
-                            data.id
-
-                        -- example @tofix
-                    in
-                    div [ class "notification is-success-light" ]
-                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-                        , div [ class "is-flex is-align-items-center" ]
-                            [ A.icon1 "icon-check icon-2x has-text-success" " "
-                            , text "data queried..."
-                            , text space_
-                            , a
-                                [ href link
-                                , onClickPD (OnClose { reset = True, link = link })
-                                , target "_blank"
-                                ]
-                                [ textH T.checkItOut_masc ]
-                            ]
-                        ]
-
-                _ ->
-                    viewModalContent op model
-            ]
+            [ viewModalContent op model ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
@@ -411,44 +341,21 @@ viewModal op model =
 viewModalContent : Op -> Model -> Html Msg
 viewModalContent op model =
     let
-        message =
-            Dict.get "message" model.form.post
-
         isSendable_ =
-            isPostSendable [ "title" ] model.form.post
+            model.target_username /= ""
 
         isLoading =
-            Loading.isLoading model.data_result
+            Loading.isLoadingRest model.owner_result
     in
     div [ class "modal-card" ]
-        [ div [ class "modal-card-head" ]
-            [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
-                [ textH "EditMe" ]
+        [ div [ class "modal-card-head is-warning" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+                [ text T.confirmAction ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "label" ] [ text "EditMe" ]
-                , div [ class "control" ]
-                    [ textarea
-                        [ class "textarea"
-                        , rows 5
-                        , placeholder T.leaveCommentOpt
-                        , value (withDefault "" message)
-                        , onInput <| OnChangePost "message"
-                        ]
-                        []
-                    , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
-                    ]
-                ]
-            ]
+            [ viewBody op model ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-            [ case model.data_result of
-                Failure err ->
-                    div [ class "field" ] [ viewGqlErrors err ]
-
-                _ ->
-                    text ""
-            , div [ class "field level is-mobile" ]
+            [ div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
                         [ class "button is-light"
@@ -458,13 +365,20 @@ viewModalContent op model =
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button is-light is-success"
+                        [ class "button is-warning"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable_)
-                        , onClick (OnSubmit (isSendable_ && not isLoading) <| DoDataQuery)
+                        , onClick (OnSubmit (isSendable_ && not isLoading) <| OnMakeOwner)
                         ]
-                        [ textH T.submit ]
+                        [ textH T.confirmOwner ]
                     ]
                 ]
             ]
+        ]
+
+
+viewBody : Op -> Model -> Html Msg
+viewBody op model =
+    div []
+        [ showMsg "owner-0" "is-warning is-light" "icon-alert-triangle" T.newOwnerMessageWarning ""
         ]

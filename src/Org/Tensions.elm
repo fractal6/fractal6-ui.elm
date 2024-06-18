@@ -143,7 +143,7 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle, Cmd.none )
 
                     DoFetchNode nameid ->
-                        ( Cmd.map TreeMenuMsg <| send (TreeMenu.FetchNewNode nameid False), Cmd.none )
+                        ( Cmd.map TreeMenuMsg <| sendSleep (TreeMenu.FetchNewNode nameid False) 333, Cmd.none )
 
                     DoAddNodes nodes ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.AddNodes nodes), Cmd.none )
@@ -669,7 +669,7 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
             , actionPanel = ActionPanel.init global.session.user global.session.screen
             }
                 |> (\m ->
@@ -1482,7 +1482,7 @@ update global message model =
 
                 extra_cmd =
                     if
-                        (out.result == Just ( True, True ))
+                        (out.result == Just ( True, True ) && getTargetsHere model == [])
                             || (out.result == Just ( True, False ) && dataNeedLoad model)
                     then
                         send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
@@ -1747,7 +1747,7 @@ viewSearchBar model =
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "type-filter" ]
-                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link2" ] []) (text "")
+                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link-back" ] []) (text "")
                             , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1768,7 +1768,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
-                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
+                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link-back" ] []) (text "")
                             , text T.status
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1778,15 +1778,15 @@ viewSearchBar model =
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
                                     [ ternary (model.statusFilter == AllStatus) A.checked A.unchecked, text (statusFilter2Text AllStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) A.checked A.unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
+                                    [ ternary (model.statusFilter == OpenStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) A.checked A.unchecked, span [] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
+                                    [ ternary (model.statusFilter == ClosedStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
                                 ]
                             ]
                         ]
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link2" ] []) (text "")
+                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link-back" ] []) (text "")
                             , text T.label
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1800,7 +1800,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control", onClick ChangeAuthor ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
+                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link-back" ] []) (text "")
                             , text T.author
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1814,7 +1814,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "depth-filter" ]
-                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link2" ] []) (text "")
+                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link-back" ] []) (text "")
                             , text T.depth
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]

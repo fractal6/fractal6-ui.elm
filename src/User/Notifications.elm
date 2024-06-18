@@ -35,6 +35,7 @@ import Extra exposing (ternary, upT)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
@@ -617,8 +618,17 @@ viewMenu model =
                 |> List.concatMap
                     (\x ->
                         [ li []
-                            [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
-                                [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first), menuToCount x model.notif ]
+                            [ a
+                                [ classList [ ( "is-active", x == model.menuFocus ) ]
+                                , target "_blank"
+                                , onClickPD
+                                    (ChangeMenuFocus x)
+                                ]
+                                [ div [ class "is-inline-flex" ]
+                                    [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first)
+                                    , menuToCount x model.notif
+                                    ]
+                                ]
                             ]
                         ]
                     )
@@ -672,7 +682,15 @@ viewUserEvent conf ue =
                         [ ( "id", ue.id )
                         , if e.event_type == TensionEvent.UserLeft && node.nameid == nid2rootid node.nameid && node.nameid == e.tension.emitterid then
                             -- Anchor tension !
-                            ( "title", T.userLeft_orga_event )
+                            case RoleType.fromString (withDefault "" e.new) of
+                                Just RoleType.Owner ->
+                                    ( "title", T.userLeft_owner_event )
+
+                                Just RoleType.Guest ->
+                                    ( "title", T.userLeft_orga_event )
+
+                                _ ->
+                                    ( "title", "Unknow UserLeft event, please report." )
 
                           else
                             ( "title", eventTypeToText e.event_type )

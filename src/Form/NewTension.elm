@@ -64,6 +64,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -92,6 +93,8 @@ type alias Model =
     , draft : Maybe ProjectDraft
     , isTargetOpen : String
     , isTypeOpen : String
+    , expanded_lines : ExpandedLines
+    , freezeOutsideClick : Bool
 
     -- switching tab
     , activeTab : TensionTab
@@ -189,6 +192,8 @@ initModel user conf =
     , draft = Nothing
     , isTargetOpen = ""
     , isTypeOpen = ""
+    , expanded_lines = Dict.empty
+    , freezeOutsideClick = False
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
@@ -515,6 +520,8 @@ type Msg
       PushTension (GqlData Tension -> Msg)
     | OnSubmit Bool (Time.Posix -> Msg)
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
+    | OnOutsideTreeClickClose
+    | UnfreezeOutsideClick
       -- Modal control
     | SetIsActive2 Bool
     | OnOpen NewTensionInput (Maybe ProjectDraft)
@@ -533,6 +540,7 @@ type Msg
     | DoInvite
     | OnInvite Time.Posix
     | PushAck (GqlData IdPayload)
+    | OnToggleDropdownRoles String
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource EmitterOrReceiver
@@ -664,6 +672,16 @@ update_ apis message model =
                 _ ->
                     ( { model | path_data = result }, noOut )
 
+        OnOutsideTreeClickClose ->
+            if model.freezeOutsideClick then
+                ( model, noOut )
+
+            else
+                ( { model | freezeOutsideClick = True }, out0 [ Ports.outsideClickClose "closeTreeSelFromJs" "tree-selector", sendSleep UnfreezeOutsideClick 250 ] )
+
+        UnfreezeOutsideClick ->
+            ( { model | freezeOutsideClick = False }, noOut )
+
         -- Modal control
         SetIsActive2 v ->
             if v then
@@ -708,7 +726,9 @@ update_ apis message model =
                                     setPath p newModel
                             in
                             if data.sources == [] && data.refresh_trial == 0 then
-                                ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing )
+                                ( { data | refresh_trial = 1 }
+                                , Out [ sendSleep (OnOpen (FromPath p) d) 500 ] [ DoUpdateToken ] Nothing
+                                )
 
                             else if data.sources == [] then
                                 ( { data | isActive2 = True } |> setStep TensionNotAuthorized
@@ -729,7 +749,11 @@ update_ apis message model =
                                                 send (OnSwitchTab NewCircleTab)
                                 in
                                 ( { data | isActive2 = True } |> setUctx uctx
-                                , out0 [ sendSleep (SetIsActive2 True) 10, switch_cmd, Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path)) ]
+                                , out0
+                                    [ sendSleep (SetIsActive2 True) 10
+                                    , switch_cmd
+                                    , Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path))
+                                    ]
                                 )
 
                 LoggedOut ->
@@ -827,7 +851,18 @@ update_ apis message model =
             ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnTargetClick id_ ->
-            ( { model | isTargetOpen = ternary (model.isTargetOpen == "") id_ "" }, out0 [ Ports.requireTreeData ] )
+            case model.isTargetOpen of
+                "" ->
+                    if id_ /= "" then
+                        ( { model | isTargetOpen = id_ }
+                        , out0 [ Ports.requireTreeData, sendSleep OnOutsideTreeClickClose 250 ]
+                        )
+
+                    else
+                        ( model, noOut )
+
+                _ ->
+                    ( { model | isTargetOpen = "" }, out0 [ Ports.click "" ] )
 
         OnTypeClick id_ ->
             ( { model | isTypeOpen = ternary (model.isTypeOpen == "") id_ "" }, noOut )
@@ -889,6 +924,17 @@ update_ apis message model =
                 _ ->
                     ( { model | action_result = result }, noOut )
 
+        OnToggleDropdownRoles nid ->
+            let
+                newModel =
+                    if Dict.member nid model.expanded_lines then
+                        { model | expanded_lines = Dict.remove nid model.expanded_lines }
+
+                    else
+                        { model | expanded_lines = Dict.insert nid False model.expanded_lines }
+            in
+            ( newModel, noOut )
+
         -- Doc change
         OnChangeTensionType type_ ->
             ( setTensionType type_ model, noOut )
@@ -899,10 +945,10 @@ update_ apis message model =
         OnChangeTensionTarget odata target ->
             case localGraphFromOrga target.nameid odata of
                 Just path ->
-                    ( setPath path model, noOut )
+                    ( setPath path model, out0 [ send (OnTargetClick "") ] )
 
                 Nothing ->
-                    ( setTarget (shrinkNode target) model, noOut )
+                    ( setTarget (shrinkNode target) model, out0 [ send (OnTargetClick "") ] )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
@@ -1183,7 +1229,7 @@ subscriptions (State model) =
                 []
            )
         ++ (if model.isTargetOpen /= "" then
-                [ Events.onMouseUp (JD.succeed (OnTargetClick ""))
+                [ Ports.closeTreeSelFromJs (always (OnTargetClick ""))
                 , Events.onKeyUp (Dom.key "Escape" (OnTargetClick ""))
                 ]
 
@@ -1283,37 +1329,46 @@ viewStep tree_data (State model) =
 viewSuccess : Tension -> Model -> Html Msg
 viewSuccess res model =
     let
+        isSelfContract_ =
+            isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users
+
         link =
             case model.action_result of
                 Success c ->
-                    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
+                    if isSelfContract_ then
+                        Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
+
+                    else
+                        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
 
                 _ ->
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
     div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-        , A.icon1 "icon-check icon-2x has-text-success" " "
-        , text model.nodeDoc.form.txt.added
-        , text " "
-        , a
-            [ href link
-            , onClickPD (OnClose { reset = True, link = link })
-            , target "_blank"
-            ]
-            [ case model.activeTab of
-                NewTensionTab ->
-                    text T.checkItOut_fem
+        , div [ class "is-flex is-align-items-center" ]
+            [ A.icon1 "icon-check icon-2x has-text-success" ""
+            , text model.nodeDoc.form.txt.added
+            , text space_
+            , a
+                [ href link
+                , onClickPD (OnClose { reset = True, link = link })
+                , target "_blank"
+                ]
+                [ case model.activeTab of
+                    NewTensionTab ->
+                        text T.checkItOut_fem
 
-                _ ->
-                    text T.checkItOut_masc
+                    _ ->
+                        text T.checkItOut_masc
+                ]
             ]
         , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
             case model.action_result of
                 Success _ ->
-                    div []
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , if isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users then
+                    div [ class "is-flex is-align-items-center" ]
+                        [ A.icon1 "icon-check icon-2x has-text-success" ""
+                        , if isSelfContract_ then
                             text T.self_link_action_success
 
                           else
@@ -1361,7 +1416,7 @@ viewTensionTabs isAdmin tab targ =
         type_ =
             nid2type targ.nameid
     in
-    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
+    div [ id "tensionTabTop", class "tabs bulma-issue-33" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
                 [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
@@ -1490,8 +1545,8 @@ viewRecipients tree_data model =
                     ]
             , menu_cls = "is-right is-left-mobile"
             , content_cls = "has-border p-0"
-            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
-            , msg = OnTargetClick (ternary isOpen "" "something")
+            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) OnToggleDropdownRoles [ model.nodeDoc.form.target.nameid ] model.expanded_lines tree_data
+            , msg = ternary isOpen (OnTargetClick "") (OnTargetClick "something")
             }
         ]
 
@@ -1779,7 +1834,7 @@ viewRolesExt model =
                                 ++ [ br [ class "clearfix" ] []
                                    , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [] [], text T.youCanMake ]
+                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-5" ] [], text T.youCanMake ]
 
                                           else
                                             span [ class "content is-small" ] [ text T.needNewRole, br [] [], text T.makeA ]

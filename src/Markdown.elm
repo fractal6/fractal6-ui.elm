@@ -19,10 +19,10 @@
 -}
 
 
-module Markdown exposing (renderMarkdown)
+module Markdown exposing (renderMarkdown, setMdCheckbox)
 
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Extra exposing (regexFromString)
+import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, input, label, li, span, table, text, u, ul)
 import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
@@ -35,6 +35,22 @@ import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Maybe exposing (withDefault)
 import Regex
 import String exposing (startsWith, toLower)
+import Url exposing (percentDecode)
+
+
+urlRegex : Regex.Regex
+urlRegex =
+    regexFromString "(^|[^\\w\\[\\`])https?://[À-ÿ\\w\\-\\+\\.\\?\\#/@~&=:%_]+"
+
+
+userRegex : Regex.Regex
+userRegex =
+    regexFromString "(^|[^\\w\\[\\`])@[\\w\\-\\.]+\\b"
+
+
+tensionRegex : Regex.Regex
+tensionRegex =
+    regexFromString "(^|[^\\w\\[\\`])0x[0-9a-f]+"
 
 
 renderMarkdown : String -> String -> Html msg
@@ -136,7 +152,8 @@ frac6Renderer style recursive =
                                                                     [ type_ "checkbox"
                                                                     , checked False
                                                                     , class "checkbox_readonly"
-                                                                    , disabled True
+
+                                                                    --, disabled True
                                                                     ]
                                                                     []
                                                                 ]
@@ -148,8 +165,6 @@ frac6Renderer style recursive =
                                                                     [ type_ "checkbox"
                                                                     , checked True
                                                                     , class "checkbox_readonly"
-
-                                                                    --, disabled True
                                                                     ]
                                                                     []
                                                                 ]
@@ -162,14 +177,15 @@ frac6Renderer style recursive =
                                                 li [] children
                             )
                     )
+        , table = \x -> div [ class "table-container" ] [ table [] x ]
         , text =
             \t ->
                 if recursive then
                     mardownRoutine
                         style
-                        ( "(^|[^\\w\\[\\`])https?://[À-ÿ\\w\\-\\+\\.\\?\\#/@~&=:%]+", autoLink )
-                        [ ( "(^|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
-                        , ( "(^|[^\\w\\[\\`])0x[0-9a-f]+", tensionLink )
+                        ( urlRegex, autoLink )
+                        [ ( userRegex, userLink )
+                        , ( tensionRegex, tensionLink )
 
                         --, ( "\\bo/[0-9a-zA-Z\\-_\]+", circleLink )
                         ]
@@ -177,7 +193,6 @@ frac6Renderer style recursive =
 
                 else
                     text t
-        , table = \x -> div [ class "table-container" ] [ table [] x ]
         , html =
             -- Html tag supported in the text
             Markdown.Html.oneOf
@@ -210,7 +225,7 @@ frac6Renderer style recursive =
     }
 
 
-mardownRoutine : String -> ( String, Regex.Match -> String -> String ) -> List ( String, Regex.Match -> String -> String ) -> String -> Html msg
+mardownRoutine : String -> ( Regex.Regex, Regex.Match -> String -> String ) -> List ( Regex.Regex, Regex.Match -> String -> String ) -> String -> Html msg
 mardownRoutine style rep next_replacers content =
     let
         reg =
@@ -220,10 +235,10 @@ mardownRoutine style rep next_replacers content =
             Tuple.second rep
 
         matches =
-            Regex.find (regexFromString reg) content
+            Regex.find reg content
     in
     -- Split on the regex (and append the regex replacer)
-    Regex.split (regexFromString reg) content
+    Regex.split reg content
         |> List.indexedMap
             (\i next_content ->
                 [ case LE.uncons next_replacers of
@@ -274,8 +289,9 @@ frac6Parser content =
         -- Tension format
         --|> Regex.replace (regexFromString "\\b0x[0-9a-f]+") tensionLink
         -- Autolink
-        --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=:]+") autoLink
-        --
+        --|> Regex.replace urlRegex autoLink
+        -- Escape "_" in link to give the priority to autolink
+        |> escapeLinks
         -- Force line break (except for Table)
         |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)
 
@@ -299,6 +315,9 @@ autoLink m full =
 
             else
                 ( " ", parts )
+
+        decodedLink =
+            percentDecode link |> withDefault link
     in
     if String.slice (m.index - 2) m.index full == "](" then
         match
@@ -306,10 +325,10 @@ autoLink m full =
     else
         left
             ++ "["
-            ++ link
+            ++ decodedLink
             ++ "]"
             ++ "("
-            ++ link
+            ++ decodedLink
             ++ ")"
             ++ right
 
@@ -387,3 +406,98 @@ circleLink m full =
         -- TODO: split on / to know which route to use
         --++ (Route.Org { param1 = "", param2 = tid } |> toHref)
         ++ ")"
+
+
+
+--
+-- Parsing
+--
+
+
+{-| Escape \_ in link !
+-}
+escapeLinks : String -> String
+escapeLinks input =
+    let
+        escapeUnderscores url =
+            String.replace "_" "\\_" url
+
+        replaceUnderscores url text =
+            String.replace url (escapeUnderscores url) text
+    in
+    input
+        |> Regex.find urlRegex
+        |> List.foldl (\match acc -> replaceUnderscores match.match acc) input
+
+
+{-| Function to set checkbox at the checkbox posisiont (checkbox count)
+-}
+setMdCheckbox : { position : Int, isChecked : Bool, cid : String } -> String -> String
+setMdCheckbox cb markdown =
+    let
+        -- Split the markdown into lines
+        markdownLines =
+            String.lines markdown
+
+        -- Checkbox value based on shouldCheck
+        checkboxValue c =
+            if cb.isChecked then
+                c ++ " [x]"
+
+            else
+                c ++ " [ ]"
+
+        -- Function to update the line containing the nth checkbox
+        updateLines : List String -> Int -> Int -> List String -> List String
+        updateLines remainingLines currentIndex targetIndex updatedLines =
+            case remainingLines of
+                [] ->
+                    updatedLines
+
+                lineContent :: rest ->
+                    let
+                        cbPattern =
+                            "^(\\-|\\*|\\+)\\s+\\[[ x]\\]"
+
+                        -- Trim leading spaces from the line
+                        trimmedLine =
+                            String.trimLeft lineContent
+
+                        -- Check if this line contains a checkbox
+                        updatedLine =
+                            if regexContains cbPattern trimmedLine && currentIndex == targetIndex then
+                                let
+                                    -- Calculate the leading spaces from the line
+                                    leadingSpacesCount =
+                                        String.length lineContent - String.length trimmedLine
+
+                                    leadingSpaces =
+                                        String.left leadingSpacesCount lineContent
+
+                                    match_len =
+                                        regexfirstMatchLength cbPattern trimmedLine |> withDefault 0
+                                in
+                                String.append
+                                    leadingSpaces
+                                    (String.replace (String.left match_len trimmedLine) (checkboxValue (String.left 1 trimmedLine)) trimmedLine)
+
+                            else
+                                lineContent
+
+                        nextUpdatedLines =
+                            updatedLines ++ [ updatedLine ]
+
+                        nextIndex =
+                            if regexContains cbPattern trimmedLine then
+                                currentIndex + 1
+
+                            else
+                                currentIndex
+                    in
+                    updateLines rest nextIndex targetIndex nextUpdatedLines
+
+        -- Update the markdown lines
+        updatedMarkdownLines =
+            updateLines markdownLines 0 cb.position []
+    in
+    String.join "\n" updatedMarkdownLines

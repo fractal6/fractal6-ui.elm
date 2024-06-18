@@ -75,6 +75,16 @@ uctxFromUser user =
             initUserctx
 
 
+maybeUctx : UserState -> Maybe UserCtx
+maybeUctx user =
+    case user of
+        LoggedIn uctx ->
+            Just uctx
+
+        LoggedOut ->
+            Nothing
+
+
 
 --
 -- Forms
@@ -679,14 +689,18 @@ getOwners odata =
         |> withDefault []
 
 
-getParentFragmentFromRole role =
-    let
-        l =
-            String.split "#" role.nameid
-                |> List.filter (\x -> x /= "")
-                |> Array.fromList
-    in
-    Array.get (Array.length l - 2) l |> withDefault ""
+getParentFragmentFromRole : { r | nameid : String } -> String
+getParentFragmentFromRole r =
+    case String.split "#" r.nameid of
+        [ a, b, c ] ->
+            if b == "" then
+                a
+
+            else
+                b
+
+        other ->
+            LE.last other |> withDefault ""
 
 
 nodeFromTension t =

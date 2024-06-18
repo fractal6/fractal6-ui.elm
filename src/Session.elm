@@ -28,11 +28,12 @@ import Codecs exposing (RecentActivityTab(..), WindowPos, userCtxDecoder, window
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
-import Loading exposing (GqlData, RestData)
-import Maybe exposing (withDefault)
+import Loading exposing (GqlData, RequestResult(..), RestData)
+import Maybe exposing (andThen, withDefault)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
+import Schemas.TreeMenu as TreeMenuSchema
 import Time
 import Url exposing (Url)
 
@@ -55,6 +56,7 @@ type alias Conf =
     , lang : Lang.Lang
     , now : Time.Posix
     , url : Url.Url
+    , user : UserState
     }
 
 
@@ -68,7 +70,7 @@ type alias Apis =
     , gql : String
     , rest : String
     , assets : String
-    , version : String
+    , client_version : String
     }
 
 
@@ -91,6 +93,17 @@ toReflink url =
     Url.toString url |> String.split "?" |> List.head |> withDefault ""
 
 
+{-| Use to pass model to components in order to avoid losing time to deep caopy data
+@deprecated: This structure might not be usesull, see this discussion for more context :
+<https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
+-}
+type alias BigData x =
+    { x
+        | path_data : Maybe LocalGraph
+        , tree_data : GqlData NodesDict
+    }
+
+
 {-|
 
     Persistent session data.
@@ -104,7 +117,7 @@ type alias SessionFlags =
     , window_pos : Maybe JD.Value
     , recent_activity_tab : Maybe JD.Value
     , orga_menu : Maybe Bool
-    , tree_menu : Maybe Bool
+    , tree_menu : Maybe JD.Value
     , apis : Apis
     , screen : Screen
     , theme : Maybe JD.Value
@@ -147,21 +160,12 @@ type alias Session =
     , window_pos : Maybe WindowPos
     , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
-    , tree_menu : Maybe Bool
+    , tree_menu : Maybe TreeMenuSchema.PersistentModel
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
-    }
-
-
-{-| Use to pass model to components in order to avoid losing time to deep caopy data
-@debug: not use yet, see answer in : <https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
--}
-type alias BigData x =
-    { x
-        | path_data : Maybe LocalGraph
-        , tree_data : GqlData NodesDict
+    , system_notification : RestData String
     }
 
 
@@ -182,6 +186,7 @@ type
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoUpdateScreen Screen
     | DoToggleWatchOrga String
+    | DoPushSystemNotif (RestData String)
       -- Components Msg
     | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String
@@ -189,7 +194,7 @@ type
     | DoOpenLinkTensionPanel (Maybe { id : String, cards_len : Int })
     | DoOpenCardPanel ProjectCard
     | DoToggleTreeMenu
-    | DoFetchNode String
+    | DoFetchNode String -- A delay is applied in page global update to wait for backend potential processing (like user first-link)
     | DoAddNodes (List Node)
     | DoUpdateNode String (Node -> Node)
     | DoDelNodes (List String)
@@ -247,6 +252,7 @@ resetSession session flags =
     , labelsPanel = Nothing
     , newOrgaData = Nothing
     , orgaInfo = Nothing
+    , system_notification = RemoteData.NotAsked
     }
 
 
@@ -290,7 +296,7 @@ fromLocalSession flags =
                             ( Just JournalTab, Cmd.none )
 
                         Ok _ ->
-                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+                            ( Nothing, Ports.logErr "Unknown activity tab" )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )
@@ -318,11 +324,17 @@ fromLocalSession flags =
                         Ok "DARK" ->
                             ( Just DarkTheme, Cmd.none )
 
+                        Ok "dark" ->
+                            ( Just DarkTheme, Cmd.none )
+
                         Ok "LIGHT" ->
                             ( Just LightTheme, Cmd.none )
 
-                        Ok _ ->
-                            ( Nothing, Ports.logErr "Unknwown, theme string" )
+                        Ok "light" ->
+                            ( Just LightTheme, Cmd.none )
+
+                        Ok l ->
+                            ( Nothing, Ports.logErr "Unknown theme string" )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )
@@ -355,13 +367,17 @@ fromLocalSession flags =
       , window_pos = window_pos
       , recent_activity_tab = recent_activity_tab
       , orga_menu = flags.orga_menu
-      , tree_menu = flags.tree_menu
+      , tree_menu =
+            flags.tree_menu
+                |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
+                |> withDefault Nothing
       , apis = flags.apis
       , screen = flags.screen
       , authorsPanel = Nothing
       , labelsPanel = Nothing
       , newOrgaData = Nothing
       , orgaInfo = Nothing
+      , system_notification = RemoteData.NotAsked
       }
     , [ cmd1, cmd2, cmd3, cmd4, cmd5 ]
     )

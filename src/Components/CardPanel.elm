@@ -747,6 +747,7 @@ viewPanelTension path_data t model =
                   else
                     viewTitle t model
                 , viewSubTitle model.conf t model
+                , hr [ class "my-0" ] []
                 ]
             ]
         , div [ id "main-block", class "main-block" ]
@@ -830,24 +831,29 @@ viewTitleEdit new old result =
 
 viewSubTitle : Conf -> TensionPanel -> Model -> Html Msg
 viewSubTitle conf t model =
-    div [ class "tensionSubtitle my-2" ]
-        [ span
-            [ class "tag is-rounded has-background-tag"
+    div [ class "tensionSubtitle level mt-4" ]
+        [ div [ class "level-left" ] <|
+            List.map (div [ class "level-item" ] << List.singleton) <|
+                [ span
+                    [ class "tag is-rounded has-background-tag"
 
-            --, classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
-            --, ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
-            ]
-            [ tensionIcon2 t.type_ ]
-        , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
-            -- As Governance tension get automatically closed when there are created,
-            -- there status is not relevant, I can cause confusion to user as the object exists.
-            span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                [ t.status |> tensionStatus2str |> text ]
+                    --, classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
+                    --, ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+                    ]
+                    [ tensionIcon2 t.type_ ]
+                , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
+                    -- As Governance tension get automatically closed when there are created,
+                    -- there status is not relevant, I can cause confusion to user as the object exists.
+                    span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
+                        [ t.status |> tensionStatus2str |> text ]
 
-          else
-            text ""
-        , viewTensionDateAndUser conf "is-discrete" t.createdAt t.createdBy
-        , viewCircleTarget model.commonOp "is-pulled-right" t.receiver
+                  else
+                    text ""
+                , viewTensionDateAndUser conf "is-discrete" t.createdAt t.createdBy
+                ]
+        , div [ class "level-right" ] <|
+            List.map (div [ class "level-item" ] << List.singleton) <|
+                [ viewCircleTarget model.commonOp "" t.receiver ]
         ]
 
 
@@ -1012,11 +1018,12 @@ viewTensionSidePane t model =
 
         -- Extras
         , hr [ class "has-background-border-light my-5" ] []
-        , div
-            [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+        , a
+            [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
+            , target "_blank"
             ]
-            [ A.icon "icon-external-link mr-1", text "Open in a new tab" ]
+            [ A.icon1 "icon-external-link" T.openNewTab ]
         ]
 
 
@@ -1064,13 +1071,16 @@ viewPanelDraft draft model =
                                 text ""
                             , button [ class "delete ", onClick OnClose ] []
                             ]
-                        , div [ class "tensionSubtitle mt-3" ]
-                            [ span [ class "tag is-rounded has-background-tag" ]
-                                [ div [ class "help is-icon-aligned mb-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
-                            , viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy
+                        , div [ class "tensionSubtitle mt-3 level" ]
+                            [ div [ class "level-left" ]
+                                [ span [ class "level-item tag is-rounded has-background-tag" ]
+                                    [ div [ class "help my-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
+                                , div [ class "level-item" ] [ viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy ]
+                                ]
                             ]
                         ]
                 ]
+            , hr [ class "my-0" ] []
             ]
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
@@ -1138,7 +1148,7 @@ viewMessageEdit conf new old form result =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div []
+    div [ class "submitFocus" ]
         [ div [ class "message" ]
             [ div [ class "message-header pb-0" ] [ viewCommentInputHeader opHeader "draftInput" form ]
             , div [ class "message-body" ]
@@ -1197,16 +1207,16 @@ viewDraftSidePane d model =
     in
     div [ class "tensionSidePane" ]
         ([ -- Extras
-           hr [ class "has-background-border-light my-5" ] []
+           hr [ class "is-transparent has-background-border-light my-5" ] []
          ]
             ++ (if isAdmin || isAuthor then
                     [ div
-                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
                         [ A.icon1 "icon-exchange" T.convertDraft ]
                     , div
-                        [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoRemoveDraft card.id)
                         ]
                         [ A.icon1 "icon-trash" T.deleteDraft ]
