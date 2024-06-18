@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.3] - 2024-06-18
+
+### ⛰️  Features
+
+- [ui] make roles accessible with dropdown menu in the tree left menu
+- [ux] add a notification box if client version is outdated.
+- [ux/edition] allow to check/uncheck chekboxes in messages (Markdown) by clicking.
+- [ux/edition] use arrows to navigate in the user mention selection (@...).
+- [members view] new option for Owner to grant user Owner.
+- [members view] Show pending roles in user row if any.
+- [members view] Use a modal confirmation before adding new owner
+
+### 🐛 Bug Fixes
+
+- [ui] Improves alignements and size and colors of various items
+- [ui] fix order of selected labels in the filter box.
+- [ui] make "open contracts hints" in Overview page only visible by circle coordos.
+- [ui] Improve node tag descriptors view + improve tag alignement.
+- [ux] Redirect to valid link when user link himself to a role from the members page.
+- [ux] Add "Remove guest" entry in the ellipsis menu.
+- [ux] fix duplicate tensions if tree menu open.
+- [ux] Disable clickability for email-invited users without accounts in contract view
+- [ux] Improve contract duplicate error messages and redirection + better user context reload on page refresh.
+- [ux] Open link in a new tab in the contract confirm modal.
+- [ux/orga map] Fix Graphpack navigation.
+- [tree view] Show open contracts when roles are collapsed.
+- [ux/edition] when entering <enter> after en empty list, exit the list (markdown).
+- [ui/edition] Parse and decode url automatically in markdown text.
+- [project view] open tension in new tab link + i18n.
+- [project view] Fix moving column in project board.
+- [project view] Keep adding draft after typing enter.
+- [members view] Fix adding role to users from members page.
+
+### 🚜 Refactor
+
+- [codefactor] simplify the modular port decoder
+- Action panel + no new tension action for membersipNode.
+
+### 🎨 Styling
+
+- [tree view] Increase the menu width and item spacing.
+- Choose organisation, with a 's'
+
 ## [0.8.2]
 
 ### New
