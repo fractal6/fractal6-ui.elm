@@ -322,7 +322,7 @@ update_ apis message model =
             if model.isOpen then
                 let
                     newPos =
-                        case dir of
+                        (case dir of
                             "up" ->
                                 model.activePos - 1
 
@@ -331,17 +331,18 @@ update_ apis message model =
 
                             _ ->
                                 model.activePos
-                                    |> (\x ->
-                                            -- Compute boundary
-                                            if x >= List.length model.lookup then
-                                                0
+                        )
+                            |> (\x ->
+                                    -- Compute boundary
+                                    if x >= List.length model.lookup then
+                                        0
 
-                                            else if x < 0 then
-                                                0
+                                    else if x < 0 then
+                                        0
 
-                                            else
-                                                x
-                                       )
+                                    else
+                                        x
+                               )
                 in
                 ( { model | activePos = newPos }, noOut )
 

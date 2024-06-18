@@ -334,10 +334,6 @@ fromLocalSession flags =
                             ( Just LightTheme, Cmd.none )
 
                         Ok l ->
-                            let
-                                d =
-                                    Debug.log "e" l
-                            in
                             ( Nothing, Ports.logErr "Unknown theme string" )
 
                         Err err ->

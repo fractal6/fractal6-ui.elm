@@ -879,7 +879,7 @@ viewMembers conf members_d invitations_d focus isPanelOpen ell =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
-                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+                span [ class "help-label button-light is-goroot", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""

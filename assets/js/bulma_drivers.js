@@ -506,6 +506,8 @@ function markupRichText(e, el, app) {
     // Handle backspace/removing character
     if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
 
+        var start = el.selectionStart;
+
         // Handle toggle down tooltip
         if (e.key == " " ||
             e.key == "Escape" ||
@@ -516,7 +518,6 @@ function markupRichText(e, el, app) {
             return
         }
 
-        var start = el.selectionStart;
 
         // Handle update patter/input
         if (e.key === "Enter") {
