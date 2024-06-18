@@ -1662,9 +1662,12 @@ viewEventMentioned lang now event =
                         [ viewUsernameLink event.createdBy.username
                         , strong [] [ text T.mentioned2 ]
                         , text (formatDate lang now event.createdAt)
-                        , div []
+                        ]
+                , div [ class "level ml-4 mt-1" ] <|
+                    List.singleton <|
+                        div [ class "level-left" ] <|
                             [ a
-                                [ class "is-strong is-size-6 discrete-link mr-4"
+                                [ class "is-strong is-size-6 discrete-link mr-4 level-item"
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
                                 [ span
@@ -1675,12 +1678,11 @@ viewEventMentioned lang now event =
                                 , text title
                                 ]
                             , a
-                                [ class "discrete-link is-discrete"
+                                [ class "discrete-link is-discrete level-item"
                                 , href (toLink OverviewBaseUri receiverid [])
                                 ]
                                 [ receiverid |> String.replace "#" "/" |> text ]
                             ]
-                        ]
                 ]
             ]
 

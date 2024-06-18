@@ -482,6 +482,7 @@ export const GraphPack = {
         }
 
         // Draw node
+        var rayon = node.ctx.rayon;
         switch (node.data.type_) {
             case NodeType.Role:
                 //var r = node.ctx.rayon*0.75;
@@ -491,15 +492,16 @@ export const GraphPack = {
                 //ctx.ellipse(node.ctx.centerX, node.ctx.centerY, r+l, r-l, 0, 0, Math.PI * 2, false);
                 //ctx.ellipse(node.ctx.centerX, node.ctx.centerY, r-l, r+l, 0, 0, Math.PI * 2, false);
                 //ctx.fill();
+                //var rayon = Math.min(node.ctx.rayon, 25);
                 ctx.beginPath();
                 ctx.fillStyle = circleColor;
-                ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
+                ctx.arc(node.ctx.centerX, node.ctx.centerY, rayon, 0, 2 * Math.PI, true);
                 ctx.fill();
                 break;
             default:
                 ctx.beginPath();
                 ctx.fillStyle = circleColor;
-                ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
+                ctx.arc(node.ctx.centerX, node.ctx.centerY, rayon, 0, 2 * Math.PI, true);
                 ctx.fill();
         }
 

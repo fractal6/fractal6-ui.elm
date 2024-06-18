@@ -2029,6 +2029,7 @@ figcaption {
     .media-left {
         position: relative;
         top: 2px;
+        align-self: flex-start;
     }
 }
 #cardPanel {

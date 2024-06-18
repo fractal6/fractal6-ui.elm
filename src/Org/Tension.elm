@@ -1682,8 +1682,7 @@ viewTension u t model =
                             ]
                     , div [ class "level-right" ] <|
                         List.map (div [ class "level-item" ] << List.singleton) <|
-                            [ viewCircleTarget model.commonOp "" t.receiver
-                            ]
+                            [ viewCircleTarget model.commonOp "" t.receiver ]
                     ]
                 ]
             ]
