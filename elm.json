@@ -1,11 +1,13 @@
 {
     "type": "application",
-    "source-directories": [ "src" ],
+    "source-directories": [
+        "src"
+    ],
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
             "avh4/elm-fifo": "1.0.4",
-            "dillonkearns/elm-graphql": "5.0.11",
+            "dillonkearns/elm-graphql": "5.0.12",
             "dillonkearns/elm-markdown": "7.0.1",
             "dividat/elm-identicon": "1.0.0",
             "elm/browser": "1.0.2",
@@ -27,7 +29,7 @@
             "gingko/time-distance": "2.4.0",
             "jorgengranseth/elm-string-format": "1.0.1",
             "justgook/elm-image": "5.0.0",
-            "justinmimbs/date": "4.0.1",
+            "justinmimbs/date": "4.1.0",
             "krisajenkins/remotedata": "6.0.1",
             "rtfeldman/elm-iso8601-date-strings": "1.1.4",
             "ryannhg/elm-spa": "4.1.0"
