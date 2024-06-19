@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - [ux] Disable clickability for email-invited users without accounts in contract view
 - [ux] Improve contract duplicate error messages and redirection + better user context reload on page refresh.
 - [ux] Open link in a new tab in the contract confirm modal.
-- [ux/orga map] Fix Graphpack navigation.
+- [ux/orga map] Fix Graphpack navigation, and right-click menu.
 - [tree view] Show open contracts when roles are collapsed.
 - [ux/edition] when entering <enter> after en empty list, exit the list (markdown).
 - [ui/edition] Parse and decode url automatically in markdown text.

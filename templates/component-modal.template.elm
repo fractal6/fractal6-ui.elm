@@ -143,6 +143,14 @@ setDataResult result model =
     { model | data_result = result }
 
 
+openModal : Model -> Model
+openModal model =
+    { model | isActive2 = True }
+
+
+closeModal : Model -> Model
+closeModal data =
+    { model | isActive = False }
 
 -- utils
 
@@ -229,8 +237,8 @@ update_ apis message model =
                 ( { model | isActive2 = model.isActive }, noOut )
 
         OnOpen ->
-            ( { model | isActive2 = True }
-            , out0 [ sendSleep (SetIsActive2 True) 10, Ports.open_modal "${module_basename}Modal" ]
+            ( openModal model
+            , out0 [ sendSleep (SetIsActive2 True) 10 ]
             )
 
         OnClose data ->
@@ -242,7 +250,7 @@ update_ apis message model =
                     else
                         ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            ( { newModel | isActive = False }
+            ( closeModal newModel
             , out2
                 [ Ports.close_modal
                 , ternary data.reset (sendSleep OnReset 333) Cmd.none

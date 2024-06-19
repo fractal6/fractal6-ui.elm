@@ -87,7 +87,7 @@ viewEventMedia conf inline ev =
     div [ class "content" ]
         [ p [] <|
             [ a
-                [ class "discrete-link is-inline-flex is-align-items-center"
+                [ class "discrete-link is-icon-aligned"
                 , href (Dict.get "link" ev |> withDefault "#")
                 ]
               <|
@@ -111,7 +111,7 @@ viewContractMedia conf ev =
     div [ class "content" ]
         [ p [] <|
             [ a
-                [ class "discrete-link"
+                [ class "discrete-link is-icon-aligned"
                 , href (Dict.get "link" ev |> withDefault "#")
                 ]
               <|
@@ -135,7 +135,11 @@ viewContractMedia conf ev =
 viewNotifMedia : Conf -> Dict String String -> Html msg
 viewNotifMedia conf ev =
     div [ class "content" ]
-        [ a [ class "discrete-link", href (Dict.get "link" ev |> withDefault "#") ] <|
+        [ a
+            [ class "discrete-link is-icon-aligned"
+            , href (Dict.get "link" ev |> withDefault "#")
+            ]
+          <|
             List.intersperse (text " ") <|
                 [ A.icon (Dict.get "icon" ev |> withDefault "")
                 , Dict.get "title" ev |> withDefault "no input message." |> text

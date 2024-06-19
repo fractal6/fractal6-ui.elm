@@ -24,7 +24,7 @@ module Assets exposing (..)
 import Assets.Logo as Logo
 import Extra exposing (space_)
 import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
-import Html.Attributes exposing (attribute, class, classList, href)
+import Html.Attributes exposing (attribute, class, classList, href, style)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T

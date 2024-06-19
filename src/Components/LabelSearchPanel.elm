@@ -452,14 +452,13 @@ view_ isInternal op model =
         [ case model.labels_data of
             Success labels_d ->
                 let
-                    --selection =
-                    --    List.map .name op_.selectedLabels
-                    --op =
-                    --    { op_ | selectedLabels = List.filter (\x -> List.member x.name selection) labels_d }
                     labels =
                         if model.pattern == "" then
+                            -- selection
                             op.selectedLabels
+                                -- sort by username
                                 ++ List.sortBy .name (List.take 42 labels_d)
+                                -- uniq
                                 |> LE.uniqueBy .name
 
                         else

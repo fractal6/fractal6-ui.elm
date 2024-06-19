@@ -354,6 +354,13 @@ export const actions = {
             gp.clearNodeTooltip();
         }
     },
+    'CLEAR_CONTEXT_MENU': (app, session, message) => {
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.clearContextMenu();
+        }
+    },
 
     //
     // User Ctx -- Localstorage

@@ -437,8 +437,9 @@ view_ op model =
                     --    model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
                     users =
                         if model.pattern == "" then
-                            List.sortBy .username op.selectedAssignees
-                                -- First show looged user
+                            -- selection
+                            op.selectedAssignees
+                                -- First show self user
                                 ++ List.filter (\u -> model.form.uctx.username == u.username) assignees_d
                                 -- sort by username
                                 ++ List.sortBy .username (List.take 42 assignees_d)

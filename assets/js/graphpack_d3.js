@@ -834,6 +834,10 @@ export const GraphPack = {
         this.nodeHoveredFromJs("");
         return
     },
+    clearContextMenu() {
+        this.isFrozen = false;
+        this.isFrozenMenu = false;
+    },
 
 
     // Create the interpolation function between current view and the clicked on node.
@@ -1389,13 +1393,16 @@ export const GraphPack = {
     },
 
     nodeHoveredFromJs(node) {
+        if (!this.app || this.isFrozenMenu || this.isFrozen) return
+
         var nid;
         if (!node) {
             nid = ""
         } else {
             nid = node.data.nameid;
         }
-        if (this.app) this.app.ports.nodeHoveredFromJs.send(nid);
+
+        this.app.ports.nodeHoveredFromJs.send(nid);
     },
 
     nodeFocusedFromJs(node) {
@@ -1661,6 +1668,7 @@ export const GraphPack = {
         var canvasMouseMoveEvent = e => {
             if (this.isZooming) return false
             if (this.isFrozen) return false
+            if (this.isFrozenMenu) return false
             var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e, p);
 
@@ -1687,12 +1695,9 @@ export const GraphPack = {
 
         // Listen for mouse entering canvas
         var canvasMouseEnterEvent = e => {
-            if (this.isZooming) {
-                return false
-            }
-            if (this.isFrozen) {
-                return false
-            }
+            if (this.isZooming) return false
+            if (this.isFrozen) return false
+            if (this.isFrozenMenu) return false
             var node = this.getNodeUnderPointer(e);
             // Avoid redrawing and avoid glitch when leaving tooltip.
             if (node != this.hoveredNode && !this.checkIf(this.getPointerCtx(e), "InTooltip", this.hoveredNode)) {
@@ -1706,7 +1711,7 @@ export const GraphPack = {
         var canvasMouseLeaveEvent = e => {
             var p = this.getPointerCtx(e);
             var isInCanvas = this.checkIf(p, "InCanvas"); // purpose of that is possibliy linked to issue #9232dcd
-            if (!isInCanvas) {
+            if (!isInCanvas && !this.isFrozenMenu) {
                 // Remove the node hover and border
                 var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
                 if (clearBorder) this.clearNodeHover();

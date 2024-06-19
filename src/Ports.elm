@@ -256,6 +256,14 @@ clearTooltip =
         }
 
 
+clearContextMenu : Cmd msg
+clearContextMenu =
+    outgoing
+        { action = "CLEAR_CONTEXT_MENU"
+        , data = JE.string ""
+        }
+
+
 
 --
 -- Session functions

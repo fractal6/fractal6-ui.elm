@@ -784,7 +784,7 @@ viewNotif isContract ue node content =
                 ( "is-event-badge is-w", T.markAsRead )
     in
     div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-left" ] [ viewOrga True node.nameid ]
+        [ div [ class "media-left is-hidden-mobile" ] [ viewOrga True node.nameid ]
         , div [ class "media-content" ] [ content ]
         , if not ue.isRead then
             div

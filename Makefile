@@ -14,13 +14,13 @@ RELEASE_DIR := releases/$(BRANCH_NAME)/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
-# To publish {prod}
-# - git tag vXXX
-# - git checkout prod
-# - git merge dev
-# - eventually patch prod/**
-# - make publish_prod
-#
+# To publish {op|prod}
+# - generate release: git cliff --unreleased --tag XXX --topo-order
+# - git tag XXX
+# - git checkout op && git merge op
+#   - eventually patch op/**
+# - make publish_op
+# - Annoucements !
 
 #.PHONY: $(BUILD_DIRS)
 .PHONY: review
