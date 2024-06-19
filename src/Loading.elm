@@ -242,6 +242,15 @@ loadingSpin hasLoading =
         text ""
 
 
+loadingSpinR : Bool -> Html msg
+loadingSpinR hasLoading =
+    if hasLoading then
+        span [ class "spinner2 is-small", attribute "style" "right: 13px;" ] []
+
+    else
+        text ""
+
+
 loadingSpinRight : Bool -> Html msg
 loadingSpinRight hasLoading =
     if hasLoading then

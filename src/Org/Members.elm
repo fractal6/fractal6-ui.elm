@@ -333,6 +333,7 @@ type Msg
     | LogErr String
     | OnGoRoot
     | OpenActionPanel String String (Maybe ( Int, Int ))
+    | OnRemoveUser String String
       -- Components
     | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
@@ -605,7 +606,16 @@ update global message model =
             ( model, Cmd.none, send (NavigateRaw (toLink MembersBaseUri model.node_focus.rootnameid [] ++ query)) )
 
         OpenActionPanel domid nameid pos ->
-            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
+            ( model
+            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos)
+            , Cmd.none
+            )
+
+        OnRemoveUser username nameid ->
+            ( { model | actionPanel = ActionPanel.setTargetid_ nameid model.actionPanel }
+            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpenModal (UnLinkAction { username = username, name = Nothing }))
+            , Cmd.none
+            )
 
         -- Components
         HelperBarMsg msg ->
@@ -1139,8 +1149,12 @@ viewUserEllipsis conf focus m roles ell =
                                     []
                                )
                             ++ (if isOwner_ && isMemberGuest then
+                                    let
+                                        guestid =
+                                            roles |> List.filter (\x -> x.role_type == RoleType.Guest) |> List.head |> unwrap "" .nameid
+                                    in
                                     [ hr [ class "dropdown-divider" ] []
-                                    , div [ class "dropdown-item button-light is-danger", onClick (ActionPanelMsg (ActionPanel.OnOpenModal (UnLinkAction { username = m.username, name = Nothing }))) ]
+                                    , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveUser m.username guestid) ]
                                         [ A.icon1 "icon-user-plus" T.removeUser
                                         ]
                                     ]

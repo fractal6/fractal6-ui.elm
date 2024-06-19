@@ -320,11 +320,11 @@ initArtefactNodeForm user nameid initColor =
 
 type alias ActionForm =
     { uctx : UserCtx
-    , tid : String
-    , bid : String
-    , node : Node
-    , fragment : NodeFragment
-    , events : List Ev
+    , tid : String -- Tension ID
+    , bid : String -- Blob ID
+    , node : Node -- Original Node
+    , fragment : NodeFragment -- Node changes
+    , events : List Ev -- Changes events
     , users : List UserForm -- Note: For contract, One event <-> One user (candidate)
     , post : Post
     }
