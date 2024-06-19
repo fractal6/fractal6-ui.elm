@@ -297,7 +297,11 @@ action2color action =
 
 isOpen_ : String -> State -> Bool
 isOpen_ domid (State model) =
-    domid == model.domid && (model.isOpen || model.isActive)
+    if domid == "" then
+        model.isOpen || model.isActive
+
+    else
+        domid == model.domid && (model.isOpen || model.isActive)
 
 
 setTargetid_ : String -> State -> State
@@ -611,7 +615,7 @@ update_ apis message model =
                 ( open domid model, noOut )
 
             else
-                ( close model, noOut )
+                ( model, out0 [ send OnClose ] )
 
         OnOpen domid nameid tree pos ->
             -- Open panel in HelperBar
@@ -647,7 +651,7 @@ update_ apis message model =
                         )
 
             else
-                ( close model, noOut )
+                ( model, out0 [ send OnClose ] )
 
         OnGetNode result ->
             case result of
@@ -671,7 +675,7 @@ update_ apis message model =
                     ( { model | node_result = result }, noOut )
 
         OnClose ->
-            ( close model, noOut )
+            ( close model, out0 [ Ports.clearContextMenu ] )
 
         OnReset ->
             ( reset model, noOut )
@@ -811,7 +815,7 @@ update_ apis message model =
             ( closeModal newModel
               -- Ports.click: unock the tooltip if click from the tooltip, else avoid id as the click will move to the parent node
             , Out
-                (cmds ++ [ Ports.close_modal, ternary (newModel.domid == "actionPanelContentTooltip") (Ports.click "canvasOrga") Cmd.none ])
+                (cmds ++ [ Ports.close_modal, send OnClose ])
                 gcmds
                 (ternary (isSuccess newModel.action_result)
                     (Just newModel.form.fragment)
