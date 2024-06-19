@@ -507,6 +507,9 @@ strong {
         vertical-align: sub;
     }
 }
+i.va {
+    vertical-align: middle;
+}
 
 .button.is-selected {
     outline: 4px solid $grey;
@@ -1238,6 +1241,11 @@ figcaption {
     // Prevent NavbarTop overflow
     & > .columns:not(#overview) { // mt-3
         margin: 0.75rem 0 0 0;
+    }
+    @include mobile {
+        & > .columns { // mt-3
+            margin: 0.75rem 0 0 0;
+        }
     }
 }
 

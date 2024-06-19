@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -1686,7 +1686,7 @@ viewTension u t model =
                     ]
                 ]
             ]
-        , div [ class "columns is-centered is-variable is-4" ]
+        , div [ class "columns is-centered", classList [ ( "is-variable is-4", not (isMobile model.conf.screen) ) ] ]
             [ div [ class "column is-9" ]
                 [ div [ class "tabs is-md" ]
                     [ ul []
