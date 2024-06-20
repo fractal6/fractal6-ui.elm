@@ -45,6 +45,11 @@
 		border-color: var(--is-discrete);
 		//filter: invert(25%);
 	}
+    li.is-checkbox {
+        display: flex;
+        margin-left: -1rem;
+        list-style: none;
+    }
 	li input[type="checkbox"] {
 		margin-right: 8px;
 		//accent-color: #00eaff; very recent version !

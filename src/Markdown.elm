@@ -171,7 +171,7 @@ frac6Renderer style recursive =
                                         in
                                         case checkbox of
                                             Just cb ->
-                                                li [ attribute "style" "list-style:none;margin-left:-1rem;" ] (cb :: children)
+                                                li [ class "is-checkbox" ] (cb :: children)
 
                                             Nothing ->
                                                 li [] children
