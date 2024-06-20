@@ -27,12 +27,12 @@ import Bulk exposing (UserState(..))
 import Bulk.Error exposing (viewAuthNeeded, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
-import Extra.Events exposing (onKeydown)
+import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send)
 import Html exposing (Html, a, br, button, div, input, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Loading exposing (ModalData, RequestResult(..), RestData)
@@ -458,7 +458,7 @@ viewRefreshModal op model =
                                 ]
                             ]
                         , div [ class "is-size-7 is-pulled-left" ]
-                            [ a [ href (toHref Route.PasswordReset) ] [ text T.passwordForgotten ]
+                            [ a [ onClickPD (DoCloseAuthModal (toHref Route.PasswordReset)), target "_blank" ] [ text T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]
@@ -638,9 +638,11 @@ viewSigninModal op model =
                             ]
                         , div [ class "is-size-7 is-pulled-left" ]
                             [ span [ class "mr-2" ] [ text T.needAnAccount ]
-                            , a [ href (toHref Route.Signup) ] [ text T.signupNow ]
+                            , a [ onClickPD (DoCloseAuthModal (toHref Route.Signup)), target "_blank" ]
+                                [ text T.signupNow ]
                             , br [ class "mb-1" ] []
-                            , a [ href (toHref Route.PasswordReset) ] [ text T.passwordForgotten ]
+                            , a [ onClickPD (DoCloseAuthModal (toHref Route.PasswordReset)), target "_blank" ]
+                                [ text T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]
                             [ div [ class "control" ]

@@ -1381,12 +1381,12 @@ viewSuccess res model =
 
                     else
                         span [ class "m-2 is-inline-flex is-align-items-baseline" ]
-                            [ textH T.or_, a [ class "button is-small mx-2 is-primary", onClick DoInvite, target "_blank" ] [ text T.inviteSomeone ], text T.toThisRole ]
+                            [ textH T.or_, a [ class "button is-small mx-2 is-primary", onClickPD DoInvite, target "_blank" ] [ text T.inviteSomeone ], text T.toThisRole ]
 
           else if model.activeTab == NewCircleTab && model.activeButton == Just 0 then
             span [ class "m-2 is-inline-flex is-align-items-baseline" ]
                 [ textH T.or_
-                , a [ class "button is-small mx-2 is-primary", onClick (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text T.addRole ]
+                , a [ class "button is-small mx-2 is-primary", onClickPD (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text T.addRole ]
                 , text T.inThisCircle
                 ]
 
