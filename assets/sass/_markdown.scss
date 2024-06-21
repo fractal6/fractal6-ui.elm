@@ -5,13 +5,20 @@
 	&.fix-inline > p {
 		display: inline;
 	}
-	& > ul, & > ol {
-        margin-top: 0;
-		//margin-left: 1rem;
-	}
-    // Fix ol margin-top
+    // Fix list margins
+    ul, ol {
+		margin-left: 1.25rem;
+    }
     ul ol {
         margin-top: 0.5rem;
+    }
+	& > ul, & > ol {
+        margin-top: 0;
+	}
+
+    li {
+      margin-top: 0.4rem;
+      margin-bottom: 0.4rem;
     }
 
 	// Html
