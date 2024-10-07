@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 
 """Elm module generator from templates.
 
@@ -26,7 +26,6 @@ import re
 from string import Template
 
 from docopt import docopt
-from loguru import logger
 
 
 class ElmSpa(object):
@@ -214,7 +213,7 @@ ${module_basename}Msg msg ->
             try:
                 _, content = self.rmatch(spec, content, mapping=s_map)
             except TypeError as e:
-                logger.warning("Potentially not found regex: %s" % spec)
+                print("Potentially not found regex: %s" % spec)
                 continue
 
         if self.conf["--write"]:

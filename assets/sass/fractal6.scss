@@ -1670,7 +1670,7 @@ figcaption {
 
     top: calc(#{$navbar-height});
     right: 0;
-    transition: all .2s ease;
+    transition: all .333s ease;
     background-color: var(--orga-menu-background-color);
     box-shadow: inset 0 0 1px var(--border-color-light);
     border-left: 1px solid var(--bbc);

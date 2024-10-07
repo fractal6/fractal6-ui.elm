@@ -45,6 +45,7 @@ import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
 import Extra exposing (showIf, ternary, unwrap2)
+import Extra.Url exposing (queryParser)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -65,7 +66,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
+import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -90,12 +91,28 @@ type alias Model =
 
 getConf : Model -> Conf
 getConf global =
+    let
+        query =
+            queryParser global.url
+
+        viewMode =
+            Dict.get "view" query
+                |> withDefault []
+                |> (\x ->
+                        if List.any (\y -> List.member y x) [ "shared", "iframe" ] then
+                            IFrameView
+
+                        else
+                            DesktopView
+                   )
+    in
     { screen = global.session.screen
     , now = global.now
     , lang = global.session.lang
     , theme = global.session.theme
     , url = global.url
     , user = global.session.user
+    , viewMode = viewMode
     }
 
 

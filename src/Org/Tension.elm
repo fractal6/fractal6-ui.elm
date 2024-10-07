@@ -42,7 +42,7 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Extra exposing (decap, ternary, textD, unwrap)
+import Extra exposing (decap, showIf, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryParser)
 import Form.Help as Help
@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile)
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T

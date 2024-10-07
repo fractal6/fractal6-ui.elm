@@ -42,7 +42,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (space_, ternary, upH)
+import Extra exposing (showIf, space_, ternary, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (CommonMsg, Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, Conf, GlobalCmd(..), ViewMode(..))
 import Task
 import Text as T
 import Time
@@ -1605,7 +1605,8 @@ view global model =
             ++ T.tensions
     , body =
         [ div [ class "orgPane" ]
-            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
+            [ showIf (model.conf.viewMode == DesktopView)
+                (HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg)
             , div [ id "mainPane" ]
                 [ view_ global model
                 , if model.viewMode == CircleView then
@@ -1650,10 +1651,11 @@ view_ global model =
 
               else
                 text ""
-            , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
-                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
-                    [ viewSearchBar model ]
-                ]
+            , showIf (model.conf.viewMode == DesktopView) <|
+                div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
+                    [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
+                        [ viewSearchBar model ]
+                    ]
             , case model.children of
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -1963,10 +1965,16 @@ viewTensionsCount counts statusFilter =
 
 viewListTensions : Model -> Html Msg
 viewListTensions model =
+    let
+        cls_width =
+            ternary (model.conf.viewMode == DesktopView) "is-10" "is-12"
+    in
     div [ class "columns" ]
-        [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
-        , div [ class "column is-10" ]
-            [ viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
+        [ showIf (model.conf.viewMode == DesktopView) <|
+            div [ class "column is-2" ] [ viewCatMenu model.typeFilter ]
+        , div [ class "column", classList [ ( cls_width, True ) ] ]
+            [ showIf (model.conf.viewMode == DesktopView) <|
+                viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
             , viewTensions ListTension model
             ]
         ]

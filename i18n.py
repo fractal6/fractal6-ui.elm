@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 
 '''i18n file generator
 

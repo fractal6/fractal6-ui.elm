@@ -46,7 +46,7 @@ import Url exposing (Url)
 
 {-|
 
-    A general config usally set in main page's model.
+    A general config usually set in main page's model.
     It is extracted from the global model and session
 
 -}
@@ -57,7 +57,13 @@ type alias Conf =
     , now : Time.Posix
     , url : Url.Url
     , user : UserState
+    , viewMode : ViewMode
     }
+
+
+type ViewMode
+    = DesktopView
+    | IFrameView
 
 
 {-|
