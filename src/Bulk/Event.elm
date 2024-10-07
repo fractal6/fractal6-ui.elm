@@ -36,7 +36,7 @@ import Html exposing (Html, a, div, p, small, span, strong, text)
 import Html.Attributes exposing (class, classList, href)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (ContractNotif, EventFragment, EventNotif, UserEvent, Username)
-import Session exposing (Conf)
+import Session exposing (Session)
 import String.Extra as SE
 import Text as T
 
@@ -82,8 +82,8 @@ contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
 
 
-viewEventMedia : Conf -> Bool -> Dict String String -> Html msg
-viewEventMedia conf inline ev =
+viewEventMedia : Session -> Bool -> Dict String String -> Html msg
+viewEventMedia session inline ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -101,13 +101,13 @@ viewEventMedia conf inline ev =
                     , text ":"
                     , span [] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt session (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewContractMedia : Conf -> Dict String String -> Html msg
-viewContractMedia conf ev =
+viewContractMedia : Session -> Dict String String -> Html msg
+viewContractMedia session ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -127,13 +127,13 @@ viewContractMedia conf ev =
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help" ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help" ] [ byAt session (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewNotifMedia : Conf -> Dict String String -> Html msg
-viewNotifMedia conf ev =
+viewNotifMedia : Session -> Dict String String -> Html msg
+viewNotifMedia session ev =
     div [ class "content" ]
         [ a
             [ class "discrete-link is-icon-aligned"
@@ -144,7 +144,7 @@ viewNotifMedia conf ev =
                 [ A.icon (Dict.get "icon" ev |> withDefault "")
                 , Dict.get "title" ev |> withDefault "no input message." |> text
                 ]
-        , small [ class "help" ] [ byAt conf (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+        , small [ class "help" ] [ byAt session (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
         ]
 
 

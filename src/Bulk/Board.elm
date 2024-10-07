@@ -34,14 +34,14 @@ import Html.Events exposing (onClick)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Tension)
-import Session exposing (CommonMsg, Conf)
+import Session exposing (CommonMsg, Session)
 import Text as T
 
 
 type alias Op msg =
     { hasTaskMove : Bool
     , hasNewCol : Bool
-    , conf : Conf
+    , session : Session
     , node_focus : NodeFocus
     , boardId : String
     , boardHeight : Maybe Float
@@ -164,7 +164,7 @@ viewBoard op commonOp header keys_title data =
                                             [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
                                             []
                                     )
-                                    [ mediaTension commonOp op.conf op.node_focus.nameid t True False "is-size-6" ]
+                                    [ mediaTension commonOp op.session op.node_focus.nameid t True False "is-size-6" ]
                                 , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )

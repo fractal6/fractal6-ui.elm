@@ -25,6 +25,8 @@ import Array exposing (Array)
 import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
 import Codecs exposing (RecentActivityTab(..), WindowPos, userCtxDecoder, windowDecoder)
+import Dict exposing (Dict)
+import Extra.Url exposing (queryParser)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD
@@ -42,28 +44,6 @@ import Url exposing (Url)
 --
 -- Session / Global
 --
-
-
-{-|
-
-    A general config usually set in main page's model.
-    It is extracted from the global model and session
-
--}
-type alias Conf =
-    { screen : Screen
-    , theme : Theme
-    , lang : Lang.Lang
-    , now : Time.Posix
-    , url : Url.Url
-    , user : UserState
-    , viewMode : ViewMode
-    }
-
-
-type ViewMode
-    = DesktopView
-    | IFrameView
 
 
 {-|
@@ -87,6 +67,11 @@ type alias Screen =
 type Theme
     = DarkTheme
     | LightTheme
+
+
+type ViewMode
+    = DesktopView
+    | IFrameView
 
 
 isMobile : Screen -> Bool
@@ -136,10 +121,15 @@ type alias SessionFlags =
 
 -}
 type alias Session =
-    { -- Conf
-      theme : Theme
-    , screen : Screen
+    { -- Session: A general config usually set in main page's model.
+      -- It is extracted from the global model and session
+      screen : Screen
+    , theme : Theme
     , lang : Lang.Lang
+    , now : Time.Posix
+    , url : Url.Url
+    , query : Dict String (List String)
+    , viewMode : ViewMode
 
     -- Remote Data
     , user : UserState
@@ -226,11 +216,17 @@ type alias NodesQuickSearch =
 
 resetSession : Session -> SessionFlags -> Session
 resetSession session flags =
-    { referer = Nothing
+    { apis = flags.apis
+    , referer = Nothing
     , can_referer = Nothing
     , user = LoggedOut
     , lang = session.lang
     , theme = session.theme
+    , screen = session.screen
+    , now = session.now
+    , url = session.url
+    , query = session.query
+    , viewMode = session.viewMode
     , notif = initNotifCount
     , token_data = RemoteData.NotAsked
     , node_focus = Nothing
@@ -252,8 +248,6 @@ resetSession session flags =
     , recent_activity_tab = Nothing
     , orga_menu = Nothing
     , tree_menu = session.tree_menu
-    , apis = flags.apis
-    , screen = flags.screen
     , authorsPanel = Nothing
     , labelsPanel = Nothing
     , newOrgaData = Nothing
@@ -262,8 +256,8 @@ resetSession session flags =
     }
 
 
-fromLocalSession : SessionFlags -> ( Session, List (Cmd msg) )
-fromLocalSession flags =
+fromLocalSession : Url -> SessionFlags -> ( Session, List (Cmd msg) )
+fromLocalSession url flags =
     let
         ( user, cmd1 ) =
             case flags.uctx of
@@ -347,12 +341,32 @@ fromLocalSession flags =
 
                 Nothing ->
                     ( Nothing, Cmd.none )
+
+        query =
+            queryParser url
+
+        viewMode =
+            Dict.get "view" query
+                |> withDefault []
+                |> (\x ->
+                        if List.any (\y -> List.member y x) [ "shared", "iframe" ] then
+                            IFrameView
+
+                        else
+                            DesktopView
+                   )
     in
-    ( { referer = Nothing
+    ( { apis = flags.apis
+      , referer = Nothing
       , can_referer = Nothing
       , user = user
       , lang = withDefault Lang.En lang
       , theme = withDefault DarkTheme theme
+      , screen = flags.screen
+      , now = Time.millisToPosix 0
+      , url = url
+      , query = query
+      , viewMode = viewMode
       , notif = initNotifCount
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing
@@ -377,8 +391,6 @@ fromLocalSession flags =
             flags.tree_menu
                 |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
                 |> withDefault Nothing
-      , apis = flags.apis
-      , screen = flags.screen
       , authorsPanel = Nothing
       , labelsPanel = Nothing
       , newOrgaData = Nothing

@@ -65,7 +65,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session)
 import Text as T
 import Time
 
@@ -109,7 +109,7 @@ type alias Model =
     , simplifiedView : Bool
 
     -- Common
-    , conf : Conf
+    , session : Session
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
@@ -168,14 +168,14 @@ nodeStepToString form step =
             T.invite
 
 
-init : UserState -> Conf -> State
-init user conf =
-    initModel user conf |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
-initModel : UserState -> Conf -> Model
-initModel user conf =
-    { user = user
+initModel : Session -> Model
+initModel session =
+    { user = session.user
     , result = NotAsked
     , sources = []
     , step = TensionFinal
@@ -183,7 +183,7 @@ initModel user conf =
     , isActive2 = False
     , activeTab = NewTensionTab
     , activeButton = Nothing
-    , nodeDoc = NodeDoc.init "" Nothing NodeEdit user
+    , nodeDoc = NodeDoc.init "" Nothing NodeEdit session.user
     , path_data = NotAsked -- may be different than the current path_data (op.path_data)
     , action_result = NotAsked
     , doInvite = False
@@ -201,16 +201,16 @@ initModel user conf =
     , force_init = False
 
     -- Common
-    , conf = conf
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , commonOp = CommonMsg NoMsg LogErr
 
     -- Components
-    , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , inviteInput = UserInput.init [] True False user
-    , userInput = UserInput.init [] False False user
-    , comments = Comments.init "" "" user
+    , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
+    , inviteInput = UserInput.init [] True False session.user
+    , userInput = UserInput.init [] False False session.user
+    , comments = Comments.init "" "" session.user
     }
 
 
@@ -458,7 +458,7 @@ resetPost data =
 
 resetModel : Model -> Model
 resetModel data =
-    initModel data.user data.conf
+    initModel data.session
 
 
 
@@ -1605,7 +1605,7 @@ viewTension tree_data model =
                         , p [ class "help-label" ] [ text form.txt.name_help ]
                         , br [] []
                         ]
-                    , Comments.viewNewTensionCommentInput model.conf model.comments |> Html.map CommentsMsg
+                    , Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
@@ -1793,7 +1793,7 @@ viewNodeValidate model =
         , br [] []
         , if not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ]) then
             div [ class "mt-2" ]
-                [ Comments.viewNewTensionCommentInput model.conf model.comments |> Html.map CommentsMsg
+                [ Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
                 ]
 
           else

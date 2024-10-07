@@ -23,6 +23,7 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
+import Extra.Url exposing (queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
@@ -117,8 +118,14 @@ update msg model =
 
                 ( page, pageCmd, globalCmd ) =
                     Pages.init (fromUrl url) global
+
+                session =
+                    model.global.session
+
+                sessionUpdated =
+                    { session | url = url, query = queryParser url }
             in
-            ( { model | url = url, page = page, global = global }
+            ( { model | url = url, page = page, global = { global | session = sessionUpdated } }
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd

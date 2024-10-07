@@ -72,7 +72,7 @@ import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Conf, GlobalCmd, isMobile, toReflink)
+import Session exposing (Apis, Session, GlobalCmd, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -684,23 +684,23 @@ subscriptions (State model) =
 -- ------------------------------
 
 
-viewCommentsContract : Conf -> State -> Html Msg
-viewCommentsContract conf (State model) =
+viewCommentsContract : Session -> State -> Html Msg
+viewCommentsContract session (State model) =
     model.comments
         |> List.map
             (\c ->
-                Lazy.lazy6 viewComment conf c model.comment_form model.comment_result model.highlightedCommentId model.userInput
+                Lazy.lazy6 viewComment session c model.comment_form model.comment_result model.highlightedCommentId model.userInput
             )
         |> div []
 
 
-viewCommentsTension : Conf -> Maybe TensionAction.TensionAction -> State -> Html Msg
-viewCommentsTension conf action (State model) =
-    viewComments_ conf action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
+viewCommentsTension : Session -> Maybe TensionAction.TensionAction -> State -> Html Msg
+viewCommentsTension session action (State model) =
+    viewComments_ session action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
 
 
 viewComments_ :
-    Conf
+    Session
     -> Maybe TensionAction.TensionAction
     -> List Event
     -> List Comment
@@ -710,7 +710,7 @@ viewComments_ :
     -> String
     -> UserInput.State
     -> Html Msg
-viewComments_ conf action history comments comment_form comment_result expandedEvents highlightedCommentId userInput =
+viewComments_ session action history comments comment_form comment_result expandedEvents highlightedCommentId userInput =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -724,7 +724,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            Lazy.lazy4 viewEvent conf (Dict.get "focusid" comment_form.post) action event
+                            Lazy.lazy4 viewEvent session (Dict.get "focusid" comment_form.post) action event
 
                         Nothing ->
                             text ""
@@ -732,7 +732,7 @@ viewComments_ conf action history comments comment_form comment_result expandedE
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            Lazy.lazy6 viewComment conf c comment_form comment_result highlightedCommentId userInput
+                            Lazy.lazy6 viewComment session c comment_form comment_result highlightedCommentId userInput
 
                         Nothing ->
                             text ""
@@ -807,14 +807,14 @@ viewComments_ conf action history comments comment_form comment_result expandedE
         |> div []
 
 
-viewComment : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
-viewComment conf c form result highlightedCommentId userInput =
+viewComment : Session -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
+viewComment session c form result highlightedCommentId userInput =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
 
         reflink =
-            toReflink conf.url ++ "?goto=" ++ c.createdAt
+            toReflink session.url ++ "?goto=" ++ c.createdAt
 
         isFocused =
             c.createdAt == highlightedCommentId
@@ -822,7 +822,7 @@ viewComment conf c form result highlightedCommentId userInput =
     div [ id c.createdAt, class "media section is-paddingless" ]
         [ div
             [ class "media-left is-hidden-mobile"
-            , classList [ ( "is-hidden", isMobile conf.screen ) ]
+            , classList [ ( "is-hidden", isMobile session.screen ) ]
             ]
             [ viewUser2 c.createdBy.username ]
         , div
@@ -830,20 +830,20 @@ viewComment conf c form result highlightedCommentId userInput =
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
-                viewUpdateInput conf c form result userInput
+                viewUpdateInput session c form result userInput
 
               else
                 div [ id c.id, class "message", classList [ ( "is-focusing", isFocused ) ] ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span
                             [ --class "is-hidden-tablet"
-                              classList [ ( "is-hidden", not (isMobile conf.screen) ) ]
+                              classList [ ( "is-hidden", not (isMobile session.screen) ) ]
                             ]
                             [ viewUser0 c.createdBy.username ]
-                        , viewTensionDateAndUserC conf c.createdAt c.createdBy
+                        , viewTensionDateAndUserC session c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
-                                viewUpdated conf updatedAt
+                                viewUpdated session updatedAt
 
                             Nothing ->
                                 text ""
@@ -947,8 +947,8 @@ viewComment conf c form result highlightedCommentId userInput =
         ]
 
 
-viewNewTensionCommentInput : Conf -> State -> Html Msg
-viewNewTensionCommentInput conf (State model) =
+viewNewTensionCommentInput : Session -> State -> Html Msg
+viewNewTensionCommentInput session (State model) =
     let
         opHeader =
             { onChangeViewMode = ChangeInputViewMode
@@ -960,23 +960,23 @@ viewNewTensionCommentInput conf (State model) =
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea conf "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
                 , p [ class "help-label" ] [ text model.tension_form.txt.message_help ]
                 , div
                     [ class "is-hidden-mobile is-pulled-right help"
-                    , classList [ ( "is-hidden", isMobile conf.screen ) ]
+                    , classList [ ( "is-hidden", isMobile session.screen ) ]
                     , style "font-size" "10px"
                     ]
                     [ text "Tips: <C+Enter> to submit" ]
-                , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
+                , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
                     []
                 ]
             ]
         ]
 
 
-viewUpdateInput : Conf -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
-viewUpdateInput conf comment form_ result userInput =
+viewUpdateInput : Session -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
+viewUpdateInput session comment form_ result userInput =
     let
         message =
             Dict.get "message" form_.post |> withDefault comment.message
@@ -1001,7 +1001,7 @@ viewUpdateInput conf comment form_ result userInput =
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea conf "updateCommentInput" False T.leaveComment form userInput ]
+                    [ viewCommentTextarea session "updateCommentInput" False T.leaveComment form userInput ]
                 ]
             , case result of
                 Failure err ->
@@ -1031,8 +1031,8 @@ viewUpdateInput conf comment form_ result userInput =
         ]
 
 
-viewTensionCommentInput : Conf -> TensionCommon a -> State -> Html Msg
-viewTensionCommentInput conf tension (State model) =
+viewTensionCommentInput : Session -> TensionCommon a -> State -> Html Msg
+viewTensionCommentInput session tension (State model) =
     let
         form =
             model.tension_form
@@ -1068,7 +1068,7 @@ viewTensionCommentInput conf tension (State model) =
             }
     in
     div [ id "tensionCommentInput", class "media section is-paddingless" ]
-        [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile conf.screen ) ] ]
+        [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message commentInput" ]
@@ -1076,7 +1076,7 @@ viewTensionCommentInput conf tension (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea conf "commentInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentInput" False T.leaveComment form model.userInput ]
                         ]
                     , case model.tension_patch of
                         Failure err ->
@@ -1113,8 +1113,8 @@ viewTensionCommentInput conf tension (State model) =
         ]
 
 
-viewContractCommentInput : Conf -> State -> Html Msg
-viewContractCommentInput conf (State model) =
+viewContractCommentInput : Session -> State -> Html Msg
+viewContractCommentInput session (State model) =
     let
         form =
             model.contract_form
@@ -1139,7 +1139,7 @@ viewContractCommentInput conf (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea conf "commentContractInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentContractInput" False T.leaveComment form model.userInput ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1236,8 +1236,8 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : Conf -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
-viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
+viewCommentTextarea : Session -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
+viewCommentTextarea session targetid isModal placeholder_txt form userInput =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -1246,7 +1246,7 @@ viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if isMobile conf.screen then
+            if isMobile session.screen then
                 if isModal then
                     ( 4, 2 )
 
@@ -1303,67 +1303,67 @@ viewCommentTextarea conf targetid isModal placeholder_txt form userInput =
 --
 
 
-viewEvent : Conf -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent conf focusid_m action event =
+viewEvent : Session -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent session focusid_m action event =
     let
         eventView =
             case event.event_type of
                 TensionEvent.Reopened ->
-                    viewEventStatus conf.lang conf.now event TensionStatus.Open
+                    viewEventStatus session.lang session.now event TensionStatus.Open
 
                 TensionEvent.Closed ->
-                    viewEventStatus conf.lang conf.now event TensionStatus.Closed
+                    viewEventStatus session.lang session.now event TensionStatus.Closed
 
                 TensionEvent.TitleUpdated ->
-                    viewEventTitle conf.lang conf.now event
+                    viewEventTitle session.lang session.now event
 
                 TensionEvent.TypeUpdated ->
-                    viewEventType conf.lang conf.now event
+                    viewEventType session.lang session.now event
 
                 TensionEvent.Visibility ->
-                    viewEventVisibility conf.lang conf.now event
+                    viewEventVisibility session.lang session.now event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority conf.lang conf.now event action
+                    viewEventAuthority session.lang session.now event action
 
                 TensionEvent.AssigneeAdded ->
-                    viewEventAssignee conf.lang conf.now event True
+                    viewEventAssignee session.lang session.now event True
 
                 TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee conf.lang conf.now event False
+                    viewEventAssignee session.lang session.now event False
 
                 TensionEvent.LabelAdded ->
-                    viewEventLabel focusid_m conf.lang conf.now event True
+                    viewEventLabel focusid_m session.lang session.now event True
 
                 TensionEvent.LabelRemoved ->
-                    viewEventLabel focusid_m conf.lang conf.now event False
+                    viewEventLabel focusid_m session.lang session.now event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed conf.lang conf.now event action
+                    viewEventPushed session.lang session.now event action
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived conf.lang conf.now event action True
+                    viewEventArchived session.lang session.now event action True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived conf.lang conf.now event action False
+                    viewEventArchived session.lang session.now event action False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked conf.lang conf.now event action
+                    viewEventMemberLinked session.lang session.now event action
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked conf.lang conf.now event action
+                    viewEventMemberUnlinked session.lang session.now event action
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined conf.lang conf.now event action
+                    viewEventUserJoined session.lang session.now event action
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft conf.lang conf.now event action
+                    viewEventUserLeft session.lang session.now event action
 
                 TensionEvent.Moved ->
-                    viewEventMoved conf.lang conf.now event
+                    viewEventMoved session.lang session.now event
 
                 TensionEvent.Mentioned ->
-                    viewEventMentioned conf.lang conf.now event
+                    viewEventMentioned session.lang session.now event
 
                 _ ->
                     []

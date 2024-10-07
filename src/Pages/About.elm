@@ -34,7 +34,7 @@ import Form exposing (isLoginSendable, isSignupSendable)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), getConf, send, sendSleep)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick, onInput)
@@ -124,9 +124,6 @@ type ViewMode
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        conf =
-            getConf global
-
         isHome =
             global.url.path == "/"
 
@@ -149,7 +146,7 @@ init global flags =
             , lang = global.session.lang
             , isHome = isHome
             , empty = {}
-            , help = Help.init global.session.user conf
+            , help = Help.init global.session
             }
     in
     ( model

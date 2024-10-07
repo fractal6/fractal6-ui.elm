@@ -55,7 +55,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
+import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -227,7 +227,7 @@ type alias Model =
 
     -- Common
     , refresh_trial : Int
-    , conf : Conf
+    , session : Session
     , comments : Comments.State
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -266,15 +266,8 @@ type TensionTab
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        apis =
-            global.session.apis
-
-        conf =
-            getConf global
-
-        -- Query parameters
-        query =
-            queryParser global.url
+        session =
+            global.session
 
         -- Focus
         rootnameid =
@@ -307,7 +300,7 @@ init global flags =
                     ContractsBaseUri
 
         fs =
-            focusState TensionBaseUri global.session.referer global.url global.session.node_focus newFocus_
+            focusState TensionBaseUri session.referer global.url session.node_focus newFocus_
 
         newFocus =
             if fs.orgChange then
@@ -315,15 +308,15 @@ init global flags =
                 newFocus_
 
             else
-                global.session.path_data
+                session.path_data
                     |> Maybe.map focusFromPath
                     |> withDefault newFocus_
 
         nodeView =
-            Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
+            Dict.get "v" session.query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
 
         path_data =
-            ternary fs.orgChange Loading (fromMaybeData global.session.path_data Loading)
+            ternary fs.orgChange Loading (fromMaybeData session.path_data Loading)
 
         focusid =
             withMaybeData path_data
@@ -339,9 +332,9 @@ init global flags =
             , contractid = cid_m
             , activeTab = tab
             , nodeView = nodeView
-            , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
+            , jumpTo = Dict.get "goto" session.query |> Maybe.map List.head |> withDefault Nothing
             , path_data = path_data
-            , tension_head = ternary fs.orgChange Loading (fromMaybeData global.session.tension_head Loading)
+            , tension_head = ternary fs.orgChange Loading (fromMaybeData session.tension_head Loading)
             , focusState = fs
             , tension_comments = Loading
             , tension_blobs = Loading
@@ -354,7 +347,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form
-            , tension_form = initTensionForm tid Nothing global.session.user
+            , tension_form = initTensionForm tid Nothing session.user
 
             -- Title Result
             , isTitleEdit = False
@@ -362,9 +355,9 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init tid Nothing nodeView global.session.user
+                NodeDoc.init tid Nothing nodeView session.user
                     |> (\x ->
-                            case global.session.tension_head of
+                            case session.tension_head of
                                 Just th ->
                                     NodeDoc.initBlob (nodeFromTension th) x
 
@@ -374,35 +367,35 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin = withDefault False global.session.isAdmin
+            , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
-            , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
-            , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
+            , assigneesPanel = UserSearchPanel.init tid AssignUser session.user
+            , labelsPanel = LabelSearchPanel.init tid AssignLabel session.user
 
             -- Common
-            , conf = conf
-            , helperBar = HelperBar.init baseUri global.url.query newFocus global.session.user
-            , help = Help.init global.session.user conf
-            , tensionForm = NTF.init global.session.user conf
+            , session = session
+            , helperBar = HelperBar.init baseUri global.url.query newFocus session.user
+            , help = Help.init session
+            , tensionForm = NTF.init session
             , refresh_trial = 0
-            , moveTension = MoveTension.init global.session.user
-            , contractsPage = ContractsPage.init focusid global.session.user conf
-            , selectType = SelectType.init tid global.session.user
-            , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , moveTension = MoveTension.init session.user
+            , contractsPage = ContractsPage.init focusid session.user session
+            , selectType = SelectType.init tid session.user
+            , actionPanel = ActionPanel.init session.user session.screen
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
 
             -- Open a signin dialog if contracts are requested
-            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
-            , comments = Comments.init focusid tid global.session.user
+            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , comments = Comments.init focusid tid session.user
             }
 
         refresh =
-            Maybe.map (\x -> id3Changed x.id global.url) global.session.tension_head |> withDefault True
+            Maybe.map (\x -> id3Changed x.id global.url) session.tension_head |> withDefault True
 
         -- Memory optimization
         ( tension_head, hist_cmd ) =
@@ -1678,7 +1671,7 @@ viewTension u t model =
 
                               else
                                 text ""
-                            , viewTensionDateAndUser model.conf "is-discrete" t.createdAt t.createdBy
+                            , viewTensionDateAndUser model.session "is-discrete" t.createdAt t.createdBy
                             ]
                     , div [ class "level-right" ] <|
                         List.map (div [ class "level-item" ] << List.singleton) <|
@@ -1686,7 +1679,7 @@ viewTension u t model =
                     ]
                 ]
             ]
-        , div [ class "columns is-centered", classList [ ( "is-variable is-4", not (isMobile model.conf.screen) ) ] ]
+        , div [ class "columns is-centered", classList [ ( "is-variable is-4", not (isMobile model.session.screen) ) ] ]
             [ div [ class "column is-9" ]
                 [ div [ class "tabs is-md" ]
                     [ ul []
@@ -1763,7 +1756,7 @@ viewConversation u t model =
             case u of
                 LoggedIn _ ->
                     if userCanComment then
-                        Comments.viewTensionCommentInput model.conf t model.comments |> Html.map CommentsMsg
+                        Comments.viewTensionCommentInput model.session t model.comments |> Html.map CommentsMsg
 
                     else
                         viewJoinForCommentNeeded userCanJoin
@@ -1778,7 +1771,7 @@ viewConversation u t model =
     case model.tension_comments of
         Success t_comments ->
             div [ class "comments" ]
-                [ Lazy.lazy3 Comments.viewCommentsTension model.conf t.action model.comments |> Html.map CommentsMsg
+                [ Lazy.lazy3 Comments.viewCommentsTension model.session t.action model.comments |> Html.map CommentsMsg
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -1817,7 +1810,7 @@ viewDocument u t b model =
                 }
 
             op =
-                { conf = model.conf
+                { session = model.session
                 , data = model.nodeDoc
                 , result = NotAsked
                 , publish_result = model.publish_result
@@ -2084,7 +2077,7 @@ viewSidePane u t model =
                           else
                             let
                                 op =
-                                    { conf = model.conf
+                                    { session = model.session
                                     , data = model.nodeDoc
                                     , result = NotAsked
                                     , publish_result = model.publish_result

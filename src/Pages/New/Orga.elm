@@ -43,7 +43,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), getConf, send, sendSleep)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
@@ -59,7 +59,7 @@ import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Requests exposing (createOrga)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (GlobalCmd(..), Session)
 import String.Format as Format
 import Task exposing (Task)
 import Text as T
@@ -166,8 +166,8 @@ orgaStepToString form step =
             T.reviewAndValidate
 
 
-initModel : UserState -> Conf -> Maybe OrgaForm -> Model
-initModel user conf form_m =
+initModel : UserState -> Session -> Maybe OrgaForm -> Model
+initModel user session form_m =
     { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
@@ -176,7 +176,7 @@ initModel user conf form_m =
     , isWriting = Nothing
     , exist_result = NotAsked
     , empty = {}
-    , help = Help.init user conf
+    , help = Help.init session
     , refresh_trial = 0
     , authModal = AuthModal.init user Nothing
     }
@@ -195,25 +195,22 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        conf =
-            getConf global
-
-        query =
-            queryParser global.url
+        session =
+            global.session
     in
     case global.session.user of
         LoggedOut ->
-            ( initModel global.session.user conf Nothing
+            ( initModel global.session.user session Nothing
             , Cmd.none
             , send (NavigateRaw "/")
             )
 
         LoggedIn uctx ->
-            ( initModel global.session.user conf global.session.newOrgaData
+            ( initModel global.session.user session global.session.newOrgaData
                 |> (\m ->
                         { m
                             | step =
-                                Dict.get "step" query |> withDefault [] |> List.head |> withDefault "" |> stepDecoder
+                                Dict.get "step" session.query |> withDefault [] |> List.head |> withDefault "" |> stepDecoder
                         }
                    )
             , Cmd.none

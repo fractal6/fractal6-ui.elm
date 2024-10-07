@@ -38,7 +38,7 @@ import Form.Help as Help
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, target, title)
 import Html.Events exposing (onClick)
@@ -52,7 +52,7 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import Session exposing (CommonMsg, Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..), Session)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -114,7 +114,7 @@ type alias Model =
     , can_referer : Maybe Url
 
     -- Common
-    , conf : Conf
+    , session : Session
     , help : Help.State
     , refresh_trial : Int
     , empty : {}
@@ -239,15 +239,8 @@ init global flags =
                 LoggedOut ->
                     ( initUserctx, [], [ Global.navigate <| Route.Login ] )
 
-        -- Query parameters
-        conf =
-            getConf global
-
-        query =
-            queryParser global.url
-
         menu =
-            Dict.get "m" query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" global.session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         model =
             { uctx = uctx
@@ -276,8 +269,8 @@ init global flags =
                     global.session.referer
 
             -- common
-            , conf = conf
-            , help = Help.init global.session.user conf
+            , session = global.session
+            , help = Help.init global.session
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
@@ -578,7 +571,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noNotificationsYet ]
 
                             else
-                                viewNotifications model.conf notifications
+                                viewNotifications model.session notifications
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -596,7 +589,7 @@ view_ global model =
                                 p [ class "content" ] [ text T.noAssignedYet ]
 
                             else
-                                viewAssigned model.commonOp model.conf assigned
+                                viewAssigned model.commonOp model.session assigned
 
                         LoadingSlowly ->
                             div [ class "spinner" ] []
@@ -636,16 +629,16 @@ viewMenu model =
         ]
 
 
-viewNotifications : Conf -> UserEvents -> Html Msg
-viewNotifications conf notifications =
+viewNotifications : Session -> UserEvents -> Html Msg
+viewNotifications session notifications =
     notifications
         |> List.map
-            (\ue -> Lazy.lazy2 viewUserEvent conf ue)
+            (\ue -> Lazy.lazy2 viewUserEvent session ue)
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : Conf -> UserEvent -> Html Msg
-viewUserEvent conf ue =
+viewUserEvent : Session -> UserEvent -> Html Msg
+viewUserEvent session ue =
     let
         firstEvent =
             List.head ue.event
@@ -703,7 +696,7 @@ viewUserEvent conf ue =
                         , ( "icon", eventToIcon e.event_type )
                         ]
             in
-            viewNotif False ue node (viewEventMedia conf False ev)
+            viewNotif False ue node (viewEventMedia session False ev)
 
         Just (ContractEvent c) ->
             let
@@ -724,7 +717,7 @@ viewUserEvent conf ue =
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
             in
-            viewNotif True ue node (viewContractMedia conf ev)
+            viewNotif True ue node (viewContractMedia session ev)
 
         Just (NotifEvent n) ->
             case n.tension of
@@ -763,7 +756,7 @@ viewUserEvent conf ue =
                                 , ( "icon", "icon-info" )
                                 ]
                     in
-                    viewNotif False ue node (viewNotifMedia conf ev)
+                    viewNotif False ue node (viewNotifMedia session ev)
 
                 Nothing ->
                     -- Something has beed removed, contract ?
@@ -812,8 +805,8 @@ editableEvent event =
             True
 
 
-viewAssigned : CommonMsg Msg -> Conf -> Dict String (List Tension) -> Html Msg
-viewAssigned commonOp conf tensions_d =
+viewAssigned : CommonMsg Msg -> Session -> Dict String (List Tension) -> Html Msg
+viewAssigned commonOp session tensions_d =
     Dict.keys tensions_d
         |> List.map
             (\rootid ->
@@ -827,7 +820,7 @@ viewAssigned commonOp conf tensions_d =
                 div []
                     [ div [ class "mb-2" ] [ span [ class "subtitle" ] [ text orgaName ] ]
                     , tensions
-                        |> List.map (\t -> Lazy.lazy7 mediaTension commonOp conf (nid2rootid t.receiver.nameid) t True True "is-size-6 t-o")
+                        |> List.map (\t -> Lazy.lazy7 mediaTension commonOp session (nid2rootid t.receiver.nameid) t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab", class "box is-shrinked mb-5" ]
                     ]
             )

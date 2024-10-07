@@ -48,7 +48,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -319,21 +319,17 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        session =
+            global.session
+
         apis =
-            global.session.apis
-
-        conf =
-            getConf global
-
-        -- Query parameters
-        query =
-            queryParser global.url
+            session.apis
 
         menu =
-            Dict.get "m" query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         action =
-            Dict.get "a" query |> withDefault [] |> List.head |> withDefault ""
+            Dict.get "a" session.query |> withDefault [] |> List.head |> withDefault ""
 
         -- Focus
         newFocus =
@@ -343,18 +339,18 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState SettingsBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState SettingsBaseUri session.referer global.url session.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                global.session.path_data
+                session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , menuFocus = menu
             , menuList = menuList
             , colorPicker = ColorPicker.init
-            , artefact_form = initArtefactNodeForm global.session.user newFocus.nameid ColorPicker.initColor
+            , artefact_form = initArtefactNodeForm session.user newFocus.nameid ColorPicker.initColor
             , hasUnsavedData = False
 
             -- Labels
@@ -367,7 +363,7 @@ init global flags =
             , label_result_del = NotAsked
 
             -- Roles
-            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.user
+            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView session.user
             , showMandate = ""
             , roles = Loading
             , roles_top = RemoteData.Loading
@@ -387,15 +383,15 @@ init global flags =
             , url = global.url
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus global.session.user
-            , help = Help.init global.session.user conf
-            , tensionForm = NTF.init global.session.user conf
+            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus session.user
+            , help = Help.init session
+            , tensionForm = NTF.init session
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
-            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
-            , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , actionPanel = ActionPanel.init session.user session.screen
             }
 
         cmds =

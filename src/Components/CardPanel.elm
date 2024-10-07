@@ -58,7 +58,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, CommonMsg, Conf, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
+import Session exposing (Apis, CommonMsg, Session, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -96,16 +96,16 @@ type alias Model =
     , comments : Comments.State
 
     -- Common
-    , conf : Conf
-    , mobileConf : Conf
+    , session : Session
+    , mobileConf : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
     }
 
 
-initModel : Conf -> GqlData LocalGraph -> NodeFocus -> UserState -> Model
-initModel conf path focus user =
+initModel : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> Model
+initModel session path focus user =
     { user = user
     , node_focus = focus
     , isOpen = False
@@ -128,17 +128,17 @@ initModel conf path focus user =
     , comments = Comments.init focus.nameid "" user
 
     -- Common
-    , conf = conf
-    , mobileConf = { conf | screen = { w = 1, h = 1 } }
+    , session = session
+    , mobileConf = { session | screen = { w = 1, h = 1 } }
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , commonOp = CommonMsg NoMsg LogErr
     }
 
 
-init : Conf -> GqlData LocalGraph -> NodeFocus -> UserState -> State
-init conf path focus user =
-    initModel conf path focus user |> State
+init : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> State
+init session path focus user =
+    initModel session path focus user |> State
 
 
 
@@ -149,7 +149,7 @@ init conf path focus user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.conf model.path_data model.node_focus model.user
+    initModel model.session model.path_data model.node_focus model.user
 
 
 
@@ -746,7 +746,7 @@ viewPanelTension path_data t model =
 
                   else
                     viewTitle t model
-                , viewSubTitle model.conf t model
+                , viewSubTitle model.session t model
                 , hr [ class "my-0" ] []
                 ]
             ]
@@ -829,8 +829,8 @@ viewTitleEdit new old result =
         ]
 
 
-viewSubTitle : Conf -> TensionPanel -> Model -> Html Msg
-viewSubTitle conf t model =
+viewSubTitle : Session -> TensionPanel -> Model -> Html Msg
+viewSubTitle session t model =
     div [ class "tensionSubtitle level mt-4" ]
         [ div [ class "level-left" ] <|
             List.map (div [ class "level-item" ] << List.singleton) <|
@@ -849,7 +849,7 @@ viewSubTitle conf t model =
 
                   else
                     text ""
-                , viewTensionDateAndUser conf "is-discrete" t.createdAt t.createdBy
+                , viewTensionDateAndUser session "is-discrete" t.createdAt t.createdBy
                 ]
         , div [ class "level-right" ] <|
             List.map (div [ class "level-item" ] << List.singleton) <|
@@ -1075,7 +1075,7 @@ viewPanelDraft draft model =
                             [ div [ class "level-left" ]
                                 [ span [ class "level-item tag is-rounded has-background-tag" ]
                                     [ div [ class "help my-2" ] [ A.icon1 "icon-circle-draft" "Draft" ] ]
-                                , div [ class "level-item" ] [ viewTensionDateAndUser model.conf "is-discrete" draft.createdAt draft.createdBy ]
+                                , div [ class "level-item" ] [ viewTensionDateAndUser model.session "is-discrete" draft.createdAt draft.createdBy ]
                                 ]
                             ]
                         ]
@@ -1084,15 +1084,15 @@ viewPanelDraft draft model =
             ]
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
-                [ div [ class "column is-9" ] [ viewDraftComment model.conf model.isMessageEdit model.message_result model.tension_form draft ]
+                [ div [ class "column is-9" ] [ viewDraftComment model.session model.isMessageEdit model.message_result model.tension_form draft ]
                 , div [ class "column pl-1" ] [ viewDraftSidePane draft model ]
                 ]
             ]
         ]
 
 
-viewDraftComment : Conf -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
-viewDraftComment conf isEdit result form draft =
+viewDraftComment : Session -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
+viewDraftComment session isEdit result form draft =
     let
         message =
             withDefault "" draft.message
@@ -1102,7 +1102,7 @@ viewDraftComment conf isEdit result form draft =
             new =
                 Dict.get "message" form.post |> withDefault message
         in
-        viewMessageEdit conf new message form result
+        viewMessageEdit session new message form result
 
     else
         div [ class "message" ]
@@ -1123,8 +1123,8 @@ viewDraftComment conf isEdit result form draft =
             ]
 
 
-viewMessageEdit : Conf -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
-viewMessageEdit conf new old form result =
+viewMessageEdit : Session -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
+viewMessageEdit session new old form result =
     let
         isLoading =
             result == LoadingSlowly
@@ -1136,7 +1136,7 @@ viewMessageEdit conf new old form result =
             List.length <| String.lines new
 
         ( max_len, min_len ) =
-            if isMobile conf.screen then
+            if isMobile session.screen then
                 ( 6, 4 )
 
             else

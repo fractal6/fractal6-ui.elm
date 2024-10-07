@@ -23,7 +23,6 @@ module Global exposing
     ( Flags
     , Model
     , Msg(..)
-    , getConf
     , init
     , navigate
     , now
@@ -45,7 +44,6 @@ import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
 import Extra exposing (showIf, ternary, unwrap2)
-import Extra.Url exposing (queryParser)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -66,7 +64,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -85,34 +83,6 @@ type alias Model =
     , url : Url
     , key : Nav.Key
     , session : Session
-    , now : Time.Posix
-    }
-
-
-getConf : Model -> Conf
-getConf global =
-    let
-        query =
-            queryParser global.url
-
-        viewMode =
-            Dict.get "view" query
-                |> withDefault []
-                |> (\x ->
-                        if List.any (\y -> List.member y x) [ "shared", "iframe" ] then
-                            IFrameView
-
-                        else
-                            DesktopView
-                   )
-    in
-    { screen = global.session.screen
-    , now = global.now
-    , lang = global.session.lang
-    , theme = global.session.theme
-    , url = global.url
-    , user = global.session.user
-    , viewMode = viewMode
     }
 
 
@@ -124,9 +94,9 @@ init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         ( session, cmds ) =
-            fromLocalSession flags
+            fromLocalSession url flags
     in
-    ( Model flags url key { session | system_notification = RemoteData.NotAsked } (Time.millisToPosix 0)
+    ( Model flags url key { session | system_notification = RemoteData.NotAsked }
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
@@ -217,7 +187,11 @@ update msg model =
             ( model, Nav.replaceUrl model.key url )
 
         SetTime time ->
-            ( { model | now = time }, Cmd.none )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | now = time } }, Cmd.none )
 
         UpdateReferer url ->
             let

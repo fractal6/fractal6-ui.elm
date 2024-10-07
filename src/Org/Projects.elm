@@ -50,7 +50,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
@@ -66,7 +66,7 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
-import Session exposing (Conf, GlobalCmd(..), Screen, Theme(..))
+import Session exposing (GlobalCmd(..), Screen, Session, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
@@ -194,7 +194,7 @@ type alias Model =
     , project_result_del : GqlData ProjectFull
 
     -- Common
-    , conf : Conf
+    , session : Session
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
@@ -369,15 +369,11 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        apis =
-            global.session.apis
+        session =
+            global.session
 
-        conf =
-            getConf global
-
-        -- Query parameters
         query =
-            queryParser global.url
+            session.query
 
         -- Focus
         newFocus =
@@ -387,16 +383,16 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState ProjectsBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState ProjectsBaseUri session.referer global.url session.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                global.session.path_data
+                session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , hasUnsavedData = False
-            , project_form = initProjectForm global.session.user newFocus.nameid
+            , project_form = initProjectForm session.user newFocus.nameid
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
@@ -413,23 +409,23 @@ init global flags =
             , project_result_del = NotAsked
 
             -- Common
-            , conf = conf
+            , session = session
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , tensionForm = NTF.init global.session.user conf
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
-            , help = Help.init global.session.user conf
+            , tensionForm = NTF.init session
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
+            , help = Help.init session
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
-            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
-            , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , authModal = AuthModal.init session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , actionPanel = ActionPanel.init session.user session.screen
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
+            [ ternary fs.focusChange (queryLocalGraph session.apis newFocus.nameid True (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , send DoLoad
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
@@ -1045,10 +1041,10 @@ view_ global model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ if model.project_add then
-                viewNewOrEditProject model.conf True model
+                viewNewOrEditProject model.session True model
 
               else if model.project_edit /= Nothing then
-                viewNewOrEditProject model.conf False model
+                viewNewOrEditProject model.session False model
 
               else
                 viewDefault global.session.user model
@@ -1056,8 +1052,8 @@ view_ global model =
         ]
 
 
-viewNewOrEditProject : Conf -> Bool -> Model -> Html Msg
-viewNewOrEditProject conf isNew model =
+viewNewOrEditProject : Session -> Bool -> Model -> Html Msg
+viewNewOrEditProject session isNew model =
     let
         title =
             ternary isNew T.newProject T.editProject
@@ -1191,7 +1187,7 @@ viewNewOrEditProject conf isNew model =
         , if isNew then
             div [ class "column is-half" ]
                 [ figure [ class "image is-fullwidth has-border-light is-rounded" ]
-                    [ case conf.theme of
+                    [ case session.theme of
                         DarkTheme ->
                             img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
 
@@ -1249,7 +1245,7 @@ viewProjects model =
     div [ class "columns" ]
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
-            , viewProjectsList model.conf model.node_focus model.pattern_init model.statusFilter model.projects
+            , viewProjectsList model.session model.node_focus model.pattern_init model.statusFilter model.projects
             ]
         ]
 
@@ -1327,8 +1323,8 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : Conf -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
-viewProjectsList conf focus pattern statusFilter data =
+viewProjectsList : Session -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList session focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -1338,7 +1334,7 @@ viewProjectsList conf focus pattern statusFilter data =
             Success items ->
                 if List.length items > 0 then
                     items
-                        |> List.map (\x -> Lazy.lazy4 mediaProject conf focus statusFilter x)
+                        |> List.map (\x -> Lazy.lazy4 mediaProject session focus statusFilter x)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= "" then
@@ -1361,8 +1357,8 @@ viewProjectsList conf focus pattern statusFilter data =
         ]
 
 
-mediaProject : Conf -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
-mediaProject conf focus statusFilter project =
+mediaProject : Session -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject session focus statusFilter project =
     let
         ( status_new, status_txt ) =
             case statusDecoder statusFilter of
@@ -1396,7 +1392,7 @@ mediaProject conf focus statusFilter project =
                 [ div [ class "level-left" ]
                     [ span [ class "is-discrete" ] <|
                         List.intersperse (text " ") <|
-                            [ textH T.updated, text (formatDate conf.lang conf.now project.updateAt) ]
+                            [ textH T.updated, text (formatDate session.lang session.now project.updateAt) ]
                     ]
                 , div [ class "level-right" ] []
                 ]

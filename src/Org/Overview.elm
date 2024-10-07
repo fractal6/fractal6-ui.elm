@@ -50,7 +50,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
@@ -64,7 +64,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
-import Session exposing (CommonMsg, Conf, GlobalCmd(..), NodesQuickSearch, isMobile)
+import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, Session, isMobile)
 import String
 import Text as T
 import Time
@@ -196,7 +196,7 @@ type alias Model =
     , leaders : List User
 
     -- common
-    , conf : Conf
+    , session : Session
     , refresh_trial : Int
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -230,9 +230,6 @@ init global flags =
 
         apis =
             session.apis
-
-        conf =
-            getConf global
 
         -- Focus
         newFocus =
@@ -272,7 +269,7 @@ init global flags =
                 session.window_pos
                     |> withDefault { topRight = "doc", bottomLeft = "activities" }
                     |> (\x ->
-                            if isMobile global.session.screen then
+                            if isMobile session.screen then
                                 { x | topRight = x.bottomLeft, bottomLeft = x.topRight }
 
                             else
@@ -280,26 +277,26 @@ init global flags =
                        )
             , node_hovered = Nothing
             , next_focus = Nothing
-            , recent_activity_tab = global.session.recent_activity_tab |> withDefault TensionTab
+            , recent_activity_tab = session.recent_activity_tab |> withDefault TensionTab
             , depth = Nothing
             , legend = False
             , leaders = []
 
             -- Common
-            , conf = conf
+            , session = session
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
-            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus global.session.user
-            , help = Help.init session.user conf
-            , tensionForm = NTF.init session.user conf
-            , actionPanel = ActionPanel.init session.user global.session.screen
+            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session.user
+            , help = Help.init session
+            , tensionForm = NTF.init session
+            , actionPanel = ActionPanel.init session.user session.screen
             , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
             , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
             }
 
         cmds_ =
@@ -1018,7 +1015,7 @@ view_ global model =
                             |> Maybe.map
                                 (\x ->
                                     div [ class "mb-4 pb-1" ]
-                                        [ viewPinnedTensions 2 model.conf model.node_focus x ]
+                                        [ viewPinnedTensions 2 model.session model.node_focus x ]
                                 )
                             |> withDefault (text "")
                         , viewActivies model
@@ -1463,7 +1460,7 @@ viewActivies model =
                     case model.tensions_data of
                         Success tensions ->
                             if List.length tensions > 0 then
-                                List.map (\x -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid x False True "is-size-6") tensions
+                                List.map (\x -> Lazy.lazy7 mediaTension model.commonOp model.session model.node_focus.nameid x False True "is-size-6") tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ class "mx-4 discrete-link", href (toLink TensionsBaseUri model.node_focus.nameid []) ] [ text T.seeFullList ]
                                             , text "|"
@@ -1489,7 +1486,7 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> Lazy.lazy2 viewEventNotif model.conf x) events
+                            List.map (\x -> Lazy.lazy2 viewEventNotif model.session x) events
                                 |> div [ id "journalTab" ]
 
                         Failure err ->
@@ -1504,8 +1501,8 @@ viewActivies model =
         ]
 
 
-viewEventNotif : Conf -> EventNotif -> Html Msg
-viewEventNotif conf e =
+viewEventNotif : Session -> EventNotif -> Html Msg
+viewEventNotif session e =
     let
         ue =
             UserEvent "" False []
@@ -1529,7 +1526,7 @@ viewEventNotif conf e =
         node =
             e.tension.receiver
     in
-    viewEventMedia conf True ev
+    viewEventMedia session True ev
 
 
 
