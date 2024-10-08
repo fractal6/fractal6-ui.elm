@@ -104,38 +104,43 @@ update msg model =
             ( model, Nav.load href )
 
         UrlChanged url ->
-            ( model
-            , Cmd.batch
-                [ Global.send (UrlChanged_ url)
-                , Cmd.map Global (Global.send (UpdateReferer model.url))
-                , Cmd.map Global Global.now
-                ]
-            )
+            ( model, Global.send (UrlChanged_ url) )
 
         UrlChanged_ url ->
             let
-                global =
-                    model.global |> (\g -> { g | url = url })
-
-                ( page, pageCmd, globalCmd ) =
-                    Pages.init (fromUrl url) global
+                -- Global model update
+                query =
+                    queryParser url
 
                 session =
                     model.global.session
 
-                query =
-                    queryParser url
-
                 sessionUpdated =
-                    { session | url = url, query = query, viewMode = encodeViewMode query }
+                    { session
+                        | url = url
+                        , query = query
+                        , viewMode = encodeViewMode query
+                        , referer =
+                            case model.url.path of
+                                "/logout" ->
+                                    session.referer
 
-                l =
-                    Debug.log "" url
+                                _ ->
+                                    Just model.url
+                    }
+
+                --
+                global =
+                    model.global |> (\g -> { g | url = url, session = sessionUpdated })
+
+                ( page, pageCmd, globalCmd ) =
+                    Pages.init (fromUrl url) global
             in
-            ( { model | url = url, page = page, global = { global | session = sessionUpdated } }
+            ( { model | url = url, page = page, global = global }
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
+                , Cmd.map Global Global.tickNow
 
                 -- @warning: bulma_driver:
                 -- * check if jwt cookie has expired !
@@ -202,7 +207,7 @@ view model =
     Global.view
         { page = Pages.view model.page model.global |> documentMap Page
         , global = model.global
-        , url = model.url -- @debug url change in global is not passed to Global.view. Why ?
+        , url = model.url
         , msg1 = model.nvt_msg1
         , msg2 = model.nvt_msg2
         , onClearNotif = model.onClearNotif

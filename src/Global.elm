@@ -25,11 +25,11 @@ module Global exposing
     , Msg(..)
     , init
     , navigate
-    , now
     , send
     , sendNow
     , sendSleep
     , subscriptions
+    , tickNow
     , update
     , view
     )
@@ -100,7 +100,7 @@ init flags url key =
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
-         , now
+         , tickNow
          , send UpdateUserToken
          , sendSleep RefreshNotifCount 1000
          ]
@@ -118,7 +118,6 @@ type Msg
     | NavigateRaw String
     | ReplaceUrl String
     | SetTime Time.Posix
-    | UpdateReferer Url
     | UpdateCanReferer (Maybe Url)
       -- Update Session Data
     | UpdateSessionFocus (Maybe NodeFocus)
@@ -192,21 +191,6 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | now = time } }, Cmd.none )
-
-        UpdateReferer url ->
-            let
-                session =
-                    model.session
-
-                referer =
-                    case url.path of
-                        "/logout" ->
-                            session.referer
-
-                        _ ->
-                            Just url
-            in
-            ( { model | session = { session | referer = referer } }, Cmd.none )
 
         UpdateCanReferer referer ->
             let
@@ -849,8 +833,8 @@ viewNotif msg isOk closeMsg =
 -- COMMANDS
 
 
-now : Cmd Msg
-now =
+tickNow : Cmd Msg
+tickNow =
     Task.perform SetTime Time.now
 
 

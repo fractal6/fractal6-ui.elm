@@ -1631,6 +1631,7 @@ view_ global model =
     div [ id "tensions", class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
             [ if model.viewMode == ListView then
+                -- Pinned tension
                 withMaybeData model.path_data
                     |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
                     |> withDefault Nothing
