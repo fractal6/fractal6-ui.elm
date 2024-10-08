@@ -1493,7 +1493,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , orgaInfo = global.session.orgaInfo
+            , session = global.session
             }
 
         panelData =
@@ -1644,7 +1644,7 @@ viewTension u t model =
                         [ span [ class "is-human" ] [ text t.title ]
                         , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
-                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
+                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow is-hidden-embed"
                                 , attribute "data-tooltip" T.editTitle
                                 , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
@@ -1723,7 +1723,7 @@ viewTension u t model =
                             model.contractsPage
                             |> Html.map ContractsPageMsg
                 ]
-            , div [ class "column is-3" ]
+            , div [ class "column is-3 is-hidden-embed" ]
                 [ viewSidePane u t model ]
             ]
         ]

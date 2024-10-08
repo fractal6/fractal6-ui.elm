@@ -71,7 +71,20 @@ type Theme
 
 type ViewMode
     = DesktopView
-    | IFrameView
+    | EmbedView
+
+
+encodeViewMode : Dict String (List String) -> ViewMode
+encodeViewMode query =
+    Dict.get "view" query
+        |> withDefault []
+        |> (\x ->
+                if List.member "embed" x then
+                    EmbedView
+
+                else
+                    DesktopView
+           )
 
 
 isMobile : Screen -> Bool
@@ -346,15 +359,7 @@ fromLocalSession url flags =
             queryParser url
 
         viewMode =
-            Dict.get "view" query
-                |> withDefault []
-                |> (\x ->
-                        if List.any (\y -> List.member y x) [ "shared", "iframe" ] then
-                            IFrameView
-
-                        else
-                            DesktopView
-                   )
+            encodeViewMode query
     in
     ( { apis = flags.apis
       , referer = Nothing

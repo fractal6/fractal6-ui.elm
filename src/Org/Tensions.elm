@@ -1582,7 +1582,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , orgaInfo = global.session.orgaInfo
+            , session = global.session
             }
 
         panelData =
@@ -1598,8 +1598,7 @@ view global model =
             ++ T.tensions
     , body =
         [ div [ class "orgPane" ]
-            [ showIf (model.session.viewMode == DesktopView)
-                (HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg)
+            [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
             , div [ id "mainPane" ]
                 [ view_ global model
                 , if model.viewMode == CircleView then
@@ -1644,11 +1643,10 @@ view_ global model =
 
               else
                 text ""
-            , showIf (model.session.viewMode == DesktopView) <|
-                div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
-                    [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
-                        [ viewSearchBar model ]
-                    ]
+            , div [ class "columns is-centered is-hidden-embed", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
+                [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
+                    [ viewSearchBar model ]
+                ]
             , case model.children of
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -1964,7 +1962,7 @@ viewListTensions model =
     in
     div [ class "columns" ]
         [ showIf (model.session.viewMode == DesktopView) <|
-            div [ class "column is-2" ] [ viewCatMenu model.typeFilter ]
+            div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
                 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter

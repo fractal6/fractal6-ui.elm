@@ -29,6 +29,7 @@ import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
 import Html
 import Ports
+import Session exposing (encodeViewMode)
 import Url exposing (Url)
 
 
@@ -122,8 +123,14 @@ update msg model =
                 session =
                     model.global.session
 
+                query =
+                    queryParser url
+
                 sessionUpdated =
-                    { session | url = url, query = queryParser url }
+                    { session | url = url, query = query, viewMode = encodeViewMode query }
+
+                l =
+                    Debug.log "" url
             in
             ( { model | url = url, page = page, global = { global | session = sessionUpdated } }
             , Cmd.batch

@@ -1005,7 +1005,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , orgaInfo = global.session.orgaInfo
+            , session = global.session
             }
 
         panelData =

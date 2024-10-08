@@ -816,11 +816,11 @@ layout { page, url, session, msg1, msg2, onClearNotif } =
     in
     { title = page.title
     , body =
-        [ div [ id "app" ]
-            [ Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
+        [ div [ id "app", classList [ ( "embed", session.viewMode == EmbedView ) ] ]
+            [ showIf (session.viewMode /= EmbedView) <| Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
             , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
             , div [ id "body" ] page.body
-            , Footbar.view
+            , Footbar.view session
             ]
         ]
     }

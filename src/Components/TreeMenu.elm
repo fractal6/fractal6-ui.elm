@@ -615,6 +615,7 @@ view op (State model) =
         in
         div
             [ id "tree-menu"
+            , class "is-hidden-embed"
             , classList [ ( "off", not isActive ) ]
             , onMouseLeave (ternary model.isHover (OnToggleHover False) NoMsg)
             ]
