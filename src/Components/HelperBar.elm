@@ -37,7 +37,7 @@ import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
-import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, ViewMode(..))
 import Text as T
 
 
@@ -200,7 +200,7 @@ subscriptions =
 type alias Op =
     { path_data : Maybe LocalGraph
     , isPanelOpen : Bool
-    , orgaInfo : Maybe OrgaInfo
+    , session : Session
     }
 
 
@@ -208,10 +208,22 @@ view : Op -> State -> Html Msg
 view op (State model) =
     -- @debug: padding-top overflow column.width is-paddingless
     div [ id "helperBar", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
-            [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op model ]
-            , viewNavLevel op model
-            ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ] <|
+            case op.session.viewMode of
+                DesktopView ->
+                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op model ]
+                    , viewNavLevel op model
+                    ]
+
+                EmbedView ->
+                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevelEmbed op model ] ]
+        ]
+
+
+viewPathLevelEmbed : Op -> Model -> Html Msg
+viewPathLevelEmbed op model =
+    nav [ class "level" ]
+        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
         ]
 
 
@@ -229,7 +241,7 @@ viewPathLevel op model =
                     ( "", False )
 
         ( watch_icon, watch_txt, watch_title ) =
-            if unwrap2 False .isWatching op.orgaInfo then
+            if unwrap2 False .isWatching op.session.orgaInfo then
                 ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganisation )
 
             else
@@ -247,7 +259,7 @@ viewPathLevel op model =
                         , onClick OnToggleWatch
                         ]
                         [ A.icon1 watch_icon watch_txt
-                        , case unwrap 0 .n_watchers op.orgaInfo of
+                        , case unwrap 0 .n_watchers op.session.orgaInfo of
                             0 ->
                                 text ""
 
@@ -305,7 +317,7 @@ viewNavLevel op model =
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink TensionsBaseUri focusid []) ]
                     [ A.icon1 "icon-exchange" T.tensions
-                    , case unwrap 0 .n_tensions op.orgaInfo of
+                    , case unwrap 0 .n_tensions op.session.orgaInfo of
                         0 ->
                             text ""
 
@@ -316,7 +328,7 @@ viewNavLevel op model =
              , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink ProjectsBaseUri focusid []) ]
                     [ A.icon1 "icon-layout" T.projects
-                    , case unwrap 0 .n_projects op.orgaInfo of
+                    , case unwrap 0 .n_projects op.session.orgaInfo of
                         0 ->
                             text ""
 
@@ -343,7 +355,7 @@ viewNavLevel op model =
                                 [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
                                     [ a [ href (toLink MembersBaseUri focusid []) ]
                                         [ A.icon1 "icon-user" T.members
-                                        , case unwrap 0 .n_members op.orgaInfo of
+                                        , case unwrap 0 .n_members op.session.orgaInfo of
                                             0 ->
                                                 text ""
 

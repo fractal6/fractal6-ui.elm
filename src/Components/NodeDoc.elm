@@ -47,7 +47,7 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Session exposing (Conf)
+import Session exposing (Session)
 import Text as T
 import Time
 
@@ -431,7 +431,7 @@ type alias OrgaNodeData =
 
 
 type alias Op msg =
-    { conf : Conf
+    { session : Session
     , data : NodeDoc
     , result : GqlData Tension -- result from new tension components
     , publish_result : GqlData TensionBlobFlag
@@ -583,7 +583,7 @@ viewNodeStatus isAdmin op =
     case op.blob.pushedFlag of
         Just flag ->
             div [ class "has-text-success is-italic" ]
-                [ text (T.published ++ " " ++ formatDate op.conf.lang op.conf.now flag) ]
+                [ text (T.published ++ " " ++ formatDate op.session.lang op.session.now flag) ]
 
         Nothing ->
             div [ class "field has-addons" ]
@@ -656,7 +656,7 @@ viewBlob data op_m =
                                )
 
                 NodeVersions ->
-                    viewVersions op.conf op.tension_blobs
+                    viewVersions op.session op.tension_blobs
 
                 NoView ->
                     text ""
@@ -1225,13 +1225,13 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : Conf -> GqlData TensionBlobs -> Html msg
-viewVersions conf blobsData =
-    Lazy.lazy2 viewVersions_ conf blobsData
+viewVersions : Session -> GqlData TensionBlobs -> Html msg
+viewVersions session blobsData =
+    Lazy.lazy2 viewVersions_ session blobsData
 
 
-viewVersions_ : Conf -> GqlData TensionBlobs -> Html msg
-viewVersions_ conf blobsData =
+viewVersions_ : Session -> GqlData TensionBlobs -> Html msg
+viewVersions_ session blobsData =
     case blobsData of
         Success tblobs ->
             let
@@ -1246,7 +1246,7 @@ viewVersions_ conf blobsData =
                         ]
                     , tblobs.blobs
                         |> withDefault []
-                        |> List.indexedMap (\i d -> viewVerRow conf i d)
+                        |> List.indexedMap (\i d -> viewVerRow session i d)
                         |> List.concat
                         |> tbody []
                     ]
@@ -1262,17 +1262,17 @@ viewVersions_ conf blobsData =
             text ""
 
 
-viewVerRow : Conf -> Int -> Blob -> List (Html msg)
-viewVerRow conf i blob =
+viewVerRow : Session -> Int -> Blob -> List (Html msg)
+viewVerRow session i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt conf blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate conf.lang conf.now flag)
+                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate session.lang session.now flag)
                         ]
                         [ A.icon "icon-flag" ]
 

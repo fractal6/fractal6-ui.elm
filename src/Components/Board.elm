@@ -52,7 +52,7 @@ import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, Project
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
-import Session exposing (Apis, Conf, GlobalCmd(..))
+import Session exposing (Apis, Session, GlobalCmd(..))
 import Task
 import Text as T
 

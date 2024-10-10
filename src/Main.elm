@@ -23,12 +23,15 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
+import Extra.Url exposing (getUrlQueryParam, queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
 import Html
 import Ports
+import Session exposing (encodeViewMode)
 import Url exposing (Url)
+import Url.Parser.Query
 
 
 main : Program Flags Model Msg
@@ -92,7 +95,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LinkClicked (Browser.Internal url) ->
-            if Route.fromUrl url == Just Route.Logout then
+            if getUrlQueryParam "view" model.url == Just "embed" then
+                ( model, Ports.openInNewTab (Url.toString url) )
+
+            else if Route.fromUrl url == Just Route.Logout then
                 ( model, Nav.replaceUrl model.key (Url.toString url) )
 
             else
@@ -102,18 +108,34 @@ update msg model =
             ( model, Nav.load href )
 
         UrlChanged url ->
-            ( model
-            , Cmd.batch
-                [ Global.send (UrlChanged_ url)
-                , Cmd.map Global (Global.send (UpdateReferer model.url))
-                , Cmd.map Global Global.now
-                ]
-            )
+            ( model, Global.send (UrlChanged_ url) )
 
         UrlChanged_ url ->
             let
+                -- Global model update
+                query =
+                    queryParser url
+
+                session =
+                    model.global.session
+
+                sessionUpdated =
+                    { session
+                        | url = url
+                        , query = query
+                        , viewMode = encodeViewMode query
+                        , referer =
+                            case model.url.path of
+                                "/logout" ->
+                                    session.referer
+
+                                _ ->
+                                    Just model.url
+                    }
+
+                --
                 global =
-                    model.global |> (\g -> { g | url = url })
+                    model.global |> (\g -> { g | url = url, session = sessionUpdated })
 
                 ( page, pageCmd, globalCmd ) =
                     Pages.init (fromUrl url) global
@@ -122,6 +144,7 @@ update msg model =
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
+                , Cmd.map Global Global.tickNow
 
                 -- @warning: bulma_driver:
                 -- * check if jwt cookie has expired !
@@ -188,7 +211,7 @@ view model =
     Global.view
         { page = Pages.view model.page model.global |> documentMap Page
         , global = model.global
-        , url = model.url -- @debug url change in global is not passed to Global.view. Why ?
+        , url = model.url
         , msg1 = model.nvt_msg1
         , msg2 = model.nvt_msg2
         , onClearNotif = model.onClearNotif

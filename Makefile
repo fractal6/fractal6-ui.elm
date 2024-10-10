@@ -200,8 +200,7 @@ install:
 	# Node.js
 	npm install
 	# Python
-	pip install docopt
-	pip install loguru
+	pip install docopt-ng
 
 
 elm-spa:

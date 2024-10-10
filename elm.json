@@ -31,8 +31,8 @@
             "justgook/elm-image": "5.0.0",
             "justinmimbs/date": "4.1.0",
             "krisajenkins/remotedata": "6.0.1",
-            "rtfeldman/elm-iso8601-date-strings": "1.1.4",
-            "ryannhg/elm-spa": "4.1.0"
+            "rtfeldman/elm-iso8601-date-strings": "1.1.4"
+
         },
         "indirect": {
             "avh4/elm-color": "1.0.0",

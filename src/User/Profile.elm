@@ -30,7 +30,7 @@ import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Extra exposing (ternary, unwrap)
 import Form.Help as Help
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h1, i, p, text)
 import Html.Attributes exposing (class, id)
 import Html.Lazy as Lazy
@@ -118,9 +118,6 @@ init global flags =
         apis =
             global.session.apis
 
-        conf =
-            getConf global
-
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
@@ -131,7 +128,7 @@ init global flags =
 
             -- common
             , refresh_trial = 0
-            , help = Help.init global.session.user conf
+            , help = Help.init global.session
             , authModal = AuthModal.init global.session.user Nothing
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr

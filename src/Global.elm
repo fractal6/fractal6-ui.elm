@@ -23,14 +23,13 @@ module Global exposing
     ( Flags
     , Model
     , Msg(..)
-    , getConf
     , init
     , navigate
-    , now
     , send
     , sendNow
     , sendSleep
     , subscriptions
+    , tickNow
     , update
     , view
     )
@@ -65,7 +64,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (Conf, LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, fromLocalSession, resetSession)
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -84,18 +83,6 @@ type alias Model =
     , url : Url
     , key : Nav.Key
     , session : Session
-    , now : Time.Posix
-    }
-
-
-getConf : Model -> Conf
-getConf global =
-    { screen = global.session.screen
-    , now = global.now
-    , lang = global.session.lang
-    , theme = global.session.theme
-    , url = global.url
-    , user = global.session.user
     }
 
 
@@ -107,13 +94,13 @@ init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         ( session, cmds ) =
-            fromLocalSession flags
+            fromLocalSession url flags
     in
-    ( Model flags url key { session | system_notification = RemoteData.NotAsked } (Time.millisToPosix 0)
+    ( Model flags url key { session | system_notification = RemoteData.NotAsked }
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
-         , now
+         , tickNow
          , send UpdateUserToken
          , sendSleep RefreshNotifCount 1000
          ]
@@ -131,7 +118,6 @@ type Msg
     | NavigateRaw String
     | ReplaceUrl String
     | SetTime Time.Posix
-    | UpdateReferer Url
     | UpdateCanReferer (Maybe Url)
       -- Update Session Data
     | UpdateSessionFocus (Maybe NodeFocus)
@@ -200,22 +186,11 @@ update msg model =
             ( model, Nav.replaceUrl model.key url )
 
         SetTime time ->
-            ( { model | now = time }, Cmd.none )
-
-        UpdateReferer url ->
             let
                 session =
                     model.session
-
-                referer =
-                    case url.path of
-                        "/logout" ->
-                            session.referer
-
-                        _ ->
-                            Just url
             in
-            ( { model | session = { session | referer = referer } }, Cmd.none )
+            ( { model | session = { session | now = time } }, Cmd.none )
 
         UpdateCanReferer referer ->
             let
@@ -825,11 +800,11 @@ layout { page, url, session, msg1, msg2, onClearNotif } =
     in
     { title = page.title
     , body =
-        [ div [ id "app" ]
-            [ Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
+        [ div [ id "app", classList [ ( "embed", session.viewMode == EmbedView ) ] ]
+            [ showIf (session.viewMode /= EmbedView) <| Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
             , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
             , div [ id "body" ] page.body
-            , Footbar.view
+            , Footbar.view session
             ]
         ]
     }
@@ -858,8 +833,8 @@ viewNotif msg isOk closeMsg =
 -- COMMANDS
 
 
-now : Cmd Msg
-now =
+tickNow : Cmd Msg
+tickNow =
     Task.perform SetTime Time.now
 
 

@@ -42,7 +42,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (space_, ternary, upH)
+import Extra exposing (showIf, space_, ternary, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -52,7 +52,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (CommonMsg, Conf, GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..), Session, ViewMode(..))
 import Task
 import Text as T
 import Time
@@ -205,7 +205,7 @@ type alias Model =
     , draging : Bool
 
     -- Common
-    , conf : Conf
+    , session : Session
     , refresh_trial : Int
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -604,15 +604,8 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        apis =
-            global.session.apis
-
-        conf =
-            getConf global
-
-        -- Query parameters
-        query =
-            queryParser global.url
+        session =
+            global.session
 
         -- Focus
         newFocus =
@@ -622,30 +615,30 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState TensionsBaseUri session.referer global.url session.node_focus newFocus
 
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = fromMaybeData global.session.path_data Loading
-            , children = fromMaybeDataRest global.session.children RemoteData.Loading
-            , tensions_int = fromMaybeData global.session.tensions_int Loading
-            , tensions_ext = fromMaybeData global.session.tensions_ext Loading
-            , tensions_all = fromMaybeData global.session.tensions_all Loading
-            , query = query
-            , offset = ternary fs.refresh 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
-            , authorsPanel = UserSearchPanel.load global.session.authorsPanel global.session.user
-            , labelsPanel = LabelSearchPanel.load global.session.labelsPanel global.session.user
-            , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
-            , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
-            , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
-            , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
-            , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
-            , sortFilter = Dict.get "sort" query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
-            , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
-            , tensions_count = fromMaybeData global.session.tensions_count Loading
+            , path_data = fromMaybeData session.path_data Loading
+            , children = fromMaybeDataRest session.children RemoteData.Loading
+            , tensions_int = fromMaybeData session.tensions_int Loading
+            , tensions_ext = fromMaybeData session.tensions_ext Loading
+            , tensions_all = fromMaybeData session.tensions_all Loading
+            , query = session.query
+            , offset = ternary fs.refresh 0 (Dict.get "load" session.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , authorsPanel = UserSearchPanel.load session.authorsPanel session.user
+            , labelsPanel = LabelSearchPanel.load session.labelsPanel session.user
+            , pattern = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
+            , viewMode = Dict.get "v" session.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
+            , statusFilter = Dict.get "s" session.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
+            , typeFilter = Dict.get "t" session.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
+            , depthFilter = Dict.get "d" session.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
+            , sortFilter = Dict.get "sort" session.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
+            , authors = Dict.get "u" session.query |> withDefault [] |> List.map (\x -> User x Nothing)
+            , labels = Dict.get "l" session.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
+            , tensions_count = fromMaybeData session.tensions_count Loading
 
             -- Board
             , boardHeight = Nothing
@@ -658,19 +651,19 @@ init global flags =
             , draging = False
 
             -- Common
-            , conf = conf
+            , session = session
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus global.session.user
-            , help = Help.init global.session.user conf
-            , tensionForm = NTF.init global.session.user conf
-            , moveTension = MoveTension.init global.session.user
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
-            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
-            , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.user
+            , help = Help.init session
+            , tensionForm = NTF.init session
+            , moveTension = MoveTension.init session.user
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , actionPanel = ActionPanel.init session.user session.screen
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of
@@ -682,14 +675,14 @@ init global flags =
                    )
 
         refresh2 =
-            case global.session.referer of
+            case session.referer of
                 Just referer ->
                     let
                         oldQuery =
                             queryParser referer
                     in
                     (Dict.remove "v" oldQuery |> Dict.remove "load")
-                        /= (Dict.remove "v" query |> Dict.remove "load")
+                        /= (Dict.remove "v" session.query |> Dict.remove "load")
 
                 --|| Dict.get "v" oldQuery
                 --== Dict.get "v" query
@@ -698,7 +691,7 @@ init global flags =
 
         cmds =
             [ if fs.focusChange || model.path_data == Loading then
-                [ queryLocalGraph apis newFocus.nameid True (GotPath True), send ResetData ]
+                [ queryLocalGraph session.apis newFocus.nameid True (GotPath True), send ResetData ]
 
               else if getTargetsHere model == [] then
                 -- path of children has not been loaded
@@ -1209,14 +1202,14 @@ update global message model =
         -- Board
         OnResize w h ->
             let
-                conf =
-                    model.conf
+                session =
+                    model.session
 
                 newScreen =
                     { w = w, h = h }
 
                 newConf =
-                    { conf | screen = newScreen }
+                    { session | screen = newScreen }
 
                 elmId =
                     case model.viewMode of
@@ -1229,7 +1222,7 @@ update global message model =
                         _ ->
                             ""
             in
-            ( { model | conf = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
+            ( { model | session = newConf }, Task.attempt FitBoard (Dom.getElement elmId), send (UpdateSessionScreen newScreen) )
 
         FitBoard elt ->
             case elt of
@@ -1453,7 +1446,7 @@ update global message model =
                         |> Maybe.map
                             (\o ->
                                 if Tuple.first o then
-                                    [ Nav.replaceUrl global.key (Url.toString model.conf.url) ]
+                                    [ Nav.replaceUrl global.key (Url.toString model.session.url) ]
 
                                 else
                                     []
@@ -1589,7 +1582,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , orgaInfo = global.session.orgaInfo
+            , session = global.session
             }
 
         panelData =
@@ -1638,19 +1631,20 @@ view_ global model =
     div [ id "tensions", class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
             [ if model.viewMode == ListView then
+                -- Pinned tension
                 withMaybeData model.path_data
                     |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
                     |> withDefault Nothing
                     |> Maybe.map
                         (\x ->
                             div [ class "mb-4", attribute "style" "margin-top:-1rem !important;" ]
-                                [ viewPinnedTensions 3 model.conf model.node_focus x ]
+                                [ viewPinnedTensions 3 model.session model.node_focus x ]
                         )
                     |> withDefault (text "")
 
               else
                 text ""
-            , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
+            , div [ class "columns is-centered is-hidden-embed", classList [ ( "mb-0", isFullwidth ), ( "mb-1", not isFullwidth ) ] ]
                 [ div [ class "column is-12", classList [ ( "pb-1", isFullwidth ), ( "pb-4", not isFullwidth ) ] ]
                     [ viewSearchBar model ]
                 ]
@@ -1963,10 +1957,16 @@ viewTensionsCount counts statusFilter =
 
 viewListTensions : Model -> Html Msg
 viewListTensions model =
+    let
+        cls_width =
+            ternary (model.session.viewMode == DesktopView) "is-10" "is-12"
+    in
     div [ class "columns" ]
-        [ div [ class "column is-2 " ] [ viewCatMenu model.typeFilter ]
-        , div [ class "column is-10" ]
-            [ viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
+        [ showIf (model.session.viewMode == DesktopView) <|
+            div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
+        , div [ class "column", classList [ ( cls_width, True ) ] ]
+            [ showIf (model.session.viewMode == DesktopView) <|
+                viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
             , viewTensions ListTension model
             ]
         ]
@@ -2050,7 +2050,7 @@ viewCircleTensions model =
                 op =
                     { hasTaskMove = True
                     , hasNewCol = False
-                    , conf = model.conf
+                    , session = model.session
                     , node_focus = model.node_focus
                     , boardId = "tensionsCircle"
                     , boardHeight = model.boardHeight
@@ -2122,7 +2122,7 @@ viewAssigneeTensions model =
                 op =
                     { hasTaskMove = False
                     , hasNewCol = False
-                    , conf = model.conf
+                    , session = model.session
                     , node_focus = model.node_focus
                     , boardId = "tensionsAssignee"
                     , boardHeight = model.boardHeight
@@ -2187,7 +2187,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> Lazy.lazy7 mediaTension model.commonOp model.conf model.node_focus.nameid t True True "is-size-6 t-o")
+                        |> List.map (\t -> Lazy.lazy7 mediaTension model.commonOp model.session model.node_focus.nameid t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

@@ -591,6 +591,14 @@ log message =
         }
 
 
+logErr : String -> Cmd msg
+logErr message =
+    outgoing
+        { action = "LOGERR"
+        , data = JE.string message
+        }
+
+
 show : String -> Cmd msg
 show message =
     outgoing
@@ -607,18 +615,18 @@ hide message =
         }
 
 
+openInNewTab : String -> Cmd msg
+openInNewTab url =
+    outgoing
+        { action = "OPENINNEWTAB"
+        , data = JE.string url
+        }
+
+
 fitHeight : String -> Cmd msg
 fitHeight message =
     outgoing
         { action = "FIT_HEIGHT"
-        , data = JE.string message
-        }
-
-
-logErr : String -> Cmd msg
-logErr message =
-    outgoing
-        { action = "LOGERR"
         , data = JE.string message
         }
 

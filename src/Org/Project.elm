@@ -49,7 +49,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), getConf, send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -62,7 +62,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (getProject)
-import Session exposing (Conf, GlobalCmd(..))
+import Session exposing (GlobalCmd(..), Session)
 import Text as T
 import Time
 import Url
@@ -183,7 +183,7 @@ type alias Model =
     , isProjectAdmin : Bool
 
     -- Common
-    , conf : Conf
+    , session : Session
     , refresh_trial : Int
     , empty : {}
 
@@ -213,15 +213,8 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        apis =
-            global.session.apis
-
-        conf =
-            getConf global
-
-        -- Query parameters
-        query =
-            queryParser global.url
+        session =
+            global.session
 
         -- Focus
         rootnameid =
@@ -234,40 +227,40 @@ init global flags =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
         path_data =
-            global.session.path_data
+            session.path_data
                 |> Maybe.map (\x -> Success x)
                 |> withDefault Loading
 
         -- What has changed
         fs =
-            focusState ProjectBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState ProjectBaseUri session.referer global.url session.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data = path_data
             , projectid = projectid
             , isProjectAdmin = False
-            , project_data = ternary fs.orgChange Loading (fromMaybeData global.session.project_data Loading)
-            , linkTensionPanel = LinkTensionPanel.init projectid global.session.user
-            , cardPanel = CardPanel.init conf path_data newFocus global.session.user
-            , board = Board.init projectid newFocus global.session.user
+            , project_data = ternary fs.orgChange Loading (fromMaybeData session.project_data Loading)
+            , linkTensionPanel = LinkTensionPanel.init projectid session.user
+            , cardPanel = CardPanel.init session path_data newFocus session.user
+            , board = Board.init projectid newFocus session.user
 
             -- Common
-            , conf = conf
+            , session = session
             , refresh_trial = 0
             , empty = {}
-            , tensionForm = NTF.init global.session.user conf
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus global.session.user
-            , help = Help.init global.session.user conf
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user global.session.screen
-            , authModal = AuthModal.init global.session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus global.session.user global.session.tree_menu global.session.tree_data
-            , actionPanel = ActionPanel.init global.session.user global.session.screen
+            , tensionForm = NTF.init session
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
+            , help = Help.init session
+            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , authModal = AuthModal.init session.user Nothing
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , actionPanel = ActionPanel.init session.user session.screen
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid True (GotPath True)) Cmd.none
+            [ ternary fs.focusChange (queryLocalGraph session.apis newFocus.nameid True (GotPath True)) Cmd.none
             , send DoLoad
             , Ports.hide "footBar"
             , sendSleep PassedSlowLoadTreshold 500
@@ -276,7 +269,7 @@ init global flags =
             ]
 
         refresh =
-            Maybe.map (\x -> id3Changed x.id global.url) global.session.project_data |> withDefault True
+            Maybe.map (\x -> id3Changed x.id global.url) session.project_data |> withDefault True
     in
     ( model
     , Cmd.batch cmds
@@ -644,7 +637,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , orgaInfo = global.session.orgaInfo
+            , session = global.session
             }
 
         panelData =
@@ -697,7 +690,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
-            [ div [ class "columns is-centered mb-0" ]
+            [ div [ class "columns is-centered mb-0 is-hidden-embed" ]
                 [ div [ class "column is-tree-quarter pb-1" ]
                     [ case model.project_data of
                         Success p ->
@@ -764,9 +757,3 @@ viewSearchBar project model =
         --      ]
         --  ]
         ]
-
-
-viewProject : ProjectData -> Model -> Html Msg
-viewProject data model =
-    --viewBoard op viewHeader columns
-    text ""

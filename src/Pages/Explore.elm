@@ -33,7 +33,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Global exposing (Msg(..), getConf, send, sendSleep)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -118,9 +118,6 @@ type alias Model =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        conf =
-            getConf global
-
         apis =
             global.session.apis
 
@@ -128,7 +125,7 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , help = Help.init global.session.user conf
+            , help = Help.init global.session
             , refresh_trial = 0
             , empty = {}
             , authModal = AuthModal.init global.session.user Nothing

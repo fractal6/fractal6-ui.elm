@@ -31,7 +31,7 @@ import Extra.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
 import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), getConf, send, sendSleep)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label, li, nav, p, small, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, src, style, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -108,18 +108,14 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        conf =
-            getConf global
-
-        -- Query parameters
-        query =
-            queryParser global.url
+        session =
+            global.session
 
         gcmd =
             Cmd.none
 
         email_given =
-            Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
+            Dict.get "email" session.query |> Maybe.map List.head |> withDefault Nothing
 
         model =
             { form = { post = Dict.fromList [ ( "email", withDefault "" email_given ) ] }
@@ -128,10 +124,10 @@ init global flags =
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
             , reset2_result = RemoteData.NotAsked
-            , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
+            , token_reset = Dict.get "x" session.query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
             , empty = {}
-            , help = Help.init global.session.user conf
+            , help = Help.init global.session
             }
     in
     case model.token_reset of

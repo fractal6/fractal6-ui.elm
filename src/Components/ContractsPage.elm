@@ -56,7 +56,7 @@ import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Conf, GlobalCmd(..))
+import Session exposing (Apis, Session, GlobalCmd(..))
 import Text as T
 import Time
 
@@ -77,7 +77,7 @@ type alias Model =
     , activeView : ContractsPageView
 
     -- Common
-    , conf : Conf
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , comments : Comments.State
@@ -89,8 +89,8 @@ type ContractsPageView
     | ContractsView
 
 
-initModel : String -> UserState -> Conf -> Model
-initModel focusid user conf =
+initModel : String -> UserState -> Session -> Model
+initModel focusid user session =
     { user = user
     , rootnameid = nid2rootid focusid
     , contracts_result = NotAsked
@@ -102,7 +102,7 @@ initModel focusid user conf =
     , activeView = ContractsView
 
     -- Common
-    , conf = conf
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
@@ -155,9 +155,9 @@ initVoteForm user =
     }
 
 
-init : String -> UserState -> Conf -> State
-init rid user conf =
-    initModel rid user conf |> State
+init : String -> UserState -> Session -> State
+init rid user session =
+    initModel rid user session |> State
 
 
 
@@ -646,7 +646,7 @@ viewRow d op model =
             ]
         , td [] [ span [] [ text (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
-        , td [] [ text (formatDate model.conf.lang model.conf.now d.createdAt) ]
+        , td [] [ text (formatDate model.session.lang model.session.now d.createdAt) ]
 
         -- participant
         -- n comments icons
@@ -752,12 +752,12 @@ viewContractPage c op model =
           else
             -- Close, Cancelled or no auth.
             text ""
-        , Comments.viewCommentsContract model.conf model.comments |> Html.map CommentsMsg
+        , Comments.viewCommentsContract model.session model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
         , case model.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
-                    Comments.viewContractCommentInput model.conf model.comments |> Html.map CommentsMsg
+                    Comments.viewContractCommentInput model.session model.comments |> Html.map CommentsMsg
 
                 else
                     text ""
@@ -873,7 +873,7 @@ viewContractBox c op model =
 
                     ContractStatus.Open ->
                         []
-             , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.conf c.createdBy c.createdAt ]
+             , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.session c.createdBy c.createdAt ]
              ]
                 ++ (if c.status == ContractStatus.Open && (isAuthor || op.isAdmin) then
                         [ hr [] []

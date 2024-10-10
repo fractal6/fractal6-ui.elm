@@ -1,17 +1,40 @@
 
 /*
  *
+ * Embed view
+ *
+ */
+
+#app.embed {
+  .is-hidden-embed {
+    display: none !important;
+  }
+
+  .columns {
+  }
+  .orgPane > .column, .orgPane > * > .column, .orgPane > * > * > .column {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+}
+
+
+/*
+ *
  * Bulma Fixes
  *
  */
 
-#body {
-    // FIX the fix-top-navbar padding (for the #mainPane}
-    padding-top: calc(#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
-
+#app:not(.embed) #body {
     // For discrete footer.
     min-height: calc(100vh - #{$navbar-height}) !important;
 
+    // FIX the fix-top-navbar padding (for the #mainPane}
+    padding-top: calc(#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
+}
+
+
+#body {
     @include desktop {
         // Orga Menu adjustments
         @include until-fullhd {
@@ -1187,6 +1210,15 @@ figcaption {
     }
 }
 
+#footBar_i {
+    z-index: 0;
+    position: relative;
+    //position: absolute;
+    box-shadow: 0 0 1px 0 var(--is-highlight);
+    margin-top: 4rem;
+    padding: 1rem 1rem 1rem;
+}
+
 #helperBar {
     background-color: var(--header-background-color) !important;
     margin-top: 0;
@@ -1396,7 +1428,7 @@ figcaption {
 .logo-f6 {
     fill: white;
 }
-#footBar {
+#footBar, #footBar_i {
     .logo-f6 {
         fill: var(--logo-footer-color) !important;
     }
@@ -1670,7 +1702,7 @@ figcaption {
 
     top: calc(#{$navbar-height});
     right: 0;
-    transition: all .2s ease;
+    transition: all .333s ease;
     background-color: var(--orga-menu-background-color);
     box-shadow: inset 0 0 1px var(--border-color-light);
     border-left: 1px solid var(--bbc);

@@ -5,13 +5,20 @@
 	&.fix-inline > p {
 		display: inline;
 	}
-	& > ul, & > ol {
-        margin-top: 0;
-		//margin-left: 1rem;
-	}
-    // Fix ol margin-top
+    // Fix list margins
+    ul, ol {
+		margin-left: 1.25rem;
+    }
     ul ol {
         margin-top: 0.5rem;
+    }
+	& > ul, & > ol {
+        margin-top: 0;
+	}
+
+    li {
+      margin-top: 0.4rem;
+      margin-bottom: 0.4rem;
     }
 
 	// Html
@@ -45,6 +52,11 @@
 		border-color: var(--is-discrete);
 		//filter: invert(25%);
 	}
+    li.is-checkbox {
+        display: flex;
+        margin-left: -1rem;
+        list-style: none;
+    }
 	li input[type="checkbox"] {
 		margin-right: 8px;
 		//accent-color: #00eaff; very recent version !

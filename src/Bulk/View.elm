@@ -45,7 +45,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
-import Session exposing (CommonMsg, Conf)
+import Session exposing (CommonMsg, Session)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -60,8 +60,8 @@ import Text as T
 --
 
 
-mediaTension : CommonMsg msg -> Conf -> String -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension commonOp conf focusid tension showStatus showRecip size =
+mediaTension : CommonMsg msg -> Session -> String -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension commonOp session focusid tension showStatus showRecip size =
     let
         n_comments =
             withDefault 0 tension.n_comments
@@ -105,7 +105,7 @@ mediaTension commonOp conf focusid tension showStatus showRecip size =
                       else
                         text ""
                     , if showRecip then
-                        viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
+                        viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
 
                       else
                         span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
@@ -193,8 +193,8 @@ viewTensionArrow t_blank cls emitter receiver =
         ]
 
 
-viewPinnedTensions : Int -> Conf -> NodeFocus -> List PinTension -> Html msg
-viewPinnedTensions size conf focus pins =
+viewPinnedTensions : Int -> Session -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions size session focus pins =
     List.foldl
         (\a b ->
             let
@@ -211,13 +211,13 @@ viewPinnedTensions size conf focus pins =
         |> List.map
             (\x ->
                 div [ class "tile is-parent is-vertical", classList [ ( "is-" ++ String.fromInt (12 // size), True ) ] ] <|
-                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin conf focus y ]) x
+                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin session focus y ]) x
             )
         |> div [ class "tile is-ancestor pinnedTile" ]
 
 
-viewPin : Conf -> NodeFocus -> PinTension -> Html msg
-viewPin conf focus tension =
+viewPin : Session -> NodeFocus -> PinTension -> Html msg
+viewPin session focus tension =
     div [ class "box media mediaBox p-4", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
             [ div
@@ -240,7 +240,7 @@ viewPin conf focus tension =
                         , attribute "data-tooltip" (tensionStatus2str tension.status)
                         ]
                         [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                    , viewTensionDateAndUser conf "has-text-weight-light" tension.createdAt tension.createdBy
+                    , viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
                     ]
                 ]
             ]
@@ -595,7 +595,7 @@ viewRoleExt commonOp cls link_m r =
     viewRole cls False False Nothing link_m (\_ _ _ -> commonOp.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
 
 
-viewRole : String -> Bool -> Bool -> Maybe ( Conf, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
+viewRole : String -> Bool -> Bool -> Maybe ( Session, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
 viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     -- link and msg are mutually exclusive
     let
@@ -609,8 +609,8 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
 
         since =
             case now_m of
-                Just ( conf, uri ) ->
-                    T.sinceThe ++ " " ++ formatDate conf.lang conf.now uri
+                Just ( session, uri ) ->
+                    T.sinceThe ++ " " ++ formatDate session.lang session.now uri
 
                 Nothing ->
                     ""
@@ -692,60 +692,60 @@ viewProfileC user =
 --
 
 
-viewOpenedDate : Conf -> String -> Html msg
-viewOpenedDate conf date =
+viewOpenedDate : Session -> String -> Html msg
+viewOpenedDate session date =
     span [] <|
         List.intersperse (text " ") <|
             [ text T.authored
-            , text (formatDate conf.lang conf.now date)
+            , text (formatDate session.lang session.now date)
             ]
 
 
-viewUpdated : Conf -> String -> Html msg
-viewUpdated conf date =
+viewUpdated : Session -> String -> Html msg
+viewUpdated session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ text " ·"
             , text T.edited
-            , text (formatDate conf.lang conf.now date)
+            , text (formatDate session.lang session.now date)
             ]
 
 
-viewCommentedDate : Conf -> String -> Html msg
-viewCommentedDate conf date =
+viewCommentedDate : Session -> String -> Html msg
+viewCommentedDate session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ text T.commented
-            , text (formatDate conf.lang conf.now date)
+            , text (formatDate session.lang session.now date)
             ]
 
 
-viewTensionDateAndUser : Conf -> String -> String -> Username -> Html msg
-viewTensionDateAndUser conf cls createdAt createdBy =
+viewTensionDateAndUser : Session -> String -> String -> Username -> Html msg
+viewTensionDateAndUser session cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
-            [ viewOpenedDate conf createdAt
+            [ viewOpenedDate session createdAt
             , text T.by
             , viewUsernameLink createdBy.username
             ]
 
 
-viewTensionDateAndUserC : Conf -> String -> Username -> Html msg
-viewTensionDateAndUserC conf createdAt createdBy =
+viewTensionDateAndUserC : Session -> String -> Username -> Html msg
+viewTensionDateAndUserC session createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
             [ viewUsernameLink createdBy.username
-            , viewCommentedDate conf createdAt
+            , viewCommentedDate session createdAt
             ]
 
 
-byAt : Conf -> Username -> String -> Html msg
-byAt conf createdBy createdAt =
+byAt : Session -> Username -> String -> Html msg
+byAt session createdBy createdAt =
     span [] <|
         List.intersperse (text " ") <|
             [ text T.by
             , viewUsernameLink createdBy.username
-            , text (formatDate conf.lang conf.now createdAt)
+            , text (formatDate session.lang session.now createdAt)
             ]
 
 

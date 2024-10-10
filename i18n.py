@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python
 
 '''i18n file generator
 
@@ -24,6 +24,7 @@ Examples:
 import os
 import re
 from string import Template
+
 from docopt import docopt
 
 elm_header = """\
