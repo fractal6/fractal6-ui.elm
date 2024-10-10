@@ -5,9 +5,19 @@
  *
  */
 
-#app.embed .is-hidden-embed {
-  display: none;
+#app.embed {
+  .is-hidden-embed {
+    display: none !important;
+  }
+
+  .columns {
+  }
+  .orgPane > .column, .orgPane > * > .column, .orgPane > * > * > .column {
+    padding: 0 !important;
+    width: 100% !important;
+  }
 }
+
 
 /*
  *
@@ -1205,7 +1215,7 @@ figcaption {
     position: relative;
     //position: absolute;
     box-shadow: 0 0 1px 0 var(--is-highlight);
-    margin-top: 3rem;
+    margin-top: 4rem;
     padding: 1rem 1rem 1rem;
 }
 

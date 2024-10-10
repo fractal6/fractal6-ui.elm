@@ -552,6 +552,9 @@ export const actions = {
     'LOG': (app, session, message) => {
         console.log(`From Elm:`, message);
     },
+    'LOGERR': (app, session, message) => {
+        console.warn(`Error from Elm:`, message);
+    },
     'SHOW': (app, session, id) => {
         var $e = document.getElementById(id);
         if (!$e) { return }
@@ -564,8 +567,8 @@ export const actions = {
         $e.style.display = "none";
         //$e.style.visibility = "hidden";
     },
-    'LOGERR': (app, session, message) => {
-        console.warn(`Error from Elm:`, message);
+    'OPENINNEWTAB': (app, session, url) => {
+        window.open(url, '_blank');
     },
     'CLICK': (app, session, target) => {
         if (target == "") {

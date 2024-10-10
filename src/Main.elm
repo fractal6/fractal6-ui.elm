@@ -23,7 +23,7 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
-import Extra.Url exposing (queryParser)
+import Extra.Url exposing (getUrlQueryParam, queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
@@ -31,6 +31,7 @@ import Html
 import Ports
 import Session exposing (encodeViewMode)
 import Url exposing (Url)
+import Url.Parser.Query
 
 
 main : Program Flags Model Msg
@@ -94,7 +95,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LinkClicked (Browser.Internal url) ->
-            if Route.fromUrl url == Just Route.Logout then
+            if getUrlQueryParam "view" model.url == Just "embed" then
+                ( model, Ports.openInNewTab (Url.toString url) )
+
+            else if Route.fromUrl url == Just Route.Logout then
                 ( model, Nav.replaceUrl model.key (Url.toString url) )
 
             else

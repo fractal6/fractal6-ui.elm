@@ -690,7 +690,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
-            [ div [ class "columns is-centered mb-0" ]
+            [ div [ class "columns is-centered mb-0 is-hidden-embed" ]
                 [ div [ class "column is-tree-quarter pb-1" ]
                     [ case model.project_data of
                         Success p ->

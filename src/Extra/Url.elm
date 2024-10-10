@@ -19,9 +19,11 @@
 -}
 
 
-module Extra.Url exposing (queryBuilder, queryFullBuilder, queryParser, toAnchor)
+module Extra.Url exposing (getUrlQueryParam, queryBuilder, queryFullBuilder, queryParser, toAnchor)
 
 import Dict exposing (Dict)
+import List.Extra as LE
+import Maybe exposing (withDefault)
 import Url exposing (Url)
 
 
@@ -105,3 +107,12 @@ toAnchor x =
         |> String.replace " " "-"
         |> String.toLower
         |> String.append "#"
+
+
+getUrlQueryParam : String -> Url -> Maybe String
+getUrlQueryParam key url =
+    url.query
+        |> Maybe.map (String.split "&")
+        |> Maybe.andThen (LE.find (String.startsWith (key ++ "=")))
+        |> Maybe.map (String.split "=")
+        |> Maybe.andThen LE.last
