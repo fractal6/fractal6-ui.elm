@@ -24,6 +24,7 @@ Examples:
 import os
 import re
 from string import Template
+
 from docopt import docopt
 
 elm_header = """\
@@ -90,6 +91,7 @@ class I18N(object):
             lines = _f.readlines()
 
         multiline = False
+        multiline_content = ""
         in_entry = False # not used
         entry = ""
         l = "" # current lang
@@ -106,12 +108,12 @@ class I18N(object):
 
             if multiline:
                 # Multiline entry
-                content += line
+                multiline_content += line
                 if line.endswith('"""') or line.endswith("'''"):
                     multiline = False
-                    self._append_or_replace_entry(l, entry, content, data)
+                    self._append_or_replace_entry(l, entry, multiline_content, data)
                 else:
-                    content += "\n"
+                    multiline_content += "\n"
             else:
                 # Single line entry
                 ll = line.split("=")
@@ -122,7 +124,7 @@ class I18N(object):
                     continue
                 if v.startswith('"""') or v.startswith("'''"):
                     multiline = True
-                    content = v + "\n"
+                    multiline_content = v + "\n"
                     continue
 
                 self._append_or_replace_entry(l, entry, v, data)
