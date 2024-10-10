@@ -757,9 +757,3 @@ viewSearchBar project model =
         --      ]
         --  ]
         ]
-
-
-viewProject : ProjectData -> Model -> Html Msg
-viewProject data model =
-    --viewBoard op viewHeader columns
-    text ""

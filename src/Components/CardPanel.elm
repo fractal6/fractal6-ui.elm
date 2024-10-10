@@ -33,7 +33,7 @@ import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, unwrap, unwrap2, upH)
+import Extra exposing (showIf, ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
@@ -58,7 +58,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, CommonMsg, Session, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..), isMobile, toReflink)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -1084,16 +1084,19 @@ viewPanelDraft draft model =
             ]
         , div [ class "main-block" ]
             [ div [ class "columns m-0" ]
-                [ div [ class "column is-9" ] [ viewDraftComment model.session model.isMessageEdit model.message_result model.tension_form draft ]
+                [ div [ class "column is-9" ] [ viewDraftComment model.session model.isTensionAdmin model.isMessageEdit model.message_result model.tension_form draft ]
                 , div [ class "column pl-1" ] [ viewDraftSidePane draft model ]
                 ]
             ]
         ]
 
 
-viewDraftComment : Session -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
-viewDraftComment session isEdit result form draft =
+viewDraftComment : Session -> Bool -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
+viewDraftComment session isAdmin isEdit result form draft =
     let
+        isAuthor =
+            draft.createdBy.username == form.uctx.username
+
         message =
             withDefault "" draft.message
     in
@@ -1108,10 +1111,11 @@ viewDraftComment session isEdit result form draft =
         div [ class "message" ]
             [ div [ class "message-body" ]
                 [ div []
-                    [ div [ class "level mb-0", style "margin-top" "-10px" ]
-                        [ div [ class "level-left" ] []
-                        , div [ class "level-right help button-light", onClick DoChangeMessage ] [ text T.edit ]
-                        ]
+                    [ showIf (isAdmin || isAuthor) <|
+                        div [ class "level mb-0", style "margin-top" "-10px" ]
+                            [ div [ class "level-left" ] []
+                            , div [ class "level-right help button-light", onClick DoChangeMessage ] [ text T.edit ]
+                            ]
                     , case message of
                         "" ->
                             div [ class "help is-italic" ] [ text T.noMessageProvided ]
