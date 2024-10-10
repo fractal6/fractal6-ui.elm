@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.4] - 2024-10-10
+
+### 🚀 Features
+
+- Add new view mode with url query `?view=embed` (iframe compatible)
+- Open link in newtab in embed view mode
+
+### 🐛 Bug Fixes
+
+- *(Project/draft)* Show edit button for admin only
+
+
+### ◀️ Revert
+
+- Elm-graphql update as alias is not working well.
+
+### 🚜 Refactor
+
+- *(chore)* Elm-spa dependency + import Spa code
+- *(chore)* Use session instead of conf.
+
+### Hotfix
+
+- Fix actionPanel to remove user from the members page
+- Reorder users like labels in filter box
+- Fix graphpack right click (context menu)
+- *(ui)* Improve mobile fit
+- *(ux)* Fix losing scrollbar after clicking link in auth modal
+- *(ui/markdown)* Make checkbox correctly aligned.
+- *(ui/markdown)* Better checkbox margins and flex container.
+
+
 ## [0.8.3] - 2024-06-18
 
 ### ⛰️  Features
@@ -46,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - [tree view] Increase the menu width and item spacing.
 - Choose organisation, with a 's'
+
 
 ## [0.8.2]
 
@@ -94,9 +127,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed 
 - Fix navigation context when navigating from Document or Contracts, in tension page.
 - multiple code refactor: Comments is now a components, rename WebData -> RestData, and ++.
-
-
-
 
 
 ## [0.7.9]
