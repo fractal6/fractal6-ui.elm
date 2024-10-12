@@ -605,6 +605,16 @@ getPath lg =
             []
 
 
+getParent : LocalGraph -> Maybe String
+getParent lg =
+    case List.reverse lg.path of
+        _ :: x :: _ ->
+            Just x.nameid
+
+        _ ->
+            Nothing
+
+
 getNode : String -> GqlData NodesDict -> Maybe Node
 getNode nameid orga =
     case orga of

@@ -30,7 +30,7 @@ import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -1883,15 +1883,8 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
         [ div [ class "level is-marginless is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount counts statusFilter
-                , if focus.nameid /= focus.rootnameid then
-                    span
-                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
-                        , onClick OnGoRoot
-                        ]
-                        [ A.icon "arrow-up", text T.goRoot ]
-
-                  else
-                    text ""
+                , showIf (focus.nameid /= focus.rootnameid) <|
+                    viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5 " OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
@@ -1911,11 +1904,8 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                     ]
                 ]
             ]
-        , if focus.nameid /= focus.rootnameid then
-            div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-          else
-            text ""
+        , showIf (focus.nameid /= focus.rootnameid) <|
+            viewGoRoot "is-hidden-tablet px-5" OnGoRoot
         ]
 
 
@@ -2075,9 +2065,8 @@ viewCircleTensions model =
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
                     [ text T.noTensionsYet
-                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                        (text "")
+                    , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (viewGoRoot "" OnGoRoot)
                     ]
 
             else
@@ -2145,9 +2134,8 @@ viewAssigneeTensions model =
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
                     [ text T.noTensionsAssigneesYet
-                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                        (text "")
+                    , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (viewGoRoot "" OnGoRoot)
                     ]
 
             else

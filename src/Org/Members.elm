@@ -29,7 +29,7 @@ import Bulk exposing (..)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (role2icon, roleColor, viewRole, viewUserFull)
+import Bulk.View exposing (role2icon, roleColor, viewGoRoot, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
@@ -881,11 +881,8 @@ viewMembers : Session -> GqlData (List Member) -> GqlData (List ContractLight) -
 viewMembers session members_d invitations_d focus isPanelOpen ell =
     let
         goToParent =
-            if focus.nameid /= focus.rootnameid then
-                span [ class "help-label button-light is-goroot", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-            else
-                text ""
+            showIf (focus.nameid /= focus.rootnameid) <|
+                viewGoRoot "" OnGoRoot
     in
     case members_d of
         Success members ->

@@ -29,7 +29,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str)
+import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -40,7 +40,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
-import Extra exposing (decap, space_, ternary, textH, textT, unwrap, upH)
+import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -1266,23 +1266,13 @@ viewProjectsListHeader focus counts statusFilter =
         [ div [ class "level is-marginless is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewProjectsCount counts statusFilter
-                , if focus.nameid /= focus.rootnameid then
-                    span
-                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
-                        , onClick OnGoRoot
-                        ]
-                        [ A.icon "arrow-up", text T.goRoot ]
-
-                  else
-                    text ""
+                , showIf (focus.nameid /= focus.rootnameid) <|
+                    viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5" OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
                 []
-            , if focus.nameid /= focus.rootnameid then
-                div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-              else
-                text ""
+            , showIf (focus.nameid /= focus.rootnameid) <|
+                viewGoRoot "is-hidden-tablet px-5" OnGoRoot
             ]
         ]
 

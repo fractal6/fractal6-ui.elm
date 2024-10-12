@@ -566,6 +566,15 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Edit this role"
   fr="Editer ce rôle"
 
+
+[thisThingIs]
+  en="This {{}} is {{}}"
+  fr="Ce {{}} est {{}}"
+
+[goUp]
+  en="Go up"
+  fr="Monter"
+
 [viewOnMap]
   en="View on the flow chart"
   fr="Voir sur l'organigramme"

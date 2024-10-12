@@ -22,10 +22,10 @@
 module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
-import Bulk exposing (UserState(..))
+import Bulk exposing (UserState(..), getParent)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Bulk.View exposing (counter, viewRole, visibility2icon)
-import Extra exposing (ternary, unwrap, unwrap2)
+import Extra exposing (showIf, ternary, unwrap, unwrap2)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -33,11 +33,13 @@ import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)
 import Html.Events exposing (onClick)
+import List.Extra as LE
 import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, ViewMode(..))
+import String.Format as Format
 import Text as T
 
 
@@ -211,24 +213,24 @@ view op (State model) =
         [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ] <|
             case op.session.viewMode of
                 DesktopView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op model ]
-                    , viewNavLevel op model
+                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContext op model ]
+                    , viewNavTabs op model
                     ]
 
                 EmbedView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevelEmbed op model ] ]
+                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContextEmbed op model ] ]
         ]
 
 
-viewPathLevelEmbed : Op -> Model -> Html Msg
-viewPathLevelEmbed op model =
+viewPathContextEmbed : Op -> Model -> Html Msg
+viewPathContextEmbed op model =
     nav [ class "level" ]
         [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
         ]
 
 
-viewPathLevel : Op -> Model -> Html Msg
-viewPathLevel op model =
+viewPathContext : Op -> Model -> Html Msg
+viewPathContext op model =
     let
         ( rootnameid, userCanJoin ) =
             case op.path_data of
@@ -303,8 +305,8 @@ viewPathLevel op model =
         ]
 
 
-viewNavLevel : Op -> Model -> Html Msg
-viewNavLevel op model =
+viewNavTabs : Op -> Model -> Html Msg
+viewNavTabs op model =
     let
         focusid =
             Maybe.map (\x -> x.focus.nameid) op.path_data
@@ -387,20 +389,14 @@ viewNavLevel op model =
                    )
                 ++ (Maybe.map
                         (\path ->
-                            if path.focus.type_ == NodeType.Role then
-                                [ li [ class "" ]
+                            [ showIf (path.focus.nameid /= unwrap "" .nameid path.root) <|
+                                li []
                                     [ span
-                                        [ class "help-label button-light is-h is-discrete is-align-self-flex-start"
-
-                                        --, onClick OnGoRoot
+                                        [ class "help-label button-light is-goroot is-align-self-flex-start"
                                         ]
-                                        [ a [ href (toLink model.baseUri (nearestCircleid focusid) []) ] [ A.icon "arrow-up", text T.goRoot ]
-                                        ]
+                                        [ a [ class "is-smaller is-hint", href (toLink model.baseUri (getParent path |> withDefault "") []) ] [ A.icon "arrow-up", text T.goUp ] ]
                                     ]
-                                ]
-
-                            else
-                                []
+                            ]
                         )
                         op.path_data
                         |> withDefault []
@@ -447,16 +443,9 @@ viewPath baseUri uriQuery maybePath =
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
                                     , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
-                                    , a
-                                        [ class "discrete-link stealth-link"
-
-                                        --, attribute "style" "weight: 500 !important;padding: 10px 10px;"
-                                        , case nid2type p.nameid of
-                                            NodeType.Circle ->
-                                                title T.editThisCircle
-
-                                            NodeType.Role ->
-                                                title T.editThisRole
+                                    , span
+                                        [ class ""
+                                        , title (T.thisThingIs |> Format.value (NodeType.toString (nid2type p.nameid)) |> Format.value (NodeVisibility.toString g.focus.visibility))
                                         , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
                                         ]
                                         [ A.icon (visibility2icon g.focus.visibility) ]

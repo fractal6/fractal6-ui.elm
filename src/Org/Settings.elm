@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (helperButton, viewLabel, viewRoleExt)
+import Bulk.View exposing (helperButton, viewGoRoot, viewLabel, viewRoleExt)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -38,7 +38,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMa
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict
-import Extra exposing (space_, ternary, textT, unwrap, unwrap2)
+import Extra exposing (showIf, space_, ternary, textT, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
@@ -1432,11 +1432,8 @@ viewLabels : Model -> Html Msg
 viewLabels model =
     let
         goToParent =
-            if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-            else
-                text ""
+            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                (viewGoRoot "" OnGoRoot)
     in
     div [ id "labelsTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
@@ -1697,11 +1694,8 @@ viewRoles : Model -> Html Msg
 viewRoles model =
     let
         goToParent =
-            if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-            else
-                text ""
+            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                (viewGoRoot "" OnGoRoot)
     in
     div [ id "rolesTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]

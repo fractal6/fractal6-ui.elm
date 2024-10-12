@@ -40,6 +40,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
+import Html.Events exposing (onClick)
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -1236,7 +1237,7 @@ blobTypeStr btype =
 
 
 --
--- Helper
+-- Utils
 --
 
 
@@ -1251,3 +1252,13 @@ helperButton cls content =
                 ]
             ]
         ]
+
+
+viewGoRoot : String -> msg -> Html msg
+viewGoRoot cls cmd =
+    let
+        combinedClasses =
+            "help-label button-light is-goroot " ++ cls
+    in
+    span [ class combinedClasses, onClick cmd ]
+        [ A.icon "arrow-up", text T.goRoot ]
