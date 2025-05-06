@@ -318,7 +318,7 @@ viewNavTabs op model =
                 [ a [ href (toLink OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink TensionsBaseUri focusid []) ]
-                    [ A.icon1 "icon-exchange" T.tensions
+                    [ A.icon1 "icon-exchange" (T.tensions op.session.lexicon)
                     , case unwrap 0 .n_tensions op.session.orgaInfo of
                         0 ->
                             text ""

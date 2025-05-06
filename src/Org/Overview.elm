@@ -1443,7 +1443,7 @@ viewActivies model =
                         [ ul []
                             [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= TensionTab ) ] ]
-                                    [ A.icon1 "icon-exchange icon-sm" T.tensions ]
+                                    [ A.icon1 "icon-exchange icon-sm" (T.tensions model.session.lexicon) ]
                                 ]
                             , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= JournalTab ) ] ]

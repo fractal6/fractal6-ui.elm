@@ -1320,7 +1320,7 @@ viewStep tree_data (State model) =
                             )
                         |> withDefault False
             in
-            viewJoinForTensionNeeded userCanJoin OnClose
+            viewJoinForTensionNeeded model.session userCanJoin OnClose
 
         AuthNeeded ->
             viewAuthNeeded OnClose

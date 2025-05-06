@@ -1595,7 +1595,7 @@ view global model =
     { title =
         (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
             ++ " · "
-            ++ T.tensions
+            ++ T.tensions model.session.lexicon
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg

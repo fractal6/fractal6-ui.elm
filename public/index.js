@@ -32,6 +32,8 @@ window.addEventListener('load', _ => {
     } else if (!lang) {
         lang = DEFAULT_LANG;
     }
+    // Lexicon
+    var lexicon = localStorage.getItem("lexicon");
 
     // Init Elm
     // --
@@ -54,6 +56,7 @@ window.addEventListener('load', _ => {
                 },
                 screen: { w: window.innerWidth, h: window.innerHeight },
                 theme: theme,
+                lexicon: lexicon,
             }
         })
     );

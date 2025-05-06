@@ -125,6 +125,7 @@ type alias SessionFlags =
     , apis : Apis
     , screen : Screen
     , theme : Maybe JD.Value
+    , lexicon : Maybe JD.Value
     }
 
 
@@ -143,6 +144,7 @@ type alias Session =
     , url : Url.Url
     , query : Dict String (List String)
     , viewMode : ViewMode
+    , lexicon : Dict String String
 
     -- Remote Data
     , user : UserState
@@ -235,6 +237,7 @@ resetSession session flags =
     , user = LoggedOut
     , lang = session.lang
     , theme = session.theme
+    , lexicon = session.lexicon
     , screen = session.screen
     , now = session.now
     , url = session.url
@@ -355,6 +358,19 @@ fromLocalSession url flags =
                 Nothing ->
                     ( Nothing, Cmd.none )
 
+        ( lexicon, cmd6 ) =
+            case flags.lexicon of
+                Just raw ->
+                    case JD.decodeValue (JD.dict JD.string) raw of
+                        Ok dict ->
+                            ( Just dict, Cmd.none )
+
+                        Err err ->
+                            ( Nothing, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( Nothing, Cmd.none )
+
         query =
             queryParser url
 
@@ -367,6 +383,7 @@ fromLocalSession url flags =
       , user = user
       , lang = withDefault Lang.En lang
       , theme = withDefault DarkTheme theme
+      , lexicon = withDefault Dict.empty lexicon
       , screen = flags.screen
       , now = Time.millisToPosix 0
       , url = url
@@ -402,7 +419,7 @@ fromLocalSession url flags =
       , orgaInfo = Nothing
       , system_notification = RemoteData.NotAsked
       }
-    , [ cmd1, cmd2, cmd3, cmd4, cmd5 ]
+    , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6 ]
     )
 
 
