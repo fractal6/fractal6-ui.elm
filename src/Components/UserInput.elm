@@ -559,7 +559,7 @@ viewUserSelectors op model =
                         (\u ->
                             p
                                 [ class "panel-block pt-1 pb-1"
-                                , onClick (OnClickUser u)
+                                , onMousedownPD (OnClickUser u)
                                 ]
                                 [ viewUserFull 1 False False u ]
                         )

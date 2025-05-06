@@ -1145,21 +1145,7 @@ update_ apis message model =
                     UserInput.update apis msg model.userInput
 
                 cmd =
-                    case out.result of
-                        Just ( selected, us ) ->
-                            if selected then
-                                case us of
-                                    [ u ] ->
-                                        Ports.pushInputSelection u.username
-
-                                    _ ->
-                                        Cmd.none
-
-                            else
-                                Cmd.none
-
-                        Nothing ->
-                            Cmd.none
+                    Cmd.none
 
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
