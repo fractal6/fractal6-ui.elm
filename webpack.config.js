@@ -34,10 +34,10 @@ module.exports = (env, argv) => {
     var API_URL;
     if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
-            auth: 'http://localhost:8888/auth',
-            graphql: 'http://localhost:8888/api',
-            rest: 'http://localhost:8888/q',
-            assets: 'http://localhost:8888/assets'
+            auth: 'http://localhost:8484/auth',
+            graphql: 'http://localhost:8484/api',
+            rest: 'http://localhost:8484/q',
+            assets: 'http://localhost:8484/assets'
             // @debug: CORS error.
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
             //assets: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
