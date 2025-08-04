@@ -65,7 +65,6 @@ import Ports
 import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
-import RemoteData
 import Requests exposing (fetchMembersSub)
 import Session exposing (GlobalCmd(..), Session, isMobile)
 import String.Format as Format
@@ -269,7 +268,7 @@ init global flags =
             , authModal = AuthModal.init session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
             , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , actionPanel = ActionPanel.init session.user session
             , confirmOwner = ConfirmOwner.init session.user newFocus
             }
 

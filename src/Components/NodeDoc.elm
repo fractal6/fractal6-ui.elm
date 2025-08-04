@@ -597,7 +597,7 @@ viewNodeStatus isAdmin op =
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
                         , onClick (op.onSubmit (not isLoading) <| op.onPushBlob op.blob.id)
-                        , title T.publishTitle
+                        , title (T.publishTitle op.session.lexicon)
                         ]
                         [ A.icon1 "icon-share" T.publish
                         , loadingSpin isLoading

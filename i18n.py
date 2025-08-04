@@ -53,6 +53,11 @@ elm_entry_dict_template = """\
     {v}
 """
 
+default_lexicon = {
+    "tension": "tension",
+    "Tension": "Tension",
+}
+
 
 class I18N(object):
     src_path = "src/"
@@ -88,16 +93,15 @@ class I18N(object):
                     _f.write(elm_header)
                     for k, d in data.items():
                         v = d["text"]
-                        # Rename terms to lexicon_terms !!!
-                        terms = d["terms"]
-                        if terms:
+                        lexicon_terms = d["lexicon_terms"]
+                        if lexicon_terms:
                             _f.write(elm_entry_dict_template.format(k=k, v=v))
                         else:
                             _f.write(elm_entry_template.format(k=k, v=v))
 
-                        for term in terms:
-                            w = data[term]["text"]
-                            word = f'withDefault {w} (Dict.get "{term}" lexicon)'
+                        for term in lexicon_terms:
+                            default = default_lexicon[term]
+                            word = f'withDefault "{default}" (Dict.get "{term}" lexicon)'
                             _f.write(" "*8 + f'|> String.Format.namedValue "_{term}_" ({word})\n')
                         _f.write("\n\n")
 
@@ -152,10 +156,10 @@ class I18N(object):
 
     def _append_or_replace_entry(self, lang, entry, v, data):
         # extract lexicon pattern...
-        terms = [x[3:-3] for x in re.findall(r"{{_\w+_}}", v)]
+        lexicon_terms = [x[3:-3] for x in re.findall(r"{{_\w+_}}", v)]
 
         if entry not in data or lang != self.default_lang:
-            data[entry] = {"lang": lang, "text": v, "terms": terms}
+            data[entry] = {"lang": lang, "text": v, "lexicon_terms": lexicon_terms}
 
 
     def bootstrap(self):

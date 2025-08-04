@@ -421,7 +421,7 @@ init global flags =
             , authModal = AuthModal.init session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
             , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , actionPanel = ActionPanel.init session.user session
             }
 
         cmds =
@@ -1194,7 +1194,7 @@ viewNewOrEditProject session isNew model =
                         LightTheme ->
                             img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
                     ]
-                , figcaption [] [ text T.projectCaptionSimple ]
+                , figcaption [] [ text (T.projectCaptionSimple session.lexicon) ]
                 ]
 
           else

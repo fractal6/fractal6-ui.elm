@@ -49,7 +49,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -76,6 +76,7 @@ type alias Model =
 
     -- Common
     , empty : {}
+    , session : Session
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , confirmContract : ConfirmContract.State
@@ -107,13 +108,13 @@ initForm user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> Session -> State
+init user session =
+    initModel user session |> State
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> Session -> Model
+initModel user session =
     { user = user
     , isActive = False
     , isActive2 = False
@@ -129,6 +130,7 @@ initModel user =
 
     -- Common
     , empty = {}
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , confirmContract = ConfirmContract.init user
@@ -182,7 +184,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel model.user model.session
 
 
 setTarget : Node -> Model -> Model
@@ -648,7 +650,7 @@ viewModalContent tree_data model =
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
-                        text T.moveTension
+                        text (T.moveTension model.session.lexicon)
 
                     Just blob ->
                         case blob.node of

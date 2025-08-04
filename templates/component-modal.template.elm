@@ -41,7 +41,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (MyData, Post, UserCtx)
 import Ports
 import Query.AddData exposing (getData)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -64,13 +64,14 @@ type alias Model =
     , form : MyForm -- user inputs
 
     -- Common
+    , session: Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : UserState -> Session -> Model
+initModel user session =
     { user = user
     , isActive = False
     , isActive2 = False
@@ -78,6 +79,7 @@ initModel user =
     , form = initForm user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -106,9 +108,9 @@ initForm user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : UserState -> Session -> State
+init user session =
+    initModel user session |> State
 
 
 

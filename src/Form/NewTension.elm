@@ -1395,8 +1395,8 @@ viewHeader tree_data model =
         ]
 
 
-viewTensionTabs : Bool -> TensionTab -> PNode -> Html Msg
-viewTensionTabs isAdmin tab targ =
+viewTensionTabs : Session -> Bool -> TensionTab -> PNode -> Html Msg
+viewTensionTabs session isAdmin tab targ =
     let
         -- This is the type of the receiver node.
         type_ =
@@ -1406,7 +1406,7 @@ viewTensionTabs isAdmin tab targ =
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
                 [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
-                    [ A.icon1 "icon-exchange" T.tension ]
+                    [ A.icon1 "icon-exchange" (T.tension session.lexicon) ]
                 ]
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
@@ -1571,7 +1571,7 @@ viewTension tree_data model =
                     text ""
 
                   else
-                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                    Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
                 , Lazy.lazy2 viewHeader tree_data model
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
@@ -1660,7 +1660,7 @@ viewCircle tree_data model =
                     text ""
 
                   else
-                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
+                    Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
                 , Lazy.lazy2 viewHeader tree_data model
                 ]
                     ++ (case model.nodeStep of

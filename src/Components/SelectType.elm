@@ -42,7 +42,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -59,13 +59,14 @@ type alias Model =
     , form : TensionForm -- user inputs
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : String -> UserState -> Model
-initModel tid user =
+initModel : String -> UserState -> Session -> Model
+initModel tid user session =
     { user = user
     , isOpen = False
     , data_result = NotAsked
@@ -73,14 +74,15 @@ initModel tid user =
     , form = initTensionForm tid Nothing user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> UserState -> State
-init tid user =
-    initModel tid user |> State
+init : String -> UserState -> Session -> State
+init tid user session =
+    initModel tid user session |> State
 
 
 
@@ -108,7 +110,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.form.id model.user
+    initModel model.form.id model.user model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -363,7 +365,7 @@ viewModal op (State model) =
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , text T.tensionType_action_success
+                        , text (T.tensionType_action_success model.session.lexicon)
                         ]
 
                 _ ->
@@ -383,7 +385,7 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ text T.changeTensionType ]
+                [ text (T.changeTensionType model.session.lexicon) ]
             ]
         , div [ class "modal-card-body" ]
             [ showMsg "selectType-0" "is-info is-light" "icon-info" T.tensionTypeHeader T.tensionTypeDoc

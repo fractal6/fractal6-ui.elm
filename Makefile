@@ -200,7 +200,7 @@ install:
 	# Node.js
 	npm install
 	# Python
-	pip install docopt-ng
+	pip install -r requirements.txt
 
 
 elm-spa:

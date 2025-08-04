@@ -53,7 +53,7 @@ import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -82,6 +82,7 @@ type alias Model =
     , expanded_lines : ExpandedLines
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -98,8 +99,8 @@ type alias ColTarget =
     }
 
 
-initModel : String -> UserState -> Model
-initModel projectid user =
+initModel : String -> UserState -> Session -> Model
+initModel projectid user session =
     { user = user
     , isOpen = False
     , projectid = projectid
@@ -118,14 +119,15 @@ initModel projectid user =
     , labelSearchPanel = LabelSearchPanel.load Nothing user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> UserState -> State
-init projectid user =
-    initModel projectid user |> State
+init : String -> UserState -> Session -> State
+init projectid user session =
+    initModel projectid user session |> State
 
 
 
@@ -143,7 +145,7 @@ hasTargets_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.projectid model.user
+    initModel model.projectid model.user model.session
 
 
 setDataResult : GqlData (List TensionLight) -> Model -> Model
@@ -610,7 +612,7 @@ viewPanel tree_data model =
                     [ input
                         [ class "input is-small"
                         , type_ "text"
-                        , placeholder T.searchTensions
+                        , placeholder (T.searchTensions model.session.lexicon)
                         , autofocus False
                         , value (withDefault "" model.form.pattern)
                         , onInput OnSearchInput

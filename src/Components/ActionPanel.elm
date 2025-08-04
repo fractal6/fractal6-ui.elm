@@ -57,7 +57,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
-import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
+import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -82,7 +82,7 @@ type alias Model =
     , node_result : GqlData Node
 
     -- Common
-    , screen : Screen
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -108,8 +108,8 @@ type ActionStep
     | StepAck IdPayload
 
 
-initModel : UserState -> Screen -> Model
-initModel user screen =
+initModel : UserState -> Session -> Model
+initModel user session =
     { user = user
     , action_result = NotAsked
     , node_result = NotAsked
@@ -124,17 +124,17 @@ initModel user screen =
     , pos = Nothing
 
     -- Common
-    , screen = screen
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , moveTension = MoveTension.init user
+    , moveTension = MoveTension.init user session
     , userInput = UserInput.init [] True False user
     }
 
 
-init : UserState -> Screen -> State
-init user screen =
-    initModel user screen |> State
+init : UserState -> Session -> State
+init user session =
+    initModel user session |> State
 
 
 panelAction2str : PanelState -> String
@@ -352,7 +352,7 @@ closeModal model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user model.screen
+    initModel model.user model.session
 
 
 setStep : ActionStep -> Model -> Model
@@ -1120,7 +1120,7 @@ viewPanelMenu op model =
                         , div [ class "dropdown-menu", attribute "role" "menu" ]
                             [ div [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                    [ A.icon1 "icon-exchange" T.tension ]
+                                    [ A.icon1 "icon-exchange" (T.tension model.session.lexicon) ]
                                 , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Circle) Nothing ]) ]
                                     [ A.icon1 "icon-git-branch" T.circle ]
                                 , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
@@ -1132,7 +1132,7 @@ viewPanelMenu op model =
                 NodeType.Role ->
                     div
                         [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                        [ A.icon1 "icon-plus" T.addTension ]
+                        [ A.icon1 "icon-plus" (T.addTension model.session.lexicon) ]
        ]
         -- ACTION
         ++ (if isAdmin && not isBaseMember_ then
@@ -1328,7 +1328,7 @@ viewStep1 op model =
 
                 LeaveAction ->
                     [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.user).roles) == 1 then
-                        showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" T.confirmLeaveOrga ""
+                        showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" (T.confirmLeaveOrga model.session.lexicon) ""
 
                       else
                         text ""
@@ -1379,7 +1379,7 @@ viewComment model =
             List.length (String.lines message)
 
         ( max_len, min_len ) =
-            if isMobile model.screen then
+            if isMobile model.session.screen then
                 ( 5, 2 )
 
             else

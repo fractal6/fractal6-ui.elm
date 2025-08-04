@@ -511,8 +511,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Vue d’ensemble"
 
 [tensions]
-  en="{{_tension_}}s"
-  fr="{{_tension_}}s"
+  en="{{_Tension_}}s"
+  fr="{{_Tension_}}s"
 
 [projects]
   en="Projects"
@@ -592,8 +592,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Publier"
 
 [publishTitle]
-  en="As long as a revision is not published the changes are only visible in the tension of the circle (the current page)."
-  fr="Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la tension du cercle (la page actuelle)."
+  en="As long as a revision is not published the changes are only visible in the {{_tension_}} of the circle (the current page)."
+  fr="Tant qu’une révision n’est pas publiée, les modifications ne sont visibles que dans la {{_tension_}} du cercle (la page actuelle)."
 
 [published]
   en="Published"
@@ -744,12 +744,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Rendre ce membre Propriétaire"
 
 [addTensionToProject]
-  en="Add tensions to project"
-  fr="Ajouter des tensions au projet"
+  en="Add {{_tension_}}s to project"
+  fr="Ajouter des {{_tension_}}s au projet"
 
 [projectCaptionSimple]
-  en="Start with a simple board to spread your tensions across customizable columns."
-  fr="Commencez par un tableau simple pour répartir vos tensions dans des colonnes personnalisables."
+  en="Start with a simple board to spread your {{_tension_}}s across customizable columns."
+  fr="Commencez par un tableau simple pour répartir vos {{_tension_}}s dans des colonnes personnalisables."
 
 [invite]
   en="Invite"
@@ -804,16 +804,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Texte..."
 
 [changeTensionType]
-  en="Change the tension type"
-  fr="Modifier le type de la tension"
+  en="Change the {{_tension_}} type"
+  fr="Modifier le type de la {{_tension_}}"
 
 [noResultsFound]
   en="No results found"
   fr="Aucun résulat trouvé"
 
 [searchTensions]
-  en="Search tensions"
-  fr="Rechercher des tensions"
+  en="Search {{_tension_}}s"
+  fr="Rechercher des {{_tension_}}s"
 
 [searchProjects]
   en="Search projects"
@@ -924,8 +924,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="a quitté"
 
 [mentioned2]
-  en="mentioned this tension"
-  fr="a mentionné cette tension"
+  en="mentioned this {{_tension_}}"
+  fr="a mentionné cette {{_tension_}}"
 
 [commented]
   en="commented"
@@ -1005,11 +1005,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [confirmLeaveOrga]
   en="""Are you sure you want to leave this organisation ?
-- You will be unassigned to any tensions in this organisation.
+- You will be unassigned to any {{_tension_}}s in this organisation.
 - You will be able to join again by invitation only.
   """
   fr="""Etes-vous sûr de vouloir quitter cette organisation ?
-- Vous serez desassigné de toutes tensions dans cette organisation.
+- Vous serez desassigné de toutes {{_tension_}}s dans cette organisation.
 - Vous pourrez la rejoindre à nouveau sur invitation seulement.
   """
 
@@ -1038,16 +1038,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="son rôle de propriétaire"
 
 [moveTension]
-  en="Move tension"
-  fr="Déplacer la tension"
+  en="Move {{_tension_}}"
+  fr="Déplacer la {{_tension_}}"
 
 [pinTension]
-  en="Pin tension"
-  fr="Epingler la tension"
+  en="Pin {{_tension_}}"
+  fr="Epingler la {{_tension_}}"
 
 [unpinTension]
-  en="Unpin tension"
-  fr="Désépingler la tension"
+  en="Unpin {{_tension_}}"
+  fr="Désépingler la {{_tension_}}"
 
 [moveCircle]
   en="Move circle"
@@ -1126,8 +1126,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Créer"
 
 [addTension]
-  en="New tension"
-  fr="Créer une tension"
+  en="New {{_tension_}}"
+  fr="Créer une {{_tension_}}"
 
 [remove]
   en="Remove"
@@ -1170,8 +1170,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Assignés"
 
 [assignedTensions]
-  en="Assigned Tensions"
-  fr="Tensions Assignées"
+  en="Assigned {{_Tension_}}s"
+  fr="{{_Tension_}}s Assignées"
 
 [addAssignees]
   en="Add assignees..."
@@ -1248,8 +1248,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Langue"
 
 [tension]
-  en="Tension"
-  fr="Tension"
+  en="{{_Tension_}}"
+  fr="{{_Tension_}}"
 
 [circle]
   en="Circle"
@@ -2127,8 +2127,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 -- Success
 
 [tensionType_action_success]
-  en="Tension type changed."
-  fr="Type de la tension modifié."
+  en="{{_Tension_}} type changed."
+  fr="Type de la {{_tension_}} modifié."
 
 [archive_action_success]
   en="Document archived"

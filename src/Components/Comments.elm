@@ -72,7 +72,7 @@ import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Session, GlobalCmd, isMobile, toReflink)
+import Session exposing (Apis, GlobalCmd, Session, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -1309,61 +1309,61 @@ viewEvent session focusid_m action event =
         eventView =
             case event.event_type of
                 TensionEvent.Reopened ->
-                    viewEventStatus session.lang session.now event TensionStatus.Open
+                    viewEventStatus session event TensionStatus.Open
 
                 TensionEvent.Closed ->
-                    viewEventStatus session.lang session.now event TensionStatus.Closed
+                    viewEventStatus session event TensionStatus.Closed
 
                 TensionEvent.TitleUpdated ->
-                    viewEventTitle session.lang session.now event
+                    viewEventTitle session event
 
                 TensionEvent.TypeUpdated ->
-                    viewEventType session.lang session.now event
+                    viewEventType session event
 
                 TensionEvent.Visibility ->
-                    viewEventVisibility session.lang session.now event
+                    viewEventVisibility session event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority session.lang session.now event action
+                    viewEventAuthority session event action
 
                 TensionEvent.AssigneeAdded ->
-                    viewEventAssignee session.lang session.now event True
+                    viewEventAssignee session event True
 
                 TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee session.lang session.now event False
+                    viewEventAssignee session event False
 
                 TensionEvent.LabelAdded ->
-                    viewEventLabel focusid_m session.lang session.now event True
+                    viewEventLabel focusid_m session event True
 
                 TensionEvent.LabelRemoved ->
-                    viewEventLabel focusid_m session.lang session.now event False
+                    viewEventLabel focusid_m session event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed session.lang session.now event action
+                    viewEventPushed session event action
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived session.lang session.now event action True
+                    viewEventArchived session event action True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived session.lang session.now event action False
+                    viewEventArchived session event action False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked session.lang session.now event action
+                    viewEventMemberLinked session event action
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked session.lang session.now event action
+                    viewEventMemberUnlinked session event action
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined session.lang session.now event action
+                    viewEventUserJoined session event action
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft session.lang session.now event action
+                    viewEventUserLeft session event action
 
                 TensionEvent.Moved ->
-                    viewEventMoved session.lang session.now event
+                    viewEventMoved session event
 
                 TensionEvent.Mentioned ->
-                    viewEventMentioned session.lang session.now event
+                    viewEventMentioned session event
 
                 _ ->
                     []
@@ -1375,8 +1375,8 @@ viewEvent session focusid_m action event =
         div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
 
 
-viewEventStatus : Lang.Lang -> Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
-viewEventStatus lang now event status =
+viewEventStatus : Session -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
+viewEventStatus session event status =
     let
         actionText =
             case status of
@@ -1388,20 +1388,20 @@ viewEventStatus lang now event status =
     in
     [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon ("icon-alert-circle icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventTitle : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventTitle lang now event =
+viewEventTitle : Session -> Event -> List (Html Msg)
+viewEventTitle session event =
     let
         icon =
             A.icon "icon-edit-2"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate session.lang session.now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right mx-1" ] []
@@ -1411,15 +1411,15 @@ viewEventTitle lang now event =
     ]
 
 
-viewEventType : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventType lang now event =
+viewEventType : Session -> Event -> List (Html Msg)
+viewEventType session event =
     let
         icon =
             A.icon "icon-edit-2"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate session.lang session.now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             , span [ class "arrow-right mx-1" ] []
@@ -1429,15 +1429,15 @@ viewEventType lang now event =
     ]
 
 
-viewEventVisibility : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventVisibility lang now event =
+viewEventVisibility : Session -> Event -> List (Html Msg)
+viewEventVisibility session event =
     let
         icon =
             A.icon "icon-eye"
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate session.lang session.now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right mx-1" ] []
@@ -1447,8 +1447,8 @@ viewEventVisibility lang now event =
     ]
 
 
-viewEventAuthority : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventAuthority lang now event action =
+viewEventAuthority : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventAuthority session event action =
     let
         ( icon, eventText ) =
             case tensionAction2NodeType action of
@@ -1463,7 +1463,7 @@ viewEventAuthority lang now event action =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate session.lang session.now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
             , span [ class "arrow-right mx-1" ] []
@@ -1473,8 +1473,8 @@ viewEventAuthority lang now event action =
     ]
 
 
-viewEventAssignee : Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventAssignee lang now event isNew =
+viewEventAssignee : Session -> Event -> Bool -> List (Html Msg)
+viewEventAssignee session event isNew =
     let
         icon =
             A.icon "icon-user"
@@ -1490,13 +1490,13 @@ viewEventAssignee lang now event isNew =
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate lang now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventLabel : Maybe String -> Lang.Lang -> Time.Posix -> Event -> Bool -> List (Html Msg)
-viewEventLabel focusid_m lang now event isNew =
+viewEventLabel : Maybe String -> Session -> Event -> Bool -> List (Html Msg)
+viewEventLabel focusid_m session event isNew =
     let
         icon =
             A.icon "icon-tag"
@@ -1522,26 +1522,26 @@ viewEventLabel focusid_m lang now event isNew =
     , div [ class "media-content" ]
         [ span [ class "labelsList" ] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" link label, text (formatDate lang now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" link label, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventPushed : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventPushed lang now event action_m =
+viewEventPushed : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventPushed session event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
     in
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventArchived : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
-viewEventArchived lang now event action_m isArchived =
+viewEventArchived : Session -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
+viewEventArchived session event action_m isArchived =
     let
         action =
             withDefault TensionAction.NewRole action_m
@@ -1555,22 +1555,22 @@ viewEventArchived lang now event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, textD (action2str action), text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventMemberLinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberLinked lang now event action_m =
+viewEventMemberLinked : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberLinked session event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.linked2 ], text T.toThisRole, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventMemberUnlinked : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberUnlinked lang now event action_m =
+viewEventMemberUnlinked : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberUnlinked session event action_m =
     let
         action_txt =
             case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
@@ -1582,26 +1582,26 @@ viewEventMemberUnlinked lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventUserJoined : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserJoined lang now event action_m =
+viewEventUserJoined : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserJoined session event action_m =
     let
         action_txt =
             T.theOrganisation
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.joined2 ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.joined2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventUserLeft : Lang.Lang -> Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserLeft lang now event action_m =
+viewEventUserLeft : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserLeft session event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
@@ -1624,13 +1624,13 @@ viewEventUserLeft lang now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.left2 ], text action_txt, text (formatDate lang now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.left2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventMoved : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventMoved lang now event =
+viewEventMoved : Session -> Event -> List (Html Msg)
+viewEventMoved session event =
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]
         [ span [] <|
@@ -1641,14 +1641,14 @@ viewEventMoved lang now event =
                 , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
                 , text T.to
                 , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text (formatDate lang now event.createdAt)
+                , text (formatDate session.lang session.now event.createdAt)
                 ]
         ]
     ]
 
 
-viewEventMentioned : Lang.Lang -> Time.Posix -> Event -> List (Html Msg)
-viewEventMentioned lang now event =
+viewEventMentioned : Session -> Event -> List (Html Msg)
+viewEventMentioned session event =
     case event.mentioned of
         Just { id, status, title, receiverid } ->
             let
@@ -1660,8 +1660,8 @@ viewEventMentioned lang now event =
                 [ span [] <|
                     List.intersperse (text " ")
                         [ viewUsernameLink event.createdBy.username
-                        , strong [] [ text T.mentioned2 ]
-                        , text (formatDate lang now event.createdAt)
+                        , strong [] [ text (T.mentioned2 session.lexicon) ]
+                        , text (formatDate session.lang session.now event.createdAt)
                         ]
                 , div [ class "level ml-4 mt-1" ] <|
                     List.singleton <|

@@ -379,10 +379,10 @@ init global flags =
             , help = Help.init session
             , tensionForm = NTF.init session
             , refresh_trial = 0
-            , moveTension = MoveTension.init session.user
+            , moveTension = MoveTension.init session.user session
             , contractsPage = ContractsPage.init focusid session.user session
-            , selectType = SelectType.init tid session.user
-            , actionPanel = ActionPanel.init session.user session.screen
+            , selectType = SelectType.init tid session.user session
+            , actionPanel = ActionPanel.init session.user session
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
             , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
@@ -2161,7 +2161,11 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon1 "icon-pin" <| ternary t.isPinned T.unpinTension T.pinTension ]
+                                    [ A.icon1 "icon-pin" <|
+                                        ternary t.isPinned
+                                            (T.unpinTension model.session.lexicon)
+                                            (T.pinTension model.session.lexicon)
+                                    ]
                                 ]
 
                             else
@@ -2172,7 +2176,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text T.moveTension ]
+                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (T.moveTension model.session.lexicon) ]
                                 ]
 
                             else

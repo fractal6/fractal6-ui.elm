@@ -241,7 +241,7 @@ init global flags =
             , projectid = projectid
             , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData session.project_data Loading)
-            , linkTensionPanel = LinkTensionPanel.init projectid session.user
+            , linkTensionPanel = LinkTensionPanel.init projectid session.user session
             , cardPanel = CardPanel.init session path_data newFocus session.user
             , board = Board.init projectid newFocus session.user
 
@@ -256,7 +256,7 @@ init global flags =
             , authModal = AuthModal.init session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
             , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , actionPanel = ActionPanel.init session.user session
             }
 
         cmds =
@@ -702,7 +702,7 @@ view_ global model =
                 , if model.isProjectAdmin then
                     div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
                         [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
-                            [ A.icon1 "icon-plus" T.addTensionToProject ]
+                            [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
                         ]
 
                   else

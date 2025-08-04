@@ -153,14 +153,14 @@ menuList =
     [ NotificationsMenu, AssignedMenu ]
 
 
-menuToString : MenuNotif -> ( String, String )
-menuToString menu =
+menuToString : Session -> MenuNotif -> ( String, String )
+menuToString session menu =
     case menu of
         NotificationsMenu ->
             ( T.inbox, T.notifications )
 
         AssignedMenu ->
-            ( T.assigned, T.assignedTensions )
+            ( T.assigned, T.assignedTensions session.lexicon )
 
 
 menuToIcon : MenuNotif -> String
@@ -562,7 +562,7 @@ view_ global model =
                         text ""
                 ]
             , br [] []
-            , h2 [ class "title" ] [ text (menuToString model.menuFocus |> Tuple.second) ]
+            , h2 [ class "title" ] [ text (menuToString model.session model.menuFocus |> Tuple.second) ]
             , case model.menuFocus of
                 NotificationsMenu ->
                     case model.notifications_data of
@@ -618,7 +618,7 @@ viewMenu model =
                                     (ChangeMenuFocus x)
                                 ]
                                 [ div [ class "is-inline-flex" ]
-                                    [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first)
+                                    [ A.icon1 (menuToIcon x) (menuToString model.session x |> Tuple.first)
                                     , menuToCount x model.notif
                                     ]
                                 ]
