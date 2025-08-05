@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryMembers)
 import Query.QueryUser exposing (queryUser)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -52,8 +52,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , users_result : GqlData (List User)
+    { users_result : GqlData (List User)
     , form : List UserForm
     , pattern : String
     , lookup : List User
@@ -66,15 +65,15 @@ type alias Model =
     , activePos : Int
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : List String -> Bool -> Bool -> UserState -> Model
-initModel targets isInvite multiSelect user =
-    { user = user
-    , users_result = NotAsked
+initModel : List String -> Bool -> Bool -> Session -> Model
+initModel targets isInvite multiSelect session =
+    { users_result = NotAsked
     , form = []
     , pattern = ""
     , lookup = []
@@ -87,14 +86,15 @@ initModel targets isInvite multiSelect user =
     , activePos = 0
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : List String -> Bool -> Bool -> UserState -> State
-init targets isInvite multiSelect user =
-    initModel targets isInvite multiSelect user |> State
+init : List String -> Bool -> Bool -> Session -> State
+init targets isInvite multiSelect session =
+    initModel targets isInvite multiSelect session |> State
 
 
 
@@ -107,7 +107,7 @@ init targets isInvite multiSelect user =
 
 reset : Model -> Model
 reset model =
-    initModel model.targets model.isInvite model.multiSelect model.user
+    initModel model.targets model.isInvite model.multiSelect model.session
 
 
 open : Model -> Model
@@ -306,7 +306,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser data.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser data.session.user) ]
                     )
 
                 RefreshToken i ->

@@ -655,15 +655,15 @@ init global flags =
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session
             , help = Help.init session
             , tensionForm = NTF.init session
-            , moveTension = MoveTension.init session.user session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session
+            , moveTension = MoveTension.init session
+            , joinOrga = JoinOrga.init newFocus.nameid session
+            , authModal = AuthModal.init (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing) session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
+            , actionPanel = ActionPanel.init session
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of

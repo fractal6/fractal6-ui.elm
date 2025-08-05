@@ -375,23 +375,23 @@ init global flags =
 
             -- Common
             , session = session
-            , helperBar = HelperBar.init baseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init baseUri global.url.query newFocus session
             , help = Help.init session
             , tensionForm = NTF.init session
             , refresh_trial = 0
-            , moveTension = MoveTension.init session.user session
-            , contractsPage = ContractsPage.init focusid session.user session
-            , selectType = SelectType.init tid session.user session
-            , actionPanel = ActionPanel.init session.user session
+            , moveTension = MoveTension.init session
+            , contractsPage = ContractsPage.init focusid session
+            , selectType = SelectType.init tid session
+            , actionPanel = ActionPanel.init session
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session
 
             -- Open a signin dialog if contracts are requested
-            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , comments = Comments.init focusid tid session.user
+            , authModal = AuthModal.init (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.tree_menu session.tree_data session
+            , comments = Comments.init focusid tid session
             }
 
         refresh =

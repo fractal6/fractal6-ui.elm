@@ -59,8 +59,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool
     , move_result : GqlData TensionId
     , target : String -- keep origin target (receiverid)
@@ -108,18 +107,17 @@ initForm user =
     }
 
 
-init : UserState -> Session -> State
-init user session =
-    initModel user session |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
-initModel : UserState -> Session -> Model
-initModel user session =
-    { user = user
-    , isActive = False
+initModel : Session -> Model
+initModel session =
+    { isActive = False
     , isActive2 = False
     , move_result = NotAsked
-    , form = initForm user
+    , form = initForm session.user
     , target = ""
     , blob = Nothing
     , encoded_nid = ""
@@ -133,7 +131,7 @@ initModel user session =
     , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , confirmContract = ConfirmContract.init user
+    , confirmContract = ConfirmContract.init session
     }
 
 
@@ -184,7 +182,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user model.session
+    initModel model.session
 
 
 setTarget : Node -> Model -> Model

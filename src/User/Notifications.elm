@@ -274,7 +274,7 @@ init global flags =
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , authModal = AuthModal.init global.session.user Nothing
+            , authModal = AuthModal.init Nothing global.session
             }
     in
     ( model

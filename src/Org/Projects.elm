@@ -414,14 +414,14 @@ init global flags =
             , url = global.url
             , empty = {}
             , tensionForm = NTF.init session
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session
             , help = Help.init session
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session
+            , joinOrga = JoinOrga.init newFocus.nameid session
+            , authModal = AuthModal.init (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing) session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
+            , actionPanel = ActionPanel.init session
             }
 
         cmds =

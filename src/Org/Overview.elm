@@ -289,14 +289,14 @@ init global flags =
             , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
-            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session
             , help = Help.init session
             , tensionForm = NTF.init session
-            , actionPanel = ActionPanel.init session.user session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , actionPanel = ActionPanel.init session
+            , joinOrga = JoinOrga.init newFocus.nameid session
+            , authModal = AuthModal.init Nothing session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.tree_menu session.tree_data session
             }
 
         cmds_ =

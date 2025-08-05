@@ -56,7 +56,7 @@ import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Session, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -66,8 +66,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , rootnameid : String
+    { rootnameid : String
     , form : ContractForm -- user inputs
     , contracts_result : GqlData (List Contract) -- result of any query
     , contract_result : GqlData ContractFull
@@ -89,16 +88,15 @@ type ContractsPageView
     | ContractsView
 
 
-initModel : String -> UserState -> Session -> Model
-initModel focusid user session =
-    { user = user
-    , rootnameid = nid2rootid focusid
+initModel : String -> Session -> Model
+initModel focusid session =
+    { rootnameid = nid2rootid focusid
     , contracts_result = NotAsked
     , contract_result = NotAsked
     , contract_result_del = NotAsked
     , vote_result = NotAsked
-    , form = initContractForm user
-    , voteForm = initVoteForm user
+    , form = initContractForm session.user
+    , voteForm = initVoteForm session.user
     , activeView = ContractsView
 
     -- Common
@@ -107,7 +105,7 @@ initModel focusid user session =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , comments = Comments.init focusid "" user
+    , comments = Comments.init focusid "" session
     }
 
 
@@ -155,9 +153,9 @@ initVoteForm user =
     }
 
 
-init : String -> UserState -> Session -> State
-init rid user session =
-    initModel rid user session |> State
+init : String -> Session -> State
+init rid session =
+    initModel rid session |> State
 
 
 
@@ -517,6 +515,9 @@ update_ apis message model =
 
         UpdateUctx uctx ->
             let
+                session =
+                    model.session
+
                 form =
                     model.form
 
@@ -524,7 +525,7 @@ update_ apis message model =
                     model.voteForm
             in
             ( { model
-                | user = LoggedIn uctx
+                | session = { session | user = LoggedIn uctx }
                 , form = { form | uctx = uctx }
                 , voteForm = { voteForm | uctx = uctx }
               }
@@ -754,7 +755,7 @@ viewContractPage c op model =
             text ""
         , Comments.viewCommentsContract model.session model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
-        , case model.user of
+        , case model.session.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
                     Comments.viewContractCommentInput model.session model.comments |> Html.map CommentsMsg

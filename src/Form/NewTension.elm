@@ -81,8 +81,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , nodeDoc : NodeDoc -- form
+    { nodeDoc : NodeDoc -- form
     , result : GqlData Tension
     , sources : List EmitterOrReceiver
     , step : TensionStep
@@ -175,8 +174,7 @@ init session =
 
 initModel : Session -> Model
 initModel session =
-    { user = session.user
-    , result = NotAsked
+    { result = NotAsked
     , sources = []
     , step = TensionFinal
     , isActive = False
@@ -208,9 +206,9 @@ initModel session =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
-    , inviteInput = UserInput.init [] True False session.user
-    , userInput = UserInput.init [] False False session.user
-    , comments = Comments.init "" "" session.user
+    , inviteInput = UserInput.init [] True False session
+    , userInput = UserInput.init [] False False session
+    , comments = Comments.init "" "" session
     }
 
 
@@ -386,7 +384,11 @@ setResult result data =
 
 setUctx : UserCtx -> Model -> Model
 setUctx uctx data =
-    { data | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
+    let
+        session =
+            data.session
+    in
+    { data | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
 
 
 setTensionType : TensionType.TensionType -> Model -> Model
@@ -691,7 +693,7 @@ update_ apis message model =
                 ( { model | isActive2 = model.isActive }, noOut )
 
         OnOpen t d ->
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     let
                         newModel =
@@ -1193,7 +1195,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
 
 
 subscriptions : State -> List (Sub Msg)

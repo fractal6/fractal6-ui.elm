@@ -68,8 +68,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , isActive : Bool
     , isActive2 : Bool
     , form : ActionForm
@@ -108,15 +107,14 @@ type ActionStep
     | StepAck IdPayload
 
 
-initModel : UserState -> Session -> Model
-initModel user session =
-    { user = user
-    , action_result = NotAsked
+initModel : Session -> Model
+initModel session =
+    { action_result = NotAsked
     , node_result = NotAsked
     , isOpen = False
     , isActive = False
     , isActive2 = False
-    , form = initActionForm "" user
+    , form = initActionForm "" session.user
     , state = LinkAction -- random
     , step = StepOne
     , domid = "actionPanelHelper"
@@ -127,14 +125,14 @@ initModel user session =
     , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , moveTension = MoveTension.init user session
-    , userInput = UserInput.init [] True False user
+    , moveTension = MoveTension.init session
+    , userInput = UserInput.init [] True False session
     }
 
 
-init : UserState -> Session -> State
-init user session =
-    initModel user session |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
 panelAction2str : PanelState -> String
@@ -352,7 +350,7 @@ closeModal model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user model.session
+    initModel model.session
 
 
 setStep : ActionStep -> Model -> Model
@@ -903,8 +901,11 @@ update_ apis message model =
             let
                 form =
                     model.form
+
+                session =
+                    model.session
             in
-            ( { model | user = LoggedIn uctx, form = { form | uctx = uctx } }, noOut )
+            ( { model | session = { session | user = LoggedIn uctx }, form = { form | uctx = uctx } }, noOut )
 
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
@@ -1327,7 +1328,7 @@ viewStep1 op model =
                     ]
 
                 LeaveAction ->
-                    [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.user).roles) == 1 then
+                    [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.session.user).roles) == 1 then
                         showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" (T.confirmLeaveOrga model.session.lexicon) ""
 
                       else

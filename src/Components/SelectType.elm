@@ -52,8 +52,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , type_orig : TensionType.TensionType
     , data_result : GqlData IdPayload -- result of any query
     , form : TensionForm -- user inputs
@@ -65,13 +64,12 @@ type alias Model =
     }
 
 
-initModel : String -> UserState -> Session -> Model
-initModel tid user session =
-    { user = user
-    , isOpen = False
+initModel : String -> Session -> Model
+initModel tid session =
+    { isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionForm tid Nothing user
+    , form = initTensionForm tid Nothing session.user
 
     -- Common
     , session = session
@@ -80,9 +78,9 @@ initModel tid user session =
     }
 
 
-init : String -> UserState -> Session -> State
-init tid user session =
-    initModel tid user session |> State
+init : String -> Session -> State
+init tid session =
+    initModel tid session |> State
 
 
 
@@ -110,7 +108,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.form.id model.user model.session
+    initModel model.form.id model.session
 
 
 updatePost : String -> String -> Model -> Model

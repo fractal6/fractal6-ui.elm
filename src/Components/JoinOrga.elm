@@ -47,7 +47,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
+import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
 import Text as T
 import Time
 
@@ -57,8 +57,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , form : ActionForm
     , step : JoinStep
     , node_data : GqlData Node
@@ -67,7 +66,7 @@ type alias Model =
     , isPending : Bool
 
     -- Common
-    , screen : Screen
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -82,11 +81,10 @@ type JoinStep
     | AuthNeeded
 
 
-initModel : String -> UserState -> Screen -> Model
-initModel nameid user screen =
-    { user = user
-    , isOpen = False
-    , form = initActionForm "" user -- set later
+initModel : String -> Session -> Model
+initModel nameid session =
+    { isOpen = False
+    , form = initActionForm "" session.user -- set later
     , step = JoinOne
     , node_data = Loading
     , join_result = NotAsked
@@ -94,18 +92,18 @@ initModel nameid user screen =
     , isPending = False
 
     -- Common
-    , screen = screen
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init [ nameid ] True True user
+    , userInput = UserInput.init [ nameid ] True True session
     }
 
 
-init : String -> UserState -> Screen -> State
-init nameid user screen =
-    initModel nameid user screen |> State
+init : String -> Session -> State
+init nameid session =
+    initModel nameid session |> State
 
 
 
@@ -133,7 +131,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.nameid model.user model.screen
+    initModel model.nameid model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -289,7 +287,7 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         OnOpen rootnameid method ->
-            case model.user of
+            case model.session.user of
                 LoggedOut ->
                     ( { model | step = AuthNeeded } |> open
                     , out0 [ Ports.open_modal "JoinOrgaModal" ]
@@ -354,7 +352,7 @@ update_ apis message model =
                     let
                         -- Time is ignored here, we just want the contractid
                         form =
-                            makeJoinForm model.user node (Time.millisToPosix 0) model.form
+                            makeJoinForm model.session.user node (Time.millisToPosix 0) model.form
                     in
                     ( { model | form = form }, out0 [ getContractId apis (form2cid form) OnContractIdAck ] )
 
@@ -427,10 +425,10 @@ update_ apis message model =
                     ( model, noOut )
 
         OnJoin2 node time ->
-            ( { model | form = makeJoinForm model.user node time model.form, join_result = NotAsked }, noOut )
+            ( { model | form = makeJoinForm model.session.user node time model.form, join_result = NotAsked }, noOut )
 
         OnInvite2 node time ->
-            ( { model | form = makeInviteForm model.user node time model.form, join_result = NotAsked }, noOut )
+            ( { model | form = makeInviteForm model.session.user node time model.form, join_result = NotAsked }, noOut )
 
         OnJoinAck result ->
             case parseErr result model.refresh_trial of
@@ -479,7 +477,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx, isPending = isPending uctx model.nameid }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx }, isPending = isPending uctx model.nameid }, noOut )
 
         -- Components
         UserInputMsg msg ->
@@ -733,7 +735,7 @@ viewComment isOpt model =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if isMobile model.screen then
+            if isMobile model.session.screen then
                 ( 5, 2 )
 
             else

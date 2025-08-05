@@ -54,11 +54,11 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , rolesState : RolesState
+    { rolesState : RolesState
     , focus : NodeFocus
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , baseUri : FractalBaseRoute
     , uriQuery : Maybe String
@@ -70,22 +70,22 @@ type RolesState
     | Collapsed
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Model
-initModel baseUri uriQuery focus user =
-    { user = user
-    , rolesState = Collapsed
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Session -> Model
+initModel baseUri uriQuery focus session =
+    { rolesState = Collapsed
     , focus = focus
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , baseUri = baseUri
     , uriQuery = uriQuery
     }
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> State
-init baseUri uriQuery focus user =
-    initModel baseUri uriQuery focus user |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> Session -> State
+init baseUri uriQuery focus session =
+    initModel baseUri uriQuery focus session |> State
 
 
 expand : Model -> Model
@@ -184,7 +184,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx } }, noOut )
 
 
 subscriptions : List (Sub Msg)
@@ -272,7 +276,7 @@ viewPathContext op model =
                 Nothing ->
                     text ""
             , div [ id "rolesMenu", class "is-hidden-mobile" ]
-                [ case model.user of
+                [ case model.session.user of
                     LoggedIn uctx ->
                         case op.path_data of
                             Just path ->
@@ -375,7 +379,7 @@ viewNavTabs op model =
                    )
                 ++ (Maybe.map
                         (\path ->
-                            if model.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                            if model.session.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "vbar" ] []
                                 , li [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (toLink SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]

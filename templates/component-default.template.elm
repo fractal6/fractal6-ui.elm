@@ -39,7 +39,7 @@ import Bulk.Error exposing (viewGqlErrors)
 import ModelSchema exposing (MyData, Post, UserCtx)
 import Ports
 import Query.AddData exposing (getData)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, Session, GlobalCmd(..))
 import Text as T
 import Time
 
@@ -51,21 +51,21 @@ type State
     = State Model
 
 type alias Model =
-    { user : UserState
-    , data_result : GqlData MyData -- result of any query
+    { data_result : GqlData MyData -- result of any query
     , form : MyForm -- user inputs
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
-    { user = user
-    , data_result = NotAsked
+initModel : Session -> Model
+initModel session =
+    { data_result = NotAsked
     , form = initForm user
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -89,9 +89,9 @@ initForm user =
     , post = Dict.empty
     }
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
 -- Global methods
@@ -105,7 +105,7 @@ init user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user
+    initModel model.session
 
 updatePost : String -> String -> Model -> Model
 updatePost field value model =
@@ -181,7 +181,7 @@ out2 : List (Cmd Msg) -> List GlobalCmd -> Out
 out2 cmds gcmds =
     Out cmds gcmds Nothing
 
-update : Apis -> Msg -> State -> ( State, Out )
+update :Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
     update_ apis message model
         |> Tuple.mapFirst State
@@ -216,7 +216,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->

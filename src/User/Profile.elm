@@ -129,7 +129,7 @@ init global flags =
             -- common
             , refresh_trial = 0
             , help = Help.init global.session
-            , authModal = AuthModal.init global.session.user Nothing
+            , authModal = AuthModal.init Nothing global.session
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
             }

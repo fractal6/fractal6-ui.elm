@@ -69,8 +69,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , projectid : String
     , noStatusCol : ColTarget
     , target : FocusNode
@@ -99,10 +98,9 @@ type alias ColTarget =
     }
 
 
-initModel : String -> UserState -> Session -> Model
-initModel projectid user session =
-    { user = user
-    , isOpen = False
+initModel : String -> Session -> Model
+initModel projectid session =
+    { isOpen = False
     , projectid = projectid
     , noStatusCol = { id = "", cards_len = 0 }
     , target = initFocusNode
@@ -116,7 +114,7 @@ initModel projectid user session =
     -- Components
     , isOpenTargetFilter = False
     , isOpenTypeFilter = False
-    , labelSearchPanel = LabelSearchPanel.load Nothing user
+    , labelSearchPanel = LabelSearchPanel.load Nothing session.user
 
     -- Common
     , session = session
@@ -125,9 +123,9 @@ initModel projectid user session =
     }
 
 
-init : String -> UserState -> Session -> State
-init projectid user session =
-    initModel projectid user session |> State
+init : String -> Session -> State
+init projectid session =
+    initModel projectid session |> State
 
 
 
@@ -145,7 +143,7 @@ hasTargets_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.projectid model.user model.session
+    initModel model.projectid model.session
 
 
 setDataResult : GqlData (List TensionLight) -> Model -> Model
@@ -316,7 +314,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -339,7 +337,7 @@ update_ apis message model =
                         Nothing ->
                             let
                                 form =
-                                    { uctx = uctxFromUser model.user
+                                    { uctx = uctxFromUser model.session.user
                                     , projectid = model.projectid
                                     , colid = ""
                                     , col_type = Just ProjectColumnType.NoStatusColumn
@@ -418,7 +416,7 @@ update_ apis message model =
         OnAddToProject ->
             let
                 form =
-                    { uctx = uctxFromUser model.user
+                    { uctx = uctxFromUser model.session.user
                     , title = ""
                     , colid = model.noStatusCol.id
                     , pos = model.noStatusCol.cards_len

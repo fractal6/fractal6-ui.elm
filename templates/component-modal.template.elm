@@ -57,8 +57,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , data_result : GqlData MyData -- result of any query
     , form : MyForm -- user inputs
@@ -70,10 +69,9 @@ type alias Model =
     }
 
 
-initModel : UserState -> Session -> Model
-initModel user session =
-    { user = user
-    , isActive = False
+initModel : Session -> Model
+initModel  session =
+    { isActive = False
     , isActive2 = False
     , data_result = NotAsked
     , form = initForm user
@@ -108,9 +106,9 @@ initForm user =
     }
 
 
-init : UserState -> Session -> State
-init user session =
-    initModel user session |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
 
@@ -128,7 +126,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user
+    initModel model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -306,7 +304,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->

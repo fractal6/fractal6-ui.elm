@@ -74,8 +74,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , node_focus : NodeFocus
+    { node_focus : NodeFocus
     , isOpen : Bool
     , path_data : GqlData LocalGraph -- tensionadmin
     , card : ProjectCard
@@ -104,10 +103,9 @@ type alias Model =
     }
 
 
-initModel : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> Model
-initModel session path focus user =
-    { user = user
-    , node_focus = focus
+initModel : Session -> GqlData LocalGraph -> NodeFocus -> Model
+initModel session path focus =
+    { node_focus = focus
     , isOpen = False
     , path_data = path
     , card = emptyCard
@@ -116,16 +114,16 @@ initModel session path focus user =
     , subscribe_result = NotAsked
 
     -- Title / Draft message
-    , tension_form = initTensionForm "" Nothing user
+    , tension_form = initTensionForm "" Nothing session.user
     , isTitleEdit = False
     , title_result = NotAsked
     , isMessageEdit = False
     , message_result = NotAsked
 
     -- Components
-    , assigneesPanel = UserSearchPanel.init "" AssignUser user
-    , labelsPanel = LabelSearchPanel.init "" AssignLabel user
-    , comments = Comments.init focus.nameid "" user
+    , assigneesPanel = UserSearchPanel.init "" AssignUser session.user
+    , labelsPanel = LabelSearchPanel.init "" AssignLabel session.user
+    , comments = Comments.init focus.nameid "" session
 
     -- Common
     , session = session
@@ -136,9 +134,9 @@ initModel session path focus user =
     }
 
 
-init : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> State
-init session path focus user =
-    initModel session path focus user |> State
+init : Session -> GqlData LocalGraph -> NodeFocus -> State
+init session path focus =
+    initModel session path focus |> State
 
 
 
@@ -149,7 +147,7 @@ init session path focus user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.session model.path_data model.node_focus model.user
+    initModel model.session model.path_data model.node_focus
 
 
 
@@ -287,7 +285,7 @@ update_ apis message model =
 
         OnQueryTension tid ->
             ( { model | tension_result = Loading }
-            , out0 [ getTensionPanel apis (uctxFromUser model.user) tid OnTensionAck ]
+            , out0 [ getTensionPanel apis (uctxFromUser model.session.user) tid OnTensionAck ]
             )
 
         OnTensionAck result ->
@@ -302,7 +300,7 @@ update_ apis message model =
                             withDefault [] d.history
 
                         isAdmin =
-                            getTensionRights (uctxFromUser model.user) result model.path_data
+                            getTensionRights (uctxFromUser model.session.user) result model.path_data
                     in
                     ( { model
                         | tension_result = Success { d | comments = Nothing, history = Nothing }
@@ -351,7 +349,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "title" value form.post } }, noOut )
 
         OnCancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, title_result = NotAsked }, noOut )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
 
         SubmitTitle time ->
             let
@@ -410,7 +408,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -437,7 +435,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "message" value form.post } }, noOut )
 
         OnCancelMessage ->
-            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, message_result = NotAsked }, noOut )
+            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
 
         SubmitMessage time ->
             let
@@ -471,7 +469,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -763,7 +761,7 @@ viewTitle : TensionPanel -> Model -> Html Msg
 viewTitle t model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             t.createdBy.username == uctx.username
@@ -869,7 +867,7 @@ viewTensionComments path_data t model =
                 |> withDefault False
 
         userCanComment =
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     -- Author or member can comment tension.
                     -- is Author
@@ -881,7 +879,7 @@ viewTensionComments path_data t model =
                     False
 
         userInput =
-            case model.user of
+            case model.session.user of
                 LoggedIn _ ->
                     if userCanComment then
                         Comments.viewTensionCommentInput model.mobileConf t model.comments |> Html.map CommentsMsg
@@ -907,7 +905,7 @@ viewTensionSidePane : TensionPanel -> Model -> Html Msg
 viewTensionSidePane t model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             t.createdBy.username == uctx.username
@@ -983,7 +981,7 @@ viewTensionSidePane t model =
 
         -- Subscriptions
         , hr [ class "has-background-border-light my-5" ] []
-        , case model.user of
+        , case model.session.user of
             LoggedIn _ ->
                 let
                     ( iconElt, subscribe_txt ) =
@@ -1037,7 +1035,7 @@ viewPanelDraft : ProjectDraft -> Model -> Html Msg
 viewPanelDraft draft model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             draft.createdBy.username == uctx.username
@@ -1201,7 +1199,7 @@ viewDraftSidePane d model =
             model.card
 
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             d.createdBy.username == uctx.username

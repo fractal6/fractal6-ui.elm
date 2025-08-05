@@ -166,9 +166,9 @@ orgaStepToString form step =
             T.reviewAndValidate
 
 
-initModel : UserState -> Session -> Maybe OrgaForm -> Model
-initModel user session form_m =
-    { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
+initModel : Session -> Maybe OrgaForm -> Model
+initModel session form_m =
+    { form = withDefault { post = Dict.empty, uctx = uctxFromUser session.user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
     , hasDuplicate = False
@@ -178,7 +178,7 @@ initModel user session form_m =
     , empty = {}
     , help = Help.init session
     , refresh_trial = 0
-    , authModal = AuthModal.init user Nothing
+    , authModal = AuthModal.init Nothing session
     }
 
 
@@ -200,13 +200,13 @@ init global flags =
     in
     case global.session.user of
         LoggedOut ->
-            ( initModel global.session.user session Nothing
+            ( initModel session Nothing
             , Cmd.none
             , send (NavigateRaw "/")
             )
 
         LoggedIn uctx ->
-            ( initModel global.session.user session global.session.newOrgaData
+            ( initModel session global.session.newOrgaData
                 |> (\m ->
                         { m
                             | step =

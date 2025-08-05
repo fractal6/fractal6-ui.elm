@@ -46,7 +46,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -56,8 +56,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , target : String -- keep origin target
     , blob : Maybe Blob -- potential blob attached to tension
     , data_result : GqlData IdPayload -- contract created
@@ -65,22 +64,23 @@ type alias Model =
     , form : ContractForm -- user inputs
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
-    { user = user
-    , isOpen = False
+initModel : Session -> Model
+initModel session =
+    { isOpen = False
     , target = ""
     , blob = Nothing
     , data_result = NotAsked
     , contract = Nothing
-    , form = initContractForm user
+    , form = initContractForm session.user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -98,9 +98,9 @@ updateFormFromData c f =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
 
@@ -162,7 +162,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel model.session
 
 
 updatePost : String -> String -> Model -> Model

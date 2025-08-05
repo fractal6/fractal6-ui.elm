@@ -44,7 +44,7 @@ import ModelSchema exposing (Post, UserCtx)
 import Ports
 import RemoteData
 import Requests exposing (makeOwner)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -60,37 +60,37 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , focus : NodeFocus
     , target_username : String
     , owner_result : RestData Bool
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> NodeFocus -> Model
-initModel user focus =
-    { user = user
-    , isActive = False
+initModel : Session -> NodeFocus -> Model
+initModel session focus =
+    { isActive = False
     , isActive2 = False
     , focus = focus
     , target_username = ""
     , owner_result = RemoteData.NotAsked
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : UserState -> NodeFocus -> State
-init user focus =
-    initModel user focus |> State
+init : Session -> NodeFocus -> State
+init session focus =
+    initModel session focus |> State
 
 
 
@@ -108,7 +108,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user model.focus
+    initModel model.session model.focus
 
 
 

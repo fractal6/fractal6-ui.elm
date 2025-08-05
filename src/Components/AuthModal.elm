@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import RemoteData
 import Requests exposing (login, signupValidate)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import String.Format as Format
 import Text as T
 
@@ -52,16 +52,16 @@ type State
 
 
 type alias Model =
-    { user : UserState
+    { session : Session
     , modalAuth : ModalAuth
     , refreshAfter : Bool
     , modalType : ModalType
     }
 
 
-initModel : UserState -> Maybe String -> Model
-initModel user puid =
-    { user = user
+initModel : Maybe String -> Session -> Model
+initModel puid session =
+    { session = session
     , modalAuth = Inactive
     , refreshAfter = False
     , modalType =
@@ -94,9 +94,9 @@ type ModalAuth
     | Active UserAuthForm (RestData UserCtx)
 
 
-init : UserState -> Maybe String -> State
-init user puid =
-    initModel user puid |> State
+init : Maybe String -> Session -> State
+init puid session =
+    initModel puid session |> State
 
 
 
@@ -168,7 +168,7 @@ update_ apis message model =
         OnStart ->
             case model.modalType of
                 SignupModal puid ->
-                    case model.user of
+                    case model.session.user of
                         LoggedIn _ ->
                             -- @future: manage multiple loggin:
                             -- * Check that the puid match the user.
@@ -181,7 +181,7 @@ update_ apis message model =
                     ( model, noOut )
 
         DoOpenAuthModal refresh uctx ->
-            case model.user of
+            case model.session.user of
                 -- @DEBUG/codefactor: pass directly {user} to DoOpenAuthModal !
                 LoggedIn _ ->
                     if model.modalAuth /= Inactive then
@@ -353,7 +353,7 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( initModel model.user Nothing, out2 [ Ports.close_modal ] gcmds )
+            ( initModel Nothing model.session, out2 [ Ports.close_modal ] gcmds )
 
 
 subscriptions : List (Sub Msg)

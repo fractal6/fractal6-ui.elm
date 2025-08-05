@@ -45,7 +45,7 @@ import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
 import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import String
 import Text as T
 
@@ -55,8 +55,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool
     , isHover : Bool
     , focus : NodeFocus
@@ -67,6 +66,7 @@ type alias Model =
     , expanded_lines : ExpandedLines
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , baseUri : FractalBaseRoute
@@ -86,8 +86,8 @@ prefixId did =
     "treeMenu_" ++ did
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> Model
-initModel baseUri uriQuery focus user persistent tree =
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> Session -> Model
+initModel baseUri uriQuery focus persistent tree session =
     let
         m =
             persistent
@@ -108,8 +108,7 @@ initModel baseUri uriQuery focus user persistent tree =
             else
                 m.expanded_lines
     in
-    { user = user
-    , isActive = m.isActive
+    { isActive = m.isActive
     , isActive2 = m.isActive
     , isHover = False
     , focus = focus
@@ -120,7 +119,7 @@ initModel baseUri uriQuery focus user persistent tree =
                 Success o
 
             Nothing ->
-                case user of
+                case session.user of
                     LoggedIn _ ->
                         LoadingSlowly
 
@@ -131,6 +130,7 @@ initModel baseUri uriQuery focus user persistent tree =
     , expanded_lines = expanded_lines
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , baseUri = baseUri
@@ -139,9 +139,9 @@ initModel baseUri uriQuery focus user persistent tree =
         |> setTree
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> State
-init baseUri uriQuery focus user persistent data =
-    initModel baseUri uriQuery focus user persistent data |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> Session -> State
+init baseUri uriQuery focus persistent data session =
+    initModel baseUri uriQuery focus persistent data session |> State
 
 
 setTree : Model -> Model
@@ -250,7 +250,7 @@ next_ nameid_m (Tree { node, children }) =
 
 reset : Model -> Model
 reset model =
-    initModel model.baseUri Nothing model.focus model.user (Just (toPersistant model)) (withMaybeData model.tree_result)
+    initModel model.baseUri Nothing model.focus (Just (toPersistant model)) (withMaybeData model.tree_result) model.session
 
 
 setDataResult : GqlData NodesDict -> Model -> Model
@@ -354,8 +354,12 @@ update_ apis message model =
                 )
 
         OnReload uctx ->
-            if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
-                ( { model | tree_result = LoadingSlowly, user = LoggedIn uctx }, out0 [ send OnLoad ] )
+            if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.session.user).roles) then
+                let
+                    session =
+                        model.session
+                in
+                ( { model | tree_result = LoadingSlowly, session = { session | user = LoggedIn uctx } }, out0 [ send OnLoad ] )
 
             else
                 ( model, noOut )
@@ -377,7 +381,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->

@@ -241,22 +241,22 @@ init global flags =
             , projectid = projectid
             , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData session.project_data Loading)
-            , linkTensionPanel = LinkTensionPanel.init projectid session.user session
-            , cardPanel = CardPanel.init session path_data newFocus session.user
-            , board = Board.init projectid newFocus session.user
+            , linkTensionPanel = LinkTensionPanel.init projectid session
+            , cardPanel = CardPanel.init session path_data newFocus
+            , board = Board.init projectid newFocus session
 
             -- Common
             , session = session
             , refresh_trial = 0
             , empty = {}
             , tensionForm = NTF.init session
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session
             , help = Help.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session
+            , joinOrga = JoinOrga.init newFocus.nameid session
+            , authModal = AuthModal.init Nothing session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
+            , actionPanel = ActionPanel.init session
             }
 
         cmds =

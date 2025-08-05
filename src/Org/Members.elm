@@ -262,14 +262,14 @@ init global flags =
             , tensionForm = NTF.init session
             , refresh_trial = 0
             , empty = {}
-            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session.user
+            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session
             , help = Help.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session
-            , confirmOwner = ConfirmOwner.init session.user newFocus
+            , joinOrga = JoinOrga.init newFocus.nameid session
+            , authModal = AuthModal.init Nothing session
+            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
+            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.tree_menu session.tree_data session
+            , actionPanel = ActionPanel.init session
+            , confirmOwner = ConfirmOwner.init session newFocus
             }
 
         cmds =

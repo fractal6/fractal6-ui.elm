@@ -102,8 +102,7 @@ type alias EventTracker =
 
 
 type alias Model =
-    { user : UserState
-    , focusid : String
+    { focusid : String
     , comments : List Comment
     , history : List Event
     , expandedEvents : List Int
@@ -122,35 +121,36 @@ type alias Model =
     , userInput : UserInput.State
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     }
 
 
-initModel : String -> String -> UserState -> Model
-initModel nameid tensionid user =
-    { user = user
-    , focusid = nameid
+initModel : String -> String -> Session -> Model
+initModel nameid tensionid session =
+    { focusid = nameid
     , comments = []
     , history = []
     , expandedEvents = []
     , highlightedCommentId = ""
-    , tension_form = initTensionForm tensionid Nothing user
+    , tension_form = initTensionForm tensionid Nothing session.user
     , tension_patch = NotAsked
-    , contract_form = initCommentPatchForm user []
-    , comment_form = initCommentPatchForm user [ ( "focusid", nameid ) ]
+    , contract_form = initCommentPatchForm session.user []
+    , comment_form = initCommentPatchForm session.user [ ( "focusid", nameid ) ]
     , comment_result = NotAsked
 
     -- Components
-    , userInput = UserInput.init [ nameid ] False False user
+    , userInput = UserInput.init [ nameid ] False False session
 
     -- Common
+    , session = session
     , refresh_trial = 0
     }
 
 
-init : String -> String -> UserState -> State
-init nameid tensionid user =
-    initModel nameid tensionid user |> State
+init : String -> String -> Session -> State
+init nameid tensionid session =
+    initModel nameid tensionid session |> State
 
 
 
@@ -161,7 +161,7 @@ init nameid tensionid user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.tension_form.id model.focusid model.user
+    initModel model.tension_form.id model.focusid model.session
 
 
 type Msg
@@ -350,7 +350,7 @@ update_ apis message model =
                 OkAuth tp ->
                     let
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | comments =
@@ -403,7 +403,7 @@ update_ apis message model =
                 OkAuth comment ->
                     let
                         resetForm =
-                            initCommentPatchForm model.user []
+                            initCommentPatchForm model.session.user []
                     in
                     ( { model
                         | comments =
@@ -468,7 +468,7 @@ update_ apis message model =
                             LE.setAt n comment model.comments
 
                         resetForm =
-                            initCommentPatchForm model.user [ ( "focusid", model.focusid ) ]
+                            initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
                     in
                     ( { model | comments = comments, comment_form = resetForm, comment_result = result }
                     , out0 [ Ports.bulma_driver comment.createdAt ]
@@ -546,17 +546,17 @@ update_ apis message model =
                     ( model, noOut )
 
         OnAddReaction cid type_ ->
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     ( model, out0 [ addReaction apis uctx.username cid type_ OnAddReactionAck ] )
 
                 LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ] )
 
         OnAddReactionAck result ->
             let
                 uctx =
-                    uctxFromUser model.user
+                    uctxFromUser model.session.user
             in
             case parseErr result 2 of
                 Authenticate ->
@@ -569,17 +569,17 @@ update_ apis message model =
                     ( model, noOut )
 
         OnDeleteReaction cid type_ ->
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     ( model, out0 [ deleteReaction apis uctx.username cid type_ OnDeleteReactionAck ] )
 
                 LoggedOut ->
-                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ] )
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ] )
 
         OnDeleteReactionAck result ->
             let
                 uctx =
-                    uctxFromUser model.user
+                    uctxFromUser model.session.user
             in
             case parseErr result 2 of
                 Authenticate ->

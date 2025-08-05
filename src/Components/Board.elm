@@ -52,7 +52,7 @@ import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, Project
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
-import Session exposing (Apis, Session, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Task
 import Text as T
 
@@ -66,8 +66,7 @@ nodeID =
 
 
 type alias Model =
-    { user : UserState
-    , node_focus : NodeFocus
+    { node_focus : NodeFocus
     , projectid : String
     , isProjectAdmin : Bool
     , project : ProjectData
@@ -93,6 +92,7 @@ type alias Model =
     , projectColumnModal : ProjectColumnModal.State
 
     -- Common
+    , session : Session
     , refresh_trial : Int -- use to refresh user token
     , empty : {}
     , modal_confirm : ModalConfirm Msg
@@ -110,10 +110,9 @@ type alias DraftForm =
     }
 
 
-initModel : String -> NodeFocus -> UserState -> Model
-initModel projectid focus user =
-    { user = user
-    , node_focus = focus
+initModel : String -> NodeFocus -> Session -> Model
+initModel projectid focus session =
+    { node_focus = focus
     , projectid = projectid
     , project = ProjectData "" "" []
     , hasTaskMove = True
@@ -140,18 +139,19 @@ initModel projectid focus user =
     , cardEditDropdownY = 0
 
     -- Components
-    , projectColumnModal = ProjectColumnModal.init projectid user
+    , projectColumnModal = ProjectColumnModal.init projectid session
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , empty = {}
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> NodeFocus -> UserState -> State
-init projectid focus user =
-    initModel projectid focus user |> State
+init : String -> NodeFocus -> Session -> State
+init projectid focus session =
+    initModel projectid focus session |> State
 
 
 type alias AddCardForm =
@@ -509,7 +509,7 @@ update_ apis message model =
                     LE.find (\b -> b.id == colid) model.project.columns |> unwrap [] .cards |> List.length
 
                 uctx =
-                    uctxFromUser model.user
+                    uctxFromUser model.session.user
             in
             ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True } }
             , out0
@@ -759,7 +759,7 @@ update_ apis message model =
         OnConvertDraftAck draft t ->
             let
                 form =
-                    { uctx = uctxFromUser model.user
+                    { uctx = uctxFromUser model.session.user
                     , title = ""
                     , colid = draft.colid
                     , pos = draft.pos
