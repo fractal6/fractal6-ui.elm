@@ -1153,7 +1153,7 @@ update global message model =
             let
                 query =
                     queryBuilder
-                        ([ ( "q", model.pattern |> String.trim )
+                        ([ ( "q", model.pattern |> String.trim |> String.map (\c -> ternary (c == '"') '\'' c) )
                          , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
@@ -1956,7 +1956,7 @@ viewListTensions model =
             div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
-                viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
+                Lazy.lazy4 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
             , viewTensions ListTension model
             ]
         ]
