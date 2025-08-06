@@ -1,3 +1,8 @@
+// @DEBUG: why @use this in the bulma-base does not make it available in this file ?
+@use "bulma/sass/utilities/mixins" as *;
+
+@use "bulma-base" as *;
+@use "fractal6-variables" as *;
 
 /*
  *
@@ -1833,7 +1838,7 @@ figcaption {
     // Border transparency get overwirtten somewhere.
     border: 2px solid transparent !important;
     &:hover {
-        background-color: var(--hover-color) !important;
+        //background-color: var(--hover-color) !important;
         //filter: brightness(1.2);
     }
 
@@ -2434,17 +2439,13 @@ tr.mediaBox {
 
 .pinnedTile {
     // horizontal padding
-    & > .tile + .tile {
+    & > .cell + .cell {
         padding-left: 0.5rem;
     }
 
     // vertical padding
-    .tile.is-vertical > div + div {
+    .cell.is-vertical > div + div {
         padding-top: 1.2rem;
-    }
-
-    .tile.is-vertical {
-        //padding-bottom: 0;
     }
 }
 

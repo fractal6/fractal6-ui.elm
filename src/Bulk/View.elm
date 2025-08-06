@@ -211,10 +211,12 @@ viewPinnedTensions size session focus pins =
         |> List.filter (\x -> x /= [])
         |> List.map
             (\x ->
-                div [ class "tile is-parent is-vertical", classList [ ( "is-" ++ String.fromInt (12 // size), True ) ] ] <|
-                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin session focus y ]) x
+                div [ class "cell is-vertical" ] <|
+                    List.map (\y -> div [ class "" ] [ viewPin session focus y ]) x
             )
-        |> div [ class "tile is-ancestor pinnedTile" ]
+        |> div [ class "grid pinnedTile" ]
+        |> List.singleton
+        |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "cols", True ) ] ]
 
 
 viewPin : Session -> NodeFocus -> PinTension -> Html msg

@@ -928,6 +928,7 @@ function triggerTheme(e, el, app) {
         // Assume default is dark
         theme = "light"
     }
+    document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     localStorage.setItem('theme', theme.toUpperCase());
     app.ports.flushGraphPackFromJs.send(null)

@@ -724,7 +724,11 @@ viewComments_ session action history comments comment_form comment_result expand
                 Just _ ->
                     case LE.getAt e.i history of
                         Just event ->
-                            Lazy.lazy4 viewEvent session (Dict.get "focusid" comment_form.post) action event
+                            let
+                                focusid =
+                                    Dict.get "focusid" comment_form.post
+                            in
+                            Lazy.lazy4 viewEvent session focusid action event
 
                         Nothing ->
                             text ""

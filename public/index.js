@@ -25,6 +25,7 @@ window.addEventListener('load', _ => {
         theme = DEFAULT_THEME;
     }
     document.documentElement.className = theme.toLowerCase();
+    document.documentElement.setAttribute('data-theme', theme.toLowerCase());
     // Lang
     var lang = localStorage.getItem("lang");
     if (uctx && uctx.lang) {

@@ -165,9 +165,9 @@ module.exports = (env, argv) => {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            "style-loader",
-                            "css-loader",
-                            "sass-loader",
+                            "style-loader",    // 3. Finally, injects CSS into DOM
+                            "css-loader",      // 2. Then, processes CSS imports
+                            "sass-loader",     // 1. First, compiles Sass to CSS
                         ],
                     },
                 ]
