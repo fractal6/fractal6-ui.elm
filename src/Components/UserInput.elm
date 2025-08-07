@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryMembers)
 import Query.QueryUser exposing (queryUser)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -65,13 +65,13 @@ type alias Model =
     , activePos : Int
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : List String -> Bool -> Bool -> Session -> Model
+initModel : List String -> Bool -> Bool -> SessionCommon -> Model
 initModel targets isInvite multiSelect session =
     { users_result = NotAsked
     , form = []
@@ -92,7 +92,7 @@ initModel targets isInvite multiSelect session =
     }
 
 
-init : List String -> Bool -> Bool -> Session -> State
+init : List String -> Bool -> Bool -> SessionCommon -> State
 init targets isInvite multiSelect session =
     initModel targets isInvite multiSelect session |> State
 

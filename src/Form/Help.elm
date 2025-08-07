@@ -49,7 +49,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
-import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import Text as T
 import Time
 
@@ -75,7 +75,7 @@ type alias Model =
     , formFeedback : NT.Model
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     }
@@ -122,12 +122,12 @@ labelCodec type_ =
             Label "0xc5f4" "Praise" (Just "#dddddd") []
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     let
         form =

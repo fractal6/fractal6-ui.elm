@@ -56,7 +56,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedOut ->
                     Global.navigate Route.Top
 

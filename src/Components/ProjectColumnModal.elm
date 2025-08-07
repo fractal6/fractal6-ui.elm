@@ -43,7 +43,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (IdPayload, Post, ProjectColumn, ProjectColumnEdit, UserCtx)
 import Ports
 import Query.QueryProject exposing (addProjectColumn, getProjectColumn, updateProjectColumn)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -67,14 +67,14 @@ type alias Model =
     , modal_type : ModalType
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , colorPicker : ColorPicker
     }
 
 
-initModel : String -> Session -> Model
+initModel : String -> SessionCommon -> Model
 initModel projectid session =
     { isActive = False
     , isActive2 = False
@@ -144,7 +144,7 @@ initForm projectid user =
     }
 
 
-init : String -> Session -> State
+init : String -> SessionCommon -> State
 init projectid session =
     initModel projectid session |> State
 

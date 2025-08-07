@@ -119,18 +119,19 @@ update msg model =
                 session =
                     model.global.session
 
+                common =
+                    session.common
+
                 sessionUpdated =
                     { session
-                        | url = url
-                        , query = query
-                        , viewMode = encodeViewMode query
-                        , referer =
+                        | referer =
                             case model.url.path of
                                 "/logout" ->
                                     session.referer
 
                                 _ ->
                                     Just model.url
+                        , common = { common | url = url, query = query, viewMode = encodeViewMode query }
                     }
 
                 --

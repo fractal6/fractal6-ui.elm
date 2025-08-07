@@ -38,7 +38,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryOrgaNode)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 
 
 type State
@@ -53,13 +53,13 @@ type alias Model =
     , hover : Maybe String
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> Session -> Model
+initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> SessionCommon -> Model
 initModel focus isActive orgs session =
     { isActive = withDefault False isActive
     , isActive2 = withDefault False isActive
@@ -85,7 +85,7 @@ initModel focus isActive orgs session =
     }
 
 
-init : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> Session -> State
+init : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> SessionCommon -> State
 init focus isActive orgs session =
     initModel focus isActive orgs session |> State
 

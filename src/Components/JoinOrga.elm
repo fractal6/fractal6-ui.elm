@@ -47,7 +47,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import Text as T
 import Time
 
@@ -66,7 +66,7 @@ type alias Model =
     , isPending : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -81,7 +81,7 @@ type JoinStep
     | AuthNeeded
 
 
-initModel : String -> Session -> Model
+initModel : String -> SessionCommon -> Model
 initModel nameid session =
     { isOpen = False
     , form = initActionForm "" session.user -- set later
@@ -101,7 +101,7 @@ initModel nameid session =
     }
 
 
-init : String -> Session -> State
+init : String -> SessionCommon -> State
 init nameid session =
     initModel nameid session |> State
 

@@ -66,7 +66,7 @@ import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
 import Requests exposing (fetchMembersSub)
-import Session exposing (GlobalCmd(..), Session, isMobile)
+import Session exposing (GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -188,7 +188,7 @@ type alias Model =
     , row_hover : Ellipsis
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
 
@@ -240,12 +240,12 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState MembersBaseUri session.referer global.url session.node_focus newFocus
+            focusState MembersBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , members_top = Loading
@@ -253,23 +253,23 @@ init global flags =
             , open_invitations = Loading
             , pending_hover = False
             , pending_hover_i = Nothing
-            , pattern = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
             , row_hover = resetEllipsis
 
             -- Common
-            , session = session
-            , tensionForm = NTF.init session
+            , session = session.common
+            , tensionForm = NTF.init session.common
             , refresh_trial = 0
             , empty = {}
-            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session
-            , help = Help.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session
-            , authModal = AuthModal.init Nothing session
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.tree_menu session.tree_data session
-            , actionPanel = ActionPanel.init session
-            , confirmOwner = ConfirmOwner.init session newFocus
+            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init Nothing session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
+            , confirmOwner = ConfirmOwner.init newFocus session.common
             }
 
         cmds =
@@ -747,7 +747,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -782,7 +782,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         isAdmin =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     hasLazyAdminRole uctx (withMaybeData model.path_data |> unwrap Nothing (\p -> Maybe.map .mode p.root)) model.node_focus.rootnameid
 
@@ -876,7 +876,7 @@ view_ global model =
         ]
 
 
-viewMembers : Session -> GqlData (List Member) -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewMembers : SessionCommon -> GqlData (List Member) -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
 viewMembers session members_d invitations_d focus isPanelOpen ell =
     let
         goToParent =
@@ -933,7 +933,7 @@ viewMembers session members_d invitations_d focus isPanelOpen ell =
             text ""
 
 
-viewGuest : Session -> List Member -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewGuest : SessionCommon -> List Member -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
 viewGuest session guests invitations_d focus isPanelOpen ell =
     let
         invitations =
@@ -969,7 +969,7 @@ viewGuest session guests invitations_d focus isPanelOpen ell =
         ]
 
 
-viewPending : Session -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending : SessionCommon -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
 viewPending _ pendings focus pending_hover pending_hover_i tid =
     div []
         [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
@@ -1006,7 +1006,7 @@ viewPending _ pendings focus pending_hover pending_hover_i tid =
         ]
 
 
-viewMemberRow : Session -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewMemberRow : SessionCommon -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
 viewMemberRow session focus m invitations_d hasInvitation isPanelOpen ell =
     let
         ( roles_, sub_roles_ ) =
@@ -1059,7 +1059,7 @@ viewMemberRow session focus m invitations_d hasInvitation isPanelOpen ell =
         ]
 
 
-viewGuestRow : Session -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewGuestRow : SessionCommon -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
 viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
     let
         user_invitations =
@@ -1084,7 +1084,7 @@ viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
         ]
 
 
-viewMemberRoles : Session -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
+viewMemberRoles : SessionCommon -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
 viewMemberRoles session baseUri roles isPanelOpen =
     div [ class "buttons is-inline" ] <|
         List.map
@@ -1094,7 +1094,7 @@ viewMemberRoles session baseUri roles isPanelOpen =
             roles
 
 
-viewUserEllipsis : Session -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
+viewUserEllipsis : SessionCommon -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
 viewUserEllipsis session focus m roles ell =
     let
         isOwner_ =
@@ -1157,13 +1157,13 @@ viewUserEllipsis session focus m roles ell =
         ]
 
 
-viewPendingRoles : Session -> List ContractLight -> Html Msg
+viewPendingRoles : SessionCommon -> List ContractLight -> Html Msg
 viewPendingRoles session invitations =
     div [ class "buttons is-inline" ] <|
         List.map (\c -> viewPendingRole session c) invitations
 
 
-viewPendingRole : Session -> ContractLight -> Html Msg
+viewPendingRole : SessionCommon -> ContractLight -> Html Msg
 viewPendingRole session c =
     let
         tooltip_cls =

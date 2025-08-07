@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import RemoteData
 import Requests exposing (login, signupValidate)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import String.Format as Format
 import Text as T
 
@@ -52,14 +52,14 @@ type State
 
 
 type alias Model =
-    { session : Session
+    { session : SessionCommon
     , modalAuth : ModalAuth
     , refreshAfter : Bool
     , modalType : ModalType
     }
 
 
-initModel : Maybe String -> Session -> Model
+initModel : Maybe String -> SessionCommon -> Model
 initModel puid session =
     { session = session
     , modalAuth = Inactive
@@ -94,7 +94,7 @@ type ModalAuth
     | Active UserAuthForm (RestData UserCtx)
 
 
-init : Maybe String -> Session -> State
+init : Maybe String -> SessionCommon -> State
 init puid session =
     initModel puid session |> State
 

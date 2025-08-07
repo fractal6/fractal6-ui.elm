@@ -52,7 +52,7 @@ import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, Project
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Task
 import Text as T
 
@@ -92,7 +92,7 @@ type alias Model =
     , projectColumnModal : ProjectColumnModal.State
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , empty : {}
     , modal_confirm : ModalConfirm Msg
@@ -110,7 +110,7 @@ type alias DraftForm =
     }
 
 
-initModel : String -> NodeFocus -> Session -> Model
+initModel : String -> NodeFocus -> SessionCommon -> Model
 initModel projectid focus session =
     { node_focus = focus
     , projectid = projectid
@@ -149,7 +149,7 @@ initModel projectid focus session =
     }
 
 
-init : String -> NodeFocus -> Session -> State
+init : String -> NodeFocus -> SessionCommon -> State
 init projectid focus session =
     initModel projectid focus session |> State
 

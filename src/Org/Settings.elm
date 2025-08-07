@@ -326,10 +326,10 @@ init global flags =
             session.apis
 
         menu =
-            Dict.get "m" session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" session.common.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         action =
-            Dict.get "a" session.query |> withDefault [] |> List.head |> withDefault ""
+            Dict.get "a" session.common.query |> withDefault [] |> List.head |> withDefault ""
 
         -- Focus
         newFocus =
@@ -339,18 +339,18 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState SettingsBaseUri session.referer global.url session.node_focus newFocus
+            focusState SettingsBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , menuFocus = menu
             , menuList = menuList
             , colorPicker = ColorPicker.init
-            , artefact_form = initArtefactNodeForm session.user newFocus.nameid ColorPicker.initColor
+            , artefact_form = initArtefactNodeForm session.common.user newFocus.nameid ColorPicker.initColor
             , hasUnsavedData = False
 
             -- Labels
@@ -363,7 +363,7 @@ init global flags =
             , label_result_del = NotAsked
 
             -- Roles
-            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView session.user
+            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView session.common.user
             , showMandate = ""
             , roles = Loading
             , roles_top = RemoteData.Loading
@@ -383,15 +383,15 @@ init global flags =
             , url = global.url
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus session
-            , help = Help.init session
-            , tensionForm = NTF.init session
+            , helperBar = HelperBar.init SettingsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , tensionForm = NTF.init session.common
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid session
-            , authModal = AuthModal.init (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing) session
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
-            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
-            , actionPanel = ActionPanel.init session
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault Nothing) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
 
         cmds =
@@ -849,7 +849,7 @@ update global message model =
                 , role_edit = Nothing
                 , role_result = NotAsked
                 , role_result_del = NotAsked
-                , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.user
+                , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.common.user
               }
                 |> resetForm
             , Cmd.none
@@ -1226,7 +1226,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =

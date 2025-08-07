@@ -46,7 +46,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -64,13 +64,13 @@ type alias Model =
     , form : ContractForm -- user inputs
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     { isOpen = False
     , target = ""
@@ -98,7 +98,7 @@ updateFormFromData c f =
     }
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 

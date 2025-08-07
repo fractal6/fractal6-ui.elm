@@ -56,7 +56,7 @@ import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -76,7 +76,7 @@ type alias Model =
     , activeView : ContractsPageView
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , comments : Comments.State
@@ -88,7 +88,7 @@ type ContractsPageView
     | ContractsView
 
 
-initModel : String -> Session -> Model
+initModel : String -> SessionCommon -> Model
 initModel focusid session =
     { rootnameid = nid2rootid focusid
     , contracts_result = NotAsked
@@ -153,7 +153,7 @@ initVoteForm user =
     }
 
 
-init : String -> Session -> State
+init : String -> SessionCommon -> State
 init rid session =
     initModel rid session |> State
 

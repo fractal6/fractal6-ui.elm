@@ -47,7 +47,7 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Session exposing (Session)
+import Session exposing (SessionCommon)
 import Text as T
 import Time
 
@@ -431,7 +431,7 @@ type alias OrgaNodeData =
 
 
 type alias Op msg =
-    { session : Session
+    { session : SessionCommon
     , data : NodeDoc
     , result : GqlData Tension -- result from new tension components
     , publish_result : GqlData TensionBlobFlag
@@ -1225,12 +1225,12 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : Session -> GqlData TensionBlobs -> Html msg
+viewVersions : SessionCommon -> GqlData TensionBlobs -> Html msg
 viewVersions session blobsData =
     Lazy.lazy2 viewVersions_ session blobsData
 
 
-viewVersions_ : Session -> GqlData TensionBlobs -> Html msg
+viewVersions_ : SessionCommon -> GqlData TensionBlobs -> Html msg
 viewVersions_ session blobsData =
     case blobsData of
         Success tblobs ->
@@ -1262,7 +1262,7 @@ viewVersions_ session blobsData =
             text ""
 
 
-viewVerRow : Session -> Int -> Blob -> List (Html msg)
+viewVerRow : SessionCommon -> Int -> Blob -> List (Html msg)
 viewVerRow session i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
         [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]

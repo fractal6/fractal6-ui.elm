@@ -52,7 +52,7 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import Session exposing (CommonMsg, GlobalCmd(..), Session)
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -114,7 +114,7 @@ type alias Model =
     , can_referer : Maybe Url
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , help : Help.State
     , refresh_trial : Int
     , empty : {}
@@ -153,7 +153,7 @@ menuList =
     [ NotificationsMenu, AssignedMenu ]
 
 
-menuToString : Session -> MenuNotif -> ( String, String )
+menuToString : SessionCommon -> MenuNotif -> ( String, String )
 menuToString session menu =
     case menu of
         NotificationsMenu ->
@@ -224,7 +224,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         ( uctx, cmds, gcmds ) =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx_ ->
                     ( uctx_
                     , case menu of
@@ -240,11 +240,11 @@ init global flags =
                     ( initUserctx, [], [ Global.navigate <| Route.Login ] )
 
         menu =
-            Dict.get "m" global.session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" global.session.common.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         model =
             { uctx = uctx
-            , notif = global.session.notif
+            , notif = global.session.data.notif
             , notifications_data = Loading
             , assigned_data = Loading
             , eid = ""
@@ -269,12 +269,12 @@ init global flags =
                     global.session.referer
 
             -- common
-            , session = global.session
-            , help = Help.init global.session
+            , session = global.session.common
+            , help = Help.init global.session.common
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , authModal = AuthModal.init Nothing global.session
+            , authModal = AuthModal.init Nothing global.session.common
             }
     in
     ( model
@@ -629,7 +629,7 @@ viewMenu model =
         ]
 
 
-viewNotifications : Session -> UserEvents -> Html Msg
+viewNotifications : SessionCommon -> UserEvents -> Html Msg
 viewNotifications session notifications =
     notifications
         |> List.map
@@ -637,7 +637,7 @@ viewNotifications session notifications =
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : Session -> UserEvent -> Html Msg
+viewUserEvent : SessionCommon -> UserEvent -> Html Msg
 viewUserEvent session ue =
     let
         firstEvent =
@@ -805,7 +805,7 @@ editableEvent event =
             True
 
 
-viewAssigned : CommonMsg Msg -> Session -> Dict String (List Tension) -> Html Msg
+viewAssigned : CommonMsg Msg -> SessionCommon -> Dict String (List Tension) -> Html Msg
 viewAssigned commonOp session tensions_d =
     Dict.keys tensions_d
         |> List.map

@@ -46,7 +46,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
-import Session exposing (CommonMsg, Session)
+import Session exposing (CommonMsg, SessionCommon)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -61,7 +61,7 @@ import Text as T
 --
 
 
-mediaTension : CommonMsg msg -> Session -> String -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension : CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> String -> Html msg
 mediaTension commonOp session focusid tension showStatus showRecip size =
     let
         n_comments =
@@ -194,7 +194,7 @@ viewTensionArrow t_blank cls emitter receiver =
         ]
 
 
-viewPinnedTensions : Int -> Session -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions : Int -> SessionCommon -> NodeFocus -> List PinTension -> Html msg
 viewPinnedTensions size session focus pins =
     List.foldl
         (\a b ->
@@ -219,7 +219,7 @@ viewPinnedTensions size session focus pins =
         |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "cols", True ) ] ]
 
 
-viewPin : Session -> NodeFocus -> PinTension -> Html msg
+viewPin : SessionCommon -> NodeFocus -> PinTension -> Html msg
 viewPin session focus tension =
     div [ class "box media mediaBox p-4", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
@@ -598,7 +598,7 @@ viewRoleExt commonOp cls link_m r =
     viewRole cls False False Nothing link_m (\_ _ _ -> commonOp.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
 
 
-viewRole : String -> Bool -> Bool -> Maybe ( Session, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
+viewRole : String -> Bool -> Bool -> Maybe ( SessionCommon, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
 viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     -- link and msg are mutually exclusive
     let
@@ -695,7 +695,7 @@ viewProfileC user =
 --
 
 
-viewOpenedDate : Session -> String -> Html msg
+viewOpenedDate : SessionCommon -> String -> Html msg
 viewOpenedDate session date =
     span [] <|
         List.intersperse (text " ") <|
@@ -704,7 +704,7 @@ viewOpenedDate session date =
             ]
 
 
-viewUpdated : Session -> String -> Html msg
+viewUpdated : SessionCommon -> String -> Html msg
 viewUpdated session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
@@ -714,7 +714,7 @@ viewUpdated session date =
             ]
 
 
-viewCommentedDate : Session -> String -> Html msg
+viewCommentedDate : SessionCommon -> String -> Html msg
 viewCommentedDate session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
@@ -723,7 +723,7 @@ viewCommentedDate session date =
             ]
 
 
-viewTensionDateAndUser : Session -> String -> String -> Username -> Html msg
+viewTensionDateAndUser : SessionCommon -> String -> String -> Username -> Html msg
 viewTensionDateAndUser session cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
@@ -733,7 +733,7 @@ viewTensionDateAndUser session cls createdAt createdBy =
             ]
 
 
-viewTensionDateAndUserC : Session -> String -> Username -> Html msg
+viewTensionDateAndUserC : SessionCommon -> String -> Username -> Html msg
 viewTensionDateAndUserC session createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
@@ -742,7 +742,7 @@ viewTensionDateAndUserC session createdAt createdBy =
             ]
 
 
-byAt : Session -> Username -> String -> Html msg
+byAt : SessionCommon -> Username -> String -> Html msg
 byAt session createdBy createdAt =
     span [] <|
         List.intersperse (text " ") <|

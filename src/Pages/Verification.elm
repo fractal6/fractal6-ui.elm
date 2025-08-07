@@ -107,10 +107,10 @@ init global flags =
         model =
             { form = { post = Dict.empty }
             , result = RemoteData.NotAsked
-            , email_token = Dict.get "email_token" global.session.query |> Maybe.map List.head |> withDefault Nothing
-            , email = Dict.get "email" global.session.query |> Maybe.map List.head |> withDefault Nothing
+            , email_token = Dict.get "email_token" global.session.common.query |> Maybe.map List.head |> withDefault Nothing
+            , email = Dict.get "email" global.session.common.query |> Maybe.map List.head |> withDefault Nothing
             , empty = {}
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             }
     in
     ( model
@@ -144,7 +144,7 @@ update global message model =
     in
     case message of
         SubmitVerification token ->
-            case global.session.user of
+            case global.session.common.user of
                 LoggedOut ->
                     ( { model | result = RemoteData.Loading }
                     , signupValidate apis (Dict.fromList [ ( "email_token", token ) ]) GotVerification
@@ -214,7 +214,7 @@ viewVerification global model =
                 viewHttpErrors err
 
             RemoteData.NotAsked ->
-                case global.session.user of
+                case global.session.common.user of
                     LoggedOut ->
                         almostThere (withDefault "" model.email) T.toConfirmYourAccount (toHref Route.Signup)
 

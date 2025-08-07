@@ -77,7 +77,7 @@ init global flags =
     let
         model =
             { empty = {}
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             }
     in
     ( model, Cmd.none, Cmd.none )

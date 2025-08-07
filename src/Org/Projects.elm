@@ -66,7 +66,7 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
-import Session exposing (GlobalCmd(..), Screen, Session, Theme(..))
+import Session exposing (GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
@@ -194,7 +194,7 @@ type alias Model =
     , project_result_del : GqlData ProjectFull
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
@@ -373,7 +373,7 @@ init global flags =
             global.session
 
         query =
-            session.query
+            session.common.query
 
         -- Focus
         newFocus =
@@ -383,16 +383,16 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState ProjectsBaseUri session.referer global.url session.node_focus newFocus
+            focusState ProjectsBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , hasUnsavedData = False
-            , project_form = initProjectForm session.user newFocus.nameid
+            , project_form = initProjectForm session.common.user newFocus.nameid
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
@@ -409,19 +409,19 @@ init global flags =
             , project_result_del = NotAsked
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , tensionForm = NTF.init session
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session
-            , help = Help.init session
+            , tensionForm = NTF.init session.common
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid session
-            , authModal = AuthModal.init (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing) session
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
-            , actionPanel = ActionPanel.init session
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
 
         cmds =
@@ -1005,7 +1005,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -1047,12 +1047,12 @@ view_ global model =
                 viewNewOrEditProject model.session False model
 
               else
-                viewDefault global.session.user model
+                viewDefault global.session.common.user model
             ]
         ]
 
 
-viewNewOrEditProject : Session -> Bool -> Model -> Html Msg
+viewNewOrEditProject : SessionCommon -> Bool -> Model -> Html Msg
 viewNewOrEditProject session isNew model =
     let
         title =
@@ -1313,7 +1313,7 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : Session -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList : SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
 viewProjectsList session focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
@@ -1347,7 +1347,7 @@ viewProjectsList session focus pattern statusFilter data =
         ]
 
 
-mediaProject : Session -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject : SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
 mediaProject session focus statusFilter project =
     let
         ( status_new, status_txt ) =

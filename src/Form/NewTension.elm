@@ -65,7 +65,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon)
 import Text as T
 import Time
 
@@ -108,7 +108,7 @@ type alias Model =
     , simplifiedView : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
@@ -167,12 +167,12 @@ nodeStepToString form step =
             T.invite
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     { result = NotAsked
     , sources = []
@@ -1401,7 +1401,7 @@ viewHeader tree_data model =
         ]
 
 
-viewTensionTabs : Session -> Bool -> TensionTab -> PNode -> Html Msg
+viewTensionTabs : SessionCommon -> Bool -> TensionTab -> PNode -> Html Msg
 viewTensionTabs session isAdmin tab targ =
     let
         -- This is the type of the receiver node.

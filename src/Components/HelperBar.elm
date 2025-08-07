@@ -38,7 +38,7 @@ import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
-import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, ViewMode(..))
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, ViewMode(..))
 import String.Format as Format
 import Text as T
 
@@ -58,7 +58,7 @@ type alias Model =
     , focus : NodeFocus
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , baseUri : FractalBaseRoute
     , uriQuery : Maybe String
@@ -70,7 +70,7 @@ type RolesState
     | Collapsed
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Session -> Model
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> SessionCommon -> Model
 initModel baseUri uriQuery focus session =
     { rolesState = Collapsed
     , focus = focus
@@ -83,7 +83,7 @@ initModel baseUri uriQuery focus session =
     }
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> Session -> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> SessionCommon -> State
 init baseUri uriQuery focus session =
     initModel baseUri uriQuery focus session |> State
 
@@ -206,7 +206,7 @@ subscriptions =
 type alias Op =
     { path_data : Maybe LocalGraph
     , isPanelOpen : Bool
-    , session : Session
+    , orgaInfo : Maybe OrgaInfo
     }
 
 
@@ -215,7 +215,7 @@ view op (State model) =
     -- @debug: padding-top overflow column.width is-paddingless
     div [ id "helperBar", class "columns is-centered is-marginless" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ] <|
-            case op.session.viewMode of
+            case model.session.viewMode of
                 DesktopView ->
                     [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContext op model ]
                     , viewNavTabs op model
@@ -247,7 +247,7 @@ viewPathContext op model =
                     ( "", False )
 
         ( watch_icon, watch_txt, watch_title ) =
-            if unwrap2 False .isWatching op.session.orgaInfo then
+            if unwrap2 False .isWatching op.orgaInfo then
                 ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganisation )
 
             else
@@ -265,7 +265,7 @@ viewPathContext op model =
                         , onClick OnToggleWatch
                         ]
                         [ A.icon1 watch_icon watch_txt
-                        , case unwrap 0 .n_watchers op.session.orgaInfo of
+                        , case unwrap 0 .n_watchers op.orgaInfo of
                             0 ->
                                 text ""
 
@@ -322,8 +322,8 @@ viewNavTabs op model =
                 [ a [ href (toLink OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink TensionsBaseUri focusid []) ]
-                    [ A.icon1 "icon-exchange" (T.tensions op.session.lexicon)
-                    , case unwrap 0 .n_tensions op.session.orgaInfo of
+                    [ A.icon1 "icon-exchange" (T.tensions model.session.lexicon)
+                    , case unwrap 0 .n_tensions op.orgaInfo of
                         0 ->
                             text ""
 
@@ -334,7 +334,7 @@ viewNavTabs op model =
              , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink ProjectsBaseUri focusid []) ]
                     [ A.icon1 "icon-layout" T.projects
-                    , case unwrap 0 .n_projects op.session.orgaInfo of
+                    , case unwrap 0 .n_projects op.orgaInfo of
                         0 ->
                             text ""
 
@@ -361,7 +361,7 @@ viewNavTabs op model =
                                 [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
                                     [ a [ href (toLink MembersBaseUri focusid []) ]
                                         [ A.icon1 "icon-user" T.members
-                                        , case unwrap 0 .n_members op.session.orgaInfo of
+                                        , case unwrap 0 .n_members op.orgaInfo of
                                             0 ->
                                                 text ""
 

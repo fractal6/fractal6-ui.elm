@@ -72,7 +72,7 @@ import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, GlobalCmd, Session, isMobile, toReflink)
+import Session exposing (Apis, GlobalCmd, SessionCommon, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -121,12 +121,12 @@ type alias Model =
     , userInput : UserInput.State
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     }
 
 
-initModel : String -> String -> Session -> Model
+initModel : String -> String -> SessionCommon -> Model
 initModel nameid tensionid session =
     { focusid = nameid
     , comments = []
@@ -148,7 +148,7 @@ initModel nameid tensionid session =
     }
 
 
-init : String -> String -> Session -> State
+init : String -> String -> SessionCommon -> State
 init nameid tensionid session =
     initModel nameid tensionid session |> State
 
@@ -284,7 +284,7 @@ update_ apis message model =
             ( { model | history = history, highlightedCommentId = withDefault "" eltid }, noOut )
 
         PushEvents events ->
-            -- @todo: update tension_head history here (need to create a Session.Cmd to handle this.
+            -- @todo: update tension_head history here (need to create a SessionCommon.Cmd to handle this.
             ( { model | history = model.history ++ events }, noOut )
 
         OnHighlight id ->
@@ -684,7 +684,7 @@ subscriptions (State model) =
 -- ------------------------------
 
 
-viewCommentsContract : Session -> State -> Html Msg
+viewCommentsContract : SessionCommon -> State -> Html Msg
 viewCommentsContract session (State model) =
     model.comments
         |> List.map
@@ -694,13 +694,13 @@ viewCommentsContract session (State model) =
         |> div []
 
 
-viewCommentsTension : Session -> Maybe TensionAction.TensionAction -> State -> Html Msg
+viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension session action (State model) =
     viewComments_ session action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
 
 
 viewComments_ :
-    Session
+    SessionCommon
     -> Maybe TensionAction.TensionAction
     -> List Event
     -> List Comment
@@ -811,7 +811,7 @@ viewComments_ session action history comments comment_form comment_result expand
         |> div []
 
 
-viewComment : Session -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
 viewComment session c form result highlightedCommentId userInput =
     let
         isAuthor =
@@ -951,7 +951,7 @@ viewComment session c form result highlightedCommentId userInput =
         ]
 
 
-viewNewTensionCommentInput : Session -> State -> Html Msg
+viewNewTensionCommentInput : SessionCommon -> State -> Html Msg
 viewNewTensionCommentInput session (State model) =
     let
         opHeader =
@@ -979,7 +979,7 @@ viewNewTensionCommentInput session (State model) =
         ]
 
 
-viewUpdateInput : Session -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
+viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
 viewUpdateInput session comment form_ result userInput =
     let
         message =
@@ -1035,7 +1035,7 @@ viewUpdateInput session comment form_ result userInput =
         ]
 
 
-viewTensionCommentInput : Session -> TensionCommon a -> State -> Html Msg
+viewTensionCommentInput : SessionCommon -> TensionCommon a -> State -> Html Msg
 viewTensionCommentInput session tension (State model) =
     let
         form =
@@ -1117,7 +1117,7 @@ viewTensionCommentInput session tension (State model) =
         ]
 
 
-viewContractCommentInput : Session -> State -> Html Msg
+viewContractCommentInput : SessionCommon -> State -> Html Msg
 viewContractCommentInput session (State model) =
     let
         form =
@@ -1240,7 +1240,7 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : Session -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
+viewCommentTextarea : SessionCommon -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
 viewCommentTextarea session targetid isModal placeholder_txt form userInput =
     let
         message =
@@ -1307,7 +1307,7 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
 --
 
 
-viewEvent : Session -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent : SessionCommon -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
 viewEvent session focusid_m action event =
     let
         eventView =
@@ -1379,7 +1379,7 @@ viewEvent session focusid_m action event =
         div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
 
 
-viewEventStatus : Session -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
+viewEventStatus : SessionCommon -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
 viewEventStatus session event status =
     let
         actionText =
@@ -1397,7 +1397,7 @@ viewEventStatus session event status =
     ]
 
 
-viewEventTitle : Session -> Event -> List (Html Msg)
+viewEventTitle : SessionCommon -> Event -> List (Html Msg)
 viewEventTitle session event =
     let
         icon =
@@ -1415,7 +1415,7 @@ viewEventTitle session event =
     ]
 
 
-viewEventType : Session -> Event -> List (Html Msg)
+viewEventType : SessionCommon -> Event -> List (Html Msg)
 viewEventType session event =
     let
         icon =
@@ -1433,7 +1433,7 @@ viewEventType session event =
     ]
 
 
-viewEventVisibility : Session -> Event -> List (Html Msg)
+viewEventVisibility : SessionCommon -> Event -> List (Html Msg)
 viewEventVisibility session event =
     let
         icon =
@@ -1451,7 +1451,7 @@ viewEventVisibility session event =
     ]
 
 
-viewEventAuthority : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventAuthority : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventAuthority session event action =
     let
         ( icon, eventText ) =
@@ -1477,7 +1477,7 @@ viewEventAuthority session event action =
     ]
 
 
-viewEventAssignee : Session -> Event -> Bool -> List (Html Msg)
+viewEventAssignee : SessionCommon -> Event -> Bool -> List (Html Msg)
 viewEventAssignee session event isNew =
     let
         icon =
@@ -1499,7 +1499,7 @@ viewEventAssignee session event isNew =
     ]
 
 
-viewEventLabel : Maybe String -> Session -> Event -> Bool -> List (Html Msg)
+viewEventLabel : Maybe String -> SessionCommon -> Event -> Bool -> List (Html Msg)
 viewEventLabel focusid_m session event isNew =
     let
         icon =
@@ -1531,7 +1531,7 @@ viewEventLabel focusid_m session event isNew =
     ]
 
 
-viewEventPushed : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventPushed : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventPushed session event action_m =
     let
         action =
@@ -1544,7 +1544,7 @@ viewEventPushed session event action_m =
     ]
 
 
-viewEventArchived : Session -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
+viewEventArchived : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
 viewEventArchived session event action_m isArchived =
     let
         action =
@@ -1564,7 +1564,7 @@ viewEventArchived session event action_m isArchived =
     ]
 
 
-viewEventMemberLinked : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberLinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventMemberLinked session event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
@@ -1573,7 +1573,7 @@ viewEventMemberLinked session event action_m =
     ]
 
 
-viewEventMemberUnlinked : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberUnlinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventMemberUnlinked session event action_m =
     let
         action_txt =
@@ -1591,7 +1591,7 @@ viewEventMemberUnlinked session event action_m =
     ]
 
 
-viewEventUserJoined : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserJoined : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserJoined session event action_m =
     let
         action_txt =
@@ -1604,7 +1604,7 @@ viewEventUserJoined session event action_m =
     ]
 
 
-viewEventUserLeft : Session -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventUserLeft : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserLeft session event action_m =
     let
         action =
@@ -1633,7 +1633,7 @@ viewEventUserLeft session event action_m =
     ]
 
 
-viewEventMoved : Session -> Event -> List (Html Msg)
+viewEventMoved : SessionCommon -> Event -> List (Html Msg)
 viewEventMoved session event =
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]
@@ -1651,7 +1651,7 @@ viewEventMoved session event =
     ]
 
 
-viewEventMentioned : Session -> Event -> List (Html Msg)
+viewEventMentioned : SessionCommon -> Event -> List (Html Msg)
 viewEventMentioned session event =
     case event.mentioned of
         Just { id, status, title, receiverid } ->

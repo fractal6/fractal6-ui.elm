@@ -31,7 +31,7 @@ import Loading exposing (ErrorData, GqlData, HttpError, ModalData, RequestResult
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import RemoteData
-import Session exposing (Session)
+import Session exposing (SessionCommon)
 import Text as T
 
 
@@ -147,7 +147,7 @@ viewAuthNeeded onClose =
         ]
 
 
-viewJoinForTensionNeeded : Session -> Bool -> (ModalData -> msg) -> Html msg
+viewJoinForTensionNeeded : SessionCommon -> Bool -> (ModalData -> msg) -> Html msg
 viewJoinForTensionNeeded session userCanJoin onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head is-warning" ]

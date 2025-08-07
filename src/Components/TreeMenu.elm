@@ -45,7 +45,7 @@ import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
 import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import String
 import Text as T
 
@@ -66,7 +66,7 @@ type alias Model =
     , expanded_lines : ExpandedLines
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , baseUri : FractalBaseRoute
@@ -86,7 +86,7 @@ prefixId did =
     "treeMenu_" ++ did
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> Session -> Model
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> SessionCommon -> Model
 initModel baseUri uriQuery focus persistent tree session =
     let
         m =
@@ -139,7 +139,7 @@ initModel baseUri uriQuery focus persistent tree session =
         |> setTree
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> Session -> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> SessionCommon -> State
 init baseUri uriQuery focus persistent data session =
     initModel baseUri uriQuery focus persistent data session |> State
 

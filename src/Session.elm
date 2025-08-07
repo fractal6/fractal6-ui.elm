@@ -134,26 +134,23 @@ type alias SessionFlags =
     Shared session data stored in global model
 
 -}
-type alias Session =
-    { -- Session: A general config usually set in main page's model.
-      -- It is extracted from the global model and session
-      screen : Screen
+type alias SessionCommon =
+    { user : UserState
+    , screen : Screen
     , theme : Theme
     , lang : Lang.Lang
     , now : Time.Posix
     , url : Url.Url
     , query : Dict String (List String)
     , viewMode : ViewMode
-    , lexicon : Dict String String
-
-    -- Remote Data
-    , user : UserState
-    , notif : NotifCount
-    , referer : Maybe Url
-    , can_referer : Maybe Url
-    , token_data : RestData UserCtx
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
+    , lexicon : Dict String String
+    }
+
+
+type alias SessionData =
+    { notif : NotifCount
     , children : Maybe (List NodeId)
     , node_data : Maybe NodeData
     , tensions_data : Maybe (List Tension)
@@ -165,9 +162,7 @@ type alias Session =
     , project_data : Maybe ProjectData
     , orgs_data : Maybe (List OrgaNode)
     , tree_data : Maybe NodesDict
-    , isAdmin : Maybe Bool
     , node_quickSearch : Maybe NodesQuickSearch
-    , apis : Apis
     , window_pos : Maybe WindowPos
     , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
@@ -177,6 +172,19 @@ type alias Session =
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
     , system_notification : RestData String
+    }
+
+
+type alias Session =
+    { -- Session: A general config usually set in main page's model.
+      -- It is extracted from the global model and session
+      isAdmin : Maybe Bool
+    , apis : Apis
+    , referer : Maybe Url
+    , can_referer : Maybe Url
+    , token_data : RestData UserCtx
+    , common : SessionCommon
+    , data : SessionData
     }
 
 
@@ -231,44 +239,48 @@ type alias NodesQuickSearch =
 
 resetSession : Session -> SessionFlags -> Session
 resetSession session flags =
-    { apis = flags.apis
+    { isAdmin = Nothing
+    , apis = flags.apis
     , referer = Nothing
     , can_referer = Nothing
-    , user = LoggedOut
-    , lang = session.lang
-    , theme = session.theme
-    , lexicon = session.lexicon
-    , screen = session.screen
-    , now = session.now
-    , url = session.url
-    , query = session.query
-    , viewMode = session.viewMode
-    , notif = initNotifCount
     , token_data = RemoteData.NotAsked
-    , node_focus = Nothing
-    , path_data = Nothing
-    , children = Nothing
-    , node_data = Nothing
-    , tensions_data = Nothing
-    , tensions_int = Nothing
-    , tensions_ext = Nothing
-    , tensions_all = Nothing
-    , tensions_count = Nothing
-    , tension_head = Nothing
-    , project_data = Nothing
-    , orgs_data = Nothing
-    , tree_data = Nothing
-    , isAdmin = Nothing
-    , node_quickSearch = Nothing
-    , window_pos = Nothing
-    , recent_activity_tab = Nothing
-    , orga_menu = Nothing
-    , tree_menu = session.tree_menu
-    , authorsPanel = Nothing
-    , labelsPanel = Nothing
-    , newOrgaData = Nothing
-    , orgaInfo = Nothing
-    , system_notification = RemoteData.NotAsked
+    , common =
+        { user = LoggedOut
+        , lang = session.common.lang
+        , theme = session.common.theme
+        , lexicon = session.common.lexicon
+        , screen = session.common.screen
+        , now = session.common.now
+        , url = session.common.url
+        , query = session.common.query
+        , viewMode = session.common.viewMode
+        , node_focus = Nothing -- hard to update session in components...put in data instead ?
+        , path_data = Nothing --
+        }
+    , data =
+        { notif = initNotifCount
+        , children = Nothing
+        , node_data = Nothing
+        , tensions_data = Nothing
+        , tensions_int = Nothing
+        , tensions_ext = Nothing
+        , tensions_all = Nothing
+        , tensions_count = Nothing
+        , tension_head = Nothing
+        , project_data = Nothing
+        , orgs_data = Nothing
+        , tree_data = Nothing
+        , node_quickSearch = Nothing
+        , window_pos = Nothing
+        , recent_activity_tab = Nothing
+        , orga_menu = Nothing
+        , tree_menu = session.data.tree_menu
+        , authorsPanel = Nothing
+        , labelsPanel = Nothing
+        , newOrgaData = Nothing
+        , orgaInfo = Nothing
+        , system_notification = RemoteData.NotAsked
+        }
     }
 
 
@@ -377,47 +389,51 @@ fromLocalSession url flags =
         viewMode =
             encodeViewMode query
     in
-    ( { apis = flags.apis
+    ( { isAdmin = Nothing
+      , apis = flags.apis
       , referer = Nothing
       , can_referer = Nothing
-      , user = user
-      , lang = withDefault Lang.En lang
-      , theme = withDefault DarkTheme theme
-      , lexicon = withDefault Dict.empty lexicon
-      , screen = flags.screen
-      , now = Time.millisToPosix 0
-      , url = url
-      , query = query
-      , viewMode = viewMode
-      , notif = initNotifCount
       , token_data = RemoteData.NotAsked
-      , node_focus = Nothing
-      , path_data = Nothing
-      , children = Nothing
-      , node_data = Nothing
-      , tensions_data = Nothing
-      , tensions_int = Nothing
-      , tensions_ext = Nothing
-      , tensions_all = Nothing
-      , tensions_count = Nothing
-      , tension_head = Nothing
-      , project_data = Nothing
-      , orgs_data = Nothing
-      , tree_data = Nothing
-      , isAdmin = Nothing
-      , node_quickSearch = Nothing
-      , window_pos = window_pos
-      , recent_activity_tab = recent_activity_tab
-      , orga_menu = flags.orga_menu
-      , tree_menu =
-            flags.tree_menu
-                |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
-                |> withDefault Nothing
-      , authorsPanel = Nothing
-      , labelsPanel = Nothing
-      , newOrgaData = Nothing
-      , orgaInfo = Nothing
-      , system_notification = RemoteData.NotAsked
+      , common =
+            { user = user
+            , lang = withDefault Lang.En lang
+            , theme = withDefault DarkTheme theme
+            , lexicon = withDefault Dict.empty lexicon
+            , screen = flags.screen
+            , now = Time.millisToPosix 0
+            , url = url
+            , query = query
+            , viewMode = viewMode
+            , node_focus = Nothing
+            , path_data = Nothing
+            }
+      , data =
+            { notif = initNotifCount
+            , children = Nothing
+            , node_data = Nothing
+            , tensions_data = Nothing
+            , tensions_int = Nothing
+            , tensions_ext = Nothing
+            , tensions_all = Nothing
+            , tensions_count = Nothing
+            , tension_head = Nothing
+            , project_data = Nothing
+            , orgs_data = Nothing
+            , tree_data = Nothing
+            , node_quickSearch = Nothing
+            , window_pos = window_pos
+            , recent_activity_tab = recent_activity_tab
+            , orga_menu = flags.orga_menu
+            , tree_menu =
+                flags.tree_menu
+                    |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
+                    |> withDefault Nothing
+            , authorsPanel = Nothing
+            , labelsPanel = Nothing
+            , newOrgaData = Nothing
+            , orgaInfo = Nothing
+            , system_notification = RemoteData.NotAsked
+            }
       }
     , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6 ]
     )

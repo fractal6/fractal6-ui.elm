@@ -128,7 +128,7 @@ init global flags =
             global.url.path == "/"
 
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     if isHome then
                         Nav.replaceUrl global.key <| toLink UsersBaseUri uctx.username []
@@ -140,13 +140,13 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.common.lang ) ] }
             , result = RemoteData.NotAsked
             , viewMode = Login
-            , lang = global.session.lang
+            , lang = global.session.common.lang
             , isHome = isHome
             , empty = {}
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             }
     in
     ( model

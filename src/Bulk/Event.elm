@@ -36,7 +36,7 @@ import Html exposing (Html, a, div, p, small, span, strong, text)
 import Html.Attributes exposing (class, classList, href)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (ContractNotif, EventFragment, EventNotif, UserEvent, Username)
-import Session exposing (Session)
+import Session exposing (SessionCommon)
 import String.Extra as SE
 import Text as T
 
@@ -82,7 +82,7 @@ contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
 
 
-viewEventMedia : Session -> Bool -> Dict String String -> Html msg
+viewEventMedia : SessionCommon -> Bool -> Dict String String -> Html msg
 viewEventMedia session inline ev =
     div [ class "content" ]
         [ p [] <|
@@ -106,7 +106,7 @@ viewEventMedia session inline ev =
         ]
 
 
-viewContractMedia : Session -> Dict String String -> Html msg
+viewContractMedia : SessionCommon -> Dict String String -> Html msg
 viewContractMedia session ev =
     div [ class "content" ]
         [ p [] <|
@@ -132,7 +132,7 @@ viewContractMedia session ev =
         ]
 
 
-viewNotifMedia : Session -> Dict String String -> Html msg
+viewNotifMedia : SessionCommon -> Dict String String -> Html msg
 viewNotifMedia session ev =
     div [ class "content" ]
         [ a

@@ -115,7 +115,7 @@ init global flags =
             Cmd.none
 
         email_given =
-            Dict.get "email" session.query |> Maybe.map List.head |> withDefault Nothing
+            Dict.get "email" session.common.query |> Maybe.map List.head |> withDefault Nothing
 
         model =
             { form = { post = Dict.fromList [ ( "email", withDefault "" email_given ) ] }
@@ -124,10 +124,10 @@ init global flags =
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
             , reset2_result = RemoteData.NotAsked
-            , token_reset = Dict.get "x" session.query |> Maybe.map List.head |> withDefault Nothing
+            , token_reset = Dict.get "x" session.common.query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
             , empty = {}
-            , help = Help.init global.session
+            , help = Help.init session.common
             }
     in
     case model.token_reset of
@@ -139,7 +139,7 @@ init global flags =
                 newForm =
                     { form | post = Dict.insert "token" token form.post }
             in
-            ( { model | form = newForm }, uuidCheck global.session.apis (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
+            ( { model | form = newForm }, uuidCheck session.apis (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
 
         Nothing ->
             ( model, send LoadCaptcha, gcmd )

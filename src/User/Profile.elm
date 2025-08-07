@@ -128,8 +128,8 @@ init global flags =
 
             -- common
             , refresh_trial = 0
-            , help = Help.init global.session
-            , authModal = AuthModal.init Nothing global.session
+            , help = Help.init global.session.common
+            , authModal = AuthModal.init Nothing global.session.common
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
             }
@@ -197,7 +197,7 @@ update global message model =
         GotNodes result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     let
@@ -295,7 +295,7 @@ view global model =
     , body =
         [ case model.user of
             Success user ->
-                view_ global.session.user user model
+                view_ global.session.common.user user model
 
             NotAsked ->
                 text ""

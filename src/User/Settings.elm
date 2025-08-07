@@ -203,7 +203,7 @@ init global flags =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
         menu =
-            Dict.get "m" global.session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" global.session.common.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         model =
             { username = username
@@ -217,8 +217,8 @@ init global flags =
 
             -- common
             , refresh_trial = 0
-            , help = Help.init global.session
-            , authModal = AuthModal.init Nothing global.session
+            , help = Help.init global.session.common
+            , authModal = AuthModal.init Nothing global.session.common
             , empty = {}
             }
 

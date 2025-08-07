@@ -82,7 +82,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     send <| NavigateRaw <| toLink UsersBaseUri uctx.username []
 
@@ -90,7 +90,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.common.lang ) ] }
             , result = RemoteData.NotAsked
             }
     in

@@ -168,7 +168,7 @@ orgaStepToString form step =
 
 initModel : Session -> Maybe OrgaForm -> Model
 initModel session form_m =
-    { form = withDefault { post = Dict.empty, uctx = uctxFromUser session.user } form_m
+    { form = withDefault { post = Dict.empty, uctx = uctxFromUser session.common.user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
     , hasDuplicate = False
@@ -176,9 +176,9 @@ initModel session form_m =
     , isWriting = Nothing
     , exist_result = NotAsked
     , empty = {}
-    , help = Help.init session
+    , help = Help.init session.common
     , refresh_trial = 0
-    , authModal = AuthModal.init Nothing session
+    , authModal = AuthModal.init Nothing session.common
     }
 
 
@@ -198,7 +198,7 @@ init global flags =
         session =
             global.session
     in
-    case global.session.user of
+    case session.common.user of
         LoggedOut ->
             ( initModel session Nothing
             , Cmd.none
@@ -206,11 +206,11 @@ init global flags =
             )
 
         LoggedIn uctx ->
-            ( initModel session global.session.newOrgaData
+            ( initModel session session.data.newOrgaData
                 |> (\m ->
                         { m
                             | step =
-                                Dict.get "step" session.query |> withDefault [] |> List.head |> withDefault "" |> stepDecoder
+                                Dict.get "step" session.common.query |> withDefault [] |> List.head |> withDefault "" |> stepDecoder
                         }
                    )
             , Cmd.none

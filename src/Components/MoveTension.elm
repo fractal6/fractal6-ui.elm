@@ -49,7 +49,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -75,7 +75,7 @@ type alias Model =
 
     -- Common
     , empty : {}
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , confirmContract : ConfirmContract.State
@@ -107,12 +107,12 @@ initForm user =
     }
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     { isActive = False
     , isActive2 = False

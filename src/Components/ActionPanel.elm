@@ -57,7 +57,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
-import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -81,7 +81,7 @@ type alias Model =
     , node_result : GqlData Node
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -107,7 +107,7 @@ type ActionStep
     | StepAck IdPayload
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     { action_result = NotAsked
     , node_result = NotAsked
@@ -130,7 +130,7 @@ initModel session =
     }
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 

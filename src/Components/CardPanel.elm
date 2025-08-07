@@ -58,7 +58,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, UserSearchPanelOnClickAction(..), isMobile, toReflink)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -95,16 +95,16 @@ type alias Model =
     , comments : Comments.State
 
     -- Common
-    , session : Session
-    , mobileConf : Session
+    , session : SessionCommon
+    , mobileConf : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
     }
 
 
-initModel : Session -> GqlData LocalGraph -> NodeFocus -> Model
-initModel session path focus =
+initModel : GqlData LocalGraph -> NodeFocus -> SessionCommon -> Model
+initModel path focus session =
     { node_focus = focus
     , isOpen = False
     , path_data = path
@@ -134,9 +134,9 @@ initModel session path focus =
     }
 
 
-init : Session -> GqlData LocalGraph -> NodeFocus -> State
-init session path focus =
-    initModel session path focus |> State
+init : GqlData LocalGraph -> NodeFocus -> SessionCommon -> State
+init path focus session =
+    initModel path focus session |> State
 
 
 
@@ -147,7 +147,7 @@ init session path focus =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.session model.path_data model.node_focus
+    initModel model.path_data model.node_focus model.session
 
 
 
@@ -827,7 +827,7 @@ viewTitleEdit new old result =
         ]
 
 
-viewSubTitle : Session -> TensionPanel -> Model -> Html Msg
+viewSubTitle : SessionCommon -> TensionPanel -> Model -> Html Msg
 viewSubTitle session t model =
     div [ class "tensionSubtitle level mt-4" ]
         [ div [ class "level-left" ] <|
@@ -1089,7 +1089,7 @@ viewPanelDraft draft model =
         ]
 
 
-viewDraftComment : Session -> Bool -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
+viewDraftComment : SessionCommon -> Bool -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
 viewDraftComment session isAdmin isEdit result form draft =
     let
         isAuthor =
@@ -1125,7 +1125,7 @@ viewDraftComment session isAdmin isEdit result form draft =
             ]
 
 
-viewMessageEdit : Session -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
+viewMessageEdit : SessionCommon -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
 viewMessageEdit session new old form result =
     let
         isLoading =

@@ -34,14 +34,14 @@ import Html.Events exposing (onClick)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Tension)
-import Session exposing (CommonMsg, Session)
+import Session exposing (CommonMsg, SessionCommon)
 import Text as T
 
 
 type alias Op msg =
     { hasTaskMove : Bool
     , hasNewCol : Bool
-    , session : Session
+    , session : SessionCommon
     , node_focus : NodeFocus
     , boardId : String
     , boardHeight : Maybe Float

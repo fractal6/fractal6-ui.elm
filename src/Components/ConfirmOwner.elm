@@ -44,7 +44,7 @@ import ModelSchema exposing (Post, UserCtx)
 import Ports
 import RemoteData
 import Requests exposing (makeOwner)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -67,14 +67,14 @@ type alias Model =
     , owner_result : RestData Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : Session -> NodeFocus -> Model
-initModel session focus =
+initModel : NodeFocus -> SessionCommon -> Model
+initModel focus session =
     { isActive = False
     , isActive2 = False
     , focus = focus
@@ -88,9 +88,9 @@ initModel session focus =
     }
 
 
-init : Session -> NodeFocus -> State
-init session focus =
-    initModel session focus |> State
+init : NodeFocus -> SessionCommon -> State
+init focus session =
+    initModel focus session |> State
 
 
 
@@ -108,7 +108,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.session model.focus
+    initModel model.focus model.session
 
 
 

@@ -26,7 +26,7 @@ import Dict
 import Extra.Url exposing (queryFullBuilder)
 import Html exposing (Html, a, div, small, span, text)
 import Html.Attributes exposing (attribute, class, href, id, target, title)
-import Session exposing (Session, ViewMode(..))
+import Session exposing (SessionCommon, ViewMode(..))
 import Text as T
 import Url
 
@@ -36,7 +36,7 @@ logo_footer =
     a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 ]
 
 
-view : Session -> Html msg
+view : SessionCommon -> Html msg
 view session =
     case session.viewMode of
         DesktopView ->

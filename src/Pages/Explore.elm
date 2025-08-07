@@ -125,10 +125,10 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             , refresh_trial = 0
             , empty = {}
-            , authModal = AuthModal.init Nothing global.session
+            , authModal = AuthModal.init Nothing global.session.common
             , commonOp = CommonMsg NoMsg LogErr
             }
 

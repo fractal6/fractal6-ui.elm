@@ -42,7 +42,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
-import Session exposing (Apis, GlobalCmd(..), Session)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -58,13 +58,13 @@ type alias Model =
     , form : TensionForm -- user inputs
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : String -> Session -> Model
+initModel : String -> SessionCommon -> Model
 initModel tid session =
     { isOpen = False
     , data_result = NotAsked
@@ -78,7 +78,7 @@ initModel tid session =
     }
 
 
-init : String -> Session -> State
+init : String -> SessionCommon -> State
 init tid session =
     initModel tid session |> State
 

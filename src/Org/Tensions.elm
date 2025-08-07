@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (CommonMsg, GlobalCmd(..), Session, ViewMode(..))
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, ViewMode(..))
 import Task
 import Text as T
 import Time
@@ -205,7 +205,7 @@ type alias Model =
     , draging : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -615,30 +615,30 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri session.referer global.url session.node_focus newFocus
+            focusState TensionsBaseUri session.referer global.url session.common.node_focus newFocus
 
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = fromMaybeData session.path_data Loading
-            , children = fromMaybeDataRest session.children RemoteData.Loading
-            , tensions_int = fromMaybeData session.tensions_int Loading
-            , tensions_ext = fromMaybeData session.tensions_ext Loading
-            , tensions_all = fromMaybeData session.tensions_all Loading
-            , query = session.query
-            , offset = ternary fs.refresh 0 (Dict.get "load" session.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
-            , authorsPanel = UserSearchPanel.load session.authorsPanel session.user
-            , labelsPanel = LabelSearchPanel.load session.labelsPanel session.user
-            , pattern = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , viewMode = Dict.get "v" session.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
-            , statusFilter = Dict.get "s" session.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
-            , typeFilter = Dict.get "t" session.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
-            , depthFilter = Dict.get "d" session.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
-            , sortFilter = Dict.get "sort" session.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
-            , authors = Dict.get "u" session.query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , labels = Dict.get "l" session.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
-            , tensions_count = fromMaybeData session.tensions_count Loading
+            , path_data = fromMaybeData session.common.path_data Loading
+            , children = fromMaybeDataRest session.data.children RemoteData.Loading
+            , tensions_int = fromMaybeData session.data.tensions_int Loading
+            , tensions_ext = fromMaybeData session.data.tensions_ext Loading
+            , tensions_all = fromMaybeData session.data.tensions_all Loading
+            , query = session.common.query
+            , offset = ternary fs.refresh 0 (Dict.get "load" session.common.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common.user
+            , labelsPanel = LabelSearchPanel.load session.data.labelsPanel session.common.user
+            , pattern = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , viewMode = Dict.get "v" session.common.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
+            , statusFilter = Dict.get "s" session.common.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
+            , typeFilter = Dict.get "t" session.common.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
+            , depthFilter = Dict.get "d" session.common.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
+            , sortFilter = Dict.get "sort" session.common.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
+            , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing)
+            , labels = Dict.get "l" session.common.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
+            , tensions_count = fromMaybeData session.data.tensions_count Loading
 
             -- Board
             , boardHeight = Nothing
@@ -651,19 +651,19 @@ init global flags =
             , draging = False
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session
-            , help = Help.init session
-            , tensionForm = NTF.init session
-            , moveTension = MoveTension.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session
-            , authModal = AuthModal.init (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing) session
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.tree_menu session.tree_data session
-            , actionPanel = ActionPanel.init session
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , tensionForm = NTF.init session.common
+            , moveTension = MoveTension.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault Nothing) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of
@@ -682,7 +682,7 @@ init global flags =
                             queryParser referer
                     in
                     (Dict.remove "v" oldQuery |> Dict.remove "load")
-                        /= (Dict.remove "v" session.query |> Dict.remove "load")
+                        /= (Dict.remove "v" session.common.query |> Dict.remove "load")
 
                 --|| Dict.get "v" oldQuery
                 --== Dict.get "v" query
@@ -1582,7 +1582,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
