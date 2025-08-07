@@ -526,7 +526,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id "ProjectColumnModalModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -618,14 +618,14 @@ viewModalContent op model =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ textH T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class "button is-light is-success defaultSubmit"
+                        ([ class "button is-success defaultSubmit"
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable_)
                          ]

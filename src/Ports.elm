@@ -90,6 +90,9 @@ port updateMenuTreeFromJs : (JD.Value -> msg) -> Sub msg
 port updateLangFromJs : (String -> msg) -> Sub msg
 
 
+port updateThemeFromJs : (String -> msg) -> Sub msg
+
+
 port updateNotifFromJs : (NotifCount -> msg) -> Sub msg
 
 

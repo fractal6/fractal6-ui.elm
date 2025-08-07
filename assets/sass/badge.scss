@@ -1,0 +1,146 @@
+@use "sass:meta";
+@use "sass:list";
+@use "shared" as *;
+
+$badge-font-size: .65rem !default;
+$badge-height: 14px !default;
+$badge-padding: .05rem .15rem !default;
+$badge-shadow: 0 0 0 2px var(--bulma-scheme-main) !default;
+
+
+@mixin badge-positions {
+    &.is-left {
+        bottom: 0;
+        left: 0;
+        right: auto;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    &.is-right {
+        bottom: auto;
+        left: auto;
+        right: 0;
+        top: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    &.is-top {
+        bottom: auto;
+        left: 50%;
+        right: auto;
+        top: 0;
+        transform: translate(-50%, -50%);
+    }
+
+    &.is-top-left {
+        bottom: auto;
+        left: 0;
+        right: auto;
+        top: 0;
+        transform: translate(-50%, -50%);
+    }
+
+    &.is-top-right {
+        bottom: auto;
+        left: auto;
+        right: 0;
+        top: 0;
+        transform: translate(50%, -50%);
+    }
+
+    &.is-bottom {
+        bottom: 0;
+        left: 50%;
+        right: auto;
+        top: auto;
+        transform: translate(-50%, 50%);
+    }
+
+    &.is-bottom-left {
+        bottom: 0;
+        left: 0;
+        right: auto;
+        top: auto;
+        transform: translate(-50%, 50%);
+    }
+
+    &.is-bottom-right {
+        bottom: 0;
+        left: auto;
+        right: 0;
+        top: auto;
+        transform: translate(50%, 50%);
+    }
+}
+
+.badge {
+    background-color: var(--primary);
+    border: 2px solid transparent;
+    border-radius: $badge-height;
+    box-shadow: $badge-shadow;
+    color: var(--scheme-main);
+    font-size: $badge-font-size;
+    height: $badge-height;
+    line-height: calc(#{$badge-height} / 2 + 1px);
+    min-width: $badge-height;
+    overflow: hidden;
+    padding: $badge-padding;
+    position: absolute;
+    right: 0;
+    text-overflow: ellipsis;
+    top: 0;
+    transform: translate(50%, -50%);
+    white-space: nowrap;
+
+    &.is-outlined {
+        background-color: var(--white);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    @include badge-positions;
+
+    @each $name, $pair in $colors {
+        $color: if(meta.type-of($pair) == 'list', list.nth($pair, 1), $pair);
+        $color-invert: if(meta.type-of($pair) == 'list' and list.length($pair) > 1, list.nth($pair, 2), null);
+
+        &.is-#{$name} {
+            &:not(.is-outlined) {
+                background-color: var(--#{$name});
+                @if $color-invert {
+                    color: var(--#{$name}-invert);
+                } @else {
+                    color: var(--text-invert);
+                }
+            }
+
+            &.is-outlined {
+                border-color: var(--#{$name});
+                color: var(--#{$name});
+            }
+
+            // If light and dark colors are provided
+            @if list.length($pair) >= 4 {
+                $color-light: list.nth($pair, 3);
+                $color-dark: list.nth($pair, 4);
+                &.is-light {
+                    color: var(--#{$name}-dark);
+                    &:not(.is-outlined) {
+                        background-color: var(--#{$name}-light);
+                    }
+                    &.is-outlined {
+                        border-color: var(--#{$name});
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Tabs position fix
+.tabs {
+    li {
+        position: relative;
+    }
+}

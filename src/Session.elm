@@ -349,17 +349,11 @@ fromLocalSession url flags =
             case flags.theme of
                 Just raw ->
                     case JD.decodeValue JD.string raw of
-                        Ok "DARK" ->
-                            ( Just DarkTheme, Cmd.none )
+                        Ok "light" ->
+                            ( Just LightTheme, Cmd.none )
 
                         Ok "dark" ->
                             ( Just DarkTheme, Cmd.none )
-
-                        Ok "LIGHT" ->
-                            ( Just LightTheme, Cmd.none )
-
-                        Ok "light" ->
-                            ( Just LightTheme, Cmd.none )
 
                         Ok l ->
                             ( Nothing, Ports.logErr "Unknown theme string" )

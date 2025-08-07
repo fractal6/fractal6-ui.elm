@@ -212,9 +212,9 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    -- @debug: padding-top overflow column.width is-paddingless
-    div [ id "helperBar", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ] <|
+    -- @debug: padding-top overflow column.width p-0
+    div [ id "helperBar", class "columns is-centered m-0" ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd p-0" ] <|
             case model.session.viewMode of
                 DesktopView ->
                     [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContext op model ]
@@ -259,7 +259,7 @@ viewPathContext op model =
             [ case op.path_data of
                 Just _ ->
                     div
-                        [ class "tag has-border-light is-rounded-light mr-3 is-w is-h"
+                        [ class "tag has-border-light-small is-rounded-light mr-3 is-w is-h"
                         , attribute "style" "padding: 14px 15px;"
                         , title watch_title
                         , onClick OnToggleWatch
@@ -412,7 +412,7 @@ viewNavTabs op model =
 viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html Msg
 viewPath baseUri uriQuery maybePath =
     div
-        [ class "breadcrumb wrapped-container"
+        [ class "breadcrumb has-succeeds-separator wrapped-container"
         , attribute "aria-label" "breadcrumbs"
         ]
     <|

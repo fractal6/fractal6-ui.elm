@@ -22,10 +22,10 @@ window.addEventListener('load', _ => {
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
     if (!theme) {
-        theme = DEFAULT_THEME;
+        theme = DEFAULT_THEME.toLowerCase();
     }
-    document.documentElement.className = theme.toLowerCase();
-    document.documentElement.setAttribute('data-theme', theme.toLowerCase());
+    document.documentElement.className = "is-" + theme;
+    document.documentElement.setAttribute('data-theme', theme);
     // Lang
     var lang = localStorage.getItem("lang");
     if (uctx && uctx.lang) {

@@ -397,7 +397,7 @@ viewAuthNeededModal : Model -> Html Msg
 viewAuthNeededModal model =
     div
         [ id "authNeededModal"
-        , class "modal is-light modal-fx-fadIn"
+        , class "modal modal-fx-fadIn"
         , classList [ ( "is-active", model.modalType == AuthNeeded ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -515,7 +515,7 @@ viewSignupModal op model =
                                         |> renderMarkdown "is-human"
                                     ]
                                 , div [ class "is-aligned-center" ]
-                                    [ button [ class "button is-success is-light ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
+                                    [ button [ class "button is-success ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
                                 ]
 
                             _ ->

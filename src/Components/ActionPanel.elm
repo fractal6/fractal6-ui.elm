@@ -1224,7 +1224,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id ("actionPanelModal" ++ model.domid)
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
 
         --, attribute "data-modal-close" "closeActionPanelModalFromJs"
@@ -1329,7 +1329,7 @@ viewStep1 op model =
 
                 LeaveAction ->
                     [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.session.user).roles) == 1 then
-                        showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" (T.confirmLeaveOrga model.session.lexicon) ""
+                        showMsg "leaveMe" "is-warning" "icon-alert-triangle" (T.confirmLeaveOrga model.session.lexicon) ""
 
                       else
                         text ""
@@ -1417,7 +1417,7 @@ viewVisibility op model =
     in
     div []
         [ -- Show the help information
-          showMsg "visibility-0" "is-info is-light" "icon-info" T.visibilityInfoHeader ""
+          showMsg "visibility-0" "is-info" "icon-info" T.visibilityInfoHeader ""
 
         -- Show the choices as card.
         , NodeVisibility.list
@@ -1437,7 +1437,7 @@ viewVisibility op model =
                                 ""
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-cliclable"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeVisibility x)
                         ]
@@ -1457,7 +1457,7 @@ viewCircleAuthority : Op -> Model -> Html Msg
 viewCircleAuthority op model =
     div []
         [ -- Show the help information
-          showMsg "circleAuthority-0" "is-info is-light" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
+          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
 
         -- Show the choices as card.
         , NodeMode.list
@@ -1476,7 +1476,7 @@ viewCircleAuthority op model =
                                     ( "icon-", T.authAgile )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeMode x)
                         ]
@@ -1496,7 +1496,7 @@ viewRoleAuthority : Op -> Model -> Html Msg
 viewRoleAuthority op model =
     div []
         [ -- Show the help information
-          --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
+          --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
           -- Show the choices as card.
           --RoleType.list
           [ ( RoleType.Peer, T.peerRoleInfo ), ( RoleType.Coordinator, T.coordinatorRoleInfo ) ]
@@ -1510,7 +1510,7 @@ viewRoleAuthority op model =
                             "icon-user has-text-" ++ roleColor x
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , attribute "style" "min-width: 150px;"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeRoleType x)

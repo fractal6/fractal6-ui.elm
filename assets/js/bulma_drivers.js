@@ -920,18 +920,19 @@ function triggerMenuTree(e, el, app) {
 function triggerTheme(e, el, app) {
     // Toggle theme color
     var theme;
-    if (document.documentElement.classList.contains("dark")) {
+    if (document.documentElement.classList.contains("is-dark")) {
         theme = "light";
-    } else if (document.documentElement.classList.contains("light")) {
+    } else if (document.documentElement.classList.contains("is-light")) {
         theme = "dark";
     } else {
-        // Assume default is dark
+        // Default theme
         theme = "light"
     }
     document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.className = theme;
-    localStorage.setItem('theme', theme.toUpperCase());
+    document.documentElement.className = "is-" + theme;
+    localStorage.setItem('theme', theme);
     app.ports.flushGraphPackFromJs.send(null)
+    app.ports.updateThemeFromJs.send(theme);
 }
 
 function triggerLang(e, el, app) {

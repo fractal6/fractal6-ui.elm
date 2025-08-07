@@ -1,6 +1,24 @@
-@use "bulma-base" as *;
+@use "sass:list";
 
 @charset "utf-8";
+
+
+// Zen fonts
+// --
+$f6-size-1: 3rem;
+$f6-size-2: 2.5rem;
+$f6-size-3: 2rem;
+$f6-size-4: 1.75rem;
+$f6-size-5: 1.5rem;
+$f6-size-6: 1.1rem;
+$f6-size-7: 0.9rem;
+$f6-weight-light: 400;
+$f6-weight-normal: 500;
+$f6-weight-medium: 600;
+$f6-weight-semibold: 700;
+$f6-weight-bold: 800;
+
+$f6-sizes: $f6-size-1 $f6-size-2 $f6-size-3 $f6-size-4 $f6-size-5 $f6-size-6 $f6-size-7;
 
 //
 // Fonts face
@@ -81,9 +99,8 @@ html, body {
 }
 
 // Fix size of Zen font size
-$sizes: $size-1 $size-2 $size-3 $size-4 $size-5 $size-6 $size-7;
-@each $size in $sizes {
-    $i: index($sizes, $size);
+@each $size in $f6-sizes {
+    $i: list.index($f6-sizes, $size);
     .is-size-#{$i} {
          &.is-human, .is-human {
             font-size: $size !important;
@@ -92,21 +109,21 @@ $sizes: $size-1 $size-2 $size-3 $size-4 $size-5 $size-6 $size-7;
 }
 
 
-.has-text-weight-light {
-  font-weight: $weight-light !important;
-}
-.has-text-weight-normal {
-  font-weight: $weight-normal !important;
-}
-.has-text-weight-medium {
-  font-weight: $weight-medium !important;
-}
-.has-text-weight-semibold {
-	font-weight: $weight-semibold !important;
-}
-.has-text-weight-bold {
-	font-weight: $weight-bold !important;
-}
+//.has-text-weight-light {
+//  font-weight: $weight-light !important;
+//}
+//.has-text-weight-normal {
+//  font-weight: $weight-normal !important;
+//}
+//.has-text-weight-medium {
+//  font-weight: $weight-medium !important;
+//}
+//.has-text-weight-semibold {
+//	font-weight: $weight-semibold !important;
+//}
+//.has-text-weight-bold {
+//	font-weight: $weight-bold !important;
+//}
 
 
 
@@ -165,8 +182,8 @@ i {
     }
 	&.icon-lg {
 	/* makes the font 33% larger relative to the icon container */
-		font-size: (4rem / 3);
-		line-height: (3rem / 4);
+		font-size: calc(4rem / 3);
+		line-height: calc(3rem / 4);
 		vertical-align: -.0667rem;
 	}
 

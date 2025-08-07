@@ -1,25 +1,29 @@
-@use "bulma-base" as *;
+@use "sass:color";
+@use "sass:map";
+@use "shared" as *;
 
 //
 // App
 //
 
-$orange-frac6: #d38e23;
-$green-frac6: #3ffba3;
-$green-frac6-lighter: #7af2bf;
-$blue-frac6: #2176d0;
-
-$grey-light3: lighten($grey, 40);
-
 //
 // Dimensions
 //
 $section-padding-desktop: 3rem 1.5rem;
+$border-size: 2px;
+$border-size-small: 1px;
 
 // Navbar
 $navbar-height: 2.4rem;
 $navbar-item-img-max-height: 1.5rem;
 $navbar-padding: 0rem;
+
+// Modal
+$modal-background-background-color: rgba(black, 0.7);
+$modal-in-duration: 0.25s;
+$modal-out-duration: 0.25s;
+$modal-width: 650px;
+$modal-width-large: 790px;
 
 // Tooltip
 $tooltip-background-opacity: 0.92;
@@ -30,16 +34,6 @@ $node-tooltip-background: $white-ter;
 $node-tooltip-shadow: rgba(42, 70, 205, 0.5);
 $tooltip-transition-duration: 0.1s;
 
-// Modal
-$modal-background-background-color: rgba(black, 0.6);
-$modal-in-duration: 0.25s;
-$modal-out-duration: 0.25s;
-$modal-width: 650px;
-$modal-width-large: 790px;
-
-// divider
-$divider-color: var(--grey-light);
-
 // quick help
 $acc-height-title: 42px;
 $acc-height-subtitle: 48px;
@@ -49,24 +43,185 @@ $acc-height: 48px;
 $orga-menu-width: 64px;
 $tree-menu-width: 260px;
 
+//
+// Light Theme
+//
+
+$background-secondary-light: var(--bulma-scheme-main); // #f6f8fa
+$background-header-light: #f6f8fa;
+$background-evidence-light: #f8f4fd; // etheureum
+
+$f6-light-theme: (
+  // Background
+  body-background-color: var(--bulma-scheme-main),
+  secondary-background: $background-secondary-light,
+  header-background-color: $background-header-light,
+  orga-menu-background-color: $background-secondary-light,
+  tree-menu-background-color: $background-secondary-light,
+  background-evidence: $background-evidence-light,
+  background-hover: var(--bulma-background),
+  background-hover-discrete: var(--bulma-scheme-main-bis),
+  user-emoticon-bg: var(--bulma-primary-invert),
+  orga-emoticon-bg: #71beee, // #6da8d6
+
+  //Colors (shortcuts...)
+  text: var(--bulma-text),
+  link: var(--bulma-link),
+  primary: var(--bulma-primary),
+  info: var(--bulma-info),
+  success: var(--bulma-success),
+  warning: var(--bulma-warning),
+  danger: var(--bulma-danger),
+  //Custom
+  link2: $green,
+  announce: #bfb40c,
+  author: $background-evidence-light,
+  counter: var(--bulma-border-weak),
+  // All primary colors have those variations...
+  text-weak: var(--bulma-text-weak),
+  text-evidence: var(--bulma-text),
+  text-strong: var(--bulma-text-strong), // similar to -bold
+  text-invert: var(--bulma-text-invert), // not sure useful
+
+  // Borders
+  border-color: var(--bulma-text-70),
+  border-color-light: var(--bulma-border),
+
+  // GraphPack
+  gp-lvl-0-bg: #FAFAFA,
+  gp-lvl-1-bg: #D9DCDE,
+  gp-lvl-2-bg: #B9BFC3,
+  gp-lvl-3-bg: #97A0A6,
+  gp-lvl-4-bg: #7C868E,
+  gp-lvl-5-bg: #646E75,
+  gp-lvl-6-bg: #51595F,
+  gp-lvl-7-bg: #454B50,
+);
+$bulma-light-theme: (
+  body-background-color: map.get($f6-light-theme, 'body-background-color'),
+  footer-background-color: map.get($f6-light-theme, 'secondary-background'),
+  box-background-color: map.get($f6-light-theme, 'secondary-background'),
+  navbar-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-brand-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-item-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-dropdown-arrow: var(--bulma-navbar-item-color),
+  modal-background-background-color: $modal-background-background-color,
+  shadow: $shadow-color,
+  breadcrumb-item-separator-color: var(--bulma-text-weak),
+  button-color: var(--bulma-text), // text-strong by default
+  table-color: var(--text-evidence),
+);
+
+//
+// Dark Theme
+//
+
+$background-secondary-dark: var(--bulma-scheme-main);
+$background-header-dark: #202328; // #2a2f35(v1) #202328(bulma-background)
+$background-evidence-dark: #212830; // github background , bulma-scheme-main-ter
+
+$f6-dark-theme: (
+  // Background
+  body-background-color: var(--bulma-scheme-main),
+  secondary-background: $background-secondary-dark,
+  header-background-color: $background-header-dark,
+  orga-menu-background-color: $background-secondary-dark,
+  tree-menu-background-color: $background-secondary-dark,
+  background-evidence: $background-evidence-dark,
+  background-hover: var(--bulma-background),
+  background-hover-discrete: var(--bulma-scheme-main-bis),
+  user-emoticon-bg: #00000052,
+  orga-emoticon-bg: #1d4060, //  #6996f7 (blue ethereum)
+
+  //Colors (shortcuts...)
+  text: var(--bulma-text),
+  link: var(--bulma-link),
+  primary: var(--bulma-primary),
+  info: var(--bulma-info),
+  success: var(--bulma-success),
+  warning: var(--bulma-warning),
+  danger: var(--bulma-danger),
+  //Custom
+  link2: $green,
+  announce: #eedb44,
+  author: $background-evidence-dark,
+  counter: var(--bulma-border-weak),
+  // All primary colors have those variations...
+  text-weak: var(--bulma-text-weak),
+  text-evidence: var(--bulma-text),
+  text-strong: var(--bulma-text-strong), // similar to -bold
+  text-invert: var(--bulma-text-invert), // not sure useful
+
+  // Borders
+  border-color: var(--bulma-border),
+  border-color-light: var(--bulma-border-weak),
+
+  // GraphPack
+  gp-lvl-0-bg: #cfcfcf,
+  gp-lvl-1-bg: #b0b0b0,
+  gp-lvl-2-bg: #808081,
+  gp-lvl-3-bg: #505050,
+  gp-lvl-4-bg: #404040,
+  gp-lvl-5-bg: #303030,
+  gp-lvl-6-bg: #202020,
+  gp-lvl-7-bg: #101010,
+);
+$bulma-dark-theme: (
+  body-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  footer-background-color: map.get($f6-dark-theme, 'secondary-background'),
+  box-background-color: map.get($f6-dark-theme, 'secondary-background'),
+  navbar-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-brand-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-item-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-dropdown-arrow: var(--bulma-navbar-item-color),
+  modal-background-background-color: $modal-background-background-color,
+  shadow: $shadow-color,
+  breadcrumb-item-separator-color: var(--bulma-text-weak),
+  button-color: var(--bulma-text), // text-strong by default
+  table-color: var(--text-evidence),
+);
+
+//
+// Commons/Mixins
+//
+
+$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal);
+
+// Mixin to apply theme overrides to classes
+@mixin apply-bulma-overrides($theme-map) {
+  @each $class in $bulma-override-classes {
+    .#{$class} {
+      @each $var-name, $value in $theme-map {
+        --bulma-#{$var-name}: #{$value};
+      }
+    }
+  }
+}
+
 :root {
+
     //
     // App
     //
-    --orange-frac6: #{$orange-frac6};
-    --green-frac6: #{$green-frac6};
-    --green-frac6-lighter: #{$green-frac6-lighter};
-    --blue-frac6: #{$blue-frac6};
-    //--hover-color: #{$hover-color};
-    //
+    --f6-orange: #{$f6-orange};
+    --f6-green: #{$f6-green};
+    --f6-green-lighter: #{$f6-green-lighter};
+    --f6-blue: #{$f6-blue};
+
     // Dimmension
-    //
-    --section-padding-desktop: #{$section-padding-desktop};
+    --bulma-section-padding-desktop: 3rem 1.5rem;
 
     // Navbar
-    --navbar-height: #{$navbar-height};
-    --navbar-item-img-max-height: #{$navbar-item-img-max-height};
-    --navbar-padding: #{$navbar-padding};
+    --bulma-navbar-height: #{$navbar-height};
+    --bulma-navbar-item-img-max-height: #{$navbar-item-img-max-height};
+    --bulma-navbar-padding: #{$navbar-padding};
+
+    // Modal
+    --bulma-modal-background-background-color: #{$modal-background-background-color};
+    --bulma-modal-in-duration: #{$modal-in-duration};
+    --bulma-modal-out-duration: #{$modal-out-duration};
+    --bulma-modal-width: #{$modal-width};
+    --bulma-modal-width-large: #{$modal-width-large};
 
     // Tooltip
     --tooltip-background-opacity: #{$tooltip-background-opacity};
@@ -77,67 +232,61 @@ $tree-menu-width: 260px;
     --node-tooltip-shadow: #{$node-tooltip-shadow};
     --tooltip-transition-duration: #{$tooltip-transition-duration};
 
-    // Modal
-    --modal-background-background-color: #{$modal-background-background-color};
-    --modal-in-duration: #{$modal-in-duration};
-    --modal-out-duration: #{$modal-out-duration};
-    --modal-width: #{$modal-width};
-    --modal-width-large: #{$modal-width-large};
-
-    // divider
-    --divider-color: #{$divider-color};
-    --breadcrumb-li-content: "\0002f";
-
     // quick help
     --acc-height-title: #{$acc-height-title};
     --acc-height-subtitle: #{$acc-height-subtitle};
     --acc-height: #{$acc-height};
+
 }
 
-// Graph-packing
-$gp-lvl-0-bg: #FAFAFA;
-$gp-lvl-1-bg: #D9DCDE;
-$gp-lvl-2-bg: #B9BFC3;
-$gp-lvl-3-bg: #97A0A6;
-$gp-lvl-4-bg: #7C868E;
-$gp-lvl-5-bg: #646E75;
-$gp-lvl-6-bg: #51595F;
-$gp-lvl-7-bg: #454B50;
 
+// Apply light theme
+// --
+// prefers-color-scheme
 @media (prefers-color-scheme: light) {
-  :root, :root.is-light {
-    // Graph-packing
-    --gp-lvl-0-bg: #{$gp-lvl-0-bg};
-    --gp-lvl-1-bg: #{$gp-lvl-1-bg};
-    --gp-lvl-2-bg: #{$gp-lvl-2-bg};
-    --gp-lvl-3-bg: #{$gp-lvl-3-bg};
-    --gp-lvl-4-bg: #{$gp-lvl-4-bg};
-    --gp-lvl-5-bg: #{$gp-lvl-5-bg};
-    --gp-lvl-6-bg: #{$gp-lvl-6-bg};
-    --gp-lvl-7-bg: #{$gp-lvl-7-bg};
+  :root {
+    @each $name, $value in $f6-light-theme {
+      --#{$name}: #{$value};
+    }
+    @each $name, $value in $bulma-light-theme {
+        --bulma-#{$name}: #{$value};
+    }
   }
+  @include apply-bulma-overrides($bulma-light-theme);
+}
+// Class-based overrides
+[data-theme=light], .theme-light, .is-light, :root.is-light {
+  @each $name, $value in $f6-light-theme {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $bulma-light-theme {
+    --bulma-#{$name}: #{$value};
+  }
+  @include apply-bulma-overrides($bulma-light-theme);
 }
 
-// Graph-packing
-$gp-lvl-0-bg: #e0e0e0;
-$gp-lvl-1-bg: #b0b0b0;
-$gp-lvl-2-bg: #808081;
-$gp-lvl-3-bg: #505050;
-$gp-lvl-4-bg: #404040;
-$gp-lvl-5-bg: #303030;
-$gp-lvl-6-bg: #202020;
-$gp-lvl-7-bg: #101010;
-
+// Apply dark theme
+// --
+// prefers-color-scheme
 @media (prefers-color-scheme: dark) {
-  :root, :root.is-dark {
-    // Graph-packing
-    --gp-lvl-0-bg: #{$gp-lvl-0-bg};
-    --gp-lvl-1-bg: #{$gp-lvl-1-bg};
-    --gp-lvl-2-bg: #{$gp-lvl-2-bg};
-    --gp-lvl-3-bg: #{$gp-lvl-3-bg};
-    --gp-lvl-4-bg: #{$gp-lvl-4-bg};
-    --gp-lvl-5-bg: #{$gp-lvl-5-bg};
-    --gp-lvl-6-bg: #{$gp-lvl-6-bg};
-    --gp-lvl-7-bg: #{$gp-lvl-7-bg};
+  :root {
+    @each $name, $value in $f6-dark-theme {
+      --#{$name}: #{$value};
+    }
+    @each $name, $value in $bulma-dark-theme {
+        --bulma-#{$name}: #{$value};
+    }
   }
+  @include apply-bulma-overrides($bulma-dark-theme);
+}
+
+// Class-based overrides
+[data-theme=dark], .theme-dark, .is-dark, :root.is-dark{
+  @each $name, $value in $f6-dark-theme {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $bulma-dark-theme {
+    --bulma-#{$name}: #{$value};
+  }
+  @include apply-bulma-overrides($bulma-dark-theme);
 }

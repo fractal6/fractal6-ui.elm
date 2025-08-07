@@ -399,6 +399,7 @@ update_ apis message model =
         OnToggle ->
             if model.isActive then
                 ( { model | isActive = False }
+                  -- @debug: is it working ? the branch icon in navbar does no highlight every time on click ?!
                 , out0 [ Ports.saveMenuTree (toPersistant { model | isActive = False }), Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 500 ]
                 )
 
@@ -641,7 +642,7 @@ view op (State model) =
 
     else
         div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
-            --[ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
+            --[ div [ class "border-hinter is-hidden-mobile", onClick OnToggle ] [] ]
             [ div [] [] ]
 
 
@@ -749,7 +750,7 @@ viewCircleLine hover focus node =
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
-                    [ span [ class "tag is-rounded has-border", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ] ]
+                    [ span [ class "tag is-rounded has-border-small", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ] ]
 
               else
                 text ""

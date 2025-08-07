@@ -232,10 +232,10 @@ welcome uctx =
                 |> renderMarkdown "is-human"
             ]
         , div [ class "is-aligned-center" ]
-            [ a [ class "button is-success is-light breakable", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
+            [ a [ class "button is-success breakable", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
             , br [] []
             , text T.or_
             , br [] []
-            , a [ class "button is-success is-light breakable", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
+            , a [ class "button is-success breakable", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
             ]
         ]

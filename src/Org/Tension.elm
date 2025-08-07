@@ -1597,7 +1597,7 @@ viewTension u t model =
             t.blobs |> withDefault [] |> List.head
     in
     div []
-        [ div [ class "columns is-marginless" ]
+        [ div [ class "columns m-0" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9 px-0 pt-0" ]
@@ -1907,7 +1907,7 @@ viewSidePane u t model =
                 (case u of
                     LoggedIn _ ->
                         [ h2
-                            [ class "subtitle", classList [ ( "is-h", hasAssigneeRight ) ] ]
+                            [ class "subtitle" ]
                             [ text T.assignees
                             , if model.isAssigneeOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -1949,7 +1949,7 @@ viewSidePane u t model =
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn _ ->
-                        [ h2 [ class "subtitle", classList [ ( "is-h", hasLabelRight ) ] ]
+                        [ h2 [ class "subtitle" ]
                             [ text T.labels
                             , if model.isLabelOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -2012,7 +2012,7 @@ viewSidePane u t model =
                                 LoggedIn _ ->
                                     [ div [ id domid ]
                                         [ h2
-                                            [ class "subtitle", classList [ ( "is-h", hasBlobRight || hasRole ) ] ]
+                                            [ class "subtitle" ]
                                             [ text T.document
                                             , if isOpen then
                                                 A.icon "icon-x is-pulled-right"
@@ -2061,7 +2061,7 @@ viewSidePane u t model =
                                                     text ""
                                    , Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-highlight is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")

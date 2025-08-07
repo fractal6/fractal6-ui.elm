@@ -741,7 +741,7 @@ viewAboutSection node data op_m =
                     && isSuccess data.tid_r
                     && not (List.member node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ]))
               then
-                div [ class "level-right is-marginless is-small is-hidden-mobile" ]
+                div [ class "level-right m-0 is-small is-hidden-mobile" ]
                     [ viewToolbarDropdown NoView data ]
 
               else

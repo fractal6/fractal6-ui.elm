@@ -32,6 +32,7 @@ module Global exposing
     , tickNow
     , update
     , view
+    , viewNotif
     )
 
 import Auth exposing (ErrState(..), parseErr, parseErr2)
@@ -64,7 +65,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -141,6 +142,7 @@ type Msg
     | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
+    | UpdateSessionTheme String
     | UpdateSessionNotif NotifCount
     | GotOrgaInfo (GqlData OrgaInfo)
     | RefreshNotifCount
@@ -330,10 +332,10 @@ update msg model =
                         )
                         session.data.orgaInfo
                         data
-                        
+
                 sessionData =
                     session.data
-                    
+
                 common =
                     session.common
             in
@@ -422,10 +424,10 @@ update msg model =
 
                         Nothing ->
                             data
-                            
+
                 sessionData =
                     session.data
-                    
+
                 common =
                     session.common
             in
@@ -591,6 +593,24 @@ update msg model =
                 Nothing ->
                     ( model, Ports.logErr ("Error: Bad lang format: " ++ data) )
 
+        UpdateSessionTheme data ->
+            let
+                session =
+                    model.session
+
+                common =
+                    session.common
+            in
+            case data of
+                "light" ->
+                    ( { model | session = { session | common = { common | theme = LightTheme } } }, Cmd.none )
+
+                "dark" ->
+                    ( { model | session = { session | common = { common | theme = DarkTheme } } }, Cmd.none )
+
+                _ ->
+                    ( model, Ports.logErr ("Error: Bad theme format: " ++ data) )
+
         UpdateSessionNotif data ->
             let
                 session =
@@ -646,7 +666,7 @@ update msg model =
                                     { oi | isWatching = Just d, n_watchers = ternary d (oi.n_watchers + 1) (max 0 (oi.n_watchers - 1)) }
                                 )
                                 session.data.orgaInfo
-                                
+
                         sessionData =
                             session.data
                     in
@@ -669,7 +689,7 @@ update msg model =
                                 )
                                 session.data.tree_data
                                 |> withDefault data
-                                
+
                         sessionData =
                             session.data
                     in
@@ -696,7 +716,7 @@ update msg model =
                             { p | focus = { focus | pinned = result } }
                         )
                         session.common.path_data
-                        
+
                 common =
                     session.common
             in
@@ -817,7 +837,7 @@ update msg model =
                             { oi | client_version = session.apis.client_version }
                         )
                         session.data.orgaInfo
-                        
+
                 sessionData =
                     session.data
             in
@@ -897,6 +917,7 @@ subscriptions _ =
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
         , Ports.pd Ports.updateMenuTreeFromJs TreeMenuSchema.decode LogErr UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
+        , Ports.updateThemeFromJs UpdateSessionTheme
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         ]
 
@@ -935,7 +956,7 @@ layout { page, url, session, msg1, msg2, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy7 Navbar.view session.common.user session.data.notif session.data.orgaInfo session.apis url msg1 msg2
+            [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy6 Navbar.view session.apis session.common session.data.notif session.data.orgaInfo msg1 msg2
             , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
             , div [ id "body" ] page.body
             , Footbar.view session.common
@@ -948,10 +969,10 @@ viewNotif : String -> Bool -> msg -> Html msg
 viewNotif msg isOk closeMsg =
     let
         color =
-            ternary isOk "is-success" "is-error"
+            ternary isOk "has-background-success-soft" "has-background-error-soft"
     in
     div
-        [ class "f6-notification notification is-light"
+        [ class "f6-notification notification"
         , classList [ ( color, True ) ]
         ]
         [ button [ class "delete", onClick closeMsg ] []

@@ -376,7 +376,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "ConfirmContractModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -431,7 +431,7 @@ viewModalContent op (State model) =
                 [ text T.newContract ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "0" "is-info is-light" "icon-info" T.contractInfoHeader T.contractInfo
+            [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
             , showContractForm model.form
             , div [ class "field" ]
                 [ div [ class "control" ]
@@ -457,14 +457,14 @@ viewModalContent op (State model) =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button defaultSubmit is-light is-success"
+                        [ class "button defaultSubmit is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable || isLoading)
                         , onClick (OnSubmit <| OnDataQuery)
@@ -478,7 +478,7 @@ viewModalContent op (State model) =
 
 showContractForm : ContractForm -> Html Msg
 showContractForm f =
-    form [ class "box is-light form" ]
+    form [ class "box form" ]
         [ div [ class "field is-horizontal" ]
             [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractType ] ]
             , div [ class "field-body" ]

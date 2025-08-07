@@ -96,8 +96,6 @@ viewEventMedia session inline ev =
                     , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
                     , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     , text ":"
                     , span [] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
@@ -124,8 +122,6 @@ viewContractMedia session ev =
                     , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
                     , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
             , small [ class "help" ] [ byAt session (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]

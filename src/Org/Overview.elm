@@ -1030,7 +1030,7 @@ view_ global model =
               viewCanvas global.session.common.user model
             , viewFromPos model.window_pos.bottomLeft
             ]
-        , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
+        , div [ class "divider is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
         , div [ class "column is-6 is-5-fullhd" ]
             [ div [ id "nextToChart" ]
                 [ viewFromPos model.window_pos.topRight ]
@@ -1193,10 +1193,10 @@ viewSearchList _ model =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.circle ] ]
+                                        [ td [ class "is-aligned-center is-size-6" ] [ text T.circle ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.role ] ]
+                                        [ td [ class "is-aligned-center is-size-6" ] [ text T.role ] ]
 
                                      else
                                         []
@@ -1239,7 +1239,7 @@ viewCanvas us model =
             _ ->
                 text ""
         , if model.legend then
-            div [ id "canvasLegend", class "box is-warning-light has-text-dark" ]
+            div [ id "canvasLegend", class "box has-background-evidence" ]
                 [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text T.circlesLegend ] ]
                 , br [ class "mb-3" ] []
                 , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text T.focusLegend ] ]
@@ -1259,7 +1259,7 @@ viewCanvas us model =
                 , A.icon1 "icon-key icon-lg" T.visibilitySecretLegend
                 , br [ class "mb-5" ] []
                 , span
-                    [ class "button-light has-text-info is-size-7 is-pulled-right"
+                    [ class "button-light is-info is-size-7 is-pulled-right"
                     , onClick (HelpMsg (Help.OnOpen ""))
                     ]
                     [ text T.help ]
@@ -1386,7 +1386,7 @@ viewCanvas us model =
                         []
                    )
                 ++ [ div
-                        [ class "tag is-rounded has-border-light2 is-light is-info is-small tooltip has-tooltip-arrow"
+                        [ class "tag is-small is-w tooltip has-tooltip-arrow"
 
                         -- Pushed to bottom in flex/column parent.
                         , attribute "style" "margin-top:auto; user-select:none;"
@@ -1424,7 +1424,7 @@ viewActivies : Model -> Html Msg
 viewActivies model =
     div
         [ id "activities", class "box is-shrinked2 is-flex-grow" ]
-        [ div [ class "title ml-4 mt-2 mb-3" ]
+        [ div [ class "title ml-4 pt-2 mb-3" ]
             [ div [ class "level" ]
                 [ div [ class "level-left" ]
                     [ div
@@ -1442,11 +1442,11 @@ viewActivies model =
                     [ div [ class "tabs is-small" ]
                         [ ul []
                             [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= TensionTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank" ]
                                     [ A.icon1 "icon-exchange icon-sm" (T.tensions model.session.lexicon) ]
                                 ]
                             , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= JournalTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank" ]
                                     [ A.icon1 "icon-history icon-sm" T.journal ]
                                 ]
                             ]

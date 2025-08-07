@@ -78,6 +78,11 @@ icon1 cls words =
     span [ classList [ ( "is-flex is-align-items-center", String.trim words /= "" ) ] ] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
+icon1_noflex : String -> String -> Html msg
+icon1_noflex cls words =
+    span [] [ icon cls, text (space_ ++ space_ ++ words) ]
+
+
 {-| Debug case where inline flex break the ui
 -}
 icon1_ : String -> String -> Html msg
@@ -153,8 +158,8 @@ viewNotFound =
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 is-highlight-2" ] [ text T.welcome ]
-        , p [ class "has-text-grey-light" ] [ text T.welcomeSub ]
+        [ h2 [ class "mb-0 has-text-strong" ] [ text T.welcome ]
+        , p [ class "is-discrete" ] [ text T.welcomeSub ]
         ]
 
 
@@ -164,7 +169,7 @@ almostThere username aim link =
         [ div [ class "title is-aligned-center" ] [ text (T.almostThere ++ "...") ]
         , div [ class "notification is-light is-info" ]
             [ text (T.checkYourEmail |> Format.value username |> Format.value aim)
-            , hr [ class "has-background-grey-light mt-5 mb-5" ] []
+            , hr [ class "has-background-border mt-5 mb-5" ] []
             , small []
                 [ text T.checkConfirmationEmail
                 , text (" " ++ T.or_ ++ " ")

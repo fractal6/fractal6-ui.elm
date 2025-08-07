@@ -517,7 +517,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "helpModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
@@ -589,7 +589,7 @@ viewQuickHelp fromModal op (State model) =
                                             , section [ class "acc" ]
                                                 [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "is-light" "box") ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "" "box") ]
                                                 ]
                                             ]
                                         )
@@ -634,7 +634,7 @@ viewAskQuestion fromModal op (State model) =
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
-                [ div [ class "box is-light" ]
+                [ div [ class "box" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , text T.messageSent
                     , text ". "
@@ -749,7 +749,7 @@ viewFeedback fromModal op (State model) =
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
-                [ div [ class "box is-light" ]
+                [ div [ class "box" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , text T.messageSent
                     , text ". "
@@ -884,7 +884,7 @@ viewFix op (State model) =
                     |> List.map
                         (\x ->
                             div
-                                [ class "card has-border column is-paddingless m-3 is-h"
+                                [ class "card has-border column p-0 m-3 is-h is-clickable"
                                 , onClick (OnChangeTab (Tuple.second x))
                                 ]
                                 [ div [ class "card-content p-4" ]

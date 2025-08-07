@@ -347,7 +347,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "SelectTypeModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -386,7 +386,7 @@ viewModalContent op (State model) =
                 [ text (T.changeTensionType model.session.lexicon) ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "selectType-0" "is-info is-light" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
             , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->
@@ -415,14 +415,14 @@ viewModalContent op (State model) =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button is-light is-success"
+                        [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isSendable model) || isLoading)
                         , onClick (OnSubmit <| OnPatchData)

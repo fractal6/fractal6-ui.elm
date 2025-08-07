@@ -823,7 +823,7 @@ viewComment session c form result highlightedCommentId userInput =
         isFocused =
             c.createdAt == highlightedCommentId
     in
-    div [ id c.createdAt, class "media section is-paddingless" ]
+    div [ id c.createdAt, class "media section p-0" ]
         [ div
             [ class "media-left is-hidden-mobile"
             , classList [ ( "is-hidden", isMobile session.screen ) ]
@@ -853,7 +853,7 @@ viewComment session c form result highlightedCommentId userInput =
                                 text ""
                         , div [ class "is-pulled-right" ]
                             [ div [ class "dropdown is-right mr-2" ]
-                                [ div [ class "dropdown-trigger is-w is-h" ]
+                                [ div [ class "dropdown-trigger is-w" ]
                                     [ div
                                         [ class "ellipsis"
                                         , attribute "aria-controls" ("emoticon-" ++ c.id)
@@ -868,7 +868,7 @@ viewComment session c form result highlightedCommentId userInput =
                                     ]
                                 ]
                             , div [ class "dropdown is-right" ]
-                                [ div [ class "dropdown-trigger is-w is-h" ]
+                                [ div [ class "dropdown-trigger is-w" ]
                                     [ div
                                         [ class "ellipsis"
                                         , attribute "aria-controls" ("edit-ellipsis-" ++ c.id)
@@ -1071,7 +1071,7 @@ viewTensionCommentInput session tension (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ id "tensionCommentInput", class "media section is-paddingless" ]
+    div [ id "tensionCommentInput", class "media section p-0" ]
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
@@ -1135,7 +1135,7 @@ viewContractCommentInput session (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ id "tensionCommentInput", class "media section is-paddingless" ]
+    div [ id "tensionCommentInput", class "media section p-0" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message commentInput" ]
@@ -1223,8 +1223,8 @@ viewCommentInputHeader op targetid form =
             , div [ onClick (op.onRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
             , div
                 [ onClick (op.onToggleMdHelp targetid)
-                , class "tooltip has-tooltip-bottom is-right is-h is-w"
-                , classList [ ( "is-highlight", isMdHelpOpen ) ]
+                , class "tooltip has-tooltip-bottom is-right is-w"
+                , classList [ ( "has-text-strong", isMdHelpOpen ) ]
                 , attribute "data-tooltip" T.markdownSupport
                 ]
                 [ A.icon "icon-markdown" ]
@@ -1376,7 +1376,7 @@ viewEvent session focusid_m action event =
         text ""
 
     else
-        div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
+        div [ id event.createdAt, class "media p-0 actionComment" ] eventView
 
 
 viewEventStatus : SessionCommon -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
@@ -1392,7 +1392,7 @@ viewEventStatus session event status =
     in
     [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon ("icon-alert-circle icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1494,7 +1494,7 @@ viewEventAssignee session event isNew =
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate session.lang session.now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewUsernameLink value, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1526,7 +1526,7 @@ viewEventLabel focusid_m session event isNew =
     , div [ class "media-content" ]
         [ span [ class "labelsList" ] <|
             List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" link label, text (formatDate session.lang session.now event.createdAt) ]
+                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewLabel "" link label, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1539,7 +1539,7 @@ viewEventPushed session event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1559,7 +1559,7 @@ viewEventArchived session event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1568,7 +1568,7 @@ viewEventMemberLinked : SessionCommon -> Event -> Maybe TensionAction.TensionAct
 viewEventMemberLinked session event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1586,7 +1586,7 @@ viewEventMemberUnlinked session event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.unlinked2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.unlinked2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1599,7 +1599,7 @@ viewEventUserJoined session event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [] [ text T.joined2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.joined2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1628,7 +1628,7 @@ viewEventUserLeft session event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [] [ text T.left2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.left2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -1640,7 +1640,7 @@ viewEventMoved session event =
         [ span [] <|
             List.intersperse (text " ")
                 [ viewUsernameLink event.createdBy.username
-                , strong [] [ text T.moved2 ]
+                , strong [ class "has-text-evidence" ] [ text T.moved2 ]
                 , text T.from
                 , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
                 , text T.to
@@ -1664,7 +1664,7 @@ viewEventMentioned session event =
                 [ span [] <|
                     List.intersperse (text " ")
                         [ viewUsernameLink event.createdBy.username
-                        , strong [] [ text (T.mentioned2 session.lexicon) ]
+                        , strong [ class "has-text-evidence" ] [ text (T.mentioned2 session.lexicon) ]
                         , text (formatDate session.lang session.now event.createdAt)
                         ]
                 , div [ class "level ml-4 mt-1" ] <|

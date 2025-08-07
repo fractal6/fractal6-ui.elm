@@ -17,9 +17,9 @@ const safePostCssParser = require('postcss-safe-parser');
 const autoprefixer = require('autoprefixer');
 
 const commitHash = require('child_process')
-  .execSync('git rev-parse --short HEAD')
-  .toString()
-  .trim();
+    .execSync('git rev-parse --short HEAD')
+    .toString()
+    .trim();
 
 // additional webpack settings for local env (when invoked by 'npm start')
 module.exports = (env, argv) => {
@@ -28,6 +28,7 @@ module.exports = (env, argv) => {
     var MODE = argv.mode;
     const isDev = MODE == 'development';
     const isProd = MODE == 'production';
+    const watchCssOnly = env.WATCH_CSS_ONLY === 'true';
 
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
     var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "DARK";
@@ -64,6 +65,12 @@ module.exports = (env, argv) => {
 
     // common webpack config (valid for dev and prod)
     var common = {
+        cache: {
+            type: 'filesystem',
+            buildDependencies: {
+                config: [__filename]
+            }
+        },
         stats: { colors: true }, // "error-only"
         mode: MODE,
         entry: entryPath,
@@ -77,6 +84,7 @@ module.exports = (env, argv) => {
             modules: ['node_modules']
         },
         plugins: [
+            //require('postcss-discard-unused'), // npm install postcss-discard-unused --save
             new webpack.DefinePlugin({
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
@@ -95,7 +103,7 @@ module.exports = (env, argv) => {
             new CopyPlugin({
                 patterns: [{
                     from: 'assets/images',
-                    to: 'static/images/' ,
+                    to: 'static/images/',
                     globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
                 }],
             }),
@@ -106,10 +114,14 @@ module.exports = (env, argv) => {
                     test: /\.js$/,
                     exclude: /node_modules/,
                     use: [
-                        { loader: 'babel-loader' },
-                        //options: {
-                        //    presets: ['@babel/preset-env']
-                        //}
+                        {
+                            loader: 'esbuild-loader',
+                            options: {
+                                target: 'es2017',  // Good balance of features and compatibility
+                                loader: 'js',
+                                //loader: 'jsx'  // if you use JSX
+                            }
+                        }
                     ],
                 },
                 // Copy fonts
@@ -134,7 +146,38 @@ module.exports = (env, argv) => {
     // additional webpack settings for prod env (when invoked via --mode
     if (isDev) {
         return merge(common, {
-            optimization: {moduleIds: 'named'},
+            infrastructureLogging: {
+                //level: 'verbose', // or 'info', 'warn', 'error'
+                //debug: /webpack/,  // Enable debugging for modules matching this pattern
+            },
+            devtool: 'eval-cheap-module-source-map',
+            watchOptions: {
+                ignored: [
+                    '**/node_modules',
+                    '**/elm-stuff',
+                    '**/.git',
+                    '**/.direnv',
+                ],
+            },
+            optimization: {
+                moduleIds: 'named',
+                runtimeChunk: 'single',
+                splitChunks: {
+                    cacheGroups: {
+                        styles: {
+                            name: 'styles',
+                            test: /\.css$|\.scss$/,
+                            chunks: 'all',
+                            enforce: true,
+                        },
+                        elm: {
+                            name: 'elm',
+                            test: /\.elm$/,
+                            chunks: 'all',
+                        }
+                    }
+                }
+            },
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
@@ -157,6 +200,7 @@ module.exports = (env, argv) => {
                                 options: {
                                     // add Elm's debug overlay to output
                                     debug: true,
+                                    optimize: false,   // Skip optimization in dev
                                 }
                             }
                         ]
@@ -165,9 +209,25 @@ module.exports = (env, argv) => {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            "style-loader",    // 3. Finally, injects CSS into DOM
-                            "css-loader",      // 2. Then, processes CSS imports
-                            "sass-loader",     // 1. First, compiles Sass to CSS
+                            "style-loader",      // 3. Finally, injects CSS into DOM
+                            //"css-loader",        // 2. Then, processes CSS imports
+                            {
+                                loader: "css-loader",
+                                options: {
+                                    "sourceMap": false,
+                                }
+                            },
+                            //"sass-loader",     // 1. First, compiles Sass to CSS
+                            {
+                                loader: "sass-loader",
+                                options: {
+                                    //implementation: require('sass'), // longer...?
+                                    sassOptions: {
+                                        outputStyle: 'expanded',
+                                        sourceMap: false,
+                                    }
+                                }
+                            }
                         ],
                     },
                 ]
@@ -176,8 +236,12 @@ module.exports = (env, argv) => {
                 // serve index.html in place of 404 responses
                 hot: true,
                 historyApiFallback: true,
-                //contentBase: './static',
-                //proxy: [],
+                client: {
+                    overlay: {
+                        errors: true,
+                        warnings: false,
+                    },
+                },
                 // feel free to delete this section if you don't need anything like this
                 //before(app) {
                 //    // on port 3000
@@ -236,7 +300,16 @@ module.exports = (env, argv) => {
                         use: [
                             MiniCssExtractPlugin.loader,
                             "css-loader",
-                            "sass-loader",
+                            {
+                                loader: "sass-loader",
+                                options: {
+                                    //implementation: require('sass'),
+                                    sassOptions: {
+                                        outputStyle: 'compressed',
+                                        sourceMap: false,
+                                    }
+                                }
+                            },
                             {
                                 loader: "postcss-loader",
                                 options: {
@@ -273,7 +346,7 @@ module.exports = (env, argv) => {
                                 unsafe: true,
                                 unsafe_comps: false, // break graphpack
                                 unsafe_math: true,
-                                pure_funcs: [ 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
+                                pure_funcs: ['A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
                                 //keep_fnames: true,
                             },
                         },

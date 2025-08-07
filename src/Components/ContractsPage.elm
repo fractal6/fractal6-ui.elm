@@ -614,7 +614,7 @@ viewContractsTable : List Contract -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]
-        [ thead [ class "is-size-7" ]
+        [ thead []
             [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
             ]
         , data
@@ -651,7 +651,7 @@ viewRow d op model =
 
         -- participant
         -- n comments icons
-        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+        , td [ class "is-aligned-right", attribute "style" "min-width: 6rem;" ]
             [ if isAuthor || op.isAdmin then
                 let
                     deleteLoading =
@@ -661,7 +661,7 @@ viewRow d op model =
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
-                    [ span [ class "tag is-danger is-light is-smaller2 tooltip has-tooltip-arrow", attribute "data-tooltip" T.deleteThisContract ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
+                    [ span [ class "tag is-danger is-smaller2 tooltip has-tooltip-arrow", attribute "data-tooltip" T.deleteThisContract ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
 
               else
                 text ""
@@ -732,7 +732,7 @@ viewContractPage c op model =
                     n =
                         nodeFromTension c.tension
                 in
-                div [ class "notification is-success is-light" ]
+                div [ class "notification is-success" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , ternary isCandidate
                         (text (cev2c n.type_ c.event.event_type))
@@ -740,7 +740,7 @@ viewContractPage c op model =
                     ]
 
             else if isVoteSuccess && model.voteForm.vote == 0 then
-                div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
+                div [ class "notification is-danger" ] [ text T.invitationRejected ]
 
             else
                 viewVoteBox model.form.uctx isValidator participants candidates c model
@@ -877,7 +877,7 @@ viewContractBox c op model =
              , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.session c.createdBy c.createdAt ]
              ]
                 ++ (if c.status == ContractStatus.Open && (isAuthor || op.isAdmin) then
-                        [ hr [] []
+                        [ br [] []
                         , div
                             [ class "is-pulled-right button-light is-danger"
                             , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
@@ -920,13 +920,13 @@ viewVoteBox uctx isValidator participants candidates c model =
              else
                 -- Otherwire show a "Accept/Cancel" buttons
                 [ div
-                    [ class "button is-success is-light is-rounded"
+                    [ class "button is-success is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
                     , onClick (OnSubmit (not isLoading) <| DoVote 1)
                     ]
                     [ span [ class "mx-4" ] [ text T.accept ] ]
                 , div
-                    [ class "button is-danger is-light is-rounded"
+                    [ class "button is-danger is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
                     , onClick (OnSubmit (not isLoading) <| DoVote 0)
                     ]

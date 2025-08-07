@@ -496,7 +496,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [toggleLightMode]
   en="Toggle light mode"
-  fr="Changer de thème"
+  fr="Thème clair"
+
+[toggleDarkMode]
+  en="Toggle dark mode"
+  fr="Thème sombre"
 
 [view]
   en="View"
@@ -691,9 +695,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Announcement"
   fr="Annonce"
 
-[showAllCat]
-  en="Show all categories"
-  fr="Voir toutes les catégories"
+[allCat]
+  en="All categories"
+  fr="Toutes les catégories"
 
 [theVisibility]
   en="the visibility"
@@ -992,23 +996,23 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Vous avez des données non sauvegardées, veuillez confirmer pour continuer (votre édition sera perdue)."
 
 [confirmDeleteLabel]
-  en="Are you sure to delete this label"
-  fr="Etes-vous sûr de vouloir supprimer cette étiquette"
+  en="Please confirm to delete this label"
+  fr="Veuillez confirmer pour supprimer cette étiquette"
 
 [confirmDeleteRole]
-  en="Are you sure to delete this role"
-  fr="Etes-vous sûr de vouloir supprimer ce rôle"
+  en="Please confirm to delete this role"
+  fr="Veuillez confirmer pour supprimer ce rôle"
 
 [confirmDeleteContract]
-  en="Are you sure to cancel this contract"
+  en="Please confirm to cancel this contract"
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
 
 [confirmLeaveOrga]
-  en="""Are you sure you want to leave this organisation ?
+  en="""Please confirm to leave this organisation:
 - You will be unassigned to any {{_tension_}}s in this organisation.
 - You will be able to join again by invitation only.
   """
-  fr="""Etes-vous sûr de vouloir quitter cette organisation ?
+  fr="""Veuillez confirmer pour quitter cette organisation :
 - Vous serez desassigné de toutes {{_tension_}}s dans cette organisation.
 - Vous pourrez la rejoindre à nouveau sur invitation seulement.
   """
@@ -2053,8 +2057,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 #
 
 [circlesLegend]
-  en="Circles and sub-circles (group, team, ...)"
-  fr="Cercles et sous-cercles (groupe, équipe, ...)"
+  en="Circles and sub-circles (group, team, etc)"
+  fr="Cercles et sous-cercles (groupe, équipe, etc)"
 
 [focusLegend]
   en="Focused circle/role"
@@ -2807,7 +2811,7 @@ This action is irreversible. Once added, an owner can only be removed if they ch
 
 Additionally, an owner has the highest level of read and write access within the organization.
 
-Are you sure you want to continue?
+Please confirm to continue.
 """
   fr="""Vous êtes sur le point d'ajouter **un nouveau propriétaire**.
 
@@ -2815,5 +2819,5 @@ Cette action est irréversible. Une fois ajouté, un propriétaire ne peut être
 
 De plus, un propriétaire dispose du niveau de droit et d'accès en lecture et écriture le plus élevé dans l'organisation.
 
-Êtes-vous sûr de vouloir continuer ?
+Veuillez confirmer pour continuer.
 """

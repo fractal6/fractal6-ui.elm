@@ -227,10 +227,14 @@ update_ apis message model =
 
         OnToggle ->
             if model.isActive then
-                ( { model | isActive = False }, out0 [ Ports.saveMenuOrga False, Ports.closeOrgaMenu, sendSleep (SetIsActive2 False) 500 ] )
+                ( { model | isActive = False }
+                , out0 [ Ports.saveMenuOrga False, Ports.closeOrgaMenu, sendSleep (SetIsActive2 False) 500 ]
+                )
 
             else
-                ( { model | isActive2 = True }, out0 [ Ports.saveMenuOrga True, send OnLoad, sendSleep (SetIsActive2 True) 10 ] )
+                ( { model | isActive2 = True }
+                , out0 [ Ports.saveMenuOrga True, send OnLoad, sendSleep (SetIsActive2 True) 10 ]
+                )
 
         SetIsActive2 v ->
             -- Prevent elm from computing the VDOM
@@ -325,7 +329,7 @@ viewOrgaMenu hover focus orgs_result op =
          )
             ++ [ div [ class "m-5 pb-6" ]
                     [ a
-                        [ class "is-discrete-2"
+                        [ class "discrete-link"
                         , href (toHref Route.New_Orga)
                         , title "Create new organizatinon"
                         ]

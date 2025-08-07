@@ -840,7 +840,7 @@ view_ global model =
                 , if isAdmin then
                     div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
                         [ div
-                            [ class "button is-primary is-pushed-right"
+                            [ class "button is-success is-pushed-right"
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ A.icon1 "icon-user-plus" T.inviteMembers ]
@@ -1119,7 +1119,7 @@ viewUserEllipsis session focus m roles ell =
                 , isOpen = isOpen_
                 , dropdown_cls = ternary isMobile_ "is-right" ""
                 , button_cls = ""
-                , button_html = A.icon "icon-more-vertical is-h icon-1half"
+                , button_html = A.icon "icon-more-vertical is-w icon-1half"
                 , msg = OnRowEdit (ternary ell.isOpen False True)
                 , menu_cls = ""
                 , content_cls = "p-0 has-border-light"

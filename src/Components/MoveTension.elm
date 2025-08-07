@@ -572,7 +572,7 @@ viewModal : GqlData NodesDict -> Model -> Html Msg
 viewModal tree_data model =
     div
         [ id "MoveTensionModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -681,7 +681,7 @@ viewModalContent tree_data model =
                         , button_html =
                             if List.member model.form.target.nameid [ "", model.target ] then
                                 span
-                                    [ class "button is-small s-light is-inverted" ]
+                                    [ class "button is-small" ]
                                     [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
 
                             else

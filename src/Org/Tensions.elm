@@ -1637,7 +1637,7 @@ view_ global model =
                     |> withDefault Nothing
                     |> Maybe.map
                         (\x ->
-                            div [ class "mb-4", attribute "style" "margin-top:-1rem !important;" ]
+                            div [ class "mb-4" ]
                                 [ viewPinnedTensions 3 model.session model.node_focus x ]
                         )
                     |> withDefault (text "")
@@ -1699,7 +1699,7 @@ viewCatMenu typeFilter =
             |> List.append
                 [ li []
                     [ a [ onClickPD (ChangeTypeFilter AllTypes), target "_blank", classList [ ( "is-active", AllTypes == typeFilter ) ] ]
-                        [ text T.showAllCat ]
+                        [ text T.allCat ]
                     ]
                 ]
             |> ul [ class "menu-list" ]
@@ -1878,9 +1878,9 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
-        , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0;"
         ]
-        [ div [ class "level is-marginless is-mobile" ]
+        [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount counts statusFilter
                 , showIf (focus.nameid /= focus.rootnameid) <|
@@ -1915,7 +1915,7 @@ viewTensionsCount counts statusFilter =
         Success c ->
             let
                 activeCls =
-                    "is-hovered has-text-weight-semibold"
+                    "is-hovered is-active has-text-weight-semibold"
 
                 inactiveCls =
                     "has-background-header"
@@ -2013,7 +2013,7 @@ viewCircleTensions model =
                             Maybe.map
                                 (\t ->
                                     if isRole t.receiver.nameid then
-                                        A.icon1 "icon-leaf" t.receiver.name
+                                        A.icon1_noflex "icon-leaf" t.receiver.name
 
                                     else
                                         text t.receiver.name
@@ -2028,7 +2028,7 @@ viewCircleTensions model =
                           else
                             a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ] [ title ]
                         , span
-                            [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
+                            [ class "tag has-background-inherit is-rounded has-border-small button-light is-w is-pulled-right mx-1"
 
                             --  It's distracting for for the eyes (works with onMouseEnter below)
                             --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]
@@ -2234,7 +2234,7 @@ viewClearFilterButton model =
 
     else
         span
-            [ class "tag is-rounded is-small is-danger is-light button-light"
+            [ class "tag is-rounded is-small has-background-danger-soft button-light"
             , attribute "style" "margin: 0.35rem;"
             , onClick OnClearFilter
             ]

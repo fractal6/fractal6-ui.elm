@@ -325,7 +325,7 @@ viewHero model =
 
 viewSignBox : Model -> Html Msg
 viewSignBox model =
-    div [ class "card" ]
+    div [ class "card has-background-evidence" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title tabs is-fullwidth p-0" ]
                 [ ul []

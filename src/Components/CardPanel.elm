@@ -1213,7 +1213,7 @@ viewDraftSidePane d model =
          ]
             ++ (if isAdmin || isAuthor then
                     [ div
-                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
+                        [ class "is-smaller has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
                         [ A.icon1 "icon-exchange" T.convertDraft ]

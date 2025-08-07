@@ -1261,9 +1261,9 @@ viewProjectsListHeader focus counts statusFilter =
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
-        , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0;"
         ]
-        [ div [ class "level is-marginless is-mobile" ]
+        [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewProjectsCount counts statusFilter
                 , showIf (focus.nameid /= focus.rootnameid) <|

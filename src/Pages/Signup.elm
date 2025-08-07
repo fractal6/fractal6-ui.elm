@@ -183,7 +183,7 @@ view_ global model =
 
 viewSignup : Global.Model -> Model -> Html Msg
 viewSignup global model =
-    div [ class "card" ]
+    div [ class "card has-background-evidence" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title" ]
                 [ text T.signup_ ]

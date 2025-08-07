@@ -1,0 +1,52 @@
+//
+// Bulma fixes
+//
+
+// dropdown-item in navbar do not close on click
+// https://github.com/jgthms/bulma/issues/2514
+@media screen and (min-width: 1025px) {
+    .navbar-item.is-hoverable:hover .navbar-dropdown {
+        display: block !important;
+    }
+    .navbar-item.is-hoverable:focus-within .navbar-dropdown {
+        display: none;
+    }
+}
+
+.button {
+    &:not(.is-light):not(.is-ghost) {
+        color: var(--bulma-text); // bulma-text-on-schema (--text) is to weak on dark mode...
+        &.is-primary,
+        &.is-info,
+        &.is-success,
+        &.is-warning,
+        &.is-danger {
+            color: white;
+        }
+    }
+}
+
+.level-left, .level-right {
+    gap: 0;
+}
+
+.dropdown-content {
+    // @debug: the bulma color is not defined sometimes (when created on the fly in kb-board...?
+    background-color: var(--body-background-color);
+
+    .dropdown-item:hover {
+        background-color: var(--background-hover);
+    }
+}
+
+.panel-heading {
+    color: var(--bulma-text);
+}
+
+.modal-card-body {
+    //flex-grow: unset; // needed for the long dropdown (move tension)
+}
+
+.modal-card-head {
+    padding: 1rem !important;
+}

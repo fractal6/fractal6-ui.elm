@@ -1268,7 +1268,7 @@ viewModal : GqlData NodesDict -> State -> Html Msg
 viewModal tree_data (State model) =
     div
         [ id "tensionModal"
-        , class "modal is-light modal-fx-slideTop"
+        , class "modal modal-fx-slideTop"
         , classList [ ( "is-active", model.isActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
@@ -1336,7 +1336,7 @@ viewSuccess res model =
                 _ ->
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
-    div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
+    div [ class "notification is-success is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
         , div [ class "is-flex is-align-items-center" ]
             [ A.icon1 "icon-check icon-2x has-text-success" ""
@@ -1447,7 +1447,7 @@ viewTensionType model =
             model.isTypeOpen /= ""
     in
     div []
-        [ span [ class "has-text-grey-light" ] [ text ("Type" ++ ":" ++ space_) ]
+        [ span [ class "is-discrete" ] [ text ("Type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
             B.dropdownLight
                 { dropdown_id = "type-menu"
@@ -1460,7 +1460,7 @@ viewTensionType model =
                         , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                         ]
                 , menu_cls = ""
-                , content_cls = "has-border-light"
+                , content_cls = "has-border-light-small"
                 , msg = OnTypeClick (ternary isOpen "" "something")
                 , content_html =
                     div [ class "dropdown-item" ]
@@ -1472,14 +1472,14 @@ viewTensionType model =
                                             x == tension_type
                                     in
                                     div
-                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                                         , classList [ ( "is-selected", isActive ) ]
                                         , onClick (OnChangeTensionType x)
                                         ]
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                            , div [ class "content is-small" ]
-                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                            , div [ class "content" ]
+                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1492,14 +1492,14 @@ viewTensionType model =
                                             x == tension_type
                                     in
                                     div
-                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                                         , classList [ ( "is-selected", isActive ) ]
                                         , onClick (OnChangeTensionType x)
                                         ]
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                            , div [ class "content is-small" ]
-                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                            , div [ class "content" ]
+                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1524,7 +1524,7 @@ viewRecipients tree_data model =
     in
     div [ attribute "style" "max-width: 285px;" ]
         [ -- @DEBUG: emitter is ignored now...
-          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
+          span [ class "is-discrete", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
         , B.dropdownLight
             { dropdown_id = "target-menu"
             , isOpen = isOpen
@@ -1620,7 +1620,7 @@ viewTension tree_data model =
                     , div [ class "field level is-mobile" ]
                         [ div [ class "level-left" ]
                             [ button
-                                [ class "button is-light"
+                                [ class "button"
                                 , onClick (OnCloseSafe "" "")
                                 ]
                                 [ text T.cancel ]
@@ -1675,7 +1675,7 @@ viewCircle tree_data model =
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
+                                            [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                         ]
                                     ]
                                 ]
@@ -1685,7 +1685,7 @@ viewCircle tree_data model =
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
+                                            [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                         ]
                                     ]
                                 ]
@@ -1701,7 +1701,7 @@ viewCircle tree_data model =
                                             text ""
                                     , div [ class "field level is-mobile" ]
                                         [ div [ class "level-left" ]
-                                            [ button [ class "button is-light", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
+                                            [ button [ class "button", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
                                                 [ A.icon0 "icon-chevron-left", text T.back ]
                                             ]
                                         , div [ class "level-right" ]
@@ -1753,7 +1753,7 @@ viewNodeBreadcrumb form step =
                 NodeType.Circle ->
                     [ CircleVisibilityStep, NodeValidateStep ]
     in
-    nav [ class "breadcrumb has-succeeds-separator is-small", attribute "aria-labels" "breadcrumbs" ]
+    nav [ class "breadcrumb has-succeeds-separator lifeline is-small", attribute "aria-labels" "breadcrumbs" ]
         [ ul [] <|
             List.map
                 (\x ->
@@ -1803,14 +1803,14 @@ viewRolesExt model =
         [ viewNodeBreadcrumb form model.nodeStep
 
         -- Show the help information
-        --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
+        --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
         , div [ class "subtitle" ] [ text T.selectRoleTemplate ]
         , case model.roles_result of
             Success roles ->
                 List.map
                     (\role ->
                         div
-                            [ class "card has-border column is-paddingless m-3 is-h"
+                            [ class "card has-border column p-0 m-3 is-h is-clickable"
                             , classList [ ( "is-selected", Just role.id == form.node.role_ext ) ]
                             , attribute "style" "min-width: 150px;"
                             ]
@@ -1886,7 +1886,7 @@ viewCircleVisibility model =
                                     ( "icon-lock", visibility2descr x )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected is-selectable", isSelected ) ]
 
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???

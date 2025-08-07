@@ -191,7 +191,7 @@ view_ model =
 
 viewLogin : Model -> Html Msg
 viewLogin model =
-    div [ class "card" ]
+    div [ class "card has-background-evidence" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title" ]
                 [ text T.signin_ ]

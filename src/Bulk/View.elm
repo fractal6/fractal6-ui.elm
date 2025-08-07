@@ -106,10 +106,10 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                       else
                         text ""
                     , if showRecip then
-                        viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
+                        viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
 
                       else
-                        span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
+                        span [ class "is-weak" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
                     ]
                 , div [ class "level-right" ] []
                 ]
@@ -172,7 +172,7 @@ viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
 viewCircleTarget commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
+            span [ class ("tag tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
@@ -180,13 +180,13 @@ viewCircleTarget commonOp cls er =
 
 viewCircleSimple : String -> Html msg
 viewCircleSimple nameid =
-    span [ class "tag has-border-light is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
+    span [ class "tag is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
 
 
 viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small is-light is-inverted is-static has-text-weight-light" ]
+        [ span [ class "is-small is-light is-inverted is-static is-weak" ]
             [ viewNodeRef t_blank OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-light is-inverted is-static" ]
@@ -196,32 +196,19 @@ viewTensionArrow t_blank cls emitter receiver =
 
 viewPinnedTensions : Int -> SessionCommon -> NodeFocus -> List PinTension -> Html msg
 viewPinnedTensions size session focus pins =
-    List.foldl
-        (\a b ->
-            let
-                pad =
-                    pins |> List.drop (a * size) |> List.take size |> List.map Just
-            in
-            b ++ [ pad ++ List.repeat (size - List.length pad) Nothing ]
-        )
-        []
-        (List.range 0 (List.length pins - 1))
-        |> LE.transpose
-        |> List.map (List.filterMap identity)
-        |> List.filter (\x -> x /= [])
+    pins
         |> List.map
-            (\x ->
-                div [ class "cell is-vertical" ] <|
-                    List.map (\y -> div [ class "" ] [ viewPin session focus y ]) x
+            (\pin ->
+                div [ class "cell" ] [ viewPin session focus pin ]
             )
-        |> div [ class "grid pinnedTile" ]
+        |> div [ class "grid" ]
         |> List.singleton
-        |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "cols", True ) ] ]
+        |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "-cols", True ) ] ]
 
 
 viewPin : SessionCommon -> NodeFocus -> PinTension -> Html msg
 viewPin session focus tension =
-    div [ class "box media mediaBox p-4", style "width" "100%" ]
+    div [ class "box media mediaBox p-4 is-h", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
@@ -243,7 +230,7 @@ viewPin session focus tension =
                         , attribute "data-tooltip" (tensionStatus2str tension.status)
                         ]
                         [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                    , viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
+                    , viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
                     ]
                 ]
             ]
@@ -924,34 +911,6 @@ roleColor rt =
 
         RoleType.Retired ->
             "purple"
-
-
-colorFromRole : { r | role_type : RoleType.RoleType } -> String
-colorFromRole r =
-    case r.role_type of
-        RoleType.Owner ->
-            "var(--orange-frac6)"
-
-        RoleType.Member ->
-            "var(--primary)"
-
-        RoleType.Coordinator ->
-            "var(--orange-frac6)"
-
-        RoleType.Peer ->
-            "var(--primary)"
-
-        RoleType.Bot ->
-            "var(--white-dimmed)"
-
-        RoleType.Guest ->
-            "var(--primary)"
-
-        RoleType.Pending ->
-            "var(--warning)"
-
-        RoleType.Retired ->
-            "var(--warning)"
 
 
 role2icon : { r | role_type : RoleType.RoleType } -> String

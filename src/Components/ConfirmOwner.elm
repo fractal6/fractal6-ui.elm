@@ -321,7 +321,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id "ConfirmOwnerModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -358,7 +358,7 @@ viewModalContent op model =
             [ div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ textH T.cancel ]
@@ -380,5 +380,5 @@ viewModalContent op model =
 viewBody : Op -> Model -> Html Msg
 viewBody op model =
     div []
-        [ showMsg "owner-0" "is-warning is-light" "icon-alert-triangle" T.newOwnerMessageWarning ""
+        [ showMsg "owner-0" "is-warning" "icon-alert-triangle" T.newOwnerMessageWarning ""
         ]

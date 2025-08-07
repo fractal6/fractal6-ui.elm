@@ -594,7 +594,7 @@ viewProfileSettings user result switch_index menuFocus form =
                     [ text T.updateProfile ]
                 ]
             ]
-        , hr [ class "has-border-light", style "margin-top" "80px" ] []
+        , hr [ style "margin-top" "80px" ] []
         , div [ class "mb-4" ]
             [ div [ class "field is-horizontal" ]
                 --[ div [ class "field-label" ] [ label [ class "label" ] [ A.icon1 "icon-globe" T.language ] ]
@@ -735,7 +735,7 @@ viewAccountSettings user user_result password_result switch_index menuFocus form
                 )
                 switches
             ++ [ -- Reset password Form
-                 div [ class "box is-warning-light my-6" ]
+                 div [ class "box my-6" ]
                     [ h2 [ class "subtitle" ] [ text "Change Password" ]
                     , div [ class "field" ]
                         [ label [ class "label" ] [ text "Current password" ]

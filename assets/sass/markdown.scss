@@ -1,9 +1,8 @@
-@use "bulma-base" as *;
-@use "fonts" as *;
+@use "shared" as *;
 
 .markdown-body {
 	// Fixes
-	color: var(--text);
+	color: var(--bulma-text);
 	&.fix-inline > p {
 		display: inline;
 	}
@@ -94,7 +93,7 @@
 			//border-bottom-style: double !important;
 		}
 		tr:nth-child(even){
-			background-color: var(--chbc) !important;
+			background-color: var(--comment-header-background-color) !important;
 		}
 		th {
 			border: 1px solid var(--border-color) !important;

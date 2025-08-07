@@ -194,7 +194,7 @@ export const GraphPack = {
     usernameColor: "#8282cc",
     nameColor: "#172335",
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
-    focusCircleWidth: 6, // warning, can break stroke with canvas drawing.
+    focusCircleWidth: 4, // warning, can break stroke with canvas drawing.
     hoverCircleColor: "#555", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 2,
     outsideZoomOpacity: "75",
@@ -317,9 +317,10 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
 
         // Draw canvas buttons
+        var buttonMargin = 13;
         this.$canvasButtons.style.height = this.height - 20 + "px";
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - 8 - scrollLeft + "px";
-        this.$canvasButtons.style.top = r.top + 13 - scrollTop + "px";
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - buttonMargin - scrollLeft + "px";
+        this.$canvasButtons.style.top = r.top + buttonMargin - scrollTop + "px";
         this.$canvasButtons.classList.remove("is-invisible");
 
         // Draw welcome buttons
@@ -339,7 +340,7 @@ export const GraphPack = {
         this.computedHeight = (window.innerHeight) / 2;
 
         // Canvas settings
-        this.width = Math.max(this.computedWidth, this.minWidth);
+        this.width = Math.max(this.computedWidth - 4, this.minWidth);
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
@@ -994,6 +995,10 @@ export const GraphPack = {
             styles.getPropertyValue('--gp-lvl-6-bg').trim(),
             styles.getPropertyValue('--gp-lvl-7-bg').trim(),
         ]
+
+        this.backgroundColor = styles.getPropertyValue('--body-background-color').trim()
+        this.focusCircleColor = styles.getPropertyValue('--link2').trim()
+        this.hoverCircleColor = styles.getPropertyValue('--border-color').trim()
     },
 
     // Mapping function from a node depth to color.
@@ -1020,6 +1025,9 @@ export const GraphPack = {
         var color, depth;
         var depth = z.depth > 2 ? node.depth - z.depth + 2 : node.depth;
         opac = opac || "";
+        if (opac.startsWith('hsl')) {
+            opac = "";
+        }
 
         // See doc here: https://www.w3resource.com/html5-canvas/html5-canvas-gradients-patterns.php
         var grd = this.ctx2d.createRadialGradient(node.ctx.centerX - node.ctx.rayon / 4, node.ctx.centerY - node.ctx.rayon / 2, 0,
@@ -1027,8 +1035,8 @@ export const GraphPack = {
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
             grd.addColorStop(0, shadeColor(color, 10) + opac);
-            grd.addColorStop(0.2, color + opac);
-            grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
+            //grd.addColorStop(0.2, color + opac);
+            //grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
             if (color.substring(0, 1) == "r") {

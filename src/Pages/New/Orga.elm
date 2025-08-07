@@ -462,7 +462,7 @@ viewBreadcrumb model =
         path =
             [ OrgaVisibilityStep, OrgaValidateStep ]
     in
-    nav [ class "breadcrumb has-succeeds-separator is-small", attribute "aria-labels" "breadcrumbs" ]
+    nav [ class "breadcrumb has-succeeds-separator lifeline is-small", attribute "aria-labels" "breadcrumbs" ]
         [ ul [] <|
             List.map
                 (\x ->
@@ -491,14 +491,14 @@ viewOrgaVisibility model =
                             Just x == NodeVisibility.fromString (Dict.get "visibility" form.post |> withDefault "")
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected is-selectable", isActive ) ]
 
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
                         ]
                         [ div [ class "card-content p-4", onClick (OnSelectVisibility x) ]
                             [ h2 [ class "is-strong is-size-5 mb-5" ] [ A.icon1 (visibility2icon x ++ " icon-bg") (NodeVisibility.toString x) ]
-                            , div [ class "content is-smaller" ] [ text (visibility2descr x), span [ class "help mt-4" ] [ text (visibility2extra x) ] ]
+                            , div [ class "content is-smaller" ] [ text (visibility2descr x), br [] [], br [] [], span [ class "help-label " ] [ text (visibility2extra x) ] ]
                             ]
                         ]
                 )
@@ -563,14 +563,14 @@ viewOrgaValidate model =
                     username =
                         model.form.uctx.username
                 in
-                div [ class "f6-error message is-danger is-light is-small mt-1" ]
+                div [ class "message is-danger is-light is-small mt-1" ]
                     [ p [ class "message-body" ]
                         (if String.length nid > 42 then
                             [ text T.nameTooLongError ]
 
                          else
                             [ text T.duplicateNameError
-                            , p [ class "is-hint mt-2" ] [ renderMarkdown "is-light f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            , p [ class "is-hint mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                             ]
                         )
                     ]

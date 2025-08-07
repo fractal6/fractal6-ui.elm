@@ -573,7 +573,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "JoinOrgaModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -641,7 +641,7 @@ viewJoinStep op model =
                             --    link =
                             --        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
                             --in
-                            --div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
+                            --div [ class "box", onClick (OnClose { reset = True, link = "" }) ]
                             --    [ text "Request already sent. "
                             --    , a
                             --        [ href link
@@ -650,7 +650,7 @@ viewJoinStep op model =
                             --        ]
                             --        [ text T.checkItOut_fem ]
                             --    ]
-                            div [ class "box is-light is-warning" ] [ text T.checkYourPendingInvitation ]
+                            div [ class "box is-warning" ] [ text T.checkYourPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -660,7 +660,7 @@ viewJoinStep op model =
                 , div [ class "field level is-mobile" ]
                     [ div [ class "level-left" ]
                         [ button
-                            [ class "button is-light"
+                            [ class "button"
                             , onClick (OnCloseSafe "" "")
                             ]
                             [ text T.cancel ]
@@ -694,7 +694,7 @@ viewJoinStep op model =
                 , case model.join_result of
                     Failure err ->
                         if model.isPending then
-                            div [ class "box is-light is-warning" ] [ text T.checkPendingInvitation ]
+                            div [ class "box is-warning" ] [ text T.checkPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -704,7 +704,7 @@ viewJoinStep op model =
                 , div [ class "field level is-mobile" ]
                     [ div [ class "level-left" ]
                         [ button
-                            [ class "button is-light"
+                            [ class "button"
                             , onClick (OnCloseSafe "" "")
                             ]
                             [ text T.cancel ]

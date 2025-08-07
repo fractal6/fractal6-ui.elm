@@ -34,16 +34,16 @@ import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, te
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, title)
 import Html.Events exposing (onClick)
 import ModelSchema exposing (NotifCount, OrgaInfo)
-import Session exposing (Apis)
+import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
 import Url exposing (Url)
 
 
-view : UserState -> NotifCount -> Maybe OrgaInfo -> Apis -> Url -> (String -> msg) -> msg -> Html msg
-view user notif orga_info apis url replaceUrl onCloseOutdated =
+view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> (String -> msg) -> msg -> Html msg
+view apis session notif orga_info replaceUrl onCloseOutdated =
     let
         orgUrl =
-            isOrgUrl url
+            isOrgUrl session.url
 
         -- @debug: make it work even when orgaInfo is Nothing !
         hasVersionOutdated =
@@ -60,7 +60,7 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                 ([ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ A.logo0
-                    , case user of
+                    , case session.user of
                         LoggedOut ->
                             strong [ class "is-recursiv", attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]
 
@@ -68,11 +68,11 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                             text ""
 
                     --, span [ class "has-text-orange", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                    , span [ class "has-text-orange", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                    --, span [ class "has-text-orange", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
                     ]
                  ]
                     ++ (if orgUrl then
-                            case user of
+                            case session.user of
                                 LoggedIn _ ->
                                     [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu icon-bg" ]
                                     , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
@@ -84,14 +84,14 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                         else
                             []
                        )
-                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" user notif url ]
+                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" session.user notif session.url ]
                        , A.burger "userMenu"
                        ]
                 )
             , showIf hasVersionOutdated <|
-                div [ class "f6-notification notification is-warning is-light" ]
+                div [ class "f6-notification notification has-background-warning-soft" ]
                     [ button [ class "delete", onClick onCloseOutdated ] []
-                    , a [ class "stealth-link" ]
+                    , a [ class "button-light is-light" ]
                         -- https://github.com/surprisetalk/elm-bulma/issues/17
                         [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]
                         , viewGqlErrorsLight [ "Refresh now for new features and improvements" ]
@@ -99,13 +99,13 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                     ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
-                    (case user of
+                    (case session.user of
                         LoggedIn uctx ->
                             [ a
                                 [ class "navbar-item is-size-7"
                                 , classList
                                     [ ( "is-active"
-                                      , case fromUrl url of
+                                      , case fromUrl session.url of
                                             Just (Dynamic a) ->
                                                 ternary (a.param1 == uctx.username) True False
 
@@ -126,18 +126,18 @@ view user notif orga_info apis url replaceUrl onCloseOutdated =
                     )
                         ++ [ a
                                 [ class "navbar-item"
-                                , classList [ ( "is-active", fromUrl url == Just Explore ) ]
+                                , classList [ ( "is-active", fromUrl session.url == Just Explore ) ]
                                 , href (toHref Explore)
                                 ]
                                 [ text T.explore ]
                            ]
                 , div [ class "navbar-end" ] <|
-                    [ notificationButton "is-hidden-touch" user notif url
-                    , helpButton user
+                    [ notificationButton "is-hidden-touch" session.user notif session.url
+                    , helpButton session.user
 
                     --, newButton user
                     ]
-                        ++ userButtons user url replaceUrl
+                        ++ userButtons session replaceUrl
                 ]
             ]
         ]
@@ -186,7 +186,7 @@ helpButton user =
                 [ div [ class "navbar-link is-arrowless is-hidden-touch" ]
                     [ div [ class "button is-rounded is-small has-background-navbar", style "height" "inherit" ] [ A.icon "icon-question" ] ]
                 , div [ class "button-light is-hidden-tablet" ] [ A.icon1 "icon-question" "Help" ]
-                , div [ class "navbar-dropdown" ]
+                , div [ class "navbar-dropdown has-border" ]
                     [ div [ class "navbar-item pb-3 helpTrigger", attribute "data-help" "QuickHelp" ]
                         [ text T.quickHelp ]
                     , hr [ class "navbar-divider" ] []
@@ -213,7 +213,7 @@ newButton user =
                     , attribute "style" "padding-right: 1.65rem;"
                     ]
                     [ A.icon "icon-plus icon-bg" ]
-                , div [ class "navbar-dropdown is-right" ]
+                , div [ class "navbar-dropdown has-border is-right" ]
                     [ a [ class "navbar-item", href (toHref New_Orga) ]
                         [ text T.newOrganisation ]
                     ]
@@ -223,9 +223,9 @@ newButton user =
             text ""
 
 
-userButtons : UserState -> Url -> (String -> msg) -> List (Html msg)
-userButtons user url replaceUrl =
-    case user of
+userButtons : SessionCommon -> (String -> msg) -> List (Html msg)
+userButtons session replaceUrl =
+    case session.user of
         LoggedIn uctx ->
             [ div [ class "navbar-item has-dropdown is-hoverabl" ]
                 [ div
@@ -233,13 +233,19 @@ userButtons user url replaceUrl =
                     , attribute "style" "padding-right: 1.85rem;"
                     ]
                     [ text uctx.username ]
-                , div [ class "navbar-dropdown is-right" ]
+                , div [ class "navbar-dropdown has-border is-right" ]
                     [ a [ class "navbar-item", href (toLink UsersBaseUri uctx.username []) ]
                         [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
                     , div [ id "themeTrigger", class "navbar-item pb-3" ]
-                        [ A.icon1 "icon-moon" T.toggleLightMode ]
+                        [ case session.theme of
+                            LightTheme ->
+                                A.icon1 "icon-moon" T.toggleDarkMode
+
+                            DarkTheme ->
+                                A.icon1 "icon-sun" T.toggleLightMode
+                        ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item py-3", href (toHref New_Orga) ]
                         [ A.icon1 "icon-plus" T.newOrganisation ]
@@ -259,14 +265,14 @@ userButtons user url replaceUrl =
                     , attribute "style" "padding-right: 1.85rem;"
                     ]
                     [ Logo.i18n ]
-                , div [ class "navbar-dropdown is-right" ] <|
+                , div [ class "navbar-dropdown has-border is-right" ] <|
                     List.map
                         (\lang ->
                             span [ class "navbar-item button-light langTrigger", attribute "data-lang" (Lang.toString lang) ] [ text (lang2str lang) ]
                         )
                         Lang.list
                 ]
-                :: (if List.member (fromUrl url) [ Just Login, Just Signup ] then
+                :: (if List.member (fromUrl session.url) [ Just Login, Just Signup ] then
                         []
 
                     else

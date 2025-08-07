@@ -954,7 +954,7 @@ viewBoard op model =
                                   text ""
                                 , div
                                     ([ id card.id
-                                     , class "box is-shrinked2 mb-2 mx-2 kb-card"
+                                     , class "box is-hoverable is-shrinked2 mb-2 mx-2 kb-card"
                                      ]
                                         ++ ternary model.hasTaskMove
                                             [ classList
@@ -1046,7 +1046,7 @@ viewBoard op model =
            )
         |> div
             [ id nodeID
-            , class "columns is-fullwidth is-marginless is-mobile kb-board board2"
+            , class "columns is-fullwidth m-0 is-mobile kb-board board2"
             , attribute "style" <|
                 case model.boardHeight of
                     Just h ->
@@ -1066,7 +1066,7 @@ viewHeader isAdmin isEdited col =
             , span [ class "level-right" ]
                 [ if isAdmin then
                     span
-                        [ class "tag is-rounded-light button-light is-w has-border mx-1"
+                        [ class "tag has-background-inherit is-rounded-light button-light is-w has-border-small mx-1"
                         , onClick (OnAddDraft col.id)
                         ]
                         [ A.icon "icon-plus" ]
@@ -1082,7 +1082,7 @@ viewHeader isAdmin isEdited col =
                         , button_html = A.icon "button-light icon-more-horizontal icon-lg"
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)
                         , menu_cls = ""
-                        , content_cls = "has-border-light"
+                        , content_cls = ""
                         , content_html =
                             div []
                                 [ div
@@ -1144,9 +1144,9 @@ viewMediaDraft cardid isHovered isEdited d =
             else
                 text ""
     in
-    div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-content is-smaller" ]
-            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+    div [ class "media mediaBox is-size-7" ]
+        [ div [ class "media-content" ]
+            [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div []
                 [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
@@ -1231,9 +1231,9 @@ viewMediaTension cardid isHovered isEdited focus t =
                 text ""
     in
     div
-        [ class "media mediaBox is-hoverable is-size-7" ]
-        [ div [ class "media-content is-smaller" ]
-            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+        [ class "media mediaBox is-size-7" ]
+        [ div [ class "media-content" ]
+            [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div []
                 [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
@@ -1272,7 +1272,7 @@ viewCardDropdown model =
                 ]
                 [ case card.card of
                     CardTension t ->
-                        div [ class "dropdown-content has-border-light p-0" ]
+                        div [ class "dropdown-content p-0" ]
                             [ a
                                 [ class "dropdown-item button-light discrete-link"
                                 , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
@@ -1284,7 +1284,7 @@ viewCardDropdown model =
                             ]
 
                     CardDraft d ->
-                        div [ class "dropdown-content has-border-light p-0" ]
+                        div [ class "dropdown-content p-0" ]
                             [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
                             , hr [ class "dropdown-divider" ] []
                             , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]

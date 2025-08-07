@@ -29,7 +29,8 @@
     "webdev": "webpack-dev-server --hot --port 8001 --mode development",
     "webprod": "webpack-dev-server --hot --port 8001 --mode production",
     "prod": "webpack --mode production",
-    "dev": "webpack --mode development"
+    "dev": "webpack --mode development",
+    "webpack_profile": "webpack --config webpack.profile.js"
   },
   "dependencies": {
     "@bulvar/bulma": "^0.11.24",
@@ -44,10 +45,8 @@
     "minisearch": "^7.1.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
     "@dillonkearns/elm-graphql": "^4.3.2",
     "autoprefixer": "^10.4.21",
-    "babel-loader": "^10.0.0",
     "chokidar-cli": "3.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^9.2.0",
@@ -58,15 +57,16 @@
     "elm-reloader": "^1.1.2",
     "elm-spa": "4.1.0",
     "elm-webpack-loader": "^8.0.0",
+    "esbuild-loader": "^4.3.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.6.3",
     "mini-css-extract-plugin": "^2.9.3",
-    "node-sass": "^9.0.0",
     "postcss-loader": "^8.1.1",
     "postcss-safe-parser": "^7.0.1",
     "postcss-scss": "^4.0.9",
-    "sass": "^1.89.2",
+    "sass": "^1.90.0",
     "sass-loader": "^16.0.5",
+    "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.14",
     "uglify-js": "^3.19.3",

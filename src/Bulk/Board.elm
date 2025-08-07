@@ -149,7 +149,7 @@ viewBoard op commonOp header keys_title data =
                                 in
                                 [ ternary isHoveredUp draggingDiv (text "")
                                 , div
-                                    (class "box is-shrinked2 mb-2 mx-2"
+                                    (class "box kb-card is-shrinked2 mb-2 mx-2"
                                         :: ternary op.hasTaskMove
                                             [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
                                             , attribute "draggable" "true"
@@ -185,7 +185,7 @@ viewBoard op commonOp header keys_title data =
            )
         |> div
             [ id op.boardId
-            , class "columns is-fullwidth is-marginless is-mobile kb-board board1"
+            , class "columns is-fullwidth m-0 is-mobile kb-board board1"
 
             --, onMouseLeave (OnColumnHover Nothing)
             , attribute "style" <|

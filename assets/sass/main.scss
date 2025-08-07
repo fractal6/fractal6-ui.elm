@@ -1,36 +1,14 @@
-//
-// Imports
-//
-
-// Custom Variables
-// 1. First call for custom variable redifinition in Bulma.
-//@import "colorscheme";
-
-// Bulma Sass
-//@import "../../node_modules/@bulvar/bulma/bulma.sass" // does not work !?;
-//@import "../../node_modules/bulma/bulma.sass";
-
-
-// Bulma Extension
-//@import '@creativebulma/bulma-tooltip/src/sass/index';
-//@import '@creativebulma/bulma-tagsinput/src/sass/index';
-//@import '@creativebulma/bulma-badge/src/sass/index';
-//@import 'bulma-switch/src/sass/index';
-// Defines Css variables (Custom properties)
-//@import "@bulvar/bulma/css/bulma";
-
-// Custom Variables
-// 2. Defines the color theme.
-//@import "colorscheme";
-
-
-
-@use "fractal6-variables";
+// Import your modules (they won't re-import Bulma)
 @use "fonts";
-//@import "github-markdown";
+@use "fractal6";
 @use "markdown";
 @use "divider";
-@use "fractal6";
+@use "badge";
+@use "bulma-fixes";
+
+// Themes
+// @DEBUG: very long to build cf sass-loader...
+//@use "bulma/sass/themes";
 
 
 
