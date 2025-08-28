@@ -469,7 +469,41 @@ update_ apis message model =
 
                 OkAuth _ ->
                     if cmd == Cmd.none then
-                        ( data, Out [] [] (Just ( False, Just <| buildOutResult model )) )
+                        let
+                            txt =
+                                case model.blob of
+                                    Nothing ->
+                                        T.move_action_success
+
+                                    Just blob ->
+                                        case blob.node of
+                                            Just node ->
+                                                case node.type_ of
+                                                    Just NodeType.Circle ->
+                                                        T.move_circle_action_success
+
+                                                    Just NodeType.Role ->
+                                                        T.move_role_action_success
+
+                                                    Nothing ->
+                                                        "[blob node type_ undefined (please report it)]"
+
+                                            Nothing ->
+                                                T.notImplemented
+                        in
+                        ( data
+                        , Out [ send (OnCloseSafe "" "") ]
+                            [ DoPushSystemNotif
+                                { cls = "is-success"
+                                , content =
+                                    div [ class "is-flex is-align-items-center mr-5" ]
+                                        [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                        , text txt
+                                        ]
+                                }
+                            ]
+                            (Just ( False, Just <| buildOutResult model ))
+                        )
 
                     else
                         -- Contract here
@@ -583,35 +617,7 @@ viewModal tree_data model =
             ]
             []
         , div [ class "modal-content" ]
-            [ case model.move_result of
-                Success _ ->
-                    div [ class "notification is-success-light" ]
-                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-                        , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , case model.blob of
-                            Nothing ->
-                                text T.move_action_success
-
-                            Just blob ->
-                                case blob.node of
-                                    Just node ->
-                                        case node.type_ of
-                                            Just NodeType.Circle ->
-                                                text T.move_circle_action_success
-
-                                            Just NodeType.Role ->
-                                                text T.move_role_action_success
-
-                                            Nothing ->
-                                                text "[blob node type_ undefined (please report it)]"
-
-                                    Nothing ->
-                                        text T.notImplemented
-                        ]
-
-                _ ->
-                    viewModalContent tree_data model
-            ]
+            [ viewModalContent tree_data model ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]

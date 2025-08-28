@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, type_, value)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, title, type_, value)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -661,7 +661,7 @@ viewRow d op model =
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
-                    [ span [ class "tag is-danger is-smaller2 tooltip has-tooltip-arrow", attribute "data-tooltip" T.deleteThisContract ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
+                    [ span [ class "button-light is-small is-danger", title T.deleteThisContract ] [ A.icon "icon-trash", loadingSpin deleteLoading ] ]
 
               else
                 text ""
@@ -732,7 +732,7 @@ viewContractPage c op model =
                     n =
                         nodeFromTension c.tension
                 in
-                div [ class "notification is-success" ]
+                div [ class "notification is-success is-soft" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , ternary isCandidate
                         (text (cev2c n.type_ c.event.event_type))
@@ -740,7 +740,7 @@ viewContractPage c op model =
                     ]
 
             else if isVoteSuccess && model.voteForm.vote == 0 then
-                div [ class "notification is-danger" ] [ text T.invitationRejected ]
+                div [ class "notification is-danger is-soft" ] [ text T.invitationRejected ]
 
             else
                 viewVoteBox model.form.uctx isValidator participants candidates c model

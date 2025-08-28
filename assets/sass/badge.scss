@@ -3,7 +3,7 @@
 @use "shared" as *;
 
 $badge-font-size: .65rem !default;
-$badge-height: 14px !default;
+$badge-height: 8px !default;
 $badge-padding: .05rem .15rem !default;
 $badge-shadow: 0 0 0 2px var(--bulma-scheme-main) !default;
 
@@ -78,7 +78,7 @@ $badge-shadow: 0 0 0 2px var(--bulma-scheme-main) !default;
     background-color: var(--primary);
     border: 2px solid transparent;
     border-radius: $badge-height;
-    box-shadow: $badge-shadow;
+    //box-shadow: $badge-shadow;
     color: var(--scheme-main);
     font-size: $badge-font-size;
     height: $badge-height;

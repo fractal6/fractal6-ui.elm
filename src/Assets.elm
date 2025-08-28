@@ -167,7 +167,7 @@ almostThere : String -> String -> String -> Html msg
 almostThere username aim link =
     div []
         [ div [ class "title is-aligned-center" ] [ text (T.almostThere ++ "...") ]
-        , div [ class "notification is-light is-info" ]
+        , div [ class "notification is-soft is-info" ]
             [ text (T.checkYourEmail |> Format.value username |> Format.value aim)
             , hr [ class "has-background-border mt-5 mb-5" ] []
             , small []

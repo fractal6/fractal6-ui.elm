@@ -62,7 +62,7 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                     [ A.logo0
                     , case session.user of
                         LoggedOut ->
-                            strong [ class "is-recursiv", attribute "style" "position:relative;bottom:2px;" ] [ text "Fractale" ]
+                            span [ class "logo-fractale-text is-recursiv" ] [ text "Fractale" ]
 
                         _ ->
                             text ""
@@ -159,12 +159,12 @@ notificationButton cls user notif url =
                     ]
                     [ A.icon "icon-bg icon-bell"
                     , if notif.unread_events > 0 then
-                        span [ class "badge is-event-badge", style "margin-top" "-5px", title T.unreadNotif ] []
+                        span [ class "badge is-event-badge", title T.unreadNotif ] []
 
                       else
                         text ""
                     , if notif.pending_contracts > 0 then
-                        span [ class "badge is-contract-badge is-top-left", attribute "style" "left:5px;margin-top:1px;", title T.pendingContract ] []
+                        span [ class "badge is-contract-badge is-top-left", title T.pendingContract ] []
 
                       else
                         text ""

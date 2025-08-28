@@ -184,9 +184,7 @@ view global model =
 view_ : Model -> Html Msg
 view_ model =
     div [ id "loginForm", class "columns is-centered top-section" ]
-        [ div [ class "" ]
-            [ viewLogin model ]
-        ]
+        [ viewLogin model ]
 
 
 viewLogin : Model -> Html Msg
@@ -238,6 +236,8 @@ viewLogin model =
                                 , onKeydown SubmitKeyDown
                                 ]
                                 []
+                            , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                [ A.icon "icon-eye" ]
                             ]
                         ]
                     ]

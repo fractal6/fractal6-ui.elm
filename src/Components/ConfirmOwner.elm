@@ -38,7 +38,7 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isFailure, isSuccess, withMapDataRest, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, errorHttpToString, isFailure, isSuccess, withMapDataRest, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Post, UserCtx)
 import Ports
@@ -248,7 +248,7 @@ update_ apis message model =
                 RemoteData.Success _ ->
                     ( { model | owner_result = result }
                     , out2 [ closeMsg ]
-                        [ DoPushSystemNotif (withMapDataRest (\ok -> ternary ok T.ownerPromotion "not implemented") result)
+                        [ DoPushSystemNotif { cls = "is-success", content = text T.ownerPromotion }
 
                         -- do the Doload !
                         , DoUpdateNode model.focus.nameid identity
@@ -257,7 +257,7 @@ update_ apis message model =
 
                 RemoteData.Failure err ->
                     ( { model | owner_result = result }
-                    , out2 [ closeMsg ] [ DoPushSystemNotif (RemoteData.Failure err) ]
+                    , out2 [ closeMsg ] [ DoPushSystemNotif { cls = "is-success", content = text (errorHttpToString err) } ]
                     )
 
                 _ ->

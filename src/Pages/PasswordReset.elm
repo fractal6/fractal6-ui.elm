@@ -290,7 +290,7 @@ view_ global model =
                     case model.reset2_result of
                         RemoteData.Success _ ->
                             div []
-                                [ div [ class "notification is-light is-success" ] [ text T.passwordUpdated ]
+                                [ div [ class "notification is-soft is-success" ] [ text T.passwordUpdated ]
                                 , a [ href "/" ] [ text T.goHome ]
                                 ]
 
@@ -300,7 +300,7 @@ view_ global model =
                                     viewResetForm2 global model
 
                                 RemoteData.Success False ->
-                                    div [ class "notification is-light is-warning" ] [ text T.sessionExpired2 ]
+                                    div [ class "notification is-soft is-warning" ] [ text T.sessionExpired2 ]
 
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
@@ -422,7 +422,7 @@ viewResetForm global model =
                     text ""
             , case model.reset_result of
                 RemoteData.Success False ->
-                    div [ class "notification is-light is-warning" ] [ text T.wrongCode ]
+                    div [ class "notification is-soft is-warning" ] [ text T.wrongCode ]
 
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -460,6 +460,8 @@ viewResetForm2 global model =
                                     , onInput (ChangeUserPost "password")
                                     ]
                                     []
+                                , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                    [ A.icon "icon-eye" ]
                                 ]
                             ]
                         ]
@@ -482,6 +484,8 @@ viewResetForm2 global model =
                                     , onKeydown SubmitKeyDown
                                     ]
                                     []
+                                , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                    [ A.icon "icon-eye" ]
                                 ]
                             ]
                         ]

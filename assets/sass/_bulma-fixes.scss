@@ -1,3 +1,5 @@
+@use "shared" as *;
+
 //
 // Bulma fixes
 //
@@ -14,7 +16,7 @@
 }
 
 .button {
-    &:not(.is-light):not(.is-ghost) {
+    &:not(.is-light):not(.is-ghost):not(.is-soft) {
         color: var(--bulma-text); // bulma-text-on-schema (--text) is to weak on dark mode...
         &.is-primary,
         &.is-info,
@@ -22,6 +24,19 @@
         &.is-warning,
         &.is-danger {
             color: white;
+        }
+
+        &.is-link {
+            color: var(--bulma-link-invert);
+        }
+    }
+}
+
+.tag, .box, .notification {
+    @each $name, $pair in $colors {
+        &.is-#{$name}.is-soft {
+            color: var(--bulma-text);
+            background-color: var(--bulma-#{$name}-soft);
         }
     }
 }

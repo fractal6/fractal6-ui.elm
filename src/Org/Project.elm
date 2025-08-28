@@ -115,6 +115,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateScreen a ->
                         ( [], send (UpdateSessionScreen a) )
 
+                    DoPushSystemNotif a ->
+                        ( [], send (OnPushSystemNotif a) )
+
                     -- Component
                     DoCreateTension a ntm d ->
                         case ntm of
@@ -712,7 +715,7 @@ view_ global model =
             -- User notification
             , case Board.board_result model.board of
                 Failure err ->
-                    div [ class "f6-notification notification is-danger is-light" ]
+                    div [ class "f6-notification notification is-danger" ]
                         [ button [ class "delete", onClick OnClearBoardResult ] []
                         , viewGqlErrorsLight err
                         ]

@@ -294,7 +294,17 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( data
-                    , Out [] [] (Just ( True, withDefault TensionType.Operational model.form.type_ ))
+                    , Out [ send (OnCloseSafe "" "") ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text (T.tensionType_action_success model.session.lexicon)
+                                    ]
+                            }
+                        ]
+                        (Just ( True, withDefault TensionType.Operational model.form.type_ ))
                     )
 
                 _ ->
@@ -360,6 +370,7 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success _ ->
+                    -- @obsolete
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "

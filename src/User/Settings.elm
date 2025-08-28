@@ -800,7 +800,7 @@ viewAccountSettings user user_result password_result switch_index menuFocus form
                         ]
                     , case password_result of
                         RemoteData.Success _ ->
-                            div [ class "notification is-success" ] [ text "Your password has been reset successfully." ]
+                            div [ class "notification is-success is-soft" ] [ text "Your password has been reset successfully." ]
 
                         RemoteData.Failure e ->
                             viewHttpErrors e

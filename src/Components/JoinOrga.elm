@@ -29,7 +29,7 @@ import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -438,11 +438,27 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
+                OkAuth data ->
+                    let
+                        link =
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+                    in
                     ( { model | join_result = result }
-                    , out1
+                    , out2
+                        [ send (OnCloseSafe "" "") ]
                         [ --Contract based event (DoLoad for pendings nodes)...
                           DoUpdateNode model.form.node.nameid identity
+                        , DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text T.requestSent
+                                    , text space_
+                                    , a [ href link ]
+                                        [ text T.checkItOut_fem ]
+                                    ]
+                            }
                         ]
                     )
 
@@ -587,6 +603,7 @@ viewModal op (State model) =
             [ -- class modal-card ?
               case model.join_result of
                 Success data ->
+                    -- @obsolete
                     viewSuccess data op model
 
                 _ ->
@@ -607,7 +624,7 @@ viewSuccess data op model =
         div [ class "notification is-success-light", onClick (OnClose { reset = True, link = "" }) ]
             [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
             , A.icon1 "icon-check icon-2x has-text-success" " "
-            , text (T.requestSent ++ " ")
+            , text space_
             , a
                 [ href link
                 , onClickPD (OnClose { reset = True, link = link })
@@ -650,7 +667,7 @@ viewJoinStep op model =
                             --        ]
                             --        [ text T.checkItOut_fem ]
                             --    ]
-                            div [ class "box is-warning" ] [ text T.checkYourPendingInvitation ]
+                            div [ class "box is-warning is-soft" ] [ text T.checkYourPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -694,7 +711,7 @@ viewJoinStep op model =
                 , case model.join_result of
                     Failure err ->
                         if model.isPending then
-                            div [ class "box is-warning" ] [ text T.checkPendingInvitation ]
+                            div [ class "box is-warning is-soft" ] [ text T.checkPendingInvitation ]
 
                         else
                             viewGqlErrors err

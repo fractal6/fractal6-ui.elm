@@ -44,7 +44,7 @@ import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
-import Extra exposing (showIf, ternary, unwrap2)
+import Extra exposing (showIf, showMaybe, ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -65,7 +65,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -160,7 +160,7 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | OnCloseOutdatedVersion
-    | OnPushSystemNotif (RestData String)
+    | OnPushSystemNotif SystemNotification
     | OnClearSystemNotif
       -- utils
     | VOID
@@ -271,8 +271,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
 
@@ -294,8 +293,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -345,8 +343,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -437,8 +434,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -448,8 +444,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -459,8 +454,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -470,8 +464,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -481,8 +474,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -492,8 +484,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -503,8 +494,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -521,8 +511,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -532,8 +521,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -543,8 +531,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -554,8 +541,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -565,8 +551,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 common =
                     session.common
             in
@@ -615,8 +600,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -735,8 +719,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 common =
                     session.common
             in
@@ -847,23 +830,21 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
-            ( { model | session = { session | data = { sessionData | system_notification = result } } }, sendSleep OnClearSystemNotif 4000 )
+            ( { model | session = { session | data = { sessionData | system_notification = sessionData.system_notification ++ [ result ] } } }, sendSleep OnClearSystemNotif 5000 )
 
         OnClearSystemNotif ->
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
-            ( { model | session = { session | data = { sessionData | system_notification = RemoteData.NotAsked } } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | system_notification = withDefault [] (List.tail sessionData.system_notification) } } }, Cmd.none )
 
         -- Utils
         VOID ->
@@ -876,8 +857,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -887,8 +867,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -898,8 +877,7 @@ update msg model =
             let
                 session =
                     model.session
-            in
-            let
+
                 sessionData =
                     session.data
             in
@@ -941,23 +919,12 @@ view { page, global, url, msg1, msg2, onClearNotif } =
 
 layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
 layout { page, url, session, msg1, msg2, onClearNotif } =
-    let
-        ( notif_msg, notif_ok ) =
-            case session.data.system_notification of
-                RemoteData.Success msg ->
-                    ( msg, Just True )
-
-                RemoteData.Failure err ->
-                    ( errorHttpToString err, Just False )
-
-                _ ->
-                    ( "", Nothing )
-    in
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
             [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy6 Navbar.view session.apis session.common session.data.notif session.data.orgaInfo msg1 msg2
-            , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
+            , showIf (session.data.system_notification /= [])
+                (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body
             , Footbar.view session.common
             ]
@@ -965,23 +932,25 @@ layout { page, url, session, msg1, msg2, onClearNotif } =
     }
 
 
-viewNotif : String -> Bool -> msg -> Html msg
-viewNotif msg isOk closeMsg =
-    let
-        color =
-            ternary isOk "has-background-success-soft" "has-background-error-soft"
-    in
-    div
-        [ class "f6-notification notification"
-        , classList [ ( color, True ) ]
-        ]
-        [ button [ class "delete", onClick closeMsg ] []
-        , div [ class "stealth-link" ]
-            -- https://github.com/surprisetalk/elm-bulma/issues/17
-            [ -- p [ class "title is-6 mb-2" ] [ text msg ]
-              viewGqlErrorsLight [ msg ]
-            ]
-        ]
+viewNotif : List SystemNotification -> msg -> Html msg
+viewNotif notifs closeMsg =
+    notifs
+        |> List.indexedMap
+            (\i notif ->
+                div
+                    [ id ("notif" ++ String.fromInt i) -- do not work
+                    , class ("f6-notification notification has-timer " ++ notif.cls)
+                    ]
+                    [ button [ class "delete", onClick closeMsg ] []
+                    , div [ class "stealth-link" ]
+                        -- https://github.com/surprisetalk/elm-bulma/issues/17
+                        [ -- p [ class "title is-6 mb-2" ] [ text msg ]
+                          --viewGqlErrorsLight [ data ]
+                          Html.map never notif.content
+                        ]
+                    ]
+            )
+        |> div []
 
 
 

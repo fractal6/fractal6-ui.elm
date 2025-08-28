@@ -33,7 +33,7 @@ import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (mor, showIf, ternary)
+import Extra exposing (mor, showIf, space_, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -856,8 +856,33 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushAction model.form model.state) 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
-                    ( model |> setActionResult result, noOut )
+                OkAuth data ->
+                    let
+                        selfContract =
+                            isSelfContract model.form.uctx model.form.users
+                    in
+                    ( model |> setActionResult result
+                    , out2
+                        [ send (OnCloseModalSafe "" "")
+                        ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" " "
+                                    , text (action2post model.state selfContract ++ ".")
+                                    , text space_
+                                    , showIf (model.state == LinkAction && not selfContract) <|
+                                        let
+                                            link =
+                                                Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+                                        in
+                                        a [ href link ]
+                                            [ text T.consult ]
+                                    ]
+                            }
+                        ]
+                    )
 
                 DuplicateErr ->
                     ( setActionResult (Failure [ T.duplicateContractError ]) model, noOut )
@@ -1248,6 +1273,7 @@ viewModalContent op model =
             viewStep1 op model
 
         StepAck data ->
+            -- @obsolete
             let
                 selfContract =
                     isSelfContract model.form.uctx model.form.users
@@ -1257,7 +1283,7 @@ viewModalContent op model =
                 [ button [ class "delete", onClick (OnCloseModalSafe "" "") ] []
                 , A.icon1 "icon-check icon-2x has-text-success" " "
                 , text (action2post model.state selfContract ++ ". ")
-                , if model.state == LinkAction && not selfContract then
+                , showIf (model.state == LinkAction && not selfContract) <|
                     let
                         link =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
@@ -1268,9 +1294,6 @@ viewModalContent op model =
                         , target "_blank"
                         ]
                         [ text T.consult ]
-
-                  else
-                    text ""
                 ]
 
 

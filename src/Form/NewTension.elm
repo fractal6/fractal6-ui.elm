@@ -1035,19 +1035,54 @@ update_ apis message model =
                                            )
                             }
 
-                        gcmds =
-                            if tension.status == TensionStatus.Open then
-                                [ DoPushTension tension ]
+                        isSelfContract_ =
+                            isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users
 
-                            else
-                                []
+                        link =
+                            case model.action_result of
+                                Success c ->
+                                    if isSelfContract_ then
+                                        Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id } |> toHref
+
+                                    else
+                                        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id, param3 = c.id } |> toHref
+
+                                _ ->
+                                    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id } |> toHref
+
+                        baseCmds =
+                            [ send (OnClose { reset = True, link = "" }) ]
+
+                        baseGcmds =
+                            [ DoPushSystemNotif
+                                { cls = "is-success"
+                                , content =
+                                    div [ class "is-flex is-align-items-center mr-5" ]
+                                        [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                        , text model.nodeDoc.form.txt.added
+                                        , text space_
+                                        , a [ href link ]
+                                            [ ternary (model.activeTab == NewTensionTab)
+                                                (text T.checkItOut_fem)
+                                                (text T.checkItOut_masc)
+                                            ]
+                                        ]
+                                }
+                            ]
 
                         cmds =
                             if not (List.isEmpty data.nodeDoc.form.users) then
-                                [ send (OnSubmit True OnInvite) ]
+                                send (OnSubmit True OnInvite) :: baseCmds
 
                             else
-                                []
+                                baseCmds
+
+                        gcmds =
+                            if tension.status == TensionStatus.Open then
+                                DoPushTension tension :: baseGcmds
+
+                            else
+                                baseGcmds
 
                         output =
                             Just ( tension, model.draft )
@@ -1336,6 +1371,7 @@ viewSuccess res model =
                 _ ->
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
+    -- @obsolete
     div [ class "notification is-success is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
         , div [ class "is-flex is-align-items-center" ]
@@ -1347,12 +1383,9 @@ viewSuccess res model =
                 , onClickPD (OnClose { reset = True, link = link })
                 , target "_blank"
                 ]
-                [ case model.activeTab of
-                    NewTensionTab ->
-                        text T.checkItOut_fem
-
-                    _ ->
-                        text T.checkItOut_masc
+                [ ternary (model.activeTab == NewTensionTab)
+                    (text T.checkItOut_fem)
+                    (text T.checkItOut_masc)
                 ]
             ]
         , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
@@ -1569,6 +1602,7 @@ viewTension tree_data model =
     in
     case model.result of
         Success res ->
+            -- @obsolete
             viewSuccess res model
 
         other ->
@@ -1658,6 +1692,7 @@ viewCircle tree_data model =
     in
     case model.result of
         Success res ->
+            -- @obsolete
             viewSuccess res model
 
         other ->

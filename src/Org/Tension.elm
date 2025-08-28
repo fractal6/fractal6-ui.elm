@@ -137,6 +137,9 @@ mapGlobalOutcmds gcmds =
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
+
                     -- Component
                     DoCreateTension a ntm d ->
                         case ntm of
@@ -848,7 +851,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (DoUnsubscribe model.unwatch) 500, send UpdateUserToken )
 
                 OkAuth d ->
-                    ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
+                    ( { model | unsubscribe_result = result }, sendSleep OnCloseUnsubscribe 5000, Cmd.none )
 
                 _ ->
                     ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
@@ -878,7 +881,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (DoUnwatch model.unwatch) 500, send UpdateUserToken )
 
                 OkAuth d ->
-                    ( { model | unwatch_result = result }, Cmd.none, send (GotIsWatching result) )
+                    ( { model | unwatch_result = result }, sendSleep OnCloseUnwatch 5000, send (GotIsWatching result) )
 
                 _ ->
                     ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
@@ -1560,7 +1563,7 @@ view_ global model =
 
             -- User notification
             , if isSuccess model.unsubscribe_result && model.unsubscribe /= "" then
-                div [ class "f6-notification notification is-success-light" ]
+                div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
                     , text T.beenUnsubscribe
                     ]
@@ -1568,7 +1571,7 @@ view_ global model =
               else
                 text ""
             , if isSuccess model.unwatch_result && model.unwatch /= "" then
-                div [ class "f6-notification notification is-success-light" ]
+                div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnwatch ] []
                     , text T.beenUnwatch
                     ]
@@ -1900,7 +1903,7 @@ viewSidePane u t model =
         [ -- Assignees/User select
           div
             [ class "media"
-            , classList [ ( "is-w", hasAssigneeRight ) ]
+            , classList [ ( "is-w2", hasAssigneeRight ) ]
             , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
             ]
             [ div [ class "media-content" ] <|
@@ -1943,7 +1946,7 @@ viewSidePane u t model =
         -- Label select
         , div
             [ class "media"
-            , classList [ ( "is-w", hasLabelRight ) ]
+            , classList [ ( "is-w2", hasLabelRight ) ]
             , ternary hasLabelRight (onClick DoLabelEdit) (onClick NoMsg)
             ]
             [ div [ class "media-content" ] <|
@@ -1996,11 +1999,13 @@ viewSidePane u t model =
                     node =
                         blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
                 in
-                div [ class "media" ]
+                div
+                    [ class "media"
+                    , classList [ ( "is-w2", hasBlobRight || hasRole ) ]
+                    ]
                     [ div [ class "media-content wrapped-container" ]
                         [ div
                             [ class "media-content"
-                            , classList [ ( "is-w", hasBlobRight || hasRole ) ]
                             , if not isOpen then
                                 onClick (OpenActionPanel domid node.nameid Nothing)
 

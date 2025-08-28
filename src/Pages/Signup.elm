@@ -176,9 +176,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "signupForm", class "columns is-centered top-section" ]
-        [ div [ class "" ]
-            [ viewSignup global model ]
-        ]
+        [ viewSignup global model ]
 
 
 viewSignup : Global.Model -> Model -> Html Msg
@@ -252,8 +250,10 @@ viewSignup global model =
                                 , onKeydown SubmitKeyDown
                                 ]
                                 []
-                            , p [ class "help" ] [ text T.passwordRequirements ]
+                            , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                [ A.icon "icon-eye" ]
                             ]
+                        , p [ class "help" ] [ text T.passwordRequirements ]
                         ]
                     ]
                 ]

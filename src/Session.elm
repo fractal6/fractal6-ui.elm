@@ -29,6 +29,7 @@ import Dict exposing (Dict)
 import Extra.Url exposing (queryParser)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
+import Html exposing (Html)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData)
 import Maybe exposing (andThen, withDefault)
@@ -171,7 +172,7 @@ type alias SessionData =
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
-    , system_notification : RestData String
+    , system_notification : List SystemNotification
     }
 
 
@@ -205,7 +206,7 @@ type
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoUpdateScreen Screen
     | DoToggleWatchOrga String
-    | DoPushSystemNotif (RestData String)
+    | DoPushSystemNotif SystemNotification
       -- Components Msg
     | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String
@@ -234,6 +235,12 @@ type alias NodesQuickSearch =
     , lookup : Array Node
     , idx : Int
     , visible : Bool
+    }
+
+
+type alias SystemNotification =
+    { cls : String
+    , content : Html Never
     }
 
 
@@ -279,7 +286,7 @@ resetSession session flags =
         , labelsPanel = Nothing
         , newOrgaData = Nothing
         , orgaInfo = Nothing
-        , system_notification = RemoteData.NotAsked
+        , system_notification = []
         }
     }
 
@@ -426,7 +433,7 @@ fromLocalSession url flags =
             , labelsPanel = Nothing
             , newOrgaData = Nothing
             , orgaInfo = Nothing
-            , system_notification = RemoteData.NotAsked
+            , system_notification = []
             }
       }
     , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6 ]

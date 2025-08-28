@@ -121,6 +121,9 @@ mapGlobalOutcmds gcmds =
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
 
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
+
                     -- Component
                     DoCreateTension a ntm d ->
                         case ntm of

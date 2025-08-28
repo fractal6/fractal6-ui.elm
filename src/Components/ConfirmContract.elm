@@ -30,7 +30,7 @@ import Bulk.Event exposing (contractEventToText, contractTypeToText)
 import Bulk.View exposing (viewTensionArrow)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (ternary, unwrap)
+import Extra exposing (space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty)
@@ -321,7 +321,25 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoAddContract 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( False, d )) )
+                    let
+                        link =
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = d.id } |> toHref
+                    in
+                    ( data
+                    , Out [ send (OnCloseSafe "" "") ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text T.newContractCreated
+                                    , a [ href link ]
+                                        [ text T.checkItOut_masc ]
+                                    ]
+                            }
+                        ]
+                        (Just ( False, d ))
+                    )
 
                 DuplicateErr ->
                     ( setDataResult (Failure [ T.duplicateContractError ]) model, noOut )
@@ -389,6 +407,7 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success data ->
+                    -- @obsolete
                     let
                         link =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = data.id } |> toHref
@@ -397,6 +416,7 @@ viewModal op (State model) =
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
                         , text T.newContractCreated
+                        , text space_
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })

@@ -182,6 +182,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $passwordViz = $doc.querySelectorAll('.passwordVisibilityTrigger');
+    if ($passwordViz.length > 0) {
+        $passwordViz.forEach(el => {
+            setupHandler("click", triggerPasswerodViz, el, el, app);
+        });
+    }
+
     const $langTrigger = $doc.querySelectorAll('.langTrigger');
     if ($langTrigger.length > 0) {
         $langTrigger.forEach(el => {
@@ -933,6 +940,29 @@ function triggerTheme(e, el, app) {
     localStorage.setItem('theme', theme);
     app.ports.flushGraphPackFromJs.send(null)
     app.ports.updateThemeFromJs.send(theme);
+}
+
+function triggerPasswerodViz(e, el, app) {
+    // Find the password input by looking at siblings within the parent container
+    const inputContainer = el.parentNode;
+    const passwordInput = inputContainer.querySelector('input[type="password"], input[type="text"]');
+
+    if (passwordInput) {
+        // Toggle between password and text type
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+
+        // Optionally update the icon if needed
+        const iconElement = el.querySelector('i');
+        if (iconElement) {
+            if (passwordInput.type === 'text') {
+                iconElement.classList.remove('icon-eye');
+                iconElement.classList.add('icon-eye-off');
+            } else {
+                iconElement.classList.remove('icon-eye-off');
+                iconElement.classList.add('icon-eye');
+            }
+        }
+    }
 }
 
 function triggerLang(e, el, app) {

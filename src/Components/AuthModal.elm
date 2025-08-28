@@ -454,6 +454,8 @@ viewRefreshModal op model =
                                         , onKeydown SubmitKeyDown
                                         ]
                                         []
+                                    , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                        [ A.icon "icon-eye" ]
                                     ]
                                 ]
                             ]
@@ -551,6 +553,8 @@ viewSignupModal op model =
                                                 , onKeydown SubmitKeyDown
                                                 ]
                                                 []
+                                            , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                                [ A.icon "icon-eye" ]
                                             ]
                                         ]
                                     ]
@@ -633,6 +637,8 @@ viewSigninModal op model =
                                         , onKeydown SubmitKeyDown
                                         ]
                                         []
+                                    , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                        [ A.icon "icon-eye" ]
                                     ]
                                 ]
                             ]

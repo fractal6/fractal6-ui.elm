@@ -649,15 +649,7 @@ span[data-tooltip] {
     }
 }
 
-.badge {
-    right: 6px !important;
-    top: 6px !important;
-    //
-    height: 8px !important;
-    border-radius: 8px !important;
-    min-width: 8px !important;
-    box-shadow: none !important;
-}
+
 
 .arrow {
     border: solid;
@@ -802,10 +794,6 @@ span[data-tooltip] {
     }
     &.has-background-danger {
         color: white;
-    }
-
-    &.is-warning {
-        background: $orange;
     }
 }
 
@@ -963,18 +951,42 @@ span[data-tooltip] {
     max-width: 50%;
     min-width: 250px;
     z-index: 9999; // Ensure a high z-index value to place the element on top
+
+
+    /* Add a pseudo-element for the progress bar */
+    &.has-timer::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        width: 0; /* Start with 0 width */
+        background-color: currentcolor;
+        opacity: 0.5;
+        animation: notification-timer 5s linear forwards; /* 6 seconds animation */
+    }
 }
 
-.f6-help-message {
+/* Progress bar animation */
+@keyframes notification-timer {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+.f6-notification, .f6-help-message {
     @each $name, $pair in $colors {
         &.notification.is-#{$name} {
             color: var(--bulma-text) !important;
-            background: var(--bulma-#{$name}-soft);
+            background: var(--bulma-#{$name}-soft) !important;
         }
         .message.is-#{$name} {
             .message-header {
                 color: var(--bulma-text) !important;
-                background: var(--bulma-#{$name}-soft);
+                background: var(--bulma-#{$name}-soft) !important;
             }
         }
     }
@@ -1365,6 +1377,9 @@ figcaption {
 #loginForm, #signupForm {
     @include desktop {
         min-width: 400px;
+        & > .card {
+            min-width: 400px;
+        }
     }
     @include mobile {
         margin-top: 10px;
@@ -1403,6 +1418,13 @@ figcaption {
     .logo-f6 {
         fill: #375a7f !important;
     }
+}
+
+.logo-fractale-text {
+    position:relative;
+    bottom:4px;
+    left: -8px;
+    font-weight: 500;
 }
 
 //
@@ -2015,6 +2037,13 @@ figcaption {
         border-top: 1px solid var(--border-color-light) !important;
         margin: 0;
         padding-bottom: 2rem;
+
+        &.is-w2:hover {
+            cursor: pointer;
+            .subtitle {
+                color: var(--text-strong);
+            }
+        }
     }
 
     .media-content {
@@ -2618,8 +2647,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
 
     .modal-card-head {
         @each $name, $pair in $colors {
-            &.is-#{$name} {
-                background: var(--#{$name});
+            &.is-#{$name}, &.is-#{$name} .modal-card-title {
+                background: var(--bulma-#{$name}-soft);
+                //color: var(--bulma-text);
             }
         }
     }
