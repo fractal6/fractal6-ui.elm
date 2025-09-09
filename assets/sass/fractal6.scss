@@ -429,6 +429,18 @@ a:hover .is-name, a:hover .is-username {
 .has-border-color-light {
     border-color: var(--border-color-light) !important;
 }
+.has-border-danger {
+    border-color: var(--danger) !important;
+    &:focus, &:focus:hover {
+        border-color: var(--danger) !important;
+    }
+}
+.has-border-hint-primary {
+    border: solid $border-size var(--primary);
+    padding: var(--bulma-size-small);
+    border-radius: 8px;
+}
+
 .is-dashed {
     border-style: dashed;
 }
@@ -3002,13 +3014,6 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         .input:nth-child(3) {
             border-radius: unset !important;
         }
-    }
-}
-
-.has-border-danger {
-    border-color: var(--danger) !important;
-    &:focus, &:focus:hover {
-        border-color: var(--danger) !important;
     }
 }
 

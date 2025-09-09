@@ -257,7 +257,7 @@ update_ apis message model =
 
                 RemoteData.Failure err ->
                     ( { model | owner_result = result }
-                    , out2 [ closeMsg ] [ DoPushSystemNotif { cls = "is-success", content = text (errorHttpToString err) } ]
+                    , out2 [ closeMsg ] [ DoPushSystemNotif { cls = "is-danger", content = text (errorHttpToString err) } ]
                     )
 
                 _ ->

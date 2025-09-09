@@ -65,13 +65,13 @@ $f6-light-theme: (
   orga-emoticon-bg: #71beee, // #6da8d6
 
   //Colors (shortcuts...)
-  text: var(--bulma-text),
-  link: var(--bulma-link),
-  primary: var(--bulma-primary),
-  info: var(--bulma-info),
-  success: var(--bulma-success),
-  warning: var(--bulma-warning),
-  danger: var(--bulma-danger),
+  text: var(--bulma-text-on-scheme),
+  link: var(--bulma-link-on-scheme),
+  primary: var(--bulma-primary-on-scheme),
+  info: var(--bulma-info-on-scheme),
+  success: var(--bulma-success-on-scheme),
+  warning: var(--bulma-warning-on-scheme),
+  danger: var(--bulma-danger-on-scheme),
   //Custom
   link2: $green,
   announce: #bfb40c,
