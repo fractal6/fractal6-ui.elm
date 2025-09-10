@@ -682,10 +682,10 @@ viewBlob data op_m =
                                         else
                                             String.toLower T.firstLinks
                                 in
-                                div [ class "is-hint mt-3" ]
+                                div [ class " mt-3" ]
                                     [ A.icon1 "icon-users" ""
-                                    , span [ class "is-hint-2" ] [ text (String.fromInt i) ]
-                                    , text (" " ++ txt ++ "  " ++ space_)
+                                    , span [ class "has-text-evidence" ] [ text (String.fromInt i) ]
+                                    , span [ class "is-discrete" ] [ text (" " ++ txt ++ "  " ++ space_) ]
                                     , viewUsers True data.leads
                                     ]
 
@@ -693,7 +693,10 @@ viewBlob data op_m =
                                 -- Role Lead link Maybe.map
                                 showMaybe node.first_link
                                     (\fs ->
-                                        div [ class "is-hint is-inline-flex mt-3" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
+                                        div [ class "is-inline-flex mt-3" ]
+                                            [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_)
+                                            , viewUser True fs.username
+                                            ]
                                     )
 
                             -- Open Contracts

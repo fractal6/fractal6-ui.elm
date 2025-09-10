@@ -306,12 +306,6 @@ input[type="checkbox"] {
 .help {
     font-weight: 300 !important;
 }
-.is-hint {
-    color: var(--is-hint) !important;
-}
-.is-hint-2 {
-    color: var(--is-hint2) !important;
-}
 .is-link-back {
     color: var(--text) !important;
     background-color: var(--link2) !important;
@@ -342,7 +336,7 @@ a.is-link {;
     color: var(--text-weak) !important;
 }
 .is-goroot {
-    color: var(--is-hint) !important;
+    color: var(--text-weak) !important;
 }
 .has-text-text {
     color: var(--text) !important;
@@ -1806,7 +1800,6 @@ figcaption {
 
 .tagHint {
     border-radius: 9999px !important;
-    color: var(--is-hint2) !important;
     background-color: var(--author) !important;
 }
 
@@ -2059,7 +2052,6 @@ figcaption {
         .level-left {
             font-size: 0.75rem;
             font-weight: bold;
-            color: var(--is-hint);
             flex-basis: 33%;
             padding-right: var(--size-small);
         }

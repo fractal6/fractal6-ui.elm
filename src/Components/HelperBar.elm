@@ -398,7 +398,7 @@ viewNavTabs op model =
                                     [ span
                                         [ class "help-label button-light is-goroot is-align-self-flex-start"
                                         ]
-                                        [ a [ class "is-smaller is-hint", href (toLink model.baseUri (getParent path |> withDefault "") []) ] [ A.icon "arrow-up", text T.goUp ] ]
+                                        [ a [ class "is-smaller", href (toLink model.baseUri (getParent path |> withDefault "") []) ] [ A.icon "arrow-up", text T.goUp ] ]
                                     ]
                             ]
                         )

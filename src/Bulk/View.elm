@@ -1205,7 +1205,7 @@ blobTypeStr btype =
 helperButton : String -> String -> Html msg
 helperButton cls content =
     span [ class ("is-helper dropdown " ++ cls) ]
-        [ div [ class "dropdown-trigger" ] [ A.icon "icon-help-circle is-sm button-light is-h" ]
+        [ div [ class "dropdown-trigger" ] [ A.icon "icon-help-circle is-sm button-light" ]
         , div [ class "dropdown-menu", attribute "style" "menu" ]
             [ div [ class "dropdown-content" ]
                 [ div [ class "dropdown-item" ]

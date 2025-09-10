@@ -1734,7 +1734,7 @@ viewSearchBar model =
                               else
                                 text ""
                             , span [ class "vbar has-border-color" ] []
-                            , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+                            , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]
                         ]
@@ -1891,7 +1891,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                 ]
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
-                    [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
+                    [ div [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
                         [ text T.sort
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
@@ -2031,7 +2031,7 @@ viewCircleTensions model =
                           else
                             a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ] [ title ]
                         , span
-                            [ class "tag has-background-inherit is-rounded has-border-small button-light is-w is-pulled-right mx-1"
+                            [ class "tag has-background-inherit is-rounded has-border-small button-light is-pulled-right mx-1"
 
                             --  It's distracting for for the eyes (works with onMouseEnter below)
                             --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]

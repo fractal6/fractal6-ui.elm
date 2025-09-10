@@ -567,7 +567,7 @@ viewPanel tree_data model =
                 }
 
         labelFilter_html =
-            span []
+            span [ class "ml-2" ]
                 [ span
                     [ class "button is-small"
                     , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
@@ -626,7 +626,7 @@ viewPanel tree_data model =
                         -- @warning: height of this element manually to be able to work on relative
                         -- height percentage for .parent-block (100% of the parent height).
                         div [ class "panel-block is-top is-size-7" ]
-                            [ label [ class "is-h", onClickPD OnSelectAll ]
+                            [ label [ class "is-w", onClickPD OnSelectAll ]
                                 [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
                                 ]

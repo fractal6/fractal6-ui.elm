@@ -570,7 +570,7 @@ viewOrgaValidate model =
 
                          else
                             [ text T.duplicateNameError
-                            , p [ class "is-hint mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            , p [ class "mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                             ]
                         )
                     ]

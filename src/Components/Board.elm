@@ -1066,7 +1066,7 @@ viewHeader isAdmin isEdited col =
             , span [ class "level-right" ]
                 [ if isAdmin then
                     span
-                        [ class "tag has-background-inherit is-rounded-light button-light is-w has-border-small mx-1"
+                        [ class "tag has-background-inherit is-rounded-light button-light has-border-small mx-1"
                         , onClick (OnAddDraft col.id)
                         ]
                         [ A.icon "icon-plus" ]
@@ -1125,7 +1125,7 @@ viewNewCol : Html Msg
 viewNewCol =
     div [ class "column is-2 ml-2" ]
         [ div
-            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5 is-hint"
+            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
             , style "width" "100%"
             , onClick OnAddCol
             ]
