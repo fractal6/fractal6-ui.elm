@@ -259,40 +259,25 @@ hr {
     }
 }
 
-.input,
-.textarea {
-    transition: all 100ms ease;
+.input, .textarea {
     &:focus {
-        border-color: var(--input-focus-border-color) !important;
-        background-color: var(--input-focus-background-color) !important;
-        box-shadow: none;
-
-        &:hover {
-            border-color: var(--input-focus-border-color) !important;
-            background-color: var(--input-focus-background-color) !important;
-        }
-    }
-    &:empty:before {
-        content: attr(data-placeholder);
-        color: var(--text-weak) !important;
-        opacity: 0.3;
-    }
-}
-.input:not([type="search"]),
-.textarea {
-    border-color: var(--border-color-light);
-    &:hover {
-        border-color: var(--border-color-light);
+        box-shadow: none !important;
     }
     &.is-disabled, &[disabled] {
-        color: var(--bulma-text-weak);
-        -webkit-text-fill-color: var(--bulma-text-weak); // chrome f*ck !
+        color: var(--bulma-text-weak) !important;
+        -webkit-text-fill-color: var(--bulma-text-weak) !important; // chrome f*ck !
     }
 }
+
+.input:not([type="search"]), .textarea {
+    &:focus {
+        border-color: var(--link) !important;
+    }
+}
+
 .input[type="search"] {
-    border-color: var(--border-color);
-    &:hover {
-        border-color: var(--border-color);
+    &:focus {
+        border-color: var(--text);
     }
 }
 
