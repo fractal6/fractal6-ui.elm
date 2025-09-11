@@ -52,7 +52,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -1321,8 +1321,8 @@ viewCanvas us model =
             ((withMaybeMapData
                 (\path ->
                     [ div
-                        [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                        , attribute "data-tooltip" (T.add ++ "...")
+                        [ class "button tooltip "
+                        , title (T.add ++ "...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path) Nothing)
                         ]
                         [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs is-strong" ] ]
@@ -1333,8 +1333,8 @@ viewCanvas us model =
              )
                 ++ (if isAdmin then
                         [ div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.inviteMembers
+                            [ class "button tooltip"
+                            , title T.inviteMembers
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
@@ -1354,14 +1354,14 @@ viewCanvas us model =
 
                     else
                         [ div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.goRoot
+                            [ class "button"
+                            , title T.goRoot
                             , onClick (NodeClicked model.node_focus.rootnameid)
                             ]
                             [ A.icon "icon-chevrons-up" ]
                         , div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.goParent
+                            [ class "button tooltip"
+                            , title T.goParent
                             , case model.path_data of
                                 Success g ->
                                     LE.getAt 1 (List.reverse g.path)
@@ -1378,8 +1378,8 @@ viewCanvas us model =
                    )
                 ++ (if isComplex then
                         [ div
-                            [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.reverseTooltip
+                            [ class "button buttonToggle tooltip"
+                            , title T.reverseTooltip
                             , onClick ToggleGraphReverse
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
@@ -1393,7 +1393,7 @@ viewCanvas us model =
 
                         -- Pushed to bottom in flex/column parent.
                         , attribute "style" "margin-top:auto; user-select:none;"
-                        , attribute "data-tooltip" "Show the legend"
+                        , title "Show the legend"
                         , onClick (SetLegend (not model.legend))
                         ]
                         [ text "Legend" ]
@@ -1431,10 +1431,10 @@ viewActivies model =
             [ div [ class "level" ]
                 [ div [ class "level-left" ]
                     [ div
-                        [ class "tooltip has-tooltip-arrow"
+                        [ class "tooltip"
                         , case model.path_data of
                             Success p ->
-                                attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
+                                title ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
 
                             _ ->
                                 class ""

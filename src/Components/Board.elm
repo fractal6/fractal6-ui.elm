@@ -40,7 +40,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendSleep)
 import Html exposing (Html, a, br, div, hr, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -1156,8 +1156,8 @@ viewMediaDraft cardid isHovered isEdited d =
         , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
             [ if d.message /= Nothing then
                 a
-                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
-                    , attribute "data-tooltip" "Has comment"
+                    [ class "level-right is-pulled-right discrete-link"
+                    , title "Has comment"
                     ]
                     [ A.icon "icon-message-square icon-sm" ]
 
@@ -1203,8 +1203,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                             getTensionCharac action
                     in
                     div
-                        [ class "tooltip has-tooltip-left has-tooltip-arrow"
-                        , attribute "data-tooltip" (action2str tc.action)
+                        [ title (action2str tc.action)
                         , style "left" "15px"
                         ]
                         [ A.icon0 (action2icon tc ++ " icon-sm") ]
@@ -1213,8 +1212,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                     case t.status of
                         TensionStatus.Closed ->
                             div
-                                [ class "tooltip has-tooltip-left has-tooltip-arrow"
-                                , attribute "data-tooltip" T.closedTension
+                                [ title T.closedTension
                                 , style "left" "15px"
                                 ]
                                 [ A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status) ]
@@ -1249,8 +1247,8 @@ viewMediaTension cardid isHovered isEdited focus t =
         , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
             [ if n_comments > 1 then
                 a
-                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
-                    , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                    [ class "level-right is-pulled-right discrete-link"
+                    , title (String.fromInt (n_comments - 1) ++ " comments")
                     ]
                     [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
 

@@ -1400,12 +1400,12 @@ viewTensionTabs session isAdmin tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                [ a [ class "tootltip", title T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" (T.tension session.lexicon) ]
                 ]
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                    [ a [ class "tootltip is-left", title T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" T.circle ]
                     ]
 
@@ -1413,7 +1413,7 @@ viewTensionTabs session isAdmin tab targ =
                 text ""
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                    [ a [ class "tootltip is-left", title T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" T.role ]
                     ]
 

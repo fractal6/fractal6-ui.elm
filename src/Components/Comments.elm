@@ -58,7 +58,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow)
 import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -1210,22 +1210,22 @@ viewCommentInputHeader op targetid form =
                 ]
             ]
         , div [ class "level-right is-hidden-mobile" ]
-            [ div [ onClick (op.onRichText targetid "Heading"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Heading text" ] [ text "H" ]
-            , div [ onClick (op.onRichText targetid "Bold"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Bold text" ] [ strong [] [ text "B" ] ]
-            , div [ onClick (op.onRichText targetid "Italic"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
-            , div [ onClick (op.onRichText targetid "Strikethrough"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
-            , div [ onClick (op.onRichText targetid "Quote"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
-            , div [ onClick (op.onRichText targetid "Link"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "List-ul"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "List-ol"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "List-check"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "MentionUser"), class "tooltip has-tooltip-bottom", attribute "data-tooltip" "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "MentionTension"), class "tooltip has-tooltip-bottom mr-3", attribute "data-tooltip" "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
+            [ div [ onClick (op.onRichText targetid "Heading"), class "tooltip has-tooltip-bottom", title "Heading text" ] [ text "H" ]
+            , div [ onClick (op.onRichText targetid "Bold"), class "", title "Bold text" ] [ strong [] [ text "B" ] ]
+            , div [ onClick (op.onRichText targetid "Italic"), class "", title "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
+            , div [ onClick (op.onRichText targetid "Strikethrough"), class "", title "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]
+            , div [ onClick (op.onRichText targetid "Quote"), class "mr-3", title "Quote" ] [ span [] [ A.icon "icon-quote-right icon-xs" ] ]
+            , div [ onClick (op.onRichText targetid "Link"), class "", title "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-ul"), class "", title "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-ol"), class "", title "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-check"), class "mr-3", title "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "MentionUser"), class "", title "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "MentionTension"), class "mr-3", title "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
             , div
                 [ onClick (op.onToggleMdHelp targetid)
-                , class "tooltip has-tooltip-bottom is-right is-w"
+                , class "is-right is-w"
                 , classList [ ( "has-text-strong", isMdHelpOpen ) ]
-                , attribute "data-tooltip" T.markdownSupport
+                , title T.markdownSupport
                 ]
                 [ A.icon "icon-markdown" ]
             ]
@@ -1674,10 +1674,7 @@ viewEventMentioned session event =
                                 [ class "is-strong is-size-6 discrete-link mr-4 level-item"
                                 , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
                                 ]
-                                [ span
-                                    [ class "tooltip has-tooltip-arrow"
-                                    , attribute "data-tooltip" (tensionStatus2str status)
-                                    ]
+                                [ span [ Html.Attributes.title (tensionStatus2str status) ]
                                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
                                 , text title
                                 ]

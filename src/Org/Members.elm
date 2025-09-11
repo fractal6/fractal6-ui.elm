@@ -52,7 +52,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, title, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -1086,7 +1086,7 @@ viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
 
 viewMemberRoles : SessionCommon -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
 viewMemberRoles session baseUri roles isPanelOpen =
-    div [ class "buttons is-inline" ] <|
+    div [ class "buttons" ] <|
         List.map
             (\r ->
                 viewRole "" True False (Just ( session, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
@@ -1159,16 +1159,13 @@ viewUserEllipsis session focus m roles ell =
 
 viewPendingRoles : SessionCommon -> List ContractLight -> Html Msg
 viewPendingRoles session invitations =
-    div [ class "buttons is-inline" ] <|
+    div [ class "buttons" ] <|
         List.map (\c -> viewPendingRole session c) invitations
 
 
 viewPendingRole : SessionCommon -> ContractLight -> Html Msg
 viewPendingRole session c =
     let
-        tooltip_cls =
-            String.split " " "tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
-
         since =
             T.createdThe ++ " " ++ formatDate session.lang session.now c.createdAt
 
@@ -1183,8 +1180,7 @@ viewPendingRole session c =
     in
     a
         [ class "button buttonRole is-small pending-border"
-        , classList (List.map (\x -> ( x, True )) tooltip_cls)
-        , attribute "data-tooltip"
+        , title
             (T.theyPlay
                 |> Format.namedValue "role" (upH role.name)
                 |> Format.namedValue "circle" (getParentFragmentFromRole role)

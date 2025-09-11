@@ -511,7 +511,7 @@ viewToolbar mode data =
     div [ class "field has-addons docToolbar" ]
         [ p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" T.edit
+            , title T.edit
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -523,7 +523,7 @@ viewToolbar mode data =
             ]
         , p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" T.revisions
+            , title T.revisions
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -1275,7 +1275,7 @@ viewVerRow session i blob =
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate session.lang session.now flag)
+                        , title (T.published ++ " " ++ formatDate session.lang session.now flag)
                         ]
                         [ A.icon "icon-flag" ]
 

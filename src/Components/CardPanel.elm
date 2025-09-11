@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -776,8 +776,8 @@ viewTitle t model =
         , div [ class "is-pulled-right" ]
             [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
                 span
-                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
-                    , attribute "data-tooltip" T.editTitle
+                    [ class "is-small button-light tooltipmr-4"
+                    , title T.editTitle
                     , onClick DoChangeTitle
                     ]
                     [ A.icon "icon-edit-2" ]
@@ -1059,8 +1059,8 @@ viewPanelDraft draft model =
                         , div [ class "is-pulled-right" ]
                             [ if model.isTensionAdmin || isAuthor then
                                 span
-                                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
-                                    , attribute "data-tooltip" T.editTitle
+                                    [ class "is-small button-light tooltip mr-4"
+                                    , title T.editTitle
                                     , onClick DoChangeTitle
                                     ]
                                     [ A.icon "icon-edit-2" ]

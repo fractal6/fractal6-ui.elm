@@ -75,7 +75,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -99,7 +99,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                     [ if showStatus then
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                            , attribute "data-tooltip" (tensionStatus2str tension.status)
+                            , title (tensionStatus2str tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
@@ -127,7 +127,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                         a
                             [ class "level-item discrete-link tooltip has-tooltip-arrow"
                             , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
-                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
+                            , title ("1 " ++ action2str action ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
                             ]
                             [ A.icon0 (action2icon tc ++ " icon-sm") ]
@@ -137,7 +137,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 , if n_comments > 1 then
                     a
                         [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
-                        , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                        , title (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                         ]
                         [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
@@ -212,7 +212,7 @@ viewPin session focus tension =
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -227,7 +227,7 @@ viewPin session focus tension =
                 [ div [ class "level-left" ]
                     [ span
                         [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                        , attribute "data-tooltip" (tensionStatus2str tension.status)
+                        , title (tensionStatus2str tension.status)
                         ]
                         [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                     , viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
@@ -628,12 +628,16 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     a_or_span
         ([ class "button buttonRole is-small"
          , classList (List.map (\x -> ( x, True )) cls)
-         , attribute (ternary hasTooltip "data-tooltip" "data-void")
-            (ternary isSelf T.youPlay T.theyPlay
-                |> Format.namedValue "role" (upH r.name)
-                |> Format.namedValue "circle" (getParentFragmentFromRole r)
-                |> Format.namedValue "since" since
-            )
+         , if hasTooltip then
+            title
+                (ternary isSelf T.youPlay T.theyPlay
+                    |> Format.namedValue "role" (upH r.name)
+                    |> Format.namedValue "circle" (getParentFragmentFromRole r)
+                    |> Format.namedValue "since" since
+                )
+
+           else
+            attribute "data-void" ""
          , onClickPos (msg "actionPanelHelper" r.nameid)
          , href link
          ]
@@ -865,7 +869,7 @@ mediaOrga commonOp user_m root =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
-                            , div [ class "buttons is-inline" ] <|
+                            , div [ class "buttons" ] <|
                                 (roles
                                     |> List.map
                                         (\r ->

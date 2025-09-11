@@ -54,7 +54,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -1840,7 +1840,7 @@ viewSearchBar model =
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsListTooltip ]
                             [ A.icon1 "icon-list" T.list ]
                         ]
                     ]
@@ -1848,20 +1848,20 @@ viewSearchBar model =
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
                 --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
                 --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                --        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ]
+                --        [ div [ class "tooltip is-left", title T.tensionsIntExtTooltip ]
                 --        [ text "Internal/External" ] ]
                 --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsCircleTooltip ]
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter AssigneeView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsAssigneeTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsAssigneeTooltip ]
                             [ A.icon1 "icon-users" T.byAssignee ]
                         ]
                     ]

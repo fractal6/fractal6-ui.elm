@@ -57,7 +57,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -1647,8 +1647,8 @@ viewTension u t model =
                         [ span [ class "is-human" ] [ text t.title ]
                         , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
-                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow is-hidden-embed"
-                                , attribute "data-tooltip" T.editTitle
+                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip is-hidden-embed"
+                                , title T.editTitle
                                 , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
                                 ]

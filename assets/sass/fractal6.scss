@@ -620,9 +620,6 @@ i.va {
         left: 100% !important;
     }
 }
-span[data-tooltip] {
-    border-bottom-style: none !important;
-}
 .tooltip {
     // Tooltip has fadin, and no fadout
     transition: none !important;
@@ -933,6 +930,7 @@ span[data-tooltip] {
 
 .f6-notification {
     border: $border-size solid var(--border-color-light);
+    border-radius: 10px !important;
 
     position: fixed;
     top: calc(#{$navbar-height} + 0.5em);
@@ -949,7 +947,8 @@ span[data-tooltip] {
         content: '';
         position: absolute;
         bottom: 0;
-        left: 0;
+        left: 5px;
+        right: 5px;
         height: 2px;
         width: 0; /* Start with 0 width */
         background-color: currentcolor;
@@ -964,7 +963,7 @@ span[data-tooltip] {
         width: 0;
     }
     100% {
-        width: 100%;
+        width: calc(100% - 10px);
     }
 }
 
@@ -1944,7 +1943,7 @@ figcaption {
 }
 
 .commentHeader {
-    margin-top: $size-small;
+    margin-top: 4px;
     width: 100%;
     .level-right {
         font-size: 15px;
@@ -2571,7 +2570,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         border-left-style: solid;
         max-height: 1.5rem;
         border-radius: 0 8px 8px 0;
-        padding: 0 6px 1px 6px;
+        //padding: 0 6px 1px 6px;
+        padding-left: 4px;
+        padding-right: 4px;
         &:hover {
             background-color: color.adjust($node-tooltip-background, $lightness: -10%) !important;
             border-radius: 0 8px 8px 0;
@@ -3151,7 +3152,7 @@ i.is-liked {
 
 // @fix bulma
 .is-active {
-    .tag, [data-tooltip] {
+    .tag  {
         font-weight: 500;
     }
 }
