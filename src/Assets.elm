@@ -23,8 +23,8 @@ module Assets exposing (..)
 
 import Assets.Logo as Logo
 import Extra exposing (space_)
-import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, style)
+import Html exposing (Html, a, div, h1, h2, hr, i, img, p, small, span, text)
+import Html.Attributes exposing (alt, attribute, class, classList, height, href, src, style, width)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T
@@ -114,12 +114,9 @@ unchecked =
 
 logo0 : Html msg
 logo0 =
-    Lazy.lazy2 Logo.logo_fractal "30" "38"
-
-
-logo1 : Html msg
-logo1 =
-    Lazy.lazy2 Logo.logo_fractal "38" "54"
+    -- Can-t set the dvg color like this !
+    --img [ class "logo-f6", src "/static/images/logo/f6.svg", alt "Fractale, free your organization", height 30, width 38 ] []
+    Lazy.lazy2 Logo.logo_fractal "25" "25"
 
 
 logo2 : Html msg
@@ -129,7 +126,7 @@ logo2 =
 
 logo_about : Html msg
 logo_about =
-    Lazy.lazy2 Logo.logo_about "" "500"
+    Lazy.lazy2 Logo.logo_fractal "" "500"
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.

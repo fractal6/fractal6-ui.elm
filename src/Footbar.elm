@@ -33,7 +33,7 @@ import Url
 
 logo_footer : Html msg
 logo_footer =
-    a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 ]
+    a [ class "mr-2", attribute "style" "position:relative;top:2px;", href "https://fractale.co" ] [ A.logo0 ]
 
 
 view : SessionCommon -> Html msg

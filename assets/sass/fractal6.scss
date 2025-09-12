@@ -1112,7 +1112,7 @@ figcaption {
     }
 
     .navbar-brand a {
-        padding-bottom: 0 !important;
+        //padding-bottom: 0 !important;
     }
 
     .navbar-link:not(.is-arrowless) {
@@ -1413,10 +1413,11 @@ figcaption {
 }
 
 .logo-fractale-text {
-    position:relative;
-    bottom:4px;
-    left: -8px;
+    position: relative;
+    bottom: 1px;
+    left: -5px;
     font-weight: 500;
+    color: var(--text-strong);
 }
 
 //
