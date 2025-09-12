@@ -44,8 +44,8 @@ $badge-shadow: 0 0 0 2px var(--bulma-scheme-main) !default;
     &.is-top-right {
         bottom: auto;
         left: auto;
-        right: 0;
-        top: 0;
+        right: 6px;
+        top: 6px;
         transform: translate(50%, -50%);
     }
 

@@ -1744,7 +1744,7 @@ viewSearchBar model =
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "type-filter" ]
-                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1765,7 +1765,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
-                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.status
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1783,7 +1783,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.label
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1797,7 +1797,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control", onClick ChangeAuthor ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.author
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1811,7 +1811,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "depth-filter" ]
-                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.depth
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]

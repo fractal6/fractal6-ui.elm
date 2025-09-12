@@ -260,6 +260,8 @@ hr {
 }
 
 .input, .textarea {
+    box-shadow: none;
+    border-color: var(--border-color-light) !important;
     &:focus {
         box-shadow: none !important;
     }
@@ -277,7 +279,7 @@ hr {
 
 .input[type="search"] {
     &:focus {
-        border-color: var(--text);
+        border-color: var(--text) !important;
     }
 }
 
@@ -359,11 +361,11 @@ a.is-link {;
     background-color: var(--announce);
 }
 .is-name {
-    color: var(--text-evidence);
+    color: var(--text);
 }
 .is-username {
-    color: var(--text);
-    font-size: $size-7;
+    color: var(--text-evidence);
+    font-size: 0.9rem;
 }
 a.is-name:hover, a.is-username:hover,
 a:hover .is-name, a:hover .is-username {
@@ -1183,14 +1185,14 @@ figcaption {
 #helperBar {
     background-color: var(--header-background-color) !important;
     margin-top: 0;
-    padding-top: 2rem;
+    padding-top: 1.85rem;
 
     .breadcrumb {
         font-size: 1.15rem;
         a {
             color: var(--link);
-            padding-right:0.4rem;
-            padding-left:0.4rem;
+            padding-right: 0.4rem;
+            padding-left: 0.4rem;
         }
     }
 
@@ -1888,7 +1890,7 @@ figcaption {
             font-weight: 500 !important;
             border-bottom: solid 1px var(--border-color-light);
             a {
-                color: var(--text-evidence);
+                color: var(--text);
                 text-decoration: none !important;
                 font-weight: 600 !important;
                 &:hover { text-decoration: underline !important; }

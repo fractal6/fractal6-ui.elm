@@ -21,7 +21,7 @@ $navbar-padding: 0rem;
 // Modal
 $modal-background-background-color: rgba(black, 0.7);
 $modal-in-duration: 0.25s;
-$modal-out-duration: 0.25s;
+$modal-out-duration: 0.33s;
 $modal-width: 650px;
 $modal-width-large: 790px;
 
@@ -79,13 +79,13 @@ $f6-light-theme: (
   counter: var(--bulma-border-weak),
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
-  text-evidence: var(--bulma-text),
+  text-evidence: var(--bulma-text-on-scheme),
   text-strong: var(--bulma-text-strong), // similar to -bold
   text-invert: var(--bulma-text-invert), // not sure useful
 
   // Borders
-  border-color: var(--bulma-text-70),
-  border-color-light: var(--bulma-border),
+  border-color: var(--bulma-text-60),
+  border-color-light: var(--bulma-text-80),
 
   // GraphPack
   gp-lvl-0-bg: #FAFAFA,
@@ -148,7 +148,7 @@ $f6-dark-theme: (
   counter: var(--bulma-border-weak),
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
-  text-evidence: var(--bulma-text),
+  text-evidence: var(--bulma-text-on-scheme),
   text-strong: var(--bulma-text-strong), // similar to -bold
   text-invert: var(--bulma-text-invert), // not sure useful
 

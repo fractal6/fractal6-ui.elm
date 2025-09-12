@@ -16,6 +16,7 @@
 }
 
 .button {
+    box-shadow: none;
     &:not(.is-light):not(.is-ghost):not(.is-soft) {
         color: var(--bulma-text); // bulma-text-on-schema (--text) is to weak on dark mode...
         &.is-primary,
@@ -33,6 +34,7 @@
 }
 
 .tag, .box, .notification {
+    box-shadow: none;
     @each $name, $pair in $colors {
         &.is-#{$name}.is-soft {
             color: var(--bulma-text);
@@ -46,6 +48,7 @@
 }
 
 .dropdown-content {
+    box-shadow: none;
     // @debug: the bulma color is not defined sometimes (when created on the fly in kb-board...?
     background-color: var(--body-background-color);
 
@@ -55,13 +58,16 @@
 }
 
 .panel-heading {
+    box-shadow: none;
     color: var(--bulma-text);
 }
 
 .modal-card-body {
+    box-shadow: none;
     //flex-grow: unset; // needed for the long dropdown (move tension)
 }
 
 .modal-card-head {
+    box-shadow: none;
     padding: 1rem !important;
 }

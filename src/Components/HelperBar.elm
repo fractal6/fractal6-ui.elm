@@ -217,12 +217,12 @@ view op (State model) =
         [ div [ class "column is-12 is-11-desktop is-10-fullhd p-0" ] <|
             case model.session.viewMode of
                 DesktopView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContext op model ]
+                    [ div [ class "ml-3 mb-4 mx-mobile" ] [ viewPathContext op model ]
                     , viewNavTabs op model
                     ]
 
                 EmbedView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathContextEmbed op model ] ]
+                    [ div [ class "ml-3 mb-4 mx-mobile" ] [ viewPathContextEmbed op model ] ]
         ]
 
 

@@ -31,7 +31,7 @@ i18n : Html msg
 i18n =
     svg
         [ Attr.attribute "xmlns" "http://www.w3.org/2000/svg"
-        , Attr.style "fill" "white"
+        , Attr.style "fill" "var(--text)"
         , viewBox "0 0 24 24"
         , height "22"
         , width "22"
