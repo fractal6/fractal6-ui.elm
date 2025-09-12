@@ -54,7 +54,7 @@ type alias DropdownData msg =
             , msg = OnTargetClick
             , menu_cls = "is-right is-left-mobile"
             , content_cls = "has-border p-0"
-            , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
+            , content_html = viewSelectorTree (OnUpdate tree_data) [ model.nodeDoc.form.target.nameid ] tree_data
             }
 
         B.dropdown "object-id" isOpen

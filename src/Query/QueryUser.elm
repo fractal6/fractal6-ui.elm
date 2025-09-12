@@ -174,9 +174,13 @@ userFilter : String -> Query.QueryUserOptionalArguments -> Query.QueryUserOption
 userFilter userfrag a =
     let
         userreg =
-            "^"
-                ++ userfrag
-                |> SE.surround "/"
+            let
+                fragments =
+                    String.split " " userfrag
+                        |> List.map (\frag -> "^" ++ frag)
+                        |> String.join "|"
+            in
+            "/" ++ fragments ++ "/i"
     in
     { a
         | first = Present 30

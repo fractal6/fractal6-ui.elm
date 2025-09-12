@@ -458,6 +458,7 @@ viewUserSeeker (State model) =
 
             else
                 model.lookup
+                    |> List.filter (\u -> not <| List.member u.username (List.map .username model.form))
                     |> List.indexedMap
                         (\i u ->
                             p
@@ -555,6 +556,7 @@ viewUserSelectors op model =
 
             else
                 model.lookup
+                    |> List.filter (\u -> not <| List.member u.username (List.map .username model.form))
                     |> List.map
                         (\u ->
                             p

@@ -116,7 +116,8 @@ type alias Model =
     -- Components
     , labelsPanel : LabelSearchPanel.State
     , inviteInput : UserInput.State
-    , userInput : UserInput.State
+
+    --, userInput : UserInput.State
     , comments : Comments.State
     }
 
@@ -207,7 +208,8 @@ initModel session =
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
     , inviteInput = UserInput.init [] True False session
-    , userInput = UserInput.init [] False False session
+
+    --, userInput = UserInput.init [] False False session
     , comments = Comments.init "" "" session
     }
 
@@ -573,7 +575,7 @@ type Msg
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | InviteInputMsg UserInput.Msg
-    | UserInputMsg UserInput.Msg
+      --| UserInputMsg UserInput.Msg
     | CommentsMsg Comments.Msg
 
 
@@ -753,8 +755,8 @@ update_ apis message model =
                                 ( { data | isActive2 = True } |> setUctx uctx
                                 , out0
                                     [ sendSleep (SetIsActive2 True) 10
+                                    , Cmd.map CommentsMsg (send <| Comments.OnSetTarget (List.map .nameid p.path))
                                     , switch_cmd
-                                    , Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path))
                                     ]
                                 )
 
@@ -1199,21 +1201,18 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map InviteInputMsg m) |> List.append cmds) out.gcmds
             )
 
-        UserInputMsg msg ->
-            let
-                ( data, out ) =
-                    UserInput.update apis msg model.userInput
-
-                cmd =
-                    Cmd.none
-
-                ( cmds, _ ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | userInput = data }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
-            )
-
+        --UserInputMsg msg ->
+        --    let
+        --        ( data, out ) =
+        --            UserInput.update apis msg model.userInput
+        --        cmd =
+        --            Cmd.none
+        --        ( cmds, _ ) =
+        --            mapGlobalOutcmds out.gcmds
+        --    in
+        --    ( { model | userInput = data }
+        --    , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
+        --    )
         CommentsMsg msg ->
             let
                 ( data, out ) =
@@ -1272,7 +1271,7 @@ subscriptions (State model) =
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
-                    ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+                    --++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
                     ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
             else

@@ -172,6 +172,7 @@ type Msg
     | SetHistory (List Event) (Maybe String)
     | PushEvents (List Event)
     | OnHighlight String
+    | OnSetTarget (List String)
       -- Change Post
     | OnChangeComment String String
     | OnChangeContractComment String String
@@ -289,6 +290,11 @@ update_ apis message model =
 
         OnHighlight id ->
             ( { model | highlightedCommentId = id }, noOut )
+
+        OnSetTarget targets ->
+            ( model
+            , out0 [ Cmd.map UserInputMsg (send <| UserInput.ChangePath targets) ]
+            )
 
         OnChangeComment field value ->
             let

@@ -149,7 +149,7 @@ openModal model =
 
 
 closeModal : Model -> Model
-closeModal data =
+closeModal model =
     { model | isActive = False }
 
 -- utils

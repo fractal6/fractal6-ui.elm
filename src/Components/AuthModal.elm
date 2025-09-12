@@ -376,7 +376,7 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    -- @DEUBG: implement isActive2 to get Fadin working...
+    -- @DEBUG: implement isActive2 to get Fadin working...
     div []
         [ case model.modalType of
             SigninModal ->

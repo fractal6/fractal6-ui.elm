@@ -57,7 +57,8 @@ type State
 
 
 type alias Model =
-    { isOpen : Bool
+    { isActive : Bool
+    , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , form : ActionForm
     , step : JoinStep
     , node_data : GqlData Node
@@ -83,7 +84,8 @@ type JoinStep
 
 initModel : String -> SessionCommon -> Model
 initModel nameid session =
-    { isOpen = False
+    { isActive = False
+    , isActive2 = False
     , form = initActionForm "" session.user -- set later
     , step = JoinOne
     , node_data = Loading
@@ -110,27 +112,17 @@ init nameid session =
 -- Global methods
 
 
-isOpen_ : State -> Bool
-isOpen_ (State model) =
-    model.isOpen
+isActive_ : State -> Bool
+isActive_ (State model) =
+    model.isActive
 
 
 
 --- State Controls
 
 
-open : Model -> Model
-open model =
-    { model | isOpen = True }
-
-
-close : Model -> Model
-close model =
-    { model | isOpen = False }
-
-
-reset : Model -> Model
-reset model =
+resetModel : Model -> Model
+resetModel model =
     initModel model.nameid model.session
 
 
@@ -141,6 +133,16 @@ updatePost field value model =
             model.form
     in
     { model | form = { form | post = Dict.insert field value form.post } }
+
+
+openModal : Model -> Model
+openModal model =
+    { model | isActive2 = True }
+
+
+closeModal : Model -> Model
+closeModal model =
+    { model | isActive = False }
 
 
 setJoinResult : GqlData IdPayload -> Model -> Model
@@ -223,7 +225,8 @@ isSendable model =
 
 
 type Msg
-    = OnOpen String JoinStep
+    = SetIsActive2 Bool
+    | OnOpen String JoinStep
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -286,11 +289,18 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
+        SetIsActive2 v ->
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "JoinOrgaModal" ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
+
         OnOpen rootnameid method ->
             case model.session.user of
                 LoggedOut ->
-                    ( { model | step = AuthNeeded } |> open
-                    , out0 [ Ports.open_modal "JoinOrgaModal" ]
+                    ( { model | step = AuthNeeded } |> openModal
+                    , out0 [ sendSleep (SetIsActive2 True) 10 ]
                     )
 
                 LoggedIn uctx ->
@@ -300,17 +310,20 @@ update_ apis message model =
                     in
                     if method == JoinOne && not (isMember uctx rootnameid || isPndg) then
                         -- Join
-                        ( { model | step = method, isPending = isPndg } |> open
-                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
+                        ( { model | step = method, isPending = isPndg } |> openModal
+                        , out0
+                            [ fetchNode apis rootnameid OnGetNode
+                            , sendSleep (SetIsActive2 True) 10
+                            ]
                         )
 
                     else if method == InviteOne then
                         -- Invite
-                        ( { model | step = method, isPending = isPndg } |> open
+                        ( { model | step = method, isPending = isPndg } |> openModal
                         , out0
-                            [ Ports.open_modal "JoinOrgaModal"
-                            , fetchNode apis rootnameid OnGetNode
+                            [ fetchNode apis rootnameid OnGetNode
                             , Cmd.map UserInputMsg (send UserInput.OnLoad)
+                            , sendSleep (SetIsActive2 True) 10
                             ]
                         )
 
@@ -319,16 +332,24 @@ update_ apis message model =
 
         OnClose data ->
             let
-                cmds =
-                    ternary data.reset [ sendSleep OnReset 333 ] []
+                ( newModel, gcmds ) =
+                    if data.link == "" then
+                        ( model, [] )
 
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
+                    else
+                        ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            ( close model, out2 (Ports.close_modal :: cmds) gcmds )
+            ( closeModal newModel
+            , out2
+                [ Ports.close_modal
+                , ternary data.reset (sendSleep OnReset 333) Cmd.none
+                , sendSleep (SetIsActive2 False) 500
+                ]
+                gcmds
+            )
 
         OnReset ->
-            ( reset model, noOut )
+            ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             if canExitSafe model then
@@ -336,7 +357,12 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0
+                    [ send
+                        (DoModalConfirmOpen (OnClose { reset = True, link = link })
+                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
+                        )
+                    ]
                 )
 
         OnRedirectPending rootnameid ->
@@ -559,7 +585,7 @@ subscriptions (State model) =
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
-        ++ (if model.isOpen then
+        ++ (if model.isActive then
                 UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
 
             else
@@ -579,10 +605,14 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
+    if model.isActive2 then
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
+
+    else
+        text ""
 
 
 viewModal : Op -> State -> Html Msg
@@ -590,7 +620,7 @@ viewModal op (State model) =
     div
         [ id "JoinOrgaModal"
         , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isOpen ) ]
+        , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div

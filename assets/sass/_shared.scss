@@ -1,16 +1,15 @@
 // Bulma generate palette colors before themes
 // --
-$f6-blue: #2176d0;
-$f6-orange: #d38e23;
-$f6-green: #3ffba3;
 
-$f6-green-lighter: #7af2bf;
+$f6-blue: #4258ff; // #4258ff ethereum(blue) -  #2176d0;
+$f6-green: #7af2bf; // #7af2bf eth(green) - #3ffba3;
+$f6-orange: #d38e23;
 
 // Forward the base variables first
 @forward "bulma/sass/utilities" with (
   // Colors
-  $primary: #4258ff, // ethereum(blue)
-  $link: $f6-green-lighter,
+  $primary: $f6-blue,
+  $link: $f6-green,
   $warning: $f6-orange,
   // Misc
   $shadow-color: transparent,
