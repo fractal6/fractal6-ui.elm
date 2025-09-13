@@ -25,7 +25,7 @@
 
 [aboutHero]
   en="**Fractale** is a collaboration and communication platform inspired by self-organized systems and open-source culture. We build collective intelligence tools to foster transparency, scalability and resilience in organisations."
-  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective qui favorise la transparence, accompagne l'évolution et renforce la résilience des organisations."
+  fr="**Fractale** est une plateforme de collaboration et de communication inspirée par les systèmes auto-organisés et la culture open source. Nous construisons des outils d'intelligence collective qui favorisent la transparence, accompagne l'évolution et renforce la résilience des organisations."
 
 [npoHero]
   en="From a few members to several thousand collaborators, Fractale allows NPOs to facilitate team coordination, make governance structures transparent while providing a memory to the organisation."
@@ -187,7 +187,7 @@ fr="Enregister votre mot de passe"
   fr="Rôles et Cercles"
 [govFeat3]
   en="Distributed Authority"
-  fr="Authorité Distribué"
+  fr="Authorité Distribuée"
 [govFeat4]
   en="Controlled Visibility"
   fr="Contrôle de la Visibilité"
