@@ -93,8 +93,10 @@ viewBoard op commonOp header keys_title data =
                         List.head tensions
                 in
                 [ div
-                    (class "column is-3"
-                        :: ternary op.hasTaskMove
+                    ([ class "column is-3"
+                     , attribute "style" "z-index:10;" -- prevent the hinter-tree to overflow
+                     ]
+                        ++ ternary op.hasTaskMove
                             [ onDragEnter (op.onMoveEnterCol { pos = i, to_receiverid = key } False)
                             , onDragLeave op.onMoveLeaveCol
 

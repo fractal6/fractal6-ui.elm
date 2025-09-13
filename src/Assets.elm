@@ -143,6 +143,7 @@ burger targetid =
         [ span [ attribute "aria-hidden" "true" ] []
         , span [ attribute "aria-hidden" "true" ] []
         , span [ attribute "aria-hidden" "true" ] []
+        , span [ attribute "aria-hidden" "true" ] []
         ]
 
 

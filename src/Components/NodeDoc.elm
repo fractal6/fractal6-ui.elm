@@ -1010,7 +1010,7 @@ viewMandateInput txt mandate op =
     div []
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ text T.purpose ]
+                [ text T.purpose, helperButton "ml-2" T.purposeHelper ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"

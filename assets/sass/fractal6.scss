@@ -937,7 +937,7 @@ i.va {
     border-radius: 10px !important;
 
     position: fixed;
-    top: calc(#{$navbar-height} + 0.5em);
+    top: calc(#{$navbar-height} + 0.33em);
     left: 50%;
     -webkit-transform: translateX(-50%);
     transform: translateX(-20%) translateY(0%);
@@ -1639,9 +1639,42 @@ figcaption {
     width: 20px;
     top: calc(#{$navbar-height});
     left: 0;
-    &:hover > .hinter {
-        width: 25px;
-        cursor: pointer;
+
+    .hinter-tree {
+        height: 100%;
+        width: 5px;
+        position: relative;
+
+        .half-circle {
+            position: absolute;
+            top: 35%;
+            left: -24px;
+            width: 50px;
+            height: 72px;
+            background-color: transparent;
+            border: 2px solid var(--border-color-light);
+            border-left: none;
+            border-radius: 0 50px 50px 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+
+            // Translate transition logics
+            // @DEBUG: couldn"t make it work !
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            transition-delay: 0.5s;
+            z-index: 1;
+            &.translated {
+                transform: translateX(-50px);
+            }
+
+            i {
+                margin-left: 25px; /* Adjust to center the icon in the visible part */
+                color: var(--border-color-light);
+                font-size: 18px;
+            }
+        }
     }
 }
 
@@ -3183,6 +3216,7 @@ i.is-liked {
     color: var(--link);
     &.badge {
         background-color: var(--link);
+        right: 3px !important;
     }
 }
 .is-event-badge-bg {
@@ -3195,6 +3229,7 @@ i.is-liked {
     color: var(--warning);
     &.badge {
         background-color: var(--warning);
+        left: 3px !important;
     }
 }
 .is-contract-badge-bg {

@@ -642,8 +642,13 @@ view op (State model) =
 
     else
         div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
-            --[ div [ class "border-hinter is-hidden-mobile", onClick OnToggle ] [] ]
-            [ div [] [] ]
+            [ div [ class "hinter-tree is-hidden-touch" ]
+                [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+            ]
+
+
+
+--[ div [ class "border-hinter is-hidden-mobile", onClick OnToggle ] [] ]
 
 
 viewTreeMenu : Model -> Html Msg

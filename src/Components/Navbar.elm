@@ -134,8 +134,6 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
                     , helpButton session.user
-
-                    --, newButton user
                     ]
                         ++ userButtons session replaceUrl
                 ]
@@ -195,27 +193,6 @@ helpButton user =
                     , hr [ class "navbar-divider" ] []
                     , div [ class "navbar-item pt-3 helpTrigger", attribute "data-help" "Feedback" ]
                         [ text T.giveFeedback ]
-                    ]
-                ]
-
-        LoggedOut ->
-            text ""
-
-
-newButton : UserState -> Html msg
-newButton user =
-    case user of
-        LoggedIn _ ->
-            div
-                [ class "navbar-item has-dropdown is-hoverabl" ]
-                [ div
-                    [ class "navbar-link is-small"
-                    , attribute "style" "padding-right: 1.65rem;"
-                    ]
-                    [ A.icon "icon-plus icon-bg" ]
-                , div [ class "navbar-dropdown has-border is-right" ]
-                    [ a [ class "navbar-item", href (toHref New_Orga) ]
-                        [ text T.newOrganisation ]
                     ]
                 ]
 

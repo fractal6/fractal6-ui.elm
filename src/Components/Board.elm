@@ -918,8 +918,10 @@ viewBoard op model =
                         col.col_type == ProjectColumnType.NoStatusColumn
                 in
                 [ div
-                    (class "column is-3"
-                        :: ternary model.hasTaskMove
+                    ([ class "column is-3"
+                     , attribute "style" "z-index:10;" -- prevent the hinter-tree to overflow
+                     ]
+                        ++ ternary model.hasTaskMove
                             [ onDragEnter <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
                             , onDragLeave <| OnMoveLeaveCol
 

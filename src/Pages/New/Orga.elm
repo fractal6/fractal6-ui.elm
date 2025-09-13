@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
 import Bulk.Error exposing (viewHttpErrors)
-import Bulk.View exposing (visibility2descr, visibility2extra, visibility2icon)
+import Bulk.View exposing (helperButton, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
@@ -597,7 +597,8 @@ viewOrgaValidate model =
             , p [ class "help" ] [ text T.aboutHelp ]
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ text T.purpose ]
+            [ div [ class "label" ]
+                [ text T.purpose, helperButton "ml-2" T.purposeHelper ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
