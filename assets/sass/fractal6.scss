@@ -419,6 +419,17 @@ a:hover .is-name, a:hover .is-username {
     border-radius: 8px;
 }
 
+
+
+@each $role in $f6-roles {
+  .has-text-#{$role} {
+    color: var(--#{$role}) !important;
+  }
+  .has-background-#{$role} {
+    background-color: var(--#{$role}) !important;
+  }
+}
+
 .is-dashed {
     border-style: dashed !important;
 }
