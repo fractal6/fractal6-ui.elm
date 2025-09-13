@@ -181,16 +181,7 @@ export const GraphPack = {
     //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     //colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: [],
-    roleColors: {
-        [RoleType.Coordinator]: "#ffdaa1",
-        [RoleType.Guest]: "#f4fdf5",
-        [RoleType.Pending]: "#1abc9c",
-        [RoleType.Retired]: "#8e44ad",
-        [RoleType.Bot]: "#eeeeee",
-        //[RoleType.Bot]: "#81b987",
-        //[RoleType.Bot]: "rgb(0,0,0,0)", // transparent
-        "_default_": "#a2b9df" // "#edf5ff"// "#f0fff0", // "#FFFFF9"
-    },
+    roleColors: {},
     usernameColor: "#8282cc",
     nameColor: "#172335",
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
@@ -518,9 +509,9 @@ export const GraphPack = {
 
             // Draw user dashed border
             var w = 2;
-            var color = "green";
+            var color = this.link2Color;
             ctx.beginPath();
-            ctx.setLineDash([5, 5]);
+            ctx.setLineDash([10, 10]);
             ctx.beginPath();
             ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon - w * 0.5,
                 0, 2 * Math.PI, true);
@@ -995,10 +986,19 @@ export const GraphPack = {
             styles.getPropertyValue('--gp-lvl-6-bg').trim(),
             styles.getPropertyValue('--gp-lvl-7-bg').trim(),
         ]
+        this.roleColors = {
+            [RoleType.Coordinator]: styles.getPropertyValue('--coordinator').trim(),
+            [RoleType.Guest]: styles.getPropertyValue('--guest').trim(),
+            [RoleType.Pending]: styles.getPropertyValue('--pending').trim(),
+            [RoleType.Retired]: styles.getPropertyValue('--retired').trim(),
+            [RoleType.Bot]: styles.getPropertyValue('--bot').trim(),
+            "_default_": "#a2b9df" // "#edf5ff"// "#f0fff0", // "#FFFFF9"
+        };
 
         this.backgroundColor = styles.getPropertyValue('--body-background-color').trim()
-        this.focusCircleColor = styles.getPropertyValue('--link2').trim()
+        this.focusCircleColor = styles.getPropertyValue('--link').trim()
         this.hoverCircleColor = styles.getPropertyValue('--border-color').trim()
+        this.link2Color = styles.getPropertyValue('--link2').trim()
     },
 
     // Mapping function from a node depth to color.
@@ -1039,11 +1039,11 @@ export const GraphPack = {
             //grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
-            if (color.substring(0, 1) == "r") {
+            if (color.substring(0, 1) == "r" || color.substring(0, 1) == "h") {
                 grd = color;
             } else {
                 grd.addColorStop(0, color + opac);
-                grd.addColorStop(1, shadeColor(color, -20) + opac);
+                //grd.addColorStop(1, shadeColor(color, -20) + opac);
             }
         } else {
             console.warn("Node type unknonw", node.data.type_);

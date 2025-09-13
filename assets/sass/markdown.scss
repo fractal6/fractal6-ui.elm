@@ -34,8 +34,11 @@
 		background-color: var(--code-color) !important;
 	}
 	a {
-		color: var(--link2) !important;
+		color: var(--info) !important;
 		text-decoration: none !important;
+        &.is-link {
+            color: var(--link) !important;
+        }
 	}
 	a:hover {
 		text-decoration: underline !important;

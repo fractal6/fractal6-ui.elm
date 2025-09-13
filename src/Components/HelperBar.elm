@@ -423,7 +423,7 @@ viewPath baseUri uriQuery maybePath =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
 
                     icon =
-                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
                         --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
                         A.icon0 "icon-layers icon-lg"
                 in

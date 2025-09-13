@@ -67,8 +67,8 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                         _ ->
                             text ""
 
-                    --, span [ class "has-text-orange", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                    --, span [ class "has-text-orange", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                    --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                    --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
                     ]
                  ]
                     ++ (if orgUrl then

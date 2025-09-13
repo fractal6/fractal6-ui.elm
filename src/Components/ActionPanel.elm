@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
+import Bulk.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
@@ -1530,7 +1530,7 @@ viewRoleAuthority op model =
                             Just x == mor model.form.fragment.role_type model.form.node.role_type
 
                         icon =
-                            "icon-user has-text-" ++ roleColor x
+                            "icon-user has-text-" ++ (RoleType.toString x |> String.toLower)
                     in
                     div
                         [ class "card has-border column p-0 m-3 is-h is-clickable"

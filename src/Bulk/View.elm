@@ -525,7 +525,7 @@ viewUserFull size isLinked_ isBoxed user =
     in
     ob
         (ternary isBoxed
-            ([ title user.username, class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
+            ([ title user.username, class ("box field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
             ([] ++ lk)
         )
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
@@ -611,8 +611,7 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
                     [ colorAttr c ]
 
                 Nothing ->
-                    --( "is-" ++ roleColor r.role_type, [] )
-                    [ colorAttr (roleColor r.role_type) ]
+                    [ colorAttr (RoleType.toString r.role_type |> String.toLower) ]
 
         a_or_span =
             case link_m of
@@ -887,34 +886,6 @@ mediaOrga commonOp user_m root =
                    )
             )
         ]
-
-
-roleColor : RoleType.RoleType -> String
-roleColor rt =
-    case rt of
-        RoleType.Owner ->
-            "orange"
-
-        RoleType.Member ->
-            "primary"
-
-        RoleType.Coordinator ->
-            "orange"
-
-        RoleType.Peer ->
-            "primary"
-
-        RoleType.Bot ->
-            "white-dimmed"
-
-        RoleType.Guest ->
-            "blue-grey"
-
-        RoleType.Pending ->
-            "turquoise"
-
-        RoleType.Retired ->
-            "purple"
 
 
 role2icon : { r | role_type : RoleType.RoleType } -> String

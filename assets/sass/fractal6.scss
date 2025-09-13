@@ -312,9 +312,6 @@ input[type="checkbox"] {
     color: var(--text) !important;
     background-color: var(--link2) !important;
 }
-a.is-link {;
-    color: var(--link2) !important;
-}
 .link-like {
     &:hover {
         color: var(--link);
@@ -361,10 +358,10 @@ a.is-link {;
     background-color: var(--announce);
 }
 .is-name {
-    color: var(--text);
+    color: var(--text-evidence);
 }
 .is-username {
-    color: var(--text-evidence);
+    color: var(--text-weak);
     font-size: 0.9rem;
 }
 a.is-name:hover, a.is-username:hover,
@@ -387,19 +384,19 @@ a:hover .is-name, a:hover .is-username {
     background-color: var(--counter) !important;
 }
 .has-background-header {
-    background-color: var(--header-background-color);
+    background-color: var(--header-background-color) !important;
 }
 .has-border {
-    border: $border-size solid var(--border-color);
+    border: $border-size solid var(--border-color) !important;
 }
 .has-border-small {
-    border: $border-size-small solid var(--border-color);
+    border: $border-size-small solid var(--border-color) !important;
 }
 .has-border-light {
-    border: $border-size solid var(--border-color-light);
+    border: $border-size solid var(--border-color-light) !important;
 }
 .has-border-light-small {
-    border: $border-size-small solid var(--border-color-light);
+    border: $border-size-small solid var(--border-color-light) !important;
 }
 .has-border-link {
     border: $border-size solid var(--link) !important;
@@ -423,17 +420,17 @@ a:hover .is-name, a:hover .is-username {
 }
 
 .is-dashed {
-    border-style: dashed;
+    border-style: dashed !important;
 }
 .is-md {
     font-size: 0.9rem !important;
 }
 .is-transparent {
-    opacity: 0;
-    z-index: -1;
+    opacity: 0 !important;
+    z-index: -1 !important;
 }
 .do-clear {
-    animation: fadeOut 0.5s;
+    animation: fadeOut 0.5s !important;
 }
 .discrete-link {
     color: inherit;
@@ -913,13 +910,6 @@ i.va {
 }
 
 
-// @debug: hover is not computed from variable defined here...
-.is-primary {
-    &:not(.hero):hover {
-        background-color: color.adjust($primary, $lightness: -5%) !important;
-    }
-}
-
 .is-center {
     // Dropdown menu centering
     left: 50% !important;
@@ -1034,12 +1024,6 @@ figcaption {
     text-align: center;
     font-style: italic;
     padding: 0.75rem;
-}
-
-.shadow {
-    -moz-box-shadow:    2px 2px 5px 5px color.adjust($primary, $lightness: 5%);
-    -webkit-box-shadow: 2px 2px 5px 5px color.adjust($primary, $lightness: 5%);
-    box-shadow:         2px 2px 5px 5px color.adjust($primary, $lightness: 5%);
 }
 
 .is-rounded-light {
@@ -1190,9 +1174,14 @@ figcaption {
     .breadcrumb {
         font-size: 1.15rem;
         a {
-            color: var(--link);
+            color: var(--text-evidence);
             padding-right: 0.4rem;
             padding-left: 0.4rem;
+
+            &:hover {
+                background-color: var(--border-color-light);
+                border-radius: 6px;
+            }
         }
     }
 
@@ -1227,10 +1216,6 @@ figcaption {
             // prevent user roles overflow
             max-width: 75%;
         }
-    }
-
-    .tag.is-h:hover {
-        background-color: var(--background-evidence);
     }
 }
 
@@ -1348,14 +1333,6 @@ figcaption {
         }
     }
 
-}
-
-.is-primary-2 {
-    background-color: color.adjust($primary, $lightness: -10%);
-}
-
-.is-info-2 {
-    background-color: color.adjust($info, $lightness: -40%);
 }
 
 .is-invisible-force {
@@ -1787,9 +1764,6 @@ figcaption {
     height: 2.4em;
     font-weight: 500;
     border-radius: 10px !important;
-    &.is-orange {
-        background-color: var(--f6-orange) !important;
-    }
     // Border transparency get overwirtten somewhere.
     border: 2px solid transparent !important;
 
@@ -1834,10 +1808,6 @@ figcaption {
         .button {
             font-size: 0.6rem !important;
         }
-    }
-
-    & > a, & > div > a, .content a {
-        color: var(--blue);
     }
 }
 
@@ -2207,7 +2177,7 @@ figcaption {
         &.is-delete {
             &:hover {
                 cursor: pointer;
-                color: var(--red);
+                color: var(--danger);
                 background-color: var(--background-evidence);
             }
         }
@@ -2302,10 +2272,10 @@ tr.mediaBox {
     }
 
     .tag {
-        border: 1px solid transparent;
+        border: 2px solid transparent;
         &:hover {
-            border-color: var(--link2);
             cursor: pointer !important;
+            border-color: var(--link);
         }
     }
 }
@@ -2313,7 +2283,9 @@ tr.mediaBox {
     margin-top: -8px;
     .labelsList .tag {
         margin-top: 8px;
-        &:hover { border-color: transparent; }
+        &:hover {
+        border-color: transparent;
+    }
     }
     .help {
         margin-top: 22px !important;
@@ -2998,21 +2970,8 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     }
 }
 
-.select.is-orange, .select.is-orange::after,
-.select.is-orange select,
-.select.is-orange select:focus,
-.select.is-orange select:active {
-    border-color: var(--f6-orange) !important;
-}
-.has-text-orange {
-    color: var(--f6-orange) !important;
-}
-.has-background-orange {
-    background: var(--f6-orange) !important;
-}
-
 i.is-liked {
-    color: var(--f6-orange);
+    color: var(--warning);
 }
 
 //
@@ -3160,7 +3119,15 @@ i.is-liked {
     }
 }
 
-.is-w:hover {
+.tag.is-w, .tag.button-light {
+    border: 2px solid transparent;
+    &:hover {
+        cursor: pointer;
+        border-color: var(--link);
+    }
+}
+
+.is-w:hover:not(.tag) {
     cursor: pointer;
     color: var(--text-strong) !important;
     &.content, .content, &.content strong {
@@ -3173,7 +3140,7 @@ i.is-liked {
 }
 
 // is-w + is-h
-.button-light, .button-light > i {
+.button-light:not(.tag), .button-light > i {
     &:hover, & > a:hover {
         cursor: pointer !important;
         color: var(--bulma-text-bold) !important;
@@ -3214,12 +3181,12 @@ i.is-liked {
 }
 .is-contract-badge-bg {
     .tag {
-        color: $dark;
+        color: $dark !important;
         background-color: var(--warning) !important;
     }
 }
 
-.is-success-light {
+.is-success-light { // @deprecated
     background-color: var(--success-light);
     color: color.adjust($dark, $lightness: 10%);
 }
@@ -3625,7 +3592,7 @@ i.is-liked {
 }
 
 .error, .error:hover {
-    color: var(--is-danger) !important;
+    color: var(--danger) !important;
 }
 
 .f6-error {

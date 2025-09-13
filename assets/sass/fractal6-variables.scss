@@ -2,9 +2,31 @@
 @use "sass:map";
 @use "shared" as *;
 
+@use "bulma/sass/utilities/css-variables" as cv;
+@use "bulma/sass/themes/setup";
+@use "bulma/sass/themes/light";
+@use "bulma/sass/themes/dark";
+
 //
 // App
 //
+
+
+// default Bulma colors
+$orange: hsl(14, 100%, 53%) !default;
+$yellow: hsl(42, 100%, 53%) !default;
+$green: hsl(153, 53%, 53%) !default;
+$turquoise: hsl(171, 100%, 41%) !default;
+$cyan: hsl(198, 100%, 70%) !default;
+$blue: hsl(233, 100%, 63%) !default;
+$purple: hsl(271, 100%, 71%) !default;
+$red: hsl(348, 100%, 70%) !default;
+
+// common colors
+$white-dimmed: #c1cdd9;
+$blue-grey:  #668099;
+$f6-warning: #d38e23; // orange
+$f6-success: #1ca64c; // green
 
 //
 // Dimensions
@@ -51,6 +73,15 @@ $background-secondary-light: var(--bulma-scheme-main); // #f6f8fa
 $background-header-light: #f6f8fa;
 $background-evidence-light: #f8f4fd; // etheureum
 
+$f6-light-palette: (
+    primary: #6c24e0, // #6c24e0 ethereum(purple)
+    info: $blue,
+    success: $f6-success,
+    warning: $f6-warning,
+    danger: #ff5338,
+    link: #1293d8, // #1293d8 elm(blue)
+    link2: #1293d8,
+);
 $f6-light-theme: (
   // Background
   body-background-color: var(--bulma-scheme-main),
@@ -61,25 +92,25 @@ $f6-light-theme: (
   background-evidence: $background-evidence-light,
   background-hover: var(--bulma-background),
   background-hover-discrete: var(--bulma-scheme-main-bis),
-  user-emoticon-bg: var(--bulma-primary-invert),
+  user-emoticon-bg: #eeeeff,
   orga-emoticon-bg: #71beee, // #6da8d6
 
   //Colors (shortcuts...)
-  text: var(--bulma-text-on-scheme),
-  link: var(--bulma-link-on-scheme),
-  primary: var(--bulma-primary-on-scheme),
-  info: var(--bulma-info-on-scheme),
-  success: var(--bulma-success-on-scheme),
-  warning: var(--bulma-warning-on-scheme),
-  danger: var(--bulma-danger-on-scheme),
+  text: var(--bulma-text),
+  link: var(--bulma-link),
+  primary: var(--bulma-primary),
+  info: var(--bulma-info),
+  success: var(--bulma-success),
+  warning: var(--bulma-warning),
+  danger: var(--bulma-danger),
   //Custom
-  link2: $green,
+  link2: var(--bulma-link2),
   announce: #bfb40c,
   author: $background-evidence-light,
   counter: var(--bulma-border-weak),
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
-  text-evidence: var(--bulma-text-on-scheme),
+  text-evidence: var(--bulma-text-20),
   text-strong: var(--bulma-text-strong), // similar to -bold
   text-invert: var(--bulma-text-invert), // not sure useful
 
@@ -88,14 +119,24 @@ $f6-light-theme: (
   border-color-light: var(--bulma-text-80),
 
   // GraphPack
-  gp-lvl-0-bg: #FAFAFA,
-  gp-lvl-1-bg: #D9DCDE,
-  gp-lvl-2-bg: #B9BFC3,
-  gp-lvl-3-bg: #97A0A6,
-  gp-lvl-4-bg: #7C868E,
-  gp-lvl-5-bg: #646E75,
-  gp-lvl-6-bg: #51595F,
-  gp-lvl-7-bg: #454B50,
+  // --
+  gp-lvl-0-bg: #fafafa,
+  gp-lvl-1-bg: #d9dcde,
+  gp-lvl-2-bg: #b9bfc3,
+  gp-lvl-3-bg: #97a0a6,
+  gp-lvl-4-bg: #7c868e,
+  gp-lvl-5-bg: #646e75,
+  gp-lvl-6-bg: #51595f,
+  gp-lvl-7-bg: #454b50,
+  // Roles
+  owner: var(--bulma-warning),
+  member: var(--bulma-primary),
+  coordinator: var(--bulma-warning),
+  peer: var(--bulma-primary),
+  bot: $white-dimmed,
+  guest: $blue-grey,
+  pending: $turquoise,
+  retired: $purple,
 );
 $bulma-light-theme: (
   body-background-color: map.get($f6-light-theme, 'body-background-color'),
@@ -109,7 +150,7 @@ $bulma-light-theme: (
   shadow: $shadow-color,
   breadcrumb-item-separator-color: var(--bulma-text-weak),
   button-color: var(--bulma-text), // text-strong by default
-  table-color: var(--text-evidence),
+  table-color: var(--text),
 );
 
 //
@@ -120,6 +161,15 @@ $background-secondary-dark: var(--bulma-scheme-main);
 $background-header-dark: #202328; // #2a2f35(v1) #202328(bulma-background)
 $background-evidence-dark: #212830; // github background , bulma-scheme-main-ter
 
+$f6-dark-palette: (
+    primary: #4258ff, // #4258ff ethereum(blue) -  #2176d0
+    info: $cyan,
+    success: $f6-success,
+    warning: $f6-warning,
+    danger: $red,
+    link: #7af2bf, // #7af2bf eth(green) - #3ffba3
+    link2: $green,
+);
 $f6-dark-theme: (
   // Background
   body-background-color: var(--bulma-scheme-main),
@@ -142,13 +192,13 @@ $f6-dark-theme: (
   warning: var(--bulma-warning),
   danger: var(--bulma-danger),
   //Custom
-  link2: $green,
+  link2: var(--bulma-link2),
   announce: #eedb44,
   author: $background-evidence-dark,
   counter: var(--bulma-border-weak),
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
-  text-evidence: var(--bulma-text-on-scheme),
+  text-evidence: var(--bulma-text-80),
   text-strong: var(--bulma-text-strong), // similar to -bold
   text-invert: var(--bulma-text-invert), // not sure useful
 
@@ -157,6 +207,7 @@ $f6-dark-theme: (
   border-color-light: var(--bulma-border-weak),
 
   // GraphPack
+  // --
   gp-lvl-0-bg: #cfcfcf,
   gp-lvl-1-bg: #b0b0b0,
   gp-lvl-2-bg: #808081,
@@ -165,6 +216,15 @@ $f6-dark-theme: (
   gp-lvl-5-bg: #303030,
   gp-lvl-6-bg: #202020,
   gp-lvl-7-bg: #101010,
+  // Roles
+  owner: var(--bulma-warning),
+  member: var(--bulma-primary),
+  coordinator: var(--bulma-warning),
+  peer: var(--bulma-primary),
+  bot: $white-dimmed,
+  guest: $blue-grey,
+  pending: $turquoise,
+  retired: $purple,
 );
 $bulma-dark-theme: (
   body-background-color: map.get($f6-dark-theme, 'body-background-color'),
@@ -178,7 +238,7 @@ $bulma-dark-theme: (
   shadow: $shadow-color,
   breadcrumb-item-separator-color: var(--bulma-text-weak),
   button-color: var(--bulma-text), // text-strong by default
-  table-color: var(--text-evidence),
+  table-color: var(--text),
 );
 
 //
@@ -198,13 +258,32 @@ $bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, 
   }
 }
 
-:root {
 
-    // Color palette
-    --f6-blue: #{$f6-blue};
-    --f6-green: #{$f6-green};
-    --f6-orange: #{$f6-orange};
-    --f6-success: #{$f6-success};
+// Helper to register, generate palette, and generate on-scheme colors for each color token
+@mixin _register-theme-palette($theme-palette, $scheme-main) {
+    // Loop over the palette for auto configuration
+  @each $name, $value in $theme-palette {
+    @include cv.register-hsl($name, $value);
+    @include cv.generate-color-palette($name, $value);
+    @include cv.generate-on-scheme-colors($name, $value, $scheme-main);
+  }
+}
+
+@mixin light-theme-config {
+  @include light.light-theme;
+  @include _register-theme-palette($f6-light-palette, light.$scheme-main);
+}
+
+@mixin dark-theme-config {
+  @include dark.dark-theme;
+  @include _register-theme-palette($f6-dark-palette, dark.$scheme-main);
+}
+
+//
+// Css Chore
+//
+
+:root {
 
     // Dimmension
     --bulma-section-padding-desktop: 3rem 1.5rem;
@@ -287,4 +366,36 @@ $bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, 
     --bulma-#{$name}: #{$value};
   }
   @include apply-bulma-overrides($bulma-dark-theme);
+}
+
+//
+// Initial theme setup
+//
+
+// Setup the light theme as the default theme
+:root {
+  @include light-theme-config;
+  @include setup.setup-theme;
+}
+
+// prefers-color-scheme: light
+@include cv.system-theme($name: "light") {
+  @include light-theme-config;
+}
+
+// prefers-color-scheme: dark
+@include cv.system-theme($name: "dark") {
+  @include dark-theme-config;
+}
+
+// [data-theme=light], .theme-light
+@include cv.bulma-theme($name: "light") {
+  @include light-theme-config;
+  @include setup.setup-theme;
+}
+
+// [data-theme=dark], .theme-dark
+@include cv.bulma-theme($name: "dark") {
+  @include dark-theme-config;
+  @include setup.setup-theme;
 }

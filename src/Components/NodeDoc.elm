@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUser, viewUsers)
 import Dict
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
@@ -1171,14 +1171,14 @@ viewSelectAuthority op =
     div [ class "field" ]
         [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
-                [ span [ class ("has-text-" ++ roleColor role_type_selected) ] [ text (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class ("has-text-" ++ (RoleType.toString role_type_selected |> String.toLower)) ] [ text (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
                         (\role_type ->
                             let
                                 clsColor =
-                                    "has-text-" ++ roleColor role_type
+                                    "has-text-" ++ (RoleType.toString role_type |> String.toLower)
                             in
                             div
                                 [ class ("dropdown-item button-light " ++ clsColor)

@@ -29,7 +29,7 @@ import Bulk exposing (..)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (role2icon, roleColor, viewGoRoot, viewRole, viewUserFull)
+import Bulk.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
@@ -840,7 +840,7 @@ view_ global model =
                 , if isAdmin then
                     div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
                         [ div
-                            [ class "button is-success is-pushed-right"
+                            [ class "button is-primary is-pushed-right"
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ A.icon1 "icon-user-plus" T.inviteMembers ]
@@ -1187,7 +1187,7 @@ viewPendingRole session c =
                 |> Format.namedValue "since" since
             )
         , href link
-        , colorAttr (roleColor role.role_type)
+        , colorAttr (RoleType.toString role.role_type |> String.toLower)
         , style "opacity" "0.75"
         ]
         [ A.icon1 (role2icon role) (upH role.name) ]

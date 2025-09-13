@@ -15,29 +15,33 @@
     }
 }
 
-.button {
+.button, .tag {
     box-shadow: none;
     &:not(.is-light):not(.is-ghost):not(.is-soft) {
-        color: var(--bulma-text); // bulma-text-on-schema (--text) is to weak on dark mode...
-        &.is-primary,
-        &.is-info,
-        &.is-success,
-        &.is-warning,
-        &.is-danger {
-            color: white;
-        }
-
-        &.is-link {
-            color: var(--bulma-link-invert);
+        color: var(--bulma-text); // var(--text) is to weak on dark mode...
+        @each $name, $pair in $colors {
+            &.is-#{$name} {
+                @if $name == 'link' {
+                    color: var(--bulma-link-invert);
+                } @else if $name == 'warning' {
+                    color: var(--bulma-warning-invert);
+                } @else {
+                    color: white;
+                }
+            }
         }
     }
 }
 
-.tag, .box, .notification {
+.button, .tag, .box, .notification {
     box-shadow: none;
     @each $name, $pair in $colors {
         &.is-#{$name}.is-soft {
-            color: var(--bulma-text);
+            @if $name == 'danger' {
+                color: white;
+            } @else {
+                color: var(--bulma-text);
+            }
             background-color: var(--bulma-#{$name}-soft);
         }
     }

@@ -260,22 +260,12 @@ colorAttr color =
 
             else
                 "var(--" ++ color ++ ")"
-
-        c_h =
-            if String.startsWith "#" color then
-                color ++ "cc"
-
-            else
-                "var(--" ++ color ++ "-hover)"
     in
     attribute "style"
         ("background-color:"
             ++ c
             ++ "; color:"
             ++ colorToTextColor color
-            ++ ";"
-            ++ "--hover-color:"
-            ++ c_h
             ++ ";"
         )
 
