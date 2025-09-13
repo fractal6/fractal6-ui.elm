@@ -1054,6 +1054,10 @@ figcaption {
         border-bottom: 1px solid var(--border-color-light);
     }
 
+    svg {
+        max-height: $navbar-height !important;
+    }
+
     // Fix right navbar top on touch
     .navbar-touch-end {
         display: none;
@@ -1259,7 +1263,7 @@ figcaption {
 
     @include fullhd {
         .logo svg {
-            width: 550px;
+            //width: 550px;
         }
     }
     @include widescreen-only {
@@ -1372,6 +1376,8 @@ figcaption {
 
 .logo-f6 {
     fill: var(--text-strong);
+    //position: relative;
+    //bottom: 3px;
 }
 #footBar, #footBar_i {
     .logo-f6 {
@@ -1385,7 +1391,7 @@ figcaption {
 }
 #welcome {
     .logo-f6 {
-        fill: #375a7f !important;
+        fill: var(--primary) !important;
     }
 }
 

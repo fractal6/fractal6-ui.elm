@@ -116,7 +116,7 @@ logo0 : Html msg
 logo0 =
     -- Can-t set the dvg color like this !
     --img [ class "logo-f6", src "/static/images/logo/f6.svg", alt "Fractale, free your organization", height 30, width 38 ] []
-    Lazy.lazy2 Logo.logo_fractal "25" "25"
+    Lazy.lazy2 Logo.logo_fractal "" "24"
 
 
 logo2 : Html msg
@@ -126,7 +126,7 @@ logo2 =
 
 logo_about : Html msg
 logo_about =
-    Lazy.lazy2 Logo.logo_fractal "" "500"
+    Lazy.lazy2 Logo.logo_fractal "" "400"
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.

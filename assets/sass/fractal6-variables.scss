@@ -74,7 +74,7 @@ $background-header-light: #f6f8fa;
 $background-evidence-light: #f8f4fd; // etheureum
 
 $f6-light-palette: (
-    primary: #6c24e0, // #6c24e0 ethereum(purple)
+    primary: #7070ee, // #6c24e0 ethereum(purple), #7070ee alice(purple)
     info: $blue,
     success: $f6-success,
     warning: $f6-warning,
@@ -162,7 +162,8 @@ $background-header-dark: #202328; // #2a2f35(v1) #202328(bulma-background)
 $background-evidence-dark: #212830; // github background , bulma-scheme-main-ter
 
 $f6-dark-palette: (
-    primary: #4258ff, // #4258ff ethereum(blue) -  #2176d0
+    //primary: #4258ff, // #4258ff ethereum(blue) -  #2176d0
+    primary: #7070ee, // #6c24e0 ethereum(purple), #7070ee alice(purple)
     info: $cyan,
     success: $f6-success,
     warning: $f6-warning,
