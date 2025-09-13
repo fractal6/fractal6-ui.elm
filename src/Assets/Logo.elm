@@ -47,7 +47,7 @@ focusCircle =
             []
         , node
             "circle"
-            [ cx "51", cy "51", r "42", Attr.attribute "style" "fill:#e8e8e8;stroke:#4a79ac;stroke-width:8px" ]
+            [ cx "51", cy "51", r "42", Attr.attribute "style" "fill:#e8e8e8;stroke:var(--link);stroke-width:10px" ]
             []
         ]
 
