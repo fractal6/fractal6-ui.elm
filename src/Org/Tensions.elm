@@ -1881,7 +1881,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
-        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0;"
+        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0 !important;"
         ]
         [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
