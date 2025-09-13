@@ -491,16 +491,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Explorer les organisations"
 
 [newOrganisation]
-  en="New organisation"
-  fr="Nouvelle organisation"
+  en="New Organisation"
+  fr="Nouvelle Organisation"
 
 [toggleLightMode]
-  en="Toggle light mode"
-  fr="Thème clair"
+  en="Light Theme"
+  fr="Thème Clair"
 
 [toggleDarkMode]
-  en="Toggle dark mode"
-  fr="Thème sombre"
+  en="Dark Theme"
+  fr="Thème Sombre"
 
 [view]
   en="View"
@@ -2802,6 +2802,17 @@ See [the documentation](https://doc.fractale.co/circle/#authority) to learn more
 
 Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoir plus.
 """
+
+[purposeHelper]
+  en="""The purpose of an organization defines the core of its mission and its objectives.
+
+This document can be modified later as the organization evolves.
+  """
+  fr="""La raison d'être d'une organsition définie le coeur de sa mission et ses objectifs.
+
+This document can be modified later as the organisation evolve.
+"""
+
 
 
 [newOwnerMessageWarning]
