@@ -1319,7 +1319,7 @@ viewStep1 op model =
                     |> List.singleton
                     |> span []
                 , text ":"
-                , span [ class "has-text-primary ml-2" ] [ text model.form.node.name ]
+                , span [ class "has-text-primary has-text-weight-extrabold ml-2" ] [ text model.form.node.name ]
 
                 --, button [ class "delete is-pulled-right", onClick (OnCloseModalSafe "" "") ] []
                 ]

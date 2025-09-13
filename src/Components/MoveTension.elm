@@ -661,10 +661,10 @@ viewModalContent tree_data model =
                             Just node ->
                                 case node.type_ of
                                     Just NodeType.Circle ->
-                                        span [] [ text (T.moveCircle ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveCircle ++ ": "), span [ class "has-text-primary has-text-weight-extrabold" ] [ text (withDefault "" node.name) ] ]
 
                                     Just NodeType.Role ->
-                                        span [] [ text (T.moveRole ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveRole ++ ": "), span [ class "has-text-primary has-text-weight-extrabold" ] [ text (withDefault "" node.name) ] ]
 
                                     Nothing ->
                                         text "[blob node type_ undefined (please report it)]"

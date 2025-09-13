@@ -1000,8 +1000,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Veuillez confirmer pour supprimer cette étiquette"
 
 [confirmDeleteRole]
-  en="Please confirm to delete this role"
-  fr="Veuillez confirmer pour supprimer ce rôle"
+  en="Please confirm to delete the role"
+  fr="Veuillez confirmer pour supprimer le rôle"
 
 [confirmDeleteContract]
   en="Please confirm to cancel this contract"

@@ -532,13 +532,6 @@ i.va {
     vertical-align: middle;
 }
 
-.button.is-selected {
-    outline: 4px solid $grey;
-    outline-style: outset;
-    outline-offset: 3px;
-}
-
-
 .button.is-multiline {
     white-space: unset; //@debug: or normal ?
     height: auto;
@@ -550,12 +543,20 @@ i.va {
     white-space: normal;
 }
 
-.card.is-selected {
-    border: calc($border-size*1.5) solid var(--link);
+.button.is-selected {
+    outline: $border-size solid var(--link);
+    outline-style: outset;
+    outline-offset: 2px;
 }
 
-.card.is-h:hover:not(.is-selected) {
-    border: $border-size solid var(--link);
+.card.is-selected {
+    border: calc($border-size*1.5) solid var(--link) !important;
+}
+
+.card.is-h:not(.is-selected) {
+  &:hover {
+    border-color: var(--bulma-link-invert) !important;
+  }
 }
 
 .icon {
@@ -3547,8 +3548,8 @@ i.is-liked {
     transition: opacity linear 0.1s;
     &::before {
         animation: 1.3s linear infinite spinner;
-        border: solid 3px #eee;
-        border-bottom-color: #6588EF;
+        border: solid 4px var(--background-evidence);
+        border-bottom-color: var(--primary);
         border-radius: 50%;
         content: "";
         height: 40px;
@@ -3576,8 +3577,8 @@ i.is-liked {
     transition: opacity linear 0.1s;
     &::before {
         animation: 1.3s linear infinite spinner;
-        border: solid 3px #eee;
-        border-bottom-color: #6588EF;
+        border: solid 4px var(--text-weak);
+        border-bottom-color: var(--primary);
         border-radius: 50%;
         content: "";
         height: 40px;
