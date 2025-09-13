@@ -338,6 +338,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Public profile"
   fr="Profil publique"
 
+[accountProfil]
+  en="Account Settings"
+  fr="Paramètres du compte"
+
+[emailProfil]
+  en="Notification Settings"
+  fr="Paramètres des notifications"
+
 [emailConf]
   en="Notifications"
   fr="Notifications"

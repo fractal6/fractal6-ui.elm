@@ -40,7 +40,7 @@ import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withMaybeData)
@@ -52,7 +52,7 @@ import Query.PatchUser exposing (patchUser)
 import Query.QueryUser exposing (queryUserFull)
 import RemoteData
 import Requests exposing (updatePassword)
-import Session exposing (GlobalCmd(..))
+import Session exposing (GlobalCmd(..), toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -117,8 +117,9 @@ type alias Model =
     -- Common
     , help : Help.State
     , refresh_trial : Int
-    , authModal : AuthModal.State
+    , can_referer : Maybe Url
     , empty : {}
+    , authModal : AuthModal.State
     }
 
 
@@ -169,11 +170,10 @@ menuToString menu =
             ( T.profile, T.publicProfil )
 
         AccountMenu ->
-            ( T.account, "" )
+            ( T.account, T.accountProfil )
 
         EmailMenu ->
-            --( "Email settings", "Email settings" )
-            ( T.emailConf, "" )
+            ( T.emailConf, T.emailProfil )
 
 
 menuToIcon : MenuSettings -> String
@@ -218,8 +218,9 @@ init global flags =
             -- common
             , refresh_trial = 0
             , help = Help.init global.session.common
-            , authModal = AuthModal.init Nothing global.session.common
+            , can_referer = toF6Referer (Route.fromUrl global.url |> withDefault Route.Top) global.session
             , empty = {}
+            , authModal = AuthModal.init Nothing global.session.common
             }
 
         cmds =
@@ -229,7 +230,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , send (UpdateSessionFocus Nothing)
+    , Cmd.batch [ send (UpdateSessionFocus Nothing), send (UpdateCanReferer model.can_referer) ]
     )
 
 
@@ -254,6 +255,7 @@ type Msg
     | LogErr String
     | DoOpenModal
     | DoCloseModal ModalData
+    | GoBack
       -- Help
     | HelpMsg Help.Msg
     | AuthModalMsg AuthModal.Msg
@@ -393,6 +395,16 @@ update global message model =
             in
             ( model, Cmd.none, Cmd.batch [ gcmd, Ports.close_modal ] )
 
+        GoBack ->
+            ( model
+            , Cmd.none
+            , send <|
+                NavigateRaw <|
+                    withDefault "" <|
+                        Maybe.map (\r -> r.path ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")) <|
+                            model.can_referer
+            )
+
         -- Help
         HelpMsg msg ->
             let
@@ -457,7 +469,17 @@ view_ model =
     div [ id "settings", class "columns is-centered top-section" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns" ]
-                [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                [ div [ class "column is-one-fifth" ]
+                    [ div [ class "level mb-2" ]
+                        [ div
+                            [ class "is-strong arrow-left is-w is-h p-1 level-left"
+                            , title T.goBack
+                            , onClick GoBack
+                            ]
+                            []
+                        ]
+                    , viewSettingsMenu model
+                    ]
                 , div [ class "column" ]
                     [ case model.user of
                         Success user ->

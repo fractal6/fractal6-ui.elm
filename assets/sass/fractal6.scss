@@ -241,12 +241,6 @@ hr {
     }
 }
 
-.mt-desktop {
-    @include desktop {
-        margin-top: 2rem;
-    }
-}
-
 .mt-mobile {
     @include mobile {
         margin-top: $size-small;
@@ -2270,6 +2264,17 @@ figcaption {
     }
 }
 
+.box {
+    .mediaBox:first-child {
+       border-top-left-radius: var(--bulma-box-radius);
+       border-top-right-radius: var(--bulma-box-radius);
+    }
+    .mediaBox:last-child {
+        border-bottom-left-radius: var(--bulma-box-radius);
+        border-bottom-right-radius: var(--bulma-box-radius);
+    }
+}
+
 .mediaBox {
     cursor: initial;
     &.is-hoverable:hover {
@@ -3249,6 +3254,10 @@ i.is-liked {
         content: " \27F5 ";
         padding-right: 5px;
         padding-left: 5px;
+    }
+
+    &.is-strong {
+        font-size: 1.2rem;
     }
 }
 .arrow-right { // long

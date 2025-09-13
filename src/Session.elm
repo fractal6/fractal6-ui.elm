@@ -29,6 +29,7 @@ import Dict exposing (Dict)
 import Extra.Url exposing (queryParser)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
+import Generated.Route as Route exposing (toHref)
 import Html exposing (Html)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData)
@@ -96,6 +97,19 @@ isMobile screen =
 toReflink : Url -> String
 toReflink url =
     Url.toString url |> String.split "?" |> List.head |> withDefault ""
+
+
+toF6Referer : Route.Route -> Session -> Maybe Url
+toF6Referer route session =
+    Maybe.map
+        (\referer ->
+            if Just route == Route.fromUrl referer then
+                withDefault referer session.can_referer
+
+            else
+                referer
+        )
+        session.referer
 
 
 {-| Use to pass model to components in order to avoid losing time to deep caopy data

@@ -52,7 +52,7 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon)
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -111,12 +111,12 @@ type alias Model =
     , assigned_data : GqlData (Dict String (List Tension))
     , eid : String
     , menuFocus : MenuNotif
-    , can_referer : Maybe Url
 
     -- Common
     , session : SessionCommon
     , help : Help.State
     , refresh_trial : Int
+    , can_referer : Maybe Url
     , empty : {}
     , commonOp : CommonMsg Msg
     , authModal : AuthModal.State
@@ -249,33 +249,22 @@ init global flags =
             , assigned_data = Loading
             , eid = ""
             , menuFocus = menu
-            , can_referer =
-                Maybe.map
-                    (\r ->
-                        if
-                            (String.dropLeft 1 r.path
-                                |> String.split "/"
-                                |> List.head
-                                |> withDefault ""
-                                |> String.append "/"
-                            )
-                                == toHref Route.Notifications
-                        then
-                            withDefault r global.session.can_referer
-
-                        else
-                            r
-                    )
-                    global.session.referer
 
             -- common
             , session = global.session.common
             , help = Help.init global.session.common
             , refresh_trial = 0
+            , can_referer = toF6Referer (Route.fromUrl global.url |> withDefault Route.Top) global.session
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
             , authModal = AuthModal.init Nothing global.session.common
             }
+
+        gg =
+            Debug.log "referer" model.can_referer
+
+        g =
+            Debug.log "url" global.url
     in
     ( model
     , Cmd.batch cmds
@@ -544,24 +533,24 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "top-section columns" ]
-        [ div [ class "column is-2 is-3-fullhd" ] [ viewMenu model ]
-        , div [ class "column is-8 is-6-fullhd pt-0" ]
-            [ div []
+        [ div [ class "column is-2 is-3-fullhd" ]
+            [ div [ class "level mb-2" ]
                 [ div
-                    [ class "is-strong arrow-left is-w is-h bc is-pulled-left"
-                    , attribute "style" "position:relative; top:-15px;"
+                    [ class "is-strong arrow-left is-w is-h p-1 level-left"
                     , title T.goBack
                     , onClick GoBack
                     ]
                     []
-                , case model.menuFocus of
-                    NotificationsMenu ->
-                        div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
-
-                    AssignedMenu ->
-                        text ""
                 ]
-            , br [] []
+            , viewMenu model
+            ]
+        , div [ class "column is-8 is-6-fullhd pt-0" ]
+            [ case model.menuFocus of
+                NotificationsMenu ->
+                    div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
+
+                AssignedMenu ->
+                    text ""
             , h2 [ class "title" ] [ text (menuToString model.session model.menuFocus |> Tuple.second) ]
             , case model.menuFocus of
                 NotificationsMenu ->
@@ -605,7 +594,7 @@ view_ global model =
 
 viewMenu : Model -> Html Msg
 viewMenu model =
-    nav [ id "menuSettings", class "menu mt-desktop" ]
+    nav [ id "menuSettings", class "menu" ]
         [ ul [ class "menu-list" ] <|
             (menuList
                 |> List.concatMap
