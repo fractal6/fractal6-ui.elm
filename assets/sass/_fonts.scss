@@ -235,7 +235,12 @@ i {
 	-ms-transform: rotate(-45deg);
 }
 
-.icon-rotate:before {
+.icon-rotate-45:before {
+    display: inline-block;
+    transform: rotate(45deg);
+}
+
+.icon-rotate-90:before {
     display: inline-block;
     transform: rotate(90deg);
 }

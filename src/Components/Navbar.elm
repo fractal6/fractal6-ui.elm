@@ -74,7 +74,7 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                     ++ (if orgUrl then
                             case session.user of
                                 LoggedIn _ ->
-                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-menu icon-bg" ]
+                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-git-commit icon-rotate-90 icon-bg" ]
                                     , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
                                     ]
 
