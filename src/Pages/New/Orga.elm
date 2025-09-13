@@ -598,7 +598,7 @@ viewOrgaValidate model =
             ]
         , div [ class "field" ]
             [ div [ class "label" ]
-                [ text T.purpose, helperButton "ml-2" T.purposeHelper ]
+                [ text T.purpose, helperButton "ml-2" (T.purposeHelper |> Format.value T.orgaSubject) ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"

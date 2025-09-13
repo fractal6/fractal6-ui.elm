@@ -243,13 +243,14 @@ export function BulmaDriver(app, target, handlers) {
     //
     // * focus on the element automatically
     //
-    const $autofocuses = $doc.querySelectorAll('.autofocus');
-    if ($autofocuses.length > 0) {
-        $autofocuses.forEach(el => {
-            el.focus();
-            return true
-        });
-    }
+const $autofocuses = $doc.querySelectorAll('.autofocus');
+if ($autofocuses.length > 0) {
+    $autofocuses.forEach(el => {
+        el.focus();
+        el.classList.remove('autofocus'); // Remove the autofocus class after focusing to allow focus to the next one...
+        return true;
+    });
+}
 
     //
     // Submit data

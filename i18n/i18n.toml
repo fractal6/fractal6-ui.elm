@@ -2056,6 +2056,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 # Legend
 #
 
+[orgaSubject]
+  en="the organisation"
+  fr="de l'organisation"
+[circleSubject]
+  en="the circle"
+  fr="du cercle"
+[roleSubject]
+  en="the role"
+  fr="du rôle"
+
 [circlesLegend]
   en="Circles and sub-circles (group, team, etc)"
   fr="Cercles et sous-cercles (groupe, équipe, etc)"
@@ -2804,14 +2814,26 @@ Voir [la documentation](https://doc.fractale.co/circle/#authority) pour en savoi
 """
 
 [purposeHelper]
-  en="""The purpose of an organization defines the core of its mission and its objectives.
+  en="""The purpose of {{}} defines the core of its mission and its objectives.
 
-This document can be modified later as the organization evolves.
+This document can be modified later as the organisation evolves.
   """
-  fr="""La raison d'être d'une organsition définie le coeur de sa mission et ses objectifs.
+  fr="""La raison d'être {{}} définie le coeur de sa mission et ses objectifs.
 
 This document can be modified later as the organisation evolve.
 """
+
+[responsabilitiesHelper]
+  en="Responsibilities define the ongoing activities, work, and functions that the role or circle is expected to perform. They describe what the role is accountable for on a continuing basis."
+  fr="Les responsabilités définissent les activités, travaux et fonctions continus que le rôle ou le cercle est censé accomplir. Elles décrivent ce dont le rôle est responsable de façon permanente."
+
+[domainsHelper]
+  en="Domains are the properties, resources, processes, or areas that this role or circle has exclusive control over. Others must get permission to impact these domains."
+  fr="Les domaines sont les propriétés, ressources, processus ou zones sur lesquels ce rôle ou cercle a un contrôle exclusif. Les autres doivent obtenir une permission pour impacter ces domaines."
+
+[policiesHelper]
+  en="Policies establish rules, guidelines, or limitations on how the domains of this role or circle can be accessed or used by others. They define the conditions under which permission is granted or restricted."
+  fr="Les politiques établissent des règles, des directives ou des limitations sur la façon dont les domaines de ce rôle ou cercle peuvent être accessibles ou utilisés par d'autres. Elles définissent les conditions dans lesquelles une permission est accordée ou restreinte."
 
 
 
@@ -2820,7 +2842,7 @@ This document can be modified later as the organisation evolve.
 
 This action is irreversible. Once added, an owner can only be removed if they choose to leave the role themselves.
 
-Additionally, an owner has the highest level of read and write access within the organization.
+Additionally, an owner has the highest level of read and write access within the organisation.
 
 Please confirm to continue.
 """

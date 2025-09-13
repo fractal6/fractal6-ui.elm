@@ -527,6 +527,7 @@ type alias FormText =
     , ph_policies : String
     , submit : String
     , close_submit : String
+    , purposeSubject : String
     }
 
 
@@ -546,6 +547,7 @@ initFormText node_type =
                 ""
                 T.tensionSubmit
                 ""
+                T.orgaSubject
 
         Just NodeType.Role ->
             FormText
@@ -560,6 +562,7 @@ initFormText node_type =
                 T.phRolePolicies
                 T.tensionSubmit
                 T.tensionRoleCloseSubmit
+                T.roleSubject
 
         Just NodeType.Circle ->
             FormText
@@ -574,6 +577,7 @@ initFormText node_type =
                 T.phCirclePolicies
                 T.tensionSubmit
                 T.tensionCircleCloseSubmit
+                T.circleSubject
 
 
 

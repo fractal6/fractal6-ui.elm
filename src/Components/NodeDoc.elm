@@ -48,6 +48,7 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Session exposing (SessionCommon)
+import String.Format as Format
 import Text as T
 import Time
 
@@ -1010,7 +1011,7 @@ viewMandateInput txt mandate op =
     div []
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ text T.purpose, helperButton "ml-2" T.purposeHelper ]
+                [ text T.purpose, helperButton "ml-2" (T.purposeHelper |> Format.value txt.purposeSubject) ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
@@ -1030,10 +1031,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.responsabilities ]
+                [ div [ class "label" ] [ text T.responsabilities, helperButton "ml-2" T.responsabilitiesHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_responsabilities
                         , value responsabilities
@@ -1051,10 +1052,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.domains ]
+                [ div [ class "label" ] [ text T.domains, helperButton "ml-2" T.domainsHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_domains
                         , value domains
@@ -1072,10 +1073,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.policies ]
+                [ div [ class "label" ] [ text T.policies, helperButton "ml-2" T.policiesHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_policies
                         , value policies

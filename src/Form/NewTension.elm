@@ -1002,13 +1002,13 @@ update_ apis message model =
             ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
 
         OnAddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnAddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnAddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnSubmitTension doClose time ->
             let
