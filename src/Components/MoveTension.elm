@@ -688,12 +688,12 @@ viewModalContent tree_data model =
                             if List.member model.form.target.nameid [ "", model.target ] then
                                 span
                                     [ class "button" ]
-                                    [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                    [ text T.selectADestination, span [ class "ml-2 icon-chevron-down" ] [] ]
 
                             else
                                 span
                                     [ class "button is-rounded has-border" ]
-                                    [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                    [ text model.form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                         , menu_cls = ""
                         , content_cls = "p-0 has-border-light"
                         , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] model.expanded_lines tree_data

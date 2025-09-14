@@ -291,7 +291,7 @@ module.exports = (env, argv) => {
                         exclude: [/elm-stuff/, /node_modules/, /tests/],
                         use: {
                             loader: 'elm-webpack-loader',
-                            options: { optimize: true }
+                            options: { optimize: true, verbose: true }
                         }
                     },
                     {
