@@ -2597,8 +2597,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         color: var(--text);
         background-color: var(--node-tooltip-background);
         padding-top: 5px;
+        padding-bottom: 5px;
         padding-left: 10px;
-        border-radius: 14px 0 0 14px;
+        border-radius: 14px;
         border-color: transparent;
         &:hover {
             background-color: var(--background-hover-discrete) !important;
