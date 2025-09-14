@@ -22,17 +22,40 @@
       margin-bottom: 0.4rem;
     }
 
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text-evidence);
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    h2 {
+      font-size: 2em;
+    }
+    h3 {
+      font-size: 1.5em;
+    }
+    h4 {
+      font-size: 1.25em;
+    }
+    h5 {
+      font-size: 1em;
+    }
+    h6 {
+      font-size: 0.875em;
+    }
+
 	// Html
     // --
 	pre, code {
 		@include defaultFontFace;
 		font-size: 14px;
 		max-height: 500px;
-		border-radius: 5px;
-
 		color: currentColor;
 		background-color: var(--code-color) !important;
 	}
+    pre {
+		border-radius: 10px;
+    }
 	a {
 		color: var(--info) !important;
 		text-decoration: none !important;
@@ -53,7 +76,7 @@
 		padding-right: 0;
 		background: inherit;
 		font-weight: 600;
-		border-color: var(--is-discrete);
+		border-color: var(--border-color-light);
 		//filter: invert(25%);
 	}
     li.is-checkbox {
@@ -113,11 +136,11 @@
 .box {
     .markdown-body {
         pre, code {
-            background-color: var(--code-color-light) !important;
+            background-color: var(--code-color) !important;
         }
 
         hr {
-            background-color: var(--code-color-light) !important;
+            background-color: var(--code-color) !important;
         }
     }
 }
@@ -125,7 +148,7 @@
 // Fix highlight color in human mardown
 .markdown-body.is-human {
 	strong {
-		color: var(--is-highlight);
+		color: var(--text-strong);
     }
 
     em {

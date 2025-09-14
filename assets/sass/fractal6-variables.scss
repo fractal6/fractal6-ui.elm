@@ -117,6 +117,9 @@ $f6-light-theme: (
   border-color: var(--bulma-text-60),
   border-color-light: var(--bulma-text-80),
 
+  // Markdown
+  code-color: $background-header-light,
+
   // GraphPack
   // --
   gp-lvl-0-bg: $background-header-light,
@@ -206,6 +209,9 @@ $f6-dark-theme: (
   // Borders
   border-color: var(--bulma-border),
   border-color-light: var(--bulma-border-weak),
+
+  // Markdown
+  code-color: $background-header-dark,
 
   // GraphPack
   // --
@@ -303,10 +309,6 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
     --bulma-modal-width: #{$modal-width};
     --bulma-modal-width-large: #{$modal-width-large};
 
-    // Tooltip
-    --tooltip-background-opacity: #{$tooltip-background-opacity};
-    --tooltip-background-color: #{$tooltip-background-color};
-    --tooltip-color: #{$tooltip-color};
     //-- Node tooltip
     --tooltip-transition-duration: #{$tooltip-transition-duration};
 
