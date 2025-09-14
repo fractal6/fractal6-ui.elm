@@ -824,6 +824,9 @@ export const GraphPack = {
 
     // Clear node tooltip.
     clearNodeTooltip() {
+        // with the css animation, no more needs to clear it.
+        return
+
         if (this.$tooltip) {
             this.$tooltip.classList.remove("fadeIn");
             this.$tooltip.classList.add("fadeOut");
