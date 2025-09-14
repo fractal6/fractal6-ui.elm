@@ -253,6 +253,7 @@ module.exports = (env, argv) => {
         })
     } else if (isProd) {
         return module.exports = merge(common, {
+            cache: false,
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
