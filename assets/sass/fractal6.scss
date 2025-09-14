@@ -2538,16 +2538,12 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     -ms-user-select: none;
     user-select: none;
 
-    // Content
-    #doTension {
-        color: $dark !important;
-    }
-    background-color: rgba($node-tooltip-background, 0.9);
 
     // Box style
-    border: 1px solid black;
-    border-style: solid;
-    border-radius: 8px;
+    cursor: pointer;
+    background-color: var(--node-tooltip-background);
+    border-radius: 14px;
+    border: 2px solid var(--border-color);
 
     // Tooltip style
     &::after,
@@ -2561,32 +2557,25 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         pointer-events: none;
         border: solid transparent;
     }
-    &::after {
-        margin-left: -6px;
-        border-width: 6px;
-        border-top-color: $node-tooltip-background;
-    }
+    // Shape of the arrow
     &::before {
         margin-left: -7px;
         border-width: 7px;
-        border-top-color: black;
+        border-top-color: var(--border-color);
     }
-
-    // -> on hover
-    cursor: pointer;
-    &:hover {
-        background-color: $node-tooltip-background;
-    }
+    // Border the arrow
+    //&::after {
+    //    margin-left: -6px;
+    //    border-width: 6px;
+    //    border-top-color: var(--node-tooltip-background);
+    //}
 
     // Animate the tooltip
     &.fadeIn {
         visibility: inherit;
-        background-color: rgba($node-tooltip-background, 0.9);
-        transition: background-color 0.3s;
+        transition: 0.3s;
         opacity: 1;
-        transition: opacity 0.3s;
         &:hover {
-            background-color: $node-tooltip-background;
             transition: background-color 0s;
         }
     }
@@ -2605,22 +2594,31 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
     }
 
     #doTension {
-        padding-left: 8px;
+        color: var(--text);
+        background-color: var(--node-tooltip-background);
+        padding-top: 5px;
+        padding-left: 10px;
+        border-radius: 14px 0 0 14px;
+        border-color: transparent;
+        &:hover {
+            background-color: var(--background-hover-discrete) !important;
+            border-radius: 14px 0 0 14px;
+        }
     }
 
     #doAction > span > span > .button {
+        color: var(--text);
+        background-color: var(--node-tooltip-background);
+        padding: 10px 4px;
+        border-radius: 0 14px 14px 0;
+        border-color: transparent;
         // Vertical separator
-        border-left-color: var(--border-color-light) !important;
+        border-left-color: var(--border-color) !important;
         border-left-width: 1px !important;
         border-left-style: solid;
-        max-height: 1.5rem;
-        border-radius: 0 8px 8px 0;
-        //padding: 0 6px 1px 6px;
-        padding-left: 4px;
-        padding-right: 4px;
         &:hover {
-            background-color: color.adjust($node-tooltip-background, $lightness: -10%) !important;
-            border-radius: 0 8px 8px 0;
+            background-color: var(--background-hover-discrete) !important;
+            border-radius: 0 14px 14px 0;
         }
     }
 }

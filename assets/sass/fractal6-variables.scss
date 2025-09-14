@@ -52,8 +52,6 @@ $tooltip-background-opacity: 0.92;
 $tooltip-background-color: var(--grey-dark);
 $tooltip-color: white;
 //-- Node tooltip
-$node-tooltip-background: $white-ter;
-$node-tooltip-shadow: rgba(42, 70, 205, 0.5);
 $tooltip-transition-duration: 0.1s;
 
 // quick help
@@ -108,6 +106,7 @@ $f6-light-theme: (
   announce: #bfb40c,
   author: $background-evidence-light,
   counter: var(--bulma-border-weak),
+  node-tooltip-background: $background-evidence-light,
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
   text-evidence: var(--bulma-text-20),
@@ -120,10 +119,11 @@ $f6-light-theme: (
 
   // GraphPack
   // --
-  gp-lvl-0-bg: #fafafa,
-  gp-lvl-1-bg: #d9dcde,
-  gp-lvl-2-bg: #b9bfc3,
-  gp-lvl-3-bg: #97a0a6,
+  gp-lvl-0-bg: $background-header-light,
+  gp-lvl-1-bg: #e5e5e5,
+  gp-lvl-2-bg: #bababa,
+  gp-lvl-3-bg: #a3a3a3,
+  // Not tested/used
   gp-lvl-4-bg: #7c868e,
   gp-lvl-5-bg: #646e75,
   gp-lvl-6-bg: #51595f,
@@ -196,6 +196,7 @@ $f6-dark-theme: (
   announce: #eedb44,
   author: $background-evidence-dark,
   counter: var(--bulma-border-weak),
+  node-tooltip-background: $background-evidence-dark,
   // All primary colors have those variations...
   text-weak: var(--bulma-text-weak),
   text-evidence: var(--bulma-text-80),
@@ -208,10 +209,11 @@ $f6-dark-theme: (
 
   // GraphPack
   // --
-  gp-lvl-0-bg: #cfcfcf,
-  gp-lvl-1-bg: #b0b0b0,
-  gp-lvl-2-bg: #808081,
-  gp-lvl-3-bg: #505050,
+  gp-lvl-0-bg: $background-header-dark,
+  gp-lvl-1-bg: #3d3d52,    // Medium blue-gray
+  gp-lvl-2-bg: #565673,    // Lighter blue-gray
+  gp-lvl-3-bg: #7272a3,    // Light purple-blue
+  // Not tested/used
   gp-lvl-4-bg: #404040,
   gp-lvl-5-bg: #303030,
   gp-lvl-6-bg: #202020,
@@ -221,7 +223,7 @@ $f6-dark-theme: (
   member: var(--bulma-primary),
   coordinator: var(--bulma-warning),
   peer: var(--bulma-primary),
-  bot: $white-dimmed,
+  bot: $grey-dark,
   guest: $blue-grey,
   pending: $turquoise,
   retired: $purple,
@@ -306,8 +308,6 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
     --tooltip-background-color: #{$tooltip-background-color};
     --tooltip-color: #{$tooltip-color};
     //-- Node tooltip
-    --node-tooltip-background: #{$node-tooltip-background};
-    --node-tooltip-shadow: #{$node-tooltip-shadow};
     --tooltip-transition-duration: #{$tooltip-transition-duration};
 
     // quick help

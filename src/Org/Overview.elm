@@ -1123,7 +1123,6 @@ viewActionPanel domid us node o actionPanel =
                     [ span [ id domid ]
                         [ span
                             [ class "button is-small clickMe"
-                            , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
                             , onClick (OpenActionPanel domid node.nameid Nothing)
                             ]
                             [ i [ class "icon-more-vertical" ] [] ]
@@ -1407,17 +1406,19 @@ viewCanvas us model =
             , attribute "data-event-tension" "doTension"
             , attribute "data-event-action" "doAction"
             ]
-            [ span [ id "doTension" ]
-                [ span [] [ text "void" ] -- Node name from JS
-                , i [ class "icon-plus custom-style" ] []
-                ]
-            , span [ id "doAction" ]
-                [ case model.node_hovered of
-                    Just node ->
-                        viewActionPanel "actionPanelContentTooltip" us node model.tree_data model.actionPanel
+            [ div [ class "is-flex" ]
+                [ span [ id "doTension" ]
+                    [ span [] [ text "void" ] -- Node name from JS
+                    , i [ class "icon-plus custom-style" ] []
+                    ]
+                , span [ id "doAction" ]
+                    [ case model.node_hovered of
+                        Just node ->
+                            viewActionPanel "actionPanelContentTooltip" us node model.tree_data model.actionPanel
 
-                    Nothing ->
-                        text ""
+                        Nothing ->
+                            text ""
+                    ]
                 ]
             ]
         ]
