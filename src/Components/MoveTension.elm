@@ -676,10 +676,10 @@ viewModalContent tree_data model =
                 ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ span [] [ text (T.newReceiver ++ ": ") ]
-                    , B.dropdownLight
+            [ div [ class "level is-flex-inline" ]
+                [ span [ class "level-right" ] [ text (T.newReceiver ++ ":") ]
+                , div [ class "level-item" ]
+                    [ B.dropdownLight
                         { dropdown_id = "target-menu"
                         , isOpen = isTargetOpen
                         , dropdown_cls = ""
@@ -687,16 +687,16 @@ viewModalContent tree_data model =
                         , button_html =
                             if List.member model.form.target.nameid [ "", model.target ] then
                                 span
-                                    [ class "button is-small" ]
+                                    [ class "button" ]
                                     [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
 
                             else
                                 span
-                                    [ class "button is-small is-rounded has-border" ]
+                                    [ class "button is-rounded has-border" ]
                                     [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                         , menu_cls = ""
                         , content_cls = "p-0 has-border-light"
-                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, model.target, decoded_nid ] model.expanded_lines tree_data
+                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] model.expanded_lines tree_data
                         , msg = ternary isTargetOpen (OnTargetClick "") (OnTargetClick "something")
                         }
                     ]

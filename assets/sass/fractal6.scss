@@ -145,6 +145,7 @@ html.has-modal-active, html.has-modal-active2 {
     min-width: 7rem !important;
     width: max-content;
     max-width: 330px;
+    z-index: 20;
 }
 
 .dropdown-menu.is-right {
@@ -823,6 +824,10 @@ i.va {
         background-color: var(--header-background-color);
         &.is-author {
             background-color: var(--author) !important;
+        }
+
+        .dropdown-item {
+            font-weight: normal !important;
         }
     }
 
