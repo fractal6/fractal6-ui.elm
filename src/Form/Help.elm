@@ -33,6 +33,7 @@ import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
@@ -326,7 +327,7 @@ update_ apis message model =
             , out0
                 [ sendSleep (SetIsActive2 True) 10
                 , if not (isSuccessRest model.doc) && tab == QuickHelp then
-                    getQuickDoc apis "en" OnGotQuickDoc
+                    getQuickDoc apis (Lang.toString model.session.lang |> String.toLower) OnGotQuickDoc
 
                   else
                     send NoMsg
@@ -377,7 +378,7 @@ update_ apis message model =
         OnChangeTab tab ->
             ( changeTab tab model |> (\x -> { x | withChoice = False })
             , if not (isSuccessRest model.doc) && tab == QuickHelp then
-                out0 [ getQuickDoc apis "en" OnGotQuickDoc ]
+                out0 [ getQuickDoc apis (Lang.toString model.session.lang |> String.toLower) OnGotQuickDoc ]
 
               else
                 noOut

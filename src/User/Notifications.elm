@@ -259,12 +259,6 @@ init global flags =
             , commonOp = CommonMsg NoMsg LogErr
             , authModal = AuthModal.init Nothing global.session.common
             }
-
-        gg =
-            Debug.log "referer" model.can_referer
-
-        g =
-            Debug.log "url" global.url
     in
     ( model
     , Cmd.batch cmds
