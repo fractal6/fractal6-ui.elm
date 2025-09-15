@@ -397,6 +397,8 @@ viewLogin model =
                             , onKeydown SubmitEnter
                             ]
                             []
+                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                            [ A.icon "icon-eye" ]
                         ]
                     ]
                 ]
@@ -492,8 +494,10 @@ viewSignup model =
                             , onKeydown SubmitEnter
                             ]
                             []
-                        , p [ class "help" ] [ text T.passwordRequirements ]
+                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                            [ A.icon "icon-eye" ]
                         ]
+                    , p [ class "help" ] [ text T.passwordRequirements ]
                     ]
                 ]
             ]
