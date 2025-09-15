@@ -53,7 +53,7 @@ type State
 
 type alias Model =
     { users_result : GqlData (List User)
-    , form : List UserForm
+    , form : List UserForm -- selected users
     , pattern : String
     , lookup : List User
     , multiSelect : Bool
@@ -263,7 +263,13 @@ update_ apis message model =
                 ( model, noOut )
 
         OnCloseMembers ->
-            ( close { model | activePos = 0 }, noOut )
+            ( close
+                { model
+                    | activePos = 0
+                    , form = [] -- reset selection when close from javascript (comments)
+                }
+            , noOut
+            )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
