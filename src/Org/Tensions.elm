@@ -1733,7 +1733,7 @@ viewSearchBar model =
 
                               else
                                 text ""
-                            , span [ class "vbar has-border-color" ] []
+                            , span [ class "vbar" ] []
                             , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]

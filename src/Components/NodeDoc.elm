@@ -463,7 +463,7 @@ view_ : OrgaNodeData -> Maybe (Op msg) -> Html msg
 view_ data op_m =
     case data.tid_r of
         Success _ ->
-            div []
+            div [ id "blobDocument" ]
                 [ if not data.hasInnerToolbar then
                     case op_m of
                         Just op ->

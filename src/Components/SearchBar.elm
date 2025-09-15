@@ -72,7 +72,7 @@ viewSearchBar op pattern_init pattern =
 
                               else
                                 text ""
-                            , span [ class "vbar has-border-color" ] []
+                            , span [ class "vbar" ] []
                             , span [ class "button-light px-1", onClick (op.onSearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]

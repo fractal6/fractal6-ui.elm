@@ -1017,6 +1017,7 @@ export const GraphPack = {
         this.hoverCircleColor = styles.getPropertyValue('--text-weak').trim()
         this.link2Color = styles.getPropertyValue('--link2').trim()
         this.nameColor = styles.getPropertyValue('--text-evidence').trim()
+        this.usernameColor = styles.getPropertyValue('--text').trim()
     },
 
     // Mapping function from a node depth to color.

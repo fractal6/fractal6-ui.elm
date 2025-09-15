@@ -60,16 +60,16 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                 ([ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ A.logo0
-                    , case session.user of
-                        LoggedOut ->
-                            span [ class "logo-fractale-text is-recursiv" ] [ text "Fractale" ]
+                    , showIf (session.user == LoggedOut) <|
+                        span [ class "logo-fractale-text is-recursiv" ]
+                            [ text "Fractale"
 
-                        _ ->
-                            text ""
-
-                    --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                    --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                            --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                            --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                            ]
                     ]
+                 , showIf (session.user == LoggedOut) <|
+                    span [ class "vbar", attribute "style" "margin-top: 10px !important; margin-left: 0;" ] []
                  ]
                     ++ (if orgUrl then
                             case session.user of

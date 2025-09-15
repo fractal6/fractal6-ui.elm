@@ -1012,19 +1012,19 @@ update global message model =
             )
 
         ChangeBlobEdit value ->
-            ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         ChangeBlobPost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
         AddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         AddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         AddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         CommitBlob data time ->
             let

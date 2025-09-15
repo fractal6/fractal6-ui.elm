@@ -3321,14 +3321,14 @@ i.is-liked {
 
 .hbar {
     display: inline-block;
-    border-top: 1px solid var(--text-weak);
+    border-top: 1px solid var(--border-color-light);
     height: 8px;
     width: 25px;
 }
 
 .vbar { // next buttons
     display: inline-block;
-    border-left: 1px solid #ccc;
+    border-left: 1px solid var(--border-color-light);
     height: 16px;
     margin-left: 5px;
     padding-left: 5px;
