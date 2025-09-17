@@ -1822,6 +1822,10 @@ figcaption {
     padding-top: 4px;
     padding-bottom: 6px;
 
+    &:hover {
+      filter: brightness(0.92);
+    }
+
 }
 
 .tagHint {

@@ -2006,16 +2006,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="et"
 
 [youPlay]
-  en="You play the role: {{role}},\nin the circle: {{circle}},\n{{since}}"
-  fr="Vous jouez le rôle: {{role}},\ndans le cercle: {{circle}},\n{{since}}"
+  en="You play the role: {{role}}\nin the circle: {{circle}}\n{{since}}"
+  fr="Vous jouez le rôle: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
 
 [theyPlay]
-  en="Role: {{role}},\nin the circle: {{circle}},\n{{since}}"
-  fr="Rôle: {{role}},\ndans le cercle: {{circle}},\n{{since}}"
+  en="Role: {{role}}\nin the circle: {{circle}}\n{{since}}"
+  fr="Rôle: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
 
 [pendingRole]
-  en="Invitation to play: {{role}},\nin the circle: {{circle}},\n{{since}}"
-  fr="Invitation à jouer: {{role}},\ndans le cercle: {{circle}},\n{{since}}"
+  en="Invitation to play: {{role}}\nin the circle: {{circle}}\n{{since}}"
+  fr="Invitation à jouer: {{role}}\ndans le cercle: {{circle}}\n{{since}}"
 
 [addTensionColumn]
   en="Add tensions here"
