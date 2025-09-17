@@ -776,7 +776,7 @@ viewTitle t model =
         , div [ class "is-pulled-right" ]
             [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
                 span
-                    [ class "is-small button-light tooltipmr-4"
+                    [ class "is-small button-light tooltip mr-4"
                     , title T.editTitle
                     , onClick DoChangeTitle
                     ]
@@ -1055,19 +1055,21 @@ viewPanelDraft draft model =
 
                   else
                     div []
-                        [ text draft.title
-                        , div [ class "is-pulled-right" ]
-                            [ if model.isTensionAdmin || isAuthor then
-                                span
-                                    [ class "is-small button-light tooltip mr-4"
-                                    , title T.editTitle
-                                    , onClick DoChangeTitle
-                                    ]
-                                    [ A.icon "icon-edit-2" ]
+                        [ div [ class "level" ]
+                            [ text draft.title
+                            , div [ class "level-right" ]
+                                [ if model.isTensionAdmin || isAuthor then
+                                    div
+                                        [ class "is-small button-light tooltip mr-4"
+                                        , title T.editTitle
+                                        , onClick DoChangeTitle
+                                        ]
+                                        [ A.icon "icon-edit-2" ]
 
-                              else
-                                text ""
-                            , button [ class "delete ", onClick OnClose ] []
+                                  else
+                                    text ""
+                                , button [ class "delete ", onClick OnClose ] []
+                                ]
                             ]
                         , div [ class "tensionSubtitle mt-3 level" ]
                             [ div [ class "level-left" ]
