@@ -2051,16 +2051,19 @@ viewSidePane u t model =
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
-                                            viewCircleTarget model.commonOp "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                            -- @debug: can't center item :/
+                                            div [ class "is-flex" ]
+                                                [ viewCircleTarget model.commonOp "mb-3 is-medium is-align-self-center" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                                ]
 
                                         NodeType.Role ->
                                             case node.role_type of
                                                 Just rt ->
                                                     if t.hasBeenPushed then
-                                                        viewRole "mb-2" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
+                                                        viewRole "" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
-                                                        viewRoleExt model.commonOp "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
+                                                        viewRoleExt model.commonOp "is-small" Nothing { name = node.name, color = node.color, role_type = rt }
 
                                                 Nothing ->
                                                     text ""

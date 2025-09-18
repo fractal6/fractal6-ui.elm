@@ -1460,7 +1460,7 @@ viewVisibility op model =
                                 ""
                     in
                     div
-                        [ class "card has-border column p-0 m-3 is-h is-cliclable"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeVisibility x)
                         ]
