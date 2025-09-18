@@ -2828,7 +2828,7 @@ This document can be modified later as the organisation evolves.
   """
   fr="""La raison d'être {{}} définie le coeur de sa mission et ses objectifs.
 
-This document can be modified later as the organisation evolve.
+Ce document peut être modifié ultérieurement au fur et à mesure que l'organisation évolue.
 """
 
 [responsabilitiesHelper]
