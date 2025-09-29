@@ -2235,6 +2235,7 @@ figcaption {
     }
 
     .tag {
+        margin-bottom: $size-small;
         height: 2.2em;
         font-size: 0.9rem;
         &.is-delete {
@@ -4046,4 +4047,6 @@ input[type=search] {
     animation: growBox 0.15s;
     animation-fill-mode: forwards;
 }
+
+
 

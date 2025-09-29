@@ -13,9 +13,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const safePostCssParser = require('postcss-safe-parser');
 
-// deprecated
-const autoprefixer = require('autoprefixer');
-
 const commitHash = require('child_process')
     .execSync('git rev-parse --short HEAD')
     .toString()
@@ -84,7 +81,6 @@ module.exports = (env, argv) => {
             modules: ['node_modules']
         },
         plugins: [
-            //require('postcss-discard-unused'), // npm install postcss-discard-unused --save
             new webpack.DefinePlugin({
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
@@ -93,11 +89,6 @@ module.exports = (env, argv) => {
                 'VERSION': JSON.stringify(commitHash),
                 'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),
                 'DEFAULT_THEME': JSON.stringify(DEFAULT_THEME),
-            }),
-            new webpack.LoaderOptionsPlugin({
-                options: {
-                    postcss: [autoprefixer()]
-                }
             }),
             // Copy images
             new CopyPlugin({
@@ -150,14 +141,9 @@ module.exports = (env, argv) => {
                 //level: 'verbose', // or 'info', 'warn', 'error'
                 //debug: /webpack/,  // Enable debugging for modules matching this pattern
             },
-            devtool: 'eval-cheap-module-source-map',
+            //devtool: 'eval-cheap-module-source-map',
             watchOptions: {
-                ignored: [
-                    '**/node_modules',
-                    '**/elm-stuff',
-                    '**/.git',
-                    '**/.direnv',
-                ],
+                ignored: [ '**/node_modules', '**/elm-stuff', '**/.git', '**/.direnv'],
             },
             optimization: {
                 moduleIds: 'named',
@@ -186,7 +172,7 @@ module.exports = (env, argv) => {
                     filename: 'index.html'
                 }),
                 // Prevents compilation errors causing the hot loader to lose state
-                new webpack.NoEmitOnErrorsPlugin()
+                new webpack.NoEmitOnErrorsPlugin(),
             ],
             module: {
                 rules: [
@@ -198,7 +184,7 @@ module.exports = (env, argv) => {
                             {
                                 loader: 'elm-webpack-loader',
                                 options: {
-                                    // add Elm's debug overlay to output
+                                    // Add Elm's debug overlay to output
                                     debug: true,
                                     optimize: false,   // Skip optimization in dev
                                 }
@@ -209,14 +195,15 @@ module.exports = (env, argv) => {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            "style-loader",      // 3. Finally, injects CSS into DOM
-                            //"css-loader",        // 2. Then, processes CSS imports
+                            "style-loader",        // 4. Finally, injects CSS into DOM
+                            //"css-loader",        // 3. Then, processes CSS imports
                             {
                                 loader: "css-loader",
                                 options: {
                                     "sourceMap": false,
                                 }
                             },
+                            "postcss-loader",      // 2. Postcss optimization
                             //"sass-loader",     // 1. First, compiles Sass to CSS
                             {
                                 loader: "sass-loader",
@@ -227,7 +214,7 @@ module.exports = (env, argv) => {
                                         sourceMap: false,
                                     }
                                 }
-                            }
+                            },
                         ],
                     },
                 ]
@@ -254,25 +241,26 @@ module.exports = (env, argv) => {
     } else if (isProd) {
         return module.exports = merge(common, {
             cache: false,
+            //devtool: 'sourcemap',
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
                     template: 'public/index.html',
                     inject: 'body',
                     filename: 'index.html',
-                    minify: {
-                        removeComments: true,
-                        collapseWhitespace: true,
-                        removeRedundantAttributes: true,
-                        useShortDoctype: true,
-                        removeEmptyAttributes: true,
-                        removeStyleLinkTypeAttributes: true,
-                        keepClosingSlash: true,
-                        minifyJS: true,
-                        minifyCSS: true,
-                        minifyURLs: true,
-                    },
-                }),
+                   // minify: {
+                   //     removeComments: true,
+                   //     collapseWhitespace: true,
+                   //     removeRedundantAttributes: true,
+                   //     useShortDoctype: true,
+                   //     removeEmptyAttributes: true,
+                   //     removeStyleLinkTypeAttributes: true,
+                   //     keepClosingSlash: true,
+                   //     minifyJS: true,
+                   //     minifyCSS: true,
+                   //     minifyURLs: true,
+                   // },
+                }),//
                 // Delete everything from output-path (/dist) and report to user
                 new CleanWebpackPlugin({
                     root: __dirname,
@@ -301,6 +289,7 @@ module.exports = (env, argv) => {
                         use: [
                             MiniCssExtractPlugin.loader,
                             "css-loader",
+                            "postcss-loader",
                             {
                                 loader: "sass-loader",
                                 options: {
@@ -310,14 +299,6 @@ module.exports = (env, argv) => {
                                         sourceMap: false,
                                     }
                                 }
-                            },
-                            {
-                                loader: "postcss-loader",
-                                options: {
-                                    postcssOptions: {
-                                        parser: "postcss-scss", // allow inline comment (//)
-                                    },
-                                },
                             },
                         ],
                     },
@@ -354,6 +335,7 @@ module.exports = (env, argv) => {
                     }),
 
                     new CssMinimizerPlugin({
+                        parallel: true,
                         // Default is CssMinimizerPlugin.cssnanoMinify
                         //minify: CssMinimizerPlugin.cleanCssMinify,
 
@@ -362,7 +344,20 @@ module.exports = (env, argv) => {
                         //    processorOptions: {
                         //        parser: safePostCssParser,
                         //    },
-                        //},
+
+                         //minimizerOptions: {
+                         //    preset: [
+                         //        'default',
+                         //        {
+                         //            discardComments: { removeAll: true },
+                         //            discardUnused: true,
+                         //            mergeIdents: true,
+                         //            reduceIdents: true,
+                         //            discardDuplicates: true,
+                         //            minifySelectors: true,
+                         //        },
+                         //    ],
+                         //},
                     }),
                 ]
             }
