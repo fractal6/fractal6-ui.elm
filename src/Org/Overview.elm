@@ -1440,7 +1440,7 @@ viewActivies model =
                             _ ->
                                 class ""
                         ]
-                        [ span [ class "help" ] [ text T.recentActivities, text ":" ] ]
+                        [ span [ class "help-label" ] [ text T.recentActivities, text ":" ] ]
                     ]
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
