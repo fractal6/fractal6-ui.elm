@@ -21,7 +21,7 @@ window.addEventListener('load', _ => {
     // Menu data
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
-    if (!theme) {
+    if (!theme || !uctx) {
         theme = DEFAULT_THEME.toLowerCase();
     }
     document.documentElement.className = "is-" + theme;

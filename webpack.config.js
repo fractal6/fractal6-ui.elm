@@ -28,7 +28,7 @@ module.exports = (env, argv) => {
     const watchCssOnly = env.WATCH_CSS_ONLY === 'true';
 
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
-    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "DARK";
+    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "LIGHT";
     var API_URL;
     if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
@@ -92,11 +92,27 @@ module.exports = (env, argv) => {
             }),
             // Copy images
             new CopyPlugin({
-                patterns: [{
-                    from: 'assets/images',
-                    to: 'static/images/',
-                    globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
-                }],
+                patterns: [
+                    {
+                        from: 'assets/images',
+                        to: 'static/images/',
+                        globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
+                    },
+                    {
+                        from: 'public/service-worker.js',
+                        to: 'service-worker.js',
+                        transform(content) {
+                            return content.toString().replace(
+                                'VERSION_PLACEHOLDER',
+                                commitHash
+                            );
+                        }
+                    },
+                    {
+                        from: 'public/site.webmanifest',
+                        to: 'site.webmanifest'
+                    }
+                ],
             }),
         ],
         module: {
@@ -203,7 +219,7 @@ module.exports = (env, argv) => {
                                     "sourceMap": false,
                                 }
                             },
-                            "postcss-loader",      // 2. Postcss optimization
+                            "postcss-loader",    // 2. Postcss optimization
                             //"sass-loader",     // 1. First, compiles Sass to CSS
                             {
                                 loader: "sass-loader",

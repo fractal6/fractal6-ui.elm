@@ -243,25 +243,28 @@ viewLogin model =
                     ]
                 ]
             , br [] []
-            , div [ class "is-size-7 is-pulled-left" ]
-                [ span [ class "mr-2" ] [ text T.needAnAccount ]
-                , a [ class "underlined-link", href (toHref Route.Signup) ] [ text T.signupNow ]
-                , br [ class "mb-1" ] []
-                , a [ class "underlined-link", href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
-                ]
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ if isLoginSendable model.form.post then
-                        button
-                            [ id "submitButton"
-                            , class "button is-success"
-                            , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
-                            , onClick (SubmitUser model.form)
-                            ]
-                            [ text T.signin ]
+            , div [ class "level is-mobile" ]
+                [ div [ class "level-left level-with-breakline is-size-7 " ]
+                    [ span [] [ text T.needAnAccount, a [ class "ml-2 underlined-link", href (toHref Route.Signup) ] [ text T.signupNow ] ]
 
-                      else
-                        button [ class "button", disabled True ] [ text T.signin ]
+                    --, br [ class "mb-1" ] [] -- do not work in flex/level
+                    , div [ class "flex-break" ] []
+                    , a [ class "underlined-link", href (toHref Route.PasswordReset) ] [ textH T.passwordForgotten ]
+                    ]
+                , div [ class "level-right field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ if isLoginSendable model.form.post then
+                            button
+                                [ id "submitButton"
+                                , class "button is-success"
+                                , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
+                                , onClick (SubmitUser model.form)
+                                ]
+                                [ text T.signin ]
+
+                          else
+                            button [ class "button", disabled True ] [ text T.signin ]
+                        ]
                     ]
                 ]
             ]

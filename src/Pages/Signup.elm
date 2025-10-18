@@ -258,24 +258,25 @@ viewSignup global model =
                     ]
                 ]
             , br [] []
-            , div [ class "is-size-7 is-pulled-left" ]
-                [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
-                , a [ class "underlined-link", href (toHref Route.Login) ] [ textH T.signinNow ]
-                ]
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ if isSignupSendable model.form.post then
-                        button
-                            [ id "submitButton"
-                            , class "button is-success"
-                            , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
-                            , type_ "submit"
-                            , onClick (SubmitUser model.form)
-                            ]
-                            [ text T.signup ]
+            , div [ class "level is-mobile" ]
+                [ div [ class "level-left level-with-breakline is-size-7 " ]
+                    [ span [] [ text T.alreadyAnAccount, a [ class "ml-2 underlined-link", href (toHref Route.Login) ] [ textH T.signinNow ] ]
+                    ]
+                , div [ class "level-right field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ if isSignupSendable model.form.post then
+                            button
+                                [ id "submitButton"
+                                , class "button is-success"
+                                , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
+                                , type_ "submit"
+                                , onClick (SubmitUser model.form)
+                                ]
+                                [ text T.signup ]
 
-                      else
-                        button [ class "button", disabled True ] [ text T.signup ]
+                          else
+                            button [ class "button", disabled True ] [ text T.signup ]
+                        ]
                     ]
                 ]
             ]

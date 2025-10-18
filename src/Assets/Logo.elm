@@ -31,7 +31,7 @@ i18n : Html msg
 i18n =
     svg
         [ Attr.attribute "xmlns" "http://www.w3.org/2000/svg"
-        , Attr.style "fill" "var(--text)"
+        , Attr.style "fill" "var(--bulma-text)"
         , viewBox "0 0 24 24"
         , height "22"
         , width "22"
@@ -67,39 +67,6 @@ circles =
             []
         , node "circle"
             [ cx "75", cy "51", r "15", Attr.attribute "style" "fill:#747474;stroke:black;stroke-width:1px" ]
-            []
-        ]
-
-
-logo : Html msg
-logo =
-    svg
-        [ id "logo"
-        , class "logo-f6"
-        , viewBox "0 0 100 100"
-        , height "32"
-        , width "32"
-        ]
-        [ ellipse
-            [ cx "50"
-            , cy "50"
-            , rx "42"
-            , ry "35"
-            , Attr.attribute "style" "stroke:white;stroke-width:3"
-            , Attr.attribute "fill" "rgba(124,240,10,0)"
-            ]
-            []
-        , polygon
-            [ points "10,95, 90,95, 50,30"
-            , Attr.attribute "style" "stroke:white;stroke-width:3"
-            , Attr.attribute "fill" "rgba(124,240,10,0)"
-            ]
-            []
-        , polygon
-            [ points "10,5, 90,5, 50,70"
-            , Attr.attribute "style" "stroke:white;stroke-width:3"
-            , Attr.attribute "fill" "rgba(124,240,10,0)"
-            ]
             []
         ]
 
@@ -148,4 +115,37 @@ logo_fractal h w =
                 ]
                 []
             ]
+        ]
+
+
+logo_test : Html msg
+logo_test =
+    svg
+        [ id "logo"
+        , class "logo-f6"
+        , viewBox "0 0 100 100"
+        , height "32"
+        , width "32"
+        ]
+        [ ellipse
+            [ cx "50"
+            , cy "50"
+            , rx "42"
+            , ry "35"
+            , Attr.attribute "style" "stroke:white;stroke-width:3"
+            , Attr.attribute "fill" "rgba(124,240,10,0)"
+            ]
+            []
+        , polygon
+            [ points "10,95, 90,95, 50,30"
+            , Attr.attribute "style" "stroke:white;stroke-width:3"
+            , Attr.attribute "fill" "rgba(124,240,10,0)"
+            ]
+            []
+        , polygon
+            [ points "10,5, 90,5, 50,70"
+            , Attr.attribute "style" "stroke:white;stroke-width:3"
+            , Attr.attribute "fill" "rgba(124,240,10,0)"
+            ]
+            []
         ]

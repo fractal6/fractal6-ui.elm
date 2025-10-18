@@ -277,6 +277,10 @@ subscriptions _ _ =
         |> Sub.batch
 
 
+
+---- VIEW ----
+
+
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = T.welcome ++ " - " ++ T.welcome2
