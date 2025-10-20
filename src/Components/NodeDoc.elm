@@ -766,7 +766,7 @@ viewAboutSection node data op_m =
                 ]
         , -- Node About
           showMaybe data.node_data.about
-            (\about -> renderMarkdown "is-human" about)
+            (\about -> renderMarkdown "is-human has-text-strong" about)
         ]
 
 

@@ -1365,8 +1365,8 @@ mediaProject session focus statusFilter project =
         [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] []
         , div [ class "media-content " ]
-            [ div [ class "columns mb-0" ]
-                [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
+            [ div [ class "columns mb-1" ]
+                [ div [ class ("column pb-0 " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
                     [ a
                         [ class "has-text-weight-semibold is-human discrete-link"
                         , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
@@ -1375,7 +1375,7 @@ mediaProject session focus statusFilter project =
                     ]
                 , case project.description of
                     Just x ->
-                        div [ class "column is-8" ]
+                        div [ class "column pb-0 is-8" ]
                             [ span [ class "is-discret is-smaller" ] [ text x ] ]
 
                     Nothing ->

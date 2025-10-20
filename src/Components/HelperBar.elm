@@ -446,7 +446,7 @@ viewPath baseUri uriQuery maybePath =
                             else
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
-                                    , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
+                                    , a [ class "is-block is-wrapped has-text-weight-bold has-text-strong", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                     , span
                                         [ class ""
                                         , title (T.thisThingIs |> Format.value (NodeType.toString (nid2type p.nameid)) |> Format.value (NodeVisibility.toString g.focus.visibility))

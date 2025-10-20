@@ -24,52 +24,49 @@ $f6-sizes: $f6-size-1 $f6-size-2 $f6-size-3 $f6-size-4 $f6-size-5 $f6-size-6 $f6
 // Fonts face
 //
 
+// more at https://fonts.google.com
+
+/* latin */
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 500 700; // < 400 is too weak..
+  font-display: swap; // To avoid flashing unstyled content
+  src: local('Quicksand'),
+       url('https://fonts.gstatic.com/s/quicksand/v37/6xKtdSZaM9iE8KbpRA_hK1QN.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin */
+@font-face {
+  font-family: 'Cantarell';
+  font-style: normal;
+  font-weight: 400; // a different font file for each weight :/
+  src: local('Cantarell')
+     url('https://fonts.gstatic.com/s/cantarell/v18/B50NF7ZDq37KMUvlO015jKJr.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin */
 //@font-face {
-//    font-family: Zen;
-//    src: url(../fonts/ZenKurenaido-Regular.ttf);
-//}
-//@font-face {
-//    font-family: Roboto;
-//    src: url(../fonts/Roboto-Regular.ttf);
-//}
-//@font-face {
-//    font-family: Lato;
-//    src: url(../fonts/Lato-Regular.ttf);
-//}
-//@font-face {
-//    font-family: OpenSans;
-//    src: url(../fonts/OpenSans-Regular.ttf);
+//  font-family: 'Recursive';
+//  font-style: normal;
+//  font-weight: 300 1000;
+//  font-display: swap; // To avoid flashing unstyled content
+//  src: url('https://fonts.gstatic.com/s/recursive/v44/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnA.woff2') format('woff2'),
+//       url('../fonts/Recursive_VF_1.084--subset-GF_latin_basic.woff2') format('woff2');
+//  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 //}
 
-@font-face {
-    font-family: ArrowTypeRecursive;
-    //font-style: oblique 0deg 15deg;
-    //font-weight: 400 1000;
-    //font-display: swap;
-    src: url('../fonts/Recursive_VF_1.084--subset-GF_latin_basic.woff2') format('woff2');
-    //src: url('../fonts/RecursiveSansCslSt-Regular.woff2') format('woff2');
-}
 
 @mixin defaultFontFace {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+    font-family: Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif !important;
 }
 
-@mixin OpenRecursive {
-    font-family: ArrowTypeRecursive !important;
+@mixin humanFontFace {
+    font-family: Cantarell, Josefin Sans, Recursive,
+                 Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif !important;
 }
-
-//@mixin zenFontFace {
-//    font-family: zenKurenaido, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-//    // Default
-//    font-size: $size-6 !important;
-//    font-weight: $weight-normal !important;
-//}
-
-//@mixin OpenFace {
-//    font-family: OpenSans !important;
-//}
-
-
 
 //
 // Default font
@@ -87,7 +84,7 @@ html, body {
 .is-human {
     //@include zenFontFace;
     //@include OpenFace;
-    @include OpenRecursive;
+    @include humanFontFace;
     /* set variation axis values */
     --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
     --casl: "CASL" 0; /* Casual: Linear to Casual */
@@ -97,6 +94,19 @@ html, body {
     /* apply axis values with CSS custom properties */
     font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
 }
+
+.is-recursive {
+    @include humanFontFace;
+    /* set variation axis values */
+    --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
+    --casl: "CASL" 1; /* Casual: Linear to Casual */
+    //--wght: "wght" 400; /* Weight: Light to ExtraBlack; usually set with `font-weight` */
+    --slnt: "slnt" 0; /* Slant: 0 to -15 degrees, auto cursive at -14 */
+    --CRSV: "CRSV" 0.5;  /* Cursive: always roman, auto substitution, or always cursive */
+    /* apply axis values with CSS custom properties */
+    font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
+}
+
 
 // Fix size of Zen font size
 @each $size in $f6-sizes {
@@ -108,36 +118,6 @@ html, body {
     }
 }
 
-
-//.has-text-weight-light {
-//  font-weight: $weight-light !important;
-//}
-//.has-text-weight-normal {
-//  font-weight: $weight-normal !important;
-//}
-//.has-text-weight-medium {
-//  font-weight: $weight-medium !important;
-//}
-//.has-text-weight-semibold {
-//	font-weight: $weight-semibold !important;
-//}
-//.has-text-weight-bold {
-//	font-weight: $weight-bold !important;
-//}
-
-
-
-.is-recursive {
-    @include OpenRecursive;
-    /* set variation axis values */
-    --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
-    --casl: "CASL" 1; /* Casual: Linear to Casual */
-    //--wght: "wght" 400; /* Weight: Light to ExtraBlack; usually set with `font-weight` */
-    --slnt: "slnt" 0; /* Slant: 0 to -15 degrees, auto cursive at -14 */
-    --CRSV: "CRSV" 0.5;  /* Cursive: always roman, auto substitution, or always cursive */
-    /* apply axis values with CSS custom properties */
-    font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
-}
 
 
 /*

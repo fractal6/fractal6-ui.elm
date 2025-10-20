@@ -210,7 +210,7 @@ export const GraphPack = {
     circlesPadding: 4, // 1.8
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
-    fontstyleCircle: "Roboto, Cantarell, Arial, fractaleicon",
+    fontstyleCircle: "Cantarell, Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif, fractaleicon",
 
     // Graph fx settings
     isLoading: true,

@@ -301,7 +301,9 @@ input[type="checkbox"] {
     margin-top: 0.25rem !important;
 }
 .help {
-    font-weight: 300 !important;
+    // Avoid font-weight < 400 as is wont work with certain font (QuickSand, Cantarell)
+    //font-weight: 300 !important;
+    color: var(--text-weak);
 }
 .is-link-back {
     color: var(--text) !important;
@@ -465,6 +467,14 @@ a:hover .is-name, a:hover .is-username {
 .is-flex-grow {
     flex-grow: 1 !important;
 }
+.flex-break {
+    flex-basis: 100%;
+    height: 0;
+}
+.level-with-breakline {
+    flex-direction: column;
+    align-items: flex-start;
+}
 .is-aligned-center {
     text-align: center !important;
 }
@@ -496,9 +506,6 @@ a:hover .is-name, a:hover .is-username {
 
 .is-strong {
     font-weight: bold;
-}
-.is-thin {
-    font-weight: 300;
 }
 
 .is-text-aligned {
@@ -1335,10 +1342,10 @@ figcaption {
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         @include touch {
-            font-size: 3rem !important;
+            font-size: 3.9rem !important;
         }
         @include mobile {
-            font-size: 2.4rem !important;
+            font-size: 3rem !important;
         }
     }
     .card h2 {
