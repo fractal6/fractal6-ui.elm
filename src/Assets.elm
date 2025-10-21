@@ -112,6 +112,11 @@ unchecked =
 --
 
 
+logo_inline : Html msg
+logo_inline =
+    Lazy.lazy2 Logo.logo_fractal_inline "" "110"
+
+
 logo0 : Html msg
 logo0 =
     -- Can-t set the svg color like this !

@@ -31,7 +31,7 @@ import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
-import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, title)
+import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onClick)
 import ModelSchema exposing (NotifCount, OrgaInfo)
 import Session exposing (Apis, SessionCommon, Theme(..))
@@ -49,27 +49,37 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
         hasVersionOutdated =
             (Maybe.map .client_version orga_info /= Just apis.client_version)
                 && (orga_info /= Nothing)
+
+        isLoggedOut =
+            session.user == LoggedOut
+
+        loggedClass =
+            ternary isLoggedOut "is-logged-out" "is-logged-in"
     in
-    header [ id "navbarTop", class "has-navbar-fixed-top" ]
+    header [ id "navbarTop", class ("has-navbar-fixed-top " ++ loggedClass) ]
         [ nav
-            [ class "navbar is-fixed-top"
-            , attribute "role" "navigation"
-            , attribute "aria-label" "main navigation"
-            ]
+            ([ class "navbar is-fixed-top"
+             , classList [ ( "is-primary", isLoggedOut ) ]
+             , attribute "role" "navigation"
+             , attribute "aria-label" "main navigation"
+             ]
+                ++ ternary isLoggedOut [ attribute "data-theme" "light" ] []
+            )
             [ div [ class "navbar-brand" ]
                 ([ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ A.logo0
-                    , showIf (session.user == LoggedOut) <|
-                        span [ class "logo-fractale-text is-recursiv" ]
-                            [ text "Fractale"
+                    [ if isLoggedOut then
+                        A.logo_inline
 
-                            --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                            --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                      else
+                        A.logo0
+                    , showIf isLoggedOut <|
+                        span [ class "logo-fractale-text" ]
+                            [-- text "Fractale"
+                             --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                             --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
                             ]
                     ]
-                 , showIf (session.user == LoggedOut) <|
-                    span [ class "vbar", attribute "style" "margin-top: 10px !important; margin-left: 0;" ] []
                  ]
                     ++ (if orgUrl then
                             case session.user of
@@ -131,6 +141,20 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                                 ]
                                 [ text T.explore ]
                            ]
+                        ++ (if isLoggedOut then
+                                [ span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
+                                , a
+                                    [ class "navbar-item", target "_blank", href "https://doc.fractale.co" ]
+                                    [ text "Docs" ]
+                                , span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
+                                , a
+                                    [ class "navbar-item", href "https://github.com/fractal6/fractal6.go", target "_blank" ]
+                                    [ text "Open Source" ]
+                                ]
+
+                            else
+                                []
+                           )
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
                     , helpButton session.user
@@ -253,9 +277,11 @@ userButtons session replaceUrl =
                         []
 
                     else
-                        [ div [ class "navbar-item" ] [ a [ href (toHref Login) ] [ text T.signin ] ]
-                        , div [ class "navbar-item notMe" ]
-                            [ a [ class "button is-rounded is-small is-success has-text-weight-bold", href (toHref Signup) ]
+                        [ div [ class "navbar-item" ]
+                            [ a [ class "button is-rounded is-outlined has-background-primary", href (toHref Login) ] [ text T.signin ]
+                            ]
+                        , div [ class "navbar-item" ]
+                            [ a [ class "button is-rounded is-signup", href (toHref Signup) ]
                                 [ text T.tryFree ]
                             ]
                         ]
