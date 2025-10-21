@@ -1214,13 +1214,23 @@ viewSearchList _ model =
 viewCanvas : UserState -> Model -> Html Msg
 viewCanvas us model =
     let
-        isAdmin =
+        ( isAdmin, hasRole ) =
             case us of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
+                    ( hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
+                    , case model.node_hovered of
+                        Just node ->
+                            Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+
+                        Nothing ->
+                            False
+                    )
 
                 LoggedOut ->
-                    False
+                    ( False, False )
+
+        hasConfig =
+            isAdmin || hasRole
 
         isComplex =
             --Maybe.map (\x -> x > 2) model.depth |> withDefault False
@@ -1407,7 +1417,7 @@ viewCanvas us model =
             , attribute "data-event-action" "doAction"
             ]
             [ div [ class "is-flex" ]
-                [ span [ id "doTension" ]
+                [ span [ id "doTension", classList [ ( "no-config", not hasConfig ) ] ]
                     [ span [] [ text "void" ] -- Node name from JS
                     , i [ class "icon-plus custom-style" ] []
                     ]

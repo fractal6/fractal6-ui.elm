@@ -832,7 +832,7 @@ mediaOrga commonOp user_m root =
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
                 [ div [ class "column is-8" ]
-                    [ a [ href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
+                    [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
                             renderMarkdown "is-human pt-1" ab

@@ -15,6 +15,7 @@ const cssVarSafeList = [
     '--gp-lvl-0-bg', '--gp-lvl-1-bg', '--gp-lvl-2-bg', '--gp-lvl-3-bg', '--gp-lvl-4-bg', '--gp-lvl-5-bg', '--gp-lvl-6-bg', '--gp-lvl-7-bg',
     // Roles
     '--owner', '--member', '--coordinator', '--peer', '--bot', '--guest', '--pending', '--retired',
+
 ];
 
 module.exports = {
@@ -32,6 +33,7 @@ module.exports = {
             variables: true, // remove unused CSS variables
             safelist: {
                 variables: cssVarSafeList,
+                deep:  [/^is-/, /^has-/]
             }
         }),
 

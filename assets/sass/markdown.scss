@@ -57,7 +57,9 @@
 		border-radius: 10px;
     }
 	a {
-		color: var(--info) !important;
+        // Having a different color for external and internal link might be a bad idea has it confuses the eyes, finally...
+		//color: var(--info) !important;
+		color: var(--link) !important;
 		text-decoration: none !important;
         &.is-link {
             color: var(--link) !important;

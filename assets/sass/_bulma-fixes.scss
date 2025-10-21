@@ -15,6 +15,11 @@
     }
 }
 
+.button:not(.buttonRole) {
+    // Fix for quicksand font.
+    font-weight: 600;
+}
+
 .button, .tag {
     box-shadow: none;
     &:not(.is-light):not(.is-ghost):not(.is-soft) {

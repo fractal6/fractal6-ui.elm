@@ -170,6 +170,10 @@ fr="Enregister votre mot de passe"
   en="Wrong code, please try again."
   fr="Code incorrect, veuillez réessayer."
 
+[subscribeToAnnoucements]
+  en="Subscribe to Fractale Announcements"
+  fr="S'abonner aux annonces de Fractale"
+
 # Features
 
 [govTransp]

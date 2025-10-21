@@ -2616,6 +2616,9 @@ a.tag.has-border, a.tag.has-border-light, .tag-circle {
         &:hover {
             background-color: var(--background-hover-discrete) !important;
             border-radius: 14px 0 0 14px;
+            &.no-config {
+              border-radius: 14px;
+            }
         }
     }
 
