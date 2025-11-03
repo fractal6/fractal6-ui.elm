@@ -738,7 +738,7 @@ viewAboutSection node data op_m =
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ text T.about ]
                 , text space_
-                , span [ class "is-name" ] [ text node.name ]
+                , span [ class "has-text-strong" ] [ text node.name ]
                 ]
             , if
                 data.hasInnerToolbar
