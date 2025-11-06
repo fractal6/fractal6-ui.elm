@@ -223,15 +223,13 @@ viewPin session focus tension =
                 , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                 ]
                 [ text tension.title ]
-            , span [ class "level is-smaller2 is-mobile mt-2" ]
-                [ div [ class "level-left" ]
-                    [ span
-                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                        , title (tensionStatus2str tension.status)
-                        ]
-                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                    , viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
+            , div [ class "is-smaller2 mt-2" ]
+                [ span
+                    [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                    , title (tensionStatus2str tension.status)
                     ]
+                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
                 ]
             ]
         ]

@@ -1593,7 +1593,7 @@ figcaption {
         width: 0 !important;
     }
 
-    padding-top: 25px;
+    padding-top: 12px;
     // First level child
     & .menu > .menu-list > li > ul,
     & .menu > .menu-list > ul {
@@ -1647,6 +1647,31 @@ figcaption {
         }
     }
 }
+// Make tree-menu hover button (+= overflow the text and in fixed hozizontal position
+.treeMenu {
+    position: relative;
+}
+.treeMenu .level {
+    position: static; /* Override Bulma's positioning if needed */
+}
+.treeMenu .here {
+    position: absolute;
+    right: 5%; /* 95% from left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: auto; /* Ensure button is clickable */
+}
+.treeMenu .level-left {
+  /* Prevent the level-left from taking full width and pushing button */
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+// Fix the mobile centering menu
+.treeMenu .level-left {
+  flex-direction: row;
+}
+
 
 #tree-selector {
     li, li a {
@@ -3341,6 +3366,10 @@ i.is-liked {
         background-color: var(--link);
         right: 3px !important;
     }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
+    }
 }
 .is-event-badge-bg {
     .tag {
@@ -3353,6 +3382,10 @@ i.is-liked {
     &.badge {
         background-color: var(--warning);
         left: 3px !important;
+    }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
     }
 }
 .is-contract-badge-bg {

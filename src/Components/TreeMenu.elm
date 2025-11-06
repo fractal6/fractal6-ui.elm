@@ -736,7 +736,7 @@ viewCircleLine hover focus node =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
                 , showMaybe node.first_link
                     (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
@@ -777,7 +777,7 @@ viewRolesLine type_txt hover roles nid expanded_lines =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ span [ class "tag has-background-tag has-text-text" ]
                     [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                 , case List.sum <| List.map .n_open_tensions roles of
@@ -906,7 +906,7 @@ viewRolesLine2 onDropdownClick type_txt hover roles nid expanded_lines =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ span [ class "tag is-smaller2 has-background-tag has-text-text" ]
                     [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                 ]

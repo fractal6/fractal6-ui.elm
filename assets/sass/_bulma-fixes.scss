@@ -86,3 +86,12 @@
         color: var(--text);
     }
 }
+
+.fixed-grid > .grid {
+    @include mobile {
+        display: block;
+        .cell:not(last-child) {
+            margin-bottom: $size-small;
+        }
+    }
+}
