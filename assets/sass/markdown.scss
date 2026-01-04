@@ -71,7 +71,7 @@
 	a:visited {
 		color: var(--info-light);
 	}
-	blockquote {
+    blockquote {
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 		padding-left: 15px;
@@ -80,7 +80,7 @@
 		font-weight: 600;
 		border-color: var(--border-color-light);
 		//filter: invert(25%);
-	}
+    }
     li.is-checkbox {
         display: flex;
         margin-left: -1rem;

@@ -1069,7 +1069,7 @@ figcaption {
 
 #navbarTop {
 
-    // Logged-out navbar
+    // Logged-in navbar
     &.is-logged-in {
         & > .navbar {
             height: $navbar-height;
@@ -1089,90 +1089,113 @@ figcaption {
         }
     }
 
-    // Logged-in navbar
+    // Logged-out navbar
     &.is-logged-out {
-        margin-bottom: 2rem;
+        // Apply logged-in styles on mobile
+        @include mobile {
+            & > .navbar {
+                height: $navbar-height;
+                border-bottom: 1px solid var(--border-color-light);
 
-        // invisible background layer behind the navbar
-        &::before {
-            content: '';
-            position: fixed;  // Match the navbar's fixed positioning
-            inset: 0;  // Shorthand for top/right/bottom/left
-            background: var(--body-background-color);
-            height: calc(58px + #{$size-small}); // navbar height + margins
-            z-index: 100;
-        }
-        & > .navbar {
-            z-index: 101;
-            // Layout
-            //display: inline-flex;
-            height: 58px;
-            padding: 10px 24px;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            // Style
-            border-radius: 50px;
-            background: var(--primary);
-            margin: $size-small auto 0;
+                .navbar-item, .navbar-link {
+                    &:hover {
+                        color: var(--text-strong);
+                    }
+                }
 
-
-            // Bulma responsive width logic
-            @include desktop {
-                width: calc(11 / 12 * 100%);
-            }
-
-            @include widescreen {
-                width: calc(11 / 12 * 100%); // is-7-widescreen
-            }
-
-            @include fullhd {
-                width: calc(11 / 12 * 100%); // is-6-fullhd (50%)
-            }
-
-            // Fix colors
-            // --
-            color: var(--bulma-navbar-item-color) !important;
-            .button, .vbar, .logo-fractale-text {
-                color: var(--bulma-navbar-item-color) !important;
-            }
-            .vbar {
-                color: var(--bulma-navbar-item-color) !important;
-            }
-            svg {
-                fill: var(--bulma-navbar-item-color) !important;
-            }
-            .is-signup {
-                border-color: var(--primary);
-                color: var(--primary) !important;
-                background-color: map.get($f6-dark-palette, link) !important;
-                &:hover {
-                    color: var(--bulma-navbar-item-color) !important;
-                    background-color: map.get($f6-dark-palette, link2) !important;
+                .navbar-item {
+                    &.is-active, .navbar-link.is-active {
+                        background-color: var(--background-hover) !important;
+                    }
                 }
             }
+        }
 
-            .navbar-item {
-                height: 58px !important;
+        // Apply logged-out styles on tablet and above
+        @include tablet {
+            margin-bottom: 2rem;
+
+            // invisible background layer behind the navbar
+            &::before {
+                content: '';
+                position: fixed;  // Match the navbar's fixed positioning
+                inset: 0;  // Shorthand for top/right/bottom/left
+                background: var(--body-background-color);
+                height: calc(58px + #{$size-small}); // navbar height + margins
+                z-index: 100;
             }
+            & > .navbar {
+                z-index: 101;
+                // Layout
+                //display: inline-flex;
+                height: 58px;
+                padding: 10px 24px;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+                // Style
+                border-radius: 50px;
+                background: var(--primary);
+                margin: $size-small auto 0;
 
-            .navbar-brand > .navbar-item {
-                background-color: inherit !important;
+
+                // Bulma responsive width logic
+                @include desktop {
+                    width: calc(11 / 12 * 100%);
+                }
+
+                @include widescreen {
+                    width: calc(11 / 12 * 100%); // is-7-widescreen
+                }
+
+                @include fullhd {
+                    width: calc(11 / 12 * 100%); // is-6-fullhd (50%)
+                }
+
+                // Fix colors
+                // --
+                color: var(--bulma-navbar-item-color) !important;
+                .button, .vbar, .logo-fractale-text {
+                    color: var(--bulma-navbar-item-color) !important;
+                }
+                .vbar {
+                    color: var(--bulma-navbar-item-color) !important;
+                }
+                svg {
+                    fill: var(--bulma-navbar-item-color) !important;
+                }
+                .is-signup {
+                    border-color: var(--primary);
+                    color: var(--primary) !important;
+                    background-color: map.get($f6-dark-palette, link) !important;
+                    &:hover {
+                        color: var(--bulma-navbar-item-color) !important;
+                        background-color: map.get($f6-dark-palette, link2) !important;
+                    }
+                }
+
+                .navbar-item {
+                    height: 58px !important;
+                }
+
+                .navbar-brand > .navbar-item {
+                    background-color: inherit !important;
+                }
+
+                //.navbar-dropdown {
+                //    .navbar-item { // @bulma's wrong !
+                //        &:hover {
+                //            background-color: initial;
+                //            color: var(--bulma-text-light);
+                //        }
+                //        &.is-active {
+                //            background-color: initial;
+                //        }
+                //    }
+
+                //}
             }
-
-            //.navbar-dropdown {
-            //    .navbar-item { // @bulma's wrong !
-            //        &:hover {
-            //            background-color: initial;
-            //            color: var(--bulma-text-light);
-            //        }
-            //        &.is-active {
-            //            background-color: initial;
-            //        }
-            //    }
-
-            //}
         }
     }
 

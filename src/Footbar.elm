@@ -55,7 +55,7 @@ view session =
                         ]
                     , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2025 The Fractale Team" ]
                     ]
-                , div [ class "level m-0 is-hidden-tablet" ] [ small [ class "level-item" ] [ logo_footer, text "© 2025 The Fractale Team" ] ]
+                , div [ class "level m-0 is-hidden-tablet mt-4" ] [ small [ class "level-item" ] [ logo_footer, text "© 2025 The Fractale Team" ] ]
                 ]
 
         EmbedView ->
