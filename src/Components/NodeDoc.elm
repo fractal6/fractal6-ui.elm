@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, helperButton, roleColor, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUser, viewUsers)
 import Dict
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
@@ -47,7 +47,8 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Session exposing (Session)
+import Session exposing (SessionCommon)
+import String.Format as Format
 import Text as T
 import Time
 
@@ -431,7 +432,7 @@ type alias OrgaNodeData =
 
 
 type alias Op msg =
-    { session : Session
+    { session : SessionCommon
     , data : NodeDoc
     , result : GqlData Tension -- result from new tension components
     , publish_result : GqlData TensionBlobFlag
@@ -462,7 +463,7 @@ view_ : OrgaNodeData -> Maybe (Op msg) -> Html msg
 view_ data op_m =
     case data.tid_r of
         Success _ ->
-            div []
+            div [ id "blobDocument" ]
                 [ if not data.hasInnerToolbar then
                     case op_m of
                         Just op ->
@@ -511,7 +512,7 @@ viewToolbar mode data =
     div [ class "field has-addons docToolbar" ]
         [ p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" T.edit
+            , title T.edit
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -523,7 +524,7 @@ viewToolbar mode data =
             ]
         , p
             [ class "control tooltip has-tooltip-arrow"
-            , attribute "data-tooltip" T.revisions
+            , title T.revisions
             ]
             [ a
                 [ class "button is-small is-rounded  is-discrete"
@@ -597,7 +598,7 @@ viewNodeStatus isAdmin op =
                     div
                         [ class "button is-small is-success has-text-weight-semibold"
                         , onClick (op.onSubmit (not isLoading) <| op.onPushBlob op.blob.id)
-                        , title T.publishTitle
+                        , title (T.publishTitle op.session.lexicon)
                         ]
                         [ A.icon1 "icon-share" T.publish
                         , loadingSpin isLoading
@@ -682,10 +683,10 @@ viewBlob data op_m =
                                         else
                                             String.toLower T.firstLinks
                                 in
-                                div [ class "is-hint mt-3" ]
+                                div [ class " mt-3" ]
                                     [ A.icon1 "icon-users" ""
-                                    , span [ class "is-hint-2" ] [ text (String.fromInt i) ]
-                                    , text (" " ++ txt ++ "  " ++ space_)
+                                    , span [ class "has-text-evidence" ] [ text (String.fromInt i) ]
+                                    , span [ class "is-discrete" ] [ text (" " ++ txt ++ "  " ++ space_) ]
                                     , viewUsers True data.leads
                                     ]
 
@@ -693,7 +694,10 @@ viewBlob data op_m =
                                 -- Role Lead link Maybe.map
                                 showMaybe node.first_link
                                     (\fs ->
-                                        div [ class "is-hint is-inline-flex mt-3" ] [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_), viewUser True fs.username ]
+                                        div [ class "is-inline-flex mt-3" ]
+                                            [ A.icon1 "icon-user" (String.toLower T.firstLink ++ "  " ++ space_)
+                                            , viewUser True fs.username
+                                            ]
                                     )
 
                             -- Open Contracts
@@ -734,14 +738,14 @@ viewAboutSection node data op_m =
                 [ A.icon "icon-info icon-lg mr-2"
                 , span [ class "nowrap" ] [ text T.about ]
                 , text space_
-                , span [ class "is-name" ] [ text node.name ]
+                , span [ class "has-text-strong" ] [ text node.name ]
                 ]
             , if
                 data.hasInnerToolbar
                     && isSuccess data.tid_r
                     && not (List.member node.role_type (List.map Just [ RoleType.Guest, RoleType.Owner, RoleType.Pending, RoleType.Retired ]))
               then
-                div [ class "level-right is-marginless is-small is-hidden-mobile" ]
+                div [ class "level-right m-0 is-small is-hidden-mobile" ]
                     [ viewToolbarDropdown NoView data ]
 
               else
@@ -762,7 +766,7 @@ viewAboutSection node data op_m =
                 ]
         , -- Node About
           showMaybe data.node_data.about
-            (\about -> renderMarkdown "is-human" about)
+            (\about -> renderMarkdown "is-human has-text-strong" about)
         ]
 
 
@@ -1007,7 +1011,7 @@ viewMandateInput txt mandate op =
     div []
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ text T.purpose ]
+                [ text T.purpose, helperButton "ml-2" (T.purposeHelper |> Format.value txt.purposeSubject) ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
@@ -1027,10 +1031,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.responsabilities ]
+                [ div [ class "label" ] [ text T.responsabilities, helperButton "ml-2" T.responsabilitiesHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_responsabilities
                         , value responsabilities
@@ -1048,10 +1052,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.domains ]
+                [ div [ class "label" ] [ text T.domains, helperButton "ml-2" T.domainsHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_domains
                         , value domains
@@ -1069,10 +1073,10 @@ viewMandateInput txt mandate op =
                     List.length <| String.lines purpose
             in
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.policies ]
+                [ div [ class "label" ] [ text T.policies, helperButton "ml-2" T.policiesHelper ]
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea"
+                        [ class "textarea autofocus"
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_policies
                         , value policies
@@ -1168,14 +1172,14 @@ viewSelectAuthority op =
     div [ class "field" ]
         [ div [ class "dropdown is-right" ]
             [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
-                [ span [ class ("has-text-" ++ roleColor role_type_selected) ] [ text (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+                [ span [ class ("has-text-" ++ (RoleType.toString role_type_selected |> String.toLower)) ] [ text (RoleType.toString role_type_selected) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
             , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
                 [ div [ class "dropdown-content is-right" ] <|
                     List.map
                         (\role_type ->
                             let
                                 clsColor =
-                                    "has-text-" ++ roleColor role_type
+                                    "has-text-" ++ (RoleType.toString role_type |> String.toLower)
                             in
                             div
                                 [ class ("dropdown-item button-light " ++ clsColor)
@@ -1225,12 +1229,12 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : Session -> GqlData TensionBlobs -> Html msg
+viewVersions : SessionCommon -> GqlData TensionBlobs -> Html msg
 viewVersions session blobsData =
     Lazy.lazy2 viewVersions_ session blobsData
 
 
-viewVersions_ : Session -> GqlData TensionBlobs -> Html msg
+viewVersions_ : SessionCommon -> GqlData TensionBlobs -> Html msg
 viewVersions_ session blobsData =
     case blobsData of
         Success tblobs ->
@@ -1262,7 +1266,7 @@ viewVersions_ session blobsData =
             text ""
 
 
-viewVerRow : Session -> Int -> Blob -> List (Html msg)
+viewVerRow : SessionCommon -> Int -> Blob -> List (Html msg)
 viewVerRow session i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
         [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
@@ -1272,7 +1276,7 @@ viewVerRow session i blob =
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (T.published ++ " " ++ formatDate session.lang session.now flag)
+                        , title (T.published ++ " " ++ formatDate session.lang session.now flag)
                         ]
                         [ A.icon "icon-flag" ]
 

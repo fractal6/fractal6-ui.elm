@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, type_, value)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, title, type_, value)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -56,7 +56,7 @@ import Query.PatchContract exposing (sendVote)
 import Query.PatchTension exposing (patchComment)
 import Query.QueryContract exposing (getContract, getContracts)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, Session, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -66,8 +66,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , rootnameid : String
+    { rootnameid : String
     , form : ContractForm -- user inputs
     , contracts_result : GqlData (List Contract) -- result of any query
     , contract_result : GqlData ContractFull
@@ -77,7 +76,7 @@ type alias Model =
     , activeView : ContractsPageView
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , comments : Comments.State
@@ -89,16 +88,15 @@ type ContractsPageView
     | ContractsView
 
 
-initModel : String -> UserState -> Session -> Model
-initModel focusid user session =
-    { user = user
-    , rootnameid = nid2rootid focusid
+initModel : String -> SessionCommon -> Model
+initModel focusid session =
+    { rootnameid = nid2rootid focusid
     , contracts_result = NotAsked
     , contract_result = NotAsked
     , contract_result_del = NotAsked
     , vote_result = NotAsked
-    , form = initContractForm user
-    , voteForm = initVoteForm user
+    , form = initContractForm session.user
+    , voteForm = initVoteForm session.user
     , activeView = ContractsView
 
     -- Common
@@ -107,7 +105,7 @@ initModel focusid user session =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , comments = Comments.init focusid "" user
+    , comments = Comments.init focusid "" session
     }
 
 
@@ -155,9 +153,9 @@ initVoteForm user =
     }
 
 
-init : String -> UserState -> Session -> State
-init rid user session =
-    initModel rid user session |> State
+init : String -> SessionCommon -> State
+init rid session =
+    initModel rid session |> State
 
 
 
@@ -517,6 +515,9 @@ update_ apis message model =
 
         UpdateUctx uctx ->
             let
+                session =
+                    model.session
+
                 form =
                     model.form
 
@@ -524,7 +525,7 @@ update_ apis message model =
                     model.voteForm
             in
             ( { model
-                | user = LoggedIn uctx
+                | session = { session | user = LoggedIn uctx }
                 , form = { form | uctx = uctx }
                 , voteForm = { voteForm | uctx = uctx }
               }
@@ -613,7 +614,7 @@ viewContractsTable : List Contract -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
         [ class "table is-fullwidth" ]
-        [ thead [ class "is-size-7" ]
+        [ thead []
             [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
             ]
         , data
@@ -650,7 +651,7 @@ viewRow d op model =
 
         -- participant
         -- n comments icons
-        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+        , td [ class "is-aligned-right", attribute "style" "min-width: 6rem;" ]
             [ if isAuthor || op.isAdmin then
                 let
                     deleteLoading =
@@ -660,7 +661,7 @@ viewRow d op model =
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
-                    [ span [ class "tag is-danger is-light is-smaller2 tooltip has-tooltip-arrow", attribute "data-tooltip" T.deleteThisContract ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
+                    [ span [ class "button-light is-small is-danger", title T.deleteThisContract ] [ A.icon "icon-trash", loadingSpin deleteLoading ] ]
 
               else
                 text ""
@@ -731,7 +732,7 @@ viewContractPage c op model =
                     n =
                         nodeFromTension c.tension
                 in
-                div [ class "notification is-success is-light" ]
+                div [ class "notification is-success is-soft" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , ternary isCandidate
                         (text (cev2c n.type_ c.event.event_type))
@@ -739,7 +740,7 @@ viewContractPage c op model =
                     ]
 
             else if isVoteSuccess && model.voteForm.vote == 0 then
-                div [ class "notification is-danger is-light" ] [ text T.invitationRejected ]
+                div [ class "notification is-danger is-soft" ] [ text T.invitationRejected ]
 
             else
                 viewVoteBox model.form.uctx isValidator participants candidates c model
@@ -754,7 +755,7 @@ viewContractPage c op model =
             text ""
         , Comments.viewCommentsContract model.session model.comments |> Html.map CommentsMsg
         , hr [ class "has-background-border-light is-2" ] []
-        , case model.user of
+        , case model.session.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
                     Comments.viewContractCommentInput model.session model.comments |> Html.map CommentsMsg
@@ -876,7 +877,7 @@ viewContractBox c op model =
              , div [ class "is-pulled-right" ] [ text (T.created ++ space_), byAt model.session c.createdBy c.createdAt ]
              ]
                 ++ (if c.status == ContractStatus.Open && (isAuthor || op.isAdmin) then
-                        [ hr [] []
+                        [ br [] []
                         , div
                             [ class "is-pulled-right button-light is-danger"
                             , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
@@ -919,13 +920,13 @@ viewVoteBox uctx isValidator participants candidates c model =
              else
                 -- Otherwire show a "Accept/Cancel" buttons
                 [ div
-                    [ class "button is-success is-light is-rounded"
+                    [ class "button is-success is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
                     , onClick (OnSubmit (not isLoading) <| DoVote 1)
                     ]
                     [ span [ class "mx-4" ] [ text T.accept ] ]
                 , div
-                    [ class "button is-danger is-light is-rounded"
+                    [ class "button is-danger is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
                     , onClick (OnSubmit (not isLoading) <| DoVote 0)
                     ]

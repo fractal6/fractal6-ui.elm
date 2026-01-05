@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -22,10 +22,10 @@
 module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
-import Bulk exposing (UserState(..))
+import Bulk exposing (UserState(..), getParent)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Bulk.View exposing (counter, viewRole, visibility2icon)
-import Extra exposing (ternary, unwrap, unwrap2)
+import Extra exposing (showIf, ternary, unwrap, unwrap2)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -33,11 +33,13 @@ import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)
 import Html.Events exposing (onClick)
+import List.Extra as LE
 import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
-import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, ViewMode(..))
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, ViewMode(..))
+import String.Format as Format
 import Text as T
 
 
@@ -52,11 +54,11 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , rolesState : RolesState
+    { rolesState : RolesState
     , focus : NodeFocus
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , baseUri : FractalBaseRoute
     , uriQuery : Maybe String
@@ -68,22 +70,22 @@ type RolesState
     | Collapsed
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Model
-initModel baseUri uriQuery focus user =
-    { user = user
-    , rolesState = Collapsed
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> SessionCommon -> Model
+initModel baseUri uriQuery focus session =
+    { rolesState = Collapsed
     , focus = focus
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , baseUri = baseUri
     , uriQuery = uriQuery
     }
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> State
-init baseUri uriQuery focus user =
-    initModel baseUri uriQuery focus user |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> SessionCommon -> State
+init baseUri uriQuery focus session =
+    initModel baseUri uriQuery focus session |> State
 
 
 expand : Model -> Model
@@ -182,7 +184,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx } }, noOut )
 
 
 subscriptions : List (Sub Msg)
@@ -200,35 +206,35 @@ subscriptions =
 type alias Op =
     { path_data : Maybe LocalGraph
     , isPanelOpen : Bool
-    , session : Session
+    , orgaInfo : Maybe OrgaInfo
     }
 
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    -- @debug: padding-top overflow column.width is-paddingless
-    div [ id "helperBar", class "columns is-centered is-marginless" ]
-        [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ] <|
-            case op.session.viewMode of
+    -- @debug: padding-top overflow column.width p-0
+    div [ id "helperBar", class "columns is-centered m-0" ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd p-0" ] <|
+            case model.session.viewMode of
                 DesktopView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op model ]
-                    , viewNavLevel op model
+                    [ div [ class "ml-3 mb-4 mx-mobile" ] [ viewPathContext op model ]
+                    , viewNavTabs op model
                     ]
 
                 EmbedView ->
-                    [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevelEmbed op model ] ]
+                    [ div [ class "ml-3 mb-4 mx-mobile" ] [ viewPathContextEmbed op model ] ]
         ]
 
 
-viewPathLevelEmbed : Op -> Model -> Html Msg
-viewPathLevelEmbed op model =
+viewPathContextEmbed : Op -> Model -> Html Msg
+viewPathContextEmbed op model =
     nav [ class "level" ]
         [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
         ]
 
 
-viewPathLevel : Op -> Model -> Html Msg
-viewPathLevel op model =
+viewPathContext : Op -> Model -> Html Msg
+viewPathContext op model =
     let
         ( rootnameid, userCanJoin ) =
             case op.path_data of
@@ -241,7 +247,7 @@ viewPathLevel op model =
                     ( "", False )
 
         ( watch_icon, watch_txt, watch_title ) =
-            if unwrap2 False .isWatching op.session.orgaInfo then
+            if unwrap2 False .isWatching op.orgaInfo then
                 ( "icon-eye is-liked", T.unwatch, T.unwatchThisOrganisation )
 
             else
@@ -253,13 +259,13 @@ viewPathLevel op model =
             [ case op.path_data of
                 Just _ ->
                     div
-                        [ class "tag has-border-light is-rounded-light mr-3 is-w is-h"
+                        [ class "tag has-border-light-small is-rounded-light mr-3 is-w is-h"
                         , attribute "style" "padding: 14px 15px;"
                         , title watch_title
                         , onClick OnToggleWatch
                         ]
                         [ A.icon1 watch_icon watch_txt
-                        , case unwrap 0 .n_watchers op.session.orgaInfo of
+                        , case unwrap 0 .n_watchers op.orgaInfo of
                             0 ->
                                 text ""
 
@@ -270,7 +276,7 @@ viewPathLevel op model =
                 Nothing ->
                     text ""
             , div [ id "rolesMenu", class "is-hidden-mobile" ]
-                [ case model.user of
+                [ case model.session.user of
                     LoggedIn uctx ->
                         case op.path_data of
                             Just path ->
@@ -303,8 +309,8 @@ viewPathLevel op model =
         ]
 
 
-viewNavLevel : Op -> Model -> Html Msg
-viewNavLevel op model =
+viewNavTabs : Op -> Model -> Html Msg
+viewNavTabs op model =
     let
         focusid =
             Maybe.map (\x -> x.focus.nameid) op.path_data
@@ -316,8 +322,8 @@ viewNavLevel op model =
                 [ a [ href (toLink OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
              , li [ classList [ ( "is-active", model.baseUri == TensionsBaseUri || isTensionBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink TensionsBaseUri focusid []) ]
-                    [ A.icon1 "icon-exchange" T.tensions
-                    , case unwrap 0 .n_tensions op.session.orgaInfo of
+                    [ A.icon1 "icon-exchange" (T.tensions model.session.lexicon)
+                    , case unwrap 0 .n_tensions op.orgaInfo of
                         0 ->
                             text ""
 
@@ -328,7 +334,7 @@ viewNavLevel op model =
              , li [ classList [ ( "is-active", model.baseUri == ProjectsBaseUri || isProjectBaseUri model.baseUri ) ] ]
                 [ a [ href (toLink ProjectsBaseUri focusid []) ]
                     [ A.icon1 "icon-layout" T.projects
-                    , case unwrap 0 .n_projects op.session.orgaInfo of
+                    , case unwrap 0 .n_projects op.orgaInfo of
                         0 ->
                             text ""
 
@@ -355,7 +361,7 @@ viewNavLevel op model =
                                 [ li [ classList [ ( "is-active", model.baseUri == MembersBaseUri ) ] ]
                                     [ a [ href (toLink MembersBaseUri focusid []) ]
                                         [ A.icon1 "icon-user" T.members
-                                        , case unwrap 0 .n_members op.session.orgaInfo of
+                                        , case unwrap 0 .n_members op.orgaInfo of
                                             0 ->
                                                 text ""
 
@@ -373,7 +379,7 @@ viewNavLevel op model =
                    )
                 ++ (Maybe.map
                         (\path ->
-                            if model.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                            if model.session.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "vbar" ] []
                                 , li [ classList [ ( "is-active", model.baseUri == SettingsBaseUri ) ] ]
                                     [ a [ href (toLink SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
@@ -387,20 +393,14 @@ viewNavLevel op model =
                    )
                 ++ (Maybe.map
                         (\path ->
-                            if path.focus.type_ == NodeType.Role then
-                                [ li [ class "" ]
+                            [ showIf (path.focus.nameid /= unwrap "" .nameid path.root) <|
+                                li []
                                     [ span
-                                        [ class "help-label button-light is-h is-discrete is-align-self-flex-start"
-
-                                        --, onClick OnGoRoot
+                                        [ class "help-label button-light is-goroot is-align-self-flex-start"
                                         ]
-                                        [ a [ href (toLink model.baseUri (nearestCircleid focusid) []) ] [ A.icon "arrow-up", text T.goRoot ]
-                                        ]
+                                        [ a [ class "is-smaller", href (toLink model.baseUri (getParent path |> withDefault "") []) ] [ A.icon "arrow-up", text T.goUp ] ]
                                     ]
-                                ]
-
-                            else
-                                []
+                            ]
                         )
                         op.path_data
                         |> withDefault []
@@ -412,7 +412,7 @@ viewNavLevel op model =
 viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html Msg
 viewPath baseUri uriQuery maybePath =
     div
-        [ class "breadcrumb wrapped-container"
+        [ class "breadcrumb has-succeeds-separator wrapped-container"
         , attribute "aria-label" "breadcrumbs"
         ]
     <|
@@ -423,7 +423,7 @@ viewPath baseUri uriQuery maybePath =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
 
                     icon =
-                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
                         --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
                         A.icon0 "icon-layers icon-lg"
                 in
@@ -446,17 +446,10 @@ viewPath baseUri uriQuery maybePath =
                             else
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
-                                    , a [ class "is-block is-wrapped has-text-weight-semibold", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
-                                    , a
-                                        [ class "discrete-link stealth-link"
-
-                                        --, attribute "style" "weight: 500 !important;padding: 10px 10px;"
-                                        , case nid2type p.nameid of
-                                            NodeType.Circle ->
-                                                title T.editThisCircle
-
-                                            NodeType.Role ->
-                                                title T.editThisRole
+                                    , a [ class "is-block is-wrapped has-text-weight-bold has-text-strong", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
+                                    , span
+                                        [ class ""
+                                        , title (T.thisThingIs |> Format.value (NodeType.toString (nid2type p.nameid)) |> Format.value (NodeVisibility.toString g.focus.visibility))
                                         , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
                                         ]
                                         [ A.icon (visibility2icon g.focus.visibility) ]

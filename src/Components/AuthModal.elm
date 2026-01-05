@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import RemoteData
 import Requests exposing (login, signupValidate)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import String.Format as Format
 import Text as T
 
@@ -52,16 +52,16 @@ type State
 
 
 type alias Model =
-    { user : UserState
+    { session : SessionCommon
     , modalAuth : ModalAuth
     , refreshAfter : Bool
     , modalType : ModalType
     }
 
 
-initModel : UserState -> Maybe String -> Model
-initModel user puid =
-    { user = user
+initModel : Maybe String -> SessionCommon -> Model
+initModel puid session =
+    { session = session
     , modalAuth = Inactive
     , refreshAfter = False
     , modalType =
@@ -94,9 +94,9 @@ type ModalAuth
     | Active UserAuthForm (RestData UserCtx)
 
 
-init : UserState -> Maybe String -> State
-init user puid =
-    initModel user puid |> State
+init : Maybe String -> SessionCommon -> State
+init puid session =
+    initModel puid session |> State
 
 
 
@@ -168,7 +168,7 @@ update_ apis message model =
         OnStart ->
             case model.modalType of
                 SignupModal puid ->
-                    case model.user of
+                    case model.session.user of
                         LoggedIn _ ->
                             -- @future: manage multiple loggin:
                             -- * Check that the puid match the user.
@@ -181,7 +181,7 @@ update_ apis message model =
                     ( model, noOut )
 
         DoOpenAuthModal refresh uctx ->
-            case model.user of
+            case model.session.user of
                 -- @DEBUG/codefactor: pass directly {user} to DoOpenAuthModal !
                 LoggedIn _ ->
                     if model.modalAuth /= Inactive then
@@ -353,7 +353,7 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( initModel model.user Nothing, out2 [ Ports.close_modal ] gcmds )
+            ( initModel Nothing model.session, out2 [ Ports.close_modal ] gcmds )
 
 
 subscriptions : List (Sub Msg)
@@ -376,7 +376,7 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    -- @DEUBG: implement isActive2 to get Fadin working...
+    -- @DEBUG: implement isActive2 to get Fadin working...
     div []
         [ case model.modalType of
             SigninModal ->
@@ -397,7 +397,7 @@ viewAuthNeededModal : Model -> Html Msg
 viewAuthNeededModal model =
     div
         [ id "authNeededModal"
-        , class "modal is-light modal-fx-fadIn"
+        , class "modal modal-fx-fadIn"
         , classList [ ( "is-active", model.modalType == AuthNeeded ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -454,6 +454,8 @@ viewRefreshModal op model =
                                         , onKeydown SubmitKeyDown
                                         ]
                                         []
+                                    , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                        [ A.icon "icon-eye" ]
                                     ]
                                 ]
                             ]
@@ -515,7 +517,7 @@ viewSignupModal op model =
                                         |> renderMarkdown "is-human"
                                     ]
                                 , div [ class "is-aligned-center" ]
-                                    [ button [ class "button is-success is-light ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
+                                    [ button [ class "button is-success ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
                                 ]
 
                             _ ->
@@ -551,6 +553,8 @@ viewSignupModal op model =
                                                 , onKeydown SubmitKeyDown
                                                 ]
                                                 []
+                                            , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                                [ A.icon "icon-eye" ]
                                             ]
                                         ]
                                     ]
@@ -633,6 +637,8 @@ viewSigninModal op model =
                                         , onKeydown SubmitKeyDown
                                         ]
                                         []
+                                    , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                        [ A.icon "icon-eye" ]
                                     ]
                                 ]
                             ]

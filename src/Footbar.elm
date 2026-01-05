@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -26,23 +26,23 @@ import Dict
 import Extra.Url exposing (queryFullBuilder)
 import Html exposing (Html, a, div, small, span, text)
 import Html.Attributes exposing (attribute, class, href, id, target, title)
-import Session exposing (Session, ViewMode(..))
+import Session exposing (SessionCommon, ViewMode(..))
 import Text as T
 import Url
 
 
 logo_footer : Html msg
 logo_footer =
-    a [ href "https://fractale.co", attribute "style" "position:relative;top:5px;" ] [ A.logo0 ]
+    a [ class "mr-2", attribute "style" "position:relative;top:2px;", href "https://fractale.co" ] [ A.logo0 ]
 
 
-view : Session -> Html msg
+view : SessionCommon -> Html msg
 view session =
     case session.viewMode of
         DesktopView ->
             div [ id "footBar", class "footer" ]
                 [ div [ class "level m-0" ]
-                    [ small [ class "level-item is-hidden-mobile" ] [ logo_footer, text "© 2024 The Fractale Team" ]
+                    [ small [ class "level-item is-hidden-mobile" ] [ logo_footer, text "© 2025 The Fractale Team" ]
                     , div [ class "level-item" ]
                         [ div [ class "columns is-mobile is-multiline is-centered contacts" ]
                             [ span [ class "column is-narrow" ] [ a [ href "https://fractale.co/about" ] [ text "About" ] ]
@@ -52,9 +52,9 @@ view session =
                             , span [ class "column is-narrow" ] [ a [ href "mailto:contact@fractale.co" ] [ text T.contactUs ] ]
                             ]
                         ]
-                    , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2024 The Fractale Team" ]
+                    , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2025 The Fractale Team" ]
                     ]
-                , div [ class "level m-0 is-hidden-tablet" ] [ small [ class "level-item" ] [ logo_footer, text "© 2024 The Fractale Team" ] ]
+                , div [ class "level m-0 is-hidden-tablet mt-4" ] [ small [ class "level-item" ] [ logo_footer, text "© 2025 The Fractale Team" ] ]
                 ]
 
         EmbedView ->

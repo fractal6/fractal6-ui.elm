@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -33,6 +33,7 @@ import Extra exposing (space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
@@ -49,7 +50,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
-import Session exposing (Apis, GlobalCmd(..), Session, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import Text as T
 import Time
 
@@ -75,7 +76,7 @@ type alias Model =
     , formFeedback : NT.Model
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     }
@@ -122,12 +123,12 @@ labelCodec type_ =
             Label "0xc5f4" "Praise" (Just "#dddddd") []
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
     let
         form =
@@ -326,7 +327,7 @@ update_ apis message model =
             , out0
                 [ sendSleep (SetIsActive2 True) 10
                 , if not (isSuccessRest model.doc) && tab == QuickHelp then
-                    getQuickDoc apis "en" OnGotQuickDoc
+                    getQuickDoc apis (Lang.toString model.session.lang |> String.toLower) OnGotQuickDoc
 
                   else
                     send NoMsg
@@ -377,7 +378,7 @@ update_ apis message model =
         OnChangeTab tab ->
             ( changeTab tab model |> (\x -> { x | withChoice = False })
             , if not (isSuccessRest model.doc) && tab == QuickHelp then
-                out0 [ getQuickDoc apis "en" OnGotQuickDoc ]
+                out0 [ getQuickDoc apis (Lang.toString model.session.lang |> String.toLower) OnGotQuickDoc ]
 
               else
                 noOut
@@ -517,7 +518,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "helpModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
@@ -589,7 +590,7 @@ viewQuickHelp fromModal op (State model) =
                                             , section [ class "acc" ]
                                                 [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "is-light" "box") ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "" "box") ]
                                                 ]
                                             ]
                                         )
@@ -634,7 +635,7 @@ viewAskQuestion fromModal op (State model) =
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
-                [ div [ class "box is-light" ]
+                [ div [ class "box" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , text T.messageSent
                     , text ". "
@@ -749,7 +750,7 @@ viewFeedback fromModal op (State model) =
                     Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
-                [ div [ class "box is-light" ]
+                [ div [ class "box" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , text T.messageSent
                     , text ". "
@@ -884,7 +885,7 @@ viewFix op (State model) =
                     |> List.map
                         (\x ->
                             div
-                                [ class "card has-border column is-paddingless m-3 is-h"
+                                [ class "card has-border column p-0 m-3 is-h is-clickable"
                                 , onClick (OnChangeTab (Tuple.second x))
                                 ]
                                 [ div [ class "card-content p-4" ]

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -174,9 +174,13 @@ userFilter : String -> Query.QueryUserOptionalArguments -> Query.QueryUserOption
 userFilter userfrag a =
     let
         userreg =
-            "^"
-                ++ userfrag
-                |> SE.surround "/"
+            let
+                fragments =
+                    String.split " " userfrag
+                        |> List.map (\frag -> "^" ++ frag)
+                        |> String.join "|"
+            in
+            "/" ++ fragments ++ "/i"
     in
     { a
         | first = Present 30

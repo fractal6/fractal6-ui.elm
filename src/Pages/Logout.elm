@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -56,7 +56,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedOut ->
                     Global.navigate Route.Top
 

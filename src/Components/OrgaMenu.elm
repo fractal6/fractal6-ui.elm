@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -38,7 +38,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryOrgaNode)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 
 
 type State
@@ -46,23 +46,22 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool
     , focus : NodeFocus
     , orgs_result : GqlData (List OrgaNode)
     , hover : Maybe String
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> UserState -> Model
-initModel focus isActive orgs user =
-    { user = user
-    , isActive = withDefault False isActive
+initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> SessionCommon -> Model
+initModel focus isActive orgs session =
+    { isActive = withDefault False isActive
     , isActive2 = withDefault False isActive
     , focus = focus
     , orgs_result =
@@ -71,7 +70,7 @@ initModel focus isActive orgs user =
                 Success o
 
             Nothing ->
-                case user of
+                case session.user of
                     LoggedIn _ ->
                         LoadingSlowly
 
@@ -80,14 +79,15 @@ initModel focus isActive orgs user =
     , hover = Nothing
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> UserState -> State
-init focus isActive orgs user =
-    initModel focus isActive orgs user |> State
+init : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> SessionCommon -> State
+init focus isActive orgs session =
+    initModel focus isActive orgs session |> State
 
 
 
@@ -100,7 +100,7 @@ init focus isActive orgs user =
 
 reset : Model -> Model
 reset model =
-    initModel model.focus (Just model.isActive) (withMaybeData model.orgs_result) model.user
+    initModel model.focus (Just model.isActive) (withMaybeData model.orgs_result) model.session
 
 
 setDataResult : GqlData (List OrgaNode) -> Model -> Model
@@ -172,7 +172,7 @@ update_ apis message model =
     case message of
         -- Data
         OnLoad ->
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     case getRootids uctx.roles of
                         [] ->
@@ -195,8 +195,12 @@ update_ apis message model =
                     ( model, noOut )
 
         OnReload uctx ->
-            if not (isSuccess model.orgs_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
-                ( { model | orgs_result = LoadingSlowly, user = LoggedIn uctx }, out0 [ send OnLoad ] )
+            if not (isSuccess model.orgs_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.session.user).roles) then
+                let
+                    session =
+                        model.session
+                in
+                ( { model | orgs_result = LoadingSlowly, session = { session | user = LoggedIn uctx } }, out0 [ send OnLoad ] )
 
             else
                 ( model, noOut )
@@ -209,7 +213,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -223,10 +227,14 @@ update_ apis message model =
 
         OnToggle ->
             if model.isActive then
-                ( { model | isActive = False }, out0 [ Ports.saveMenuOrga False, Ports.closeOrgaMenu, sendSleep (SetIsActive2 False) 500 ] )
+                ( { model | isActive = False }
+                , out0 [ Ports.saveMenuOrga False, Ports.closeOrgaMenu, sendSleep (SetIsActive2 False) 500 ]
+                )
 
             else
-                ( { model | isActive2 = True }, out0 [ Ports.saveMenuOrga True, send OnLoad, sendSleep (SetIsActive2 True) 10 ] )
+                ( { model | isActive2 = True }
+                , out0 [ Ports.saveMenuOrga True, send OnLoad, sendSleep (SetIsActive2 True) 10 ]
+                )
 
         SetIsActive2 v ->
             -- Prevent elm from computing the VDOM
@@ -321,7 +329,7 @@ viewOrgaMenu hover focus orgs_result op =
          )
             ++ [ div [ class "m-5 pb-6" ]
                     [ a
-                        [ class "is-discrete-2"
+                        [ class "discrete-link"
                         , href (toHref Route.New_Orga)
                         , title "Create new organizatinon"
                         ]

@@ -1,6 +1,6 @@
 /*
  * Fractale - Self-organisation for humans.
- * Copyright (C) 2024 Fractale Co
+ * Copyright (C) 2025 Fractale Co
  *
  * This file is part of Fractale.
  *
@@ -182,6 +182,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $passwordViz = $doc.querySelectorAll('.passwordVisibilityTrigger');
+    if ($passwordViz.length > 0) {
+        $passwordViz.forEach(el => {
+            setupHandler("click", triggerPasswerodViz, el, el, app);
+        });
+    }
+
     const $langTrigger = $doc.querySelectorAll('.langTrigger');
     if ($langTrigger.length > 0) {
         $langTrigger.forEach(el => {
@@ -236,13 +243,14 @@ export function BulmaDriver(app, target, handlers) {
     //
     // * focus on the element automatically
     //
-    const $autofocuses = $doc.querySelectorAll('.autofocus');
-    if ($autofocuses.length > 0) {
-        $autofocuses.forEach(el => {
-            el.focus();
-            return true
-        });
-    }
+const $autofocuses = $doc.querySelectorAll('.autofocus');
+if ($autofocuses.length > 0) {
+    $autofocuses.forEach(el => {
+        el.focus();
+        el.classList.remove('autofocus'); // Remove the autofocus class after focusing to allow focus to the next one...
+        return true;
+    });
+}
 
     //
     // Submit data
@@ -920,17 +928,42 @@ function triggerMenuTree(e, el, app) {
 function triggerTheme(e, el, app) {
     // Toggle theme color
     var theme;
-    if (document.documentElement.classList.contains("dark")) {
+    if (document.documentElement.classList.contains("is-dark")) {
         theme = "light";
-    } else if (document.documentElement.classList.contains("light")) {
+    } else if (document.documentElement.classList.contains("is-light")) {
         theme = "dark";
     } else {
-        // Assume default is dark
+        // Default theme
         theme = "light"
     }
-    document.documentElement.className = theme;
-    localStorage.setItem('theme', theme.toUpperCase());
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.className = "is-" + theme;
+    localStorage.setItem('theme', theme);
     app.ports.flushGraphPackFromJs.send(null)
+    app.ports.updateThemeFromJs.send(theme);
+}
+
+function triggerPasswerodViz(e, el, app) {
+    // Find the password input by looking at siblings within the parent container
+    const inputContainer = el.parentNode;
+    const passwordInput = inputContainer.querySelector('input[type="password"], input[type="text"]');
+
+    if (passwordInput) {
+        // Toggle between password and text type
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+
+        // Optionally update the icon if needed
+        const iconElement = el.querySelector('i');
+        if (iconElement) {
+            if (passwordInput.type === 'text') {
+                iconElement.classList.remove('icon-eye');
+                iconElement.classList.add('icon-eye-off');
+            } else {
+                iconElement.classList.remove('icon-eye-off');
+                iconElement.classList.add('icon-eye');
+            }
+        }
+    }
 }
 
 function triggerLang(e, el, app) {

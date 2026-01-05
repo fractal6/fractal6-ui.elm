@@ -21,10 +21,11 @@ window.addEventListener('load', _ => {
     // Menu data
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
-    if (!theme) {
-        theme = DEFAULT_THEME;
+    if (!theme || !uctx) {
+        theme = DEFAULT_THEME.toLowerCase();
     }
-    document.documentElement.className = theme.toLowerCase();
+    document.documentElement.className = "is-" + theme;
+    document.documentElement.setAttribute('data-theme', theme);
     // Lang
     var lang = localStorage.getItem("lang");
     if (uctx && uctx.lang) {
@@ -32,6 +33,8 @@ window.addEventListener('load', _ => {
     } else if (!lang) {
         lang = DEFAULT_LANG;
     }
+    // Lexicon
+    var lexicon = localStorage.getItem("lexicon");
 
     // Init Elm
     // --
@@ -54,6 +57,7 @@ window.addEventListener('load', _ => {
                 },
                 screen: { w: window.innerWidth, h: window.innerHeight },
                 theme: theme,
+                lexicon: lexicon,
             }
         })
     );

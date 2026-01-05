@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -72,8 +72,8 @@ viewSearchBar op pattern_init pattern =
 
                               else
                                 text ""
-                            , span [ class "vbar has-border-color" ] []
-                            , span [ class "button-light is-w px-1", onClick (op.onSearchKeyDown 13) ]
+                            , span [ class "vbar" ] []
+                            , span [ class "button-light px-1", onClick (op.onSearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]
                         ]

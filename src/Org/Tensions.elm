@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -30,7 +30,7 @@ import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewPinnedTensions, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -54,7 +54,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -66,7 +66,7 @@ import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
-import Session exposing (CommonMsg, GlobalCmd(..), Session, ViewMode(..))
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, ViewMode(..))
 import Task
 import Text as T
 import Time
@@ -120,6 +120,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
+
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -205,7 +208,7 @@ type alias Model =
     , draging : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -615,30 +618,30 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri session.referer global.url session.node_focus newFocus
+            focusState TensionsBaseUri session.referer global.url session.common.node_focus newFocus
 
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = fromMaybeData session.path_data Loading
-            , children = fromMaybeDataRest session.children RemoteData.Loading
-            , tensions_int = fromMaybeData session.tensions_int Loading
-            , tensions_ext = fromMaybeData session.tensions_ext Loading
-            , tensions_all = fromMaybeData session.tensions_all Loading
-            , query = session.query
-            , offset = ternary fs.refresh 0 (Dict.get "load" session.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
-            , authorsPanel = UserSearchPanel.load session.authorsPanel session.user
-            , labelsPanel = LabelSearchPanel.load session.labelsPanel session.user
-            , pattern = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , viewMode = Dict.get "v" session.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
-            , statusFilter = Dict.get "s" session.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
-            , typeFilter = Dict.get "t" session.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
-            , depthFilter = Dict.get "d" session.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
-            , sortFilter = Dict.get "sort" session.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
-            , authors = Dict.get "u" session.query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , labels = Dict.get "l" session.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
-            , tensions_count = fromMaybeData session.tensions_count Loading
+            , path_data = fromMaybeData session.common.path_data Loading
+            , children = fromMaybeDataRest session.data.children RemoteData.Loading
+            , tensions_int = fromMaybeData session.data.tensions_int Loading
+            , tensions_ext = fromMaybeData session.data.tensions_ext Loading
+            , tensions_all = fromMaybeData session.data.tensions_all Loading
+            , query = session.common.query
+            , offset = ternary fs.refresh 0 (Dict.get "load" session.common.query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common.user
+            , labelsPanel = LabelSearchPanel.load session.data.labelsPanel session.common.user
+            , pattern = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , viewMode = Dict.get "v" session.common.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
+            , statusFilter = Dict.get "s" session.common.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
+            , typeFilter = Dict.get "t" session.common.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
+            , depthFilter = Dict.get "d" session.common.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
+            , sortFilter = Dict.get "sort" session.common.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
+            , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing)
+            , labels = Dict.get "l" session.common.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
+            , tensions_count = fromMaybeData session.data.tensions_count Loading
 
             -- Board
             , boardHeight = Nothing
@@ -651,19 +654,19 @@ init global flags =
             , draging = False
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.user
-            , help = Help.init session
-            , tensionForm = NTF.init session
-            , moveTension = MoveTension.init session.user
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , tensionForm = NTF.init session.common
+            , moveTension = MoveTension.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault Nothing) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of
@@ -682,7 +685,7 @@ init global flags =
                             queryParser referer
                     in
                     (Dict.remove "v" oldQuery |> Dict.remove "load")
-                        /= (Dict.remove "v" session.query |> Dict.remove "load")
+                        /= (Dict.remove "v" session.common.query |> Dict.remove "load")
 
                 --|| Dict.get "v" oldQuery
                 --== Dict.get "v" query
@@ -1153,7 +1156,7 @@ update global message model =
             let
                 query =
                     queryBuilder
-                        ([ ( "q", model.pattern |> String.trim )
+                        ([ ( "q", model.pattern |> String.trim |> String.map (\c -> ternary (c == '"') '\'' c) )
                          , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
@@ -1582,7 +1585,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -1595,7 +1598,7 @@ view global model =
     { title =
         (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
             ++ " · "
-            ++ T.tensions
+            ++ T.tensions model.session.lexicon
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
@@ -1637,7 +1640,7 @@ view_ global model =
                     |> withDefault Nothing
                     |> Maybe.map
                         (\x ->
-                            div [ class "mb-4", attribute "style" "margin-top:-1rem !important;" ]
+                            div [ class "mb-4" ]
                                 [ viewPinnedTensions 3 model.session model.node_focus x ]
                         )
                     |> withDefault (text "")
@@ -1699,7 +1702,7 @@ viewCatMenu typeFilter =
             |> List.append
                 [ li []
                     [ a [ onClickPD (ChangeTypeFilter AllTypes), target "_blank", classList [ ( "is-active", AllTypes == typeFilter ) ] ]
-                        [ text T.showAllCat ]
+                        [ text T.allCat ]
                     ]
                 ]
             |> ul [ class "menu-list" ]
@@ -1718,7 +1721,7 @@ viewSearchBar model =
                             , type_ "search"
                             , autocomplete False
                             , autofocus False
-                            , placeholder T.searchTensions
+                            , placeholder (T.searchTensions model.session.lexicon)
                             , value model.pattern
                             , onInput ChangePattern
                             , onKeydown SearchKeyDown
@@ -1730,8 +1733,8 @@ viewSearchBar model =
 
                               else
                                 text ""
-                            , span [ class "vbar has-border-color" ] []
-                            , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+                            , span [ class "vbar" ] []
+                            , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
                                 [ A.icon "icon-search" ]
                             ]
                         ]
@@ -1741,7 +1744,7 @@ viewSearchBar model =
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "type-filter" ]
-                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1762,7 +1765,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
-                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.status
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1780,7 +1783,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.label
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1794,7 +1797,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control", onClick ChangeAuthor ]
                         [ div [ class "button is-small" ]
-                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.author
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1808,7 +1811,7 @@ viewSearchBar model =
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "depth-filter" ]
-                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link-back" ] []) (text "")
+                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.depth
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
@@ -1837,7 +1840,7 @@ viewSearchBar model =
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsListTooltip ]
                             [ A.icon1 "icon-list" T.list ]
                         ]
                     ]
@@ -1845,20 +1848,20 @@ viewSearchBar model =
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
                 --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
                 --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                --        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ]
+                --        [ div [ class "tooltip is-left", title T.tensionsIntExtTooltip ]
                 --        [ text "Internal/External" ] ]
                 --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsCircleTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsCircleTooltip ]
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter AssigneeView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" T.tensionsAssigneeTooltip ]
+                        [ div [ class "tooltip is-left", title T.tensionsAssigneeTooltip ]
                             [ A.icon1 "icon-users" T.byAssignee ]
                         ]
                     ]
@@ -1878,24 +1881,17 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
-        , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0 !important;"
         ]
-        [ div [ class "level is-marginless is-mobile" ]
+        [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount counts statusFilter
-                , if focus.nameid /= focus.rootnameid then
-                    span
-                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
-                        , onClick OnGoRoot
-                        ]
-                        [ A.icon "arrow-up", text T.goRoot ]
-
-                  else
-                    text ""
+                , showIf (focus.nameid /= focus.rootnameid) <|
+                    viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5 " OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
-                    [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
+                    [ div [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
                         [ text T.sort
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
@@ -1911,11 +1907,8 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                     ]
                 ]
             ]
-        , if focus.nameid /= focus.rootnameid then
-            div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-          else
-            text ""
+        , showIf (focus.nameid /= focus.rootnameid) <|
+            viewGoRoot "is-hidden-tablet px-5" OnGoRoot
         ]
 
 
@@ -1925,7 +1918,7 @@ viewTensionsCount counts statusFilter =
         Success c ->
             let
                 activeCls =
-                    "is-hovered has-text-weight-semibold"
+                    "is-hovered is-active has-text-weight-semibold"
 
                 inactiveCls =
                     "has-background-header"
@@ -1966,7 +1959,7 @@ viewListTensions model =
             div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
-                viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
+                Lazy.lazy4 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
             , viewTensions ListTension model
             ]
         ]
@@ -2023,7 +2016,7 @@ viewCircleTensions model =
                             Maybe.map
                                 (\t ->
                                     if isRole t.receiver.nameid then
-                                        A.icon1 "icon-leaf" t.receiver.name
+                                        A.icon1_noflex "icon-leaf" t.receiver.name
 
                                     else
                                         text t.receiver.name
@@ -2038,7 +2031,7 @@ viewCircleTensions model =
                           else
                             a [ class "stealth-link is-w is-h", href (toLink TensionsBaseUri n [] ++ query) ] [ title ]
                         , span
-                            [ class "tag is-rounded button-light is-w has-border is-pulled-right mx-1"
+                            [ class "tag has-background-inherit is-rounded has-border-small button-light is-pulled-right mx-1"
 
                             --  It's distracting for for the eyes (works with onMouseEnter below)
                             --, classList [ ( "is-invisible", model.hover_column /= Just n ) ]
@@ -2075,9 +2068,8 @@ viewCircleTensions model =
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
                     [ text T.noTensionsYet
-                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                        (text "")
+                    , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (viewGoRoot "" OnGoRoot)
                     ]
 
             else
@@ -2145,9 +2137,8 @@ viewAssigneeTensions model =
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
                     [ text T.noTensionsAssigneesYet
-                    , ternary (model.node_focus.nameid /= model.node_focus.rootnameid)
-                        (span [ class "help-label button-light is-h is-discrete", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ])
-                        (text "")
+                    , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (viewGoRoot "" OnGoRoot)
                     ]
 
             else
@@ -2246,7 +2237,7 @@ viewClearFilterButton model =
 
     else
         span
-            [ class "tag is-rounded is-small is-danger is-light button-light"
+            [ class "tag is-rounded is-small has-background-danger-soft button-light"
             , attribute "style" "margin: 0.35rem;"
             , onClick OnClearFilter
             ]

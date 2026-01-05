@@ -1,0 +1,97 @@
+@use "shared" as *;
+
+//
+// Bulma fixes
+//
+
+// dropdown-item in navbar do not close on click
+// https://github.com/jgthms/bulma/issues/2514
+@media screen and (min-width: 1025px) {
+    .navbar-item.is-hoverable:hover .navbar-dropdown {
+        display: block !important;
+    }
+    .navbar-item.is-hoverable:focus-within .navbar-dropdown {
+        display: none;
+    }
+}
+
+.button:not(.buttonRole) {
+    // Fix for quicksand font.
+    font-weight: 600;
+}
+
+.button, .tag {
+    box-shadow: none;
+    &:not(.is-light):not(.is-ghost):not(.is-soft) {
+        color: var(--bulma-text); // var(--text) is to weak on dark mode...
+        @each $name, $pair in $colors {
+            &.is-#{$name} {
+                @if $name == 'link' {
+                    color: var(--bulma-link-invert);
+                } @else if $name == 'warning' {
+                    color: var(--bulma-warning-invert);
+                } @else {
+                    color: white;
+                }
+            }
+        }
+    }
+}
+
+.button, .tag, .box, .notification {
+    box-shadow: none;
+    @each $name, $pair in $colors {
+        &.is-#{$name}.is-soft {
+            @if $name == 'danger' {
+                color: white;
+            } @else {
+                color: var(--bulma-text);
+            }
+            background-color: var(--bulma-#{$name}-soft);
+        }
+    }
+}
+
+.level-left, .level-right {
+    gap: 0;
+}
+
+.dropdown-content {
+    box-shadow: none;
+    // @debug: the bulma color is not defined sometimes (when created on the fly in kb-board...?
+    background-color: var(--body-background-color);
+
+    .dropdown-item:hover {
+        background-color: var(--background-hover);
+    }
+}
+
+.panel-heading {
+    box-shadow: none;
+    color: var(--bulma-text);
+}
+
+.modal-card-body {
+    box-shadow: none;
+    //flex-grow: unset; // needed for the long dropdown (move tension)
+}
+
+.modal-card-head {
+    box-shadow: none;
+    padding: 1rem !important;
+}
+
+.table {
+    td {
+        color: var(--text);
+    }
+}
+
+.fixed-grid > .grid {
+    @include mobile {
+        display: block;
+        .cell:not(last-child) {
+            margin-bottom: $size-small;
+        }
+    }
+}

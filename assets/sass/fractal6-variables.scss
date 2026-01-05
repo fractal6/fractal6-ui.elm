@@ -1,0 +1,404 @@
+@use "sass:color";
+@use "sass:map";
+@use "shared" as *;
+
+@use "bulma/sass/utilities/css-variables" as cv;
+@use "bulma/sass/themes/setup";
+@use "bulma/sass/themes/light";
+@use "bulma/sass/themes/dark";
+
+//
+// App
+//
+
+
+// default Bulma colors
+$orange: hsl(14, 100%, 53%) !default;
+$yellow: hsl(42, 100%, 53%) !default;
+$green: hsl(153, 53%, 53%) !default;
+$turquoise: hsl(171, 100%, 41%) !default;
+$cyan: hsl(198, 100%, 70%) !default;
+$blue: hsl(233, 100%, 63%) !default;
+$purple: hsl(271, 100%, 71%) !default;
+$red: hsl(348, 100%, 70%) !default;
+
+// common colors
+$white-dimmed: #c1cdd9;
+$blue-grey:  #668099;
+$f6-warning: #d38e23; // orange
+$f6-success: #1ca64c; // green
+
+//
+// Dimensions
+//
+$section-padding-desktop: 3rem 1.5rem;
+$border-size: 2px;
+$border-size-small: 1px;
+
+// Navbar
+$navbar-height: 2.4rem;
+$navbar-item-img-max-height: 1.5rem;
+$navbar-padding: 0rem;
+
+// Modal
+$modal-background-background-color: rgba(black, 0.7);
+$modal-in-duration: 0.25s;
+$modal-out-duration: 0.33s;
+$modal-width: 650px;
+$modal-width-large: 790px;
+
+// Tooltip
+$tooltip-background-opacity: 0.92;
+$tooltip-background-color: var(--grey-dark);
+$tooltip-color: white;
+//-- Node tooltip
+$tooltip-transition-duration: 0.1s;
+
+// quick help
+$acc-height-title: 42px;
+$acc-height-subtitle: 48px;
+$acc-height: 48px;
+
+// Menu
+$orga-menu-width: 64px;
+$tree-menu-width: 260px;
+
+//
+// Light Theme
+//
+
+$background-secondary-light: var(--bulma-scheme-main); // #f6f8fa
+$background-header-light: #f6f8fa;
+$background-evidence-light: #f8f4fd; // etheureum
+
+$f6-light-palette: (
+    primary: #7070ee, // #4258ff ethereum(blue) - #6c24e0 ethereum(purple) - #7070ee alice(purple) - #2176d0
+    info: $blue,
+    success: $f6-success,
+    warning: $f6-warning,
+    danger: #ff5338,
+    link: #1293d8, // #1293d8 elm(blue)
+    link2: #1293d8,
+);
+$f6-light-theme: (
+  // Background
+  body-background-color: var(--bulma-scheme-main),
+  secondary-background: $background-secondary-light,
+  header-background-color: $background-header-light,
+  orga-menu-background-color: $background-secondary-light,
+  tree-menu-background-color: $background-secondary-light,
+  background-evidence: $background-evidence-light,
+  background-hover: var(--bulma-background),
+  background-hover-discrete: var(--bulma-scheme-main-bis),
+  user-emoticon-bg: #eeeeff,
+  orga-emoticon-bg: #71beee, // #6da8d6
+
+  //Colors (shortcuts...)
+  text: var(--bulma-text),
+  link: var(--bulma-link),
+  primary: var(--bulma-primary),
+  info: var(--bulma-info),
+  success: var(--bulma-success),
+  warning: var(--bulma-warning),
+  danger: var(--bulma-danger),
+  //Custom
+  link2: var(--bulma-link2),
+  announce: #bfb40c,
+  author: $background-evidence-light,
+  counter: var(--bulma-border-weak),
+  node-tooltip-background: $background-evidence-light,
+  // All primary colors have those variations...
+  text-weak: var(--bulma-text-weak),
+  text-evidence: var(--bulma-text-20),
+  text-strong: var(--bulma-text-10), // similar to -bold
+  text-invert: var(--bulma-text-invert), // not sure useful
+
+  // Borders
+  border-color: var(--bulma-text-60),
+  border-color-light: var(--bulma-text-80),
+
+  // Markdown
+  code-color: $background-header-light,
+
+  // GraphPack
+  // --
+  gp-lvl-0-bg: $background-header-light,
+  gp-lvl-1-bg: #e5e5e5,
+  gp-lvl-2-bg: #bababa,
+  gp-lvl-3-bg: #a3a3a3,
+  // Not tested/used
+  gp-lvl-4-bg: #7c868e,
+  gp-lvl-5-bg: #646e75,
+  gp-lvl-6-bg: #51595f,
+  gp-lvl-7-bg: #454b50,
+  // Roles
+  owner: var(--bulma-warning),
+  member: var(--bulma-primary),
+  coordinator: var(--bulma-warning),
+  peer: var(--bulma-primary),
+  bot: $white-dimmed,
+  guest: $blue-grey,
+  pending: $turquoise,
+  retired: $purple,
+);
+$bulma-light-theme: (
+  body-background-color: map.get($f6-light-theme, 'body-background-color'),
+  footer-background-color: map.get($f6-light-theme, 'secondary-background'),
+  box-background-color: map.get($f6-light-theme, 'secondary-background'),
+  navbar-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-brand-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-item-background-color: map.get($f6-light-theme, 'body-background-color'),
+  navbar-dropdown-arrow: var(--bulma-navbar-item-color),
+  modal-background-background-color: $modal-background-background-color,
+  shadow: $shadow-color,
+  breadcrumb-item-separator-color: var(--bulma-text-weak),
+  button-color: var(--bulma-text), // text-strong by default
+  table-color: var(--text),
+);
+
+//
+// Dark Theme
+//
+
+$background-secondary-dark: var(--bulma-scheme-main);
+$background-header-dark: #202328; // #2a2f35(v1) #202328(bulma-background)
+$background-evidence-dark: #212830; // github background , bulma-scheme-main-ter
+
+$f6-dark-palette: (
+    primary: #7070ee, // #4258ff ethereum(blue) - #6c24e0 ethereum(purple) - #7070ee alice(purple) - #2176d0
+    info: $cyan,
+    success: $f6-success,
+    warning: $f6-warning,
+    danger: $red,
+    link: #7af2bf, // #7af2bf eth(green) - #3ffba3
+    link2: $green,
+);
+$f6-dark-theme: (
+  // Background
+  body-background-color: var(--bulma-scheme-main),
+  secondary-background: $background-secondary-dark,
+  header-background-color: $background-header-dark,
+  orga-menu-background-color: $background-secondary-dark,
+  tree-menu-background-color: $background-secondary-dark,
+  background-evidence: $background-evidence-dark,
+  background-hover: var(--bulma-background),
+  background-hover-discrete: var(--bulma-scheme-main-bis),
+  user-emoticon-bg: #00000052,
+  orga-emoticon-bg: #1d4060, //  #6996f7 (blue ethereum)
+
+  //Colors (shortcuts...)
+  text: var(--bulma-text),
+  link: var(--bulma-link),
+  primary: var(--bulma-primary),
+  info: var(--bulma-info),
+  success: var(--bulma-success),
+  warning: var(--bulma-warning),
+  danger: var(--bulma-danger),
+  //Custom
+  link2: var(--bulma-link2),
+  announce: #eedb44,
+  author: $background-evidence-dark,
+  counter: var(--bulma-border-weak),
+  node-tooltip-background: $background-evidence-dark,
+  // All primary colors have those variations...
+  text-weak: var(--bulma-text-weak),
+  text-evidence: var(--bulma-text-80),
+  text-strong: var(--bulma-text-strong), // similar to -bold
+  text-invert: var(--bulma-text-invert), // not sure useful
+
+  // Borders
+  border-color: var(--bulma-border),
+  border-color-light: var(--bulma-border-weak),
+
+  // Markdown
+  code-color: $background-header-dark,
+
+  // GraphPack
+  // --
+  gp-lvl-0-bg: $background-header-dark,
+  gp-lvl-1-bg: #3d3d52,    // Medium blue-gray
+  gp-lvl-2-bg: #565673,    // Lighter blue-gray
+  gp-lvl-3-bg: #7272a3,    // Light purple-blue
+  // Not tested/used
+  gp-lvl-4-bg: #404040,
+  gp-lvl-5-bg: #303030,
+  gp-lvl-6-bg: #202020,
+  gp-lvl-7-bg: #101010,
+  // Roles
+  owner: var(--bulma-warning),
+  member: var(--bulma-primary),
+  coordinator: var(--bulma-warning),
+  peer: var(--bulma-primary),
+  bot: $grey-dark,
+  guest: $blue-grey,
+  pending: $turquoise,
+  retired: $purple,
+);
+$bulma-dark-theme: (
+  body-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  footer-background-color: map.get($f6-dark-theme, 'secondary-background'),
+  box-background-color: map.get($f6-dark-theme, 'secondary-background'),
+  navbar-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-brand-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-item-background-color: map.get($f6-dark-theme, 'body-background-color'),
+  navbar-dropdown-arrow: var(--bulma-navbar-item-color),
+  modal-background-background-color: $modal-background-background-color,
+  shadow: $shadow-color,
+  breadcrumb-item-separator-color: var(--bulma-text-weak),
+  button-color: var(--bulma-text), // text-strong by default
+  table-color: var(--text),
+);
+
+//
+// Commons/Mixins
+//
+
+$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal);
+$f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
+
+// Mixin to apply theme overrides to classes
+@mixin apply-bulma-overrides($theme-map) {
+  @each $class in $bulma-override-classes {
+    .#{$class} {
+      @each $var-name, $value in $theme-map {
+        --bulma-#{$var-name}: #{$value};
+      }
+    }
+  }
+}
+
+
+// Helper to register, generate palette, and generate on-scheme colors for each color token
+@mixin _register-theme-palette($theme-palette, $scheme-main) {
+    // Loop over the palette for auto configuration
+  @each $name, $value in $theme-palette {
+    @include cv.register-hsl($name, $value);
+    @include cv.generate-color-palette($name, $value);
+    @include cv.generate-on-scheme-colors($name, $value, $scheme-main);
+  }
+}
+
+@mixin light-theme-config {
+  @include light.light-theme;
+  @include _register-theme-palette($f6-light-palette, light.$scheme-main);
+}
+
+@mixin dark-theme-config {
+  @include dark.dark-theme;
+  @include _register-theme-palette($f6-dark-palette, dark.$scheme-main);
+}
+
+//
+// Css Chore
+//
+
+:root {
+
+    // Dimmension
+    --bulma-section-padding-desktop: 3rem 1.5rem;
+
+    // Navbar
+    --bulma-navbar-height: #{$navbar-height};
+    --bulma-navbar-item-img-max-height: #{$navbar-item-img-max-height};
+    --bulma-navbar-padding: #{$navbar-padding};
+
+    // Modal
+    --bulma-modal-background-background-color: #{$modal-background-background-color};
+    --bulma-modal-in-duration: #{$modal-in-duration};
+    --bulma-modal-out-duration: #{$modal-out-duration};
+    --bulma-modal-width: #{$modal-width};
+    --bulma-modal-width-large: #{$modal-width-large};
+
+    //-- Node tooltip
+    --tooltip-transition-duration: #{$tooltip-transition-duration};
+
+    // quick help
+    --acc-height-title: #{$acc-height-title};
+    --acc-height-subtitle: #{$acc-height-subtitle};
+    --acc-height: #{$acc-height};
+
+}
+
+
+// Apply light theme
+// --
+// prefers-color-scheme
+@media (prefers-color-scheme: light) {
+  :root {
+    @each $name, $value in $f6-light-theme {
+      --#{$name}: #{$value};
+    }
+    @each $name, $value in $bulma-light-theme {
+        --bulma-#{$name}: #{$value};
+    }
+  }
+  @include apply-bulma-overrides($bulma-light-theme);
+}
+// Class-based overrides
+[data-theme=light], .theme-light, .is-light, :root.is-light {
+  @each $name, $value in $f6-light-theme {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $bulma-light-theme {
+    --bulma-#{$name}: #{$value};
+  }
+  @include apply-bulma-overrides($bulma-light-theme);
+}
+
+// Apply dark theme
+// --
+// prefers-color-scheme
+@media (prefers-color-scheme: dark) {
+  :root {
+    @each $name, $value in $f6-dark-theme {
+      --#{$name}: #{$value};
+    }
+    @each $name, $value in $bulma-dark-theme {
+        --bulma-#{$name}: #{$value};
+    }
+  }
+  @include apply-bulma-overrides($bulma-dark-theme);
+}
+
+// Class-based overrides
+[data-theme=dark], .theme-dark, .is-dark, :root.is-dark{
+  @each $name, $value in $f6-dark-theme {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $bulma-dark-theme {
+    --bulma-#{$name}: #{$value};
+  }
+  @include apply-bulma-overrides($bulma-dark-theme);
+}
+
+//
+// Initial theme setup
+//
+
+// Setup the light theme as the default theme
+:root {
+  @include light-theme-config;
+  @include setup.setup-theme;
+}
+
+// prefers-color-scheme: light
+@include cv.system-theme($name: "light") {
+  @include light-theme-config;
+}
+
+// prefers-color-scheme: dark
+@include cv.system-theme($name: "dark") {
+  @include dark-theme-config;
+}
+
+// [data-theme=light], .theme-light
+@include cv.bulma-theme($name: "light") {
+  @include light-theme-config;
+  @include setup.setup-theme;
+}
+
+// [data-theme=dark], .theme-dark
+@include cv.bulma-theme($name: "dark") {
+  @include dark-theme-config;
+  @include setup.setup-theme;
+}

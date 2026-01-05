@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -57,7 +57,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -73,7 +73,7 @@ import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
+import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -136,6 +136,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
+
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -227,7 +230,7 @@ type alias Model =
 
     -- Common
     , refresh_trial : Int
-    , session : Session
+    , session : SessionCommon
     , comments : Comments.State
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -300,7 +303,7 @@ init global flags =
                     ContractsBaseUri
 
         fs =
-            focusState TensionBaseUri session.referer global.url session.node_focus newFocus_
+            focusState TensionBaseUri session.referer global.url session.common.node_focus newFocus_
 
         newFocus =
             if fs.orgChange then
@@ -308,15 +311,15 @@ init global flags =
                 newFocus_
 
             else
-                session.path_data
+                session.common.path_data
                     |> Maybe.map focusFromPath
                     |> withDefault newFocus_
 
         nodeView =
-            Dict.get "v" session.query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
+            Dict.get "v" session.common.query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
 
         path_data =
-            ternary fs.orgChange Loading (fromMaybeData session.path_data Loading)
+            ternary fs.orgChange Loading (fromMaybeData session.common.path_data Loading)
 
         focusid =
             withMaybeData path_data
@@ -332,9 +335,9 @@ init global flags =
             , contractid = cid_m
             , activeTab = tab
             , nodeView = nodeView
-            , jumpTo = Dict.get "goto" session.query |> Maybe.map List.head |> withDefault Nothing
+            , jumpTo = Dict.get "goto" session.common.query |> Maybe.map List.head |> withDefault Nothing
             , path_data = path_data
-            , tension_head = ternary fs.orgChange Loading (fromMaybeData session.tension_head Loading)
+            , tension_head = ternary fs.orgChange Loading (fromMaybeData session.data.tension_head Loading)
             , focusState = fs
             , tension_comments = Loading
             , tension_blobs = Loading
@@ -347,7 +350,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form
-            , tension_form = initTensionForm tid Nothing session.user
+            , tension_form = initTensionForm tid Nothing session.common.user
 
             -- Title Result
             , isTitleEdit = False
@@ -355,9 +358,9 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init tid Nothing nodeView session.user
+                NodeDoc.init tid Nothing nodeView session.common.user
                     |> (\x ->
-                            case session.tension_head of
+                            case session.data.tension_head of
                                 Just th ->
                                     NodeDoc.initBlob (nodeFromTension th) x
 
@@ -370,32 +373,32 @@ init global flags =
             , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
-            , assigneesPanel = UserSearchPanel.init tid AssignUser session.user
-            , labelsPanel = LabelSearchPanel.init tid AssignLabel session.user
+            , assigneesPanel = UserSearchPanel.init tid AssignUser session.common.user
+            , labelsPanel = LabelSearchPanel.init tid AssignLabel session.common.user
 
             -- Common
-            , session = session
-            , helperBar = HelperBar.init baseUri global.url.query newFocus session.user
-            , help = Help.init session
-            , tensionForm = NTF.init session
+            , session = session.common
+            , helperBar = HelperBar.init baseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , tensionForm = NTF.init session.common
             , refresh_trial = 0
-            , moveTension = MoveTension.init session.user
-            , contractsPage = ContractsPage.init focusid session.user session
-            , selectType = SelectType.init tid session.user
-            , actionPanel = ActionPanel.init session.user session.screen
+            , moveTension = MoveTension.init session.common
+            , contractsPage = ContractsPage.init focusid session.common
+            , selectType = SelectType.init tid session.common
+            , actionPanel = ActionPanel.init session.common
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
 
             -- Open a signin dialog if contracts are requested
-            , authModal = AuthModal.init session.user (Dict.get "puid" session.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing))
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , comments = Comments.init focusid tid session.user
+            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , comments = Comments.init focusid tid session.common
             }
 
         refresh =
-            Maybe.map (\x -> id3Changed x.id global.url) session.tension_head |> withDefault True
+            Maybe.map (\x -> id3Changed x.id global.url) session.data.tension_head |> withDefault True
 
         -- Memory optimization
         ( tension_head, hist_cmd ) =
@@ -584,7 +587,7 @@ update global message model =
         LoadTensionHead ->
             let
                 ( uctx, cmd ) =
-                    case global.session.user of
+                    case global.session.common.user of
                         LoggedIn uctx_ ->
                             ( uctx_
                               -- Now directly loaded in TensionLoad query
@@ -656,7 +659,7 @@ update global message model =
                                     { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                 isAdmin =
-                                    getTensionRights (uctxFromUser global.session.user) model.tension_head result
+                                    getTensionRights (uctxFromUser global.session.common.user) model.tension_head result
 
                                 newFocus =
                                     focusFromNameid newPath.focus.nameid
@@ -694,7 +697,7 @@ update global message model =
         GotTensionHead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
@@ -733,7 +736,7 @@ update global message model =
                                 nid2rootid targetid
 
                         isAdmin =
-                            getTensionRights (uctxFromUser global.session.user) result model.path_data
+                            getTensionRights (uctxFromUser global.session.common.user) result model.path_data
                     in
                     ( { model
                         -- Memory Optimization: Do no store history twice.
@@ -763,7 +766,7 @@ update global message model =
         GotIsSubscribe result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
@@ -803,7 +806,7 @@ update global message model =
         GotMarkAsRead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
@@ -826,7 +829,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         DoUnsubscribe name ->
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     ( { model | unsubscribe = name }
                     , toggleTensionSubscription apis uctx.username model.tensionid False GotUnsubscribe
@@ -834,7 +837,7 @@ update global message model =
                     )
 
                 LoggedOut ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
         OnCloseUnsubscribe ->
             ( { model | unsubscribe = "" }, Cmd.none, Cmd.none )
@@ -842,19 +845,19 @@ update global message model =
         GotUnsubscribe result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (DoUnsubscribe model.unwatch) 500, send UpdateUserToken )
 
                 OkAuth d ->
-                    ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
+                    ( { model | unsubscribe_result = result }, sendSleep OnCloseUnsubscribe 5000, Cmd.none )
 
                 _ ->
                     ( { model | unsubscribe_result = result }, Cmd.none, Cmd.none )
 
         DoUnwatch name ->
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     ( { model | unwatch = name }
                     , toggleOrgaWatch apis uctx.username model.node_focus.rootnameid False GotUnwatch
@@ -862,7 +865,7 @@ update global message model =
                     )
 
                 LoggedOut ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
         OnCloseUnwatch ->
             ( { model | unwatch = "" }, Cmd.none, Cmd.none )
@@ -872,13 +875,13 @@ update global message model =
             -- * NEED: push user notifications to inform the success of the operation (do this for tension unsubscribe also).
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (DoUnwatch model.unwatch) 500, send UpdateUserToken )
 
                 OkAuth d ->
-                    ( { model | unwatch_result = result }, Cmd.none, send (GotIsWatching result) )
+                    ( { model | unwatch_result = result }, sendSleep OnCloseUnwatch 5000, send (GotIsWatching result) )
 
                 _ ->
                     ( { model | unwatch_result = result }, Cmd.none, Cmd.none )
@@ -919,7 +922,7 @@ update global message model =
         PinAck result ->
             case parseErr result 2 of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 OkAuth d ->
                     let
@@ -929,7 +932,7 @@ update global message model =
                         th =
                             withMapData (\x -> { x | isPinned = v }) model.tension_head
                     in
-                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid Nothing global.session.user }
+                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid Nothing global.session.common.user }
                     , Cmd.none
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -952,7 +955,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.user, title_result = NotAsked }, Cmd.none, Cmd.none )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
 
         SubmitTitle time ->
             let
@@ -976,7 +979,7 @@ update global message model =
         TitleAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | title_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( { model | title_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PushTitle 500, send UpdateUserToken )
@@ -992,7 +995,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid Nothing global.session.user
+                            initTensionForm model.tensionid Nothing global.session.common.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , Cmd.none
@@ -1009,19 +1012,19 @@ update global message model =
             )
 
         ChangeBlobEdit value ->
-            ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         ChangeBlobPost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
         AddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         AddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         AddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
 
         CommitBlob data time ->
             let
@@ -1040,7 +1043,7 @@ update global message model =
             in
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | nodeDoc = NodeDoc.setResult NotAsked model.nodeDoc }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( { model | nodeDoc = NodeDoc.setResult NotAsked model.nodeDoc }, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushBlob_ newDoc.form) 500, send UpdateUserToken )
@@ -1094,7 +1097,7 @@ update global message model =
         PushBlobAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | publish_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( { model | publish_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PublishBlob 500, send UpdateUserToken )
@@ -1121,7 +1124,7 @@ update global message model =
                                     { th | blobs = blobs, title = r.title, hasBeenPushed = True }
 
                                 resetForm =
-                                    initTensionForm model.tensionid Nothing global.session.user
+                                    initTensionForm model.tensionid Nothing global.session.common.user
                             in
                             ( { model
                                 | tension_head = Success newTh
@@ -1493,7 +1496,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -1542,7 +1545,7 @@ view_ global model =
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ case model.tension_head of
                 Success t ->
-                    viewTension global.session.user t model
+                    viewTension global.session.common.user t model
 
                 Failure err ->
                     -- If user has only contract visibility right...
@@ -1560,7 +1563,7 @@ view_ global model =
 
             -- User notification
             , if isSuccess model.unsubscribe_result && model.unsubscribe /= "" then
-                div [ class "f6-notification notification is-success-light" ]
+                div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
                     , text T.beenUnsubscribe
                     ]
@@ -1568,7 +1571,7 @@ view_ global model =
               else
                 text ""
             , if isSuccess model.unwatch_result && model.unwatch /= "" then
-                div [ class "f6-notification notification is-success-light" ]
+                div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnwatch ] []
                     , text T.beenUnwatch
                     ]
@@ -1597,7 +1600,7 @@ viewTension u t model =
             t.blobs |> withDefault [] |> List.head
     in
     div []
-        [ div [ class "columns is-marginless" ]
+        [ div [ class "columns m-0" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9 px-0 pt-0" ]
@@ -1644,8 +1647,8 @@ viewTension u t model =
                         [ span [ class "is-human" ] [ text t.title ]
                         , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
-                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow is-hidden-embed"
-                                , attribute "data-tooltip" T.editTitle
+                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip is-hidden-embed"
+                                , title T.editTitle
                                 , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
                                 ]
@@ -1900,14 +1903,14 @@ viewSidePane u t model =
         [ -- Assignees/User select
           div
             [ class "media"
-            , classList [ ( "is-w", hasAssigneeRight ) ]
+            , classList [ ( "is-w2", hasAssigneeRight ) ]
             , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
             ]
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn _ ->
                         [ h2
-                            [ class "subtitle", classList [ ( "is-h", hasAssigneeRight ) ] ]
+                            [ class "subtitle" ]
                             [ text T.assignees
                             , if model.isAssigneeOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -1935,7 +1938,7 @@ viewSidePane u t model =
                                 viewUsers True assignees
 
                               else
-                                div [ class "help is-italic" ] [ text T.noneYet ]
+                                div [ class "help-label is-italic" ] [ text T.noneYet ]
                             ]
                        ]
             ]
@@ -1943,13 +1946,13 @@ viewSidePane u t model =
         -- Label select
         , div
             [ class "media"
-            , classList [ ( "is-w", hasLabelRight ) ]
+            , classList [ ( "is-w2", hasLabelRight ) ]
             , ternary hasLabelRight (onClick DoLabelEdit) (onClick NoMsg)
             ]
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn _ ->
-                        [ h2 [ class "subtitle", classList [ ( "is-h", hasLabelRight ) ] ]
+                        [ h2 [ class "subtitle" ]
                             [ text T.labels
                             , if model.isLabelOpen then
                                 A.icon "icon-x is-pulled-right"
@@ -1977,7 +1980,7 @@ viewSidePane u t model =
                                 viewLabels Nothing labels
 
                               else
-                                div [ class "help is-italic" ] [ text T.noneYet ]
+                                div [ class "help-label is-italic" ] [ text T.noneYet ]
                             ]
                        ]
             ]
@@ -1996,11 +1999,13 @@ viewSidePane u t model =
                     node =
                         blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
                 in
-                div [ class "media" ]
+                div
+                    [ class "media"
+                    , classList [ ( "is-w2", hasBlobRight || hasRole ) ]
+                    ]
                     [ div [ class "media-content wrapped-container" ]
                         [ div
                             [ class "media-content"
-                            , classList [ ( "is-w", hasBlobRight || hasRole ) ]
                             , if not isOpen then
                                 onClick (OpenActionPanel domid node.nameid Nothing)
 
@@ -2012,7 +2017,7 @@ viewSidePane u t model =
                                 LoggedIn _ ->
                                     [ div [ id domid ]
                                         [ h2
-                                            [ class "subtitle", classList [ ( "is-h", hasBlobRight || hasRole ) ] ]
+                                            [ class "subtitle" ]
                                             [ text T.document
                                             , if isOpen then
                                                 A.icon "icon-x is-pulled-right"
@@ -2046,22 +2051,25 @@ viewSidePane u t model =
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
-                                            viewCircleTarget model.commonOp "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                            -- @debug: can't center item :/
+                                            div [ class "is-flex" ]
+                                                [ viewCircleTarget model.commonOp "mb-3 is-medium is-align-self-center" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                                ]
 
                                         NodeType.Role ->
                                             case node.role_type of
                                                 Just rt ->
                                                     if t.hasBeenPushed then
-                                                        viewRole "mb-2" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
+                                                        viewRole "" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
-                                                        viewRoleExt model.commonOp "is-small mb-3" Nothing { name = node.name, color = node.color, role_type = rt }
+                                                        viewRoleExt model.commonOp "is-small" Nothing { name = node.name, color = node.color, role_type = rt }
 
                                                 Nothing ->
                                                     text ""
                                    , Maybe.map
                                         (\fs ->
-                                            div [ class "mt-2" ] [ span [ class "is-highlight is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
+                                            div [ class "mt-2" ] [ span [ class "is-inline-flex mr-2" ] [ A.icon1 "icon-user" (T.firstLink ++ " :") ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
@@ -2161,7 +2169,11 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon1 "icon-pin" <| ternary t.isPinned T.unpinTension T.pinTension ]
+                                    [ A.icon1 "icon-pin" <|
+                                        ternary t.isPinned
+                                            (T.unpinTension model.session.lexicon)
+                                            (T.pinTension model.session.lexicon)
+                                    ]
                                 ]
 
                             else
@@ -2172,7 +2184,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text T.moveTension ]
+                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (T.moveTension model.session.lexicon) ]
                                 ]
 
                             else

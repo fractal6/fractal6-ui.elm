@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -128,7 +128,7 @@ init global flags =
             global.url.path == "/"
 
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     if isHome then
                         Nav.replaceUrl global.key <| toLink UsersBaseUri uctx.username []
@@ -140,13 +140,13 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.common.lang ) ] }
             , result = RemoteData.NotAsked
             , viewMode = Login
-            , lang = global.session.lang
+            , lang = global.session.common.lang
             , isHome = isHome
             , empty = {}
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             }
     in
     ( model
@@ -277,6 +277,10 @@ subscriptions _ _ =
         |> Sub.batch
 
 
+
+---- VIEW ----
+
+
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = T.welcome ++ " - " ++ T.welcome2
@@ -298,7 +302,7 @@ viewHero : Model -> Html Msg
 viewHero model =
     div []
         [ div [ class "columns is-centered custom-b-1 m-0" ]
-            [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd", style "min-width" "300px" ]
+            [ div [ class "column is-7-desktop is-7-widescreen is-6-fullhd" ]
                 [ h1 [ class "title top-title" ]
                     [ renderMarkdown "is-huma" T.heroTitle ]
 
@@ -325,7 +329,7 @@ viewHero model =
 
 viewSignBox : Model -> Html Msg
 viewSignBox model =
-    div [ class "card" ]
+    div [ class "card has-background-evidence" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title tabs is-fullwidth p-0" ]
                 [ ul []
@@ -397,6 +401,8 @@ viewLogin model =
                             , onKeydown SubmitEnter
                             ]
                             []
+                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                            [ A.icon "icon-eye" ]
                         ]
                     ]
                 ]
@@ -492,8 +498,10 @@ viewSignup model =
                             , onKeydown SubmitEnter
                             ]
                             []
-                        , p [ class "help" ] [ text T.passwordRequirements ]
+                        , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                            [ A.icon "icon-eye" ]
                         ]
+                    , p [ class "help" ] [ text T.passwordRequirements ]
                     ]
                 ]
             ]

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -34,14 +34,14 @@ import Html.Events exposing (onClick)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Tension)
-import Session exposing (CommonMsg, Session)
+import Session exposing (CommonMsg, SessionCommon)
 import Text as T
 
 
 type alias Op msg =
     { hasTaskMove : Bool
     , hasNewCol : Bool
-    , session : Session
+    , session : SessionCommon
     , node_focus : NodeFocus
     , boardId : String
     , boardHeight : Maybe Float
@@ -93,8 +93,10 @@ viewBoard op commonOp header keys_title data =
                         List.head tensions
                 in
                 [ div
-                    (class "column is-3"
-                        :: ternary op.hasTaskMove
+                    ([ class "column is-3"
+                     , attribute "style" "z-index:10;" -- prevent the hinter-tree to overflow
+                     ]
+                        ++ ternary op.hasTaskMove
                             [ onDragEnter (op.onMoveEnterCol { pos = i, to_receiverid = key } False)
                             , onDragLeave op.onMoveLeaveCol
 
@@ -149,7 +151,7 @@ viewBoard op commonOp header keys_title data =
                                 in
                                 [ ternary isHoveredUp draggingDiv (text "")
                                 , div
-                                    (class "box is-shrinked2 mb-2 mx-2"
+                                    (class "box kb-card is-shrinked2 mb-2 mx-2"
                                         :: ternary op.hasTaskMove
                                             [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
                                             , attribute "draggable" "true"
@@ -185,7 +187,7 @@ viewBoard op commonOp header keys_title data =
            )
         |> div
             [ id op.boardId
-            , class "columns is-fullwidth is-marginless is-mobile kb-board board1"
+            , class "columns is-fullwidth m-0 is-mobile kb-board board1"
 
             --, onMouseLeave (OnColumnHover Nothing)
             , attribute "style" <|

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -49,7 +49,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep, viewNotif)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
@@ -62,7 +62,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (getProject)
-import Session exposing (GlobalCmd(..), Session)
+import Session exposing (GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 import Url
@@ -114,6 +114,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateScreen a ->
                         ( [], send (UpdateSessionScreen a) )
+
+                    DoPushSystemNotif a ->
+                        ( [], send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -183,7 +186,7 @@ type alias Model =
     , isProjectAdmin : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
 
@@ -227,36 +230,36 @@ init global flags =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
         path_data =
-            session.path_data
+            session.common.path_data
                 |> Maybe.map (\x -> Success x)
                 |> withDefault Loading
 
         -- What has changed
         fs =
-            focusState ProjectBaseUri session.referer global.url session.node_focus newFocus
+            focusState ProjectBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data = path_data
             , projectid = projectid
             , isProjectAdmin = False
-            , project_data = ternary fs.orgChange Loading (fromMaybeData session.project_data Loading)
-            , linkTensionPanel = LinkTensionPanel.init projectid session.user
-            , cardPanel = CardPanel.init session path_data newFocus session.user
-            , board = Board.init projectid newFocus session.user
+            , project_data = ternary fs.orgChange Loading (fromMaybeData session.data.project_data Loading)
+            , linkTensionPanel = LinkTensionPanel.init projectid session.common
+            , cardPanel = CardPanel.init path_data newFocus session.common
+            , board = Board.init projectid newFocus session.common
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , empty = {}
-            , tensionForm = NTF.init session
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
-            , help = Help.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , tensionForm = NTF.init session.common
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init Nothing session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
 
         cmds =
@@ -269,7 +272,7 @@ init global flags =
             ]
 
         refresh =
-            Maybe.map (\x -> id3Changed x.id global.url) session.project_data |> withDefault True
+            Maybe.map (\x -> id3Changed x.id global.url) session.data.project_data |> withDefault True
     in
     ( model
     , Cmd.batch cmds
@@ -376,7 +379,7 @@ update global message model =
                 Success data ->
                     let
                         isAdmin =
-                            case global.session.user of
+                            case global.session.common.user of
                                 LoggedIn uctx ->
                                     --hasAdminRole uctx (withMaybeData model.path_data)
                                     hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
@@ -637,7 +640,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -702,7 +705,7 @@ view_ global model =
                 , if model.isProjectAdmin then
                     div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
                         [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
-                            [ A.icon1 "icon-plus" T.addTensionToProject ]
+                            [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
                         ]
 
                   else
@@ -712,7 +715,7 @@ view_ global model =
             -- User notification
             , case Board.board_result model.board of
                 Failure err ->
-                    div [ class "f6-notification notification is-danger is-light" ]
+                    div [ class "f6-notification notification is-danger" ]
                         [ button [ class "delete", onClick OnClearBoardResult ] []
                         , viewGqlErrorsLight err
                         ]
@@ -750,7 +753,7 @@ viewSearchBar project model =
         --                else
         --                  text ""
         --              , span [ class "vbar has-border-color" ] []
-        --              , span [ class "button-light is-w px-1", onClick (SearchKeyDown 13) ]
+        --              , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
         --                  [ A.icon "icon-search" ]
         --              ]
         --          ]

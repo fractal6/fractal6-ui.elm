@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -29,6 +29,8 @@ import Dict exposing (Dict)
 import Extra.Url exposing (queryParser)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html)
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData)
 import Maybe exposing (andThen, withDefault)
@@ -97,6 +99,19 @@ toReflink url =
     Url.toString url |> String.split "?" |> List.head |> withDefault ""
 
 
+toF6Referer : Route.Route -> Session -> Maybe Url
+toF6Referer route session =
+    Maybe.map
+        (\referer ->
+            if Just route == Route.fromUrl referer then
+                withDefault referer session.can_referer
+
+            else
+                referer
+        )
+        session.referer
+
+
 {-| Use to pass model to components in order to avoid losing time to deep caopy data
 @deprecated: This structure might not be usesull, see this discussion for more context :
 <https://discourse.elm-lang.org/t/deep-copy-or-shallow-copy/9241>
@@ -125,6 +140,7 @@ type alias SessionFlags =
     , apis : Apis
     , screen : Screen
     , theme : Maybe JD.Value
+    , lexicon : Maybe JD.Value
     }
 
 
@@ -133,25 +149,23 @@ type alias SessionFlags =
     Shared session data stored in global model
 
 -}
-type alias Session =
-    { -- Session: A general config usually set in main page's model.
-      -- It is extracted from the global model and session
-      screen : Screen
+type alias SessionCommon =
+    { user : UserState
+    , screen : Screen
     , theme : Theme
     , lang : Lang.Lang
     , now : Time.Posix
     , url : Url.Url
     , query : Dict String (List String)
     , viewMode : ViewMode
-
-    -- Remote Data
-    , user : UserState
-    , notif : NotifCount
-    , referer : Maybe Url
-    , can_referer : Maybe Url
-    , token_data : RestData UserCtx
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
+    , lexicon : Dict String String
+    }
+
+
+type alias SessionData =
+    { notif : NotifCount
     , children : Maybe (List NodeId)
     , node_data : Maybe NodeData
     , tensions_data : Maybe (List Tension)
@@ -163,9 +177,7 @@ type alias Session =
     , project_data : Maybe ProjectData
     , orgs_data : Maybe (List OrgaNode)
     , tree_data : Maybe NodesDict
-    , isAdmin : Maybe Bool
     , node_quickSearch : Maybe NodesQuickSearch
-    , apis : Apis
     , window_pos : Maybe WindowPos
     , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
@@ -174,7 +186,20 @@ type alias Session =
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
-    , system_notification : RestData String
+    , system_notification : List SystemNotification
+    }
+
+
+type alias Session =
+    { -- Session: A general config usually set in main page's model.
+      -- It is extracted from the global model and session
+      isAdmin : Maybe Bool
+    , apis : Apis
+    , referer : Maybe Url
+    , can_referer : Maybe Url
+    , token_data : RestData UserCtx
+    , common : SessionCommon
+    , data : SessionData
     }
 
 
@@ -195,7 +220,7 @@ type
     | DoUpdateOrgs (Maybe (List OrgaNode))
     | DoUpdateScreen Screen
     | DoToggleWatchOrga String
-    | DoPushSystemNotif (RestData String)
+    | DoPushSystemNotif SystemNotification
       -- Components Msg
     | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
     | DoJoinOrga String
@@ -227,45 +252,56 @@ type alias NodesQuickSearch =
     }
 
 
+type alias SystemNotification =
+    { cls : String
+    , content : Html Never
+    }
+
+
 resetSession : Session -> SessionFlags -> Session
 resetSession session flags =
-    { apis = flags.apis
+    { isAdmin = Nothing
+    , apis = flags.apis
     , referer = Nothing
     , can_referer = Nothing
-    , user = LoggedOut
-    , lang = session.lang
-    , theme = session.theme
-    , screen = session.screen
-    , now = session.now
-    , url = session.url
-    , query = session.query
-    , viewMode = session.viewMode
-    , notif = initNotifCount
     , token_data = RemoteData.NotAsked
-    , node_focus = Nothing
-    , path_data = Nothing
-    , children = Nothing
-    , node_data = Nothing
-    , tensions_data = Nothing
-    , tensions_int = Nothing
-    , tensions_ext = Nothing
-    , tensions_all = Nothing
-    , tensions_count = Nothing
-    , tension_head = Nothing
-    , project_data = Nothing
-    , orgs_data = Nothing
-    , tree_data = Nothing
-    , isAdmin = Nothing
-    , node_quickSearch = Nothing
-    , window_pos = Nothing
-    , recent_activity_tab = Nothing
-    , orga_menu = Nothing
-    , tree_menu = session.tree_menu
-    , authorsPanel = Nothing
-    , labelsPanel = Nothing
-    , newOrgaData = Nothing
-    , orgaInfo = Nothing
-    , system_notification = RemoteData.NotAsked
+    , common =
+        { user = LoggedOut
+        , lang = session.common.lang
+        , theme = session.common.theme
+        , lexicon = session.common.lexicon
+        , screen = session.common.screen
+        , now = session.common.now
+        , url = session.common.url
+        , query = session.common.query
+        , viewMode = session.common.viewMode
+        , node_focus = Nothing -- hard to update session in components...put in data instead ?
+        , path_data = Nothing --
+        }
+    , data =
+        { notif = initNotifCount
+        , children = Nothing
+        , node_data = Nothing
+        , tensions_data = Nothing
+        , tensions_int = Nothing
+        , tensions_ext = Nothing
+        , tensions_all = Nothing
+        , tensions_count = Nothing
+        , tension_head = Nothing
+        , project_data = Nothing
+        , orgs_data = Nothing
+        , tree_data = Nothing
+        , node_quickSearch = Nothing
+        , window_pos = Nothing
+        , recent_activity_tab = Nothing
+        , orga_menu = Nothing
+        , tree_menu = session.data.tree_menu
+        , authorsPanel = Nothing
+        , labelsPanel = Nothing
+        , newOrgaData = Nothing
+        , orgaInfo = Nothing
+        , system_notification = []
+        }
     }
 
 
@@ -334,20 +370,27 @@ fromLocalSession url flags =
             case flags.theme of
                 Just raw ->
                     case JD.decodeValue JD.string raw of
-                        Ok "DARK" ->
-                            ( Just DarkTheme, Cmd.none )
+                        Ok "light" ->
+                            ( Just LightTheme, Cmd.none )
 
                         Ok "dark" ->
                             ( Just DarkTheme, Cmd.none )
 
-                        Ok "LIGHT" ->
-                            ( Just LightTheme, Cmd.none )
-
-                        Ok "light" ->
-                            ( Just LightTheme, Cmd.none )
-
                         Ok l ->
                             ( Nothing, Ports.logErr "Unknown theme string" )
+
+                        Err err ->
+                            ( Nothing, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( Nothing, Cmd.none )
+
+        ( lexicon, cmd6 ) =
+            case flags.lexicon of
+                Just raw ->
+                    case JD.decodeValue (JD.dict JD.string) raw of
+                        Ok dict ->
+                            ( Just dict, Cmd.none )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )
@@ -361,48 +404,53 @@ fromLocalSession url flags =
         viewMode =
             encodeViewMode query
     in
-    ( { apis = flags.apis
+    ( { isAdmin = Nothing
+      , apis = flags.apis
       , referer = Nothing
       , can_referer = Nothing
-      , user = user
-      , lang = withDefault Lang.En lang
-      , theme = withDefault DarkTheme theme
-      , screen = flags.screen
-      , now = Time.millisToPosix 0
-      , url = url
-      , query = query
-      , viewMode = viewMode
-      , notif = initNotifCount
       , token_data = RemoteData.NotAsked
-      , node_focus = Nothing
-      , path_data = Nothing
-      , children = Nothing
-      , node_data = Nothing
-      , tensions_data = Nothing
-      , tensions_int = Nothing
-      , tensions_ext = Nothing
-      , tensions_all = Nothing
-      , tensions_count = Nothing
-      , tension_head = Nothing
-      , project_data = Nothing
-      , orgs_data = Nothing
-      , tree_data = Nothing
-      , isAdmin = Nothing
-      , node_quickSearch = Nothing
-      , window_pos = window_pos
-      , recent_activity_tab = recent_activity_tab
-      , orga_menu = flags.orga_menu
-      , tree_menu =
-            flags.tree_menu
-                |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
-                |> withDefault Nothing
-      , authorsPanel = Nothing
-      , labelsPanel = Nothing
-      , newOrgaData = Nothing
-      , orgaInfo = Nothing
-      , system_notification = RemoteData.NotAsked
+      , common =
+            { user = user
+            , lang = withDefault Lang.En lang
+            , theme = withDefault DarkTheme theme
+            , lexicon = withDefault Dict.empty lexicon
+            , screen = flags.screen
+            , now = Time.millisToPosix 0
+            , url = url
+            , query = query
+            , viewMode = viewMode
+            , node_focus = Nothing
+            , path_data = Nothing
+            }
+      , data =
+            { notif = initNotifCount
+            , children = Nothing
+            , node_data = Nothing
+            , tensions_data = Nothing
+            , tensions_int = Nothing
+            , tensions_ext = Nothing
+            , tensions_all = Nothing
+            , tensions_count = Nothing
+            , tension_head = Nothing
+            , project_data = Nothing
+            , orgs_data = Nothing
+            , tree_data = Nothing
+            , node_quickSearch = Nothing
+            , window_pos = window_pos
+            , recent_activity_tab = recent_activity_tab
+            , orga_menu = flags.orga_menu
+            , tree_menu =
+                flags.tree_menu
+                    |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
+                    |> withDefault Nothing
+            , authorsPanel = Nothing
+            , labelsPanel = Nothing
+            , newOrgaData = Nothing
+            , orgaInfo = Nothing
+            , system_notification = []
+            }
       }
-    , [ cmd1, cmd2, cmd3, cmd4, cmd5 ]
+    , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6 ]
     )
 
 

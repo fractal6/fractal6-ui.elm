@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -37,7 +37,7 @@ import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
+import Extra exposing (showIf, space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
@@ -56,7 +56,7 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -65,7 +65,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon)
 import Text as T
 import Time
 
@@ -81,8 +81,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , nodeDoc : NodeDoc -- form
+    { nodeDoc : NodeDoc -- form
     , result : GqlData Tension
     , sources : List EmitterOrReceiver
     , step : TensionStep
@@ -105,11 +104,11 @@ type alias Model =
     , nodeStep : NodeStep
     , roles_result : GqlData (List RoleExtFull)
     , doInvite : Bool
-    , withUsers : Maybe (List String)
+    , withUsers : List String
     , simplifiedView : Bool
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
@@ -117,7 +116,8 @@ type alias Model =
     -- Components
     , labelsPanel : LabelSearchPanel.State
     , inviteInput : UserInput.State
-    , userInput : UserInput.State
+
+    --, userInput : UserInput.State
     , comments : Comments.State
     }
 
@@ -168,15 +168,14 @@ nodeStepToString form step =
             T.invite
 
 
-init : Session -> State
+init : SessionCommon -> State
 init session =
     initModel session |> State
 
 
-initModel : Session -> Model
+initModel : SessionCommon -> Model
 initModel session =
-    { user = session.user
-    , result = NotAsked
+    { result = NotAsked
     , sources = []
     , step = TensionFinal
     , isActive = False
@@ -187,7 +186,7 @@ initModel session =
     , path_data = NotAsked -- may be different than the current path_data (op.path_data)
     , action_result = NotAsked
     , doInvite = False
-    , withUsers = Nothing
+    , withUsers = []
     , simplifiedView = False
     , draft = Nothing
     , isTargetOpen = ""
@@ -208,9 +207,10 @@ initModel session =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
-    , inviteInput = UserInput.init [] True False session.user
-    , userInput = UserInput.init [] False False session.user
-    , comments = Comments.init "" "" session.user
+    , inviteInput = UserInput.init [] True False session
+
+    --, userInput = UserInput.init [] False False session
+    , comments = Comments.init "" "" session
     }
 
 
@@ -386,7 +386,11 @@ setResult result data =
 
 setUctx : UserCtx -> Model -> Model
 setUctx uctx data =
-    { data | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
+    let
+        session =
+            data.session
+    in
+    { data | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
 
 
 setTensionType : TensionType.TensionType -> Model -> Model
@@ -506,7 +510,7 @@ canExitSafe data =
 
 hasData : Model -> Bool
 hasData data =
-    not (isPostEmpty [ "title", "message" ] data.nodeDoc.form.post)
+    not (isPostEmpty [ "title", "message", "invitation" ] data.nodeDoc.form.post)
 
 
 
@@ -571,7 +575,7 @@ type Msg
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | InviteInputMsg UserInput.Msg
-    | UserInputMsg UserInput.Msg
+      --| UserInputMsg UserInput.Msg
     | CommentsMsg Comments.Msg
 
 
@@ -691,7 +695,7 @@ update_ apis message model =
                 ( { model | isActive2 = model.isActive }, noOut )
 
         OnOpen t d ->
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     let
                         newModel =
@@ -751,8 +755,8 @@ update_ apis message model =
                                 ( { data | isActive2 = True } |> setUctx uctx
                                 , out0
                                     [ sendSleep (SetIsActive2 True) 10
+                                    , Cmd.map CommentsMsg (send <| Comments.OnSetTarget (List.map .nameid p.path))
                                     , switch_cmd
-                                    , Cmd.map UserInputMsg (send <| UserInput.ChangePath (List.map .nameid p.path))
                                     ]
                                 )
 
@@ -774,16 +778,23 @@ update_ apis message model =
             ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ send (OnOpen t Nothing), cmd ] )
 
         OnOpenRoleUser t u ->
-            let
-                cmd =
-                    if isSuccess model.result then
-                        send OnReset
+            ( { model
+                | activeTab = NewRoleTab
+                , force_init = True
+                , withUsers = [ u ]
+                , doInvite = True
+                , activeButton = Just 0
+                , simplifiedView = True
+              }
+            , out0
+                [ send (OnOpen t Nothing)
+                , UserInput.OnClickUser { username = u, name = Nothing } |> send |> Cmd.map InviteInputMsg
+                , if isSuccess model.result then
+                    send OnReset
 
-                    else
-                        Cmd.none
-            in
-            ( { model | activeTab = NewRoleTab, force_init = True, withUsers = Just [ u ], activeButton = Just 0, simplifiedView = True }
-            , out0 [ send (OnOpen t Nothing), cmd ]
+                  else
+                    Cmd.none
+                ]
             )
 
         OnClose data ->
@@ -868,7 +879,7 @@ update_ apis message model =
             ( { model | isTypeOpen = ternary (model.isTypeOpen == "") id_ "" }, noOut )
 
         DoInvite ->
-            ( { model | doInvite = True }, noOut )
+            ( { model | doInvite = True }, out0 [ Ports.focusOn "userInput" ] )
 
         OnInvite time ->
             let
@@ -909,13 +920,44 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit True OnInvite) 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
+                OkAuth c ->
                     let
                         form =
                             model.nodeDoc.form
+
+                        tensionid =
+                            withMapData .id model.result |> withDefaultData ""
+
+                        isSelfContract_ =
+                            isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users
+
+                        link =
+                            if isSelfContract_ then
+                                Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tensionid } |> toHref
+
+                            else
+                                Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tensionid, param3 = c.id } |> toHref
                     in
                     ( { model | action_result = result }
-                    , ternary (isSelfContract form.uctx form.users) (out1 [ DoUpdateToken ]) noOut
+                    , out2
+                        [ send (OnClose { reset = True, link = "" }) ]
+                        ([ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text model.nodeDoc.form.txt.added
+                                    , text space_
+                                    , a [ href link ]
+                                        [ ternary (model.activeTab == NewTensionTab)
+                                            (text T.checkItOut_fem)
+                                            (text T.checkItOut_masc)
+                                        ]
+                                    ]
+                            }
+                         ]
+                            ++ ternary (isSelfContract form.uctx form.users) [ DoUpdateToken ] []
+                        )
                     )
 
                 DuplicateErr ->
@@ -960,13 +1002,13 @@ update_ apis message model =
             ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
 
         OnAddResponsabilities ->
-            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnAddDomains ->
-            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnAddPolicies ->
-            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnSubmitTension doClose time ->
             let
@@ -1020,32 +1062,46 @@ update_ apis message model =
                         data =
                             { model
                                 | nodeDoc =
-                                    NodeDoc.setId tension.id model.nodeDoc
-                                        |> (\nd ->
-                                                case model.withUsers of
-                                                    Just us ->
-                                                        NodeDoc.setUsers
-                                                            (List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) us)
-                                                            nd
-
-                                                    Nothing ->
-                                                        nd
-                                           )
+                                    model.nodeDoc
+                                        |> NodeDoc.setId tension.id
+                                        |> NodeDoc.setUsers (List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) model.withUsers)
                             }
+
+                        ( cmds, gcmds_ ) =
+                            if model.doInvite && not (List.isEmpty data.nodeDoc.form.users) then
+                                ( [ send (OnSubmit True OnInvite) ]
+                                , []
+                                )
+
+                            else
+                                let
+                                    link =
+                                        Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id } |> toHref
+                                in
+                                ( [ send (OnClose { reset = True, link = "" }) ]
+                                , [ DoPushSystemNotif
+                                        { cls = "is-success"
+                                        , content =
+                                            div [ class "is-flex is-align-items-center mr-5" ]
+                                                [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                                , text model.nodeDoc.form.txt.added
+                                                , text space_
+                                                , a [ href link ]
+                                                    [ ternary (model.activeTab == NewTensionTab)
+                                                        (text T.checkItOut_fem)
+                                                        (text T.checkItOut_masc)
+                                                    ]
+                                                ]
+                                        }
+                                  ]
+                                )
 
                         gcmds =
                             if tension.status == TensionStatus.Open then
-                                [ DoPushTension tension ]
+                                DoPushTension tension :: gcmds_
 
                             else
-                                []
-
-                        cmds =
-                            if not (List.isEmpty data.nodeDoc.form.users) then
-                                [ send (OnSubmit True OnInvite) ]
-
-                            else
-                                []
+                                gcmds_
 
                         output =
                             Just ( tension, model.draft )
@@ -1135,39 +1191,28 @@ update_ apis message model =
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | inviteInput = data, nodeDoc = NodeDoc.setUsers users model.nodeDoc }
+            ( { model
+                | inviteInput = data
+
+                -- setUsers make user in the tension blob which lead to an a request error
+                --, nodeDoc = NodeDoc.setUsers users model.nodeDoc
+                , withUsers = List.map (\u -> u.username) users
+              }
             , out2 (out.cmds |> List.map (\m -> Cmd.map InviteInputMsg m) |> List.append cmds) out.gcmds
             )
 
-        UserInputMsg msg ->
-            let
-                ( data, out ) =
-                    UserInput.update apis msg model.userInput
-
-                cmd =
-                    case out.result of
-                        Just ( selected, us ) ->
-                            if selected then
-                                case us of
-                                    [ u ] ->
-                                        Ports.pushInputSelection u.username
-
-                                    _ ->
-                                        Cmd.none
-
-                            else
-                                Cmd.none
-
-                        Nothing ->
-                            Cmd.none
-
-                ( cmds, _ ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | userInput = data }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
-            )
-
+        --UserInputMsg msg ->
+        --    let
+        --        ( data, out ) =
+        --            UserInput.update apis msg model.userInput
+        --        cmd =
+        --            Cmd.none
+        --        ( cmds, _ ) =
+        --            mapGlobalOutcmds out.gcmds
+        --    in
+        --    ( { model | userInput = data }
+        --    , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
+        --    )
         CommentsMsg msg ->
             let
                 ( data, out ) =
@@ -1207,7 +1252,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -1222,7 +1271,7 @@ subscriptions (State model) =
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
-                    ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+                    --++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
                     ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
             else
@@ -1276,7 +1325,7 @@ viewModal : GqlData NodesDict -> State -> Html Msg
 viewModal tree_data (State model) =
     div
         [ id "tensionModal"
-        , class "modal is-light modal-fx-slideTop"
+        , class "modal modal-fx-slideTop"
         , classList [ ( "is-active", model.isActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
@@ -1320,79 +1369,10 @@ viewStep tree_data (State model) =
                             )
                         |> withDefault False
             in
-            viewJoinForTensionNeeded userCanJoin OnClose
+            viewJoinForTensionNeeded model.session userCanJoin OnClose
 
         AuthNeeded ->
             viewAuthNeeded OnClose
-
-
-viewSuccess : Tension -> Model -> Html Msg
-viewSuccess res model =
-    let
-        isSelfContract_ =
-            isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users
-
-        link =
-            case model.action_result of
-                Success c ->
-                    if isSelfContract_ then
-                        Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
-
-                    else
-                        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id, param3 = c.id } |> toHref
-
-                _ ->
-                    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
-    in
-    div [ class "notification is-success-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
-        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-        , div [ class "is-flex is-align-items-center" ]
-            [ A.icon1 "icon-check icon-2x has-text-success" ""
-            , text model.nodeDoc.form.txt.added
-            , text space_
-            , a
-                [ href link
-                , onClickPD (OnClose { reset = True, link = link })
-                , target "_blank"
-                ]
-                [ case model.activeTab of
-                    NewTensionTab ->
-                        text T.checkItOut_fem
-
-                    _ ->
-                        text T.checkItOut_masc
-                ]
-            ]
-        , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
-            case model.action_result of
-                Success _ ->
-                    div [ class "is-flex is-align-items-center" ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" ""
-                        , if isSelfContract_ then
-                            text T.self_link_action_success
-
-                          else
-                            text T.link_action_success
-                        ]
-
-                _ ->
-                    if model.doInvite then
-                        viewInviteRole model
-
-                    else
-                        span [ class "m-2 is-inline-flex is-align-items-baseline" ]
-                            [ textH T.or_, a [ class "button is-small mx-2 is-primary", onClickPD DoInvite, target "_blank" ] [ text T.inviteSomeone ], text T.toThisRole ]
-
-          else if model.activeTab == NewCircleTab && model.activeButton == Just 0 then
-            span [ class "m-2 is-inline-flex is-align-items-baseline" ]
-                [ textH T.or_
-                , a [ class "button is-small mx-2 is-primary", onClickPD (OnOpenRole (FromNameid (getNewNameid NodeType.Role model.nodeDoc))), target "_blank" ] [ text T.addRole ]
-                , text T.inThisCircle
-                ]
-
-          else
-            text ""
-        ]
 
 
 viewHeader : GqlData NodesDict -> Model -> Html Msg
@@ -1409,8 +1389,8 @@ viewHeader tree_data model =
         ]
 
 
-viewTensionTabs : Bool -> TensionTab -> PNode -> Html Msg
-viewTensionTabs isAdmin tab targ =
+viewTensionTabs : SessionCommon -> Bool -> TensionTab -> PNode -> Html Msg
+viewTensionTabs session isAdmin tab targ =
     let
         -- This is the type of the receiver node.
         type_ =
@@ -1419,12 +1399,12 @@ viewTensionTabs isAdmin tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
-                    [ A.icon1 "icon-exchange" T.tension ]
+                [ a [ class "tootltip", title T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                    [ A.icon1 "icon-exchange" (T.tension session.lexicon) ]
                 ]
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                    [ a [ class "tootltip is-left", title T.newCircleHelp, onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" T.circle ]
                     ]
 
@@ -1432,7 +1412,7 @@ viewTensionTabs isAdmin tab targ =
                 text ""
             , if isAdmin && type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom is-left has-tooltip-arrow", attribute "data-tooltip" T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                    [ a [ class "tootltip is-left", title T.newRoleHelp, onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" T.role ]
                     ]
 
@@ -1455,7 +1435,7 @@ viewTensionType model =
             model.isTypeOpen /= ""
     in
     div []
-        [ span [ class "has-text-grey-light" ] [ text ("Type" ++ ":" ++ space_) ]
+        [ span [ class "is-discrete" ] [ text ("Type" ++ ":" ++ space_) ]
         , if model.activeTab == NewTensionTab then
             B.dropdownLight
                 { dropdown_id = "type-menu"
@@ -1468,7 +1448,7 @@ viewTensionType model =
                         , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                         ]
                 , menu_cls = ""
-                , content_cls = "has-border-light"
+                , content_cls = "has-border-light-small"
                 , msg = OnTypeClick (ternary isOpen "" "something")
                 , content_html =
                     div [ class "dropdown-item" ]
@@ -1480,14 +1460,14 @@ viewTensionType model =
                                             x == tension_type
                                     in
                                     div
-                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                                         , classList [ ( "is-selected", isActive ) ]
                                         , onClick (OnChangeTensionType x)
                                         ]
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                            , div [ class "content is-small" ]
-                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                            , div [ class "content" ]
+                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1500,14 +1480,14 @@ viewTensionType model =
                                             x == tension_type
                                     in
                                     div
-                                        [ class "card has-border column is-paddingless m-3 is-h"
+                                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                                         , classList [ ( "is-selected", isActive ) ]
                                         , onClick (OnChangeTensionType x)
                                         ]
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
-                                            , div [ class "content is-small" ]
-                                                [ text (tensionType2descr x), span [ class "help" ] [ text (tensionType2notif x) ] ]
+                                            , div [ class "content" ]
+                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1532,7 +1512,7 @@ viewRecipients tree_data model =
     in
     div [ attribute "style" "max-width: 285px;" ]
         [ -- @DEBUG: emitter is ignored now...
-          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
+          span [ class "is-discrete", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
         , B.dropdownLight
             { dropdown_id = "target-menu"
             , isOpen = isOpen
@@ -1575,78 +1555,73 @@ viewTension tree_data model =
         isSendable =
             isPostSendable [ "title" ] form.post
     in
-    case model.result of
-        Success res ->
-            viewSuccess res model
+    div [ class "panel modal-card submitFocus" ]
+        [ if model.simplifiedView then
+            text ""
 
-        other ->
-            div [ class "panel modal-card submitFocus" ]
-                [ if model.simplifiedView then
-                    text ""
-
-                  else
-                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
-                , Lazy.lazy2 viewHeader tree_data model
-                , div [ class "modal-card-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ class "input autofocus followFocus"
-                                , attribute "data-nextfocus" "textAreaModal"
-                                , type_ "text"
-                                , placeholder T.subject
-                                , spellcheck True
-                                , required True
-                                , value title
-                                , onInput (OnChangePost "title")
-                                ]
-                                []
-                            ]
-                        , p [ class "help-label" ] [ text form.txt.name_help ]
-                        , br [] []
+          else
+            Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
+        , Lazy.lazy2 viewHeader tree_data model
+        , div [ class "modal-card-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ]
+                    [ input
+                        [ class "input autofocus followFocus"
+                        , attribute "data-nextfocus" "textAreaModal"
+                        , type_ "text"
+                        , placeholder T.subject
+                        , spellcheck True
+                        , required True
+                        , value title
+                        , onInput (OnChangePost "title")
                         ]
-                    , Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ LabelSearchPanel.viewNew
-                                { selectedLabels = form.labels
-                                , targets = getPath model.path_data |> List.map .nameid
-                                , isRight = False
-                                }
-                                model.labelsPanel
-                                |> Html.map LabelSearchPanelMsg
-                            ]
-                        ]
+                        []
                     ]
-                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                    [ case other of
-                        Failure err ->
-                            viewGqlErrors err
+                , p [ class "help-label" ] [ text form.txt.name_help ]
+                , br [] []
+                ]
+            , Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
+            , div [ class "field" ]
+                [ div [ class "control" ]
+                    [ LabelSearchPanel.viewNew
+                        { selectedLabels = form.labels
+                        , targets = getPath model.path_data |> List.map .nameid
+                        , isRight = False
+                        }
+                        model.labelsPanel
+                        |> Html.map LabelSearchPanelMsg
+                    ]
+                ]
+            ]
+        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+            [ case model.result of
+                Failure err ->
+                    viewGqlErrors err
 
-                        _ ->
-                            text ""
-                    , div [ class "field level is-mobile" ]
-                        [ div [ class "level-left" ]
-                            [ button
-                                [ class "button is-light"
-                                , onClick (OnCloseSafe "" "")
-                                ]
-                                [ text T.cancel ]
+                _ ->
+                    text ""
+            , div [ class "field level is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ button
+                        [ class "button"
+                        , onClick (OnCloseSafe "" "")
+                        ]
+                        [ text T.cancel ]
+                    ]
+                , div [ class "level-right" ]
+                    [ div [ class "buttons" ]
+                        [ button
+                            [ class "button is-success defaultSubmit"
+                            , classList [ ( "is-loading", isLoading ) ]
+                            , disabled (not isSendable)
+                            , onClick (OnSubmit (isSendable && not isLoading) (OnSubmitTension False))
                             ]
-                        , div [ class "level-right" ]
-                            [ div [ class "buttons" ]
-                                [ button
-                                    [ class "button is-success defaultSubmit"
-                                    , classList [ ( "is-loading", isLoading ) ]
-                                    , disabled (not isSendable)
-                                    , onClick (OnSubmit (isSendable && not isLoading) (OnSubmitTension False))
-                                    ]
-                                    [ text form.txt.submit ]
-                                ]
-                            ]
+                            [ text form.txt.submit ]
                         ]
                     ]
                 ]
+            ]
+        ]
 
 
 viewCircle : GqlData NodesDict -> Model -> Html Msg
@@ -1659,92 +1634,104 @@ viewCircle tree_data model =
             hasLazyAdminRole form.uctx Nothing form.target.nameid
 
         isLoading =
-            model.result == LoadingSlowly
+            model.result == LoadingSlowly || model.action_result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map .purpose) /= Nothing
     in
-    case model.result of
-        Success res ->
-            viewSuccess res model
+    div [ class "panel modal-card submitFocus" ] <|
+        [ if model.simplifiedView then
+            text ""
 
-        other ->
-            div [ class "panel modal-card submitFocus" ] <|
-                [ if model.simplifiedView then
-                    text ""
-
-                  else
-                    Lazy.lazy3 viewTensionTabs isAdmin model.activeTab form.target
-                , Lazy.lazy2 viewHeader tree_data model
-                ]
-                    ++ (case model.nodeStep of
-                            RoleAuthorityStep ->
-                                [ viewRolesExt model
-                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                                    [ div [ class "field" ]
-                                        [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
-                                        ]
-                                    ]
+          else
+            Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
+        , Lazy.lazy2 viewHeader tree_data model
+        ]
+            ++ (case model.nodeStep of
+                    RoleAuthorityStep ->
+                        [ viewRolesExt model
+                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                            [ div [ class "field" ]
+                                [ div [ class "is-pulled-left" ]
+                                    [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                 ]
+                            ]
+                        ]
 
-                            CircleVisibilityStep ->
-                                [ viewCircleVisibility model
-                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                                    [ div [ class "field" ]
-                                        [ div [ class "is-pulled-left" ]
-                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
-                                        ]
-                                    ]
+                    CircleVisibilityStep ->
+                        [ viewCircleVisibility model
+                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                            [ div [ class "field" ]
+                                [ div [ class "is-pulled-left" ]
+                                    [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
                                 ]
+                            ]
+                        ]
 
-                            NodeValidateStep ->
-                                [ viewNodeValidate model
-                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                                    [ case other of
-                                        Failure err ->
-                                            viewGqlErrors err
+                    NodeValidateStep ->
+                        let
+                            inviteText =
+                                if model.doInvite && not (List.isEmpty model.withUsers) then
+                                    let
+                                        users =
+                                            List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) model.withUsers
+                                    in
+                                    " + "
+                                        ++ ternary (isSelfContract form.uctx users) T.link T.invite
 
-                                        _ ->
+                                else
+                                    ""
+                        in
+                        [ viewNodeValidate model
+                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                            [ case model.result of
+                                Failure err ->
+                                    viewGqlErrors err
+
+                                _ ->
+                                    text ""
+                            , case model.action_result of
+                                Failure err ->
+                                    viewGqlErrors err
+
+                                _ ->
+                                    text ""
+                            , div [ class "field level is-mobile" ]
+                                [ div [ class "level-left" ]
+                                    [ button [ class "button", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
+                                        [ A.icon0 "icon-chevron-left", text T.back ]
+                                    ]
+                                , div [ class "level-right" ]
+                                    [ div [ class "buttons" ]
+                                        -- Make this as simply at possible / to complex for user from now...
+                                        [ if model.simplifiedView || True then
                                             text ""
-                                    , div [ class "field level is-mobile" ]
-                                        [ div [ class "level-left" ]
-                                            [ button [ class "button is-light", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
-                                                [ A.icon0 "icon-chevron-left", text T.back ]
-                                            ]
-                                        , div [ class "level-right" ]
-                                            [ div [ class "buttons" ]
-                                                -- Make this as simply at possible / to complex for user from now...
-                                                [ if model.simplifiedView || True then
-                                                    text ""
 
-                                                  else
-                                                    button
-                                                        [ class "button is-warning"
-                                                        , classList
-                                                            [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
-                                                        , disabled (not isSendable || isLoading)
-                                                        , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension False)
-                                                        ]
-                                                        [ text form.txt.submit ]
-                                                , button
-                                                    [ class "button is-success defaultSubmit"
-                                                    , classList
-                                                        [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
-                                                    , disabled (not isSendable || isLoading)
-                                                    , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension True)
-                                                    ]
-                                                    [ text form.txt.close_submit ]
+                                          else
+                                            button
+                                                [ class "button is-warning"
+                                                , classList [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
+                                                , disabled (not isSendable || isLoading)
+                                                , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension False)
                                                 ]
+                                                [ text form.txt.submit ]
+                                        , button
+                                            [ class "button is-success defaultSubmit"
+                                            , classList [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
+                                            , disabled (not isSendable || isLoading)
+                                            , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension True)
                                             ]
+                                            [ text (form.txt.close_submit ++ inviteText) ]
                                         ]
                                     ]
                                 ]
+                            ]
+                        ]
 
-                            InviteStep ->
-                                -- This View is implemented in the success view !
-                                []
-                       )
+                    InviteStep ->
+                        -- This View is implemented in the success view !
+                        []
+               )
 
 
 viewNodeBreadcrumb : TensionForm -> NodeStep -> Html Msg
@@ -1761,7 +1748,7 @@ viewNodeBreadcrumb form step =
                 NodeType.Circle ->
                     [ CircleVisibilityStep, NodeValidateStep ]
     in
-    nav [ class "breadcrumb has-succeeds-separator is-small", attribute "aria-labels" "breadcrumbs" ]
+    nav [ class "breadcrumb has-succeeds-separator lifeline is-small", attribute "aria-labels" "breadcrumbs" ]
         [ ul [] <|
             List.map
                 (\x ->
@@ -1791,14 +1778,25 @@ viewNodeValidate model =
         , viewAboutInput2 form.txt form.node op
         , viewMandateInput form.txt form.node.mandate op
         , br [] []
-        , if not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ]) then
-            div [ class "mt-2" ]
-                [ Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
-                ]
+        , showIf (model.activeTab == NewRoleTab) (viewUserInvite model)
 
-          else
-            text ""
+        --, showIf (not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ])) <|
+        --    div [ class "mt-2" ]
+        --        [ Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg ]
         ]
+
+
+viewUserInvite : Model -> Html Msg
+viewUserInvite model =
+    if model.doInvite then
+        viewInviteRole model
+
+    else
+        div [ class "field is-grouped" ]
+            [ div [ class "button is-primary is-small", onClick DoInvite ]
+                [ text ("+ " ++ T.inviteSomeone ++ " " ++ T.toThisRole)
+                ]
+            ]
 
 
 viewRolesExt : Model -> Html Msg
@@ -1811,14 +1809,14 @@ viewRolesExt model =
         [ viewNodeBreadcrumb form model.nodeStep
 
         -- Show the help information
-        --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
+        --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
         , div [ class "subtitle" ] [ text T.selectRoleTemplate ]
         , case model.roles_result of
             Success roles ->
                 List.map
                     (\role ->
                         div
-                            [ class "card has-border column is-paddingless m-3 is-h"
+                            [ class "card has-border column p-0 m-3 is-h is-clickable"
                             , classList [ ( "is-selected", Just role.id == form.node.role_ext ) ]
                             , attribute "style" "min-width: 150px;"
                             ]
@@ -1834,10 +1832,18 @@ viewRolesExt model =
                                 ++ [ br [ class "clearfix" ] []
                                    , div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text T.noTemplateRole, br [ class "mb-5" ] [], text T.youCanMake ]
+                                            span [ class "content is-small" ]
+                                                [ text T.noTemplateRole
+                                                , br [ class "my-3" ] []
+                                                , text T.youCanMake
+                                                ]
 
                                           else
-                                            span [ class "content is-small" ] [ text T.needNewRole, br [] [], text T.makeA ]
+                                            span [ class "content is-small" ]
+                                                [ text T.needNewRole
+                                                , br [ class "my-3" ] []
+                                                , text T.makeA
+                                                ]
                                         , span
                                             [ class "button is-small has-text-link mx-2"
                                             , title T.adhocRoleHint
@@ -1894,7 +1900,7 @@ viewCircleVisibility model =
                                     ( "icon-lock", visibility2descr x )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected is-selectable", isSelected ) ]
 
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
@@ -1911,35 +1917,9 @@ viewCircleVisibility model =
 
 viewInviteRole : Model -> Html Msg
 viewInviteRole model =
-    let
-        form =
-            model.nodeDoc.form
-
-        isLoading =
-            model.action_result == LoadingSlowly
-    in
-    div [ class "columns is-centered mt-2" ]
-        [ div [ class "column is-8" ]
-            [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
-            , viewCommentInput model
-            , case model.action_result of
-                Failure err ->
-                    div [ class "field" ] [ viewGqlErrors err ]
-
-                _ ->
-                    text ""
-            , div [ class "field" ]
-                [ div [ class "is-pulled-right" ]
-                    [ button
-                        [ class "button is-link"
-                        , classList [ ( "is-loading", isLoading ) ]
-                        , disabled (not (isUsersSendable form.users) || isLoading)
-                        , onClick (OnSubmit (not isLoading) OnInvite)
-                        ]
-                        [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> text ]
-                    ]
-                ]
-            ]
+    div [ class "has-border-hint-primary" ]
+        [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
+        , viewCommentInput model
         ]
 
 
@@ -1947,7 +1927,7 @@ viewCommentInput : Model -> Html Msg
 viewCommentInput model =
     let
         message =
-            Dict.get "message" model.nodeDoc.form.post |> withDefault ""
+            Dict.get "invitation" model.nodeDoc.form.post |> withDefault ""
     in
     div [ class "field" ]
         [ div [ class "control" ]
@@ -1956,7 +1936,7 @@ viewCommentInput model =
                 , rows 3
                 , placeholder T.leaveCommentOpt
                 , value message
-                , onInput <| OnChangePost "message"
+                , onInput <| OnChangePost "invitation"
                 ]
                 []
             ]

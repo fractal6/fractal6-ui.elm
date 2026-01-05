@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -32,6 +32,7 @@ module Global exposing
     , tickNow
     , update
     , view
+    , viewNotif
     )
 
 import Auth exposing (ErrState(..), parseErr, parseErr2)
@@ -43,7 +44,7 @@ import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (RecentActivityTab, WindowPos)
 import Components.Navbar as Navbar
 import Dict
-import Extra exposing (showIf, ternary, unwrap2)
+import Extra exposing (showIf, showMaybe, ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -64,7 +65,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
-import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
+import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
 import Url exposing (Url)
@@ -96,7 +97,7 @@ init flags url key =
         ( session, cmds ) =
             fromLocalSession url flags
     in
-    ( Model flags url key { session | system_notification = RemoteData.NotAsked }
+    ( Model flags url key session
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.bulma_driver ""
@@ -141,6 +142,7 @@ type Msg
     | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
+    | UpdateSessionTheme String
     | UpdateSessionNotif NotifCount
     | GotOrgaInfo (GqlData OrgaInfo)
     | RefreshNotifCount
@@ -158,7 +160,7 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | OnCloseOutdatedVersion
-    | OnPushSystemNotif (RestData String)
+    | OnPushSystemNotif SystemNotification
     | OnClearSystemNotif
       -- utils
     | VOID
@@ -189,8 +191,11 @@ update msg model =
             let
                 session =
                     model.session
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | now = time } }, Cmd.none )
+            ( { model | session = { session | common = { common | now = time } } }, Cmd.none )
 
         UpdateCanReferer referer ->
             let
@@ -211,12 +216,18 @@ update msg model =
                 session =
                     model.session
 
+                common =
+                    session.common
+
+                sessionData =
+                    session.data
+
                 cmd =
                     case data of
                         Just n ->
                             -- If new orga context
-                            if session.orgaInfo == Nothing || Just n.rootnameid /= Maybe.map .rootnameid model.session.node_focus then
-                                getOrgaInfo apis (uctxFromUser model.session.user).username n.rootnameid GotOrgaInfo
+                            if session.data.orgaInfo == Nothing || Just n.rootnameid /= Maybe.map .rootnameid session.common.node_focus then
+                                getOrgaInfo apis (uctxFromUser session.common.user).username n.rootnameid GotOrgaInfo
 
                             else
                                 Cmd.none
@@ -227,15 +238,18 @@ update msg model =
             ( { model
                 | session =
                     { session
-                        | node_focus = data
-                        , tension_head = Nothing
-                        , project_data = Nothing
-                        , tensions_data = Nothing
-                        , tensions_int = Nothing
-                        , tensions_ext = Nothing
-                        , tensions_all = Nothing
-                        , authorsPanel = Nothing
-                        , labelsPanel = Nothing
+                        | common = { common | node_focus = data }
+                        , data =
+                            { sessionData
+                                | tension_head = Nothing
+                                , project_data = Nothing
+                                , tensions_data = Nothing
+                                , tensions_int = Nothing
+                                , tensions_ext = Nothing
+                                , tensions_all = Nothing
+                                , authorsPanel = Nothing
+                                , labelsPanel = Nothing
+                            }
                     }
               }
             , cmd
@@ -245,8 +259,11 @@ update msg model =
             let
                 session =
                     model.session
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | node_focus = data } }, Cmd.none )
+            ( { model | session = { session | common = { common | node_focus = data } } }, Cmd.none )
 
         UpdateSessionPath data ->
             -- * Update also children. Children are used to manage tensions depth search option.
@@ -254,24 +271,33 @@ update msg model =
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
+
+                common =
+                    session.common
             in
             case data of
                 Just path ->
                     if path.focus.pinned == NotAsked || isFailure path.focus.pinned then
-                        ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.batch [ send (RefreshPinTension path.focus.nameid), Ports.propagatePath (List.map .nameid path.path) ] )
+                        ( { model | session = { session | common = { common | path_data = data }, data = { sessionData | children = Nothing } } }, Cmd.batch [ send (RefreshPinTension path.focus.nameid), Ports.propagatePath (List.map .nameid path.path) ] )
 
                     else
-                        ( { model | session = { session | path_data = data, children = Nothing } }, Ports.propagatePath (List.map .nameid path.path) )
+                        ( { model | session = { session | common = { common | path_data = data }, data = { sessionData | children = Nothing } } }, Ports.propagatePath (List.map .nameid path.path) )
 
                 Nothing ->
-                    ( { model | session = { session | path_data = Nothing, children = Nothing } }, Cmd.none )
+                    ( { model | session = { session | common = { common | path_data = Nothing }, data = { sessionData | children = Nothing } } }, Cmd.none )
 
         UpdateSessionChildren data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | children = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | children = data } } }, Cmd.none )
 
         UpdateSessionTree data ->
             let
@@ -294,7 +320,7 @@ update msg model =
                                 Nothing ->
                                     path_data
                         )
-                        model.session.path_data
+                        model.session.common.path_data
 
                 -- Eventually update orga_info
                 orgaInfo =
@@ -302,17 +328,26 @@ update msg model =
                         (\oi nodes ->
                             { oi | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
                         )
-                        session.orgaInfo
+                        session.data.orgaInfo
                         data
+
+                sessionData =
+                    session.data
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | tree_data = data, path_data = pdata, orgaInfo = orgaInfo } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tree_data = data, orgaInfo = orgaInfo }, common = { common | path_data = pdata } } }, Cmd.none )
 
         UpdateSessionData data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | node_data = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | node_data = data } } }, Cmd.none )
 
         UpdateSessionTensionHead data ->
             let
@@ -359,7 +394,7 @@ update msg model =
                             in
                             { path | focus = { focus | pinned = newPinned } }
                         )
-                        session.path_data
+                        session.common.path_data
                         data
                         |> (\x ->
                                 case x of
@@ -367,12 +402,12 @@ update msg model =
                                         Just a
 
                                     Nothing ->
-                                        session.path_data
+                                        session.common.path_data
                            )
 
                 -- history is deleted to save memory in page usong the Comments components
                 tension_head =
-                    case model.session.tension_head of
+                    case model.session.data.tension_head of
                         Just source ->
                             Maybe.map
                                 (\th ->
@@ -386,57 +421,84 @@ update msg model =
 
                         Nothing ->
                             data
+
+                sessionData =
+                    session.data
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | tension_head = tension_head, path_data = pdata } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tension_head = tension_head }, common = { common | path_data = pdata } } }, Cmd.none )
 
         UpdateSessionProject data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | project_data = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | project_data = data } } }, Cmd.none )
 
         UpdateSessionOrgs data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | orgs_data = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | orgs_data = data } } }, Cmd.none )
 
         UpdateSessionTensions data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tensions_data = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tensions_data = data } } }, Cmd.none )
 
         UpdateSessionTensionsInt data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tensions_int = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tensions_int = data } } }, Cmd.none )
 
         UpdateSessionTensionsExt data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tensions_ext = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tensions_ext = data } } }, Cmd.none )
 
         UpdateSessionTensionsAll data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tensions_all = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tensions_all = data } } }, Cmd.none )
 
         UpdateSessionTensionsCount data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tensions_count = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tensions_count = data } } }, Cmd.none )
 
         UpdateSessionAdmin data ->
             let
@@ -449,36 +511,51 @@ update msg model =
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | window_pos = data } }, Ports.saveWindowpos data )
+            ( { model | session = { session | data = { sessionData | window_pos = data } } }, Ports.saveWindowpos data )
 
         UpdateSessionRecentActivityTab data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | recent_activity_tab = data } }, Ports.saveRecentActivityTab data )
+            ( { model | session = { session | data = { sessionData | recent_activity_tab = data } } }, Ports.saveRecentActivityTab data )
 
         UpdateSessionMenuOrga data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | orga_menu = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | orga_menu = data } } }, Cmd.none )
 
         UpdateSessionMenuTree data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | tree_menu = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | tree_menu = data } } }, Cmd.none )
 
         UpdateSessionScreen data ->
             let
                 session =
                     model.session
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | screen = data } }, Cmd.none )
+            ( { model | session = { session | common = { common | screen = data } } }, Cmd.none )
 
         UpdateSessionLang data ->
             let
@@ -487,25 +564,50 @@ update msg model =
             in
             case Lang.fromString data of
                 Just lang ->
-                    case session.user of
+                    let
+                        common =
+                            session.common
+                    in
+                    case session.common.user of
                         LoggedIn user ->
-                            ( { model | session = { session | lang = lang, user = LoggedIn { user | lang = lang } } }, Cmd.none )
+                            ( { model | session = { session | common = { common | lang = lang, user = LoggedIn { user | lang = lang } } } }, Cmd.none )
 
                         LoggedOut ->
-                            ( { model | session = { session | lang = lang } }, Cmd.none )
+                            ( { model | session = { session | common = { common | lang = lang } } }, Cmd.none )
 
                 Nothing ->
                     ( model, Ports.logErr ("Error: Bad lang format: " ++ data) )
+
+        UpdateSessionTheme data ->
+            let
+                session =
+                    model.session
+
+                common =
+                    session.common
+            in
+            case data of
+                "light" ->
+                    ( { model | session = { session | common = { common | theme = LightTheme } } }, Cmd.none )
+
+                "dark" ->
+                    ( { model | session = { session | common = { common | theme = DarkTheme } } }, Cmd.none )
+
+                _ ->
+                    ( model, Ports.logErr ("Error: Bad theme format: " ++ data) )
 
         UpdateSessionNotif data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | notif = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | notif = data } } }, Cmd.none )
 
         RefreshNotifCount ->
-            case model.session.user of
+            case model.session.common.user of
                 LoggedIn uctx ->
                     ( model, queryNotifCount apis { uctx = uctx } AckNotifCount )
 
@@ -521,11 +623,11 @@ update msg model =
                     ( model, Cmd.none )
 
         ToggleWatchOrga nameid ->
-            case model.session.user of
+            case model.session.common.user of
                 LoggedIn uctx ->
                     let
                         isWatching =
-                            unwrap2 False .isWatching model.session.orgaInfo
+                            unwrap2 False .isWatching model.session.data.orgaInfo
                     in
                     ( model, toggleOrgaWatch apis uctx.username nameid (not isWatching) GotIsWatching )
 
@@ -535,7 +637,7 @@ update msg model =
         GotIsWatching result ->
             case parseErr result 2 of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser model.session.user) )
+                    ( model, Ports.raiseAuthModal (uctxFromUser model.session.common.user) )
 
                 OkAuth d ->
                     let
@@ -547,9 +649,12 @@ update msg model =
                                 (\oi ->
                                     { oi | isWatching = Just d, n_watchers = ternary d (oi.n_watchers + 1) (max 0 (oi.n_watchers - 1)) }
                                 )
-                                session.orgaInfo
+                                session.data.orgaInfo
+
+                        sessionData =
+                            session.data
                     in
-                    ( { model | session = { session | orgaInfo = orgaInfo } }, Cmd.none )
+                    ( { model | session = { session | data = { sessionData | orgaInfo = orgaInfo } } }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -566,10 +671,13 @@ update msg model =
                                 (\nodes ->
                                     { data | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
                                 )
-                                session.tree_data
+                                session.data.tree_data
                                 |> withDefault data
+
+                        sessionData =
+                            session.data
                     in
-                    ( { model | session = { session | orgaInfo = Just oi } }, Cmd.none )
+                    ( { model | session = { session | data = { sessionData | orgaInfo = Just oi } } }, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
@@ -591,9 +699,12 @@ update msg model =
                             in
                             { p | focus = { focus | pinned = result } }
                         )
-                        session.path_data
+                        session.common.path_data
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | path_data = new_path } }, Ports.pathChanged )
+            ( { model | session = { session | common = { common | path_data = new_path } } }, Ports.pathChanged )
 
         --Global Utils Msg
         NavigateNode nameid ->
@@ -608,18 +719,21 @@ update msg model =
             let
                 session =
                     model.session
+
+                common =
+                    session.common
             in
-            ( { model | session = { session | user = LoggedIn uctx } }
+            ( { model | session = { session | common = { common | user = LoggedIn uctx } } }
               -- Update Components when Uctx change !
             , [ Ports.saveUserCtx uctx
-              , case session.node_focus of
+              , case session.common.node_focus of
                     Just n ->
                         getOrgaInfo apis uctx.username n.rootnameid GotOrgaInfo
 
                     Nothing ->
                         Cmd.none
               ]
-                ++ (case model.session.tree_data of
+                ++ (case model.session.data.tree_data of
                         Just ndata ->
                             [ Ports.redrawGraphPack ndata ]
 
@@ -650,7 +764,7 @@ update msg model =
 
                 _ ->
                     if parseErr2 result 1 == Auth.Authenticate then
-                        case model.session.user of
+                        case model.session.common.user of
                             LoggedIn uctx ->
                                 ( newModel, Ports.raiseAuthModal uctx )
 
@@ -663,7 +777,7 @@ update msg model =
         RedirectOnLoggedIn ->
             let
                 cmd =
-                    case model.session.user of
+                    case model.session.common.user of
                         LoggedIn uctx ->
                             let
                                 home =
@@ -685,7 +799,7 @@ update msg model =
             ( model, cmd )
 
         LoggedOutUser ->
-            case model.session.user of
+            case model.session.common.user of
                 LoggedIn uctx ->
                     ( { model | session = resetSession model.session model.flags }, Ports.removeSession uctx )
 
@@ -705,23 +819,32 @@ update msg model =
                         (\oi ->
                             { oi | client_version = session.apis.client_version }
                         )
-                        session.orgaInfo
+                        session.data.orgaInfo
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | orgaInfo = orgaInfo } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | orgaInfo = orgaInfo } } }, Cmd.none )
 
         OnPushSystemNotif result ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | system_notification = result } }, sendSleep OnClearSystemNotif 4000 )
+            ( { model | session = { session | data = { sessionData | system_notification = sessionData.system_notification ++ [ result ] } } }, sendSleep OnClearSystemNotif 5000 )
 
         OnClearSystemNotif ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | system_notification = RemoteData.NotAsked } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | system_notification = withDefault [] (List.tail sessionData.system_notification) } } }, Cmd.none )
 
         -- Utils
         VOID ->
@@ -734,22 +857,31 @@ update msg model =
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | authorsPanel = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | authorsPanel = data } } }, Cmd.none )
 
         UpdateSessionLabelsPanel data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | labelsPanel = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | labelsPanel = data } } }, Cmd.none )
 
         UpdateSessionNewOrgaData data ->
             let
                 session =
                     model.session
+
+                sessionData =
+                    session.data
             in
-            ( { model | session = { session | newOrgaData = data } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | newOrgaData = data } } }, Cmd.none )
 
 
 
@@ -763,6 +895,7 @@ subscriptions _ =
         , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
         , Ports.pd Ports.updateMenuTreeFromJs TreeMenuSchema.decode LogErr UpdateSessionMenuTree
         , Ports.updateLangFromJs UpdateSessionLang
+        , Ports.updateThemeFromJs UpdateSessionTheme
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         ]
 
@@ -786,47 +919,38 @@ view { page, global, url, msg1, msg2, onClearNotif } =
 
 layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
 layout { page, url, session, msg1, msg2, onClearNotif } =
-    let
-        ( notif_msg, notif_ok ) =
-            case session.system_notification of
-                RemoteData.Success msg ->
-                    ( msg, Just True )
-
-                RemoteData.Failure err ->
-                    ( errorHttpToString err, Just False )
-
-                _ ->
-                    ( "", Nothing )
-    in
     { title = page.title
     , body =
-        [ div [ id "app", classList [ ( "embed", session.viewMode == EmbedView ) ] ]
-            [ showIf (session.viewMode /= EmbedView) <| Lazy.lazy7 Navbar.view session.user session.notif session.orgaInfo session.apis url msg1 msg2
-            , showIf (notif_ok /= Nothing) (viewNotif notif_msg (withDefault True notif_ok) onClearNotif)
+        [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
+            [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy6 Navbar.view session.apis session.common session.data.notif session.data.orgaInfo msg1 msg2
+            , showIf (session.data.system_notification /= [])
+                (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body
-            , Footbar.view session
+            , Footbar.view session.common
             ]
         ]
     }
 
 
-viewNotif : String -> Bool -> msg -> Html msg
-viewNotif msg isOk closeMsg =
-    let
-        color =
-            ternary isOk "is-success" "is-error"
-    in
-    div
-        [ class "f6-notification notification is-light"
-        , classList [ ( color, True ) ]
-        ]
-        [ button [ class "delete", onClick closeMsg ] []
-        , div [ class "stealth-link" ]
-            -- https://github.com/surprisetalk/elm-bulma/issues/17
-            [ -- p [ class "title is-6 mb-2" ] [ text msg ]
-              viewGqlErrorsLight [ msg ]
-            ]
-        ]
+viewNotif : List SystemNotification -> msg -> Html msg
+viewNotif notifs closeMsg =
+    notifs
+        |> List.indexedMap
+            (\i notif ->
+                div
+                    [ id ("notif" ++ String.fromInt i) -- do not work
+                    , class ("f6-notification notification has-timer " ++ notif.cls)
+                    ]
+                    [ button [ class "delete", onClick closeMsg ] []
+                    , div [ class "stealth-link" ]
+                        -- https://github.com/surprisetalk/elm-bulma/issues/17
+                        [ -- p [ class "title is-6 mb-2" ] [ text msg ]
+                          --viewGqlErrorsLight [ data ]
+                          Html.map never notif.content
+                        ]
+                    ]
+            )
+        |> div []
 
 
 

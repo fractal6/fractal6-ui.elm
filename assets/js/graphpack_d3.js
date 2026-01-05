@@ -1,6 +1,6 @@
 /*
  * Fractale - Self-organisation for humans.
- * Copyright (C) 2024 Fractale Co
+ * Copyright (C) 2025 Fractale Co
  *
  * This file is part of Fractale.
  *
@@ -180,21 +180,13 @@ export const GraphPack = {
     // Graph Colors
     //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     //colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
+    // @obsolete: Color computed in computeCircleColorRange()
     colorCircleRange: [],
-    roleColors: {
-        [RoleType.Coordinator]: "#ffdaa1",
-        [RoleType.Guest]: "#f4fdf5",
-        [RoleType.Pending]: "#1abc9c",
-        [RoleType.Retired]: "#8e44ad",
-        [RoleType.Bot]: "#eeeeee",
-        //[RoleType.Bot]: "#81b987",
-        //[RoleType.Bot]: "rgb(0,0,0,0)", // transparent
-        "_default_": "#a2b9df" // "#edf5ff"// "#f0fff0", // "#FFFFF9"
-    },
+    roleColors: {},
     usernameColor: "#8282cc",
-    nameColor: "#172335",
+    nameColor: "#474747",
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
-    focusCircleWidth: 6, // warning, can break stroke with canvas drawing.
+    focusCircleWidth: 4, // warning, can break stroke with canvas drawing.
     hoverCircleColor: "#555", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 2,
     outsideZoomOpacity: "75",
@@ -218,7 +210,7 @@ export const GraphPack = {
     circlesPadding: 4, // 1.8
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
-    fontstyleCircle: "Arial, fractaleicon",
+    fontstyleCircle: "Cantarell, Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif, fractaleicon",
 
     // Graph fx settings
     isLoading: true,
@@ -317,9 +309,10 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
 
         // Draw canvas buttons
+        var buttonMargin = 13;
         this.$canvasButtons.style.height = this.height - 20 + "px";
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - 8 - scrollLeft + "px";
-        this.$canvasButtons.style.top = r.top + 13 - scrollTop + "px";
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - buttonMargin - scrollLeft + "px";
+        this.$canvasButtons.style.top = r.top + buttonMargin - scrollTop + "px";
         this.$canvasButtons.classList.remove("is-invisible");
 
         // Draw welcome buttons
@@ -339,7 +332,7 @@ export const GraphPack = {
         this.computedHeight = (window.innerHeight) / 2;
 
         // Canvas settings
-        this.width = Math.max(this.computedWidth, this.minWidth);
+        this.width = Math.max(this.computedWidth - 4, this.minWidth);
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
@@ -517,9 +510,9 @@ export const GraphPack = {
 
             // Draw user dashed border
             var w = 2;
-            var color = "green";
+            var color = this.link2Color;
             ctx.beginPath();
-            ctx.setLineDash([5, 5]);
+            ctx.setLineDash([10, 10]);
             ctx.beginPath();
             ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon - w * 0.5,
                 0, 2 * Math.PI, true);
@@ -565,6 +558,9 @@ export const GraphPack = {
         var fontSize = this.fontsizeCircle_start;
         var text, textWidth;
 
+        // @debug ME
+        opac = "";
+
         // Name
         text = node.data.name;
         textWidth = ctx2d.measureText(text).width;
@@ -583,7 +579,7 @@ export const GraphPack = {
             ctx2d.lineWidth = 1;
         else
             ctx2d.lineWidth = 2;
-        ctx2d.strokeStyle = "#5e6d6f" + opac;
+        //ctx2d.strokeStyle = "#5e6d6f" + opac;
         ctx2d.fillStyle = this.nameColor + opac;
         if (node.data.visibility !== this.getParent(node).data.visibility) {
             if (node.data.visibility == NodeVisibility.Public) {
@@ -597,10 +593,10 @@ export const GraphPack = {
                 text = "\ue95f " + text;
             }
         }
-        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
+        //ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
         ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.4);
         ctx2d.fill();
-        ctx2d.stroke();
+        //ctx2d.stroke();
 
         // Set some text around the circle
         //ctx2d.beginPath();
@@ -617,6 +613,9 @@ export const GraphPack = {
         var ctx2d = this.ctx2d
         var fontSize = this.fontsizeRole_start;
         var text, textWidth, textHeight = ctx2d.measureText('M').width;
+
+        // @debug ME
+        opac = "";
 
         // Name
         text = node.data.name;
@@ -637,15 +636,17 @@ export const GraphPack = {
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.textAlign = "center";
             // Color
+            var roleTextColor;
             if (node.data.color) {
-                ctx2d.fillStyle = this.colorToTextColor(node.data.color);
+                roleTextColor = this.colorToTextColor(node.data.color);
             } else {
-                ctx2d.fillStyle = this.nameColor + opac;
+                roleTextColor = this.nameColor + opac;
             }
+            ctx2d.fillStyle = roleTextColor;
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
             ctx2d.fill();
             // Icon Tips
-            ctx2d.fillStyle = this.nameColor + "99";
+            ctx2d.fillStyle = roleTextColor;
             if (node.data.role_type == RoleType.Bot) {
                 //ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.5);
                 ctx2d.fillText('\ue962', node.ctx.centerX, node.ctx.centerY - node.ctx.rayon * 0.45);
@@ -710,8 +711,6 @@ export const GraphPack = {
             ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
             ctx2d.stroke();
             //ctx2d.save();
-
-
         }
 
         // Draw tooltip
@@ -825,6 +824,9 @@ export const GraphPack = {
 
     // Clear node tooltip.
     clearNodeTooltip() {
+        // with the css animation, no more needs to clear it.
+        return
+
         if (this.$tooltip) {
             this.$tooltip.classList.remove("fadeIn");
             this.$tooltip.classList.add("fadeOut");
@@ -994,6 +996,28 @@ export const GraphPack = {
             styles.getPropertyValue('--gp-lvl-6-bg').trim(),
             styles.getPropertyValue('--gp-lvl-7-bg').trim(),
         ]
+        // Create the roleColors map dynamically
+        this.roleColors = Object.keys(RoleType).reduce((colors, role) => {
+          // Convert role name to lowercase for CSS variable naming convention
+          const cssVarName = `--${role.toLowerCase()}`;
+
+          // Try to get the CSS variable value, fall back to default if not found
+          const colorValue = styles.getPropertyValue(cssVarName).trim() || "#a2b9df";
+
+          // Add to the colors object
+          colors[RoleType[role]] = colorValue;
+          return colors;
+        }, {
+          // Add the default color
+          "_default_": "#a2b9df"
+        });
+
+        this.backgroundColor = styles.getPropertyValue('--body-background-color').trim()
+        this.focusCircleColor = styles.getPropertyValue('--link').trim()
+        this.hoverCircleColor = styles.getPropertyValue('--text-weak').trim()
+        this.link2Color = styles.getPropertyValue('--link2').trim()
+        this.nameColor = styles.getPropertyValue('--text-evidence').trim()
+        this.usernameColor = styles.getPropertyValue('--text').trim()
     },
 
     // Mapping function from a node depth to color.
@@ -1020,22 +1044,31 @@ export const GraphPack = {
         var color, depth;
         var depth = z.depth > 2 ? node.depth - z.depth + 2 : node.depth;
         opac = opac || "";
+        if (opac.startsWith('hsl')) {
+            opac = "";
+        }
 
         // See doc here: https://www.w3resource.com/html5-canvas/html5-canvas-gradients-patterns.php
-        var grd = this.ctx2d.createRadialGradient(node.ctx.centerX - node.ctx.rayon / 4, node.ctx.centerY - node.ctx.rayon / 2, 0,
-            node.ctx.centerX, node.ctx.centerY, node.ctx.rayon);
+        var grd = this.ctx2d.createRadialGradient(
+            node.ctx.centerX - node.ctx.rayon / 4, node.ctx.centerY - node.ctx.rayon / 2, 0,
+            node.ctx.centerX, node.ctx.centerY, node.ctx.rayon
+        );
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
-            grd.addColorStop(0, shadeColor(color, 10) + opac);
-            grd.addColorStop(0.2, color + opac);
-            grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
+            grd = color;
+            //grd.addColorStop(0, shadeColor(color, 10) + opac);
+            // 3D effects
+            //grd.addColorStop(0.2, color + opac);
+            //grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
-            if (color.substring(0, 1) == "r") {
+            if (color.substring(0, 1) == "r" || color.substring(0, 1) == "h") {
                 grd = color;
             } else {
-                grd.addColorStop(0, color + opac);
-                grd.addColorStop(1, shadeColor(color, -20) + opac);
+                grd = color;
+                //grd.addColorStop(0, color + opac);
+                // 3D effects
+                //grd.addColorStop(1, shadeColor(color, -20) + opac);
             }
         } else {
             console.warn("Node type unknonw", node.data.type_);

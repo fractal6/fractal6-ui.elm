@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -53,7 +53,7 @@ import Ports
 import Query.QueryProject exposing (addProjectCard, addProjectColumn, getNoStatusCol, updateProjectColumn)
 import Requests exposing (TensionQuery, fetchTensionsLight, initTensionQuery)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -69,8 +69,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , projectid : String
     , noStatusCol : ColTarget
     , target : FocusNode
@@ -82,6 +81,7 @@ type alias Model =
     , expanded_lines : ExpandedLines
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -98,10 +98,9 @@ type alias ColTarget =
     }
 
 
-initModel : String -> UserState -> Model
-initModel projectid user =
-    { user = user
-    , isOpen = False
+initModel : String -> SessionCommon -> Model
+initModel projectid session =
+    { isOpen = False
     , projectid = projectid
     , noStatusCol = { id = "", cards_len = 0 }
     , target = initFocusNode
@@ -115,17 +114,18 @@ initModel projectid user =
     -- Components
     , isOpenTargetFilter = False
     , isOpenTypeFilter = False
-    , labelSearchPanel = LabelSearchPanel.load Nothing user
+    , labelSearchPanel = LabelSearchPanel.load Nothing session.user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> UserState -> State
-init projectid user =
-    initModel projectid user |> State
+init : String -> SessionCommon -> State
+init projectid session =
+    initModel projectid session |> State
 
 
 
@@ -143,7 +143,7 @@ hasTargets_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.projectid model.user
+    initModel model.projectid model.session
 
 
 setDataResult : GqlData (List TensionLight) -> Model -> Model
@@ -314,7 +314,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -337,7 +337,7 @@ update_ apis message model =
                         Nothing ->
                             let
                                 form =
-                                    { uctx = uctxFromUser model.user
+                                    { uctx = uctxFromUser model.session.user
                                     , projectid = model.projectid
                                     , colid = ""
                                     , col_type = Just ProjectColumnType.NoStatusColumn
@@ -416,7 +416,7 @@ update_ apis message model =
         OnAddToProject ->
             let
                 form =
-                    { uctx = uctxFromUser model.user
+                    { uctx = uctxFromUser model.session.user
                     , title = ""
                     , colid = model.noStatusCol.id
                     , pos = model.noStatusCol.cards_len
@@ -567,7 +567,7 @@ viewPanel tree_data model =
                 }
 
         labelFilter_html =
-            span []
+            span [ class "ml-2" ]
                 [ span
                     [ class "button is-small"
                     , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
@@ -610,7 +610,7 @@ viewPanel tree_data model =
                     [ input
                         [ class "input is-small"
                         , type_ "text"
-                        , placeholder T.searchTensions
+                        , placeholder (T.searchTensions model.session.lexicon)
                         , autofocus False
                         , value (withDefault "" model.form.pattern)
                         , onInput OnSearchInput
@@ -626,7 +626,7 @@ viewPanel tree_data model =
                         -- @warning: height of this element manually to be able to work on relative
                         -- height percentage for .parent-block (100% of the parent height).
                         div [ class "panel-block is-top is-size-7" ]
-                            [ label [ class "is-h", onClickPD OnSelectAll ]
+                            [ label [ class "is-w", onClickPD OnSelectAll ]
                                 [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
                                 ]

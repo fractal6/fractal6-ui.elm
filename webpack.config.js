@@ -13,13 +13,10 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const safePostCssParser = require('postcss-safe-parser');
 
-// deprecated
-const autoprefixer = require('autoprefixer');
-
 const commitHash = require('child_process')
-  .execSync('git rev-parse --short HEAD')
-  .toString()
-  .trim();
+    .execSync('git rev-parse --short HEAD')
+    .toString()
+    .trim();
 
 // additional webpack settings for local env (when invoked by 'npm start')
 module.exports = (env, argv) => {
@@ -28,16 +25,17 @@ module.exports = (env, argv) => {
     var MODE = argv.mode;
     const isDev = MODE == 'development';
     const isProd = MODE == 'production';
+    const watchCssOnly = env.WATCH_CSS_ONLY === 'true';
 
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
-    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "DARK";
+    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "LIGHT";
     var API_URL;
     if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
-            auth: 'http://localhost:8888/auth',
-            graphql: 'http://localhost:8888/api',
-            rest: 'http://localhost:8888/q',
-            assets: 'http://localhost:8888/assets'
+            auth: 'http://localhost:8484/auth',
+            graphql: 'http://localhost:8484/api',
+            rest: 'http://localhost:8484/q',
+            assets: 'http://localhost:8484/assets'
             // @debug: CORS error.
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
             //assets: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
@@ -64,6 +62,12 @@ module.exports = (env, argv) => {
 
     // common webpack config (valid for dev and prod)
     var common = {
+        cache: {
+            type: 'filesystem',
+            buildDependencies: {
+                config: [__filename]
+            }
+        },
         stats: { colors: true }, // "error-only"
         mode: MODE,
         entry: entryPath,
@@ -86,18 +90,29 @@ module.exports = (env, argv) => {
                 'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),
                 'DEFAULT_THEME': JSON.stringify(DEFAULT_THEME),
             }),
-            new webpack.LoaderOptionsPlugin({
-                options: {
-                    postcss: [autoprefixer()]
-                }
-            }),
             // Copy images
             new CopyPlugin({
-                patterns: [{
-                    from: 'assets/images',
-                    to: 'static/images/' ,
-                    globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
-                }],
+                patterns: [
+                    {
+                        from: 'assets/images',
+                        to: 'static/images/',
+                        globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
+                    },
+                    {
+                        from: 'public/service-worker.js',
+                        to: 'service-worker.js',
+                        transform(content) {
+                            return content.toString().replace(
+                                'VERSION_PLACEHOLDER',
+                                commitHash
+                            );
+                        }
+                    },
+                    {
+                        from: 'public/site.webmanifest',
+                        to: 'site.webmanifest'
+                    }
+                ],
             }),
         ],
         module: {
@@ -106,10 +121,14 @@ module.exports = (env, argv) => {
                     test: /\.js$/,
                     exclude: /node_modules/,
                     use: [
-                        { loader: 'babel-loader' },
-                        //options: {
-                        //    presets: ['@babel/preset-env']
-                        //}
+                        {
+                            loader: 'esbuild-loader',
+                            options: {
+                                target: 'es2017',  // Good balance of features and compatibility
+                                loader: 'js',
+                                //loader: 'jsx'  // if you use JSX
+                            }
+                        }
                     ],
                 },
                 // Copy fonts
@@ -134,7 +153,33 @@ module.exports = (env, argv) => {
     // additional webpack settings for prod env (when invoked via --mode
     if (isDev) {
         return merge(common, {
-            optimization: {moduleIds: 'named'},
+            infrastructureLogging: {
+                //level: 'verbose', // or 'info', 'warn', 'error'
+                //debug: /webpack/,  // Enable debugging for modules matching this pattern
+            },
+            //devtool: 'eval-cheap-module-source-map',
+            watchOptions: {
+                ignored: [ '**/node_modules', '**/elm-stuff', '**/.git', '**/.direnv'],
+            },
+            optimization: {
+                moduleIds: 'named',
+                runtimeChunk: 'single',
+                splitChunks: {
+                    cacheGroups: {
+                        styles: {
+                            name: 'styles',
+                            test: /\.css$|\.scss$/,
+                            chunks: 'all',
+                            enforce: true,
+                        },
+                        elm: {
+                            name: 'elm',
+                            test: /\.elm$/,
+                            chunks: 'all',
+                        }
+                    }
+                }
+            },
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
@@ -143,7 +188,7 @@ module.exports = (env, argv) => {
                     filename: 'index.html'
                 }),
                 // Prevents compilation errors causing the hot loader to lose state
-                new webpack.NoEmitOnErrorsPlugin()
+                new webpack.NoEmitOnErrorsPlugin(),
             ],
             module: {
                 rules: [
@@ -155,8 +200,9 @@ module.exports = (env, argv) => {
                             {
                                 loader: 'elm-webpack-loader',
                                 options: {
-                                    // add Elm's debug overlay to output
+                                    // Add Elm's debug overlay to output
                                     debug: true,
+                                    optimize: false,   // Skip optimization in dev
                                 }
                             }
                         ]
@@ -165,9 +211,26 @@ module.exports = (env, argv) => {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            "style-loader",
-                            "css-loader",
-                            "sass-loader",
+                            "style-loader",        // 4. Finally, injects CSS into DOM
+                            //"css-loader",        // 3. Then, processes CSS imports
+                            {
+                                loader: "css-loader",
+                                options: {
+                                    "sourceMap": false,
+                                }
+                            },
+                            "postcss-loader",    // 2. Postcss optimization
+                            //"sass-loader",     // 1. First, compiles Sass to CSS
+                            {
+                                loader: "sass-loader",
+                                options: {
+                                    //implementation: require('sass'), // longer...?
+                                    sassOptions: {
+                                        outputStyle: 'expanded',
+                                        sourceMap: false,
+                                    }
+                                }
+                            },
                         ],
                     },
                 ]
@@ -176,8 +239,12 @@ module.exports = (env, argv) => {
                 // serve index.html in place of 404 responses
                 hot: true,
                 historyApiFallback: true,
-                //contentBase: './static',
-                //proxy: [],
+                client: {
+                    overlay: {
+                        errors: true,
+                        warnings: false,
+                    },
+                },
                 // feel free to delete this section if you don't need anything like this
                 //before(app) {
                 //    // on port 3000
@@ -189,25 +256,27 @@ module.exports = (env, argv) => {
         })
     } else if (isProd) {
         return module.exports = merge(common, {
+            cache: false,
+            //devtool: 'sourcemap',
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
                     template: 'public/index.html',
                     inject: 'body',
                     filename: 'index.html',
-                    minify: {
-                        removeComments: true,
-                        collapseWhitespace: true,
-                        removeRedundantAttributes: true,
-                        useShortDoctype: true,
-                        removeEmptyAttributes: true,
-                        removeStyleLinkTypeAttributes: true,
-                        keepClosingSlash: true,
-                        minifyJS: true,
-                        minifyCSS: true,
-                        minifyURLs: true,
-                    },
-                }),
+                   // minify: {
+                   //     removeComments: true,
+                   //     collapseWhitespace: true,
+                   //     removeRedundantAttributes: true,
+                   //     useShortDoctype: true,
+                   //     removeEmptyAttributes: true,
+                   //     removeStyleLinkTypeAttributes: true,
+                   //     keepClosingSlash: true,
+                   //     minifyJS: true,
+                   //     minifyCSS: true,
+                   //     minifyURLs: true,
+                   // },
+                }),//
                 // Delete everything from output-path (/dist) and report to user
                 new CleanWebpackPlugin({
                     root: __dirname,
@@ -227,7 +296,7 @@ module.exports = (env, argv) => {
                         exclude: [/elm-stuff/, /node_modules/, /tests/],
                         use: {
                             loader: 'elm-webpack-loader',
-                            options: { optimize: true }
+                            options: { optimize: true, verbose: true }
                         }
                     },
                     {
@@ -236,14 +305,16 @@ module.exports = (env, argv) => {
                         use: [
                             MiniCssExtractPlugin.loader,
                             "css-loader",
-                            "sass-loader",
+                            "postcss-loader",
                             {
-                                loader: "postcss-loader",
+                                loader: "sass-loader",
                                 options: {
-                                    postcssOptions: {
-                                        parser: "postcss-scss", // allow inline comment (//)
-                                    },
-                                },
+                                    //implementation: require('sass'),
+                                    sassOptions: {
+                                        outputStyle: 'compressed',
+                                        sourceMap: false,
+                                    }
+                                }
                             },
                         ],
                     },
@@ -273,13 +344,14 @@ module.exports = (env, argv) => {
                                 unsafe: true,
                                 unsafe_comps: false, // break graphpack
                                 unsafe_math: true,
-                                pure_funcs: [ 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
+                                pure_funcs: ['A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
                                 //keep_fnames: true,
                             },
                         },
                     }),
 
                     new CssMinimizerPlugin({
+                        parallel: true,
                         // Default is CssMinimizerPlugin.cssnanoMinify
                         //minify: CssMinimizerPlugin.cleanCssMinify,
 
@@ -288,7 +360,20 @@ module.exports = (env, argv) => {
                         //    processorOptions: {
                         //        parser: safePostCssParser,
                         //    },
-                        //},
+
+                         //minimizerOptions: {
+                         //    preset: [
+                         //        'default',
+                         //        {
+                         //            discardComments: { removeAll: true },
+                         //            discardUnused: true,
+                         //            mergeIdents: true,
+                         //            reduceIdents: true,
+                         //            discardDuplicates: true,
+                         //            minifySelectors: true,
+                         //        },
+                         //    ],
+                         //},
                     }),
                 ]
             }

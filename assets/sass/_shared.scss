@@ -1,0 +1,27 @@
+// Bulma generate palette colors before themes
+// --
+
+// Forward the base variables first
+@forward "bulma/sass/utilities" with (
+    // Misc
+    $shadow-color: transparent,
+);
+
+// Mixins needed explicitely to access it later....
+@forward "bulma/sass/utilities/mixins";
+
+// Then forward Bulma components (which might use the variables)
+@forward "bulma/sass/base";
+@forward "bulma/sass/elements";
+@forward "bulma/sass/components";
+@forward "bulma/sass/form";
+@forward "bulma/sass/grid";
+@forward "bulma/sass/helpers";
+@forward "bulma/sass/layout";
+
+// F6 fonts
+@forward "fonts";
+
+// Themes
+// @DEBUG: very long to build cf sass-loader...
+//@forward "bulma/sass/themes";

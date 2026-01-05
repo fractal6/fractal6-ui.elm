@@ -1,3 +1,73 @@
+@use "sass:list";
+
+@charset "utf-8";
+
+
+// Zen fonts
+// --
+$f6-size-1: 3rem;
+$f6-size-2: 2.5rem;
+$f6-size-3: 2rem;
+$f6-size-4: 1.75rem;
+$f6-size-5: 1.5rem;
+$f6-size-6: 1.1rem;
+$f6-size-7: 0.9rem;
+$f6-weight-light: 400;
+$f6-weight-normal: 500;
+$f6-weight-medium: 600;
+$f6-weight-semibold: 700;
+$f6-weight-bold: 800;
+
+$f6-sizes: $f6-size-1 $f6-size-2 $f6-size-3 $f6-size-4 $f6-size-5 $f6-size-6 $f6-size-7;
+
+//
+// Fonts face
+//
+
+// more at https://fonts.google.com
+
+/* latin */
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 500 700; // < 400 is too weak..
+  font-display: swap; // To avoid flashing unstyled content
+  src: local('Quicksand'),
+       url('https://fonts.gstatic.com/s/quicksand/v37/6xKtdSZaM9iE8KbpRA_hK1QN.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin */
+@font-face {
+  font-family: 'Cantarell';
+  font-style: normal;
+  font-weight: 400; // a different font file for each weight :/
+  src: local('Cantarell')
+     url('https://fonts.gstatic.com/s/cantarell/v18/B50NF7ZDq37KMUvlO015jKJr.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin */
+//@font-face {
+//  font-family: 'Recursive';
+//  font-style: normal;
+//  font-weight: 300 1000;
+//  font-display: swap; // To avoid flashing unstyled content
+//  src: url('https://fonts.gstatic.com/s/recursive/v44/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnA.woff2') format('woff2'),
+//       url('../fonts/Recursive_VF_1.084--subset-GF_latin_basic.woff2') format('woff2');
+//  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+//}
+
+
+@mixin defaultFontFace {
+    font-family: Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif !important;
+}
+
+@mixin humanFontFace {
+    font-family: Cantarell, Josefin Sans, Recursive,
+                 Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif !important;
+}
+
 //
 // Default font
 //
@@ -10,30 +80,11 @@ html, body {
     font-family : inherit !important;
 }
 
-//
-// Zen fonts
-//
-
-$size-1: 3rem;
-$size-2: 2.5rem;
-$size-3: 2rem;
-$size-4: 1.75rem;
-$size-5: 1.5rem;
-$size-6: 1.1rem;
-$size-7: 0.9rem;
-$sizes: $size-1 $size-2 $size-3 $size-4 $size-5 $size-6 $size-7;
-
-$weight-light: 400;
-$weight-normal: 500;
-$weight-medium: 600;
-$weight-semibold: 700;
-$weight-bold: 800;
-
 
 .is-human {
     //@include zenFontFace;
     //@include OpenFace;
-    @include OpenRecursive;
+    @include humanFontFace;
     /* set variation axis values */
     --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
     --casl: "CASL" 0; /* Casual: Linear to Casual */
@@ -44,36 +95,8 @@ $weight-bold: 800;
     font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
 }
 
-// Fix size of Zen font size
-@each $size in $sizes {
-    $i: index($sizes, $size);
-    .is-size-#{$i} {
-         &.is-human, .is-human {
-            font-size: $size !important;
-        }
-    }
-}
-
-.has-text-weight-light {
-  font-weight: $weight-light !important;
-}
-.has-text-weight-normal {
-  font-weight: $weight-normal !important;
-}
-.has-text-weight-medium {
-  font-weight: $weight-medium !important;
-}
-.has-text-weight-semibold {
-	font-weight: $weight-semibold !important;
-}
-.has-text-weight-bold {
-	font-weight: $weight-bold !important;
-}
-
-
-
 .is-recursive {
-    @include OpenRecursive;
+    @include humanFontFace;
     /* set variation axis values */
     --mono: "MONO" 0; /* Monospace: Sans (natural-width) or Mono (fixed-width) */
     --casl: "CASL" 1; /* Casual: Linear to Casual */
@@ -83,6 +106,18 @@ $weight-bold: 800;
     /* apply axis values with CSS custom properties */
     font-variation-settings: var(--mono), var(--casl), var(--slnt), var(--CRSV);
 }
+
+
+// Fix size of Zen font size
+@each $size in $f6-sizes {
+    $i: list.index($f6-sizes, $size);
+    .is-size-#{$i} {
+         &.is-human, .is-human {
+            font-size: $size !important;
+        }
+    }
+}
+
 
 
 /*
@@ -127,8 +162,8 @@ i {
     }
 	&.icon-lg {
 	/* makes the font 33% larger relative to the icon container */
-		font-size: (4rem / 3);
-		line-height: (3rem / 4);
+		font-size: calc(4rem / 3);
+		line-height: calc(3rem / 4);
 		vertical-align: -.0667rem;
 	}
 
@@ -180,7 +215,12 @@ i {
 	-ms-transform: rotate(-45deg);
 }
 
-.icon-rotate:before {
+.icon-rotate-45:before {
+    display: inline-block;
+    transform: rotate(45deg);
+}
+
+.icon-rotate-90:before {
     display: inline-block;
     transform: rotate(90deg);
 }

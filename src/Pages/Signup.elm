@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -82,7 +82,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         gcmd =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     send <| NavigateRaw <| toLink UsersBaseUri uctx.username []
 
@@ -90,7 +90,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.lang ) ] }
+            { form = { post = Dict.fromList [ ( "lang", Lang.toString global.session.common.lang ) ] }
             , result = RemoteData.NotAsked
             }
     in
@@ -176,14 +176,12 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "signupForm", class "columns is-centered top-section" ]
-        [ div [ class "" ]
-            [ viewSignup global model ]
-        ]
+        [ viewSignup global model ]
 
 
 viewSignup : Global.Model -> Model -> Html Msg
 viewSignup global model =
-    div [ class "card" ]
+    div [ class "card has-background-evidence" ]
         [ div [ class "card-header" ]
             [ div [ class "card-header-title" ]
                 [ text T.signup_ ]
@@ -252,30 +250,33 @@ viewSignup global model =
                                 , onKeydown SubmitKeyDown
                                 ]
                                 []
-                            , p [ class "help" ] [ text T.passwordRequirements ]
+                            , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                [ A.icon "icon-eye" ]
                             ]
+                        , p [ class "help" ] [ text T.passwordRequirements ]
                         ]
                     ]
                 ]
             , br [] []
-            , div [ class "is-size-7 is-pulled-left" ]
-                [ span [ class "mr-2" ] [ text T.alreadyAnAccount ]
-                , a [ class "underlined-link", href (toHref Route.Login) ] [ textH T.signinNow ]
-                ]
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ if isSignupSendable model.form.post then
-                        button
-                            [ id "submitButton"
-                            , class "button is-success"
-                            , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
-                            , type_ "submit"
-                            , onClick (SubmitUser model.form)
-                            ]
-                            [ text T.signup ]
+            , div [ class "level is-mobile" ]
+                [ div [ class "level-left level-with-breakline is-size-7 " ]
+                    [ span [] [ text T.alreadyAnAccount, a [ class "ml-2 underlined-link", href (toHref Route.Login) ] [ textH T.signinNow ] ]
+                    ]
+                , div [ class "level-right field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ if isSignupSendable model.form.post then
+                            button
+                                [ id "submitButton"
+                                , class "button is-success"
+                                , classList [ ( "is-loading", Loading.isLoadingRest model.result ) ]
+                                , type_ "submit"
+                                , onClick (SubmitUser model.form)
+                                ]
+                                [ text T.signup ]
 
-                      else
-                        button [ class "button", disabled True ] [ text T.signup ]
+                          else
+                            button [ class "button", disabled True ] [ text T.signup ]
+                        ]
                     ]
                 ]
             ]

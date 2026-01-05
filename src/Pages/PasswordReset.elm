@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -115,7 +115,7 @@ init global flags =
             Cmd.none
 
         email_given =
-            Dict.get "email" session.query |> Maybe.map List.head |> withDefault Nothing
+            Dict.get "email" session.common.query |> Maybe.map List.head |> withDefault Nothing
 
         model =
             { form = { post = Dict.fromList [ ( "email", withDefault "" email_given ) ] }
@@ -124,10 +124,10 @@ init global flags =
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
             , reset2_result = RemoteData.NotAsked
-            , token_reset = Dict.get "x" session.query |> Maybe.map List.head |> withDefault Nothing
+            , token_reset = Dict.get "x" session.common.query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
             , empty = {}
-            , help = Help.init global.session
+            , help = Help.init session.common
             }
     in
     case model.token_reset of
@@ -139,7 +139,7 @@ init global flags =
                 newForm =
                     { form | post = Dict.insert "token" token form.post }
             in
-            ( { model | form = newForm }, uuidCheck global.session.apis (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
+            ( { model | form = newForm }, uuidCheck session.apis (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
 
         Nothing ->
             ( model, send LoadCaptcha, gcmd )
@@ -290,7 +290,7 @@ view_ global model =
                     case model.reset2_result of
                         RemoteData.Success _ ->
                             div []
-                                [ div [ class "notification is-light is-success" ] [ text T.passwordUpdated ]
+                                [ div [ class "notification is-soft is-success" ] [ text T.passwordUpdated ]
                                 , a [ href "/" ] [ text T.goHome ]
                                 ]
 
@@ -300,7 +300,7 @@ view_ global model =
                                     viewResetForm2 global model
 
                                 RemoteData.Success False ->
-                                    div [ class "notification is-light is-warning" ] [ text T.sessionExpired2 ]
+                                    div [ class "notification is-soft is-warning" ] [ text T.sessionExpired2 ]
 
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
@@ -422,7 +422,7 @@ viewResetForm global model =
                     text ""
             , case model.reset_result of
                 RemoteData.Success False ->
-                    div [ class "notification is-light is-warning" ] [ text T.wrongCode ]
+                    div [ class "notification is-soft is-warning" ] [ text T.wrongCode ]
 
                 RemoteData.Failure err ->
                     viewHttpErrors err
@@ -460,6 +460,8 @@ viewResetForm2 global model =
                                     , onInput (ChangeUserPost "password")
                                     ]
                                     []
+                                , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                    [ A.icon "icon-eye" ]
                                 ]
                             ]
                         ]
@@ -482,6 +484,8 @@ viewResetForm2 global model =
                                     , onKeydown SubmitKeyDown
                                     ]
                                     []
+                                , span [ class "passwordVisibilityTrigger icon-input-flex-right is-clickable" ]
+                                    [ A.icon "icon-eye" ]
                                 ]
                             ]
                         ]

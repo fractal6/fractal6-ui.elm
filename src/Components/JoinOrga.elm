@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -29,7 +29,7 @@ import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -47,7 +47,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import Text as T
 import Time
 
@@ -57,8 +57,8 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isActive : Bool
+    , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , form : ActionForm
     , step : JoinStep
     , node_data : GqlData Node
@@ -67,7 +67,7 @@ type alias Model =
     , isPending : Bool
 
     -- Common
-    , screen : Screen
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -82,11 +82,11 @@ type JoinStep
     | AuthNeeded
 
 
-initModel : String -> UserState -> Screen -> Model
-initModel nameid user screen =
-    { user = user
-    , isOpen = False
-    , form = initActionForm "" user -- set later
+initModel : String -> SessionCommon -> Model
+initModel nameid session =
+    { isActive = False
+    , isActive2 = False
+    , form = initActionForm "" session.user -- set later
     , step = JoinOne
     , node_data = Loading
     , join_result = NotAsked
@@ -94,46 +94,36 @@ initModel nameid user screen =
     , isPending = False
 
     -- Common
-    , screen = screen
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init [ nameid ] True True user
+    , userInput = UserInput.init [ nameid ] True True session
     }
 
 
-init : String -> UserState -> Screen -> State
-init nameid user screen =
-    initModel nameid user screen |> State
+init : String -> SessionCommon -> State
+init nameid session =
+    initModel nameid session |> State
 
 
 
 -- Global methods
 
 
-isOpen_ : State -> Bool
-isOpen_ (State model) =
-    model.isOpen
+isActive_ : State -> Bool
+isActive_ (State model) =
+    model.isActive
 
 
 
 --- State Controls
 
 
-open : Model -> Model
-open model =
-    { model | isOpen = True }
-
-
-close : Model -> Model
-close model =
-    { model | isOpen = False }
-
-
-reset : Model -> Model
-reset model =
-    initModel model.nameid model.user model.screen
+resetModel : Model -> Model
+resetModel model =
+    initModel model.nameid model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -143,6 +133,16 @@ updatePost field value model =
             model.form
     in
     { model | form = { form | post = Dict.insert field value form.post } }
+
+
+openModal : Model -> Model
+openModal model =
+    { model | isActive2 = True }
+
+
+closeModal : Model -> Model
+closeModal model =
+    { model | isActive = False }
 
 
 setJoinResult : GqlData IdPayload -> Model -> Model
@@ -225,7 +225,8 @@ isSendable model =
 
 
 type Msg
-    = OnOpen String JoinStep
+    = SetIsActive2 Bool
+    | OnOpen String JoinStep
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -288,11 +289,18 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
+        SetIsActive2 v ->
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "JoinOrgaModal" ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
+
         OnOpen rootnameid method ->
-            case model.user of
+            case model.session.user of
                 LoggedOut ->
-                    ( { model | step = AuthNeeded } |> open
-                    , out0 [ Ports.open_modal "JoinOrgaModal" ]
+                    ( { model | step = AuthNeeded } |> openModal
+                    , out0 [ sendSleep (SetIsActive2 True) 10 ]
                     )
 
                 LoggedIn uctx ->
@@ -302,17 +310,20 @@ update_ apis message model =
                     in
                     if method == JoinOne && not (isMember uctx rootnameid || isPndg) then
                         -- Join
-                        ( { model | step = method, isPending = isPndg } |> open
-                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
+                        ( { model | step = method, isPending = isPndg } |> openModal
+                        , out0
+                            [ fetchNode apis rootnameid OnGetNode
+                            , sendSleep (SetIsActive2 True) 10
+                            ]
                         )
 
                     else if method == InviteOne then
                         -- Invite
-                        ( { model | step = method, isPending = isPndg } |> open
+                        ( { model | step = method, isPending = isPndg } |> openModal
                         , out0
-                            [ Ports.open_modal "JoinOrgaModal"
-                            , fetchNode apis rootnameid OnGetNode
+                            [ fetchNode apis rootnameid OnGetNode
                             , Cmd.map UserInputMsg (send UserInput.OnLoad)
+                            , sendSleep (SetIsActive2 True) 10
                             ]
                         )
 
@@ -321,16 +332,24 @@ update_ apis message model =
 
         OnClose data ->
             let
-                cmds =
-                    ternary data.reset [ sendSleep OnReset 333 ] []
+                ( newModel, gcmds ) =
+                    if data.link == "" then
+                        ( model, [] )
 
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
+                    else
+                        ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            ( close model, out2 (Ports.close_modal :: cmds) gcmds )
+            ( closeModal newModel
+            , out2
+                [ Ports.close_modal
+                , ternary data.reset (sendSleep OnReset 333) Cmd.none
+                , sendSleep (SetIsActive2 False) 500
+                ]
+                gcmds
+            )
 
         OnReset ->
-            ( reset model, noOut )
+            ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             if canExitSafe model then
@@ -338,7 +357,12 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0
+                    [ send
+                        (DoModalConfirmOpen (OnClose { reset = True, link = link })
+                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
+                        )
+                    ]
                 )
 
         OnRedirectPending rootnameid ->
@@ -354,7 +378,7 @@ update_ apis message model =
                     let
                         -- Time is ignored here, we just want the contractid
                         form =
-                            makeJoinForm model.user node (Time.millisToPosix 0) model.form
+                            makeJoinForm model.session.user node (Time.millisToPosix 0) model.form
                     in
                     ( { model | form = form }, out0 [ getContractId apis (form2cid form) OnContractIdAck ] )
 
@@ -427,10 +451,10 @@ update_ apis message model =
                     ( model, noOut )
 
         OnJoin2 node time ->
-            ( { model | form = makeJoinForm model.user node time model.form, join_result = NotAsked }, noOut )
+            ( { model | form = makeJoinForm model.session.user node time model.form, join_result = NotAsked }, noOut )
 
         OnInvite2 node time ->
-            ( { model | form = makeInviteForm model.user node time model.form, join_result = NotAsked }, noOut )
+            ( { model | form = makeInviteForm model.session.user node time model.form, join_result = NotAsked }, noOut )
 
         OnJoinAck result ->
             case parseErr result model.refresh_trial of
@@ -440,11 +464,27 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
+                OkAuth data ->
+                    let
+                        link =
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+                    in
                     ( { model | join_result = result }
-                    , out1
+                    , out2
+                        [ send (OnCloseSafe "" "") ]
                         [ --Contract based event (DoLoad for pendings nodes)...
                           DoUpdateNode model.form.node.nameid identity
+                        , DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text T.requestSent
+                                    , text space_
+                                    , a [ href link ]
+                                        [ text T.checkItOut_fem ]
+                                    ]
+                            }
                         ]
                     )
 
@@ -479,7 +519,11 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
         UpdateUctx uctx ->
-            ( { model | user = LoggedIn uctx, isPending = isPending uctx model.nameid }, noOut )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn uctx }, isPending = isPending uctx model.nameid }, noOut )
 
         -- Components
         UserInputMsg msg ->
@@ -541,7 +585,7 @@ subscriptions (State model) =
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
-        ++ (if model.isOpen then
+        ++ (if model.isActive then
                 UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
 
             else
@@ -561,18 +605,22 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
+    if model.isActive2 then
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
+
+    else
+        text ""
 
 
 viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "JoinOrgaModal"
-        , class "modal is-light modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isOpen ) ]
+        , class "modal modal-fx-fadeIn"
+        , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
@@ -585,6 +633,7 @@ viewModal op (State model) =
             [ -- class modal-card ?
               case model.join_result of
                 Success data ->
+                    -- @obsolete
                     viewSuccess data op model
 
                 _ ->
@@ -605,7 +654,7 @@ viewSuccess data op model =
         div [ class "notification is-success-light", onClick (OnClose { reset = True, link = "" }) ]
             [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
             , A.icon1 "icon-check icon-2x has-text-success" " "
-            , text (T.requestSent ++ " ")
+            , text space_
             , a
                 [ href link
                 , onClickPD (OnClose { reset = True, link = link })
@@ -639,7 +688,7 @@ viewJoinStep op model =
                             --    link =
                             --        Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
                             --in
-                            --div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
+                            --div [ class "box", onClick (OnClose { reset = True, link = "" }) ]
                             --    [ text "Request already sent. "
                             --    , a
                             --        [ href link
@@ -648,7 +697,7 @@ viewJoinStep op model =
                             --        ]
                             --        [ text T.checkItOut_fem ]
                             --    ]
-                            div [ class "box is-light is-warning" ] [ text T.checkYourPendingInvitation ]
+                            div [ class "box is-warning is-soft" ] [ text T.checkYourPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -658,7 +707,7 @@ viewJoinStep op model =
                 , div [ class "field level is-mobile" ]
                     [ div [ class "level-left" ]
                         [ button
-                            [ class "button is-light"
+                            [ class "button"
                             , onClick (OnCloseSafe "" "")
                             ]
                             [ text T.cancel ]
@@ -692,7 +741,7 @@ viewJoinStep op model =
                 , case model.join_result of
                     Failure err ->
                         if model.isPending then
-                            div [ class "box is-light is-warning" ] [ text T.checkPendingInvitation ]
+                            div [ class "box is-warning is-soft" ] [ text T.checkPendingInvitation ]
 
                         else
                             viewGqlErrors err
@@ -702,7 +751,7 @@ viewJoinStep op model =
                 , div [ class "field level is-mobile" ]
                     [ div [ class "level-left" ]
                         [ button
-                            [ class "button is-light"
+                            [ class "button"
                             , onClick (OnCloseSafe "" "")
                             ]
                             [ text T.cancel ]
@@ -733,7 +782,7 @@ viewComment isOpt model =
             List.length <| String.lines message
 
         ( max_len, min_len ) =
-            if isMobile model.screen then
+            if isMobile model.session.screen then
                 ( 5, 2 )
 
             else

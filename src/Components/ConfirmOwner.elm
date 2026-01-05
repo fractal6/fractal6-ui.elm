@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -38,13 +38,13 @@ import Html.Attributes exposing (attribute, checked, class, classList, disabled,
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isFailure, isSuccess, withMapDataRest, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, errorHttpToString, isFailure, isSuccess, withMapDataRest, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Post, UserCtx)
 import Ports
 import RemoteData
 import Requests exposing (makeOwner)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -60,37 +60,37 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , focus : NodeFocus
     , target_username : String
     , owner_result : RestData Bool
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> NodeFocus -> Model
-initModel user focus =
-    { user = user
-    , isActive = False
+initModel : NodeFocus -> SessionCommon -> Model
+initModel focus session =
+    { isActive = False
     , isActive2 = False
     , focus = focus
     , target_username = ""
     , owner_result = RemoteData.NotAsked
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : UserState -> NodeFocus -> State
-init user focus =
-    initModel user focus |> State
+init : NodeFocus -> SessionCommon -> State
+init focus session =
+    initModel focus session |> State
 
 
 
@@ -108,7 +108,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user model.focus
+    initModel model.focus model.session
 
 
 
@@ -248,7 +248,7 @@ update_ apis message model =
                 RemoteData.Success _ ->
                     ( { model | owner_result = result }
                     , out2 [ closeMsg ]
-                        [ DoPushSystemNotif (withMapDataRest (\ok -> ternary ok T.ownerPromotion "not implemented") result)
+                        [ DoPushSystemNotif { cls = "is-success", content = text T.ownerPromotion }
 
                         -- do the Doload !
                         , DoUpdateNode model.focus.nameid identity
@@ -257,7 +257,7 @@ update_ apis message model =
 
                 RemoteData.Failure err ->
                     ( { model | owner_result = result }
-                    , out2 [ closeMsg ] [ DoPushSystemNotif (RemoteData.Failure err) ]
+                    , out2 [ closeMsg ] [ DoPushSystemNotif { cls = "is-danger", content = text (errorHttpToString err) } ]
                     )
 
                 _ ->
@@ -321,7 +321,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id "ConfirmOwnerModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -358,7 +358,7 @@ viewModalContent op model =
             [ div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ textH T.cancel ]
@@ -380,5 +380,5 @@ viewModalContent op model =
 viewBody : Op -> Model -> Html Msg
 viewBody op model =
     div []
-        [ showMsg "owner-0" "is-warning is-light" "icon-alert-triangle" T.newOwnerMessageWarning ""
+        [ showMsg "owner-0" "is-warning" "icon-alert-triangle" T.newOwnerMessageWarning ""
         ]

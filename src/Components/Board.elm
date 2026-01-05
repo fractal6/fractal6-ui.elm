@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -40,7 +40,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendSleep)
 import Html exposing (Html, a, br, div, hr, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -52,7 +52,7 @@ import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, Project
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
-import Session exposing (Apis, Session, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Task
 import Text as T
 
@@ -66,8 +66,7 @@ nodeID =
 
 
 type alias Model =
-    { user : UserState
-    , node_focus : NodeFocus
+    { node_focus : NodeFocus
     , projectid : String
     , isProjectAdmin : Bool
     , project : ProjectData
@@ -93,6 +92,7 @@ type alias Model =
     , projectColumnModal : ProjectColumnModal.State
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , empty : {}
     , modal_confirm : ModalConfirm Msg
@@ -110,10 +110,9 @@ type alias DraftForm =
     }
 
 
-initModel : String -> NodeFocus -> UserState -> Model
-initModel projectid focus user =
-    { user = user
-    , node_focus = focus
+initModel : String -> NodeFocus -> SessionCommon -> Model
+initModel projectid focus session =
+    { node_focus = focus
     , projectid = projectid
     , project = ProjectData "" "" []
     , hasTaskMove = True
@@ -140,18 +139,19 @@ initModel projectid focus user =
     , cardEditDropdownY = 0
 
     -- Components
-    , projectColumnModal = ProjectColumnModal.init projectid user
+    , projectColumnModal = ProjectColumnModal.init projectid session
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , empty = {}
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> NodeFocus -> UserState -> State
-init projectid focus user =
-    initModel projectid focus user |> State
+init : String -> NodeFocus -> SessionCommon -> State
+init projectid focus session =
+    initModel projectid focus session |> State
 
 
 type alias AddCardForm =
@@ -509,7 +509,7 @@ update_ apis message model =
                     LE.find (\b -> b.id == colid) model.project.columns |> unwrap [] .cards |> List.length
 
                 uctx =
-                    uctxFromUser model.user
+                    uctxFromUser model.session.user
             in
             ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True } }
             , out0
@@ -759,7 +759,7 @@ update_ apis message model =
         OnConvertDraftAck draft t ->
             let
                 form =
-                    { uctx = uctxFromUser model.user
+                    { uctx = uctxFromUser model.session.user
                     , title = ""
                     , colid = draft.colid
                     , pos = draft.pos
@@ -918,8 +918,10 @@ viewBoard op model =
                         col.col_type == ProjectColumnType.NoStatusColumn
                 in
                 [ div
-                    (class "column is-3"
-                        :: ternary model.hasTaskMove
+                    ([ class "column is-3"
+                     , attribute "style" "z-index:10;" -- prevent the hinter-tree to overflow
+                     ]
+                        ++ ternary model.hasTaskMove
                             [ onDragEnter <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
                             , onDragLeave <| OnMoveLeaveCol
 
@@ -954,7 +956,7 @@ viewBoard op model =
                                   text ""
                                 , div
                                     ([ id card.id
-                                     , class "box is-shrinked2 mb-2 mx-2 kb-card"
+                                     , class "box is-hoverable is-shrinked2 mb-2 mx-2 kb-card"
                                      ]
                                         ++ ternary model.hasTaskMove
                                             [ classList
@@ -1046,7 +1048,7 @@ viewBoard op model =
            )
         |> div
             [ id nodeID
-            , class "columns is-fullwidth is-marginless is-mobile kb-board board2"
+            , class "columns is-fullwidth m-0 is-mobile kb-board board2"
             , attribute "style" <|
                 case model.boardHeight of
                     Just h ->
@@ -1066,7 +1068,7 @@ viewHeader isAdmin isEdited col =
             , span [ class "level-right" ]
                 [ if isAdmin then
                     span
-                        [ class "tag is-rounded-light button-light is-w has-border mx-1"
+                        [ class "tag has-background-inherit is-rounded-light button-light has-border-small mx-1"
                         , onClick (OnAddDraft col.id)
                         ]
                         [ A.icon "icon-plus" ]
@@ -1082,7 +1084,7 @@ viewHeader isAdmin isEdited col =
                         , button_html = A.icon "button-light icon-more-horizontal icon-lg"
                         , msg = OnToggleColEdit (ternary isEdited "" col.id)
                         , menu_cls = ""
-                        , content_cls = "has-border-light"
+                        , content_cls = ""
                         , content_html =
                             div []
                                 [ div
@@ -1125,7 +1127,7 @@ viewNewCol : Html Msg
 viewNewCol =
     div [ class "column is-2 ml-2" ]
         [ div
-            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5 is-hint"
+            [ class "has-border is-dashed is-rounded-light is-aligned-center is-h is-w p-6 pl-5"
             , style "width" "100%"
             , onClick OnAddCol
             ]
@@ -1144,9 +1146,9 @@ viewMediaDraft cardid isHovered isEdited d =
             else
                 text ""
     in
-    div [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-content is-smaller" ]
-            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+    div [ class "media mediaBox is-size-7" ]
+        [ div [ class "media-content" ]
+            [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div []
                 [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
@@ -1156,8 +1158,8 @@ viewMediaDraft cardid isHovered isEdited d =
         , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
             [ if d.message /= Nothing then
                 a
-                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
-                    , attribute "data-tooltip" "Has comment"
+                    [ class "level-right is-pulled-right discrete-link"
+                    , title "Has comment"
                     ]
                     [ A.icon "icon-message-square icon-sm" ]
 
@@ -1203,8 +1205,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                             getTensionCharac action
                     in
                     div
-                        [ class "tooltip has-tooltip-left has-tooltip-arrow"
-                        , attribute "data-tooltip" (action2str tc.action)
+                        [ title (action2str tc.action)
                         , style "left" "15px"
                         ]
                         [ A.icon0 (action2icon tc ++ " icon-sm") ]
@@ -1213,8 +1214,7 @@ viewMediaTension cardid isHovered isEdited focus t =
                     case t.status of
                         TensionStatus.Closed ->
                             div
-                                [ class "tooltip has-tooltip-left has-tooltip-arrow"
-                                , attribute "data-tooltip" T.closedTension
+                                [ title T.closedTension
                                 , style "left" "15px"
                                 ]
                                 [ A.icon ("icon-alert-circle icon-sm has-text-" ++ statusColor t.status) ]
@@ -1231,9 +1231,9 @@ viewMediaTension cardid isHovered isEdited focus t =
                 text ""
     in
     div
-        [ class "media mediaBox is-hoverable is-size-7" ]
-        [ div [ class "media-content is-smaller" ]
-            [ div [ class "help mb-2 is-flex is-justify-content-space-between" ]
+        [ class "media mediaBox is-size-7" ]
+        [ div [ class "media-content" ]
+            [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
             , div []
                 [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
@@ -1249,8 +1249,8 @@ viewMediaTension cardid isHovered isEdited focus t =
         , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]
             [ if n_comments > 1 then
                 a
-                    [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-left has-tooltip-arrow"
-                    , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                    [ class "level-right is-pulled-right discrete-link"
+                    , title (String.fromInt (n_comments - 1) ++ " comments")
                     ]
                     [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
 
@@ -1272,7 +1272,7 @@ viewCardDropdown model =
                 ]
                 [ case card.card of
                     CardTension t ->
-                        div [ class "dropdown-content has-border-light p-0" ]
+                        div [ class "dropdown-content p-0" ]
                             [ a
                                 [ class "dropdown-item button-light discrete-link"
                                 , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
@@ -1284,7 +1284,7 @@ viewCardDropdown model =
                             ]
 
                     CardDraft d ->
-                        div [ class "dropdown-content has-border-light p-0" ]
+                        div [ class "dropdown-content p-0" ]
                             [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
                             , hr [ class "dropdown-divider" ] []
                             , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]

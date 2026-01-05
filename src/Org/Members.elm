@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -29,7 +29,7 @@ import Bulk exposing (..)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (role2icon, roleColor, viewRole, viewUserFull)
+import Bulk.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
@@ -52,7 +52,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, title, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -65,9 +65,8 @@ import Ports
 import Query.QueryContract exposing (getContractId, queryOpenInvitation)
 import Query.QueryNode exposing (queryLocalGraph, queryMembersLocal)
 import Query.QueryUser exposing (queryUserRoles)
-import RemoteData
 import Requests exposing (fetchMembersSub)
-import Session exposing (GlobalCmd(..), Session, isMobile)
+import Session exposing (GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -189,7 +188,7 @@ type alias Model =
     , row_hover : Ellipsis
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
 
@@ -241,12 +240,12 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState MembersBaseUri session.referer global.url session.node_focus newFocus
+            focusState MembersBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , members_top = Loading
@@ -254,23 +253,23 @@ init global flags =
             , open_invitations = Loading
             , pending_hover = False
             , pending_hover_i = Nothing
-            , pattern = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
-            , pattern_init = Dict.get "q" session.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
+            , pattern_init = Dict.get "q" session.common.query |> withDefault [] |> List.head |> withDefault ""
             , row_hover = resetEllipsis
 
             -- Common
-            , session = session
-            , tensionForm = NTF.init session
+            , session = session.common
+            , tensionForm = NTF.init session.common
             , refresh_trial = 0
             , empty = {}
-            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session.user
-            , help = Help.init session
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
-            , confirmOwner = ConfirmOwner.init session.user newFocus
+            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init Nothing session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
+            , confirmOwner = ConfirmOwner.init newFocus session.common
             }
 
         cmds =
@@ -748,7 +747,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -783,7 +782,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         isAdmin =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx ->
                     hasLazyAdminRole uctx (withMaybeData model.path_data |> unwrap Nothing (\p -> Maybe.map .mode p.root)) model.node_focus.rootnameid
 
@@ -877,15 +876,12 @@ view_ global model =
         ]
 
 
-viewMembers : Session -> GqlData (List Member) -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewMembers : SessionCommon -> GqlData (List Member) -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
 viewMembers session members_d invitations_d focus isPanelOpen ell =
     let
         goToParent =
-            if focus.nameid /= focus.rootnameid then
-                span [ class "help-label button-light is-goroot", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-            else
-                text ""
+            showIf (focus.nameid /= focus.rootnameid) <|
+                viewGoRoot "" OnGoRoot
     in
     case members_d of
         Success members ->
@@ -937,7 +933,7 @@ viewMembers session members_d invitations_d focus isPanelOpen ell =
             text ""
 
 
-viewGuest : Session -> List Member -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
+viewGuest : SessionCommon -> List Member -> GqlData (List ContractLight) -> NodeFocus -> Bool -> Ellipsis -> Html Msg
 viewGuest session guests invitations_d focus isPanelOpen ell =
     let
         invitations =
@@ -973,7 +969,7 @@ viewGuest session guests invitations_d focus isPanelOpen ell =
         ]
 
 
-viewPending : Session -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending : SessionCommon -> List Member -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
 viewPending _ pendings focus pending_hover pending_hover_i tid =
     div []
         [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
@@ -1010,7 +1006,7 @@ viewPending _ pendings focus pending_hover pending_hover_i tid =
         ]
 
 
-viewMemberRow : Session -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewMemberRow : SessionCommon -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
 viewMemberRow session focus m invitations_d hasInvitation isPanelOpen ell =
     let
         ( roles_, sub_roles_ ) =
@@ -1063,7 +1059,7 @@ viewMemberRow session focus m invitations_d hasInvitation isPanelOpen ell =
         ]
 
 
-viewGuestRow : Session -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
+viewGuestRow : SessionCommon -> NodeFocus -> Member -> GqlData (List ContractLight) -> Bool -> Bool -> Ellipsis -> Html Msg
 viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
     let
         user_invitations =
@@ -1088,9 +1084,9 @@ viewGuestRow session focus m invitations_d hasInvitation isPanelOpen ell =
         ]
 
 
-viewMemberRoles : Session -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
+viewMemberRoles : SessionCommon -> FractalBaseRoute -> List UserRoleExtended -> Bool -> Html Msg
 viewMemberRoles session baseUri roles isPanelOpen =
-    div [ class "buttons is-inline" ] <|
+    div [ class "buttons" ] <|
         List.map
             (\r ->
                 viewRole "" True False (Just ( session, r.createdAt )) Nothing (ternary isPanelOpen (\_ _ _ -> NoMsg) OpenActionPanel) r
@@ -1098,7 +1094,7 @@ viewMemberRoles session baseUri roles isPanelOpen =
             roles
 
 
-viewUserEllipsis : Session -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
+viewUserEllipsis : SessionCommon -> NodeFocus -> Member -> List UserRoleExtended -> Ellipsis -> Html Msg
 viewUserEllipsis session focus m roles ell =
     let
         isOwner_ =
@@ -1123,7 +1119,7 @@ viewUserEllipsis session focus m roles ell =
                 , isOpen = isOpen_
                 , dropdown_cls = ternary isMobile_ "is-right" ""
                 , button_cls = ""
-                , button_html = A.icon "icon-more-vertical is-h icon-1half"
+                , button_html = A.icon "icon-more-vertical is-w icon-1half"
                 , msg = OnRowEdit (ternary ell.isOpen False True)
                 , menu_cls = ""
                 , content_cls = "p-0 has-border-light"
@@ -1161,18 +1157,15 @@ viewUserEllipsis session focus m roles ell =
         ]
 
 
-viewPendingRoles : Session -> List ContractLight -> Html Msg
+viewPendingRoles : SessionCommon -> List ContractLight -> Html Msg
 viewPendingRoles session invitations =
-    div [ class "buttons is-inline" ] <|
+    div [ class "buttons" ] <|
         List.map (\c -> viewPendingRole session c) invitations
 
 
-viewPendingRole : Session -> ContractLight -> Html Msg
+viewPendingRole : SessionCommon -> ContractLight -> Html Msg
 viewPendingRole session c =
     let
-        tooltip_cls =
-            String.split " " "tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
-
         since =
             T.createdThe ++ " " ++ formatDate session.lang session.now c.createdAt
 
@@ -1187,15 +1180,14 @@ viewPendingRole session c =
     in
     a
         [ class "button buttonRole is-small pending-border"
-        , classList (List.map (\x -> ( x, True )) tooltip_cls)
-        , attribute "data-tooltip"
+        , title
             (T.theyPlay
                 |> Format.namedValue "role" (upH role.name)
                 |> Format.namedValue "circle" (getParentFragmentFromRole role)
                 |> Format.namedValue "since" since
             )
         , href link
-        , colorAttr (roleColor role.role_type)
+        , colorAttr (RoleType.toString role.role_type |> String.toLower)
         , style "opacity" "0.75"
         ]
         [ A.icon1 (role2icon role) (upH role.name) ]

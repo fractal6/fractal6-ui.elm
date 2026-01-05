@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -27,13 +27,13 @@ import Browser.Events as Events
 import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (auth2icon, auth2str, roleColor, viewUserFull, visibility2descr, visibility2icon)
+import Bulk.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (mor, showIf, ternary)
+import Extra exposing (mor, showIf, space_, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -57,7 +57,7 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
-import Session exposing (Apis, GlobalCmd(..), Screen, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
@@ -68,8 +68,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , isActive : Bool
     , isActive2 : Bool
     , form : ActionForm
@@ -82,7 +81,7 @@ type alias Model =
     , node_result : GqlData Node
 
     -- Common
-    , screen : Screen
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
 
@@ -108,15 +107,14 @@ type ActionStep
     | StepAck IdPayload
 
 
-initModel : UserState -> Screen -> Model
-initModel user screen =
-    { user = user
-    , action_result = NotAsked
+initModel : SessionCommon -> Model
+initModel session =
+    { action_result = NotAsked
     , node_result = NotAsked
     , isOpen = False
     , isActive = False
     , isActive2 = False
-    , form = initActionForm "" user
+    , form = initActionForm "" session.user
     , state = LinkAction -- random
     , step = StepOne
     , domid = "actionPanelHelper"
@@ -124,17 +122,17 @@ initModel user screen =
     , pos = Nothing
 
     -- Common
-    , screen = screen
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , moveTension = MoveTension.init user
-    , userInput = UserInput.init [] True False user
+    , moveTension = MoveTension.init session
+    , userInput = UserInput.init [] True False session
     }
 
 
-init : UserState -> Screen -> State
-init user screen =
-    initModel user screen |> State
+init : SessionCommon -> State
+init session =
+    initModel session |> State
 
 
 panelAction2str : PanelState -> String
@@ -352,7 +350,7 @@ closeModal model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user model.screen
+    initModel model.session
 
 
 setStep : ActionStep -> Model -> Model
@@ -858,8 +856,33 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushAction model.form model.state) 500 ] [ DoUpdateToken ] )
 
-                OkAuth _ ->
-                    ( model |> setActionResult result, noOut )
+                OkAuth data ->
+                    let
+                        selfContract =
+                            isSelfContract model.form.uctx model.form.users
+                    in
+                    ( model |> setActionResult result
+                    , out2
+                        [ send (OnCloseModalSafe "" "")
+                        ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" " "
+                                    , text (action2post model.state selfContract ++ ".")
+                                    , text space_
+                                    , showIf (model.state == LinkAction && not selfContract) <|
+                                        let
+                                            link =
+                                                Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+                                        in
+                                        a [ href link ]
+                                            [ text T.consult ]
+                                    ]
+                            }
+                        ]
+                    )
 
                 DuplicateErr ->
                     ( setActionResult (Failure [ T.duplicateContractError ]) model, noOut )
@@ -903,8 +926,11 @@ update_ apis message model =
             let
                 form =
                     model.form
+
+                session =
+                    model.session
             in
-            ( { model | user = LoggedIn uctx, form = { form | uctx = uctx } }, noOut )
+            ( { model | session = { session | user = LoggedIn uctx }, form = { form | uctx = uctx } }, noOut )
 
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
@@ -1120,7 +1146,7 @@ viewPanelMenu op model =
                         , div [ class "dropdown-menu", attribute "role" "menu" ]
                             [ div [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                                    [ A.icon1 "icon-exchange" T.tension ]
+                                    [ A.icon1 "icon-exchange" (T.tension model.session.lexicon) ]
                                 , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Circle) Nothing ]) ]
                                     [ A.icon1 "icon-git-branch" T.circle ]
                                 , div [ class "dropdown-item", onClick (Do [ DoCreateTension model.form.node.nameid (Just NodeType.Role) Nothing ]) ]
@@ -1132,7 +1158,7 @@ viewPanelMenu op model =
                 NodeType.Role ->
                     div
                         [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid Nothing Nothing ]) ]
-                        [ A.icon1 "icon-plus" T.addTension ]
+                        [ A.icon1 "icon-plus" (T.addTension model.session.lexicon) ]
        ]
         -- ACTION
         ++ (if isAdmin && not isBaseMember_ then
@@ -1223,7 +1249,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id ("actionPanelModal" ++ model.domid)
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
 
         --, attribute "data-modal-close" "closeActionPanelModalFromJs"
@@ -1247,6 +1273,7 @@ viewModalContent op model =
             viewStep1 op model
 
         StepAck data ->
+            -- @obsolete
             let
                 selfContract =
                     isSelfContract model.form.uctx model.form.users
@@ -1256,7 +1283,7 @@ viewModalContent op model =
                 [ button [ class "delete", onClick (OnCloseModalSafe "" "") ] []
                 , A.icon1 "icon-check icon-2x has-text-success" " "
                 , text (action2post model.state selfContract ++ ". ")
-                , if model.state == LinkAction && not selfContract then
+                , showIf (model.state == LinkAction && not selfContract) <|
                     let
                         link =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
@@ -1267,9 +1294,6 @@ viewModalContent op model =
                         , target "_blank"
                         ]
                         [ text T.consult ]
-
-                  else
-                    text ""
                 ]
 
 
@@ -1295,7 +1319,7 @@ viewStep1 op model =
                     |> List.singleton
                     |> span []
                 , text ":"
-                , span [ class "has-text-primary ml-2" ] [ text model.form.node.name ]
+                , span [ class "has-text-primary has-text-weight-extrabold ml-2" ] [ text model.form.node.name ]
 
                 --, button [ class "delete is-pulled-right", onClick (OnCloseModalSafe "" "") ] []
                 ]
@@ -1327,8 +1351,8 @@ viewStep1 op model =
                     ]
 
                 LeaveAction ->
-                    [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.user).roles) == 1 then
-                        showMsg "leaveMe" "is-warning is-light" "icon-alert-triangle" T.confirmLeaveOrga ""
+                    [ if List.length (getOrgaRoles [ model.form.node.nameid ] (uctxFromUser model.session.user).roles) == 1 then
+                        showMsg "leaveMe" "is-warning" "icon-alert-triangle" (T.confirmLeaveOrga model.session.lexicon) ""
 
                       else
                         text ""
@@ -1379,7 +1403,7 @@ viewComment model =
             List.length (String.lines message)
 
         ( max_len, min_len ) =
-            if isMobile model.screen then
+            if isMobile model.session.screen then
                 ( 5, 2 )
 
             else
@@ -1416,7 +1440,7 @@ viewVisibility op model =
     in
     div []
         [ -- Show the help information
-          showMsg "visibility-0" "is-info is-light" "icon-info" T.visibilityInfoHeader ""
+          showMsg "visibility-0" "is-info" "icon-info" T.visibilityInfoHeader ""
 
         -- Show the choices as card.
         , NodeVisibility.list
@@ -1436,7 +1460,7 @@ viewVisibility op model =
                                 ""
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeVisibility x)
                         ]
@@ -1456,7 +1480,7 @@ viewCircleAuthority : Op -> Model -> Html Msg
 viewCircleAuthority op model =
     div []
         [ -- Show the help information
-          showMsg "circleAuthority-0" "is-info is-light" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
+          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
 
         -- Show the choices as card.
         , NodeMode.list
@@ -1475,7 +1499,7 @@ viewCircleAuthority op model =
                                     ( "icon-", T.authAgile )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeMode x)
                         ]
@@ -1495,7 +1519,7 @@ viewRoleAuthority : Op -> Model -> Html Msg
 viewRoleAuthority op model =
     div []
         [ -- Show the help information
-          --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
+          --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
           -- Show the choices as card.
           --RoleType.list
           [ ( RoleType.Peer, T.peerRoleInfo ), ( RoleType.Coordinator, T.coordinatorRoleInfo ) ]
@@ -1506,10 +1530,10 @@ viewRoleAuthority op model =
                             Just x == mor model.form.fragment.role_type model.form.node.role_type
 
                         icon =
-                            "icon-user has-text-" ++ roleColor x
+                            "icon-user has-text-" ++ (RoleType.toString x |> String.toLower)
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-h"
+                        [ class "card has-border column p-0 m-3 is-h is-clickable"
                         , attribute "style" "min-width: 150px;"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeRoleType x)

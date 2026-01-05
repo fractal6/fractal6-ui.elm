@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryMembers)
 import Query.QueryUser exposing (queryUser)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -52,9 +52,8 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , users_result : GqlData (List User)
-    , form : List UserForm
+    { users_result : GqlData (List User)
+    , form : List UserForm -- selected users
     , pattern : String
     , lookup : List User
     , multiSelect : Bool
@@ -66,15 +65,15 @@ type alias Model =
     , activePos : Int
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : List String -> Bool -> Bool -> UserState -> Model
-initModel targets isInvite multiSelect user =
-    { user = user
-    , users_result = NotAsked
+initModel : List String -> Bool -> Bool -> SessionCommon -> Model
+initModel targets isInvite multiSelect session =
+    { users_result = NotAsked
     , form = []
     , pattern = ""
     , lookup = []
@@ -87,14 +86,15 @@ initModel targets isInvite multiSelect user =
     , activePos = 0
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : List String -> Bool -> Bool -> UserState -> State
-init targets isInvite multiSelect user =
-    initModel targets isInvite multiSelect user |> State
+init : List String -> Bool -> Bool -> SessionCommon -> State
+init targets isInvite multiSelect session =
+    initModel targets isInvite multiSelect session |> State
 
 
 
@@ -107,7 +107,7 @@ init targets isInvite multiSelect user =
 
 reset : Model -> Model
 reset model =
-    initModel model.targets model.isInvite model.multiSelect model.user
+    initModel model.targets model.isInvite model.multiSelect model.session
 
 
 open : Model -> Model
@@ -263,7 +263,13 @@ update_ apis message model =
                 ( model, noOut )
 
         OnCloseMembers ->
-            ( close { model | activePos = 0 }, noOut )
+            ( close
+                { model
+                    | activePos = 0
+                    , form = [] -- reset selection when close from javascript (comments)
+                }
+            , noOut
+            )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
@@ -306,7 +312,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser data.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser data.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -458,6 +464,7 @@ viewUserSeeker (State model) =
 
             else
                 model.lookup
+                    |> List.filter (\u -> not <| List.member u.username (List.map .username model.form))
                     |> List.indexedMap
                         (\i u ->
                             p
@@ -555,11 +562,12 @@ viewUserSelectors op model =
 
             else
                 model.lookup
+                    |> List.filter (\u -> not <| List.member u.username (List.map .username model.form))
                     |> List.map
                         (\u ->
                             p
                                 [ class "panel-block pt-1 pb-1"
-                                , onClick (OnClickUser u)
+                                , onMousedownPD (OnClickUser u)
                                 ]
                                 [ viewUserFull 1 False False u ]
                         )

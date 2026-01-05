@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -43,7 +43,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (IdPayload, Post, ProjectColumn, ProjectColumnEdit, UserCtx)
 import Ports
 import Query.QueryProject exposing (addProjectColumn, getProjectColumn, updateProjectColumn)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -59,8 +59,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , data_result : GqlData String -- result of any query
     , form : ColumnForm -- user inputs
@@ -68,23 +67,24 @@ type alias Model =
     , modal_type : ModalType
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , colorPicker : ColorPicker
     }
 
 
-initModel : String -> UserState -> Model
-initModel projectid user =
-    { user = user
-    , isActive = False
+initModel : String -> SessionCommon -> Model
+initModel projectid session =
+    { isActive = False
     , isActive2 = False
     , data_result = NotAsked
-    , form = initForm projectid user
-    , orig_form = initForm projectid user
+    , form = initForm projectid session.user
+    , orig_form = initForm projectid session.user
     , modal_type = AddColumn
 
     -- Common
+    , session = session
     , refresh_trial = 1
     , modal_confirm = ModalConfirm.init NoMsg
     , colorPicker = ColorPicker.init
@@ -144,9 +144,9 @@ initForm projectid user =
     }
 
 
-init : String -> UserState -> State
-init projectid user =
-    initModel projectid user |> State
+init : String -> SessionCommon -> State
+init projectid session =
+    initModel projectid session |> State
 
 
 
@@ -164,7 +164,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.form.projectid model.user
+    initModel model.form.projectid model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -372,7 +372,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -526,7 +526,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id "ProjectColumnModalModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -618,14 +618,14 @@ viewModalContent op model =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ textH T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        ([ class "button is-light is-success defaultSubmit"
+                        ([ class "button is-success defaultSubmit"
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable_)
                          ]

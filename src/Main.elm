@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -119,18 +119,19 @@ update msg model =
                 session =
                     model.global.session
 
+                common =
+                    session.common
+
                 sessionUpdated =
                     { session
-                        | url = url
-                        , query = query
-                        , viewMode = encodeViewMode query
-                        , referer =
+                        | referer =
                             case model.url.path of
                                 "/logout" ->
                                     session.referer
 
                                 _ ->
                                     Just model.url
+                        , common = { common | url = url, query = query, viewMode = encodeViewMode query }
                     }
 
                 --

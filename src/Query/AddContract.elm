@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -23,7 +23,7 @@ module Query.AddContract exposing (addOneContract, deleteOneContract)
 
 import Bulk exposing (ContractForm)
 import Dict
-import Extra exposing (listToMaybe)
+import Extra exposing (listToMaybe, mor)
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -136,7 +136,7 @@ addContractInputEncoder f =
             \x ->
                 { x
                     | message = Dict.get "message" f.post |> fromMaybe
-                    , comments = buildComment cat f.uctx.username (Dict.get "message" f.post)
+                    , comments = buildComment cat f.uctx.username (mor (Dict.get "invitation" f.post) (Dict.get "message" f.post))
                     , candidates =
                         f.candidates
                             |> List.map

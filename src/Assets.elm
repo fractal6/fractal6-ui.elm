@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -23,8 +23,8 @@ module Assets exposing (..)
 
 import Assets.Logo as Logo
 import Extra exposing (space_)
-import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, style)
+import Html exposing (Html, a, div, h1, h2, hr, i, img, p, small, span, text)
+import Html.Attributes exposing (alt, attribute, class, classList, height, href, src, style, width)
 import Html.Lazy as Lazy
 import String.Format as Format
 import Text as T
@@ -78,6 +78,11 @@ icon1 cls words =
     span [ classList [ ( "is-flex is-align-items-center", String.trim words /= "" ) ] ] [ icon cls, text (space_ ++ space_ ++ words) ]
 
 
+icon1_noflex : String -> String -> Html msg
+icon1_noflex cls words =
+    span [] [ icon cls, text (space_ ++ space_ ++ words) ]
+
+
 {-| Debug case where inline flex break the ui
 -}
 icon1_ : String -> String -> Html msg
@@ -107,14 +112,16 @@ unchecked =
 --
 
 
+logo_inline : Html msg
+logo_inline =
+    Lazy.lazy2 Logo.logo_fractal_inline "" "110"
+
+
 logo0 : Html msg
 logo0 =
-    Lazy.lazy2 Logo.logo_fractal "30" "38"
-
-
-logo1 : Html msg
-logo1 =
-    Lazy.lazy2 Logo.logo_fractal "38" "54"
+    -- Can-t set the svg color like this !
+    --img [ class "logo-f6", src "/static/images/logo/f6.svg", alt "Fractale, free your organization", height 30, width 38 ] []
+    Lazy.lazy2 Logo.logo_fractal "" "24"
 
 
 logo2 : Html msg
@@ -124,7 +131,7 @@ logo2 =
 
 logo_about : Html msg
 logo_about =
-    Lazy.lazy2 Logo.logo_about "" "500"
+    Lazy.lazy2 Logo.logo_fractal "" "400"
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.
@@ -141,6 +148,7 @@ burger targetid =
         [ span [ attribute "aria-hidden" "true" ] []
         , span [ attribute "aria-hidden" "true" ] []
         , span [ attribute "aria-hidden" "true" ] []
+        , span [ attribute "aria-hidden" "true" ] []
         ]
 
 
@@ -153,8 +161,8 @@ viewNotFound =
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 is-highlight-2" ] [ text T.welcome ]
-        , p [ class "has-text-grey-light" ] [ text T.welcomeSub ]
+        [ h2 [ class "mb-0 has-text-strong" ] [ text T.welcome ]
+        , p [ class "is-discrete" ] [ text T.welcomeSub ]
         ]
 
 
@@ -162,9 +170,9 @@ almostThere : String -> String -> String -> Html msg
 almostThere username aim link =
     div []
         [ div [ class "title is-aligned-center" ] [ text (T.almostThere ++ "...") ]
-        , div [ class "notification is-light is-info" ]
+        , div [ class "notification is-soft is-info" ]
             [ text (T.checkYourEmail |> Format.value username |> Format.value aim)
-            , hr [ class "has-background-grey-light mt-5 mb-5" ] []
+            , hr [ class "has-background-border mt-5 mb-5" ] []
             , small []
                 [ text T.checkConfirmationEmail
                 , text (" " ++ T.or_ ++ " ")

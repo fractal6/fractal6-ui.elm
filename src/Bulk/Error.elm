@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -31,6 +31,7 @@ import Loading exposing (ErrorData, GqlData, HttpError, ModalData, RequestResult
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import RemoteData
+import Session exposing (SessionCommon)
 import Text as T
 
 
@@ -86,7 +87,7 @@ viewGqlErrors errMsg =
                                     Err t ->
                                         e
                 in
-                p [ class "message-body" ] [ renderMarkdown "is-light f6-error" err ]
+                p [ class "message-body" ] [ renderMarkdown "is-light" err ]
             )
         |> div [ class "f6-error message is-danger is-light mt-2" ]
 
@@ -116,9 +117,9 @@ viewGqlErrorsLight errMsg =
                                     Err t ->
                                         e
                 in
-                renderMarkdown "is-light f6-error" err
+                renderMarkdown "is-light" err
             )
-        |> div []
+        |> div [ class "f6-error" ]
 
 
 viewAuthNeeded : (ModalData -> msg) -> Html msg
@@ -146,8 +147,8 @@ viewAuthNeeded onClose =
         ]
 
 
-viewJoinForTensionNeeded : Bool -> (ModalData -> msg) -> Html msg
-viewJoinForTensionNeeded userCanJoin onClose =
+viewJoinForTensionNeeded : SessionCommon -> Bool -> (ModalData -> msg) -> Html msg
+viewJoinForTensionNeeded session userCanJoin onClose =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head is-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
@@ -161,7 +162,7 @@ viewJoinForTensionNeeded userCanJoin onClose =
                     [ button [ class "button is-small mx-2 joinTrigger" ] [ text T.join2 ]
                     , text T.joinForTension
                     , text " "
-                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text T.tensions ]
+                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text (T.tensions session.lexicon) ]
                     , text "."
                     ]
 
@@ -169,7 +170,7 @@ viewJoinForTensionNeeded userCanJoin onClose =
                 p []
                     [ text T.onlyMemberCanCreate
                     , text " "
-                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text T.tensions ]
+                    , a [ href "https://doc.fractale.co/tension", target "_blank" ] [ text (T.tensions session.lexicon) ]
                     , text "."
                     ]
             ]

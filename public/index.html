@@ -4,26 +4,26 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<!-- generics -->
-		<link rel="shortcut icon" type="image/x-icon" href="/static/images/logo/favicon.ico">
-		<link rel="icon" href="/static/images/logo/favicon-32.png" sizes="32x32">
-		<link rel="icon" href="/static/images/logo/favicon-128.png" sizes="128x128">
-
-		<!-- Android -->
-		<link rel="shortcut icon" href="/static/images/logo/favicon-196.png" sizes="196x196">
-
-		<!-- IOS -->
-		<link rel="apple-touch-icon" href="/static/images/logo/favicon-180.png" sizes="180x180">
-
+        <!-- SEO -->
         <title>Fractale: Self-Organisation for Humans</title>
         <meta name="description" content="Join a network that enact collective intelligence to build transparent and resilient organisations. Design your organisation's roles and circles, invite members, manage your tensions (tasks, issues, Q&A)..." />
 
+        <!-- Favicons -->
+        <link rel="icon" href="/static/images/logo/logo.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/static/images/logo/apple-touch-icon.png">
+
+        <!-- PWA -->
+        <link rel="manifest" href="/site.webmanifest">
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+
+        <!-- Open Graph -->
         <meta property="og:title" content="Fractale: Self-Organisation for Humans" />
         <meta property="og:description" content="Join a network that enact collective intelligence to build transparent and resilient organisations. Design your organisation's roles and circles, invite members, manage your tensions (tasks, issues, Q&A)..." />
         <meta property="og:site_name" content="Fractale" />
         <meta property="og:type" content="object" />
         <meta property="og:url" content="https://fractale.co" />
-        <meta property="og:image" content="https://fractale.co/static/images/logo/og.jpg" />
+        <meta property="og:image" content="https://fractale.co/static/images/logo/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="1200" />
     </head>
@@ -32,5 +32,15 @@
         <div id="main">
         </div>
     </body>
+
+    <!-- DEBUG: break the site/fetch !
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+            });
+        }
+    </script>
+    -->
 
 </html>

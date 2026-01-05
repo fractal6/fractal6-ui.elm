@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -71,7 +71,7 @@ view : Op msg -> Html msg
 view op =
     div
         [ id "confirmModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", op.data.isOpen ) ]
         , attribute "data-modal-close" "closeModalConfirmFromJs"
         ]
@@ -93,7 +93,7 @@ viewConfirm op =
         [ div [ class "modal-card-body" ]
             [ case op.data.mess.message of
                 Just m ->
-                    showMsg "0" "is-info is-light" "icon-info" (Tuple.first m) (Tuple.second m)
+                    showMsg "0" "is-info" "icon-info" (Tuple.first m) (Tuple.second m)
 
                 Nothing ->
                     text ""
@@ -104,7 +104,7 @@ viewConfirm op =
                         [ class "button is-small is-success", onClick op.onConfirm ]
                         [ text T.confirm ]
                     , button
-                        [ class "button is-small is-danger", onClick (op.onClose { reset = True, link = "" }) ]
+                        [ class "button is-small", onClick (op.onClose { reset = True, link = "" }) ]
                         [ text T.cancel ]
                     ]
                 ]

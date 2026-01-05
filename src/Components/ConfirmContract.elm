@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -30,7 +30,7 @@ import Bulk.Event exposing (contractEventToText, contractTypeToText)
 import Bulk.View exposing (viewTensionArrow)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (ternary, unwrap)
+import Extra exposing (space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty)
@@ -46,7 +46,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -56,8 +56,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , target : String -- keep origin target
     , blob : Maybe Blob -- potential blob attached to tension
     , data_result : GqlData IdPayload -- contract created
@@ -65,22 +64,23 @@ type alias Model =
     , form : ContractForm -- user inputs
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
-    { user = user
-    , isOpen = False
+initModel : SessionCommon -> Model
+initModel session =
+    { isOpen = False
     , target = ""
     , blob = Nothing
     , data_result = NotAsked
     , contract = Nothing
-    , form = initContractForm user
+    , form = initContractForm session.user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -98,9 +98,9 @@ updateFormFromData c f =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : SessionCommon -> State
+init session =
+    initModel session |> State
 
 
 
@@ -162,7 +162,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -321,7 +321,25 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoAddContract 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( False, d )) )
+                    let
+                        link =
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = d.id } |> toHref
+                    in
+                    ( data
+                    , Out [ send (OnCloseSafe "" "") ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text T.newContractCreated
+                                    , a [ href link ]
+                                        [ text T.checkItOut_masc ]
+                                    ]
+                            }
+                        ]
+                        (Just ( False, d ))
+                    )
 
                 DuplicateErr ->
                     ( setDataResult (Failure [ T.duplicateContractError ]) model, noOut )
@@ -376,7 +394,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "ConfirmContractModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -389,6 +407,7 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success data ->
+                    -- @obsolete
                     let
                         link =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = data.id } |> toHref
@@ -397,6 +416,7 @@ viewModal op (State model) =
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
                         , text T.newContractCreated
+                        , text space_
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })
@@ -431,7 +451,7 @@ viewModalContent op (State model) =
                 [ text T.newContract ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "0" "is-info is-light" "icon-info" T.contractInfoHeader T.contractInfo
+            [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
             , showContractForm model.form
             , div [ class "field" ]
                 [ div [ class "control" ]
@@ -457,14 +477,14 @@ viewModalContent op (State model) =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button defaultSubmit is-light is-success"
+                        [ class "button defaultSubmit is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable || isLoading)
                         , onClick (OnSubmit <| OnDataQuery)
@@ -478,7 +498,7 @@ viewModalContent op (State model) =
 
 showContractForm : ContractForm -> Html Msg
 showContractForm f =
-    form [ class "box is-light form" ]
+    form [ class "box form" ]
         [ div [ class "field is-horizontal" ]
             [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractType ] ]
             , div [ class "field-body" ]

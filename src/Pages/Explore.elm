@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -125,10 +125,10 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             , refresh_trial = 0
             , empty = {}
-            , authModal = AuthModal.init global.session.user Nothing
+            , authModal = AuthModal.init Nothing global.session.common
             , commonOp = CommonMsg NoMsg LogErr
             }
 

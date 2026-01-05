@@ -1,6 +1,6 @@
 /*
  * Fractale - Self-organisation for humans.
- * Copyright (C) 2024 Fractale Co
+ * Copyright (C) 2025 Fractale Co
  *
  * This file is part of Fractale.
  *
@@ -764,9 +764,24 @@ function pushLine(obj, mark, isInline) {
         value.substring(start, start+mark.length) == mark;
     if (startsWith) return
 
-    // Ignore if multiple line selected
+    // Multi lines selections
     var newline_count = (selection.match(/\n/g) || []).length;
-    if (newline_count > 0) return
+    if (newline_count > 0) {
+        // For multiline selections, add the mark to the beginning of each line
+        let lines = selection.split('\n');
+        let markedLines = lines.map(line => {
+            // Skip empty lines or only add mark to non-empty lines
+            return line.trim() ? mark + line : line;
+        });
+        replacement = markedLines.join('\n');
+
+        obj.setRangeText("", start, end);
+        // @deprecated
+        document.execCommand("insertText", false, replacement);
+        // To test setRangeText
+        //obj.setRangeText(replacement, start, end, 'select');
+        return
+    }
 
     // Get surrounding line break
     var prefix = "\n\n";
@@ -785,7 +800,22 @@ function pushLine(obj, mark, isInline) {
 
     var prev2 = value.substring(start-2, start)
     var next2 = value.substring(end, end+2)
-    if (prev2.search(/(^$|^\n|\n\n)/) >= 0 && next2.search(/^$|\n$|\n\n/) >= 0) {
+
+    // Check if the selection is surrounded by empty strings or newlines
+    var isSurroundedByWhitespace = (
+        prev2.search(/(^$|^\n|\n\n)/) >= 0 &&
+        next2.search(/^$|\n$|\n\n/) >= 0
+    );
+
+    // Check if the selection is a full line
+    var isFullLineSelection = (
+        // Selection starts at beginning of line (either at position 0 or right after a newline)
+        (start === 0 || value.charAt(start-1) === '\n') &&
+        // Selection ends at end of line (either at end of text or right before a newline)
+        (end === value.length || value.charAt(end) === '\n')
+    );
+
+    if (isSurroundedByWhitespace || isFullLineSelection) {
         // Stay on the line if space and full line selected
         // --
         var replacement = mark + selection;

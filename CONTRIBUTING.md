@@ -119,6 +119,15 @@ Extra :
 - ui: A code change that affects visual components (size or position of button, with of something etc)
 - ux: A code change that affects interaction, usability or ergonomics. 
 
+### Optimization
+
+To generate a source-map, active the source-map option in the webpack config :
+- `devtool: "sourcemap"`
+- `sass-loader: option.sassOptions.sourceMap: true`
+
+See also `npm run webpack_profile` for build profiling.
+
+
 
 ### Reporting issues, Questions, Feedback
 

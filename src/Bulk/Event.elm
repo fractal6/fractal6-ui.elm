@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -36,7 +36,7 @@ import Html exposing (Html, a, div, p, small, span, strong, text)
 import Html.Attributes exposing (class, classList, href)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (ContractNotif, EventFragment, EventNotif, UserEvent, Username)
-import Session exposing (Session)
+import Session exposing (SessionCommon)
 import String.Extra as SE
 import Text as T
 
@@ -82,7 +82,7 @@ contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
 
 
-viewEventMedia : Session -> Bool -> Dict String String -> Html msg
+viewEventMedia : SessionCommon -> Bool -> Dict String String -> Html msg
 viewEventMedia session inline ev =
     div [ class "content" ]
         [ p [] <|
@@ -96,8 +96,6 @@ viewEventMedia session inline ev =
                     , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
                     , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     , text ":"
                     , span [] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
@@ -106,7 +104,7 @@ viewEventMedia session inline ev =
         ]
 
 
-viewContractMedia : Session -> Dict String String -> Html msg
+viewContractMedia : SessionCommon -> Dict String String -> Html msg
 viewContractMedia session ev =
     div [ class "content" ]
         [ p [] <|
@@ -124,15 +122,13 @@ viewContractMedia session ev =
                     , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text T.in_ ]
                     , span [ class "is-strong" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-
-                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
             , small [ class "help" ] [ byAt session (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewNotifMedia : Session -> Dict String String -> Html msg
+viewNotifMedia : SessionCommon -> Dict String String -> Html msg
 viewNotifMedia session ev =
     div [ class "content" ]
         [ a

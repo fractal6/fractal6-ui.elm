@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -58,7 +58,7 @@ import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
 import Scroll
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), Session, UserSearchPanelOnClickAction(..), isMobile, toReflink)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
 
@@ -74,8 +74,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , node_focus : NodeFocus
+    { node_focus : NodeFocus
     , isOpen : Bool
     , path_data : GqlData LocalGraph -- tensionadmin
     , card : ProjectCard
@@ -96,18 +95,17 @@ type alias Model =
     , comments : Comments.State
 
     -- Common
-    , session : Session
-    , mobileConf : Session
+    , session : SessionCommon
+    , mobileConf : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
     }
 
 
-initModel : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> Model
-initModel session path focus user =
-    { user = user
-    , node_focus = focus
+initModel : GqlData LocalGraph -> NodeFocus -> SessionCommon -> Model
+initModel path focus session =
+    { node_focus = focus
     , isOpen = False
     , path_data = path
     , card = emptyCard
@@ -116,16 +114,16 @@ initModel session path focus user =
     , subscribe_result = NotAsked
 
     -- Title / Draft message
-    , tension_form = initTensionForm "" Nothing user
+    , tension_form = initTensionForm "" Nothing session.user
     , isTitleEdit = False
     , title_result = NotAsked
     , isMessageEdit = False
     , message_result = NotAsked
 
     -- Components
-    , assigneesPanel = UserSearchPanel.init "" AssignUser user
-    , labelsPanel = LabelSearchPanel.init "" AssignLabel user
-    , comments = Comments.init focus.nameid "" user
+    , assigneesPanel = UserSearchPanel.init "" AssignUser session.user
+    , labelsPanel = LabelSearchPanel.init "" AssignLabel session.user
+    , comments = Comments.init focus.nameid "" session
 
     -- Common
     , session = session
@@ -136,9 +134,9 @@ initModel session path focus user =
     }
 
 
-init : Session -> GqlData LocalGraph -> NodeFocus -> UserState -> State
-init session path focus user =
-    initModel session path focus user |> State
+init : GqlData LocalGraph -> NodeFocus -> SessionCommon -> State
+init path focus session =
+    initModel path focus session |> State
 
 
 
@@ -149,7 +147,7 @@ init session path focus user =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.session model.path_data model.node_focus model.user
+    initModel model.path_data model.node_focus model.session
 
 
 
@@ -287,7 +285,7 @@ update_ apis message model =
 
         OnQueryTension tid ->
             ( { model | tension_result = Loading }
-            , out0 [ getTensionPanel apis (uctxFromUser model.user) tid OnTensionAck ]
+            , out0 [ getTensionPanel apis (uctxFromUser model.session.user) tid OnTensionAck ]
             )
 
         OnTensionAck result ->
@@ -302,7 +300,7 @@ update_ apis message model =
                             withDefault [] d.history
 
                         isAdmin =
-                            getTensionRights (uctxFromUser model.user) result model.path_data
+                            getTensionRights (uctxFromUser model.session.user) result model.path_data
                     in
                     ( { model
                         | tension_result = Success { d | comments = Nothing, history = Nothing }
@@ -351,7 +349,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "title" value form.post } }, noOut )
 
         OnCancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, title_result = NotAsked }, noOut )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
 
         SubmitTitle time ->
             let
@@ -410,7 +408,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -437,7 +435,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "message" value form.post } }, noOut )
 
         OnCancelMessage ->
-            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.user, message_result = NotAsked }, noOut )
+            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
 
         SubmitMessage time ->
             let
@@ -471,7 +469,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.user
+                            initTensionForm model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -763,7 +761,7 @@ viewTitle : TensionPanel -> Model -> Html Msg
 viewTitle t model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             t.createdBy.username == uctx.username
@@ -778,8 +776,8 @@ viewTitle t model =
         , div [ class "is-pulled-right" ]
             [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
                 span
-                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
-                    , attribute "data-tooltip" T.editTitle
+                    [ class "is-small button-light tooltip mr-4"
+                    , title T.editTitle
                     , onClick DoChangeTitle
                     ]
                     [ A.icon "icon-edit-2" ]
@@ -829,7 +827,7 @@ viewTitleEdit new old result =
         ]
 
 
-viewSubTitle : Session -> TensionPanel -> Model -> Html Msg
+viewSubTitle : SessionCommon -> TensionPanel -> Model -> Html Msg
 viewSubTitle session t model =
     div [ class "tensionSubtitle level mt-4" ]
         [ div [ class "level-left" ] <|
@@ -869,7 +867,7 @@ viewTensionComments path_data t model =
                 |> withDefault False
 
         userCanComment =
-            case model.user of
+            case model.session.user of
                 LoggedIn uctx ->
                     -- Author or member can comment tension.
                     -- is Author
@@ -881,7 +879,7 @@ viewTensionComments path_data t model =
                     False
 
         userInput =
-            case model.user of
+            case model.session.user of
                 LoggedIn _ ->
                     if userCanComment then
                         Comments.viewTensionCommentInput model.mobileConf t model.comments |> Html.map CommentsMsg
@@ -907,7 +905,7 @@ viewTensionSidePane : TensionPanel -> Model -> Html Msg
 viewTensionSidePane t model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             t.createdBy.username == uctx.username
@@ -983,7 +981,7 @@ viewTensionSidePane t model =
 
         -- Subscriptions
         , hr [ class "has-background-border-light my-5" ] []
-        , case model.user of
+        , case model.session.user of
             LoggedIn _ ->
                 let
                     ( iconElt, subscribe_txt ) =
@@ -1037,7 +1035,7 @@ viewPanelDraft : ProjectDraft -> Model -> Html Msg
 viewPanelDraft draft model =
     let
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             draft.createdBy.username == uctx.username
@@ -1057,19 +1055,21 @@ viewPanelDraft draft model =
 
                   else
                     div []
-                        [ text draft.title
-                        , div [ class "is-pulled-right" ]
-                            [ if model.isTensionAdmin || isAuthor then
-                                span
-                                    [ class "is-small button-light tooltip has-tooltip-arrow has-tooltip-left mr-4"
-                                    , attribute "data-tooltip" T.editTitle
-                                    , onClick DoChangeTitle
-                                    ]
-                                    [ A.icon "icon-edit-2" ]
+                        [ div [ class "level" ]
+                            [ text draft.title
+                            , div [ class "level-right" ]
+                                [ if model.isTensionAdmin || isAuthor then
+                                    div
+                                        [ class "is-small button-light tooltip mr-4"
+                                        , title T.editTitle
+                                        , onClick DoChangeTitle
+                                        ]
+                                        [ A.icon "icon-edit-2" ]
 
-                              else
-                                text ""
-                            , button [ class "delete ", onClick OnClose ] []
+                                  else
+                                    text ""
+                                , button [ class "delete ", onClick OnClose ] []
+                                ]
                             ]
                         , div [ class "tensionSubtitle mt-3 level" ]
                             [ div [ class "level-left" ]
@@ -1091,7 +1091,7 @@ viewPanelDraft draft model =
         ]
 
 
-viewDraftComment : Session -> Bool -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
+viewDraftComment : SessionCommon -> Bool -> Bool -> GqlData IdPayload -> TensionForm -> ProjectDraft -> Html Msg
 viewDraftComment session isAdmin isEdit result form draft =
     let
         isAuthor =
@@ -1127,7 +1127,7 @@ viewDraftComment session isAdmin isEdit result form draft =
             ]
 
 
-viewMessageEdit : Session -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
+viewMessageEdit : SessionCommon -> String -> String -> TensionForm -> GqlData IdPayload -> Html Msg
 viewMessageEdit session new old form result =
     let
         isLoading =
@@ -1201,7 +1201,7 @@ viewDraftSidePane d model =
             model.card
 
         uctx =
-            uctxFromUser model.user
+            uctxFromUser model.session.user
 
         isAuthor =
             d.createdBy.username == uctx.username
@@ -1215,7 +1215,7 @@ viewDraftSidePane d model =
          ]
             ++ (if isAdmin || isAuthor then
                     [ div
-                        [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
+                        [ class "is-smaller has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
                         [ A.icon1 "icon-exchange" T.convertDraft ]

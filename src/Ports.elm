@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -88,6 +88,9 @@ port updateMenuTreeFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port updateLangFromJs : (String -> msg) -> Sub msg
+
+
+port updateThemeFromJs : (String -> msg) -> Sub msg
 
 
 port updateNotifFromJs : (NotifCount -> msg) -> Sub msg

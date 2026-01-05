@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -52,7 +52,7 @@ import Ports
 import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import Query.QueryTension exposing (queryAssignedTensions)
-import Session exposing (CommonMsg, GlobalCmd(..), Session)
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, toF6Referer)
 import Text as T
 import Time
 import Url exposing (Url)
@@ -111,12 +111,12 @@ type alias Model =
     , assigned_data : GqlData (Dict String (List Tension))
     , eid : String
     , menuFocus : MenuNotif
-    , can_referer : Maybe Url
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , help : Help.State
     , refresh_trial : Int
+    , can_referer : Maybe Url
     , empty : {}
     , commonOp : CommonMsg Msg
     , authModal : AuthModal.State
@@ -153,14 +153,14 @@ menuList =
     [ NotificationsMenu, AssignedMenu ]
 
 
-menuToString : MenuNotif -> ( String, String )
-menuToString menu =
+menuToString : SessionCommon -> MenuNotif -> ( String, String )
+menuToString session menu =
     case menu of
         NotificationsMenu ->
             ( T.inbox, T.notifications )
 
         AssignedMenu ->
-            ( T.assigned, T.assignedTensions )
+            ( T.assigned, T.assignedTensions session.lexicon )
 
 
 menuToIcon : MenuNotif -> String
@@ -197,12 +197,12 @@ menuToCount menu notif =
             span []
                 [ span
                     [ class "tooltip"
-                    , attribute "data-tooltip" T.unreadNotif
+                    , title T.unreadNotif
                     ]
                     [ c_event ]
                 , span
                     [ class "is-contract-badge-bg tootltip"
-                    , attribute "data-tooltip" T.pendingContract
+                    , title T.pendingContract
                     ]
                     [ c_contract ]
                 ]
@@ -224,7 +224,7 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         ( uctx, cmds, gcmds ) =
-            case global.session.user of
+            case global.session.common.user of
                 LoggedIn uctx_ ->
                     ( uctx_
                     , case menu of
@@ -240,41 +240,24 @@ init global flags =
                     ( initUserctx, [], [ Global.navigate <| Route.Login ] )
 
         menu =
-            Dict.get "m" global.session.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+            Dict.get "m" global.session.common.query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         model =
             { uctx = uctx
-            , notif = global.session.notif
+            , notif = global.session.data.notif
             , notifications_data = Loading
             , assigned_data = Loading
             , eid = ""
             , menuFocus = menu
-            , can_referer =
-                Maybe.map
-                    (\r ->
-                        if
-                            (String.dropLeft 1 r.path
-                                |> String.split "/"
-                                |> List.head
-                                |> withDefault ""
-                                |> String.append "/"
-                            )
-                                == toHref Route.Notifications
-                        then
-                            withDefault r global.session.can_referer
-
-                        else
-                            r
-                    )
-                    global.session.referer
 
             -- common
-            , session = global.session
-            , help = Help.init global.session
+            , session = global.session.common
+            , help = Help.init global.session.common
             , refresh_trial = 0
+            , can_referer = toF6Referer (Route.fromUrl global.url |> withDefault Route.Top) global.session
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , authModal = AuthModal.init global.session.user Nothing
+            , authModal = AuthModal.init Nothing global.session.common
             }
     in
     ( model
@@ -544,25 +527,25 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "top-section columns" ]
-        [ div [ class "column is-2 is-3-fullhd" ] [ viewMenu model ]
-        , div [ class "column is-8 is-6-fullhd pt-0" ]
-            [ div []
+        [ div [ class "column is-2 is-3-fullhd" ]
+            [ div [ class "level mb-2" ]
                 [ div
-                    [ class "is-strong arrow-left is-w is-h bc is-pulled-left"
-                    , attribute "style" "position:relative; top:-15px;"
+                    [ class "is-strong arrow-left is-w is-h p-1 level-left"
                     , title T.goBack
                     , onClick GoBack
                     ]
                     []
-                , case model.menuFocus of
-                    NotificationsMenu ->
-                        div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
-
-                    AssignedMenu ->
-                        text ""
                 ]
-            , br [] []
-            , h2 [ class "title" ] [ text (menuToString model.menuFocus |> Tuple.second) ]
+            , viewMenu model
+            ]
+        , div [ class "column is-8 is-6-fullhd pt-0" ]
+            [ case model.menuFocus of
+                NotificationsMenu ->
+                    div [ class "is-2 has-text-centered is-pulled-right" ] [ div [ class "button is-small", onClick MarkAllAsRead ] [ text T.markAllAsRead ] ]
+
+                AssignedMenu ->
+                    text ""
+            , h2 [ class "title" ] [ text (menuToString model.session model.menuFocus |> Tuple.second) ]
             , case model.menuFocus of
                 NotificationsMenu ->
                     case model.notifications_data of
@@ -605,7 +588,7 @@ view_ global model =
 
 viewMenu : Model -> Html Msg
 viewMenu model =
-    nav [ id "menuSettings", class "menu mt-desktop" ]
+    nav [ id "menuSettings", class "menu" ]
         [ ul [ class "menu-list" ] <|
             (menuList
                 |> List.concatMap
@@ -618,7 +601,7 @@ viewMenu model =
                                     (ChangeMenuFocus x)
                                 ]
                                 [ div [ class "is-inline-flex" ]
-                                    [ A.icon1 (menuToIcon x) (menuToString x |> Tuple.first)
+                                    [ A.icon1 (menuToIcon x) (menuToString model.session x |> Tuple.first)
                                     , menuToCount x model.notif
                                     ]
                                 ]
@@ -629,7 +612,7 @@ viewMenu model =
         ]
 
 
-viewNotifications : Session -> UserEvents -> Html Msg
+viewNotifications : SessionCommon -> UserEvents -> Html Msg
 viewNotifications session notifications =
     notifications
         |> List.map
@@ -637,7 +620,7 @@ viewNotifications session notifications =
         |> div [ class "box is-shrinked" ]
 
 
-viewUserEvent : Session -> UserEvent -> Html Msg
+viewUserEvent : SessionCommon -> UserEvent -> Html Msg
 viewUserEvent session ue =
     let
         firstEvent =
@@ -782,7 +765,7 @@ viewNotif isContract ue node content =
         , if not ue.isRead then
             div
                 [ class "media-right tooltip"
-                , attribute "data-tooltip" tooltip_txt
+                , title tooltip_txt
                 , if isContract then
                     onClick NoMsg
 
@@ -805,7 +788,7 @@ editableEvent event =
             True
 
 
-viewAssigned : CommonMsg Msg -> Session -> Dict String (List Tension) -> Html Msg
+viewAssigned : CommonMsg Msg -> SessionCommon -> Dict String (List Tension) -> Html Msg
 viewAssigned commonOp session tensions_d =
     Dict.keys tensions_d
         |> List.map

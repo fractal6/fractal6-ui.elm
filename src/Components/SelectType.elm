@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -52,35 +52,35 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isOpen : Bool
+    { isOpen : Bool
     , type_orig : TensionType.TensionType
     , data_result : GqlData IdPayload -- result of any query
     , form : TensionForm -- user inputs
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : String -> UserState -> Model
-initModel tid user =
-    { user = user
-    , isOpen = False
+initModel : String -> SessionCommon -> Model
+initModel tid session =
+    { isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionForm tid Nothing user
+    , form = initTensionForm tid Nothing session.user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-init : String -> UserState -> State
-init tid user =
-    initModel tid user |> State
+init : String -> SessionCommon -> State
+init tid session =
+    initModel tid session |> State
 
 
 
@@ -108,7 +108,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.form.id model.user
+    initModel model.form.id model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -294,7 +294,17 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( data
-                    , Out [] [] (Just ( True, withDefault TensionType.Operational model.form.type_ ))
+                    , Out [ send (OnCloseSafe "" "") ]
+                        [ DoPushSystemNotif
+                            { cls = "is-success"
+                            , content =
+                                div [ class "is-flex is-align-items-center mr-5" ]
+                                    [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                    , text (T.tensionType_action_success model.session.lexicon)
+                                    ]
+                            }
+                        ]
+                        (Just ( True, withDefault TensionType.Operational model.form.type_ ))
                     )
 
                 _ ->
@@ -347,7 +357,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "SelectTypeModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -360,10 +370,11 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success _ ->
+                    -- @obsolete
                     div [ class "notification is-success-light" ]
                         [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
                         , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , text T.tensionType_action_success
+                        , text (T.tensionType_action_success model.session.lexicon)
                         ]
 
                 _ ->
@@ -383,10 +394,10 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ text T.changeTensionType ]
+                [ text (T.changeTensionType model.session.lexicon) ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "selectType-0" "is-info is-light" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
             , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->
@@ -415,14 +426,14 @@ viewModalContent op (State model) =
             , div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button
-                        [ class "button is-light"
+                        [ class "button"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ text T.cancel ]
                     ]
                 , div [ class "level-right" ]
                     [ button
-                        [ class "button is-light is-success"
+                        [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not (isSendable model) || isLoading)
                         , onClick (OnSubmit <| OnPatchData)

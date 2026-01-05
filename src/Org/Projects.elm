@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -29,7 +29,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str)
+import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -40,7 +40,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
-import Extra exposing (decap, space_, ternary, textH, textT, unwrap, upH)
+import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -66,7 +66,7 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
-import Session exposing (GlobalCmd(..), Screen, Session, Theme(..))
+import Session exposing (GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
@@ -120,6 +120,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
+
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -194,7 +197,7 @@ type alias Model =
     , project_result_del : GqlData ProjectFull
 
     -- Common
-    , session : Session
+    , session : SessionCommon
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
@@ -373,7 +376,7 @@ init global flags =
             global.session
 
         query =
-            session.query
+            session.common.query
 
         -- Focus
         newFocus =
@@ -383,16 +386,16 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState ProjectsBaseUri session.referer global.url session.node_focus newFocus
+            focusState ProjectsBaseUri session.referer global.url session.common.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , hasUnsavedData = False
-            , project_form = initProjectForm session.user newFocus.nameid
+            , project_form = initProjectForm session.common.user newFocus.nameid
             , pattern = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , pattern_init = Dict.get "q" query |> withDefault [] |> List.head |> withDefault ""
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
@@ -409,19 +412,19 @@ init global flags =
             , project_result_del = NotAsked
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , url = global.url
             , empty = {}
-            , tensionForm = NTF.init session
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.user
-            , help = Help.init session
+            , tensionForm = NTF.init session.common
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
             , modal_confirm = ModalConfirm.init NoMsg
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
-            , actionPanel = ActionPanel.init session.user session.screen
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing) session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , actionPanel = ActionPanel.init session.common
             }
 
         cmds =
@@ -1005,7 +1008,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -1047,12 +1050,12 @@ view_ global model =
                 viewNewOrEditProject model.session False model
 
               else
-                viewDefault global.session.user model
+                viewDefault global.session.common.user model
             ]
         ]
 
 
-viewNewOrEditProject : Session -> Bool -> Model -> Html Msg
+viewNewOrEditProject : SessionCommon -> Bool -> Model -> Html Msg
 viewNewOrEditProject session isNew model =
     let
         title =
@@ -1194,7 +1197,7 @@ viewNewOrEditProject session isNew model =
                         LightTheme ->
                             img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
                     ]
-                , figcaption [] [ text T.projectCaptionSimple ]
+                , figcaption [] [ text (T.projectCaptionSimple session.lexicon) ]
                 ]
 
           else
@@ -1261,28 +1264,18 @@ viewProjectsListHeader focus counts statusFilter =
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
-        , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        , attribute "style" "border-top-left-radius: var(--bulma-radius-large); border-top-right-radius: var(--bulma-radius-large); border-bottom: 0 !important;"
         ]
-        [ div [ class "level is-marginless is-mobile" ]
+        [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewProjectsCount counts statusFilter
-                , if focus.nameid /= focus.rootnameid then
-                    span
-                        [ class "is-hidden-mobile help-label button-light is-h is-discrete px-5 is-align-self-flex-start"
-                        , onClick OnGoRoot
-                        ]
-                        [ A.icon "arrow-up", text T.goRoot ]
-
-                  else
-                    text ""
+                , showIf (focus.nameid /= focus.rootnameid) <|
+                    viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5" OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
                 []
-            , if focus.nameid /= focus.rootnameid then
-                div [ class "is-hidden-tablet help-label button-light is-h is-discrete px-5", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-              else
-                text ""
+            , showIf (focus.nameid /= focus.rootnameid) <|
+                viewGoRoot "is-hidden-tablet px-5" OnGoRoot
             ]
         ]
 
@@ -1323,7 +1316,7 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : Session -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList : SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
 viewProjectsList session focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
@@ -1357,7 +1350,7 @@ viewProjectsList session focus pattern statusFilter data =
         ]
 
 
-mediaProject : Session -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject : SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
 mediaProject session focus statusFilter project =
     let
         ( status_new, status_txt ) =
@@ -1372,8 +1365,8 @@ mediaProject session focus statusFilter project =
         [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] []
         , div [ class "media-content " ]
-            [ div [ class "columns mb-0" ]
-                [ div [ class ("column " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
+            [ div [ class "columns mb-1" ]
+                [ div [ class ("column pb-0 " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
                     [ a
                         [ class "has-text-weight-semibold is-human discrete-link"
                         , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
@@ -1382,7 +1375,7 @@ mediaProject session focus statusFilter project =
                     ]
                 , case project.description of
                     Just x ->
-                        div [ class "column is-8" ]
+                        div [ class "column pb-0 is-8" ]
                             [ span [ class "is-discret is-smaller" ] [ text x ] ]
 
                     Nothing ->

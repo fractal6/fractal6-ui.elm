@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -45,7 +45,7 @@ import Ports
 import Query.QueryNode exposing (queryNodesSub, queryOrgaTree)
 import Schemas.TreeMenu exposing (ExpandedLines, PersistentModel, toPersistant)
 import Scroll
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import String
 import Text as T
 
@@ -55,8 +55,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool
     , isHover : Bool
     , focus : NodeFocus
@@ -67,6 +66,7 @@ type alias Model =
     , expanded_lines : ExpandedLines
 
     -- Common
+    , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     , baseUri : FractalBaseRoute
@@ -86,8 +86,8 @@ prefixId did =
     "treeMenu_" ++ did
 
 
-initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> Model
-initModel baseUri uriQuery focus user persistent tree =
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> SessionCommon -> Model
+initModel baseUri uriQuery focus persistent tree session =
     let
         m =
             persistent
@@ -108,8 +108,7 @@ initModel baseUri uriQuery focus user persistent tree =
             else
                 m.expanded_lines
     in
-    { user = user
-    , isActive = m.isActive
+    { isActive = m.isActive
     , isActive2 = m.isActive
     , isHover = False
     , focus = focus
@@ -120,7 +119,7 @@ initModel baseUri uriQuery focus user persistent tree =
                 Success o
 
             Nothing ->
-                case user of
+                case session.user of
                     LoggedIn _ ->
                         LoadingSlowly
 
@@ -131,6 +130,7 @@ initModel baseUri uriQuery focus user persistent tree =
     , expanded_lines = expanded_lines
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , baseUri = baseUri
@@ -139,9 +139,9 @@ initModel baseUri uriQuery focus user persistent tree =
         |> setTree
 
 
-init : FractalBaseRoute -> Maybe String -> NodeFocus -> UserState -> Maybe PersistentModel -> Maybe NodesDict -> State
-init baseUri uriQuery focus user persistent data =
-    initModel baseUri uriQuery focus user persistent data |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe PersistentModel -> Maybe NodesDict -> SessionCommon -> State
+init baseUri uriQuery focus persistent data session =
+    initModel baseUri uriQuery focus persistent data session |> State
 
 
 setTree : Model -> Model
@@ -250,7 +250,7 @@ next_ nameid_m (Tree { node, children }) =
 
 reset : Model -> Model
 reset model =
-    initModel model.baseUri Nothing model.focus model.user (Just (toPersistant model)) (withMaybeData model.tree_result)
+    initModel model.baseUri Nothing model.focus (Just (toPersistant model)) (withMaybeData model.tree_result) model.session
 
 
 setDataResult : GqlData NodesDict -> Model -> Model
@@ -354,8 +354,12 @@ update_ apis message model =
                 )
 
         OnReload uctx ->
-            if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
-                ( { model | tree_result = LoadingSlowly, user = LoggedIn uctx }, out0 [ send OnLoad ] )
+            if not (isSuccess model.tree_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.session.user).roles) then
+                let
+                    session =
+                        model.session
+                in
+                ( { model | tree_result = LoadingSlowly, session = { session | user = LoggedIn uctx } }, out0 [ send OnLoad ] )
 
             else
                 ( model, noOut )
@@ -377,7 +381,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->
@@ -395,6 +399,7 @@ update_ apis message model =
         OnToggle ->
             if model.isActive then
                 ( { model | isActive = False }
+                  -- @debug: is it working ? the branch icon in navbar does no highlight every time on click ?!
                 , out0 [ Ports.saveMenuTree (toPersistant { model | isActive = False }), Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 500 ]
                 )
 
@@ -637,8 +642,13 @@ view op (State model) =
 
     else
         div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
-            --[ div [ class "hinter is-hidden-mobile", onClick OnToggle ] [] ]
-            [ div [] [] ]
+            [ div [ class "hinter-tree is-hidden-touch" ]
+                [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+            ]
+
+
+
+--[ div [ class "border-hinter is-hidden-mobile", onClick OnToggle ] [] ]
 
 
 viewTreeMenu : Model -> Html Msg
@@ -726,7 +736,7 @@ viewCircleLine hover focus node =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
                 , showMaybe node.first_link
                     (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
@@ -745,7 +755,7 @@ viewCircleLine hover focus node =
                 ]
             , if hover == Just node.nameid then
                 div [ class "level-right here" ]
-                    [ span [ class "tag is-rounded has-border", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ] ]
+                    [ span [ class "tag is-rounded has-border-small", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ] ]
 
               else
                 text ""
@@ -767,7 +777,7 @@ viewRolesLine type_txt hover roles nid expanded_lines =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ span [ class "tag has-background-tag has-text-text" ]
                     [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                 , case List.sum <| List.map .n_open_tensions roles of
@@ -896,7 +906,7 @@ viewRolesLine2 onDropdownClick type_txt hover roles nid expanded_lines =
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]
-            [ div [ class "level-left", attribute "style" "width:82%;" ]
+            [ div [ class "level-left" ]
                 [ span [ class "tag is-smaller2 has-background-tag has-text-text" ]
                     [ text "+", text (String.fromInt (List.length roles)), text (" " ++ type_txt) ]
                 ]

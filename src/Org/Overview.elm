@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -52,7 +52,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -64,7 +64,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
-import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, Session, isMobile)
+import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, SessionCommon, isMobile)
 import String
 import Text as T
 import Time
@@ -122,6 +122,9 @@ mapGlobalOutcmds gcmds =
 
                     DoToggleWatchOrga a ->
                         ( Cmd.none, send (ToggleWatchOrga a) )
+
+                    DoPushSystemNotif a ->
+                        ( Cmd.none, send (OnPushSystemNotif a) )
 
                     -- Component
                     DoCreateTension a ntm d ->
@@ -196,7 +199,7 @@ type alias Model =
     , leaders : List User
 
     -- common
-    , session : Session
+    , session : SessionCommon
     , refresh_trial : Int
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -239,10 +242,10 @@ init global flags =
 
         -- What has changed
         fs_ =
-            focusState OverviewBaseUri session.referer global.url session.node_focus newFocus
+            focusState OverviewBaseUri session.referer global.url session.common.node_focus newFocus
 
         isInit =
-            session.tree_data == Nothing || session.path_data == Nothing
+            session.data.tree_data == Nothing || session.common.path_data == Nothing
 
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
@@ -251,25 +254,25 @@ init global flags =
         --d2 = Debug.log "newfocus" [ newFocus ]
         -- QuickSearch
         qs =
-            session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0, visible = False }
+            session.data.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0, visible = False }
 
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = ternary fs.orgChange Loading (fromMaybeData session.path_data Loading) -- Loaded from GraphPack
-            , tree_data = fromMaybeData session.tree_data Loading
-            , tensions_data = fromMaybeData session.tensions_data Loading
+            , path_data = ternary fs.orgChange Loading (fromMaybeData session.common.path_data Loading) -- Loaded from GraphPack
+            , tree_data = fromMaybeData session.data.tree_data Loading
+            , tensions_data = fromMaybeData session.data.tensions_data Loading
             , journal_data = NotAsked
-            , node_data = fromMaybeData session.node_data Loading
+            , node_data = fromMaybeData session.data.node_data Loading
             , init_tensions = True
             , init_journal = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
-                session.window_pos
+                session.data.window_pos
                     |> withDefault { topRight = "doc", bottomLeft = "activities" }
                     |> (\x ->
-                            if isMobile session.screen then
+                            if isMobile session.common.screen then
                                 { x | topRight = x.bottomLeft, bottomLeft = x.topRight }
 
                             else
@@ -277,26 +280,26 @@ init global flags =
                        )
             , node_hovered = Nothing
             , next_focus = Nothing
-            , recent_activity_tab = session.recent_activity_tab |> withDefault TensionTab
+            , recent_activity_tab = session.data.recent_activity_tab |> withDefault TensionTab
             , depth = Nothing
             , legend = False
             , leaders = []
 
             -- Common
-            , session = session
+            , session = session.common
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
-            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session.user
-            , help = Help.init session
-            , tensionForm = NTF.init session
-            , actionPanel = ActionPanel.init session.user session.screen
-            , joinOrga = JoinOrga.init newFocus.nameid session.user session.screen
-            , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus session.orga_menu session.orgs_data session.user
-            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.user session.tree_menu session.tree_data
+            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session.common
+            , help = Help.init session.common
+            , tensionForm = NTF.init session.common
+            , actionPanel = ActionPanel.init session.common
+            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , authModal = AuthModal.init Nothing session.common
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
             }
 
         cmds_ =
@@ -314,7 +317,7 @@ init global flags =
                 --queryCircleTension apis newFocus.nameid GotTensions
                 ]
                     ++ (if fs.menuChange then
-                            case session.tree_data of
+                            case session.data.tree_data of
                                 Just _ ->
                                     [ send LoadOrga
                                     , Ports.initGraphPack Dict.empty "" --canvas loading effect
@@ -477,13 +480,13 @@ update global message model =
             ( { model | legend = val }, Cmd.none, Cmd.none )
 
         UpdatePath ->
-            ( { model | path_data = fromMaybeData global.session.path_data Loading }, Cmd.none, Cmd.none )
+            ( { model | path_data = fromMaybeData global.session.common.path_data Loading }, Cmd.none, Cmd.none )
 
         -- Data queries
         GotOrga result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.common.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
@@ -719,13 +722,13 @@ update global message model =
                             path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
 
                         isPathNew =
-                            Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.path_data
+                            Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.common.path_data
 
                         focus =
                             path.focus
 
                         pinned =
-                            global.session.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
+                            global.session.common.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
 
                         path_data =
                             Success { path | focus = { focus | pinned = pinned } }
@@ -948,7 +951,7 @@ view global model =
         helperData =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
-            , session = global.session
+            , orgaInfo = global.session.data.orgaInfo
             }
 
         panelData =
@@ -998,7 +1001,7 @@ view_ global model =
             , hasBeenPushed = True
             , receiver = nearestCircleid model.node_focus.nameid
             , hasInnerToolbar = True
-            , isAdmin = Maybe.map2 (\node uctx -> List.length (getNodeRights uctx node model.tree_data) > 0) focus_m (maybeUctx global.session.user) |> withDefault False
+            , isAdmin = Maybe.map2 (\node uctx -> List.length (getNodeRights uctx node model.tree_data) > 0) focus_m (maybeUctx global.session.common.user) |> withDefault False
             }
 
         viewFromPos : String -> Html Msg
@@ -1026,11 +1029,11 @@ view_ global model =
     in
     div [ id "overview", class "columns is-centered" ]
         [ div [ class "column is-6 is-5-fullhd" ]
-            [ --viewSearchBar global.session.user model
-              viewCanvas global.session.user model
+            [ --viewSearchBar global.session.common.user model
+              viewCanvas global.session.common.user model
             , viewFromPos model.window_pos.bottomLeft
             ]
-        , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
+        , div [ class "divider is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
         , div [ class "column is-6 is-5-fullhd" ]
             [ div [ id "nextToChart" ]
                 [ viewFromPos model.window_pos.topRight ]
@@ -1120,7 +1123,6 @@ viewActionPanel domid us node o actionPanel =
                     [ span [ id domid ]
                         [ span
                             [ class "button is-small clickMe"
-                            , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
                             , onClick (OpenActionPanel domid node.nameid Nothing)
                             ]
                             [ i [ class "icon-more-vertical" ] [] ]
@@ -1193,10 +1195,10 @@ viewSearchList _ model =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.circle ] ]
+                                        [ td [ class "is-aligned-center is-size-6" ] [ text T.circle ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text T.role ] ]
+                                        [ td [ class "is-aligned-center is-size-6" ] [ text T.role ] ]
 
                                      else
                                         []
@@ -1212,13 +1214,23 @@ viewSearchList _ model =
 viewCanvas : UserState -> Model -> Html Msg
 viewCanvas us model =
     let
-        isAdmin =
+        ( isAdmin, hasRole ) =
             case us of
                 LoggedIn uctx ->
-                    hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
+                    ( hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
+                    , case model.node_hovered of
+                        Just node ->
+                            Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+
+                        Nothing ->
+                            False
+                    )
 
                 LoggedOut ->
-                    False
+                    ( False, False )
+
+        hasConfig =
+            isAdmin || hasRole
 
         isComplex =
             --Maybe.map (\x -> x > 2) model.depth |> withDefault False
@@ -1239,7 +1251,7 @@ viewCanvas us model =
             _ ->
                 text ""
         , if model.legend then
-            div [ id "canvasLegend", class "box is-warning-light has-text-dark" ]
+            div [ id "canvasLegend", class "box has-background-evidence" ]
                 [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text T.circlesLegend ] ]
                 , br [ class "mb-3" ] []
                 , span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.focusCircle ], span [] [ text T.focusLegend ] ]
@@ -1259,7 +1271,7 @@ viewCanvas us model =
                 , A.icon1 "icon-key icon-lg" T.visibilitySecretLegend
                 , br [ class "mb-5" ] []
                 , span
-                    [ class "button-light has-text-info is-size-7 is-pulled-right"
+                    [ class "button-light is-info is-size-7 is-pulled-right"
                     , onClick (HelpMsg (Help.OnOpen ""))
                     ]
                     [ text T.help ]
@@ -1318,8 +1330,8 @@ viewCanvas us model =
             ((withMaybeMapData
                 (\path ->
                     [ div
-                        [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                        , attribute "data-tooltip" (T.add ++ "...")
+                        [ class "button tooltip "
+                        , title (T.add ++ "...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path) Nothing)
                         ]
                         [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs is-strong" ] ]
@@ -1330,8 +1342,8 @@ viewCanvas us model =
              )
                 ++ (if isAdmin then
                         [ div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.inviteMembers
+                            [ class "button tooltip"
+                            , title T.inviteMembers
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
@@ -1351,14 +1363,14 @@ viewCanvas us model =
 
                     else
                         [ div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.goRoot
+                            [ class "button"
+                            , title T.goRoot
                             , onClick (NodeClicked model.node_focus.rootnameid)
                             ]
                             [ A.icon "icon-chevrons-up" ]
                         , div
-                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.goParent
+                            [ class "button tooltip"
+                            , title T.goParent
                             , case model.path_data of
                                 Success g ->
                                     LE.getAt 1 (List.reverse g.path)
@@ -1375,8 +1387,8 @@ viewCanvas us model =
                    )
                 ++ (if isComplex then
                         [ div
-                            [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" T.reverseTooltip
+                            [ class "button buttonToggle tooltip"
+                            , title T.reverseTooltip
                             , onClick ToggleGraphReverse
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
@@ -1386,11 +1398,11 @@ viewCanvas us model =
                         []
                    )
                 ++ [ div
-                        [ class "tag is-rounded has-border-light2 is-light is-info is-small tooltip has-tooltip-arrow"
+                        [ class "tag is-small is-w tooltip has-tooltip-arrow"
 
                         -- Pushed to bottom in flex/column parent.
                         , attribute "style" "margin-top:auto; user-select:none;"
-                        , attribute "data-tooltip" "Show the legend"
+                        , title "Show the legend"
                         , onClick (SetLegend (not model.legend))
                         ]
                         [ text "Legend" ]
@@ -1404,17 +1416,19 @@ viewCanvas us model =
             , attribute "data-event-tension" "doTension"
             , attribute "data-event-action" "doAction"
             ]
-            [ span [ id "doTension" ]
-                [ span [] [ text "void" ] -- Node name from JS
-                , i [ class "icon-plus custom-style" ] []
-                ]
-            , span [ id "doAction" ]
-                [ case model.node_hovered of
-                    Just node ->
-                        viewActionPanel "actionPanelContentTooltip" us node model.tree_data model.actionPanel
+            [ div [ class "is-flex" ]
+                [ span [ id "doTension", classList [ ( "no-config", not hasConfig ) ] ]
+                    [ span [] [ text "void" ] -- Node name from JS
+                    , i [ class "icon-plus custom-style" ] []
+                    ]
+                , span [ id "doAction" ]
+                    [ case model.node_hovered of
+                        Just node ->
+                            viewActionPanel "actionPanelContentTooltip" us node model.tree_data model.actionPanel
 
-                    Nothing ->
-                        text ""
+                        Nothing ->
+                            text ""
+                    ]
                 ]
             ]
         ]
@@ -1424,29 +1438,29 @@ viewActivies : Model -> Html Msg
 viewActivies model =
     div
         [ id "activities", class "box is-shrinked2 is-flex-grow" ]
-        [ div [ class "title ml-4 mt-2 mb-3" ]
+        [ div [ class "title ml-4 pt-2 mb-3" ]
             [ div [ class "level" ]
                 [ div [ class "level-left" ]
                     [ div
-                        [ class "tooltip has-tooltip-arrow"
+                        [ class "tooltip"
                         , case model.path_data of
                             Success p ->
-                                attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
+                                title ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
 
                             _ ->
                                 class ""
                         ]
-                        [ span [ class "help" ] [ text T.recentActivities, text ":" ] ]
+                        [ span [ class "help-label" ] [ text T.recentActivities, text ":" ] ]
                     ]
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
                             [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= TensionTab ) ] ]
-                                    [ A.icon1 "icon-exchange icon-sm" T.tensions ]
+                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank" ]
+                                    [ A.icon1 "icon-exchange icon-sm" (T.tensions model.session.lexicon) ]
                                 ]
                             , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.recent_activity_tab /= JournalTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank" ]
                                     [ A.icon1 "icon-history icon-sm" T.journal ]
                                 ]
                             ]
@@ -1501,7 +1515,7 @@ viewActivies model =
         ]
 
 
-viewEventNotif : Session -> EventNotif -> Html Msg
+viewEventNotif : SessionCommon -> EventNotif -> Html Msg
 viewEventNotif session e =
     let
         ue =

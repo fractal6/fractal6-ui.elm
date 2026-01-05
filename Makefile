@@ -40,7 +40,7 @@ build_: assets
 	npm run build
 
 prod:
-	npm run prod
+	npm run prod -- --env lang=fr --env theme=light;
 
 dev:
 	npm run dev
@@ -62,8 +62,8 @@ review:
 #
 
 # Deploy on Netlyfy/Fleek
-publish_build: prod
-	cd ../build && \
+publish_staging: prod
+	cd ../netlify-build && \
 		rm static -rf && \
 		cp ../fractal6-ui.elm/dist/* . -r && \
 		cp ../fractal6-ui.elm/netlify.toml . && \
@@ -200,7 +200,7 @@ install:
 	# Node.js
 	npm install
 	# Python
-	pip install docopt-ng
+	pip install -r requirements.txt
 
 
 elm-spa:

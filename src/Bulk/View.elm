@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -40,12 +40,13 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
+import Html.Events exposing (onClick)
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
-import Session exposing (CommonMsg, Session)
+import Session exposing (CommonMsg, SessionCommon)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -60,7 +61,7 @@ import Text as T
 --
 
 
-mediaTension : CommonMsg msg -> Session -> String -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension : CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> String -> Html msg
 mediaTension commonOp session focusid tension showStatus showRecip size =
     let
         n_comments =
@@ -74,7 +75,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -98,17 +99,17 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                     [ if showStatus then
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                            , attribute "data-tooltip" (tensionStatus2str tension.status)
+                            , title (tensionStatus2str tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
                       else
                         text ""
                     , if showRecip then
-                        viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
+                        viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
 
                       else
-                        span [ class "has-text-weight-light" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
+                        span [ class "is-weak" ] [ text (T.authoredBy ++ " "), viewUsernameLink tension.createdBy.username ]
                     ]
                 , div [ class "level-right" ] []
                 ]
@@ -126,7 +127,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                         a
                             [ class "level-item discrete-link tooltip has-tooltip-arrow"
                             , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
-                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " " ++ T.attached)
+                            , title ("1 " ++ action2str action ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
                             ]
                             [ A.icon0 (action2icon tc ++ " icon-sm") ]
@@ -136,7 +137,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 , if n_comments > 1 then
                     a
                         [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
-                        , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                        , title (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                         ]
                         [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
@@ -171,7 +172,7 @@ viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
 viewCircleTarget commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag has-border-light tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
+            span [ class ("tag tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
 
         NodeType.Role ->
             viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
@@ -179,13 +180,13 @@ viewCircleTarget commonOp cls er =
 
 viewCircleSimple : String -> Html msg
 viewCircleSimple nameid =
-    span [ class "tag has-border-light is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
+    span [ class "tag is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
 
 
 viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small is-light is-inverted is-static has-text-weight-light" ]
+        [ span [ class "is-small is-light is-inverted is-static is-weak" ]
             [ viewNodeRef t_blank OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-light is-inverted is-static" ]
@@ -193,36 +194,25 @@ viewTensionArrow t_blank cls emitter receiver =
         ]
 
 
-viewPinnedTensions : Int -> Session -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions : Int -> SessionCommon -> NodeFocus -> List PinTension -> Html msg
 viewPinnedTensions size session focus pins =
-    List.foldl
-        (\a b ->
-            let
-                pad =
-                    pins |> List.drop (a * size) |> List.take size |> List.map Just
-            in
-            b ++ [ pad ++ List.repeat (size - List.length pad) Nothing ]
-        )
-        []
-        (List.range 0 (List.length pins - 1))
-        |> LE.transpose
-        |> List.map (List.filterMap identity)
-        |> List.filter (\x -> x /= [])
+    pins
         |> List.map
-            (\x ->
-                div [ class "tile is-parent is-vertical", classList [ ( "is-" ++ String.fromInt (12 // size), True ) ] ] <|
-                    List.map (\y -> div [ class "tile_ is-children_" ] [ viewPin session focus y ]) x
+            (\pin ->
+                div [ class "cell" ] [ viewPin session focus pin ]
             )
-        |> div [ class "tile is-ancestor pinnedTile" ]
+        |> div [ class "grid" ]
+        |> List.singleton
+        |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "-cols", True ) ] ]
 
 
-viewPin : Session -> NodeFocus -> PinTension -> Html msg
+viewPin : SessionCommon -> NodeFocus -> PinTension -> Html msg
 viewPin session focus tension =
-    div [ class "box media mediaBox p-4", style "width" "100%" ]
+    div [ class "box media mediaBox p-4 is-h", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip is-left has-tooltip-arrow"
-                , attribute "data-tooltip" (tensionType2str tension.type_)
+                , title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -233,15 +223,13 @@ viewPin session focus tension =
                 , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                 ]
                 [ text tension.title ]
-            , span [ class "level is-smaller2 is-mobile mt-2" ]
-                [ div [ class "level-left" ]
-                    [ span
-                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                        , attribute "data-tooltip" (tensionStatus2str tension.status)
-                        ]
-                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                    , viewTensionDateAndUser session "has-text-weight-light" tension.createdAt tension.createdBy
+            , div [ class "is-smaller2 mt-2" ]
+                [ span
+                    [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                    , title (tensionStatus2str tension.status)
                     ]
+                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
                 ]
             ]
         ]
@@ -535,7 +523,7 @@ viewUserFull size isLinked_ isBoxed user =
     in
     ob
         (ternary isBoxed
-            ([ title user.username, class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
+            ([ title user.username, class ("box field " ++ pad), attribute "style" "display:inline;" ] ++ lk)
             ([] ++ lk)
         )
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
@@ -595,7 +583,7 @@ viewRoleExt commonOp cls link_m r =
     viewRole cls False False Nothing link_m (\_ _ _ -> commonOp.noMsg) { nameid = "", name = r.name, color = r.color, role_type = r.role_type }
 
 
-viewRole : String -> Bool -> Bool -> Maybe ( Session, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
+viewRole : String -> Bool -> Bool -> Maybe ( SessionCommon, String ) -> Maybe String -> (String -> String -> Maybe ( Int, Int ) -> msg) -> UserRoleCommon a -> Html msg
 viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     -- link and msg are mutually exclusive
     let
@@ -621,8 +609,7 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
                     [ colorAttr c ]
 
                 Nothing ->
-                    --( "is-" ++ roleColor r.role_type, [] )
-                    [ colorAttr (roleColor r.role_type) ]
+                    [ colorAttr (RoleType.toString r.role_type |> String.toLower) ]
 
         a_or_span =
             case link_m of
@@ -638,12 +625,16 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     a_or_span
         ([ class "button buttonRole is-small"
          , classList (List.map (\x -> ( x, True )) cls)
-         , attribute (ternary hasTooltip "data-tooltip" "data-void")
-            (ternary isSelf T.youPlay T.theyPlay
-                |> Format.namedValue "role" (upH r.name)
-                |> Format.namedValue "circle" (getParentFragmentFromRole r)
-                |> Format.namedValue "since" since
-            )
+         , if hasTooltip then
+            title
+                (ternary isSelf T.youPlay T.theyPlay
+                    |> Format.namedValue "role" (upH r.name)
+                    |> Format.namedValue "circle" (getParentFragmentFromRole r)
+                    |> Format.namedValue "since" since
+                )
+
+           else
+            attribute "data-void" ""
          , onClickPos (msg "actionPanelHelper" r.nameid)
          , href link
          ]
@@ -692,7 +683,7 @@ viewProfileC user =
 --
 
 
-viewOpenedDate : Session -> String -> Html msg
+viewOpenedDate : SessionCommon -> String -> Html msg
 viewOpenedDate session date =
     span [] <|
         List.intersperse (text " ") <|
@@ -701,7 +692,7 @@ viewOpenedDate session date =
             ]
 
 
-viewUpdated : Session -> String -> Html msg
+viewUpdated : SessionCommon -> String -> Html msg
 viewUpdated session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
@@ -711,7 +702,7 @@ viewUpdated session date =
             ]
 
 
-viewCommentedDate : Session -> String -> Html msg
+viewCommentedDate : SessionCommon -> String -> Html msg
 viewCommentedDate session date =
     span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
@@ -720,7 +711,7 @@ viewCommentedDate session date =
             ]
 
 
-viewTensionDateAndUser : Session -> String -> String -> Username -> Html msg
+viewTensionDateAndUser : SessionCommon -> String -> String -> Username -> Html msg
 viewTensionDateAndUser session cls createdAt createdBy =
     span [ class cls ] <|
         List.intersperse (text " ") <|
@@ -730,7 +721,7 @@ viewTensionDateAndUser session cls createdAt createdBy =
             ]
 
 
-viewTensionDateAndUserC : Session -> String -> Username -> Html msg
+viewTensionDateAndUserC : SessionCommon -> String -> Username -> Html msg
 viewTensionDateAndUserC session createdAt createdBy =
     span [] <|
         List.intersperse (text " ") <|
@@ -739,7 +730,7 @@ viewTensionDateAndUserC session createdAt createdBy =
             ]
 
 
-byAt : Session -> Username -> String -> Html msg
+byAt : SessionCommon -> Username -> String -> Html msg
 byAt session createdBy createdAt =
     span [] <|
         List.intersperse (text " ") <|
@@ -839,7 +830,7 @@ mediaOrga commonOp user_m root =
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
                 [ div [ class "column is-8" ]
-                    [ a [ href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
+                    [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
                             renderMarkdown "is-human pt-1" ab
@@ -875,7 +866,7 @@ mediaOrga commonOp user_m root =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
-                            , div [ class "buttons is-inline" ] <|
+                            , div [ class "buttons" ] <|
                                 (roles
                                     |> List.map
                                         (\r ->
@@ -893,62 +884,6 @@ mediaOrga commonOp user_m root =
                    )
             )
         ]
-
-
-roleColor : RoleType.RoleType -> String
-roleColor rt =
-    case rt of
-        RoleType.Owner ->
-            "orange"
-
-        RoleType.Member ->
-            "primary"
-
-        RoleType.Coordinator ->
-            "orange"
-
-        RoleType.Peer ->
-            "primary"
-
-        RoleType.Bot ->
-            "white-dimmed"
-
-        RoleType.Guest ->
-            "blue-grey"
-
-        RoleType.Pending ->
-            "turquoise"
-
-        RoleType.Retired ->
-            "purple"
-
-
-colorFromRole : { r | role_type : RoleType.RoleType } -> String
-colorFromRole r =
-    case r.role_type of
-        RoleType.Owner ->
-            "var(--orange-frac6)"
-
-        RoleType.Member ->
-            "var(--primary)"
-
-        RoleType.Coordinator ->
-            "var(--orange-frac6)"
-
-        RoleType.Peer ->
-            "var(--primary)"
-
-        RoleType.Bot ->
-            "var(--white-dimmed)"
-
-        RoleType.Guest ->
-            "var(--primary)"
-
-        RoleType.Pending ->
-            "var(--warning)"
-
-        RoleType.Retired ->
-            "var(--warning)"
 
 
 role2icon : { r | role_type : RoleType.RoleType } -> String
@@ -1236,14 +1171,14 @@ blobTypeStr btype =
 
 
 --
--- Helper
+-- Utils
 --
 
 
 helperButton : String -> String -> Html msg
 helperButton cls content =
     span [ class ("is-helper dropdown " ++ cls) ]
-        [ div [ class "dropdown-trigger" ] [ A.icon "icon-help-circle is-sm button-light is-h" ]
+        [ div [ class "dropdown-trigger" ] [ A.icon "icon-help-circle is-sm button-light" ]
         , div [ class "dropdown-menu", attribute "style" "menu" ]
             [ div [ class "dropdown-content" ]
                 [ div [ class "dropdown-item" ]
@@ -1251,3 +1186,13 @@ helperButton cls content =
                 ]
             ]
         ]
+
+
+viewGoRoot : String -> msg -> Html msg
+viewGoRoot cls cmd =
+    let
+        combinedClasses =
+            "help-label button-light is-goroot " ++ cls
+    in
+    span [ class combinedClasses, onClick cmd ]
+        [ A.icon "arrow-up", text T.goRoot ]

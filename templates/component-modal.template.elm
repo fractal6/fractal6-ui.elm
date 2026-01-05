@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -41,7 +41,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (MyData, Post, UserCtx)
 import Ports
 import Query.AddData exposing (getData)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), Session)
 import Text as T
 import Time
 
@@ -57,27 +57,27 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , data_result : GqlData MyData -- result of any query
     , form : MyForm -- user inputs
 
     -- Common
+    , session: Session
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
-    { user = user
-    , isActive = False
+initModel : Session -> Model
+initModel  session =
+    { isActive = False
     , isActive2 = False
     , data_result = NotAsked
     , form = initForm user
 
     -- Common
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
@@ -106,9 +106,9 @@ initForm user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : Session -> State
+init session =
+    initModel session |> State
 
 
 
@@ -126,7 +126,7 @@ isActive_ (State model) =
 
 resetModel : Model -> Model
 resetModel model =
-    initModel model.user
+    initModel model.session
 
 
 updatePost : String -> String -> Model -> Model
@@ -149,7 +149,7 @@ openModal model =
 
 
 closeModal : Model -> Model
-closeModal data =
+closeModal model =
     { model | isActive = False }
 
 -- utils
@@ -304,7 +304,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
                 RefreshToken i ->

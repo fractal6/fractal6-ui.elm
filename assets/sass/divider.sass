@@ -1,4 +1,4 @@
-@charset "utf-8"
+@use "shared" as *;
 
 $divider-color: $grey-light !default
 $divider-font-size: $size-5 !default
@@ -15,7 +15,7 @@ $divider-width: 5px !default
     font-size: $divider-font-size
     font-weight: $weight-semibold
     letter-spacing: .5px
-    margin: $divider-margin-size var(--size-small)
+    margin: $divider-margin-size var(--bulma-size-small)
 
     &::after,
     &::before
@@ -43,7 +43,7 @@ $divider-width: 5px !default
 
     &.is-vertical
         flex-direction: column
-        margin: var(--size-small) $divider-margin-size
+        margin: var(--bulma-size-small) $divider-margin-size
 
         &::after,
         &::before
@@ -60,7 +60,7 @@ $divider-width: 5px !default
 
     &.is-vertical2
         flex-direction: column
-        margin: var(--size-small) $divider-margin-size
+        margin: var(--bulma-size-small) $divider-margin-size
 
         &::after,
         &::before

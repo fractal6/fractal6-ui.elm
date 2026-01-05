@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?408xb0');
-  src:  url('fonts/fractaleicon.eot?408xb0#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?408xb0') format('truetype'),
-    url('fonts/fractaleicon.woff?408xb0') format('woff'),
-    url('fonts/fractaleicon.svg?408xb0#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?er84yr');
+  src:  url('fonts/fractaleicon.eot?er84yr#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?er84yr') format('truetype'),
+    url('fonts/fractaleicon.woff?er84yr') format('woff'),
+    url('fonts/fractaleicon.svg?er84yr#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -147,6 +147,9 @@
 }
 .icon-git-branch:before {
   content: "\e921";
+}
+.icon-git-commit:before {
+  content: "\e971";
 }
 .icon-github:before {
   content: "\e922";

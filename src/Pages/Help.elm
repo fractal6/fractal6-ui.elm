@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -77,7 +77,7 @@ init global flags =
     let
         model =
             { empty = {}
-            , help = Help.init global.session
+            , help = Help.init global.session.common
             }
     in
     ( model, Cmd.none, Cmd.none )

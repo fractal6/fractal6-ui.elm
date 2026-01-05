@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -527,6 +527,7 @@ type alias FormText =
     , ph_policies : String
     , submit : String
     , close_submit : String
+    , purposeSubject : String
     }
 
 
@@ -546,6 +547,7 @@ initFormText node_type =
                 ""
                 T.tensionSubmit
                 ""
+                T.orgaSubject
 
         Just NodeType.Role ->
             FormText
@@ -560,6 +562,7 @@ initFormText node_type =
                 T.phRolePolicies
                 T.tensionSubmit
                 T.tensionRoleCloseSubmit
+                T.roleSubject
 
         Just NodeType.Circle ->
             FormText
@@ -574,6 +577,7 @@ initFormText node_type =
                 T.phCirclePolicies
                 T.tensionSubmit
                 T.tensionCircleCloseSubmit
+                T.circleSubject
 
 
 
@@ -603,6 +607,16 @@ getPath lg =
         -- ++ (path.focus.children |> List.filter (\x -> isCircle x.nameid) |> List.map shrinkNode)
         _ ->
             []
+
+
+getParent : LocalGraph -> Maybe String
+getParent lg =
+    case List.reverse lg.path of
+        _ :: x :: _ ->
+            Just x.nameid
+
+        _ ->
+            Nothing
 
 
 getNode : String -> GqlData NodesDict -> Maybe Node

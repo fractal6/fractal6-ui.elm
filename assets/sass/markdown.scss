@@ -1,7 +1,8 @@
+@use "shared" as *;
 
 .markdown-body {
 	// Fixes
-	color: var(--text);
+	color: var(--bulma-text);
 	&.fix-inline > p {
 		display: inline;
 	}
@@ -21,20 +22,48 @@
       margin-bottom: 0.4rem;
     }
 
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--text-evidence);
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    h2 {
+      font-size: 2em;
+    }
+    h3 {
+      font-size: 1.5em;
+    }
+    h4 {
+      font-size: 1.25em;
+    }
+    h5 {
+      font-size: 1em;
+    }
+    h6 {
+      font-size: 0.875em;
+    }
+
 	// Html
     // --
 	pre, code {
 		@include defaultFontFace;
 		font-size: 14px;
 		max-height: 500px;
-		border-radius: 5px;
-
 		color: currentColor;
 		background-color: var(--code-color) !important;
 	}
+    pre {
+		border-radius: 10px;
+    }
 	a {
-		color: var(--link2) !important;
+        // Having a different color for external and internal link might be a bad idea has it confuses the eyes, finally...
+		//color: var(--info) !important;
+		color: var(--link) !important;
 		text-decoration: none !important;
+        &.is-link {
+            color: var(--link) !important;
+        }
 	}
 	a:hover {
 		text-decoration: underline !important;
@@ -42,16 +71,16 @@
 	a:visited {
 		color: var(--info-light);
 	}
-	blockquote {
+    blockquote {
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 		padding-left: 15px;
 		padding-right: 0;
 		background: inherit;
 		font-weight: 600;
-		border-color: var(--is-discrete);
+		border-color: var(--border-color-light);
 		//filter: invert(25%);
-	}
+    }
     li.is-checkbox {
         display: flex;
         margin-left: -1rem;
@@ -92,7 +121,7 @@
 			//border-bottom-style: double !important;
 		}
 		tr:nth-child(even){
-			background-color: var(--chbc) !important;
+			background-color: var(--comment-header-background-color) !important;
 		}
 		th {
 			border: 1px solid var(--border-color) !important;
@@ -109,11 +138,11 @@
 .box {
     .markdown-body {
         pre, code {
-            background-color: var(--code-color-light) !important;
+            background-color: var(--code-color) !important;
         }
 
         hr {
-            background-color: var(--code-color-light) !important;
+            background-color: var(--code-color) !important;
         }
     }
 }
@@ -121,7 +150,7 @@
 // Fix highlight color in human mardown
 .markdown-body.is-human {
 	strong {
-		color: var(--is-highlight);
+		color: var(--text-strong);
     }
 
     em {

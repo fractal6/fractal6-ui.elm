@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2024 Fractale Co
+   Copyright (C) 2025 Fractale Co
 
    This file is part of Fractale.
 
@@ -49,7 +49,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, GlobalCmd(..))
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -59,8 +59,7 @@ type State
 
 
 type alias Model =
-    { user : UserState
-    , isActive : Bool
+    { isActive : Bool
     , isActive2 : Bool
     , move_result : GqlData TensionId
     , target : String -- keep origin target (receiverid)
@@ -76,6 +75,7 @@ type alias Model =
 
     -- Common
     , empty : {}
+    , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
     , confirmContract : ConfirmContract.State
@@ -107,18 +107,17 @@ initForm user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : SessionCommon -> State
+init session =
+    initModel session |> State
 
 
-initModel : UserState -> Model
-initModel user =
-    { user = user
-    , isActive = False
+initModel : SessionCommon -> Model
+initModel session =
+    { isActive = False
     , isActive2 = False
     , move_result = NotAsked
-    , form = initForm user
+    , form = initForm session.user
     , target = ""
     , blob = Nothing
     , encoded_nid = ""
@@ -129,9 +128,10 @@ initModel user =
 
     -- Common
     , empty = {}
+    , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , confirmContract = ConfirmContract.init user
+    , confirmContract = ConfirmContract.init session
     }
 
 
@@ -182,7 +182,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel model.session
 
 
 setTarget : Node -> Model -> Model
@@ -469,7 +469,41 @@ update_ apis message model =
 
                 OkAuth _ ->
                     if cmd == Cmd.none then
-                        ( data, Out [] [] (Just ( False, Just <| buildOutResult model )) )
+                        let
+                            txt =
+                                case model.blob of
+                                    Nothing ->
+                                        T.move_action_success
+
+                                    Just blob ->
+                                        case blob.node of
+                                            Just node ->
+                                                case node.type_ of
+                                                    Just NodeType.Circle ->
+                                                        T.move_circle_action_success
+
+                                                    Just NodeType.Role ->
+                                                        T.move_role_action_success
+
+                                                    Nothing ->
+                                                        "[blob node type_ undefined (please report it)]"
+
+                                            Nothing ->
+                                                T.notImplemented
+                        in
+                        ( data
+                        , Out [ send (OnCloseSafe "" "") ]
+                            [ DoPushSystemNotif
+                                { cls = "is-success"
+                                , content =
+                                    div [ class "is-flex is-align-items-center mr-5" ]
+                                        [ A.icon1 "icon-check icon-2x has-text-success" ""
+                                        , text txt
+                                        ]
+                                }
+                            ]
+                            (Just ( False, Just <| buildOutResult model ))
+                        )
 
                     else
                         -- Contract here
@@ -572,7 +606,7 @@ viewModal : GqlData NodesDict -> Model -> Html Msg
 viewModal tree_data model =
     div
         [ id "MoveTensionModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -583,35 +617,7 @@ viewModal tree_data model =
             ]
             []
         , div [ class "modal-content" ]
-            [ case model.move_result of
-                Success _ ->
-                    div [ class "notification is-success-light" ]
-                        [ button [ class "delete", onClick (OnCloseSafe "" "") ] []
-                        , A.icon1 "icon-check icon-2x has-text-success" " "
-                        , case model.blob of
-                            Nothing ->
-                                text T.move_action_success
-
-                            Just blob ->
-                                case blob.node of
-                                    Just node ->
-                                        case node.type_ of
-                                            Just NodeType.Circle ->
-                                                text T.move_circle_action_success
-
-                                            Just NodeType.Role ->
-                                                text T.move_role_action_success
-
-                                            Nothing ->
-                                                text "[blob node type_ undefined (please report it)]"
-
-                                    Nothing ->
-                                        text T.notImplemented
-                        ]
-
-                _ ->
-                    viewModalContent tree_data model
-            ]
+            [ viewModalContent tree_data model ]
 
         --, button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
@@ -648,17 +654,17 @@ viewModalContent tree_data model =
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
-                        text T.moveTension
+                        text (T.moveTension model.session.lexicon)
 
                     Just blob ->
                         case blob.node of
                             Just node ->
                                 case node.type_ of
                                     Just NodeType.Circle ->
-                                        span [] [ text (T.moveCircle ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveCircle ++ ": "), span [ class "has-text-primary has-text-weight-extrabold" ] [ text (withDefault "" node.name) ] ]
 
                                     Just NodeType.Role ->
-                                        span [] [ text (T.moveRole ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" node.name) ] ]
+                                        span [] [ text (T.moveRole ++ ": "), span [ class "has-text-primary has-text-weight-extrabold" ] [ text (withDefault "" node.name) ] ]
 
                                     Nothing ->
                                         text "[blob node type_ undefined (please report it)]"
@@ -670,10 +676,10 @@ viewModalContent tree_data model =
                 ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ span [] [ text (T.newReceiver ++ ": ") ]
-                    , B.dropdownLight
+            [ div [ class "level is-flex-inline" ]
+                [ span [ class "level-right" ] [ text (T.newReceiver ++ ":") ]
+                , div [ class "level-item" ]
+                    [ B.dropdownLight
                         { dropdown_id = "target-menu"
                         , isOpen = isTargetOpen
                         , dropdown_cls = ""
@@ -681,16 +687,16 @@ viewModalContent tree_data model =
                         , button_html =
                             if List.member model.form.target.nameid [ "", model.target ] then
                                 span
-                                    [ class "button is-small s-light is-inverted" ]
-                                    [ text T.selectADestination, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                    [ class "button" ]
+                                    [ text T.selectADestination, span [ class "ml-2 icon-chevron-down" ] [] ]
 
                             else
                                 span
-                                    [ class "button is-small is-rounded has-border" ]
-                                    [ text model.form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                                    [ class "button is-rounded has-border" ]
+                                    [ text model.form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                         , menu_cls = ""
                         , content_cls = "p-0 has-border-light"
-                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, model.target, decoded_nid ] model.expanded_lines tree_data
+                        , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] model.expanded_lines tree_data
                         , msg = ternary isTargetOpen (OnTargetClick "") (OnTargetClick "something")
                         }
                     ]
