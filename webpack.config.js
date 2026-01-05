@@ -40,8 +40,14 @@ module.exports = (env, argv) => {
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
             //assets: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
         }
-    }
-    else if (isProd) {
+    } else if (isProd && env.debug == "public_build") {
+        API_URL = {
+            auth: 'http://localhost:8888/auth',
+            graphql: 'http://localhost:8888/api',
+            rest: 'http://localhost:8888/q',
+            assets: 'http://localhost:8888/assets'
+        }
+    } else if (isProd) {
         API_URL = {
             auth: 'https://api.fractale.co/auth',
             graphql: 'https://api.fractale.co/api',

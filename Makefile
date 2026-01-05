@@ -183,7 +183,7 @@ $(RELEASE_BUILD_DIRS): releases/%:
         elif [ $(MAKECMDGOALS) == publish_op ]; then \
 			npm run prod -- --env lang=$* --env theme=light; \
 		else \
-			npm run prod -- --env lang=$*; \
+			npm run prod -- --env lang=$* --env debug=public_build; \
 		fi && \
 		rm -rf $(RELEASE_DIR)/$(RELEASE_NAME)$* && \
 		mkdir $(RELEASE_DIR)/$(RELEASE_NAME)/$* && \
