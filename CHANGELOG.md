@@ -4,6 +4,92 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.8] - 2026-01-04
+
+### 🐛 Bug Fixes
+
+- Mobile navbar + mardown blockquote
+
+
+## [0.8.7] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- Mobile menus fit well.
+
+
+## [0.8.6] - 2025-11-03
+
+### 🚀 Features
+
+- New navbar v2
+
+### 🐛 Bug Fixes
+
+- Build postcss + link and colors + i18n
+- *(overview)* Orga name highlight
+
+### 🎨 Styling
+
+- Bring new 'v2' logo
+- New fonts
+
+
+## [0.8.5] - 2025-10-12
+
+### 🚀 Features
+
+- Support lexicon vocab with i18N [WIP/front only]
+- Upgrade bulma to v1
+- Theme alignement
+
+## UI Improvements
+- Logo v2 and color scheme updates (graphpack, borders, badges, backgrounds)
+- Enhanced tooltips (mandates, purpose hints, graphpack animations)
+- Improved navigation hints (group/root, vertical tree menu side hinter)
+- Refined styling (input/textarea colors, table borders, markdown theme, spinners)
+- CSS role helper classes
+- Dropdown z-index fixes and header item weight adjustments
+- Password visibility toggle in welcome page
+- Fixed blob document focus and top navbar scrollbar
+
+## UX Enhancements
+- Improved role invitation flow
+- Better user selection and invitation in user input
+- Enhanced multiline markdown selection (pushLine)
+- Graphpack colors and theming
+- Fixed navigation in user pages (goback)
+- Purple primary color standardization
+
+## Features & Fixes
+- Multi-user mentions in comments
+- Fetch documentation in user's language
+- Fixed double input insertion in tension creation (Enter key)
+- Fixed card panel title edit padding in projects
+- Button role hover effects
+- Icon updates (git-commit for org menu trigger)
+- Localization: "lead link" → "référent" (French)
+
+### 💼 Other
+
+- *(webpack)* Use purgecss and postcss to largely reduce the css bundler.
+
+### 🚜 Refactor
+
+- Pass session to components once
+- Decompose to session to improve performance
+
+### ⚡ Performance
+
+- Lazy + clean search quote in tensions search
+
+
+### ⚙️ Miscellaneous Tasks
+
+- Improve i18n.py code
+- Change API port
+
+
 ## [0.8.4] - 2024-10-10
 
 ### 🚀 Features
