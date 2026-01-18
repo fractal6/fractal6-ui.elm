@@ -1091,6 +1091,19 @@ figcaption {
 
     // Logged-out navbar
     &.is-logged-out {
+
+        & > .navbar {
+            .is-signup {
+                border-color: var(--primary);
+                color: var(--primary) !important;
+                background-color: map.get($f6-dark-palette, link) !important;
+                &:hover {
+                    color: var(--bulma-navbar-item-color) !important;
+                    background-color: map.get($f6-dark-palette, link2) !important;
+                }
+            }
+        }
+
         // Apply logged-in styles on mobile
         @include mobile {
             & > .navbar {
@@ -1098,6 +1111,7 @@ figcaption {
                 border-bottom: 1px solid var(--border-color-light);
 
                 .navbar-item, .navbar-link {
+                    color: var(--text);
                     &:hover {
                         color: var(--text-strong);
                     }
@@ -1153,6 +1167,10 @@ figcaption {
                     width: calc(11 / 12 * 100%); // is-6-fullhd (50%)
                 }
 
+                .navbar-item {
+                    height: 58px !important;
+                }
+
                 // Fix colors
                 // --
                 color: var(--bulma-navbar-item-color) !important;
@@ -1165,36 +1183,11 @@ figcaption {
                 svg {
                     fill: var(--bulma-navbar-item-color) !important;
                 }
-                .is-signup {
-                    border-color: var(--primary);
-                    color: var(--primary) !important;
-                    background-color: map.get($f6-dark-palette, link) !important;
-                    &:hover {
-                        color: var(--bulma-navbar-item-color) !important;
-                        background-color: map.get($f6-dark-palette, link2) !important;
-                    }
-                }
-
-                .navbar-item {
-                    height: 58px !important;
-                }
-
                 .navbar-brand > .navbar-item {
                     background-color: inherit !important;
                 }
 
-                //.navbar-dropdown {
-                //    .navbar-item { // @bulma's wrong !
-                //        &:hover {
-                //            background-color: initial;
-                //            color: var(--bulma-text-light);
-                //        }
-                //        &.is-active {
-                //            background-color: initial;
-                //        }
-                //    }
 
-                //}
             }
         }
     }

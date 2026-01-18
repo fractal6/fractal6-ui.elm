@@ -142,11 +142,11 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                                 [ text T.explore ]
                            ]
                         ++ (if isLoggedOut then
-                                [ span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
+                                [ span [ class "vbar is-hidden-mobile", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
                                 , a
                                     [ class "navbar-item", target "_blank", href "https://doc.fractale.co" ]
                                     [ text "Docs" ]
-                                , span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
+                                , span [ class "vbar is-hidden-mobile", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
                                 , a
                                     [ class "navbar-item", href "https://github.com/fractal6/fractal6.go", target "_blank" ]
                                     [ text "Open Source" ]
