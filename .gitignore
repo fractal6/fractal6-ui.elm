@@ -6,6 +6,7 @@ dist/
 # Dev
 releases/
 review/
+.claude/
 
 # Auto-generated
 src/Text.elm

@@ -180,6 +180,12 @@ port relogErr : (String -> msg) -> Sub msg
 -}
 
 
+port dragstart : { effectAllowed : String, event : JD.Value } -> Cmd msg
+
+
+port dragover : { dropEffect : String, event : JD.Value } -> Cmd msg
+
+
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 

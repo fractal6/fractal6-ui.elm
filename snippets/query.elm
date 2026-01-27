@@ -1,4 +1,8 @@
 --
+-- Exemple of graphql queries
+--
+
+--
 -- ADD
 --
 addReactionInputEncoder : String -> String -> Int -> Mutation.AddReactionRequiredArguments

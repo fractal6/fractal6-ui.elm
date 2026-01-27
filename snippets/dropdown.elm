@@ -1,3 +1,7 @@
+--
+-- Exemple of Elm implmentation of a dropdown menu.
+--
+
 div [ class "dropdown is-right" ]
     [ div [ class "dropdown-trigger is-w is-h" ]
         [ div
