@@ -31,6 +31,7 @@ Here is the root structure:
 
 - assets/ - all the code not elm code: JS (ports), SASS/CSS, and static files (images, icons fonts etc)
 - dist/ - built code - ignore that folder
+- docs/ - feature and architecture documentations
 - i18n/ - the i18n translation files. Data is encoded in toml format
 - public/ - entry point for html code and Elm
 - releases/ - built code - ignore that folder
@@ -123,3 +124,4 @@ If you need the read a update code of msg grep the code for the message/msg spec
 
 - Alway run elm after you make modification to elm file to ensure it compiles with : `elm make src/Main.elm`.
 - If the Elm compiler files, read carefully the helpful error messages and fix the errors until it compiles.
+- Update documentation by either add a new file for a new feature or update existing one if needed in `docs/` folder.

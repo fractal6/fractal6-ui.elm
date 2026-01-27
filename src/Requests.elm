@@ -600,29 +600,16 @@ getQuickDoc api lang msg =
 --
 
 
-{-| Fetch static HTML page from local /static/pages/ directory
+{-| Fetch static HTML page from assets server.
+    Static pages are stored on the assets server (api.assets) as HTML files.
+    Example: fetchStaticPage api "welcome" msg -> fetches {api.assets}/welcome.html
 -}
-fetchStaticPageLocal : String -> (Result Http.Error String -> msg) -> Cmd msg
-fetchStaticPageLocal pagePath msg =
+fetchStaticPage : Apis -> String -> (Result Http.Error String -> msg) -> Cmd msg
+fetchStaticPage api pagePath msg =
     Http.request
         { method = "GET"
-        , headers = []
-        , url = "/static/pages/" ++ pagePath ++ ".html"
-        , body = Http.emptyBody
-        , expect = Http.expectString msg
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-{-| Fetch static HTML page from backend API (fallback)
--}
-fetchStaticPageBackend : Apis -> String -> (Result Http.Error String -> msg) -> Cmd msg
-fetchStaticPageBackend api pagePath msg =
-    Http.riskyRequest
-        { method = "GET"
         , headers = setHeaders api
-        , url = api.rest ++ "/static/" ++ pagePath
+        , url = api.assets ++ "/" ++ pagePath ++ ".html"
         , body = Http.emptyBody
         , expect = Http.expectString msg
         , timeout = Nothing

@@ -253,7 +253,7 @@ $bulma-dark-theme: (
 // Commons/Mixins
 //
 
-$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal);
+$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal, hero);
 $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 
 // Mixin to apply theme overrides to classes

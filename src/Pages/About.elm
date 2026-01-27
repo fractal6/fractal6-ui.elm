@@ -38,9 +38,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick, onInput)
-import Html.Keyed as Keyed
 import Http
-import Json.Encode as JE
 import Loading exposing (RestData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -48,9 +46,8 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
-import Requests exposing (fetchStaticPageBackend, fetchStaticPageLocal, login, signup)
+import Requests exposing (fetchStaticPage, login, signup)
 import Session exposing (GlobalCmd(..))
-import Task
 import Text as T
 
 
@@ -166,7 +163,7 @@ init global flags =
                     Cmd.none
 
                 LoggedOut ->
-                    fetchStaticPageLocal "welcome" GotLocalStaticContent
+                    fetchStaticPage global.session.apis "welcome" (GotStaticContent "static-welcome")
     in
     ( model
     , fetchCmd
@@ -185,8 +182,7 @@ type Msg
     | GotSignup (RestData Bool)
     | ChangeViewMode ViewMode
     | SubmitEnter Int
-    | GotLocalStaticContent (Result Http.Error String)
-    | GotBackendStaticContent (Result Http.Error String)
+    | GotStaticContent String (Result Http.Error String)
     | HelpMsg Help.Msg
 
 
@@ -280,28 +276,15 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        GotLocalStaticContent result ->
+        GotStaticContent elementId result ->
             case result of
                 Ok content ->
                     ( { model | staticContent = StaticSuccess content }
-                    , Ports.setInnerHtml { id = "static-welcome", html = content }
+                    , Ports.setInnerHtml { id = elementId, html = content }
                     , Cmd.none
                     )
 
                 Err _ ->
-                    -- Local not found, fallback to backend
-                    ( model, fetchStaticPageBackend apis "welcome" GotBackendStaticContent, Cmd.none )
-
-        GotBackendStaticContent result ->
-            case result of
-                Ok content ->
-                    ( { model | staticContent = StaticSuccess content }
-                    , Ports.setInnerHtml { id = "static-welcome", html = content }
-                    , Cmd.none
-                    )
-
-                Err _ ->
-                    -- Both failed, fall back to default Elm content
                     ( { model | staticContent = StaticFailure }, Cmd.none, Cmd.none )
 
         HelpMsg msg ->

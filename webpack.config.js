@@ -117,11 +117,6 @@ module.exports = (env, argv) => {
                     {
                         from: 'public/site.webmanifest',
                         to: 'site.webmanifest'
-                    },
-                    {
-                        from: 'public/static',
-                        to: 'static/pages/',
-                        globOptions: { ignore: ['**/*.swp', '**/Readme.md'] }
                     }
                 ],
             }),
