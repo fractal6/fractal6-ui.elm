@@ -38,6 +38,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (alt, attribute, class, classList, disabled, height, href, id, name, placeholder, required, rows, src, style, target, title, type_, value, width)
 import Html.Events exposing (onClick, onInput)
+import Html.Keyed as Keyed
 import Http
 import Json.Encode as JE
 import Loading exposing (RestData)
@@ -47,7 +48,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
-import Requests exposing (login, signup)
+import Requests exposing (fetchStaticPageBackend, fetchStaticPageLocal, login, signup)
 import Session exposing (GlobalCmd(..))
 import Task
 import Text as T
@@ -106,10 +107,18 @@ type alias Model =
     , lang : Lang.Lang
     , isHome : Bool
     , empty : {}
+    , staticContent : StaticContentState
 
     -- Commons
     , help : Help.State
     }
+
+
+type StaticContentState
+    = NotLoaded
+    | LoadingStatic
+    | StaticSuccess String
+    | StaticFailure
 
 
 type ViewMode
@@ -146,11 +155,21 @@ init global flags =
             , lang = global.session.common.lang
             , isHome = isHome
             , empty = {}
+            , staticContent = LoadingStatic
             , help = Help.init global.session.common
             }
+
+        -- Fetch static welcome content if not logged in
+        fetchCmd =
+            case global.session.common.user of
+                LoggedIn _ ->
+                    Cmd.none
+
+                LoggedOut ->
+                    fetchStaticPageLocal "welcome" GotLocalStaticContent
     in
     ( model
-    , Cmd.none
+    , fetchCmd
     , Cmd.batch [ gcmd, send (UpdateSessionFocus Nothing) ]
     )
 
@@ -166,6 +185,8 @@ type Msg
     | GotSignup (RestData Bool)
     | ChangeViewMode ViewMode
     | SubmitEnter Int
+    | GotLocalStaticContent (Result Http.Error String)
+    | GotBackendStaticContent (Result Http.Error String)
     | HelpMsg Help.Msg
 
 
@@ -259,6 +280,30 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        GotLocalStaticContent result ->
+            case result of
+                Ok content ->
+                    ( { model | staticContent = StaticSuccess content }
+                    , Ports.setInnerHtml { id = "static-welcome", html = content }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    -- Local not found, fallback to backend
+                    ( model, fetchStaticPageBackend apis "welcome" GotBackendStaticContent, Cmd.none )
+
+        GotBackendStaticContent result ->
+            case result of
+                Ok content ->
+                    ( { model | staticContent = StaticSuccess content }
+                    , Ports.setInnerHtml { id = "static-welcome", html = content }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    -- Both failed, fall back to default Elm content
+                    ( { model | staticContent = StaticFailure }, Cmd.none, Cmd.none )
+
         HelpMsg msg ->
             let
                 ( data, out ) =
@@ -295,6 +340,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "welcome", class "top-section" ]
         [ div [ id "welcome-1" ] [ viewHero model ]
+        , viewStaticContent model
         ]
 
 
@@ -325,6 +371,22 @@ viewHero model =
                 ]
             ]
         ]
+
+
+viewStaticContent : Model -> Html Msg
+viewStaticContent model =
+    case model.staticContent of
+        StaticSuccess content ->
+            div [ id "static-welcome" ] []
+
+        LoadingStatic ->
+            text ""
+
+        NotLoaded ->
+            text ""
+
+        StaticFailure ->
+            text ""
 
 
 viewSignBox : Model -> Html Msg

@@ -101,13 +101,24 @@ window.addEventListener('load', _ => {
                 }),
             };
 
+            //
             // Subscribe to Elm outgoing ports
+            //
             app.ports.outgoing.subscribe(({ action, data }) => {
                 if (actions[action]) {
                     actions[action](app, session, data)
                 } else {
                     console.warn(`I didn't recognize action "${action}".`)
                 }
+            });
+
+            app.ports.setInnerHtml.subscribe(function(data) {
+                requestAnimationFrame(function() {
+                    var el = document.getElementById(data.id);
+                    if (el) {
+                        el.innerHTML = data.html;
+                    }
+                });
             });
 
             // setup the dragstart and dragover ports subscriptions.

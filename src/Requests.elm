@@ -592,3 +592,39 @@ getQuickDoc api lang msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+
+--
+-- Static Pages
+--
+
+
+{-| Fetch static HTML page from local /static/pages/ directory
+-}
+fetchStaticPageLocal : String -> (Result Http.Error String -> msg) -> Cmd msg
+fetchStaticPageLocal pagePath msg =
+    Http.request
+        { method = "GET"
+        , headers = []
+        , url = "/static/pages/" ++ pagePath ++ ".html"
+        , body = Http.emptyBody
+        , expect = Http.expectString msg
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-| Fetch static HTML page from backend API (fallback)
+-}
+fetchStaticPageBackend : Apis -> String -> (Result Http.Error String -> msg) -> Cmd msg
+fetchStaticPageBackend api pagePath msg =
+    Http.riskyRequest
+        { method = "GET"
+        , headers = setHeaders api
+        , url = api.rest ++ "/static/" ++ pagePath
+        , body = Http.emptyBody
+        , expect = Http.expectString msg
+        , timeout = Nothing
+        , tracker = Nothing
+        }

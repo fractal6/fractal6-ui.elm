@@ -27,6 +27,7 @@ type Route
     | O_Dynamic { param1 : String }
     | P_Dynamic { param1 : String }
     | S_Dynamic { param1 : String }
+    | Static_Dynamic { param1 : String }
     | T_Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
     | User_Dynamic_Settings { param1 : String }
@@ -35,6 +36,7 @@ type Route
     | P_Dynamic_Dynamic { param1 : String, param2 : String }
     | Project_Dynamic_Dynamic { param1 : String, param2 : String }
     | S_Dynamic_Dynamic { param1 : String, param2 : String }
+    | Static_Dynamic_Dynamic { param1 : String, param2 : String }
     | T_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic_Action { param1 : String, param2 : String }
@@ -85,6 +87,9 @@ routes =
         , (Parser.s "s" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map S_Dynamic
+        , (Parser.s "static" </> Parser.string)
+          |> Parser.map (\param1 -> { param1 = param1 })
+          |> Parser.map Static_Dynamic
         , (Parser.s "t" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map T_Dynamic
@@ -109,6 +114,9 @@ routes =
         , (Parser.s "s" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map S_Dynamic_Dynamic
+        , (Parser.s "static" </> Parser.string </> Parser.string)
+          |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
+          |> Parser.map Static_Dynamic_Dynamic
         , (Parser.s "t" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map T_Dynamic_Dynamic
@@ -202,6 +210,9 @@ toHref route =
                 S_Dynamic { param1 } ->
                     [ "s", param1 ]
                 
+                Static_Dynamic { param1 } ->
+                    [ "static", param1 ]
+                
                 T_Dynamic { param1 } ->
                     [ "t", param1 ]
                 
@@ -225,6 +236,9 @@ toHref route =
                 
                 S_Dynamic_Dynamic { param1, param2 } ->
                     [ "s", param1, param2 ]
+                
+                Static_Dynamic_Dynamic { param1, param2 } ->
+                    [ "static", param1, param2 ]
                 
                 T_Dynamic_Dynamic { param1, param2 } ->
                     [ "t", param1, param2 ]

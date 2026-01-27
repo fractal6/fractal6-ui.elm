@@ -180,6 +180,9 @@ port relogErr : (String -> msg) -> Sub msg
 -}
 
 
+port setInnerHtml : { id : String, html : String } -> Cmd msg
+
+
 port dragstart : { effectAllowed : String, event : JD.Value } -> Cmd msg
 
 
