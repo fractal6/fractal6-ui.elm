@@ -20,7 +20,7 @@ Using Fractale for your organisation offers the following capabilities and featu
 * Journal history of events (including mandate updates!)
 * GraphQL API (the schema is managed by the backend. The src/Fractal is auto-generated from the schema)
 
-The schema of the Graphql Fractale API is defined in the file @../fractal6.go/schema/graphql/fractal6.graphql
+The schema of the Fractale API is defined in the file @../fractal6.go/schema/graphql/fractal6.graphql
 
 
 ## Elm code Structure
@@ -63,9 +63,9 @@ The Elm code is structured as follows (below `src/` then):
 - Dom.elm - Extension of the Dom libraries
 - Extra.elm - Extra tool utilities
 - Footbar.elm - Footbar view
-- Global.elm -
-- GqlClient.elm
-- Loading.elm
+- Global.elm - The SPA entrypoint logics
+- GqlClient.elm - The entrypoint for managing Graphql request
+- Loading.elm - Data structure for handling remote requests (Graphql and HTTP)
 - Main.elm - Elm Entry point
 - Mardown.elm - Markdown parser extension and utilities
 - ModelSchema.elm - GQL client
@@ -79,6 +79,7 @@ The Elm code is structured as follows (below `src/` then):
 - Text.elm - Auto-generated hardcoded texts and templates from i18n traduction
 
 Javascript ports are located in `assets/js` and are linked to elm via `src/Ports.elm`
+
 
 ## Routing
 
@@ -114,5 +115,5 @@ Try to minimize the number of ELM file you read as they can be long. Use extensi
 
 ### After adding a feature or a refactor
 
-- Alway run elm after you make modification to elm file to ensure it comples with : elm make src/Main.elm.
-- If the Elm compiler files, read carrefuly the helpfull error message and fix the error until it compiles.
+- Alway run elm after you make modification to elm file to ensure it comples with : `elm make src/Main.elm`.
+- If the Elm compiler files, read carrefuly the helpfull error messages and fix the errors until it compiles.
