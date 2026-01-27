@@ -152,7 +152,7 @@ init global flags =
             , lang = global.session.common.lang
             , isHome = isHome
             , empty = {}
-            , staticContent = LoadingStatic
+            , staticContent = NotLoaded
             , help = Help.init global.session.common
             }
 
@@ -163,7 +163,7 @@ init global flags =
                     Cmd.none
 
                 LoggedOut ->
-                    fetchStaticPage global.session.apis "welcome" (GotStaticContent "static-welcome")
+                    Cmd.none
     in
     ( model
     , fetchCmd
