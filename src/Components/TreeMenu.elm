@@ -671,7 +671,17 @@ viewTreeMenu model =
                         text ""
 
                     f :: _ ->
-                        if f |> String.toLower |> String.startsWith "no data returned" then
+                        let
+                            acceptedPrefixes =
+                                [ "no data returned"
+                                , "aucune donnée n’est retournée"
+                                ]
+                        in
+                        if
+                            f
+                                |> String.toLower
+                                |> (\s -> List.any (\prefix -> String.startsWith prefix s) acceptedPrefixes)
+                        then
                             ul [ class "menu-list" ]
                                 [ li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
                                 , li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]

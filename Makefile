@@ -235,6 +235,7 @@ _elm-spa-org-alias:
 
 clean:
 	rm -rf dist/
+	rm -rf node_modules/.cache
 
 clean_npm:
 	#rm ./package-lock.json

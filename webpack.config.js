@@ -287,7 +287,7 @@ module.exports = (env, argv) => {
                 new CleanWebpackPlugin({
                     root: __dirname,
                     exclude: [],
-                    verbose: true,
+                    verbose: false,
                     dry: false
                 }),
                 new MiniCssExtractPlugin({
