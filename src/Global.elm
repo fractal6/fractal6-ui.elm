@@ -929,26 +929,23 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : msg, msg3 : msg, msg4 : msg, onClearNotif : msg } -> Document msg
-view { page, global, url, msg1, msg2, msg3, msg4, onClearNotif } =
+view : { page : Document msg, global : Model, url : Url, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg } -> Document msg
+view { page, global, url, navbarHandlers, onClearNotif } =
     layout
         { page = page
         , url = url
         , session = global.session
-        , msg1 = msg1
-        , msg2 = msg2
-        , msg3 = msg3
-        , msg4 = msg4
+        , navbarHandlers = navbarHandlers
         , onClearNotif = onClearNotif
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, msg3 : msg, msg4 : msg, onClearNotif : msg } -> Document msg
-layout { page, url, session, msg1, msg2, msg3, msg4, onClearNotif } =
+layout : { page : Document msg, url : Url, session : Session, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg } -> Document msg
+layout { page, url, session, navbarHandlers, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.orgaInfo session.data.tension_head msg3 msg4 msg1 msg2
+            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.orgaInfo session.data.tension_head navbarHandlers
             , showIf (session.data.system_notification /= [])
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body

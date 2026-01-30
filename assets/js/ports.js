@@ -105,6 +105,8 @@ window.addEventListener('load', _ => {
             };
 
             //
+            // OUTGOING PORTS
+            // --
             // Subscribe to Elm outgoing ports
             //
             app.ports.outgoing.subscribe(({ action, data }) => {
@@ -136,7 +138,8 @@ window.addEventListener('load', _ => {
                         var documentHeight = document.documentElement.scrollHeight;
 
                         var position;
-                        if (scrollY <= 5) {
+                        // It seems that in modern browser, we have ~100 px per wheel notch
+                        if (scrollY <= 200) {
                             position = "top";
                         } else if (scrollY + windowHeight >= documentHeight - 5) {
                             position = "bottom";

@@ -19,7 +19,7 @@
 -}
 
 
-module Components.Navbar exposing (view)
+module Components.Navbar exposing (NavbarHandlers, view)
 
 import Assets as A
 import Assets.Logo as Logo
@@ -42,8 +42,18 @@ import Text as T
 import Url exposing (Url)
 
 
-view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> Maybe TensionHead -> msg -> msg -> (String -> msg) -> msg -> Html msg
-view apis session notif orga_info tension_head onScrollToTop onScrollToBottom replaceUrl onCloseOutdated =
+{-| Handlers for navbar actions passed from parent.
+-}
+type alias NavbarHandlers msg =
+    { onReplaceUrl : String -> msg
+    , onCloseOutdated : msg
+    , onScrollToTop : msg
+    , onScrollToBottom : msg
+    }
+
+
+view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+view apis session notif orga_info tension_head handlers =
     let
         orgUrl =
             isOrgUrl session.url
@@ -103,7 +113,7 @@ view apis session notif orga_info tension_head onScrollToTop onScrollToBottom re
                 )
             , showIf hasVersionOutdated <|
                 div [ class "f6-notification notification has-background-warning-soft" ]
-                    [ button [ class "delete", onClick onCloseOutdated ] []
+                    [ button [ class "delete", onClick handlers.onCloseOutdated ] []
                     , a [ class "button-light is-light" ]
                         -- https://github.com/surprisetalk/elm-bulma/issues/17
                         [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]
@@ -158,19 +168,19 @@ view apis session notif orga_info tension_head onScrollToTop onScrollToBottom re
                             else
                                 []
                            )
-                , viewTensionTitle session tension_head onScrollToTop onScrollToBottom
+                , viewTensionTitle session tension_head handlers
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
                     , helpButton session.user
                     ]
-                        ++ userButtons session replaceUrl
+                        ++ userButtons session handlers.onReplaceUrl
                 ]
             ]
         ]
 
 
-viewTensionTitle : SessionCommon -> Maybe TensionHead -> msg -> msg -> Html msg
-viewTensionTitle session tension_head onScrollToTop onScrollToBottom =
+viewTensionTitle : SessionCommon -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+viewTensionTitle session tension_head handlers =
     let
         isTensionPage =
             isTensionUrl session.url
@@ -195,13 +205,13 @@ viewTensionTitle session tension_head onScrollToTop onScrollToBottom =
                 , span
                     [ class "tension-title-text"
                     , title T.scrollToTop
-                    , onClick onScrollToTop
+                    , onClick handlers.onScrollToTop
                     ]
                     [ text th.title ]
                 , button
                     [ class "button is-small ml-2"
                     , title T.scrollToBottom
-                    , onClick onScrollToBottom
+                    , onClick handlers.onScrollToBottom
                     ]
                     [ A.icon "icon-chevron-down" ]
                 ]
