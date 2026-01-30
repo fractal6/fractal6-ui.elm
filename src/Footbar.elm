@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,7 +42,7 @@ view session =
         DesktopView ->
             div [ id "footBar", class "footer" ]
                 [ div [ class "level m-0" ]
-                    [ small [ class "level-item is-hidden-mobile" ] [ logo_footer, text "© 2025 The Fractale Team" ]
+                    [ small [ class "level-item is-hidden-mobile" ] [ logo_footer, text "© 2026 The Fractale Team" ]
                     , div [ class "level-item" ]
                         [ div [ class "columns is-mobile is-multiline is-centered contacts" ]
                             [ span [ class "column is-narrow" ] [ a [ href "https://status.fractale.co", target "_blank" ] [ text "Status" ] ]
@@ -53,9 +53,9 @@ view session =
                             , span [ class "column is-narrow" ] [ a [ href "mailto:contact@fractale.co" ] [ text T.contactUs ] ]
                             ]
                         ]
-                    , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2025 The Fractale Team" ]
+                    , small [ class "level-item is-hidden-mobile is-invisible" ] [ text "© 2026 The Fractale Team" ]
                     ]
-                , div [ class "level m-0 is-hidden-tablet mt-5" ] [ small [ class "level-item" ] [ logo_footer, text "© 2025 The Fractale Team" ] ]
+                , div [ class "level m-0 is-hidden-tablet mt-5" ] [ small [ class "level-item" ] [ logo_footer, text "© 2026 The Fractale Team" ] ]
                 ]
 
         EmbedView ->
