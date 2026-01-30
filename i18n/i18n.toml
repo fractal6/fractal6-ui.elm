@@ -422,6 +422,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Loading"
   fr="Chargement"
 
+[scrollToTop]
+  en="Scroll to top"
+  fr="Défiler vers le haut"
+
+[scrollToBottom]
+  en="Scroll to bottom"
+  fr="Défiler vers le bas"
+
 [seemore]
   en="see more"
   fr="voir plus"

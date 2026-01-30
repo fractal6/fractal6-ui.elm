@@ -1248,6 +1248,48 @@ figcaption {
         }
     }
 
+    .navbar-tension-title {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0; // Allow flex item to shrink below content size
+        padding: 0 1rem;
+        gap: 0.5rem;
+
+        .tension-type-status {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
+        }
+
+        .tension-title-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+
+            &:hover {
+                color: var(--link);
+            }
+        }
+
+        .button {
+            flex-shrink: 0;
+            padding: 0.25rem 0.5rem;
+        }
+
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
 }
 
 #footBar {

@@ -165,6 +165,32 @@ port checkboxFromJs : (JD.Value -> a) -> Sub a
 
 
 
+-- Scroll
+
+
+type ScrollPosition
+    = ScrollTop
+    | ScrollMiddle
+    | ScrollBottom
+
+
+decodeScrollPosition : String -> ScrollPosition
+decodeScrollPosition str =
+    case str of
+        "top" ->
+            ScrollTop
+
+        "bottom" ->
+            ScrollBottom
+
+        _ ->
+            ScrollMiddle
+
+
+port scrollPositionFromJs : (String -> msg) -> Sub msg
+
+
+
 -- Utils
 
 

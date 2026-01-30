@@ -161,6 +161,7 @@ type alias SessionCommon =
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , lexicon : Dict String String
+    , scrollPosition : Ports.ScrollPosition
     }
 
 
@@ -277,6 +278,7 @@ resetSession session flags =
         , viewMode = session.common.viewMode
         , node_focus = Nothing -- hard to update session in components...put in data instead ?
         , path_data = Nothing --
+        , scrollPosition = Ports.ScrollTop
         }
     , data =
         { notif = initNotifCount
@@ -421,6 +423,7 @@ fromLocalSession url flags =
             , viewMode = viewMode
             , node_focus = Nothing
             , path_data = Nothing
+            , scrollPosition = Ports.ScrollTop
             }
       , data =
             { notif = initNotifCount

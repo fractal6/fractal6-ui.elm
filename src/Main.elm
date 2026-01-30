@@ -61,6 +61,8 @@ type alias Model =
     , page : Pages.Model
     , nvt_msg1 : String -> Msg
     , nvt_msg2 : Msg
+    , nvt_msg3 : Msg
+    , nvt_msg4 : Msg
     , onClearNotif : Msg
     }
 
@@ -74,7 +76,7 @@ init flags url key =
         ( page, pageCmd, pageGlobalCmd ) =
             Pages.init (fromUrl url) global
     in
-    ( Model key url global page (Global << ReplaceUrl) (Global OnCloseOutdatedVersion) (Global OnClearSystemNotif)
+    ( Model key url global page (Global << ReplaceUrl) (Global OnCloseOutdatedVersion) (Global ScrollToTop) (Global ScrollToBottom) (Global OnClearSystemNotif)
     , Cmd.batch
         [ Cmd.map Global globalCmd
         , Cmd.map Global pageGlobalCmd
@@ -215,6 +217,8 @@ view model =
         , url = model.url
         , msg1 = model.nvt_msg1
         , msg2 = model.nvt_msg2
+        , msg3 = model.nvt_msg3
+        , msg4 = model.nvt_msg4
         , onClearNotif = model.onClearNotif
         }
 

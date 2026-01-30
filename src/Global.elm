@@ -65,6 +65,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
+import Scroll
 import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
@@ -144,6 +145,7 @@ type Msg
     | UpdateSessionLang String
     | UpdateSessionTheme String
     | UpdateSessionNotif NotifCount
+    | UpdateSessionScrollPosition String
     | GotOrgaInfo (GqlData OrgaInfo)
     | RefreshNotifCount
     | AckNotifCount (GqlData NotifCount)
@@ -162,6 +164,8 @@ type Msg
     | OnCloseOutdatedVersion
     | OnPushSystemNotif SystemNotification
     | OnClearSystemNotif
+    | ScrollToTop
+    | ScrollToBottom
       -- utils
     | VOID
     | LogErr String
@@ -606,6 +610,19 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | notif = data } } }, Cmd.none )
 
+        UpdateSessionScrollPosition posStr ->
+            let
+                pos =
+                    Ports.decodeScrollPosition posStr
+
+                session =
+                    model.session
+
+                common =
+                    session.common
+            in
+            ( { model | session = { session | common = { common | scrollPosition = pos } } }, Cmd.none )
+
         RefreshNotifCount ->
             case model.session.common.user of
                 LoggedIn uctx ->
@@ -846,6 +863,12 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | system_notification = withDefault [] (List.tail sessionData.system_notification) } } }, Cmd.none )
 
+        ScrollToTop ->
+            ( model, Scroll.scrollToTop VOID )
+
+        ScrollToBottom ->
+            ( model, Scroll.scrollToBottom VOID )
+
         -- Utils
         VOID ->
             ( model, Cmd.none )
@@ -897,6 +920,7 @@ subscriptions _ =
         , Ports.updateLangFromJs UpdateSessionLang
         , Ports.updateThemeFromJs UpdateSessionTheme
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
+        , Ports.scrollPositionFromJs UpdateSessionScrollPosition
         ]
 
 
@@ -905,24 +929,26 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
-view { page, global, url, msg1, msg2, onClearNotif } =
+view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : msg, msg3 : msg, msg4 : msg, onClearNotif : msg } -> Document msg
+view { page, global, url, msg1, msg2, msg3, msg4, onClearNotif } =
     layout
         { page = page
         , url = url
         , session = global.session
         , msg1 = msg1
         , msg2 = msg2
+        , msg3 = msg3
+        , msg4 = msg4
         , onClearNotif = onClearNotif
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
-layout { page, url, session, msg1, msg2, onClearNotif } =
+layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, msg3 : msg, msg4 : msg, onClearNotif : msg } -> Document msg
+layout { page, url, session, msg1, msg2, msg3, msg4, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy6 Navbar.view session.apis session.common session.data.notif session.data.orgaInfo msg1 msg2
+            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.orgaInfo session.data.tension_head msg3 msg4 msg1 msg2
             , showIf (session.data.system_notification /= [])
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body

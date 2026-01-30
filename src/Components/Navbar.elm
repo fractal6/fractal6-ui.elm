@@ -24,23 +24,26 @@ module Components.Navbar exposing (view)
 import Assets as A
 import Assets.Logo as Logo
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toLink)
+import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isTensionUrl, toLink)
 import Bulk.Error exposing (viewGqlErrorsLight)
-import Bulk.View exposing (lang2str)
+import Bulk.View exposing (lang2str, statusColor, tensionIcon)
 import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
+import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onClick)
-import ModelSchema exposing (NotifCount, OrgaInfo)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (NotifCount, OrgaInfo, TensionHead)
+import Ports
 import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
 import Url exposing (Url)
 
 
-view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> (String -> msg) -> msg -> Html msg
-view apis session notif orga_info replaceUrl onCloseOutdated =
+view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> Maybe TensionHead -> msg -> msg -> (String -> msg) -> msg -> Html msg
+view apis session notif orga_info tension_head onScrollToTop onScrollToBottom replaceUrl onCloseOutdated =
     let
         orgUrl =
             isOrgUrl session.url
@@ -155,6 +158,7 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                             else
                                 []
                            )
+                , viewTensionTitle session tension_head onScrollToTop onScrollToBottom
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
                     , helpButton session.user
@@ -163,6 +167,47 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                 ]
             ]
         ]
+
+
+viewTensionTitle : SessionCommon -> Maybe TensionHead -> msg -> msg -> Html msg
+viewTensionTitle session tension_head onScrollToTop onScrollToBottom =
+    let
+        isTensionPage =
+            isTensionUrl session.url
+
+        shouldShow =
+            isTensionPage
+                && session.scrollPosition
+                /= Ports.ScrollTop
+                && tension_head
+                /= Nothing
+    in
+    case ( shouldShow, tension_head ) of
+        ( True, Just th ) ->
+            div [ class "navbar-tension-title is-hidden-mobile" ]
+                [ span [ class "tension-type-status" ]
+                    [ A.icon
+                        ("icon-alert-circle icon-sm has-text-"
+                            ++ statusColor th.status
+                        )
+                    , tensionIcon th.type_
+                    ]
+                , span
+                    [ class "tension-title-text"
+                    , title T.scrollToTop
+                    , onClick onScrollToTop
+                    ]
+                    [ text th.title ]
+                , button
+                    [ class "button is-small ml-2"
+                    , title T.scrollToBottom
+                    , onClick onScrollToBottom
+                    ]
+                    [ A.icon "icon-chevron-down" ]
+                ]
+
+        _ ->
+            text ""
 
 
 notificationButton : String -> UserState -> NotifCount -> Url -> Html msg

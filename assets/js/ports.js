@@ -71,6 +71,9 @@ window.addEventListener('load', _ => {
                 rtime: null,
                 timeout: false,
                 delta: 200,
+                // Scroll position tracking
+                scrollTicking: false,
+                lastScrollPosition: "top",
                 // Graphpack
                 gp: Object.create(GraphPack),
 
@@ -123,6 +126,34 @@ window.addEventListener('load', _ => {
 
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
+
+            // Scroll position detection with throttling
+            window.addEventListener('scroll', function() {
+                if (!session.scrollTicking) {
+                    window.requestAnimationFrame(function() {
+                        var scrollY = window.scrollY;
+                        var windowHeight = window.innerHeight;
+                        var documentHeight = document.documentElement.scrollHeight;
+
+                        var position;
+                        if (scrollY <= 5) {
+                            position = "top";
+                        } else if (scrollY + windowHeight >= documentHeight - 5) {
+                            position = "bottom";
+                        } else {
+                            position = "middle";
+                        }
+
+                        // Only send if position changed (reduce Elm updates)
+                        if (position !== session.lastScrollPosition) {
+                            session.lastScrollPosition = position;
+                            app.ports.scrollPositionFromJs.send(position);
+                        }
+                        session.scrollTicking = false;
+                    });
+                    session.scrollTicking = true;
+                }
+            }, { passive: true });
 
         }
     }
