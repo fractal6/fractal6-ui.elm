@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This codebase is a webapp written in elm (elm-lang). Elm is delightful language, purely functional, typed, with great performance, small assets and that transpile to Javascript.
 
-It implements the user interface (frontend) for projects and organization management platform called Fractale (fractale.co). Note that the backed is managed by another repo we control. The webapp is implemented as a Single-Page-Application, from the elm-spa@v4.1.0 lib for basic routing structure and page templating.
+It implements the user interface (frontend) for Fractale (fractale.co), a projects and organization management platform. Note that the backed is managed by another repo we control. The webapp is implemented as a Single-Page-Application, from the elm-spa@v4.1.0 lib for basic routing structure and page templating.
 
 **Fractale** is a platform for self-organisation. It is designed around the concept that an organisation can be represented as a tree and should follow principles of transparency, governance decentralization and authority distribution. A tree divides in branches and form leaves, likewise an organisation divides in **Circles** that can have **Roles**. Both, circles and roles have an associated descriptive document, called **Mandate**, intended to define its purpose and operating rules. Finally, the communication inside the organisation is done through **Tensions**, and make the link between users and organisations. You can think of a tension as an email, but more structured and more powerful.
 
@@ -112,9 +112,13 @@ The sass code is in `assets/sass/`.
 
 - Git commits: Use semantic prefixes (feat:, fix:, refactor:, etc) followed by context and description.
 
+
+You can use context7 tool to search for up to date and precise documentation of tools and libs.
+
+
 ### Before Reading and Editing files
 
-Try to minimize the number of ELM file you read as they can be long. Use extensively find and rg (ripgrep) when you search something before reading it to reduce the cost.
+Try to minimize the number of ELM file you read as they can be long (with head -500). Use extensively find and rg (ripgrep) when you search something before reading it to reduce the cost.
 
 When you read Elm file, away filter the update function to minimize its content with the command: `awk '/^update[ :]/{skip=1; next} skip && /^[^ ]/{skip=0} !skip' file.elm`
 If you need the read a update code of msg grep the code for the message/msg specifically.
@@ -124,4 +128,4 @@ If you need the read a update code of msg grep the code for the message/msg spec
 
 - Alway run elm after you make modification to elm file to ensure it compiles with : `elm make src/Main.elm`.
 - If the Elm compiler files, read carefully the helpful error messages and fix the errors until it compiles.
-- Update documentation by either add a new file for a new feature or update existing one if needed in `docs/` folder.
+- Update documentation by either adding a new file for a new feature or updating existing one if needed in `docs/` folder.

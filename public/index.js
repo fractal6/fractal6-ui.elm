@@ -31,7 +31,9 @@ window.addEventListener('load', _ => {
     if (uctx && uctx.lang) {
        lang = uctx.lang;
     } else if (!lang) {
-        lang = DEFAULT_LANG;
+        var browserLang = (navigator.language || navigator.userLanguage || '').split('-')[0].toUpperCase();
+        var supportedLangs = ['EN', 'FR'];
+        lang = supportedLangs.includes(browserLang) ? browserLang : DEFAULT_LANG;
     }
     // Lexicon
     var lexicon = localStorage.getItem("lexicon");
