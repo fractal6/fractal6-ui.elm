@@ -1,0 +1,161 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Graph Pack Canvas
+ *
+ */
+
+#canvasParent {
+    min-height: 400px;
+}
+
+#canvasOrga {
+    border-radius: var(--bulma-radius-large) !important;
+    //background-image: linear-gradient(white, black) ;
+}
+
+#canvasLegend {
+    position: absolute;
+    z-index: 2;
+    svg {
+        margin-right: 4px;
+    }
+}
+
+#mdLegend {
+    position: absolute;
+    right: 0;
+    top:40px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+// Tooltip: http://www.cssarrowplease.com/
+#nodeTooltip {
+    position: absolute;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+
+    // Box style
+    cursor: pointer;
+    background-color: var(--node-tooltip-background);
+    border-radius: 14px;
+    border: 2px solid var(--border-color);
+
+    // Tooltip style
+    &::after,
+    &::before {
+        //font-family: "Font Awesome 5 Free";
+        //content: "\f007";
+        content: "";
+        position: absolute;
+        top: 100%; /* This will position the arrow at the bottom of the tooltip */
+        left: 50%;
+        pointer-events: none;
+        border: solid transparent;
+    }
+    // Shape of the arrow
+    &::before {
+        margin-left: -7px;
+        border-width: 7px;
+        border-top-color: var(--border-color);
+    }
+    // Border the arrow
+    //&::after {
+    //    margin-left: -6px;
+    //    border-width: 6px;
+    //    border-top-color: var(--node-tooltip-background);
+    //}
+
+    // Animate the tooltip
+    &.fadeIn {
+        visibility: inherit;
+        transition: 0.3s;
+        opacity: 1;
+        &:hover {
+            transition: background-color 0s;
+        }
+    }
+
+    &.fadeOut {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    .custom-style {
+        margin-left: 5px !important;
+        margin-right: 5px !important;
+        color: var(--link2) !important;
+        position: relative;
+        top: 1px;
+    }
+
+    #doTension {
+        color: var(--text);
+        background-color: var(--node-tooltip-background);
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 10px;
+        border-radius: 14px;
+        border-color: transparent;
+        &:hover {
+            background-color: var(--background-hover-discrete) !important;
+            border-radius: 14px 0 0 14px;
+            &.no-config {
+              border-radius: 14px;
+            }
+        }
+    }
+
+    #doAction > span > span > .button {
+        color: var(--text);
+        background-color: var(--node-tooltip-background);
+        padding: 10px 4px;
+        border-radius: 0 14px 14px 0;
+        border-color: transparent;
+        // Vertical separator
+        border-left-color: var(--border-color) !important;
+        border-left-width: 1px !important;
+        border-left-style: solid;
+        &:hover {
+            background-color: var(--background-hover-discrete) !important;
+            border-radius: 0 14px 14px 0;
+        }
+    }
+}
+
+#welcomeButtons {
+    position: absolute;
+    flex-direction: column;
+
+    .button {
+        border-radius: 25px;
+        min-width: 11.5rem;
+    }
+}
+
+#canvasButtons {
+    position: absolute;
+    //display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    .button {
+        margin-right: 0;
+        color: var(--text-strong),
+        //background: $white-ter;
+        //color: $dark;
+        //border-color: $dark;
+        //&:hover {
+        //    background: $grey-lighter;
+        //}
+    }
+}

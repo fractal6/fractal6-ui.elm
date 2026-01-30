@@ -1,0 +1,66 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Boards: kb-board, kb-card
+ *
+ */
+
+.kb-board {
+
+    & > .column {
+        min-width: 250px;
+        max-width: 400px;
+        //width: 100% !important;
+
+        @include mobile {
+            padding: 1px;
+        }
+
+        // @DEBUG: 100% height overflow because the header height is ignored (not responsive)...
+        & > .content {
+            height: 95%;
+            overflow-y: auto;
+            overflow-x: hidden;
+
+            .box:first-child {
+                margin-top: 7px;
+            }
+        }
+    }
+
+
+    .kb-card {
+        border-width: 1px !important;
+        border-radius: 6px !important;
+        background-color: var(--header-background-color);
+        &:hover, .mediaBox:hover {
+            border-radius: 6px !important;
+            background-color: var(--background-evidence) !important;
+        }
+
+        & *:hover {
+            cursor: grab;
+        }
+    }
+
+    &.board1 {
+        .column .subtitle {
+            padding-bottom: 0.5rem;
+            margin: 0;
+        }
+    }
+
+    &.board2 {
+        .column .subtitle {
+            border-top: 1px solid var(--border-color-light);
+            padding-top: 0.75rem;
+            padding-bottom: 0.5rem;
+            margin: 0;
+        }
+
+    }
+}

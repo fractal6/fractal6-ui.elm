@@ -1,0 +1,191 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Tensions: tensionsTab, mediaBox, labels
+ *
+ */
+
+#tensionsTab  {
+    .tooltip {
+        &::before,
+        &::after {
+            font-size: $size-7 !important;
+        }
+    }
+
+    .t-o{
+        font-size: 1rem !important;
+    }
+}
+
+#journalTab {
+    .content {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .content + .content {
+        border-top: 1px var(--border-color-light) solid;
+    }
+}
+
+.box {
+    .mediaBox:first-child {
+       border-top-left-radius: var(--bulma-box-radius);
+       border-top-right-radius: var(--bulma-box-radius);
+    }
+    .mediaBox:last-child {
+        border-bottom-left-radius: var(--bulma-box-radius);
+        border-bottom-right-radius: var(--bulma-box-radius);
+    }
+}
+
+.mediaBox {
+    cursor: initial;
+    &.is-hoverable:hover {
+        background-color: var(--background-hover-discrete);
+    }
+
+    &.is-active {
+        border: solid 2px var(--link) !important;
+    }
+
+    .media-content {
+        overflow: unset;
+
+        // Improve UX when hovering content
+        .content  {
+            & > a { // space between title and labels
+                margin-right: $size-small !important;
+            }
+            a { // right icons
+                &.is-size-7 {
+                    //font-size: 0.88rem !important;
+                }
+                .box > &.is-size-6 { // tensions circle
+                    font-size: 1rem !important;
+                }
+                &.is-size-5 {
+                    //font-size: 1rem !important;
+                }
+                // Zen Font
+                //&.is-size-7 {
+                //    font-size: 1rem !important;
+                //}
+                //&.is-size-6 {
+                //    font-size: 1.1rem !important;
+                //}
+                //&.is-size-5 {
+                //    font-size: 1.3rem !important;
+                //}
+            }
+        }
+    }
+}
+
+tr.mediaBox {
+    line-height: 2.1rem;
+}
+
+.labelsList {
+    .tag + .tag {
+        margin-left: 8px !important;
+    }
+
+    .tag {
+        border: 2px solid transparent;
+        &:hover {
+            cursor: pointer !important;
+            border-color: var(--link);
+        }
+    }
+}
+.tension-labelsList {
+    margin-top: -8px;
+    .labelsList .tag {
+        margin-top: 8px;
+        &:hover {
+        border-color: transparent;
+    }
+    }
+    .help {
+        margin-top: 22px !important;
+    }
+}
+
+.usersList {
+    //line-height: 2.5;
+    span  {
+        margin-right: 5px !important;
+        margin-bottom: 5px !important; // doesn't work
+    }
+}
+
+.marginTensionStatus {
+    margin-left: -24px;
+    padding-right: 5px;
+
+    position: relative;
+    top: 1px;
+}
+
+.icons-list {
+    .level-item:not(:last-child) {
+        margin-right: $size-small !important;
+    }
+}
+
+.tensionButton {
+    position: fixed;
+    // https://benfrain.com/easy-css-fix-fixed-positioning-android-2-2-2-3/
+    -webkit-backface-visibility: hidden;
+    bottom: 0;
+    right: 0;
+    margin: 50px;
+    z-index: 1;
+    @include touch {
+        margin: 15px;
+    }
+    @include desktop-only {
+        margin: 40px;
+    }
+    @include widescreen-only {
+        margin: 40px;
+    }
+
+    & > .button {
+        height: 50px;
+        width: 50px;
+        border-radius: 25px;
+        opacity: 0.9;
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+a.tag {
+    text-decoration: none !important;
+}
+a.tag.has-border, a.tag.has-border-light, .tag-circle {
+    border: 1px solid #ffffff00;
+    &:hover {
+        border: 1px solid var(--link2);
+    }
+}
+
+.tensionLight {
+    font-size: var(--small-font-size);
+}
+
+//
+// Members
+//
+
+#labelsTable {
+    .tag { font-size: 85%;}
+}

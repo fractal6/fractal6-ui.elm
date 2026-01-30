@@ -1,0 +1,76 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Emoji and Reactions
+ *
+ */
+
+.emojis {
+    max-width: 400px !important;
+    .dropdown-content {
+        border-radius: 8px;
+        padding: 10px;
+        & > span {
+            border-radius: 5px;
+            padding: 5px 11px 6px;
+            &:hover, &.is-active {
+                background: var(--background-evidence);
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.emoji-reactions {
+
+    margin-bottom: -0.15rem;
+
+    .tag {
+        margin-top: $size-small;
+        padding: 5px 8px;
+        height: 1.8em;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        background-color: var(--body-background-color);
+        border: 1px solid var(--border-color-light);
+        &:hover {
+            background-color: var(--background-hover-discrete);
+            border-color: var(--border-color);
+            cursor: pointer;
+        }
+        &.is-selected {
+            background: var(--background-hover);
+        }
+    }
+
+    .tag.dropdown > .dropdown-menu {
+        display: block;
+        visibility: hidden !important;
+    }
+    .tag.dropdown:hover > .dropdown-menu {
+        display: block;
+        transition-delay: 0.5s;
+        visibility: visible !important;
+        .dropdown-content {
+            border-radius: 8px;
+            display: flex;
+            white-space: pre-wrap;
+            align-items: center;
+            margin-bottom: -12px; // Fixed caret margin introduced...
+        }
+        &:after  {
+            content: '';
+            border: 8px solid transparent;
+            border-top: 8px solid var(--background-hover);
+            margin-left: 15px;
+            display: inline-block;
+            vertical-align: top;
+            position: relative;
+            bottom: -12px;
+        }
+    }
+}

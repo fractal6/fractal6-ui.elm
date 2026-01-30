@@ -1,0 +1,240 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Loading Spinner and Placeholders
+ *
+ */
+
+.spinner {
+    // The height here is just for demo purposes
+    height: 25vh;
+    opacity: 1;
+    position: relative;
+    transition: opacity linear 0.1s;
+    &::before {
+        animation: 1.3s linear infinite spinner;
+        border: solid 4px var(--background-evidence);
+        border-bottom-color: var(--primary);
+        border-radius: 50%;
+        content: "";
+        height: 40px;
+        left: 50%;
+        opacity: inherit;
+        position: absolute;
+        top: 50%;
+        -webkit-transform: translate3d(-50%, -50%, 0);
+        transform: translate3d(-50%, -50%, 0);
+        transform-origin: center;
+        width: 40px;
+        will-change: transform;
+    }
+    &.is-small::before {
+        height: 20px !important;
+        width: 20px !important;
+    }
+}
+
+.spinner2 { // @todo fix
+    // The height here is just for demo purposes
+    //height: 25vh;
+    opacity: 1;
+    position: relative;
+    transition: opacity linear 0.1s;
+    &::before {
+        animation: 1.3s linear infinite spinner;
+        border: solid 4px var(--text-weak);
+        border-bottom-color: var(--primary);
+        border-radius: 50%;
+        content: "";
+        height: 40px;
+        left: 0%;
+        opacity: inherit;
+        position: absolute;
+        //top: 50%;
+        -webkit-transform: translate3d(-50%, -50%, 0);
+        transform: translate3d(-50%, -50%, 0);
+        transform-origin: center;
+        width: 40px;
+        will-change: transform;
+    }
+    &.is-small::before {
+        height: 20px !important;
+        width: 20px !important;
+    }
+}
+
+@keyframes spinner {
+    0% {
+        -webkit-transform: translate3d(-50%, -50%, 0) rotate(0deg);
+        transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+        -webkit-transform: translate3d(-50%, -50%, 0) rotate(360deg);
+        transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+}
+
+.error, .error:hover {
+    color: var(--danger) !important;
+}
+
+.f6-error {
+    // customize...
+}
+
+/*
+ *
+ * Placeholder Loading
+ *
+ */
+
+.is-lazy {
+    opacity: 0.6;
+}
+
+@keyframes placeHolderLine{
+    0%{
+        background-position: -460px 0
+    }
+    100%{
+        background-position: 460px 0
+    }
+}
+.ph-line {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderLine;
+    animation-timing-function: linear;
+    background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
+    overflow: hidden;
+    height: 1.5rem;
+    width: 100px;
+    border-radius: 20px;
+
+    &.is-0 {
+        width: 225px;
+    }
+    &.is-1 {
+        width: 460px;
+    }
+}
+
+.ph-circle {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderLine;
+    animation-timing-function: linear;
+    background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
+}
+
+@keyframes placeHolderButton{
+    0%{
+        background-position: -120px 0
+    }
+    100%{
+        background-position: 120px 0
+    }
+}
+.ph-button-1 {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderButton;
+    animation-timing-function: linear;
+    background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
+    overflow: hidden;
+    height: 2.4em;
+    width: 120px;
+    border-radius: 10px;
+}
+
+/*
+--------------
+Pulse effect animation
+Activated by adding a '.pulse' class to the placeholder
+--------------
+ */
+
+.ph.pulse div{
+    -webkit-animation:pulse 1s infinite ease-in-out;
+    animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse
+{
+    0%{
+        background-color: rgba(165,165,165,.1);
+    }
+    50%{
+        background-color: rgba(165,165,165,.3);
+    }
+    100%{
+        background-color: rgba(165,165,165,.1);
+    }
+}
+
+@-webkit-keyframes pulse
+{
+    0%{
+        background-color: rgba(165,165,165,.1);
+    }
+    50%{
+        background-color: rgba(165,165,165,.3);
+    }
+    100%{
+        background-color: rgba(165,165,165,.1);
+    }
+}
+
+/*
+--------------
+Wave effect animation
+Activated by adding a '.wave' class to the placeholder
+--------------
+ */
+
+.ph.wave div{
+    -webkit-animation:wave 1s infinite linear forwards;
+    animation: wave 1s infinite linear forwards;
+    background: #f6f7f8;
+    background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
+    background-size: 800px 104px;
+}
+
+@keyframes wave{
+    0%{
+        background-position: -468px 0
+    }
+    100%{
+        background-position: 468px 0
+    }
+}
+
+@-webkit-keyframes wave{
+    0%{
+        background-position: -468px 0
+    }
+    100%{
+        background-position: 468px 0
+    }
+}
+
+/*
+ * Canvas spinner
+ */
+
+
+// don't work, but cool to rotate an element xD
+.rotate-spinner {
+    -webkit-animation:busyIcon 2s linear infinite;
+    animation:busyIcon 2s linear infinite;
+}
+@-moz-keyframes busyIcon { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }

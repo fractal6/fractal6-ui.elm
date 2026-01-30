@@ -1,0 +1,964 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Bulma Fixes and Utility Classes
+ *
+ */
+
+// Modal
+html.has-modal-active, html.has-modal-active2 {
+    @include desktop {
+        // @DEBUG: breaks the body scroll on mobile
+        // is user click "< precedent pag"...
+        overflow: hidden !important;
+        padding-right: 14px; /* Avoid width reflow */
+    }
+
+    .tabs:not(.modal .tabs), .table-container {
+        overflow: hidden;
+    }
+    .modal .tabs {
+        overflow-x: auto;
+    }
+}
+#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
+    @include desktop {
+        .navbar {
+            padding-right: 14px; /* Avoid width reflow */
+        }
+    }
+}
+
+@include mobile {
+    .reverse-columns {
+        flex-direction: column-reverse;
+        display: flex;
+    }
+}
+
+.media.is-small {
+    font-size: 0.9rem !important;
+}
+
+.dropdown-menu {
+    min-width: 7rem !important;
+    width: max-content;
+    max-width: 330px;
+    z-index: 20;
+}
+
+.dropdown-menu.is-right {
+    left: auto;
+    right: 0;
+}
+
+.dropdown-content {
+    max-height: 400px;
+    overflow: auto;
+    scrollbar-width: thin;
+}
+
+.dropdown-content {
+    border: $border-size solid var(--border-color-light);
+    .dropdown-item:hover {
+        &, & > * {
+            cursor: pointer !important;
+        }
+    }
+    a.dropdown-item:hover {
+        color: var(--link);
+    }
+}
+
+.is-helper {
+    .dropdown-content {
+        font-weight: 500;
+        background-color: var(--background-evidence) !important;
+        & > .dropdown-item:hover {
+            background-color: inherit !important;
+        }
+    }
+}
+
+.navbar-divider {
+    background-color: var(--border-color-light);
+}
+.dropdown-divider {
+    background-color: var(--border-color-light);
+    margin: 0.1rem 0;
+}
+
+.is-left-mobile {
+    @include mobile {
+        left: 0 !important;
+        right: 0 !important;
+    }
+}
+
+hr {
+    height: 1px !important;
+    &.is-2 {
+        height: 2px !important
+    }
+    &.is-3 {
+        height: 4px !important
+    }
+}
+
+.is-size-bg {
+    font-size: 1.3rem;
+}
+
+.column {
+    /*  Fix/scrollable column */
+    &.is-fullheight {
+        min-height: calc(100vh - #{$navbar-height} + #{$size-small});
+        max-height: calc(100vh - #{$navbar-height} + #{$size-small});
+        height:     calc(100vh - #{$navbar-height} + #{$size-small});
+        //display: flex;
+        //flex-direction: row;
+        //justify-content: stretch;
+        overflow-y: auto;
+    }
+
+    /* add a margin-top only when item are wrapped */
+    &.flex-gap {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 8px 0;
+    }
+
+}
+
+.clearfix {
+    display: flow-root;
+}
+
+.mx-mobile {
+    @include touch {
+        margin-left: 25px !important;
+        margin-right: 25px !important;
+    }
+}
+
+.mt-mobile {
+    @include mobile {
+        margin-top: $size-small;
+    }
+}
+
+.form {
+    .field-label {
+        flex-grow: 1;
+    }
+}
+
+.input, .textarea {
+    box-shadow: none;
+    border-color: var(--border-color-light) !important;
+    &:focus {
+        box-shadow: none !important;
+    }
+    &.is-disabled, &[disabled] {
+        color: var(--bulma-text-weak) !important;
+        -webkit-text-fill-color: var(--bulma-text-weak) !important; // chrome f*ck !
+    }
+}
+
+.input:not([type="search"]), .textarea {
+    &:focus {
+        border-color: var(--link) !important;
+    }
+}
+
+.input[type="search"] {
+    &:focus {
+        border-color: var(--text) !important;
+    }
+}
+
+input[type="checkbox"] {
+    margin-right: 0.5em;
+    height: 16px;
+    width: 16px;
+    //clip-path: circle(60% at 50% 50%);
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.panel-tabs {
+    a.is-active {
+        border-bottom-color: var(--link);
+    }
+}
+
+.help-label {
+    color: var(--text-weak) !important;
+    //display: block !important;
+    font-size: $size-small !important;
+    margin-top: 0.25rem !important;
+}
+.help {
+    // Avoid font-weight < 400 as is wont work with certain font (QuickSand, Cantarell)
+    //font-weight: 300 !important;
+    color: var(--text-weak);
+}
+.is-link-back {
+    color: var(--text) !important;
+    background-color: var(--link2) !important;
+}
+.link-like {
+    &:hover {
+        color: var(--link);
+        cursor: pointer !important;
+        text-decoration: underline;
+    }
+}
+.is-weak {
+    color: var(--text-weak) !important;
+    &:not(*:root) {
+        filter: brightness(80%) contrast(80%) saturate(80%) !important;
+    }
+    a {
+        color: var(--bulma-link);
+    }
+    a:hover {
+        color: var(--bulma-link-bold);
+    }
+}
+.is-discrete {
+    color: var(--text-weak) !important;
+}
+.is-goroot {
+    color: var(--text-weak) !important;
+}
+.has-text-text {
+    color: var(--text) !important;
+}
+.has-text-evidence {
+    color: var(--bulma-text) !important;
+}
+.has-text-strong {
+    color: var(--text-strong) !important;
+}
+.has-links-discrete {
+    a {
+        color: var(--link-discrete);
+    }
+}
+.has-text-announce {
+    color: var(--announce);
+}
+.has-background-announce {
+    background-color: var(--announce);
+}
+.is-name {
+    color: var(--text-evidence);
+}
+.is-username {
+    color: var(--text-weak);
+    font-size: 0.9rem;
+}
+a.is-name:hover, a.is-username:hover,
+a:hover .is-name, a:hover .is-username {
+    color: var(--text-strong);
+}
+.has-background-evidence {
+    background-color: var(--background-evidence) !important;
+}
+.has-background-border {
+    background-color: var(--border-color) !important;
+}
+.has-background-border-light {
+    background-color: var(--border-color-light) !important;
+}
+.has-background-author {
+    background-color: var(--author) !important;
+}
+.has-background-counter {
+    background-color: var(--counter) !important;
+}
+.has-background-header {
+    background-color: var(--header-background-color) !important;
+}
+.has-border {
+    border: $border-size solid var(--border-color) !important;
+}
+.has-border-small {
+    border: $border-size-small solid var(--border-color) !important;
+}
+.has-border-light {
+    border: $border-size solid var(--border-color-light) !important;
+}
+.has-border-light-small {
+    border: $border-size-small solid var(--border-color-light) !important;
+}
+.has-border-link {
+    border: $border-size solid var(--link) !important;
+}
+.has-border-color {
+    border-color: var(--border-color) !important;
+}
+.has-border-color-light {
+    border-color: var(--border-color-light) !important;
+}
+.has-border-danger {
+    border-color: var(--danger) !important;
+    &:focus, &:focus:hover {
+        border-color: var(--danger) !important;
+    }
+}
+.has-border-hint-primary {
+    border: solid $border-size var(--primary);
+    padding: var(--bulma-size-small);
+    border-radius: 8px;
+}
+
+
+
+@each $role in $f6-roles {
+  .has-text-#{$role} {
+    color: var(--#{$role}) !important;
+  }
+  .has-background-#{$role} {
+    background-color: var(--#{$role}) !important;
+  }
+}
+
+.is-dashed {
+    border-style: dashed !important;
+}
+.is-md {
+    font-size: 0.9rem !important;
+}
+.is-transparent {
+    opacity: 0 !important;
+    z-index: -1 !important;
+}
+.do-clear {
+    animation: fadeOut 0.5s !important;
+}
+.discrete-link {
+    color: inherit;
+    text-decoration: none !important;
+    &:visited {
+        color: inherit;
+    }
+    &:hover {
+        color: var(--link) !important;
+    }
+}
+
+.stealth-link {
+    color: var(--text-evidence) !important;
+    text-decoration: none !important;
+}
+.underlined-link {
+    &:hover {
+        text-decoration: underline !important;
+    }
+}
+
+.is-flex-inline {
+    display: inline-flex !important;
+}
+.is-flex-grow {
+    flex-grow: 1 !important;
+}
+.flex-break {
+    flex-basis: 100%;
+    height: 0;
+}
+.level-with-breakline {
+    flex-direction: column;
+    align-items: flex-start;
+}
+.is-aligned-center {
+    text-align: center !important;
+}
+.is-aligned-left {
+    text-align: left !important;
+}
+.is-aligned-right {
+    text-align: right !important;
+}
+
+.is-pushed-right {
+    // Should be combined with a is-flex container and potentially is-align-self-flex-start
+    // is-pulled-right instead which produce overlaping effect whene screen is narrow.
+    margin: auto 0 auto auto;
+}
+
+.is-underline {
+    border-bottom: 1px ridge;
+    //text-decoration: underline;
+}
+
+.is-underline-dotted {
+    border-bottom: 1px dotted;
+}
+
+.is-crossed {
+    text-decoration: line-through;
+}
+
+.is-strong {
+    font-weight: bold;
+}
+
+.is-text-aligned {
+    vertical-align: baseline;
+    .button {
+        vertical-align: baseline;
+    }
+}
+
+.is-item-aligned {
+    vertical-align: middle;
+    display: inline-block;
+    .button, span, svg {
+        vertical-align: middle;
+        display: inline-block;
+    }
+}
+
+.is-icon-aligned {
+    i {
+        display: inline-block;
+        vertical-align: sub;
+    }
+}
+i.va {
+    vertical-align: middle;
+}
+
+.button.is-multiline {
+    white-space: unset; //@debug: or normal ?
+    height: auto;
+    //flex-direction: column;
+}
+
+.breakable {
+    height: 100%;
+    white-space: normal;
+}
+
+.button.is-selected {
+    outline: $border-size solid var(--link);
+    outline-style: outset;
+    outline-offset: 2px;
+}
+
+.card.is-selected {
+    border: calc($border-size*1.5) solid var(--link) !important;
+}
+
+.card.is-h:not(.is-selected) {
+  &:hover {
+    border-color: var(--bulma-link-invert) !important;
+  }
+}
+
+.icon {
+    color: inherit !important;
+}
+
+.icon-padding-left {
+    padding-left: 8px !important;
+}
+
+
+.icon-padding-right {
+    padding-right: 8px;
+}
+
+.is-smaller {
+    font-size: 88% !important;
+}
+.is-smaller2 {
+    font-size: 80% !important;
+}
+.is-tiny {
+    font-size: 65% !important;
+}
+.is-larger {
+    font-size: 120% !important;
+}
+.is-larger2 {
+    font-size: 150% !important;
+}
+.is-larger3 {
+    font-size: 200% !important;
+}
+.is-larger4 {
+    font-size: 300% !important;
+}
+.is-bigger {
+    transform: scale(1.2);
+}
+
+.is-selectable {
+    -webkit-touch-callout: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+.tooltip.has-tooltip-multiline::before {
+    white-space: pre-line !important;
+}
+
+[data-tooltip] {
+    @include mobile {
+        // Prevent navbartop overflow
+        &::after,&::before {
+            width:0 !important;
+            visibility: hidden !important;
+        }
+    }
+
+    //border-bottom-style: none !important; // NO, will remove border on non span tooltip
+
+    // solve the markown tooltip **tabs**
+    &.is-right::before {
+        left: auto !important;
+        right: 0 !important;
+    }
+    // solve the modal tabs header tooltip (and partially the board status tooltip)
+    &.is-left::before {
+        right: auto !important;
+        left: 100% !important;
+    }
+}
+.tooltip {
+    // Tooltip has fadin, and no fadout
+    transition: none !important;
+    transition-delay: none !important;
+    font-weight: 500;
+
+    &.has-tooltip-active,
+    &:focus,
+    &:hover {
+        &::after,
+        &::before {
+            transition: all .15s linear !important;
+            transition-delay: var(--tooltip-transition-duration) !important;
+        }
+    }
+}
+
+
+
+.arrow {
+    border: solid;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+    &.right {
+        -webkit-transform: rotate(-45deg);
+        transform: rotate(-45deg);
+    }
+    &.left {
+        -webkit-transform: rotate(135deg);
+        transform: rotate(135deg);
+    }
+    &.up {
+        -webkit-transform: rotate(-135deg);
+        transform: rotate(-135deg);
+    }
+    &.down {
+        -webkit-transform: rotate(45deg);
+        transform: rotate(45deg);
+        margin-bottom: 2px;
+    }
+}
+
+
+// Dropleft components
+.right-hoverable {
+    &.button-light:active {
+        filter:none !important;
+    }
+
+    .dropdown-content {
+        min-width: 7rem !important;
+    }
+}
+.right-hoverable:hover > .dropdown-menu {
+    display: block;
+}
+.right-hoverable > .dropdown-menu {
+    top: -10px;
+    left: 100%;
+    .dropdown-item:active {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
+}
+.right-hoverable *:nth-child(1):hover + .dropdown-menu {
+    .dropdown-item:first-child {
+        background-color: var(--dropdown-item-hover-background-color);
+    }
+}
+.right-hoverable *:nth-child(1):active + .dropdown-menu {
+    .dropdown-item:first-child {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
+}
+
+.tabs, .tabs.is-boxed  {
+    a {
+        text-decoration: none !important;
+    }
+    ul {
+        border-bottom-color: var(--border-color-light) !important;
+    }
+    li.is-active a {
+        border-color: var(--border-color-light);
+    }
+    li:not(.is-active) a:hover {
+        background-color: inherit;
+        border-bottom-color: initial !important;
+    }
+}
+
+.tabs.is-boxed {
+    a {
+        border-radius: 8px 8px 0 0 !important;
+    }
+}
+
+.tabs:not(.is-boxed) {
+    li a {
+        border-bottom-color: transparent !important;
+        border-bottom-width: 1px !important;
+    }
+    li.is-active a {
+        border-bottom-color: var(--link) !important;
+        border-bottom-width: 1px !important;
+    }
+}
+
+.no-overflow {
+    overflow: hidden !important;
+}
+
+.box {
+    border: $border-size solid var(--border-color-light) !important;
+    box-shadow: none;
+
+    .tabs {
+        li:not(.is-active) {
+            a:not(:hover) {
+                color: var(--text-weak);
+            }
+        }
+    }
+
+    .media {
+        &.is-active {
+            border: solid 2px var(--link) !important;
+        }
+
+        & + .media {
+            border-top: 1px solid var(--border-color-light) !important;
+        }
+    }
+
+    &.is-hoverable:hover {
+        background-color: var(--background-hover-discrete) !important;
+    }
+
+    &.is-shrinked {
+        padding: 0;
+        .media {
+            margin: 0;
+            padding: 0.7rem 0.9rem;
+        }
+    }
+
+    &.is-shrinked2 {
+        padding: 0;
+        .media {
+            margin: 0;
+            padding: 0.4rem 0.7rem;
+        }
+    }
+
+    &.has-background-light {
+        label {color: var(--text-weak);}
+        color: black;
+    }
+    &.has-background-danger {
+        color: white;
+    }
+}
+
+.bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
+    @include desktop {
+        &:hover {
+            overflow: visible !important;
+        }
+    }
+}
+
+.scrollbar-thin {
+    // @debug see : https://bugzilla.mozilla.org/show_bug.cgi?id=1460109
+    scrollbar-width: thin;
+    scrollbar-color: grey var(--body-background-color);
+    &::-webkit-scrollbar {
+        width: 6px;
+        color: var(--text-weak);
+    }
+    &::-webkit-scrollbar-thumb {
+        border-radius: 20px;
+        background: grey;
+    }
+}
+
+.menu .menu-label {
+    font-weight: bold !important;
+}
+
+// Message
+.message {
+    .message-header {
+        color: var(--text-weak) !important;
+        background-color: var(--header-background-color);
+        &.is-author {
+            background-color: var(--author) !important;
+        }
+
+        .dropdown-item {
+            font-weight: normal !important;
+        }
+    }
+
+    .message-body {
+        overflow-wrap: break-word;
+        background-color: var(--body-background-color);
+    }
+}
+.message:not(.acc) {
+    border: $border-size-small solid  var(--border-color-light) !important;
+    border-radius: 8px !important;
+    .message-body {
+        border-radius: 8px;
+    }
+    .message-header {
+        border-radius: 8px 8px 0 0 !important;
+    }
+    .message-header + .message-body {
+        border-radius: 0 0 8px 8px !important;
+    }
+}
+
+.subtitle {
+    .icon-more-horizontal, .icon-more-vertical {
+        color: var(--text);
+    }
+}
+
+// Table
+
+.table-container {
+    overflow-x: auto;
+    overflow-y: inherit;
+    @include desktop {
+        overflow: visible !important;
+    }
+}
+
+.table, table.table {
+    border-collapse: separate;
+
+    thead tr { background-color: var(--table-background-color); }
+    thead th {
+        font-weight: 600;
+        font-size: 90% !important;
+        color: var(--text-weak);
+        background-color: var(--table-head-background-color);
+    }
+
+
+    td:first-child, th:first-child {
+        //border-left: medium none;
+        border-left: $border-size solid var(--border-color-light);
+    }
+    td:last-child, th:last-child {
+        border-right: $border-size solid var(--border-color-light);
+    }
+    td, th {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem;
+        border-bottom: $border-size-small solid var(--border-color-light) !important;
+    }
+
+    thead tr:first-child {
+        th {
+            border-top: $border-size solid var(--border-color-light);
+        }
+        th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+        th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+    }
+    tbody tr:last-child {
+        td:first-child {
+            border-radius: 0 0 0 6px;
+        }
+        td:last-child {
+            border-radius: 0 0 6px 0;
+        }
+    }
+
+    // Fix border in case there is no thead
+    thead tr:last-child th {
+        border-bottom: none !important;
+    }
+    tbody tr:first-child td {
+        border-top: $border-size solid var(--border-color-light) !important;
+    }
+}
+
+
+.is-center {
+    // Dropdown menu centering
+    left: 50% !important;
+    right: auto !important;
+    -webkit-transform: translate(-50%, 0) !important;
+    transform: translate(-50%, 0) !important;
+}
+
+// Notification
+
+.f6-notification {
+    border: $border-size solid var(--border-color-light);
+    border-radius: 10px !important;
+
+    position: fixed;
+    top: calc(#{$navbar-height} + 0.33em);
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-20%) translateY(0%);
+    max-width: 50%;
+    min-width: 250px;
+    z-index: 9999; // Ensure a high z-index value to place the element on top
+
+
+    /* Add a pseudo-element for the progress bar */
+    &.has-timer::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 5px;
+        right: 5px;
+        height: 2px;
+        width: 0; /* Start with 0 width */
+        background-color: currentcolor;
+        opacity: 0.5;
+        animation: notification-timer 5s linear forwards; /* 6 seconds animation */
+    }
+}
+
+/* Progress bar animation */
+@keyframes notification-timer {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: calc(100% - 10px);
+    }
+}
+
+.f6-notification, .f6-help-message {
+    @each $name, $pair in $colors {
+        &.notification.is-#{$name} {
+            color: var(--bulma-text) !important;
+            background: var(--bulma-#{$name}-soft) !important;
+        }
+        .message.is-#{$name} {
+            .message-header {
+                color: var(--bulma-text) !important;
+                background: var(--bulma-#{$name}-soft) !important;
+            }
+        }
+    }
+
+}
+
+.notification {
+    & > div {
+        // do not hide delete button when there is overflow.
+        max-height: 200px;
+        overflow: auto;
+    }
+
+    a:not(.stealth-link):not(.button):not(.button-light) {
+        color: var(--link) !important;
+        text-decoration: none !important;
+    }
+
+    .stealth-link, .button-light {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+}
+
+.ml--1 {
+    margin-left: -6px;
+}
+
+.margin-left-25 {
+    margin-left: 25%;
+}
+.margin-left-50 {
+    margin-left: 50%;
+}
+.margin-left-auto {
+    margin-left: auto;
+}
+
+.is-fullvh-desktop {
+    @include desktop {
+        min-height: 100vh;
+    }
+}
+
+figure {
+    border-radius: 10px;
+    img, iframe {
+        border-radius: 10px;
+    }
+}
+figcaption {
+    //class "p-3 is-italic is-aligned-center"
+    text-align: center;
+    font-style: italic;
+    padding: 0.75rem;
+}
+
+.is-rounded-light {
+    border-radius: 6px !important;
+}
+
+.is-absolute {
+    position: absolute !important;
+}
+
+.button {
+    &:focus:not(:active) {
+        box-shadow: none;
+    }
+}
+
+// END FIX BULMA
