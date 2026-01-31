@@ -510,6 +510,29 @@ i.va {
     user-select: text;
 }
 
+.is-dragging {
+    * {
+        pointer-events: none;
+    }
+}
+
+.is-focusing {
+    border: 1px solid var(--link) !important;
+}
+
+.is-column-over {
+    opacity: 1;
+    &::after, &::before {
+        width: 10px;
+        background-color: var(--link);
+    }
+}
+
+.is-growing {
+    animation: growBox 0.15s;
+    animation-fill-mode: forwards;
+}
+
 .tooltip.has-tooltip-multiline::before {
     white-space: pre-line !important;
 }
@@ -651,7 +674,7 @@ i.va {
 }
 
 .box {
-    border: $border-size solid var(--border-color-light) !important;
+    border: $border-size solid var(--border-color-light);
     box-shadow: none;
 
     .tabs {
@@ -747,7 +770,7 @@ i.va {
     }
 }
 .message:not(.acc) {
-    border: $border-size-small solid  var(--border-color-light) !important;
+    border: $border-size-small solid var(--border-color-light);
     border-radius: 8px !important;
     .message-body {
         border-radius: 8px;
@@ -959,6 +982,18 @@ figcaption {
     &:focus:not(:active) {
         box-shadow: none;
     }
+}
+
+
+// Ex, put the icon inline in input form.
+.icon-input-flex-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 8px;
+    z-index: 4;
 }
 
 // END FIX BULMA

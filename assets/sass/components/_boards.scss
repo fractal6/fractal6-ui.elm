@@ -60,6 +60,9 @@
             padding-top: 0.75rem;
             padding-bottom: 0.5rem;
             margin: 0;
+            .level-left:hover {
+                cursor: grab !important;
+            }
         }
 
     }

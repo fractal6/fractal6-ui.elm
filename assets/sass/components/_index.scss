@@ -1,9 +1,8 @@
 // Fractal6 Component Modules
 // This file forwards all component stylesheets
 
-// Base layout and utility styles
+// Base layout
 @forward "layout";
-@forward "utilities";
 
 // Navigation components
 @forward "navigation";
@@ -25,3 +24,6 @@
 @forward "emoji";
 @forward "loading";
 @forward "accordion";
+
+// Utilities (last as priority rules)
+@forward "utilities";

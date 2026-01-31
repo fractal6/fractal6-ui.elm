@@ -918,9 +918,7 @@ viewBoard op model =
                         col.col_type == ProjectColumnType.NoStatusColumn
                 in
                 [ div
-                    ([ class "column is-3"
-                     , attribute "style" "z-index:10;" -- prevent the hinter-tree to overflow
-                     ]
+                    ([ class "column is-3" ]
                         ++ ternary model.hasTaskMove
                             [ onDragEnter <| OnMoveEnterCol { pos = i, colid = colid, length = cards_len } False
                             , onDragLeave <| OnMoveLeaveCol
@@ -1063,7 +1061,7 @@ viewHeader : Bool -> Bool -> ProjectColumn -> Html Msg
 viewHeader isAdmin isEdited col =
     span []
         [ div [ class "level" ]
-            [ div [ class "level-left ml-3", attribute "style" "cursor:default !important;" ]
+            [ div [ class "level-left ml-3" ]
                 [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
             , span [ class "level-right" ]
                 [ if isAdmin then

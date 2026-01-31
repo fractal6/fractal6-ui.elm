@@ -359,8 +359,8 @@
 
     .panel-block, .panel-icon {
         &:hover:not(.is-static) {
-            cursor: pointer !important;
-            background: var(--header-background-color) !important;
+            cursor: pointer;
+            background: var(--header-background-color);
         }
     }
     .panel-block {
