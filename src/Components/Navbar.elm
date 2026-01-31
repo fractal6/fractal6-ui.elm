@@ -29,7 +29,6 @@ import Bulk.Error exposing (viewGqlErrorsLight)
 import Bulk.View exposing (lang2str, statusColor, tensionIcon)
 import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
-import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)

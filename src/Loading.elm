@@ -105,6 +105,21 @@ type HttpError body
     | BadBody String
 
 
+errorIsNoDataFound : ErrorData -> Bool
+errorIsNoDataFound err =
+    let
+        acceptedPrefixes =
+            [ "no data returned"
+            , "aucune donnée n’est retournée"
+            ]
+    in
+    err
+        |> List.any
+            (String.toLower
+                >> (\s -> List.any (\prefix -> String.startsWith prefix s) acceptedPrefixes)
+            )
+
+
 
 -- Logics
 

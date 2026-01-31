@@ -52,13 +52,14 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -2217,7 +2218,11 @@ viewTensions tensionDir model =
                                     div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
 
             Failure err ->
-                viewGqlErrors err
+                div []
+                    [ viewGqlErrors err
+                    , showIf (errorIsNoDataFound err) <|
+                        a [ class "button is-rounded is-primary is-center", href (toHref Login) ] [ text T.signin ]
+                    ]
 
             _ ->
                 div [] []

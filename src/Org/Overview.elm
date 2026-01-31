@@ -42,7 +42,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
-import Extra exposing (ternary, unwrap)
+import Extra exposing (showIf, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form.Help as Help
 import Form.NewTension as NTF
@@ -50,6 +50,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
+import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, title, type_, value)
@@ -57,7 +58,7 @@ import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), errorIsNoDataFound, fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -1110,7 +1111,7 @@ viewActionPanel domid us node o actionPanel =
                 hasConfig =
                     isAdmin || hasRole
             in
-            if hasConfig then
+            showIf hasConfig <|
                 let
                     panelData =
                         { tc = tensionCharacFromNode node
@@ -1129,9 +1130,6 @@ viewActionPanel domid us node o actionPanel =
                         ]
                     , ActionPanel.view panelData actionPanel |> Html.map ActionPanelMsg
                     ]
-
-            else
-                text ""
 
         LoggedOut ->
             text ""
@@ -1239,18 +1237,19 @@ viewCanvas us model =
     div [ id "canvasParent", classList [ ( "spinner", model.tree_data == LoadingSlowly ) ] ]
         [ case model.tree_data of
             Failure err ->
-                viewGqlErrors err
+                div []
+                    [ viewGqlErrors err
+                    , showIf (errorIsNoDataFound err) <|
+                        a [ class "button is-rounded is-primary is-center", href (toHref Login) ] [ text T.signin ]
+                    ]
 
             Success d ->
-                if isFailure model.node_data && Dict.get model.node_focus.nameid d == Nothing then
+                showIf (isFailure model.node_data && Dict.get model.node_focus.nameid d == Nothing) <|
                     viewGqlErrors [ T.nodeNotFound ]
-
-                else
-                    text ""
 
             _ ->
                 text ""
-        , if model.legend then
+        , showIf model.legend <|
             div [ id "canvasLegend", class "box has-background-evidence" ]
                 [ span [ class "is-item-aligned" ] [ i [ attribute "style" "position:relative; bottom:2px; left: -4px;" ] [ Logo.circles ], span [] [ text T.circlesLegend ] ]
                 , br [ class "mb-3" ] []
@@ -1276,9 +1275,6 @@ viewCanvas us model =
                     ]
                     [ text T.help ]
                 ]
-
-          else
-            text ""
         , canvas [ id "canvasOrga", class "has-border-light is-invisible" ] []
 
         {- Hidden classes use in graphpack_d3.js -}
@@ -1288,7 +1284,7 @@ viewCanvas us model =
         , withMaybeData model.tree_data
             |> withDefault Dict.empty
             |> (\orga ->
-                    if isFreshOrga orga then
+                    showIf (isFreshOrga orga) <|
                         let
                             p =
                                 case model.path_data of
@@ -1318,9 +1314,6 @@ viewCanvas us model =
                                 ]
                                 [ text T.createNewRole ]
                             ]
-
-                    else
-                        text ""
                )
 
         --
@@ -1352,11 +1345,8 @@ viewCanvas us model =
                     else
                         []
                    )
-                ++ [ if (model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin then
+                ++ [ showIf ((model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin) <|
                         div [ class "hbar", style "margin-right" "8px" ] []
-
-                     else
-                        text ""
                    ]
                 ++ (if model.node_focus.nameid == model.node_focus.rootnameid then
                         []

@@ -38,7 +38,7 @@ import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), errorIsNoDataFound, isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -671,17 +671,7 @@ viewTreeMenu model =
                         text ""
 
                     f :: _ ->
-                        let
-                            acceptedPrefixes =
-                                [ "no data returned"
-                                , "aucune donnée n’est retournée"
-                                ]
-                        in
-                        if
-                            f
-                                |> String.toLower
-                                |> (\s -> List.any (\prefix -> String.startsWith prefix s) acceptedPrefixes)
-                        then
+                        if errorIsNoDataFound err then
                             ul [ class "menu-list" ]
                                 [ li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
                                 , li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]

@@ -54,7 +54,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
+import Generated.Route as Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
@@ -62,7 +62,7 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), errorIsNoDataFound, fromMaybeData, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -1553,7 +1553,11 @@ view_ global model =
                     --    ContractsPage.view { emitterid = "", receiverid = "", isAdmin = model.isTensionAdmin, now = model.now } model.contractsPage
                     --        |> Html.map ContractsPageMsg
                     --else
-                    viewGqlErrors err
+                    div []
+                        [ viewGqlErrors err
+                        , showIf (errorIsNoDataFound err) <|
+                            a [ class "button is-rounded is-primary is-center", href (toHref Login) ] [ text T.signin ]
+                        ]
 
                 LoadingSlowly ->
                     div [ class "spinner" ] []
