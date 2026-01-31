@@ -165,6 +165,9 @@ mapGlobalOutcmds gcmds =
                     DoPushTension tension ->
                         ( send (PushTension tension), Cmd.none )
 
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )

@@ -21,7 +21,7 @@
 
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, RecentActivityTab, WindowPos, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
+import Codecs exposing (DraftStore, RecentActivityTab, WindowPos, draftStoreEncoder, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
@@ -373,6 +373,14 @@ saveMenuTree x =
                 [ ( "key", JE.string "tree_menu" )
                 , ( "val", TreeMenuSchema.encode x )
                 ]
+        }
+
+
+saveDrafts : DraftStore -> Cmd msg
+saveDrafts store =
+    outgoing
+        { action = "SAVE_DRAFTS"
+        , data = draftStoreEncoder store
         }
 
 

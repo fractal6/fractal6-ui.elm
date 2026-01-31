@@ -24,7 +24,7 @@ module Session exposing (..)
 import Array exposing (Array)
 import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
-import Codecs exposing (RecentActivityTab(..), WindowPos, userCtxDecoder, windowDecoder)
+import Codecs exposing (DraftStore, DraftUpdate(..), RecentActivityTab(..), WindowPos, draftStoreDecoder, initDraftStore, userCtxDecoder, windowDecoder)
 import Dict exposing (Dict)
 import Extra.Url exposing (queryParser)
 import Fractal.Enum.Lang as Lang
@@ -137,6 +137,7 @@ type alias SessionFlags =
     , recent_activity_tab : Maybe JD.Value
     , orga_menu : Maybe Bool
     , tree_menu : Maybe JD.Value
+    , drafts : Maybe JD.Value
     , apis : Apis
     , screen : Screen
     , theme : Maybe JD.Value
@@ -162,6 +163,7 @@ type alias SessionCommon =
     , path_data : Maybe LocalGraph
     , lexicon : Dict String String
     , scrollPosition : Ports.ScrollPosition
+    , drafts : DraftStore
     }
 
 
@@ -183,6 +185,7 @@ type alias SessionData =
     , recent_activity_tab : Maybe RecentActivityTab
     , orga_menu : Maybe Bool
     , tree_menu : Maybe TreeMenuSchema.PersistentModel
+    , drafts : DraftStore
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
@@ -237,6 +240,8 @@ type
       -- App Msg
     | DoPushTension Tension
     | DoModalAsk String String -- Safe close modal
+      -- Draft persistence
+    | DoUpdateDraft DraftUpdate
 
 
 type alias CommonMsg msg =
@@ -279,6 +284,7 @@ resetSession session flags =
         , node_focus = Nothing -- hard to update session in components...put in data instead ?
         , path_data = Nothing --
         , scrollPosition = Ports.ScrollTop
+        , drafts = session.data.drafts
         }
     , data =
         { notif = initNotifCount
@@ -298,6 +304,7 @@ resetSession session flags =
         , recent_activity_tab = Nothing
         , orga_menu = Nothing
         , tree_menu = session.data.tree_menu
+        , drafts = session.data.drafts
         , authorsPanel = Nothing
         , labelsPanel = Nothing
         , newOrgaData = Nothing
@@ -400,6 +407,19 @@ fromLocalSession url flags =
                 Nothing ->
                     ( Nothing, Cmd.none )
 
+        ( drafts, cmd7 ) =
+            case flags.drafts of
+                Just raw ->
+                    case JD.decodeValue draftStoreDecoder raw of
+                        Ok store ->
+                            ( store, Cmd.none )
+
+                        Err err ->
+                            ( initDraftStore, Ports.logErr (JD.errorToString err) )
+
+                Nothing ->
+                    ( initDraftStore, Cmd.none )
+
         query =
             queryParser url
 
@@ -424,6 +444,7 @@ fromLocalSession url flags =
             , node_focus = Nothing
             , path_data = Nothing
             , scrollPosition = Ports.ScrollTop
+            , drafts = drafts
             }
       , data =
             { notif = initNotifCount
@@ -446,6 +467,7 @@ fromLocalSession url flags =
                 flags.tree_menu
                     |> andThen (Result.toMaybe << JD.decodeValue TreeMenuSchema.decode)
                     |> withDefault Nothing
+            , drafts = drafts
             , authorsPanel = Nothing
             , labelsPanel = Nothing
             , newOrgaData = Nothing
@@ -453,7 +475,7 @@ fromLocalSession url flags =
             , system_notification = []
             }
       }
-    , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6 ]
+    , [ cmd1, cmd2, cmd3, cmd4, cmd5, cmd6, cmd7 ]
     )
 
 

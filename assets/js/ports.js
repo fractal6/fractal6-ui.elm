@@ -296,10 +296,14 @@ export const actions = {
 			$i.selectionEnd = start + replacer.length;
 
         // Propagate change to Elm.
-        $i.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        // Delay the input event dispatch to allow Elm to complete any pending re-renders.
+        // This prevents the input value from being overwritten by a stale model state.
+        setTimeout(() => {
+            $input.dispatchEvent(new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            }));
+        }, 10);
 
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
@@ -447,6 +451,9 @@ export const actions = {
 
         if (resizePage)
             setTimeout(() => session.gp.resizeMe(), 333);
+    },
+    'SAVE_DRAFTS' : (app, session, data) => {
+        localStorage.setItem('drafts', JSON.stringify(data));
     },
     'REMOVE_SESSION' : (app, session, _) => {
         // Remove volatile items
@@ -714,11 +721,15 @@ export const actions = {
             return
         }
 
-        //app.ports[msg.toMsg].send($input.value);
-        $input.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        // Propagate change to Elm.
+        // Delay the input event dispatch to allow Elm to complete any pending re-renders.
+        // This prevents the input value from being overwritten by a stale model state.
+        setTimeout(() => {
+            $input.dispatchEvent(new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            }));
+        }, 10);
     },
 }
 

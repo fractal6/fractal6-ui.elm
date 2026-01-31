@@ -41,7 +41,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
 import Bulk.Error exposing (viewGqlErrorsLight)
-import Codecs exposing (RecentActivityTab, WindowPos)
+import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
 import Dict
 import Extra exposing (showIf, showMaybe, ternary, unwrap2)
@@ -52,6 +52,7 @@ import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
+import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, errorHttpToString, isFailure, withMapData)
 import Maybe exposing (withDefault)
@@ -173,6 +174,8 @@ type Msg
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
+      -- Draft persistence
+    | UpdateDraft DraftUpdate
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -905,6 +908,80 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | newOrgaData = data } } }, Cmd.none )
+
+        UpdateDraft draftUpdate ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+
+                common =
+                    session.common
+
+                currentDrafts =
+                    sessionData.drafts
+
+                now =
+                    fromTime session.common.now
+
+                ( newDrafts, saveCmd ) =
+                    case draftUpdate of
+                        SaveNewTension draft ->
+                            let
+                                updated =
+                                    { currentDrafts | newTension = Just { draft | updatedAt = now } }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearNewTension ->
+                            let
+                                updated =
+                                    { currentDrafts | newTension = Nothing }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        SaveComment tensionId draft ->
+                            let
+                                updatedComments =
+                                    Dict.insert tensionId { draft | updatedAt = now } currentDrafts.comments
+
+                                -- Enforce max drafts limit
+                                finalComments =
+                                    if Dict.size updatedComments > maxCommentDrafts then
+                                        -- Remove oldest draft
+                                        let
+                                            oldest =
+                                                updatedComments
+                                                    |> Dict.toList
+                                                    |> List.sortBy (\( _, d ) -> d.updatedAt)
+                                                    |> List.head
+                                                    |> Maybe.map Tuple.first
+                                        in
+                                        case oldest of
+                                            Just key ->
+                                                Dict.remove key updatedComments
+
+                                            Nothing ->
+                                                updatedComments
+
+                                    else
+                                        updatedComments
+
+                                updated =
+                                    { currentDrafts | comments = finalComments }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearComment tensionId ->
+                            let
+                                updated =
+                                    { currentDrafts | comments = Dict.remove tensionId currentDrafts.comments }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+            in
+            ( { model | session = { session | common = { common | drafts = newDrafts }, data = { sessionData | drafts = newDrafts } } }, saveCmd )
 
 
 

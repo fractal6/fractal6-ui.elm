@@ -21,6 +21,8 @@ window.addEventListener('load', _ => {
     // Menu data
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
+    // Draft persistence
+    var drafts = JSON.parse(localStorage.getItem("drafts"));
     if (!theme || !uctx) {
         theme = DEFAULT_THEME.toLowerCase();
     }
@@ -50,6 +52,7 @@ window.addEventListener('load', _ => {
                 recent_activity_tab: recent_activity_tab,
                 orga_menu: orga_menu,
                 tree_menu: tree_menu,
+                drafts: drafts,
                 apis: {
                     auth: AUTH_API,
                     gql: GRAPHQL_API,

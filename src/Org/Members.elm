@@ -159,6 +159,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateNode nameid fun ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send DoLoad ], Cmd.none )
 
+                    DoUpdateDraft draftUpdate ->
+                        ( [], send (Global.UpdateDraft draftUpdate) )
+
                     _ ->
                         ( [], Cmd.none )
             )

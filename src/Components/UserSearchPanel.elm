@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull)
-import Codecs exposing (LookupResult, userDecoder)
+import Codecs exposing (userDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)

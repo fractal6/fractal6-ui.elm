@@ -28,7 +28,7 @@ import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewLabel, viewLabels)
-import Codecs exposing (LookupResult, labelDecoder)
+import Codecs exposing (labelDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)

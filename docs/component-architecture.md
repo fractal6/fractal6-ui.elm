@@ -11,7 +11,7 @@ Main.elm
   → Global.elm (global state, navbar, footbar)
     → Pages/*.elm (route-specific pages)
       → Components/*.elm (reusable components)
-        → Form/*.elm (form components)
+      → Form/*.elm (reusable form components)
 ```
 
 ## Message Flow
@@ -22,6 +22,19 @@ Main.elm
 - **Global.elm**: Manages session state, renders layout (navbar, body, footbar)
 - **Pages/**: Route handlers, each with their own Model/Msg/update/view
 - **Components/**: Reusable UI components with encapsulated state
+
+Three way to visualize the top SPA structure:
+
+
+1. Data Flow:
+Main(owns Key+Url) → dispatches Msg to → Global(owns Session) | Pages(uses Global.Model via Page.component)
+
+2. Composition:
+Main.view = Global.view(navbar + Pages.view(page, global) + footbar) where Pages emit Cmd Global.Msg upward
+
+3. Responsibility Chain:
+Main[router+bootstrap] → Global[shared state+layout] → Page[type wrapper] → Pages/*[route logic accessing global]
+
 
 ### Message Wrapping
 
@@ -210,8 +223,8 @@ view config (State model) =
 
 | Prefix | Usage | Example |
 |--------|-------|---------|
-| `On` | Event handlers (user actions) | `OnClick`, `OnSubmit`, `OnOpen` |
-| `Do` | Actions to perform | `DoFocus`, `DoNavigate`, `DoPatch` |
+| `On` | Page Event handlers (user actions) | `OnClick`, `OnSubmit`, `OnOpen` |
+| `Do` | Global Actions/Event to perform | `DoFocus`, `DoNavigate`, `DoPatch` |
 | `Got` / `Ack` | Response handlers | `GotData`, `AckSubmit` |
 | `Set` | State setters | `SetField`, `SetValue` |
 

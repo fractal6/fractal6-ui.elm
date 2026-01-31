@@ -23,7 +23,9 @@ module Components.Comments exposing
     ( Msg(..)
     , OutType(..)
     , State
+    , getCurrentMessage
     , init
+    , initWithDraft
     , subscriptions
     , update
     , viewCommentInputHeader
@@ -41,6 +43,7 @@ import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, User
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
+import Codecs exposing (DraftUpdate(..))
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -72,7 +75,7 @@ import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, GlobalCmd, SessionCommon, isMobile, toReflink)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -120,6 +123,9 @@ type alias Model =
     -- Components
     , userInput : UserInput.State
 
+    -- Backup for checkbox operations
+    , post_backup : Maybe String
+
     -- Common
     , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
@@ -142,6 +148,9 @@ initModel nameid tensionid session =
     -- Components
     , userInput = UserInput.init [ nameid ] False False session
 
+    -- Backup for checkbox operations
+    , post_backup = Nothing
+
     -- Common
     , session = session
     , refresh_trial = 0
@@ -153,9 +162,37 @@ init nameid tensionid session =
     initModel nameid tensionid session |> State
 
 
+initWithDraft : String -> String -> SessionCommon -> Maybe String -> State
+initWithDraft nameid tensionid session maybeDraftMessage =
+    let
+        model =
+            initModel nameid tensionid session
+
+        tension_form =
+            case maybeDraftMessage of
+                Just msg ->
+                    let
+                        f =
+                            model.tension_form
+                    in
+                    { f | post = Dict.insert "message" msg f.post }
+
+                Nothing ->
+                    model.tension_form
+    in
+    State { model | tension_form = tension_form }
+
+
 
 -- Global methods
--- not yet
+
+
+getCurrentMessage : State -> Maybe String
+getCurrentMessage (State model) =
+    Dict.get "message" model.tension_form.post
+
+
+
 -- State Controls
 
 
@@ -176,7 +213,7 @@ type Msg
       -- Change Post
     | OnChangeComment String String
     | OnChangeContractComment String String
-    | OnChangeCommentPatch String String
+    | OnChangePatchComment String String
       -- Push Comment
     | SubmitTensionComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | TensionCommentAck (GqlData PatchTensionPayloadID)
@@ -371,7 +408,7 @@ update_ apis message model =
                         , tension_form = resetForm
                         , tension_patch = result
                       }
-                    , Out [ Ports.bulma_driver "" ] [] (Just (TensionCommentAdded model.tension_form.status))
+                    , Out [ Ports.bulma_driver "" ] [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -441,7 +478,7 @@ update_ apis message model =
             in
             ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, out0 [ Ports.bulma_driver createdAt ] )
 
-        OnChangeCommentPatch field value ->
+        OnChangePatchComment field value ->
             let
                 form =
                     model.comment_form
@@ -475,13 +512,26 @@ update_ apis message model =
 
                         resetForm =
                             initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
+
+                        -- Restore backup if this was a stealth (checkbox) operation
+                        tension_form =
+                            case ( Dict.get "stealth" model.comment_form.post, model.post_backup ) of
+                                ( Just "true", Just backup ) ->
+                                    let
+                                        f =
+                                            model.tension_form
+                                    in
+                                    { f | post = Dict.insert "message" backup f.post }
+
+                                _ ->
+                                    model.tension_form
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result, tension_form = tension_form, post_backup = Nothing }
                     , out0 [ Ports.bulma_driver comment.createdAt ]
                     )
 
                 _ ->
-                    ( { model | comment_result = result }, noOut )
+                    ( { model | comment_result = result, post_backup = Nothing }, noOut )
 
         -- Common
         NoMsg ->
@@ -602,8 +652,11 @@ update_ apis message model =
             case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
                 Just c ->
                     let
+                        -- Backup the current tension_form message before stealth submission
+                        backup =
+                            Dict.get "message" model.tension_form.post
+
                         -- Simulate comment updated
-                        --
                         form =
                             model.comment_form
 
@@ -616,10 +669,9 @@ update_ apis message model =
                                         |> Dict.insert "stealth" "true"
                             }
 
-                        --
                         -- send SubmitCommentPatch
                     in
-                    ( { model | comment_form = comment_form }
+                    ( { model | comment_form = comment_form, post_backup = backup }
                     , out0 [ send (OnSubmit True SubmitCommentPatch) ]
                     )
 
@@ -1274,7 +1326,7 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
 
         onChangePost =
             if String.startsWith "update" targetid then
-                OnChangeCommentPatch
+                OnChangePatchComment
 
             else if targetid == "commentContractInput" then
                 OnChangeContractComment

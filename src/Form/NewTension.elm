@@ -29,6 +29,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
+import Codecs exposing (DraftUpdate(..), TensionDraft)
 import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -107,6 +108,9 @@ type alias Model =
     , withUsers : List String
     , simplifiedView : Bool
 
+    -- Draft persistence (debounce timer for saving)
+    , draftSaveTimer : Int
+
     -- Common
     , session : SessionCommon
     , refresh_trial : Int
@@ -116,8 +120,6 @@ type alias Model =
     -- Components
     , labelsPanel : LabelSearchPanel.State
     , inviteInput : UserInput.State
-
-    --, userInput : UserInput.State
     , comments : Comments.State
     }
 
@@ -199,6 +201,9 @@ initModel session =
     , roles_result = Loading
     , force_init = False
 
+    -- Draft persistence
+    , draftSaveTimer = 0
+
     -- Common
     , session = session
     , refresh_trial = 0
@@ -208,8 +213,6 @@ initModel session =
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
     , inviteInput = UserInput.init [] True False session
-
-    --, userInput = UserInput.init [] False False session
     , comments = Comments.init "" "" session
     }
 
@@ -557,13 +560,6 @@ type Msg
     | OnAddResponsabilities
     | OnSubmitTension Bool Time.Posix
     | OnTensionAck (GqlData Tension)
-      -- User Quick Search
-      --| OnChangeUserPattern Int String
-      --| OnChangeUserLookup (LookupResult User)
-      --| OnSelectUser Int String
-      --| OnCancelUser Int
-      --| OnShowLookupFs
-      --| OnCancelLookupFs
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -572,10 +568,11 @@ type Msg
     | NoMsg
     | LogErr String
     | UpdateUctx UserCtx
+      -- Draft persistence
+    | SaveDraftDelayed Int
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | InviteInputMsg UserInput.Msg
-      --| UserInputMsg UserInput.Msg
     | CommentsMsg Comments.Msg
 
 
@@ -698,6 +695,7 @@ update_ apis message model =
             case model.session.user of
                 LoggedIn uctx ->
                     let
+                        -- Load draft from session or from ProjectDraft
                         newModel =
                             case d of
                                 Just draft ->
@@ -710,7 +708,18 @@ update_ apis message model =
                                     }
 
                                 Nothing ->
-                                    model
+                                    -- Check for saved tension draft
+                                    case model.session.drafts.newTension of
+                                        Just tensionDraft ->
+                                            { model
+                                                | nodeDoc =
+                                                    model.nodeDoc
+                                                        |> NodeDoc.updatePost "title" tensionDraft.title
+                                                        |> NodeDoc.updatePost "message" tensionDraft.message
+                                            }
+
+                                        Nothing ->
+                                            model
 
                         cmd =
                             case Dict.get "message" newModel.nodeDoc.form.post of
@@ -993,7 +1002,25 @@ update_ apis message model =
                     ( setTarget (shrinkNode target) model, out0 [ send (OnTargetClick "") ] )
 
         OnChangePost field value ->
-            ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
+            let
+                newModel =
+                    { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }
+
+                -- Schedule debounced draft save when title changes (message changes go through Comments)
+                ( finalModel, saveCmd ) =
+                    if field == "title" && model.activeTab == NewTensionTab then
+                        let
+                            newTimer =
+                                model.draftSaveTimer + 1
+                        in
+                        ( { newModel | draftSaveTimer = newTimer }
+                        , sendSleep (SaveDraftDelayed newTimer) 3500
+                        )
+
+                    else
+                        ( newModel, Cmd.none )
+            in
+            ( finalModel, out0 [ saveCmd ] )
 
         OnSelectRoleExt role ->
             ( { model | nodeDoc = NodeDoc.updateFromRoleExt role model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
@@ -1097,11 +1124,14 @@ update_ apis message model =
                                 )
 
                         gcmds =
-                            if tension.status == TensionStatus.Open then
-                                DoPushTension tension :: gcmds_
+                            -- Clear draft on successful tension creation
+                            DoUpdateDraft ClearNewTension
+                                :: (if tension.status == TensionStatus.Open then
+                                        DoPushTension tension :: gcmds_
 
-                            else
-                                gcmds_
+                                    else
+                                        gcmds_
+                                   )
 
                         output =
                             Just ( tension, model.draft )
@@ -1130,30 +1160,6 @@ update_ apis message model =
                 _ ->
                     ( setResult result model, noOut )
 
-        -- User Quick Search
-        --OnChangeUserPattern pos pattern ->
-        --    ( updateUserPattern pos pattern model
-        --    , out0 [ Ports.searchUser pattern ]
-        --    )
-        --OnChangeUserLookup users_ ->
-        --    case users_ of
-        --        Ok users ->
-        --            ( { model | lookup_users = users }, noOut )
-        --        Err err ->
-        --            ( model, out0 [ Ports.logErr err ] )
-        --OnSelectUser pos username ->
-        --    ( { model | nodeDoc = NodeDoc.selectUser pos username model.nodeDoc }, noOut )
-        --OnCancelUser pos ->
-        --    ( cancelUser pos model, noOut )
-        --OnShowLookupFs ->
-        --    ( openLookup model
-        --    , if not model.isLookupOpen then
-        --        out0 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
-        --      else
-        --        noOut
-        --    )
-        --OnCancelLookupFs ->
-        --    ( closeLookup model, noOut )
         LabelSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -1201,37 +1207,40 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map InviteInputMsg m) |> List.append cmds) out.gcmds
             )
 
-        --UserInputMsg msg ->
-        --    let
-        --        ( data, out ) =
-        --            UserInput.update apis msg model.userInput
-        --        cmd =
-        --            Cmd.none
-        --        ( cmds, _ ) =
-        --            mapGlobalOutcmds out.gcmds
-        --    in
-        --    ( { model | userInput = data }
-        --    , out2 (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append (cmd :: cmds)) out.gcmds
-        --    )
         CommentsMsg msg ->
             let
                 ( data, out ) =
                     Comments.update apis msg model.comments
 
-                nodeDoc =
+                ( nodeDoc, draftTimer, draftSaveCmd ) =
                     case out.result of
                         Just (PostChanged ( k, v )) ->
-                            --send (OnChangePost k v)
-                            NodeDoc.updatePost k v model.nodeDoc
+                            let
+                                newNodeDoc =
+                                    NodeDoc.updatePost k v model.nodeDoc
+                            in
+                            -- Schedule debounced draft save when message changes
+                            if k == "message" then
+                                let
+                                    newTimer =
+                                        model.draftSaveTimer + 1
+
+                                    time_delay =
+                                        ternary (v == "") 0 3500
+                                in
+                                ( newNodeDoc, newTimer, sendSleep (SaveDraftDelayed newTimer) time_delay )
+
+                            else
+                                ( newNodeDoc, model.draftSaveTimer, Cmd.none )
 
                         _ ->
-                            model.nodeDoc
+                            ( model.nodeDoc, model.draftSaveTimer, Cmd.none )
 
                 ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | comments = data, nodeDoc = nodeDoc }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds) out.gcmds
+            ( { model | comments = data, nodeDoc = nodeDoc, draftSaveTimer = draftTimer }
+            , out2 (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds)) out.gcmds
             )
 
         -- Confirm Modal
@@ -1258,20 +1267,39 @@ update_ apis message model =
             in
             ( { model | session = { session | user = LoggedIn uctx }, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
 
+        SaveDraftDelayed timerValue ->
+            -- Only save if this is the most recent scheduled save (debounce)
+            if timerValue == model.draftSaveTimer then
+                -- Read current message content (may have been modified by rich text ports)
+                let
+                    draftTitle =
+                        Dict.get "title" model.nodeDoc.form.post |> withDefault ""
+
+                    draftMessage =
+                        Dict.get "message" model.nodeDoc.form.post |> withDefault ""
+
+                    draft =
+                        TensionDraft draftTitle draftMessage ""
+                in
+                if draftMessage == "" then
+                    ( model, Out [] [ DoUpdateDraft ClearNewTension ] Nothing )
+
+                else
+                    ( model, Out [] [ DoUpdateDraft (SaveNewTension draft) ] Nothing )
+
+            else
+                ( model, noOut )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
-
-    --, Ports.lookupUserFromJs OnChangeUserLookup
-    --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
     ]
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
-                    --++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
                     ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
             else

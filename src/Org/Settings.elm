@@ -152,6 +152,9 @@ mapGlobalOutcmds gcmds =
                     DoMoveNode a b c ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )

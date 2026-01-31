@@ -32,7 +32,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRou
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Bulk.View exposing (mediaTension, viewPinnedTensions)
-import Codecs exposing (LookupResult, RecentActivityTab(..), WindowPos, nodeDecoder)
+import Codecs exposing (RecentActivityTab(..), WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -169,6 +169,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateTree tree ->
                         ( send (OnUpdateTree tree), Cmd.none )
+
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )

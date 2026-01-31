@@ -28,6 +28,7 @@ import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Comments as Comments exposing (OutType(..))
@@ -176,6 +177,9 @@ mapGlobalOutcmds gcmds =
                     DoMoveNode a b c ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -231,6 +235,7 @@ type alias Model =
     -- Common
     , refresh_trial : Int
     , session : SessionCommon
+    , draftSaveTimer : Int
     , comments : Comments.State
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -394,7 +399,14 @@ init global flags =
             , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) session.common
             , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
-            , comments = Comments.init focusid tid session.common
+            , draftSaveTimer = 0
+            , comments =
+                let
+                    maybeDraft =
+                        Dict.get tid session.common.drafts.comments
+                            |> Maybe.map .message
+                in
+                Comments.initWithDraft focusid tid session.common maybeDraft
             }
 
         refresh =
@@ -556,6 +568,8 @@ type Msg
     | LogErr String
     | ScrollToElement String
     | UpdateUctx UserCtx
+      -- Draft persistence
+    | SaveDraftDelayed Int
       -- Components
     | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
@@ -1269,6 +1283,26 @@ update global message model =
             , Cmd.none
             )
 
+        SaveDraftDelayed timerValue ->
+            -- Only save if this is the most recent scheduled save (debounce)
+            if timerValue == model.draftSaveTimer then
+                -- Read current message content (may have been modified by rich text ports)
+                let
+                    draftMessage =
+                        Comments.getCurrentMessage model.comments |> withDefault ""
+
+                    draft =
+                        CommentDraft draftMessage ""
+                in
+                if draftMessage == "" then
+                    ( model, Cmd.none, send (Global.UpdateDraft (ClearComment model.tensionid)) )
+
+                else
+                    ( model, Cmd.none, send (Global.UpdateDraft (SaveComment model.tensionid draft)) )
+
+            else
+                ( model, Cmd.none, Cmd.none )
+
         -- Components
         HelperBarMsg msg ->
             let
@@ -1451,10 +1485,29 @@ update global message model =
                         _ ->
                             ( model.tension_head, Cmd.none )
 
+                -- Schedule debounced draft save when comment content changes
+                ( draftTimer, draftSaveCmd ) =
+                    case out.result of
+                        Just (PostChanged ( "message", v )) ->
+                            let
+                                newTimer =
+                                    model.draftSaveTimer + 1
+
+                                time_delay =
+                                    ternary (v == "") 0 3500
+                            in
+                            ( newTimer, sendSleep (SaveDraftDelayed newTimer) time_delay )
+
+                        _ ->
+                            ( model.draftSaveTimer, Cmd.none )
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | comments = data, tension_head = tension_head }, out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch (gcmd :: gcmds) )
+            ( { model | comments = data, tension_head = tension_head, draftSaveTimer = draftTimer }
+            , (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> (::) draftSaveCmd) |> Cmd.batch
+            , Cmd.batch (gcmd :: gcmds)
+            )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
