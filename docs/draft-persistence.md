@@ -1,18 +1,6 @@
 # Draft Persistence
 
-Save user drafts (tension comments and new tension forms) to localStorage, restoring them across page navigation and browser close. Also includes a fix for checkbox interactions that previously could cause data loss.
-
-## Features
-
-### 1. OnCheckbox Backup Fix
-
-When a user clicks a checkbox in a comment's markdown while composing a new comment, the checkbox update no longer causes loss of the in-progress text.
-
-**How it works:**
-- Before submitting a checkbox change, the current `tension_form.post["message"]` is saved to `post_backup`
-- After `CommentPatchAck` succeeds in stealth mode, the backup is restored to the form
-
-### 2. Draft Persistence
+Save user drafts (tension comments and new tension forms) to localStorage, restoring them across page navigation and browser close.
 
 Drafts are automatically saved to localStorage and restored when returning to the same context.
 

@@ -123,8 +123,8 @@ type alias Model =
     -- Components
     , userInput : UserInput.State
 
-    -- Backup for checkbox operations
-    , post_backup : Maybe String
+    -- Backup for checkbox operations (stores comment id and message being edited)
+    , post_backup : Maybe { id : String, message : String }
 
     -- Common
     , session : SessionCommon
@@ -510,23 +510,20 @@ update_ apis message model =
                             in
                             LE.setAt n comment model.comments
 
-                        resetForm =
-                            initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
-
                         -- Restore backup if this was a stealth (checkbox) operation
-                        tension_form =
+                        resetForm =
                             case ( Dict.get "stealth" model.comment_form.post, model.post_backup ) of
                                 ( Just "true", Just backup ) ->
                                     let
                                         f =
-                                            model.tension_form
+                                            initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
                                     in
-                                    { f | post = Dict.insert "message" backup f.post }
+                                    { f | id = backup.id, post = Dict.insert "message" backup.message f.post }
 
                                 _ ->
-                                    model.tension_form
+                                    initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result, tension_form = tension_form, post_backup = Nothing }
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result, post_backup = Nothing }
                     , out0 [ Ports.bulma_driver comment.createdAt ]
                     )
 
@@ -652,9 +649,14 @@ update_ apis message model =
             case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
                 Just c ->
                     let
-                        -- Backup the current tension_form message before stealth submission
+                        -- Backup the current comment_form if user is editing a comment
                         backup =
-                            Dict.get "message" model.tension_form.post
+                            if model.comment_form.id /= "" then
+                                Dict.get "message" model.comment_form.post
+                                    |> Maybe.map (\msg -> { id = model.comment_form.id, message = msg })
+
+                            else
+                                Nothing
 
                         -- Simulate comment updated
                         form =
