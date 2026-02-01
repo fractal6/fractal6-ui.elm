@@ -51,6 +51,36 @@ html.has-modal-active, html.has-modal-active2 {
     z-index: 20;
 }
 
+// Dropdown animation - ease-out on open
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown.is-active .dropdown-menu {
+    animation: dropdownFadeIn 0.15s ease-out forwards;
+}
+
+// Accordion slide-down animation for tree menu expansions
+@keyframes accordionSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+    }
+}
+
 .dropdown-menu.is-right {
     left: auto;
     right: 0;

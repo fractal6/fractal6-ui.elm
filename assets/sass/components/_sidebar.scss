@@ -109,6 +109,8 @@
                 padding-left: 0.25em;
                 margin-right: 0.7em;
                 border-right: 1px solid var(--border-color);
+                // Accordion animation for expanded roles
+                animation: accordionSlideDown 0.2s ease-out forwards;
             }
         }
 
@@ -204,6 +206,8 @@
                 padding-left: 0.25em;
                 margin-right: 0.88em;
                 border-right: 1px solid var(--border-color-light);
+                // Accordion animation for expanded roles
+                animation: accordionSlideDown 0.2s ease-out forwards;
             }
         }
 

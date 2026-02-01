@@ -21,6 +21,7 @@
 #canvasLegend {
     position: absolute;
     z-index: 2;
+    animation: dropdownFadeIn 0.15s ease-out forwards;
     svg {
         margin-right: 4px;
     }

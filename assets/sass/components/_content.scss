@@ -435,6 +435,7 @@
         max-height: none;
         width: auto;
         height: auto;
+        animation: dropdownFadeIn 0.15s ease-out forwards;
         &.is-right {
             left: auto;
             right: 0;
