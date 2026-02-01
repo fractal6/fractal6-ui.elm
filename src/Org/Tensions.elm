@@ -72,6 +72,7 @@ import Task
 import Text as T
 import Time
 import Url exposing (Url)
+import Extra exposing (unwrap)
 
 
 
@@ -1598,11 +1599,18 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
+
+        org_id =
+            String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ]
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.tensions model.session.lexicon
+        case model.path_data of
+            Success path ->
+                unwrap org_id .name path.root ++ " · " ++ T.tensions_
+
+            _ ->
+                org_id ++ " · " ++  T.tensions_
+
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg

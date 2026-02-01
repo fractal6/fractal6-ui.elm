@@ -534,6 +534,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Overview"
   fr="Vue d’ensemble"
 
+[tensions_]
+  en="Tensions"
+  fr="Tensions"
+
 [tensions]
   en="{{_Tension_}}s"
   fr="{{_Tension_}}s"

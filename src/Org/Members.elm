@@ -759,11 +759,17 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
+
+        org_id =
+            String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ]
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.members
+        case model.path_data of
+            Success path ->
+                unwrap org_id .name path.root ++ " · " ++ T.members
+
+            _ ->
+                org_id ++ " · " ++ T.members
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg

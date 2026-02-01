@@ -941,7 +941,6 @@ port nodeFocusedFromJs : (( String, Int ) -> msg) -> Sub msg
 
 -- Send to Javascript
 
-
 port sendToggleGraphReverse : () -> Cmd msg
 
 
@@ -964,11 +963,17 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = model.tree_data
             }
+
+        org_id =
+            String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ]
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.overview
+        case model.path_data of
+            Success path ->
+                unwrap org_id .name path.root ++ " · " ++ T.overview
+
+            _ ->
+                org_id ++ " · " ++ T.overview
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
