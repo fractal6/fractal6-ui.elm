@@ -295,15 +295,11 @@ export const actions = {
 		$i.selectionStart =
 			$i.selectionEnd = start + replacer.length;
 
-        // Propagate change to Elm.
-        // Delay the input event dispatch to allow Elm to complete any pending re-renders.
-        // This prevents the input value from being overwritten by a stale model state.
-        setTimeout(() => {
-            $input.dispatchEvent(new Event('input', {
-                bubbles: true,
-                cancelable: true,
-            }));
-        }, 10);
+        // Immediately propagate change to Elm
+        $i.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
 
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
@@ -687,6 +683,8 @@ export const actions = {
         }
     },
     'RICH_TEXT': (app, session, msg) => {
+        // Markdown insert from the tool menu
+
         var target = msg.target;
         var c = msg.command;
         var $input = document.getElementById(target);
@@ -721,15 +719,11 @@ export const actions = {
             return
         }
 
-        // Propagate change to Elm.
-        // Delay the input event dispatch to allow Elm to complete any pending re-renders.
-        // This prevents the input value from being overwritten by a stale model state.
-        setTimeout(() => {
-            $input.dispatchEvent(new Event('input', {
-                bubbles: true,
-                cancelable: true,
-            }));
-        }, 10);
+        // Immediately propagate change to Elm
+        $input.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
     },
 }
 
@@ -797,13 +791,32 @@ function toggleMarkup(obj, mark, prefix, suffix) {
         //selection.addRange(range);
         //
         // Works...
+        // Save original start position before editing
+        var insertPos = obj.selectionStart;
+
         obj.setRangeText("");
         // @deprecated...
         document.execCommand("insertText", false, prefix + replacement + suffix);
 
         // Put caret at right position again
-        obj.selectionStart =
-            obj.selectionEnd = end + pad + prefix.length;
+        if (mark == "[") {
+            if (selection.length > 0) {
+                // Link with selection: cursor inside () to type URL → [text](|)
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + replacement.length + 1;
+            } else {
+                // Link without selection: cursor inside [] → [|]()
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
+            }
+        } else {
+            if (selection.length > 0) {
+                // Bold/italic with selection: cursor after closing marker → **text**|
+                var totalLength = prefix.length + replacement.length + suffix.length;
+                obj.selectionStart = obj.selectionEnd = insertPos + totalLength;
+            } else {
+                // Bold/italic without selection: cursor inside delimiters → **|**
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
+            }
+        }
     }
 }
 

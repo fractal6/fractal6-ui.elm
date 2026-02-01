@@ -324,6 +324,8 @@ if ($autofocuses.length > 0) {
     // "Rich Text" on textarea
     //
     // * Capture TAB to insert space
+    // * List continuation
+    // * Search box interactions
     //
     const $textareas = $doc.querySelectorAll('.textarea');
     if ($textareas.length > 0) {
@@ -511,8 +513,8 @@ function markupRichText(e, el, app) {
 
     const userTooltip = document.getElementById(el.id + "searchInput");
 
-    // Handle backspace/removing character
     if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        // Handle backspace/removing character
 
         var start = el.selectionStart;
 
@@ -527,7 +529,7 @@ function markupRichText(e, el, app) {
         }
 
 
-        // Handle update patter/input
+        // Handle update pattern/input
         if (e.key === "Enter") {
             // Send selected item
             e.preventDefault();
@@ -588,18 +590,18 @@ function markupRichText(e, el, app) {
 
         if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start - 1])) return
 
-        // Try to see if we are the begining of list pattern
-        var backward = el.value.slice(-6, start);
-        var isLineList = backward.search(/\n\s*[-\*] $|\n\s*[-\*] \[x \]$|\n\s*[0-9]+\. $/) >= 0
+        // Try to see if we are at the beginning of list/blockquote pattern
+        var backward = el.value.slice(Math.max(0, start - 12), start);
+        var isLineList = backward.search(/\n\s*[-\*\+] $|\n\s*- \[[x ]\] $|\n\s*[0-9]+\. $|\n\s*> $/) >= 0
         if (isLineList) {
-            // Assumes we are in a **list content**
+            // Assumes we are in a **list content** or blockquote
             // 2 space for sublist indentation
             var lastIndex = backward.lastIndexOf("\n");
-            var offset = 6 - lastIndex - 1;
+            var offset = backward.length - lastIndex - 1;
             replacer = "  ";
         } else {
             // /[^\S\r\n]/ -> all whitespace but without newline
-            var isLastLineList = el.value.slice(Math.max(0, start - 500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$/) >= 0
+            var isLastLineList = el.value.slice(Math.max(0, start - 500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*- \[[x ]\] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*> [^\n]*\n[^\S\r\n]*$/) >= 0
             if (isLastLineList) {
                 replacer = "  ";
                 //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
@@ -620,8 +622,41 @@ function markupRichText(e, el, app) {
         // put caret at right position again
         el.selectionStart =
             el.selectionEnd = start + replacer.length;
+
+        // Immediately propagate change to Elm
+        el.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
+    } else if (e.key == "Backspace" && !e.ctrlKey && !e.shiftKey) {
+        // Remove indentation level on empty indented list items
+        var start = el.selectionStart;
+        var end = el.selectionEnd;
+        if (start != end) return; // selection exists, let default behavior handle it
+
+        var subvalue = el.value.slice(Math.max(0, start - 100), start);
+
+        // Match indented empty list item: "\n  - " or "\n    1. " or "\n  > " etc.
+        var indentedListMatch = subvalue.match(/\n([ \t]{2,})([-\*\+] |\d+\. |> |- \[ \] )$/);
+
+        if (indentedListMatch) {
+            var indent = indentedListMatch[1];
+            var marker = indentedListMatch[2];
+
+            // Remove 2 spaces of indentation
+            if (indent.length >= 2) {
+                e.preventDefault();
+                var newIndent = indent.slice(2); // remove 2 spaces
+                var removeLen = indent.length + marker.length + 1; // +1 for \n
+                el.value = el.value.substring(0, start - removeLen + 1) +
+                           newIndent + marker +
+                           el.value.substring(end);
+                el.selectionStart = el.selectionEnd = start - 2;
+                el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+            }
+        }
     } else if (e.key == "Enter" && !e.ctrlKey && !e.shiftKey) {
-        // Insert list if inside list
+        // Insert list if inside list, or continue blockquote
         var start = el.selectionStart;
         var end = el.selectionEnd;
 
@@ -630,25 +665,37 @@ function markupRichText(e, el, app) {
         // /[^\S\r\n]/ -> all whitespace but without newline
         var subvalue = el.value.slice(Math.max(0, start - 500), start);
 
-        // Extract thre cursor line
-        var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$/)
+        // Extract the cursor line - includes ordered lists, unordered lists, checkboxes, and blockquotes
+        var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$|(^|\n)[^\S\r\n]*?> [^\n]*?$/)
         var replacer;
 
         if (currentLineStart >= 0) {
-            // list begins template
+            // list/blockquote begins template
             var currentLine = subvalue.slice(currentLineStart)
-            var s = currentLine.trimLeft().slice(0, 3)
+            // Capture leading whitespace for indentation preservation
+            var leadingWhitespace = currentLine.match(/^[\n]?([ \t]*)/)[1] || "";
+            var trimmedLine = currentLine.trimStart();
+            var s = trimmedLine.slice(0, 3)
+
+            // Build current marker for empty line comparison
+            var currentMarker;
             if (s == "- [") {
-                replacer = "\n" + "- [ ] ";
+                currentMarker = "- [ ]";
+                replacer = "\n" + leadingWhitespace + "- [ ] ";
+            } else if (s.slice(0, 2) == "> ") {
+                currentMarker = ">";
+                replacer = "\n" + leadingWhitespace + "> ";
             } else if (parseInt(s)) {
                 var i = parseInt(s)
-                replacer = "\n" + (i + 1) + ". ";
+                currentMarker = i + ".";
+                replacer = "\n" + leadingWhitespace + (i + 1) + ". ";
             } else {
-                replacer = "\n" + s[0] + " ";
+                currentMarker = s[0];
+                replacer = "\n" + leadingWhitespace + s[0] + " ";
             }
 
-            // remove if empty
-            if ((currentLine.trim() == replacer.trim()) && start == end) {
+            // remove if empty (line contains only the list marker)
+            if ((trimmedLine.trim() == currentMarker) && start == end) {
                 // Extract the cursor previous line
                 var previousLine = null
                 var previousLineEnd = subvalue.lastIndexOf("\n");
@@ -660,10 +707,13 @@ function markupRichText(e, el, app) {
                     previousLine = subvalue.slice(previousLineStart + 1, previousLineEnd);
                 }
 
-                if (previousLine && previousLine.substring(0, replacer.trim().length) == replacer.trim()) {
-                    start -= replacer.length;
+                // Calculate how much to remove (the empty list item)
+                var emptyItemLen = currentLine.length;
+                if (previousLine && previousLine.trimStart().startsWith(currentMarker.charAt(0))) {
+                    start -= emptyItemLen;
                     replacer = "\n\n";
                 } else {
+                    start -= emptyItemLen;
                     replacer = "\n";
                 }
             }
@@ -673,7 +723,6 @@ function markupRichText(e, el, app) {
 
         e.preventDefault();
 
-
         // set textarea value to: text before caret + tab + text after caret
         el.value = el.value.substring(0, start) +
             replacer + el.value.substring(end);
@@ -681,6 +730,12 @@ function markupRichText(e, el, app) {
         // put caret at right position again
         el.selectionStart =
             el.selectionEnd = start + replacer.length;
+
+        // Immediately propagate change to Elm
+        el.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
     }
     // Do not allow non-breaking space
     else if (e.key == " ") {
@@ -690,6 +745,16 @@ function markupRichText(e, el, app) {
             e.preventDefault();
             el.value = el.value.substring(0, start) +
                 " " + el.value.substring(end);
+
+            // put caret at right position
+            el.selectionStart =
+                el.selectionEnd = start + 1;
+
+            // Immediately propagate change to Elm
+            el.dispatchEvent(new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            }));
         }
     }
 }
