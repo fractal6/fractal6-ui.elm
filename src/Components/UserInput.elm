@@ -335,6 +335,9 @@ update_ apis message model =
                             "down" ->
                                 model.activePos + 1
 
+                            "tab" ->
+                                model.activePos + 1
+
                             _ ->
                                 model.activePos
                         )

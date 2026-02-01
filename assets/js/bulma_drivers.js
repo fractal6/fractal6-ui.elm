@@ -532,6 +532,11 @@ function markupRichText(e, el, app) {
             // Send selected item
             e.preventDefault();
             app.ports.selectActiveItemFromJs.send(null);
+        } else if (e.key === "Tab") {
+            // Handle tab button
+            e.preventDefault();
+            e.stopPropagation();
+            app.ports.arrowFromJs.send("tab");
         } else if (e.key === 'ArrowUp') {
             // Catch UP/DOWN arrows
             e.preventDefault();
