@@ -247,13 +247,23 @@
     }
 }
 
+// The tree-hinter uses a parent/child pattern to prevent hover flickering.
+// The parent (#tree-hinter) is the stable container, .hinter-zone handles hover detection,
+// and .hinter-tree/.half-circle are the animated visual elements.
 #tree-hinter {
     z-index: 5;
     position: fixed;
     height: 100%;
-    width: 20px;
+    width: 30px; // Larger stable zone to overlap with tree-menu appearance area
     top: calc(#{$navbar-height});
     left: 0;
+    pointer-events: none; // Parent doesn't capture events
+
+    .hinter-zone {
+        height: 100%;
+        width: 100%;
+        pointer-events: auto; // Only the zone captures hover events
+    }
 
     .hinter-tree {
         height: 100%;
@@ -273,22 +283,26 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-
-            // Translate transition logics
-            // @DEBUG: couldn"t make it work !
             transform: translateX(0);
-            transition: transform 0.3s ease;
-            transition-delay: 0.5s;
+            transition: transform 0.3s ease, border-color 0.2s ease;
             z-index: 1;
-            &.translated {
-                transform: translateX(-50px);
-            }
 
             i {
                 margin-left: 25px; /* Adjust to center the icon in the visible part */
                 color: var(--border-color-light);
                 font-size: 18px;
+                transition: color 0.2s ease;
             }
+        }
+    }
+
+    // Hover effect on the zone animates the child visual element
+    .hinter-zone:hover .half-circle {
+        border-color: var(--link);
+        transform: translateX(5px);
+
+        i {
+            color: var(--link);
         }
     }
 }

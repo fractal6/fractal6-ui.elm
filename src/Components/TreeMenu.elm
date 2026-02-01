@@ -641,9 +641,13 @@ view op (State model) =
             ]
 
     else
-        div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
-            [ div [ class "hinter-tree is-hidden-touch" ]
-                [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+        -- Use a parent wrapper for hover detection to prevent flickering.
+        -- The hover listener is on the stable parent, visual effects are on the child.
+        div [ id "tree-hinter", class "is-hidden-mobile" ]
+            [ div [ class "hinter-zone", onMouseEnter (OnToggleHover True) ]
+                [ div [ class "hinter-tree is-hidden-touch" ]
+                    [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+                ]
             ]
 
 
