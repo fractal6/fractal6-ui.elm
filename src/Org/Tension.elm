@@ -403,8 +403,7 @@ init global flags =
             , comments =
                 let
                     maybeDraft =
-                        Dict.get tid session.common.drafts.comments
-                            |> Maybe.map .message
+                        Dict.get tid session.data.drafts.comments
                 in
                 Comments.initWithDraft focusid tid session.common maybeDraft
             }

@@ -51,9 +51,18 @@ type DraftUpdate
 1. **Components** schedule debounced saves via `SaveDraftDelayed timer` (timer only, no content)
 2. **Handlers** read current content from model when timer fires, then emit `DoUpdateDraft` GlobalCmd
 3. **Page-level `mapGlobalOutcmds`** forwards to `Global.UpdateDraft`
-4. **Global.elm** processes the update and persists to localStorage
+4. **Global.elm** processes the update and persists to localStorage via `Ports.saveDrafts`
 
 Note: Content is read at fire-time (not schedule-time) to capture any modifications made by rich text ports.
+
+### Draft Restoration
+
+Drafts are restored by passing them directly from `global.session.data.drafts` when initializing components:
+
+- **Tension page**: Passes draft directly to `Comments.initWithDraft` on init
+- **CardPanel**: Looks up draft from session when opening, passes to `Comments.initWithDraft`
+
+This direct approach eliminates the need for port-based propagation between components.
 
 ### GlobalCmd (`src/Session.elm`)
 
@@ -87,10 +96,46 @@ case model.session.drafts.newTension of
 ```elm
 let
     maybeDraft =
-        Dict.get tid session.common.drafts.comments
-            |> Maybe.map .message
+        Dict.get tid session.data.drafts.comments
 in
 Comments.initWithDraft focusid tid session.common maybeDraft
+```
+
+**CardPanel** (`src/Org/Project.elm`):
+```elm
+OnOpenCardPanel card ->
+    let
+        maybeDraft =
+            case card.card of
+                CardTension t ->
+                    Dict.get t.id global.session.data.drafts.comments
+
+                _ ->
+                    Nothing
+    in
+    ( model
+    , Cmd.map CardPanelMsg (send (CardPanel.OnOpen card maybeDraft))
+    , Cmd.none
+    )
+```
+
+### Comments.initWithDraft
+
+The `Comments.initWithDraft` function accepts the full `CommentDraft` record:
+
+```elm
+initWithDraft : String -> String -> SessionCommon -> Maybe CommentDraft -> State
+initWithDraft nameid tensionid session maybeDraft =
+    let
+        model = initModel nameid tensionid session
+        tension_form =
+            case maybeDraft of
+                Just draft ->
+                    { model.tension_form | post = Dict.insert "message" draft.message model.tension_form.post }
+                Nothing ->
+                    model.tension_form
+    in
+    State { model | tension_form = tension_form }
 ```
 
 ### Saving drafts (debounced)
@@ -145,6 +190,22 @@ SaveDraftDelayed timerValue ->
         ( model, Cmd.none, Cmd.none )
 ```
 
+**CardPanel comment** (`src/Components/CardPanel.elm`):
+```elm
+SaveDraftDelayed timerValue ->
+    if timerValue == model.draftSaveTimer then
+        let
+            draftMessage = Comments.getCurrentMessage model.comments |> withDefault ""
+            draft = CommentDraft draftMessage ""
+        in
+        if draftMessage == "" then
+            ( model, out1 [ DoUpdateDraft (ClearComment model.tension_form.id) ] )
+        else
+            ( model, out1 [ DoUpdateDraft (SaveComment model.tension_form.id draft) ] )
+    else
+        ( model, noOut )
+```
+
 ### Clearing drafts on submission
 
 **New tension**:
@@ -173,9 +234,11 @@ DoUpdateDraft draftUpdate ->
 | `src/Session.elm` | GlobalCmd (DoUpdateDraft) |
 | `src/Ports.elm` | saveDrafts function |
 | `src/Global.elm` | UpdateDraft handler, draft rotation logic |
-| `src/Components/Comments.elm` | post_backup, initWithDraft, getCurrentMessage, ClearComment emit |
+| `src/Components/Comments.elm` | initWithDraft, getCurrentMessage, ClearComment emit |
+| `src/Components/CardPanel.elm` | Draft load from session on OnOpen, SaveDraftDelayed |
 | `src/Form/NewTension.elm` | Draft load/save for new tensions |
 | `src/Org/Tension.elm` | Draft load/save for tension comments |
+| `src/Org/Project.elm` | OnOpenCardPanel passes draft from session to CardPanel |
 | `src/Org/*.elm` | mapGlobalOutcmds forwards DoUpdateDraft |
 | `public/index.js` | Load drafts from localStorage on init |
 | `assets/js/ports.js` | SAVE_DRAFTS action handler |
@@ -200,8 +263,9 @@ DoUpdateDraft draftUpdate ->
 
 ## Performance Considerations
 
-- **Debounced saves**: TIME_DELAYms delay prevents writes on every keystroke
+- **Debounced saves**: 3.5 second delay prevents writes on every keystroke
 - **Lazy rotation**: Only checks comment draft count when adding a new one
 - **Minimal port traffic**: Single JSON object per save operation
 - **Session sync**: Both SessionData and SessionCommon are updated to avoid stale reads
 - **Type-safe**: DraftUpdate union type ensures correct usage at compile time
+- **Direct restoration**: Drafts are passed directly from session on component init (no port propagation needed)

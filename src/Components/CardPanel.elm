@@ -28,6 +28,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewTensionLight, viewUsers)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -98,6 +99,7 @@ type alias Model =
     , session : SessionCommon
     , mobileConf : SessionCommon
     , refresh_trial : Int -- use to refresh user token
+    , draftSaveTimer : Int
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
     }
@@ -129,6 +131,7 @@ initModel path focus session =
     , session = session
     , mobileConf = { session | screen = { w = 1, h = 1 } }
     , refresh_trial = 0
+    , draftSaveTimer = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , commonOp = CommonMsg NoMsg LogErr
     }
@@ -157,7 +160,7 @@ resetModel model =
 
 
 type Msg
-    = OnOpen ProjectCard
+    = OnOpen ProjectCard (Maybe CommentDraft)
     | OnOutsideClickClose
     | OnClose
     | OnSetPath (GqlData LocalGraph)
@@ -200,6 +203,7 @@ type Msg
     | DoLabelEdit
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | CommentsMsg Comments.Msg
+    | SaveDraftDelayed Int
 
 
 type alias Out =
@@ -244,18 +248,27 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnOpen card ->
+        OnOpen card maybeDraft ->
             let
                 form =
                     model.tension_form
             in
             case card.card of
                 CardTension a ->
-                    ( { model | isOpen = True, card = card, tension_form = { form | id = a.id } }
+                    let
+                        newComments =
+                            Comments.initWithDraft model.node_focus.nameid a.id model.session maybeDraft
+                    in
+                    ( { model
+                        | isOpen = True
+                        , card = card
+                        , tension_form = { form | id = a.id }
+                        , comments = newComments
+                        , draftSaveTimer = 0
+                      }
                     , out0
                         [ sendSleep OnOutsideClickClose 500
                         , send (OnQueryTension a.id)
-                        , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
                         , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
                         , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
                         ]
@@ -660,10 +673,43 @@ update_ apis message model =
 
                         _ ->
                             model.tension_result
+
+                ( draftTimer, draftSaveCmd ) =
+                    case out.result of
+                        Just (PostChanged ( "message", v )) ->
+                            let
+                                newTimer =
+                                    model.draftSaveTimer + 1
+
+                                time_delay =
+                                    ternary (v == "") 0 3500
+                            in
+                            ( newTimer, sendSleep (SaveDraftDelayed newTimer) time_delay )
+
+                        _ ->
+                            ( model.draftSaveTimer, Cmd.none )
             in
-            ( { model | comments = data, tension_result = tension_result }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m)) out.gcmds
+            ( { model | comments = data, tension_result = tension_result, draftSaveTimer = draftTimer }
+            , Out (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m))) out.gcmds Nothing
             )
+
+        SaveDraftDelayed timerValue ->
+            if timerValue == model.draftSaveTimer then
+                let
+                    draftMessage =
+                        Comments.getCurrentMessage model.comments |> withDefault ""
+
+                    draft =
+                        CommentDraft draftMessage ""
+                in
+                if draftMessage == "" then
+                    ( model, out1 [ DoUpdateDraft (ClearComment model.tension_form.id) ] )
+
+                else
+                    ( model, out1 [ DoUpdateDraft (SaveComment model.tension_form.id draft) ] )
+
+            else
+                ( model, noOut )
 
 
 subscriptions : State -> List (Sub Msg)

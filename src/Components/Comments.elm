@@ -43,7 +43,7 @@ import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, User
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
-import Codecs exposing (DraftUpdate(..))
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -162,20 +162,20 @@ init nameid tensionid session =
     initModel nameid tensionid session |> State
 
 
-initWithDraft : String -> String -> SessionCommon -> Maybe String -> State
-initWithDraft nameid tensionid session maybeDraftMessage =
+initWithDraft : String -> String -> SessionCommon -> Maybe CommentDraft -> State
+initWithDraft nameid tensionid session maybeDraft =
     let
         model =
             initModel nameid tensionid session
 
         tension_form =
-            case maybeDraftMessage of
-                Just msg ->
+            case maybeDraft of
+                Just draft ->
                     let
                         f =
                             model.tension_form
                     in
-                    { f | post = Dict.insert "message" msg f.post }
+                    { f | post = Dict.insert "message" draft.message f.post }
 
                 Nothing ->
                     model.tension_form

@@ -384,8 +384,10 @@ saveDrafts store =
         }
 
 
-{-| Used to propage change in components
--}
+
+-- Session propagation (to components)
+
+
 updateNotif : NotifCount -> Cmd msg
 updateNotif notif =
     outgoing
@@ -411,7 +413,6 @@ propagatePath targets =
                 [ ( "data", JE.list JE.string targets )
                 ]
         }
-
 
 
 --- Modal
