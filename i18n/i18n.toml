@@ -2861,6 +2861,22 @@ Ce document peut être modifié ultérieurement au fur et à mesure que l’orga
 
 
 
+[discard]
+  en="Discard"
+  fr="Abandonner"
+
+[saveAsDraft]
+  en="Save as draft"
+  fr="Enregistrer comme brouillon"
+
+[keepEditing]
+  en="Keep editing"
+  fr="Continuer l'édition"
+
+[confirmUnsavedDraft]
+  en="You have unsaved changes. What would you like to do?"
+  fr="Vous avez des modifications non enregistrées. Que souhaitez-vous faire ?"
+
 [newOwnerMessageWarning]
   en="""You are about to add a new owner.
 

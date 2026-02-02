@@ -197,10 +197,11 @@ $(RELEASE_BUILD_DIRS): releases/%:
 assets: icon css js
 
 install:
-	# Node.js
-	npm install
-	# Python
-	pip install -r requirements.txt
+	# Check if .envrc exists
+	@if [ ! -f .envrc ]; then echo "Error: .envrc file not found"; exit 1; fi
+	npm install # Node dependencies
+	pip install -r requirements.txt # Python dependencies
+	./i18n.py gen -l fr -w  # generate the Text.elm from i18n
 
 
 elm-spa:

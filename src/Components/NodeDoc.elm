@@ -1140,7 +1140,7 @@ viewBlobButtons blob_type isSendable isLoading op =
 
             _ ->
                 text ""
-        , div [ class "field is-grouped is-grouped-right" ]
+        , div [ class "field is-grouped is-grouped-right mt-1" ]
             [ div [ class "control" ]
                 [ div [ class "buttons" ]
                     [ button [ class "button", onClick op.onCancelBlob ]

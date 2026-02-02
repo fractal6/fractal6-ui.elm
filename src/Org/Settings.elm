@@ -1680,7 +1680,7 @@ viewRoleAddBox model =
             , onAddPolicies = AddPolicies
             , data = model.nodeDoc
             }
-        , div [ class "field is-grouped is-grouped-right" ]
+        , div [ class "field is-grouped is-grouped-right mt-1" ]
             [ p [ class "control buttons" ]
                 [ button
                     ([ class "button is-success is-small"

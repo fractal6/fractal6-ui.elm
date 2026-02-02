@@ -115,6 +115,7 @@ type alias Model =
     , session : SessionCommon
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
+    , modal_confirm3_link : String
     , commonOp : CommonMsg Msg
 
     -- Components
@@ -208,6 +209,7 @@ initModel session =
     , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , modal_confirm3_link = ""
     , commonOp = CommonMsg NoMsg LogErr
 
     -- Components
@@ -564,6 +566,11 @@ type Msg
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
+      -- 3-choice Confirm Modal
+    | DoModalConfirm3Open String
+    | DoModalConfirm3Discard
+    | DoModalConfirm3SaveDraft
+    | DoModalConfirm3KeepEditing
       -- Common
     | NoMsg
     | LogErr String
@@ -827,18 +834,13 @@ update_ apis message model =
         OnReset ->
             ( resetModel model, noOut )
 
-        OnCloseSafe link onCloseTxt ->
+        OnCloseSafe link _ ->
             if canExitSafe model then
                 ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
 
             else
                 ( model
-                , out0
-                    [ send
-                        (DoModalConfirmOpen (OnClose { reset = True, link = link })
-                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
-                        )
-                    ]
+                , out0 [ send (DoModalConfirm3Open link) ]
                 )
 
         OnSwitchTab tab ->
@@ -1253,6 +1255,41 @@ update_ apis message model =
         DoModalConfirmSend ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
+        -- 3-choice Confirm Modal
+        DoModalConfirm3Open link ->
+            ( { model
+                | modal_confirm = ModalConfirm.open NoMsg { message = Nothing, txts = [ ( T.confirmUnsavedDraft, "" ) ] } model.modal_confirm
+                , modal_confirm3_link = link
+              }
+            , noOut
+            )
+
+        DoModalConfirm3Discard ->
+            -- Close modal, reset form, do NOT save draft
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
+            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft ClearNewTension ] Nothing
+            )
+
+        DoModalConfirm3SaveDraft ->
+            -- Save draft via DoUpdateDraft, then close
+            let
+                draftTitle =
+                    Dict.get "title" model.nodeDoc.form.post |> withDefault ""
+
+                draftMessage =
+                    Dict.get "message" model.nodeDoc.form.post |> withDefault ""
+
+                draft =
+                    TensionDraft draftTitle draftMessage ""
+            in
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
+            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft (SaveNewTension draft) ] Nothing
+            )
+
+        DoModalConfirm3KeepEditing ->
+            -- Close confirm modal only, stay in form
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
+
         -- Common
         NoMsg ->
             ( model, noOut )
@@ -1334,7 +1371,12 @@ view tree_data path_data (State model) =
     if model.isActive2 then
         div []
             [ viewModal tree_data (State model)
-            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , ModalConfirm.view3
+                { data = model.modal_confirm
+                , onDiscard = DoModalConfirm3Discard
+                , onSaveDraft = DoModalConfirm3SaveDraft
+                , onKeepEditing = DoModalConfirm3KeepEditing
+                }
             ]
 
     else

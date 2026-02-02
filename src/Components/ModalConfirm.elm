@@ -67,6 +67,14 @@ type alias Op msg =
     }
 
 
+type alias Op3 msg =
+    { data : ModalConfirm msg
+    , onDiscard : msg
+    , onSaveDraft : msg
+    , onKeepEditing : msg
+    }
+
+
 view : Op msg -> Html msg
 view op =
     div
@@ -98,7 +106,7 @@ viewConfirm op =
                 Nothing ->
                     text ""
             , op.data.mess.txts |> List.map (\( x, y ) -> span [ class y ] [ text x ]) |> List.intersperse (text " ") |> span []
-            , div [ class "field is-grouped is-grouped-right" ]
+            , div [ class "field is-grouped is-grouped-right mt-2" ]
                 [ div [ class "buttons" ]
                     [ button
                         [ class "button is-small is-success", onClick op.onConfirm ]
@@ -106,6 +114,54 @@ viewConfirm op =
                     , button
                         [ class "button is-small", onClick (op.onClose { reset = True, link = "" }) ]
                         [ text T.cancel ]
+                    ]
+                ]
+            ]
+        ]
+
+
+view3 : Op3 msg -> Html msg
+view3 op =
+    div
+        [ id "confirmModal"
+        , class "modal modal-fx-fadeIn"
+        , classList [ ( "is-active", op.data.isOpen ) ]
+        , attribute "data-modal-close" "closeModalConfirmFromJs"
+        ]
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "confirmModal"
+            , onClick op.onKeepEditing
+            ]
+            []
+        , div [ class "modal-content" ]
+            [ viewConfirm3 op ]
+        , button [ class "modal-close is-large", onClick op.onKeepEditing ] []
+        ]
+
+
+viewConfirm3 : Op3 msg -> Html msg
+viewConfirm3 op =
+    div [ class "modal-card" ]
+        [ div [ class "modal-card-body" ]
+            [ case op.data.mess.message of
+                Just m ->
+                    showMsg "0" "is-info" "icon-info" (Tuple.first m) (Tuple.second m)
+
+                Nothing ->
+                    text ""
+            , op.data.mess.txts |> List.map (\( x, y ) -> span [ class y ] [ text x ]) |> List.intersperse (text " ") |> span []
+            , div [ class "field is-grouped is-grouped-right mt-2" ]
+                [ div [ class "buttons" ]
+                    [ button
+                        [ class "button is-small is-info", onClick op.onSaveDraft ]
+                        [ text T.saveAsDraft ]
+                    , button
+                        [ class "button is-small", onClick op.onKeepEditing ]
+                        [ text T.keepEditing ]
+                    , button
+                        [ class "button is-small is-danger", onClick op.onDiscard ]
+                        [ text T.discard ]
                     ]
                 ]
             ]
