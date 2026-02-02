@@ -3,9 +3,11 @@
 @use "../shared" as *;
 @use "../fractal6-variables" as *;
 
+
+
 /*
  *
- * Animations and State Classes
+ * Animations
  *
  */
 
@@ -24,93 +26,30 @@
     to { opacity: 0; }
 }
 
-// @fix bulma
-.is-active {
-    .tag  {
-        font-weight: 500;
+// Accordion slide-down animation for tree menu expansions
+@keyframes accordionSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
     }
 }
 
-.tag.is-w, .tag.button-light {
-    border: 2px solid transparent;
-    &:hover {
-        cursor: pointer;
-        border-color: var(--link);
+// Dropdown animation - ease-out on open
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
     }
-}
-
-.is-w:hover:not(.tag) {
-    cursor: pointer;
-    color: var(--text-strong) !important;
-    &.content, .content, &.content strong {
-        color: var(--link) !important;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-}
-
-.is-h:hover {
-    background-color: var(--background-hover-discrete);
-}
-
-// is-w + is-h
-.button-light:not(.tag), .button-light > i {
-    &:hover, & > a:hover {
-        cursor: pointer !important;
-        color: var(--bulma-text-bold) !important;
-    }
-
-    @each $name, $pair in $colors {
-        &.is-#{$name} {
-            color: var(--#{$name});
-            &:hover, & > a:hover {
-                cursor: pointer !important;
-                color: var(--bulma-#{$name}-bold) !important;
-            }
-        }
-    }
-
-    &:active {
-        background-color: inherit;
-    }
-}
-
-.is-event-badge {
-    color: var(--link);
-    &.badge {
-        background-color: var(--link);
-        right: 3px !important;
-    }
-
-    @include touch { // @debug: why it goes up on mobile ?
-      top: 8px !important;
-    }
-}
-.is-event-badge-bg {
-    .tag {
-        background-color: var(--link) !important;
-    }
-}
-
-.is-contract-badge {
-    color: var(--warning);
-    &.badge {
-        background-color: var(--warning);
-        left: 3px !important;
-    }
-
-    @include touch { // @debug: why it goes up on mobile ?
-      top: 8px !important;
-    }
-}
-.is-contract-badge-bg {
-    .tag {
-        color: $dark !important;
-        background-color: var(--warning) !important;
-    }
-}
-
-.is-success-light { // @deprecated
-    background-color: var(--success-light);
-    color: color.adjust($dark, $lightness: 10%);
 }
 
 /*
@@ -119,7 +58,7 @@
 
 .slider {
     @include tablet {
-        transition: transform .5s ease, opacity .5s ease;
+        transition: transform .5s ease-out, opacity .5s ease-out;
         &.is-slide-left {
             -webkit-transform: translateX(-100%);
             transform: translateX(-100%);

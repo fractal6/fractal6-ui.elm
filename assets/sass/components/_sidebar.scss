@@ -17,7 +17,7 @@
     width: $orga-menu-width;
     top: calc(#{$navbar-height});
     left: 0;
-    transition: width .2s ease;
+    transition: width .2s ease-out;
     background-color: var(--orga-menu-background-color);
     border-right: $border-size-small solid var(--border-color-light);
 
@@ -46,7 +46,7 @@
     padding-left: 5px;
     padding-right: 5px;
     border-left: solid 4px var(--orga-menu-background-color);
-    transition: top,height .2s ease;
+    transition: top,height .2s ease-out;
 
     &:hover {
         border-left: solid 4px var(--text) !important;
@@ -72,7 +72,7 @@
     width: $tree-menu-width;
     top: calc(#{$navbar-height});
     left: 0;
-    transition: width .2s ease;
+    transition: width .2s ease-out;
     background-color: var(--tree-menu-background-color);
     border-right: $border-size-small solid var(--border-color-light);
 
@@ -130,7 +130,7 @@
 
 .treeMenu {
     padding: .6em .5em;
-    transition: top,height .2s ease;
+    transition: top,height .2s ease-out;
 
     &.pt-0 {
         padding-top: 0.25em !important;
@@ -238,7 +238,7 @@
     width: 0;
     top: calc(#{$navbar-height});
     left: 0;
-    transition: width .2s ease;
+    transition: width .2s ease-out;
     background-color: var(--tree-menu-background-color);
     box-shadow: inset -1px 0 0 var(--border-color-light);
     &:hover::after {
@@ -263,12 +263,6 @@
     left: 0;
     pointer-events: none; // Parent doesn't capture events
 
-    .hinter-zone {
-        height: 100%;
-        width: 100%;
-        pointer-events: auto; // Only the zone captures hover events
-    }
-
     .hinter-tree {
         height: 100%;
         width: 5px;
@@ -288,16 +282,22 @@
             align-items: center;
             justify-content: flex-start;
             transform: translateX(0);
-            transition: transform 0.3s ease, border-color 0.2s ease;
+            transition: transform 0.3s ease-out, border-color 0.2s ease-out;
             z-index: 1;
 
             i {
                 margin-left: 25px; /* Adjust to center the icon in the visible part */
                 color: var(--border-color-light);
                 font-size: 18px;
-                transition: color 0.2s ease;
+                transition: color 0.2s ease-out;
             }
         }
+    }
+
+    .hinter-zone {
+        height: 100%;
+        width: 18px; // Reduced hover trigger zone (was 100% = 30px) @debug: do not change the half-circle trigger zone...?
+        pointer-events: auto; // Only the zone captures hover events
     }
 
     // Hover effect on the zone animates the child visual element
@@ -331,7 +331,7 @@
 
     top: calc(#{$navbar-height});
     right: 0;
-    transition: all .333s ease;
+    transition: all .33s ease-out;
     background-color: var(--orga-menu-background-color);
     border-left: $border-size solid var(--border-color);
 
