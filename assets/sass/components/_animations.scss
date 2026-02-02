@@ -69,3 +69,8 @@
         }
     }
 }
+
+// Subtle fade-in for new comments and events in conversation thread
+.comments > div > .media {
+    animation: fadeIn 0.25s ease-out;
+}
