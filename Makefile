@@ -196,6 +196,12 @@ $(RELEASE_BUILD_DIRS): releases/%:
 
 assets: icon css js
 
+setup_wortree:
+	path_to_main=$$(git worktree list | head -n1 | awk '{print $$1}')
+	cp $$path_to_main/.envrc .
+	cp $$path_to_main/.CLAUDE.md .
+	cp -r $$path_to_main/.claude .
+
 install:
 	# Check if .envrc exists
 	@if [ ! -f .envrc ]; then echo "Error: .envrc file not found"; exit 1; fi
