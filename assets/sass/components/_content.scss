@@ -322,7 +322,7 @@
         min-width: 300px;
     }
     @include touch {
-        min-width: 200px;
+        min-width: 250px;
     }
 
     .control {
@@ -338,6 +338,20 @@
 .is-reversed > .dropList {
     bottom: 2rem;
 }
+
+// Better positioning when is-reversed is on the wrapper containing the button
+.panel-selector-wrapper {
+    position: relative;
+    display: inline-block;
+
+    > .is-reversed {
+        position: absolute;
+        bottom: calc(100% - 1.5rem);  // Position slightly above the button
+        left: 0;
+        z-index: 25;
+    }
+}
+
 
 .panel {
     .panel-heading {

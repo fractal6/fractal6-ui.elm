@@ -429,27 +429,29 @@ view op (State model) =
 
 viewNew : Op -> State -> Html Msg
 viewNew op (State model) =
-    div []
-        [ div [ id id_target_name, class "is-reversed" ]
-            [ if model.isOpen then
-                let
-                    selectedAssignees =
-                        List.concatMap
-                            (\l ->
-                                List.filter (\u -> l.username == u.username) (withDefaultData [] model.assignees_data)
-                            )
-                            op.selectedAssignees
-                in
-                view_ { op | selectedAssignees = selectedAssignees } model
+    span []
+        [ span [ class "panel-selector-wrapper" ]
+            [ div [ id id_target_name, class "is-reversed" ]
+                [ if model.isOpen then
+                    let
+                        selectedAssignees =
+                            List.concatMap
+                                (\l ->
+                                    List.filter (\u -> l.username == u.username) (withDefaultData [] model.assignees_data)
+                                )
+                                op.selectedAssignees
+                    in
+                    view_ { op | selectedAssignees = selectedAssignees } model
 
-              else
-                text ""
+                  else
+                    text ""
+                ]
+            , div
+                [ class "button is-small mr-2"
+                , onClick (OnOpen op.targets)
+                ]
+                [ A.icon1 "icon-1x icon-user" "", text T.assignees ]
             ]
-        , div
-            [ class "button is-small mr-2"
-            , onClick (OnOpen op.targets)
-            ]
-            [ A.icon1 "icon-1x icon-user" "", text T.assignees ]
         , if List.length op.selectedAssignees > 0 then
             viewUsers False op.selectedAssignees
 

@@ -459,19 +459,21 @@ view op (State model) =
 
 viewNew : Op -> State -> Html Msg
 viewNew op (State model) =
-    div []
-        [ div [ id id_target_name, class "is-reversed" ]
-            [ if model.isOpen then
-                view_ True op model
+    span []
+        [ span [ class "panel-selector-wrapper" ]
+            [ div [ id id_target_name, class "is-reversed" ]
+                [ if model.isOpen then
+                    view_ True op model
 
-              else
-                text ""
+                  else
+                    text ""
+                ]
+            , div
+                [ class "button is-small mr-2"
+                , onClick (OnOpen op.targets Nothing)
+                ]
+                [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
             ]
-        , div
-            [ class "button is-small  mr-2"
-            , onClick (OnOpen op.targets Nothing)
-            ]
-            [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
         , if List.length op.selectedLabels > 0 then
             viewLabels Nothing op.selectedLabels
 
