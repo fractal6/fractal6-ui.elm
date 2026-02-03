@@ -968,7 +968,7 @@ i.va {
     top: calc(#{$navbar-height} + 0.33em);
     left: 50%;
     -webkit-transform: translateX(-50%);
-    transform: translateX(-20%) translateY(0%);
+    transform: translateX(-50%);
     max-width: 50%;
     min-width: 250px;
     z-index: 9999; // Ensure a high z-index value to place the element on top

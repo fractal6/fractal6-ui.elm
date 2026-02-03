@@ -32,7 +32,7 @@ import Text as T
 showMsg : String -> String -> String -> String -> String -> Html msg
 showMsg id_ cls icon header message =
     if message == "" then
-        div [ class ("f6-help-message notification p-4 m-0 mb-2 is-size-7 " ++ cls) ] [ renderMarkdown "" (" <i class=\"" ++ icon ++ "\"></i> <i class=\"is-space\"></i> " ++ header) ]
+        div [ class ("f6-help-message notification p-4 m-0 mb-4 is-size-7 " ++ cls) ] [ renderMarkdown "" (" <i class=\"" ++ icon ++ "\"></i> <i class=\"is-space\"></i> " ++ header) ]
 
     else
         let
