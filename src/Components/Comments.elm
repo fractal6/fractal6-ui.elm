@@ -43,7 +43,7 @@ import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, User
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
-import Codecs exposing (DraftUpdate(..))
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -162,20 +162,20 @@ init nameid tensionid session =
     initModel nameid tensionid session |> State
 
 
-initWithDraft : String -> String -> SessionCommon -> Maybe String -> State
-initWithDraft nameid tensionid session maybeDraftMessage =
+initWithDraft : String -> String -> SessionCommon -> Maybe CommentDraft -> State
+initWithDraft nameid tensionid session maybeDraft =
     let
         model =
             initModel nameid tensionid session
 
         tension_form =
-            case maybeDraftMessage of
-                Just msg ->
+            case maybeDraft of
+                Just draft ->
                     let
                         f =
                             model.tension_form
                     in
-                    { f | post = Dict.insert "message" msg f.post }
+                    { f | post = Dict.insert "message" draft.message f.post }
 
                 Nothing ->
                     model.tension_form
@@ -1309,22 +1309,25 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
         line_len =
             List.length <| String.lines message
 
+        -- Calculate max rows based on ~75% of screen height
+        -- Assuming ~30px per line (font + padding)
+        --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile session.screen then
                 if isModal then
-                    ( 4, 2 )
+                    ( session.screen.h // 2 // 38, 2 )
 
                 else
-                    ( 6, 4 )
+                    ( session.screen.h* 2 // 3 // 38, 4 )
 
             else if isModal then
-                ( 10, 4 )
+                ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if targetid == "commentContractInput" then
-                ( 15, 4 )
+                ( session.screen.h * 5 // 6 // 38, 4 )
 
             else
-                ( 15, 6 )
+                ( session.screen.h * 5 // 6 // 38, 6 )
 
         onChangePost =
             if String.startsWith "update" targetid then

@@ -39,6 +39,7 @@ import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu
+import Dict
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -140,7 +141,7 @@ mapGlobalOutcmds gcmds =
                         ( [ send <| OpenTensionPane a ], Cmd.none )
 
                     DoOpenCardPanel a ->
-                        ( [ Cmd.map CardPanelMsg (send (CardPanel.OnOpen a)) ], Cmd.none )
+                        ( [ send (OnOpenCardPanel a) ], Cmd.none )
 
                     DoToggleTreeMenu ->
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
@@ -303,6 +304,7 @@ type Msg
     | GotProject (GqlData ProjectData) -- Rest
     | OpenTensionPane (Maybe ColTarget)
     | OnClearBoardResult
+    | OnOpenCardPanel ProjectCard
       -- Common
     | NoMsg
     | LogErr String
@@ -413,6 +415,21 @@ update global message model =
 
         OnClearBoardResult ->
             ( model, Cmd.map BoardMsg (send Board.OnClearBoardResult), Cmd.none )
+
+        OnOpenCardPanel card ->
+            let
+                maybeDraft =
+                    case card.card of
+                        CardTension t ->
+                            Dict.get t.id global.session.data.drafts.comments
+
+                        _ ->
+                            Nothing
+            in
+            ( model
+            , Cmd.map CardPanelMsg (send (CardPanel.OnOpen card maybeDraft))
+            , Cmd.none
+            )
 
         -- Common
         NoMsg ->
@@ -618,8 +635,7 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    []
-        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
+    (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
