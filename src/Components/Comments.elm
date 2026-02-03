@@ -1309,22 +1309,25 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
         line_len =
             List.length <| String.lines message
 
+        -- Calculate max rows based on ~75% of screen height
+        -- Assuming ~30px per line (font + padding)
+        --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile session.screen then
                 if isModal then
-                    ( 4, 2 )
+                    ( session.screen.h // 2 // 38, 2 )
 
                 else
-                    ( 6, 4 )
+                    ( session.screen.h* 2 // 3 // 38, 4 )
 
             else if isModal then
-                ( 10, 4 )
+                ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if targetid == "commentContractInput" then
-                ( 15, 4 )
+                ( session.screen.h * 5 // 6 // 38, 4 )
 
             else
-                ( 15, 6 )
+                ( session.screen.h * 5 // 6 // 38, 6 )
 
         onChangePost =
             if String.startsWith "update" targetid then

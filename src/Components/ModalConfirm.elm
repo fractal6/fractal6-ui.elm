@@ -154,11 +154,11 @@ viewConfirm3 op =
             , div [ class "field is-grouped is-grouped-right mt-2" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button is-small is-info", onClick op.onSaveDraft ]
-                        [ text T.saveAsDraft ]
-                    , button
                         [ class "button is-small", onClick op.onKeepEditing ]
                         [ text T.keepEditing ]
+                    , button
+                        [ class "button is-small is-info", onClick op.onSaveDraft ]
+                        [ text T.saveAsDraft ]
                     , button
                         [ class "button is-small is-danger", onClick op.onDiscard ]
                         [ text T.discard ]
