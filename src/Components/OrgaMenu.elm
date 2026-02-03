@@ -23,6 +23,7 @@ module Components.OrgaMenu exposing (Msg(..), State, init, subscriptions, update
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Dom as Dom
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Codecs exposing (NodeFocus, getRootids)
 import Bulk.View exposing (viewOrga0)
@@ -30,7 +31,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendSleep)
 import Html exposing (Html, a, div, i, span, text)
-import Html.Attributes exposing (class, classList, href, id, title)
+import Html.Attributes exposing (class, classList, href, id, style, title)
 import Html.Events exposing (onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData)
@@ -39,10 +40,17 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryOrgaNode)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
+import Task
 
 
 type State
     = State Model
+
+
+type alias TooltipInfo =
+    { name : String
+    , top : Float
+    }
 
 
 type alias Model =
@@ -50,7 +58,7 @@ type alias Model =
     , isActive2 : Bool
     , focus : NodeFocus
     , orgs_result : GqlData (List OrgaNode)
-    , hover : Maybe String
+    , tooltip : Maybe TooltipInfo
 
     -- Common
     , session : SessionCommon
@@ -76,7 +84,7 @@ initModel focus isActive orgs session =
 
                     LoggedOut ->
                         NotAsked
-    , hover = Nothing
+    , tooltip = Nothing
 
     -- Common
     , session = session
@@ -91,16 +99,12 @@ init focus isActive orgs session =
 
 
 
--- Global methods
---isOpen_ : State -> Bool
---isOpen_ (State model) =
---    model.isOpen
---- State Controls
+-- State Controls
 
 
-reset : Model -> Model
-reset model =
-    initModel model.focus (Just model.isActive) (withMaybeData model.orgs_result) model.session
+clearTooltip : Model -> Model
+clearTooltip model =
+    { model | tooltip = Nothing }
 
 
 setDataResult : GqlData (List OrgaNode) -> Model -> Model
@@ -123,7 +127,8 @@ type Msg
     | OnDataAck (GqlData (List OrgaNode))
     | OnToggle
     | SetIsActive2 Bool
-    | OnOrgHover (Maybe String)
+    | OnOrgHover (Maybe String) String -- nameid and orgName
+    | OnOrgHoverResult (Result Dom.Error TooltipInfo)
       --
     | OnUpdateFocus NodeFocus
       -- Confirm Modal
@@ -244,8 +249,39 @@ update_ apis message model =
             else
                 ( { model | isActive2 = model.isActive }, noOut )
 
-        OnOrgHover v ->
-            ( { model | hover = v }, noOut )
+        OnOrgHover maybeNameid orgName ->
+            case maybeNameid of
+                Just nameid ->
+                    -- Calculate position relative to #orga-menu container (which is fixed)
+                    -- This ensures main window scroll doesn't affect tooltip position
+                    ( model
+                    , out0
+                        [ Task.map2
+                            (\elementInfo containerInfo ->
+                                let
+                                    relativeY =
+                                        elementInfo.element.y - containerInfo.element.y
+                                in
+                                { name = orgName
+                                , top = relativeY + elementInfo.element.height / 2
+                                }
+                            )
+                            (Dom.getElement ("orga-" ++ nameid))
+                            (Dom.getElement "orga-menu")
+                            |> Task.attempt OnOrgHoverResult
+                        ]
+                    )
+
+                Nothing ->
+                    ( clearTooltip model, noOut )
+
+        OnOrgHoverResult result ->
+            case result of
+                Ok info ->
+                    ( { model | tooltip = Just info }, noOut )
+
+                Err _ ->
+                    ( clearTooltip model, noOut )
 
         OnUpdateFocus focus ->
             if isSuccess model.orgs_result then
@@ -297,9 +333,10 @@ view op (State model) =
             [ id "orga-menu"
             , class "is-hidden-touch"
             , classList [ ( "off", not model.isActive ) ]
-            , onMouseLeave (OnOrgHover Nothing)
+            , onMouseLeave (OnOrgHover Nothing "")
             ]
-            [ viewOrgaMenu model.hover model.focus model.orgs_result op
+            [ viewOrgaMenu model.focus model.orgs_result op
+            , viewTooltip model.tooltip
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             ]
 
@@ -307,12 +344,32 @@ view op (State model) =
         text ""
 
 
-viewOrgaMenu : Maybe String -> NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
-viewOrgaMenu hover focus orgs_result op =
+viewTooltip : Maybe TooltipInfo -> Html msg
+viewTooltip maybeTooltip =
+    case maybeTooltip of
+        Just { name, top } ->
+            div
+                [ class "here box"
+                , style "position" "absolute"
+                , style "top" (String.fromFloat top ++ "px")
+                , style "transform" "translateY(-50%)"
+                , style "left" "calc(64px + 0.5rem)"
+                , style "z-index" "100"
+                , style "white-space" "nowrap"
+                , style "padding" "10px"
+                ]
+                [ text name ]
+
+        Nothing ->
+            text ""
+
+
+viewOrgaMenu : NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg
+viewOrgaMenu focus orgs_result op =
     div []
         ((case orgs_result of
             Success data ->
-                List.map (\x -> Lazy.lazy3 viewOrga hover focus x) data
+                List.map (\x -> Lazy.lazy2 viewOrga focus x) data
 
             LoadingSlowly ->
                 [ div [ class "m-3 image circleBase circle1 ph-circle" ] []
@@ -339,17 +396,13 @@ viewOrgaMenu hover focus orgs_result op =
         )
 
 
-viewOrga : Maybe String -> NodeFocus -> OrgaNode -> Html Msg
-viewOrga hover focus x =
+viewOrga : NodeFocus -> OrgaNode -> Html Msg
+viewOrga focus x =
     div
-        [ class "orgaMenu"
+        [ id ("orga-" ++ x.nameid)
+        , class "orgaMenu"
         , classList [ ( "is-active", focus.rootnameid == x.nameid ) ]
-        , onMouseEnter (OnOrgHover (Just x.nameid))
+        , onMouseEnter (OnOrgHover (Just x.nameid) x.name)
         ]
-        [ if hover == Just x.nameid then
-            div [ class "here box" ] [ text x.name ]
-
-          else
-            text ""
-        , viewOrga0 True x.nameid
+        [ viewOrga0 True x.nameid
         ]
