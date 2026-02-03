@@ -1318,16 +1318,16 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
                     ( session.screen.h // 2 // 38, 2 )
 
                 else
-                    ( session.screen.h* 2 // 3 // 38, 4 )
+                    ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if isModal then
                 ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if targetid == "commentContractInput" then
-                ( session.screen.h * 5 // 6 // 38, 4 )
+                ( session.screen.h * 5 // 6 // 39, 4 )
 
             else
-                ( session.screen.h * 5 // 6 // 38, 6 )
+                ( session.screen.h * 5 // 6 // 39, 6 )
 
         onChangePost =
             if String.startsWith "update" targetid then

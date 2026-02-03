@@ -129,7 +129,7 @@ initModel path focus session =
 
     -- Common
     , session = session
-    , mobileConf = { session | screen = { w = 1, h = 1 } }
+    , mobileConf = { session | screen = { w = 600, h = session.screen.h } }
     , refresh_trial = 0
     , draftSaveTimer = 0
     , modal_confirm = ModalConfirm.init NoMsg
