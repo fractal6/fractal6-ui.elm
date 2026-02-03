@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUserFull)
+import Bulk.View exposing (viewUserFull, viewUsers)
 import Codecs exposing (userDecoder)
 import Dict
 import Dom
@@ -421,6 +421,37 @@ view op (State model) =
                         op.selectedAssignees
             in
             view_ { op | selectedAssignees = selectedAssignees } model
+
+          else
+            text ""
+        ]
+
+
+viewNew : Op -> State -> Html Msg
+viewNew op (State model) =
+    div []
+        [ div [ id id_target_name, class "is-reversed" ]
+            [ if model.isOpen then
+                let
+                    selectedAssignees =
+                        List.concatMap
+                            (\l ->
+                                List.filter (\u -> l.username == u.username) (withDefaultData [] model.assignees_data)
+                            )
+                            op.selectedAssignees
+                in
+                view_ { op | selectedAssignees = selectedAssignees } model
+
+              else
+                text ""
+            ]
+        , div
+            [ class "button is-small mr-2"
+            , onClick (OnOpen op.targets)
+            ]
+            [ A.icon1 "icon-1x icon-user" "", text T.assignees ]
+        , if List.length op.selectedAssignees > 0 then
+            viewUsers False op.selectedAssignees
 
           else
             text ""

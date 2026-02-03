@@ -407,6 +407,33 @@ removeLabel label data =
     { data | form = { f | labels = LE.remove label f.labels } }
 
 
+setAssignees : List User -> NodeDoc -> NodeDoc
+setAssignees assignees data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = assignees } }
+
+
+addAssignee : User -> NodeDoc -> NodeDoc
+addAssignee assignee data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = f.assignees ++ [ assignee ] } }
+
+
+removeAssignee : User -> NodeDoc -> NodeDoc
+removeAssignee assignee data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = LE.remove assignee f.assignees } }
+
+
 
 --
 

@@ -446,6 +446,40 @@ type alias Op =
     }
 
 
+view : Op -> State -> Html Msg
+view op (State model) =
+    div [ id id_target_name ]
+        [ if model.isOpen then
+            view_ False op model
+
+          else
+            text ""
+        ]
+
+
+viewNew : Op -> State -> Html Msg
+viewNew op (State model) =
+    div []
+        [ div [ id id_target_name, class "is-reversed" ]
+            [ if model.isOpen then
+                view_ True op model
+
+              else
+                text ""
+            ]
+        , div
+            [ class "button is-small  mr-2"
+            , onClick (OnOpen op.targets Nothing)
+            ]
+            [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
+        , if List.length op.selectedLabels > 0 then
+            viewLabels Nothing op.selectedLabels
+
+          else
+            text ""
+        ]
+
+
 view_ : Bool -> Op -> Model -> Html Msg
 view_ isInternal op model =
     nav [ id "labelSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
@@ -572,44 +606,4 @@ viewLabelSelectors isInternal labels op model =
                                 ]
                         )
         , ternary isInternal (text "") viewEdit
-        ]
-
-
-
---
--- Input View
---
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
-    div [ id id_target_name ]
-        [ if model.isOpen then
-            view_ False op model
-
-          else
-            text ""
-        ]
-
-
-viewNew : Op -> State -> Html Msg
-viewNew op (State model) =
-    div []
-        [ div [ id id_target_name, class "is-reversed" ]
-            [ if model.isOpen then
-                view_ True op model
-
-              else
-                text ""
-            ]
-        , div
-            [ class "button is-small  mr-2"
-            , onClick (OnOpen op.targets Nothing)
-            ]
-            [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
-        , if List.length op.selectedLabels > 0 then
-            viewLabels Nothing op.selectedLabels
-
-          else
-            text ""
         ]

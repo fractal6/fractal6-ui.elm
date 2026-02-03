@@ -126,6 +126,7 @@ type alias TensionForm =
     , md : Maybe String
     , users : List UserForm
     , labels : List Label
+    , assignees : List User
     }
 
 
@@ -150,6 +151,7 @@ initTensionForm tid node_type user =
     , users = []
     , events = []
     , labels = []
+    , assignees = []
     , blob_type = Nothing
     , node = initNodeFragment node_type
     , md = Nothing

@@ -32,6 +32,7 @@ import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, t
 import Codecs exposing (DraftUpdate(..), TensionDraft)
 import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
+import Components.UserSearchPanel as UserSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
 import Components.TreeMenu exposing (viewSelectorTree)
@@ -66,7 +67,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon)
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 
@@ -120,6 +121,7 @@ type alias Model =
 
     -- Components
     , labelsPanel : LabelSearchPanel.State
+    , assigneesPanel : UserSearchPanel.State
     , inviteInput : UserInput.State
     , comments : Comments.State
     }
@@ -214,6 +216,7 @@ initModel session =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
+    , assigneesPanel = UserSearchPanel.init "" SelectUser session.user
     , inviteInput = UserInput.init [] True False session
     , comments = Comments.init "" "" session
     }
@@ -448,6 +451,21 @@ removeLabel label data =
     { data | nodeDoc = NodeDoc.removeLabel label data.nodeDoc }
 
 
+setAssignees : List User -> Model -> Model
+setAssignees assignees data =
+    { data | nodeDoc = NodeDoc.setAssignees assignees data.nodeDoc }
+
+
+addAssignee : User -> Model -> Model
+addAssignee assignee data =
+    { data | nodeDoc = NodeDoc.addAssignee assignee data.nodeDoc }
+
+
+removeAssignee : User -> Model -> Model
+removeAssignee assignee data =
+    { data | nodeDoc = NodeDoc.removeAssignee assignee data.nodeDoc }
+
+
 post : String -> String -> Model -> Model
 post field value data =
     let
@@ -579,6 +597,7 @@ type Msg
     | SaveDraftDelayed Int
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
     | InviteInputMsg UserInput.Msg
     | CommentsMsg Comments.Msg
 
@@ -1186,6 +1205,30 @@ update_ apis message model =
             , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds
             )
 
+        UserSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    UserSearchPanel.update apis msg model.assigneesPanel
+
+                newModel =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                addAssignee (Tuple.second r) model
+
+                            else
+                                removeAssignee (Tuple.second r) model
+                        )
+                        out.result
+                        |> withDefault model
+
+                ( cmds, _ ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { newModel | assigneesPanel = panel }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds) out.gcmds
+            )
+
         InviteInputMsg msg ->
             let
                 ( data, out ) =
@@ -1336,6 +1379,7 @@ subscriptions (State model) =
     ]
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+                    ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
                     ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
@@ -1650,16 +1694,54 @@ viewTension tree_data model =
                 , p [ class "help-label" ] [ text form.txt.name_help ]
                 , br [] []
                 ]
+            , br [] [] -- allows selectors panel to display without overlap
             , Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
-            , div [ class "field" ]
+            , let
+                labelsOp =
+                    { selectedLabels = form.labels
+                    , targets = getPath model.path_data |> List.map .nameid
+                    , isRight = False
+                    }
+
+                assigneesOp =
+                    { selectedAssignees = form.assignees
+                    , targets = getPath model.path_data |> List.map .nameid
+                    , isRight = False
+                    }
+
+                hasLabels =
+                    not (List.isEmpty form.labels)
+
+                hasAssignees =
+                    not (List.isEmpty form.assignees)
+              in
+              div [ class "field" ]
                 [ div [ class "control" ]
-                    [ LabelSearchPanel.viewNew
-                        { selectedLabels = form.labels
-                        , targets = getPath model.path_data |> List.map .nameid
-                        , isRight = False
-                        }
-                        model.labelsPanel
-                        |> Html.map LabelSearchPanelMsg
+                    [ -- Inline container for buttons without selections
+                      div [ class "is-flex is-align-items-center mb-2" ]
+                        [ showIf (not hasLabels) <|
+                            (LabelSearchPanel.viewNew labelsOp model.labelsPanel
+                                |> Html.map LabelSearchPanelMsg
+                            )
+                        , showIf (not hasAssignees) <|
+                            (UserSearchPanel.viewNew assigneesOp model.assigneesPanel
+                                |> Html.map UserSearchPanelMsg
+                            )
+                        ]
+
+                    -- Labels on own line if has selections
+                    , showIf hasLabels <|
+                        div [ class "mb-2" ]
+                            [ LabelSearchPanel.viewNew labelsOp model.labelsPanel
+                                |> Html.map LabelSearchPanelMsg
+                            ]
+
+                    -- Assignees on own line if has selections
+                    , showIf hasAssignees <|
+                        div [ class "mb-2" ]
+                            [ UserSearchPanel.viewNew assigneesOp model.assigneesPanel
+                                |> Html.map UserSearchPanelMsg
+                            ]
                     ]
                 ]
             ]
