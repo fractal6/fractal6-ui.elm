@@ -783,10 +783,10 @@ viewComment isOpt model =
 
         ( max_len, min_len ) =
             if isMobile model.session.screen then
-                ( 5, 2 )
+                ( model.session.screen.h // 2 // 38, 3 )
 
             else
-                ( 10, 3 )
+                ( model.session.screen.h * 2 // 3 // 38, 4 )
     in
     div [ class "field" ]
         [ div [ class "control submitFocus" ]

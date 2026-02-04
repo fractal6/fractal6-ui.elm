@@ -270,9 +270,29 @@ input[type="checkbox"] {
     color: var(--text-weak);
     font-size: 0.9rem;
 }
-a.is-name:hover, a.is-username:hover,
-a:hover .is-name, a:hover .is-username {
-    color: var(--text-strong);
+
+a {
+    &.is-name:hover, &.is-username:hover, &:hover .is-name, &:hover .is-username {
+        color: var(--text-strong);
+    }
+
+    &.tag {
+        text-decoration: none !important;
+
+        &.has-border, &.has-border-light {
+            border: 1px solid #ffffff00;
+            &:hover {
+                border: 1px solid var(--link2);
+            }
+        }
+    }
+}
+
+.tag-circle {
+    border: 1px solid #ffffff00;
+    &:hover {
+        border: 1px solid var(--link2);
+    }
 }
 
 // @fix bulma
@@ -770,7 +790,7 @@ i.va {
 }
 
 .box {
-    border: $border-size solid var(--border-color-light);
+    border: $border-size solid var(--border-color-light) !important;
     box-shadow: none;
 
     .tabs {
@@ -818,7 +838,66 @@ i.va {
     &.has-background-danger {
         color: white;
     }
+
+    .mediaBox:first-child {
+        border-top-left-radius: var(--bulma-box-radius);
+        border-top-right-radius: var(--bulma-box-radius);
+    }
+    .mediaBox:last-child {
+        border-bottom-left-radius: var(--bulma-box-radius);
+        border-bottom-right-radius: var(--bulma-box-radius);
+    }
+
 }
+
+
+.mediaBox {
+    cursor: initial;
+    &.is-hoverable:hover {
+        background-color: var(--background-hover-discrete);
+    }
+
+    &.is-active {
+        border: solid 2px var(--link) !important;
+    }
+
+    .media-content {
+        overflow: unset;
+
+        // Improve UX when hovering content
+        .content  {
+            & > a { // space between title and labels
+                margin-right: $size-small !important;
+            }
+            a { // right icons
+                &.is-size-7 {
+                    //font-size: 0.88rem !important;
+                }
+                .box > &.is-size-6 { // tensions circle
+                    font-size: 1rem !important;
+                }
+                &.is-size-5 {
+                    //font-size: 1rem !important;
+                }
+                // Zen Font
+                //&.is-size-7 {
+                //    font-size: 1rem !important;
+                //}
+                //&.is-size-6 {
+                //    font-size: 1.1rem !important;
+                //}
+                //&.is-size-5 {
+                //    font-size: 1.3rem !important;
+                //}
+            }
+        }
+    }
+}
+
+tr.mediaBox {
+    line-height: 2.1rem;
+}
+
 
 .bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
     @include desktop {
@@ -925,18 +1004,18 @@ i.va {
             border-top: $border-size solid var(--border-color-light);
         }
         th:first-child {
-            border-radius: 6px 0 0 0;
+            border-radius: 8px 0 0 0;
         }
         th:last-child {
-            border-radius: 0 6px 0 0;
+            border-radius: 0 8px 0 0;
         }
     }
     tbody tr:last-child {
         td:first-child {
-            border-radius: 0 0 0 6px;
+            border-radius: 0 0 0 8px;
         }
         td:last-child {
-            border-radius: 0 0 6px 0;
+            border-radius: 0 0 8px 0;
         }
     }
 

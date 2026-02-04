@@ -5,7 +5,7 @@
 
 /*
  *
- * Tensions: tensionsTab, mediaBox, labels
+ * Tensions: tensionsTab, labels ...
  *
  */
 
@@ -33,63 +33,6 @@
     }
 }
 
-.box {
-    .mediaBox:first-child {
-       border-top-left-radius: var(--bulma-box-radius);
-       border-top-right-radius: var(--bulma-box-radius);
-    }
-    .mediaBox:last-child {
-        border-bottom-left-radius: var(--bulma-box-radius);
-        border-bottom-right-radius: var(--bulma-box-radius);
-    }
-}
-
-.mediaBox {
-    cursor: initial;
-    &.is-hoverable:hover {
-        background-color: var(--background-hover-discrete);
-    }
-
-    &.is-active {
-        border: solid 2px var(--link) !important;
-    }
-
-    .media-content {
-        overflow: unset;
-
-        // Improve UX when hovering content
-        .content  {
-            & > a { // space between title and labels
-                margin-right: $size-small !important;
-            }
-            a { // right icons
-                &.is-size-7 {
-                    //font-size: 0.88rem !important;
-                }
-                .box > &.is-size-6 { // tensions circle
-                    font-size: 1rem !important;
-                }
-                &.is-size-5 {
-                    //font-size: 1rem !important;
-                }
-                // Zen Font
-                //&.is-size-7 {
-                //    font-size: 1rem !important;
-                //}
-                //&.is-size-6 {
-                //    font-size: 1.1rem !important;
-                //}
-                //&.is-size-5 {
-                //    font-size: 1.3rem !important;
-                //}
-            }
-        }
-    }
-}
-
-tr.mediaBox {
-    line-height: 2.1rem;
-}
 
 .labelsList {
     .tag + .tag {
@@ -165,16 +108,6 @@ tr.mediaBox {
         &:hover {
             opacity: 1;
         }
-    }
-}
-
-a.tag {
-    text-decoration: none !important;
-}
-a.tag.has-border, a.tag.has-border-light, .tag-circle {
-    border: 1px solid #ffffff00;
-    &:hover {
-        border: 1px solid var(--link2);
     }
 }
 

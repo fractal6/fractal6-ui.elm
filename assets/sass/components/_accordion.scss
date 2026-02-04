@@ -151,6 +151,7 @@ input:checked + .acc .acc-content {
         font-size: 12pt;
     }
     .acc-title {
+        display: block;
         height: var(--acc-height);
         line-height: var(--acc-height);
         padding: 0 20px;
@@ -172,8 +173,17 @@ input:checked + .acc .acc-content {
                     padding 0.2s ease;
     }
 
-    section.acc > .acc-title {
-        border-top: 1px solid var(--border-light, rgba(0,0,0,.12));
+    section.acc {
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--border-light, rgba(0,0,0,.12));
+            pointer-events: none;
+        }
     }
     input:checked + section.acc {
         background-color: var(--background-evidence);
