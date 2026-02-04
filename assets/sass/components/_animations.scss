@@ -74,3 +74,46 @@
 .comments > div > .media {
     animation: fadeIn 0.25s ease-out;
 }
+
+// Settings row animation for newly created/updated items
+// Applied to td cells via parent tr class (transforms don't work on tr elements)
+@keyframes settingsRowEnter {
+    0% {
+        opacity: 0;
+        background-color: color-mix(in srgb, var(--link) 30%, transparent);
+    }
+    15% {
+        opacity: 1;
+        background-color: color-mix(in srgb, var(--link) 25%, transparent);
+    }
+    100% {
+        opacity: 1;
+        background-color: transparent;
+    }
+}
+
+// Target td cells inside the animated row
+tr.settings-row-enter > td {
+    animation: settingsRowEnter 1s ease-out forwards;
+}
+
+// Settings box animation for add/edit forms
+// Elegant slide-down with fade for the form box
+@keyframes settingsBoxEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Apply to boxes in settings context (labels and roles tables)
+#labelsTable > .box,
+#rolesTable > .box,
+#labelsTable .table .box,
+#rolesTable .table .box {
+    animation: settingsBoxEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}

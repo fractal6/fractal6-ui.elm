@@ -1015,6 +1015,12 @@ i.va {
 
 }
 
+.f6-help-message {
+    & > .message, &.notification {
+        font-size: 0.85rem;
+    }
+}
+
 .notification {
     & > div {
         // do not hide delete button when there is overflow.

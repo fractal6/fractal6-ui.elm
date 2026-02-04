@@ -187,6 +187,7 @@ type alias Model =
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
     , label_result_del : GqlData LabelFull
+    , label_anim_enter : Maybe String
 
     -- Roles
     , nodeDoc : NodeDoc
@@ -198,6 +199,7 @@ type alias Model =
     , role_edit : Maybe RoleExtFull
     , role_result : GqlData RoleExtFull
     , role_result_del : GqlData RoleExtFull
+    , role_anim_enter : Maybe String
 
     -- Orga
     , orga_rights : GqlData NodeRights
@@ -367,6 +369,7 @@ init global flags =
             , label_edit = Nothing
             , label_result = NotAsked
             , label_result_del = NotAsked
+            , label_anim_enter = Nothing
 
             -- Roles
             , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView session.common.user
@@ -378,6 +381,7 @@ init global flags =
             , role_edit = Nothing
             , role_result = NotAsked
             , role_result_del = NotAsked
+            , role_anim_enter = Nothing
 
             -- Orga
             , orga_rights = NotAsked
@@ -639,9 +643,10 @@ update global message model =
                 ( { model
                     | label_add = ternary model.label_add False True
                     , label_edit = Nothing
+                    , label_anim_enter = Nothing
                     , colorPicker = ColorPicker.setColor Nothing model.colorPicker
                   }
-                , Cmd.none
+                , Ports.bulma_driver "labelsTable"
                 , Cmd.none
                 )
 
@@ -668,7 +673,7 @@ update global message model =
                 , artefact_form = newForm
                 , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
               }
-            , Cmd.none
+            , Ports.bulma_driver "labelsTable"
             , Cmd.none
             )
 
@@ -678,6 +683,7 @@ update global message model =
                 , label_edit = Nothing
                 , label_result = NotAsked
                 , label_result_del = NotAsked
+                , label_anim_enter = Nothing
               }
                 |> resetForm
             , Cmd.none
@@ -726,7 +732,14 @@ update global message model =
                                 -- assume edit
                                 LE.setIf (\x -> x.id == label.id) label d
                     in
-                    ( { model | label_result = result, labels = Success new, label_add = False, label_edit = Nothing } |> resetForm
+                    ( { model
+                        | label_result = result
+                        , labels = Success new
+                        , label_add = False
+                        , label_edit = Nothing
+                        , label_anim_enter = Just label.id
+                      }
+                        |> resetForm
                     , Cmd.none
                     , Cmd.none
                     )
@@ -814,6 +827,7 @@ update global message model =
                 ( { model
                     | role_add = ternary model.role_add False True
                     , role_edit = Nothing
+                    , role_anim_enter = Nothing
                     , colorPicker = ColorPicker.setColor Nothing model.colorPicker
                   }
                 , Ports.bulma_driver "rolesTable"
@@ -855,6 +869,7 @@ update global message model =
                 , role_edit = Nothing
                 , role_result = NotAsked
                 , role_result_del = NotAsked
+                , role_anim_enter = Nothing
                 , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.common.user
               }
                 |> resetForm
@@ -911,7 +926,14 @@ update global message model =
                                 -- assume edit
                                 LE.setIf (\x -> x.id == role.id) role d
                     in
-                    ( { model | role_result = result, roles = Success new, role_add = False, role_edit = Nothing } |> resetForm
+                    ( { model
+                        | role_result = result
+                        , roles = Success new
+                        , role_add = False
+                        , role_edit = Nothing
+                        , role_anim_enter = Just role.id
+                      }
+                        |> resetForm
                     , Cmd.none
                     , Cmd.none
                     )
@@ -1477,7 +1499,7 @@ viewLabels model =
                             , labels
                                 |> List.concatMap
                                     (\d ->
-                                        [ tr [] <|
+                                        [ tr [ classList [ ( "settings-row-enter", model.label_anim_enter == Just d.id ) ] ] <|
                                             if model.label_edit == Just d then
                                                 [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
 
@@ -1740,7 +1762,7 @@ viewRoles model =
                             , roles
                                 |> List.concatMap
                                     (\d ->
-                                        [ tr [] <|
+                                        [ tr [ classList [ ( "settings-row-enter", model.role_anim_enter == Just d.id ) ] ] <|
                                             if model.role_edit == Just d then
                                                 [ td [ colspan 5 ] [ viewRoleAddBox model ] ]
 

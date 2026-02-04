@@ -32,11 +32,11 @@ import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, t
 import Codecs exposing (DraftUpdate(..), TensionDraft)
 import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.UserSearchPanel as UserSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
+import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Dom
 import Extra exposing (showIf, space_, ternary, textH, unwrap, unwrap2)
@@ -1356,7 +1356,7 @@ update_ apis message model =
                         Dict.get "title" model.nodeDoc.form.post |> withDefault ""
 
                     draftMessage =
-                        Dict.get "message" model.nodeDoc.form.post |> withDefault ""
+                        Dict.get "message" model.nodeDoc.form.post |> withDefault "" |> String.trim
 
                     draft =
                         TensionDraft draftTitle draftMessage ""

@@ -189,7 +189,7 @@ initWithDraft nameid tensionid session maybeDraft =
 
 getCurrentMessage : State -> Maybe String
 getCurrentMessage (State model) =
-    Dict.get "message" model.tension_form.post
+    Dict.get "message" model.tension_form.post |> Maybe.map String.trim
 
 
 
