@@ -1402,12 +1402,25 @@ viewComment model =
         line_len =
             List.length (String.lines message)
 
+        isModal = True
+
+        -- Calculate max rows based on ~75% of screen height
+        -- Assuming ~30px per line (font + padding)
+        --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile model.session.screen then
-                ( 5, 2 )
+                if isModal then
+                    ( model.session.screen.h // 2 // 38, 2 )
+
+                else
+                    ( model.session.screen.h * 2 // 3 // 38, 4 )
+
+            else if isModal then
+                ( model.session.screen.h * 2 // 3 // 38, 4 )
+
 
             else
-                ( 10, 3 )
+                ( model.session.screen.h * 5 // 6 // 39, 6 )
     in
     div [ class "field" ]
         [ div [ class "control" ]

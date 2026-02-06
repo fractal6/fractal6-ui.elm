@@ -1663,6 +1663,13 @@ viewTension tree_data model =
         title =
             Dict.get "title" form.post |> withDefault ""
 
+        commentOpts =
+            { hasTips = True
+            , isModal = True
+            , placeholderText = T.leaveCommentOpt
+            , messageHelper = model.nodeDoc.form.txt.message_help
+            }
+
         isLoading =
             model.result == LoadingSlowly
 
@@ -1695,7 +1702,7 @@ viewTension tree_data model =
                 , br [] []
                 ]
             , br [] [] -- allows selectors panel to display without overlap
-            , Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg
+            , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
             , let
                 labelsOp =
                     { selectedLabels = form.labels
@@ -1934,7 +1941,7 @@ viewNodeValidate model =
 
         --, showIf (not (List.member (Dict.get "message" form.post) [ Nothing, Just "" ])) <|
         --    div [ class "mt-2" ]
-        --        [ Comments.viewNewTensionCommentInput model.session model.comments |> Html.map CommentsMsg ]
+        --        [ Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg ]
         ]
 
 
@@ -2071,12 +2078,13 @@ viewInviteRole : Model -> Html Msg
 viewInviteRole model =
     div [ class "has-border-hint-primary" ]
         [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
-        , viewCommentInput model
+        , viewInvitationInput model
         ]
 
 
-viewCommentInput : Model -> Html Msg
-viewCommentInput model =
+viewInvitationInput : Model -> Html Msg
+viewInvitationInput model =
+    -- Be carefull to not overwrite tension_form.post is reusing Comments inputs.
     let
         message =
             Dict.get "invitation" model.nodeDoc.form.post |> withDefault ""

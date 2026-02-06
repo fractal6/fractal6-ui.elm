@@ -163,6 +163,23 @@
         }
     }
 
+    // Textarea zone & preview
+    .modal-content, .modal-card {
+        width: auto;
+        .textarea {
+            resize: both;
+        }
+        .hidden-textarea {
+            max-width: calc(#{$modal-width} - 80px);
+            resize: both;
+        }
+    }
+    // Don't let columns set their width automatically
+    .modal-content .columns, .modal-card .columns {
+        max-width: calc(#{$modal-width} - 40px);
+    }
+
+
     // Positioning, center is default
     &.modal-pos {
         &-top {
@@ -201,6 +218,7 @@
     }
     .panel-heading {
         background-color: var(--body-background-color) !important;
+        border-bottom: 1px var(--border-color-light) solid;
     }
     .panel-block, .panel-icon {
         color: var(--text-weak);
@@ -208,6 +226,33 @@
 
     .commentHeader {
         margin-top: 0 !important;
+    }
+
+    // Input Message
+    .modal-card-body {
+        .message {
+            border-color: transparent !important;
+            .tabs, .tabs.is-boxed  {
+                li a  {
+                    text-decoration: none !important;
+                }
+                li.is-active a {
+                    border-top-width: 2px !important;
+                }
+            }
+        }
+        .message-header {
+            font-weight: 500 !important;
+            padding: 0 !important;
+            a {
+                font-weight: 600 !important;
+                text-decoration: none !important;
+                &:hover { text-decoration: underline !important; }
+            }
+        }
+        .message-body {
+            padding: 0 !important;
+        }
     }
 }
 
@@ -293,53 +338,6 @@
     }
 }
 
-#tensionModal {
-    .panel-heading {
-        border-bottom: 1px var(--border-color-light) solid;
-    }
-
-    .modal-content, .modal-card {
-        width: auto;
-        .textarea {
-            resize: both;
-        }
-        .hidden-textarea {
-            max-width: calc(#{$modal-width} - 80px);
-            resize: both;
-        }
-    }
-    // Don't let columns set their width automatically
-    .modal-content .columns, .modal-card .columns {
-        max-width: calc(#{$modal-width} - 40px);
-    }
-
-    // Input Message
-    .modal-card-body {
-        .message {
-            border-color: transparent !important;
-            .tabs, .tabs.is-boxed  {
-                li a  {
-                    text-decoration: none !important;
-                }
-                li.is-active a {
-                    border-top-width: 2px !important;
-                }
-            }
-        }
-        .message-header {
-            font-weight: 500 !important;
-            padding: 0 !important;
-            a {
-                font-weight: 600 !important;
-                text-decoration: none !important;
-                &:hover { text-decoration: underline !important; }
-            }
-        }
-        .message-body {
-            padding: 0 !important;
-        }
-    }
-}
 
 .tension-modal-dropdown {
     vertical-align: unset;

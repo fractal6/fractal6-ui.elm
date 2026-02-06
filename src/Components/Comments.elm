@@ -47,7 +47,7 @@ import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (decap, ternary, textD)
+import Extra exposing (decap, showIf, ternary, textD)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickSafe)
 import Form exposing (isPostSendable)
@@ -1011,8 +1011,8 @@ viewComment session c form result highlightedCommentId userInput =
         ]
 
 
-viewNewTensionCommentInput : SessionCommon -> State -> Html Msg
-viewNewTensionCommentInput session (State model) =
+viewNewTensionCommentInput : SessionCommon -> CommentOpts -> State -> Html Msg
+viewNewTensionCommentInput session opts (State model) =
     let
         opHeader =
             { onChangeViewMode = ChangeInputViewMode
@@ -1024,14 +1024,16 @@ viewNewTensionCommentInput session (State model) =
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
-                , p [ class "help-label" ] [ text model.tension_form.txt.message_help ]
-                , div
-                    [ class "is-hidden-mobile is-pulled-right help"
-                    , classList [ ( "is-hidden", isMobile session.screen ) ]
-                    , style "font-size" "10px"
-                    ]
-                    [ text "Tips: <C+Enter> to submit" ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput ]
+                , showIf (opts.messageHelper /= "") <|
+                    p [ class "help-label" ] [ text opts.messageHelper ]
+                , showIf opts.hasTips <|
+                    div
+                        [ class "is-hidden-mobile is-pulled-right help"
+                        , classList [ ( "is-hidden", isMobile session.screen ) ]
+                        , style "font-size" "10px"
+                        ]
+                        [ text "Tips: <C+Enter> to submit" ]
                 , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
                     []
                 ]
@@ -1059,13 +1061,16 @@ viewUpdateInput session comment form_ result userInput =
             , onRichText = OnRichText
             , onToggleMdHelp = OnToggleMdHelp
             }
+
+        commentOpts =
+            {}
     in
     div [ class "message commentInput" ]
         [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "updateCommentInput" form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea session "updateCommentInput" False T.leaveComment form userInput ]
+                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput ]
                 ]
             , case result of
                 Failure err ->
@@ -1140,7 +1145,7 @@ viewTensionCommentInput session tension (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput ]
                         ]
                     , case model.tension_patch of
                         Failure err ->
@@ -1203,7 +1208,7 @@ viewContractCommentInput session (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentContractInput" defaultCommentOpts form model.userInput ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1247,14 +1252,31 @@ type alias FormCommon a =
     }
 
 
-type alias OpInputHeader msg =
+type alias OpCommentHeader msg =
     { onChangeViewMode : InputViewMode -> msg
     , onRichText : String -> String -> msg
     , onToggleMdHelp : String -> msg
     }
 
 
-viewCommentInputHeader : OpInputHeader msg -> String -> FormCommon a -> Html msg
+type alias CommentOpts =
+    { isModal : Bool
+    , hasTips : Bool
+    , placeholderText : String
+    , messageHelper : String
+    }
+
+
+defaultCommentOpts : CommentOpts
+defaultCommentOpts =
+    { isModal = False
+    , placeholderText = T.leaveComment
+    , messageHelper = ""
+    , hasTips = False
+    }
+
+
+viewCommentInputHeader : OpCommentHeader msg -> String -> FormCommon a -> Html msg
 viewCommentInputHeader op targetid form =
     let
         isMdHelpOpen =
@@ -1300,8 +1322,8 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : SessionCommon -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
-viewCommentTextarea session targetid isModal placeholder_txt form userInput =
+viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> Html Msg
+viewCommentTextarea session targetid opts form userInput =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -1314,13 +1336,13 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
         --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile session.screen then
-                if isModal then
+                if opts.isModal then
                     ( session.screen.h // 2 // 38, 2 )
 
                 else
                     ( session.screen.h * 2 // 3 // 38, 4 )
 
-            else if isModal then
+            else if opts.isModal then
                 ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if targetid == "commentContractInput" then
@@ -1345,7 +1367,7 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
             , class "textarea"
             , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
             , rows (min max_len (max line_len min_len))
-            , placeholder placeholder_txt
+            , placeholder opts.placeholderText
             , value message
             , onInput (onChangePost "message")
 

@@ -26,6 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
 import Bulk.Codecs exposing (isMember, isPending, nid2rootid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
@@ -35,9 +36,9 @@ import Form exposing (isPostEmpty)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, button, div, i, p, span, strong, text, textarea)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, value)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html, a, button, div, i, p, span, strong, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, target)
+import Html.Events exposing (onClick)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
@@ -47,7 +48,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
-import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
+import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 
@@ -73,6 +74,7 @@ type alias Model =
 
     -- Components
     , userInput : UserInput.State
+    , comments : Comments.State
     }
 
 
@@ -100,6 +102,7 @@ initModel nameid session =
 
     -- Components
     , userInput = UserInput.init [ nameid ] True True session
+    , comments = Comments.init nameid "" session
     }
 
 
@@ -124,15 +127,6 @@ isActive_ (State model) =
 resetModel : Model -> Model
 resetModel model =
     initModel model.nameid model.session
-
-
-updatePost : String -> String -> Model -> Model
-updatePost field value model =
-    let
-        form =
-            model.form
-    in
-    { model | form = { form | post = Dict.insert field value form.post } }
 
 
 openModal : Model -> Model
@@ -235,7 +229,6 @@ type Msg
     | OnNodePending (GqlData Node)
     | OnContractIdAck (GqlData IdPayload)
       -- Data
-    | OnChangePost String String
     | OnSubmit (Time.Posix -> Msg)
       -- JoinOrga Action
     | OnGetNode (GqlData Node)
@@ -252,6 +245,7 @@ type Msg
     | UpdateUctx UserCtx
       -- Components
     | UserInputMsg UserInput.Msg
+    | CommentsMsg Comments.Msg
 
 
 type alias Out =
@@ -414,9 +408,6 @@ update_ apis message model =
                 ( model, noOut )
 
         -- Data
-        OnChangePost field value ->
-            ( updatePost field value model, noOut )
-
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
 
@@ -576,6 +567,28 @@ update_ apis message model =
             in
             ( { model | userInput = data, form = { form | users = users, events = events } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
 
+        CommentsMsg msg ->
+            let
+                ( newComments, out ) =
+                    Comments.update apis msg model.comments
+
+                -- Sync message from Comments to JoinOrga.form when it changes
+                newForm =
+                    case out.result of
+                        Just (Comments.PostChanged ( "message", v )) ->
+                            let
+                                form =
+                                    model.form
+                            in
+                            { form | post = Dict.insert "message" v form.post }
+
+                        _ ->
+                            model.form
+            in
+            ( { model | comments = newComments, form = newForm }
+            , out2 (out.cmds |> List.map (Cmd.map CommentsMsg)) out.gcmds
+            )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
@@ -586,7 +599,8 @@ subscriptions (State model) =
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
         ++ (if model.isActive then
-                UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s)
+                (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+                    ++ (Comments.subscriptions model.comments |> List.map (Sub.map CommentsMsg))
 
             else
                 []
@@ -671,9 +685,17 @@ viewJoinStep : Op -> Model -> Html Msg
 viewJoinStep op model =
     case model.step of
         JoinOne ->
+            let
+                commentOpts =
+                    { hasTips = False
+                    , isModal = True
+                    , placeholderText = T.text
+                    , messageHelper = ""
+                    }
+            in
             div [ class "modal-card-body" ]
                 [ div [ class "field pb-2" ] [ text T.explainJoin ]
-                , viewComment False model
+                , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
                 , case model.node_data of
                     Failure err ->
                         viewGqlErrors err
@@ -728,10 +750,17 @@ viewJoinStep op model =
             let
                 name =
                     model.node_data |> withMaybeMapData .name |> withDefault ""
+
+                commentOpts =
+                    { hasTips = False
+                    , isModal = True
+                    , placeholderText = T.leaveCommentOpt
+                    , messageHelper = T.invitationMessageHelp
+                    }
             in
             div [ class "modal-card-body" ]
                 [ UserInput.view { label_text = span [] [ text (T.inviteMembers ++ " " ++ T.in_ ++ " "), strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg
-                , viewComment True model
+                , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
                 , case model.node_data of
                     Failure err ->
                         viewGqlErrors err
@@ -770,38 +799,3 @@ viewJoinStep op model =
 
         AuthNeeded ->
             viewAuthNeeded OnClose
-
-
-viewComment : Bool -> Model -> Html Msg
-viewComment isOpt model =
-    let
-        message =
-            Dict.get "message" model.form.post |> withDefault ""
-
-        line_len =
-            List.length <| String.lines message
-
-        ( max_len, min_len ) =
-            if isMobile model.session.screen then
-                ( model.session.screen.h // 2 // 38, 3 )
-
-            else
-                ( model.session.screen.h * 2 // 3 // 38, 4 )
-    in
-    div [ class "field" ]
-        [ div [ class "control submitFocus" ]
-            [ textarea
-                [ class "textarea"
-                , rows (min max_len (max line_len min_len))
-                , placeholder <| ternary isOpt T.leaveCommentOpt T.text
-                , value message
-                , onInput <| OnChangePost "message"
-                ]
-                []
-            ]
-        , if List.member model.step [ InviteOne ] then
-            p [ class "help-label" ] [ text T.invitationMessageHelp ]
-
-          else
-            text ""
-        ]
