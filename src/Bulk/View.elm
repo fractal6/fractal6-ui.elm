@@ -38,9 +38,9 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, br, div, hr, input, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -1196,3 +1196,34 @@ viewGoRoot cls cmd =
     in
     span [ class combinedClasses, onClick cmd ]
         [ A.icon "arrow-up", text T.goRoot ]
+
+
+viewUrlForm : Maybe String -> (String -> msg) -> Bool -> Html msg
+viewUrlForm nameid_m onChangePost hasBorderDanger =
+    div [ class "urlForm" ]
+        [ div [ class "field is-horizontal" ]
+            [ div [ class "field-body control has-icons-right" ]
+                [ div [] [ text "DOMAIN" ]
+                , input
+                    [ class "input px-0"
+                    , disabled True
+                    , value "  fractale.co/o/"
+                    , attribute "style" "width: 8em"
+                    ]
+                    []
+                , input
+                    [ class "input pl-1"
+                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
+                    , type_ "text"
+                    , value (withDefault "" nameid_m)
+                    , onInput <| onChangePost
+                    ]
+                    []
+                , if not hasBorderDanger then
+                    span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
+
+                  else
+                    text ""
+                ]
+            ]
+        ]

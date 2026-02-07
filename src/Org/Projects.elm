@@ -29,13 +29,12 @@ import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot)
+import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc exposing (viewUrlForm)
 import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBar)
 import Components.TreeMenu as TreeMenu

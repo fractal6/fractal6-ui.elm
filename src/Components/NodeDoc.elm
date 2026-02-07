@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUser, viewUsers)
+import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm, viewUser, viewUsers)
 import Dict
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
@@ -979,34 +979,6 @@ viewAboutInput2 txt node op =
 -- viewAboutInput3 (the view use in Org.Settings)
 
 
-viewUrlForm nameid_m onChangePost hasBorderDanger =
-    div [ class "urlForm" ]
-        [ div [ class "field is-horizontal" ]
-            [ div [ class "field-body control has-icons-right" ]
-                [ div [] [ text "DOMAIN" ]
-                , input
-                    [ class "input px-0"
-                    , disabled True
-                    , value "  fractale.co/o/"
-                    , attribute "style" "width: 8em"
-                    ]
-                    []
-                , input
-                    [ class "input pl-1"
-                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
-                    , type_ "text"
-                    , value (withDefault "" nameid_m)
-                    , onInput <| onChangePost
-                    ]
-                    []
-                , if not hasBorderDanger then
-                    span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
-
-                  else
-                    text ""
-                ]
-            ]
-        ]
 
 
 viewMandateInput txt mandate op =
