@@ -917,9 +917,6 @@ update msg model =
                 sessionData =
                     session.data
 
-                common =
-                    session.common
-
                 currentDrafts =
                     sessionData.drafts
 
@@ -980,8 +977,22 @@ update msg model =
                                     { currentDrafts | comments = Dict.remove tensionId currentDrafts.comments }
                             in
                             ( updated, Ports.saveDrafts updated )
+
+                        SaveNewInvite draft ->
+                            let
+                                updated =
+                                    { currentDrafts | newInvite = Just { draft | updatedAt = now } }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearNewInvite ->
+                            let
+                                updated =
+                                    { currentDrafts | newInvite = Nothing }
+                            in
+                            ( updated, Ports.saveDrafts updated )
             in
-            ( { model | session = { session | common = { common | drafts = newDrafts }, data = { sessionData | drafts = newDrafts } } }, saveCmd )
+            ( { model | session = { session | data = { sessionData | drafts = newDrafts } } }, saveCmd )
 
 
 

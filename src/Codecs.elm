@@ -406,6 +406,7 @@ type alias CommentDraft =
 -}
 type alias DraftStore =
     { newTension : Maybe TensionDraft
+    , newInvite : Maybe CommentDraft
     , comments : Dict.Dict String CommentDraft
     }
 
@@ -417,6 +418,8 @@ type DraftUpdate
     | ClearNewTension
     | SaveComment String CommentDraft -- tensionId, draft
     | ClearComment String -- tensionId
+    | SaveNewInvite CommentDraft
+    | ClearNewInvite
 
 
 maxCommentDrafts : Int
@@ -427,6 +430,7 @@ maxCommentDrafts =
 initDraftStore : DraftStore
 initDraftStore =
     { newTension = Nothing
+    , newInvite = Nothing
     , comments = Dict.empty
     }
 
@@ -448,8 +452,9 @@ commentDraftDecoder =
 
 draftStoreDecoder : JD.Decoder DraftStore
 draftStoreDecoder =
-    JD.map2 DraftStore
-        (JD.field "newTension" (JD.nullable tensionDraftDecoder))
+    JD.map3 DraftStore
+        (JD.maybe (JD.field "newTension" tensionDraftDecoder))
+        (JD.maybe (JD.field "newInvite" commentDraftDecoder))
         (JD.field "comments" (JD.dict commentDraftDecoder))
 
 
@@ -474,5 +479,6 @@ draftStoreEncoder : DraftStore -> JE.Value
 draftStoreEncoder store =
     JE.object
         [ ( "newTension", JEE.maybe tensionDraftEncoder store.newTension )
+        , ( "newInvite", JEE.maybe commentDraftEncoder store.newInvite )
         , ( "comments", JE.dict identity commentDraftEncoder store.comments )
         ]

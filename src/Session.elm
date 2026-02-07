@@ -163,7 +163,6 @@ type alias SessionCommon =
     , path_data : Maybe LocalGraph
     , lexicon : Dict String String
     , scrollPosition : Ports.ScrollPosition
-    , drafts : DraftStore
     }
 
 
@@ -284,7 +283,6 @@ resetSession session flags =
         , node_focus = Nothing -- hard to update session in components...put in data instead ?
         , path_data = Nothing --
         , scrollPosition = Ports.ScrollTop
-        , drafts = session.data.drafts
         }
     , data =
         { notif = initNotifCount
@@ -444,7 +442,6 @@ fromLocalSession url flags =
             , node_focus = Nothing
             , path_data = Nothing
             , scrollPosition = Ports.ScrollTop
-            , drafts = drafts
             }
       , data =
             { notif = initNotifCount

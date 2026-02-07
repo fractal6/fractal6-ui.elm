@@ -19,13 +19,14 @@
 -}
 
 
-module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscriptions, update, view)
+module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, setCurrentDraft, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
 import Bulk.Codecs exposing (isMember, isPending, nid2rootid)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
@@ -66,11 +67,14 @@ type alias Model =
     , nameid : String
     , join_result : GqlData IdPayload
     , isPending : Bool
+    , currentDraft : Maybe CommentDraft
 
     -- Common
     , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , modal_confirm3_link : String
+    , draftSaveTimer : Int
 
     -- Components
     , userInput : UserInput.State
@@ -94,11 +98,14 @@ initModel nameid session =
     , join_result = NotAsked
     , nameid = nameid
     , isPending = False
+    , currentDraft = Nothing
 
     -- Common
     , session = session
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , modal_confirm3_link = ""
+    , draftSaveTimer = 0
 
     -- Components
     , userInput = UserInput.init [ nameid ] True True session
@@ -122,6 +129,11 @@ isActive_ (State model) =
 
 
 --- State Controls
+
+
+setCurrentDraft : Maybe CommentDraft -> State -> State
+setCurrentDraft draft (State model) =
+    State { model | currentDraft = draft }
 
 
 resetModel : Model -> Model
@@ -235,10 +247,16 @@ type Msg
     | OnJoin2 Node Time.Posix
     | OnInvite2 Node Time.Posix
     | OnJoinAck (GqlData IdPayload)
+      -- Draft
+    | SaveDraftDelayed Int
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
+    | DoModalConfirm3Open String
+    | DoModalConfirm3Discard
+    | DoModalConfirm3SaveDraft
+    | DoModalConfirm3KeepEditing
       -- Common
     | NoMsg
     | LogErr String
@@ -301,10 +319,24 @@ update_ apis message model =
                     let
                         isPndg =
                             isPending uctx rootnameid
+
+                        form =
+                            model.form
+
+                        newForm =
+                            case model.currentDraft of
+                                Just draft ->
+                                    { form | post = Dict.insert "message" draft.message form.post }
+
+                                Nothing ->
+                                    form
+
+                        newComments =
+                            Comments.initWithDraft rootnameid "" model.session model.currentDraft
                     in
                     if method == JoinOne && not (isMember uctx rootnameid || isPndg) then
                         -- Join
-                        ( { model | step = method, isPending = isPndg } |> openModal
+                        ( { model | step = method, isPending = isPndg, form = newForm, comments = newComments } |> openModal
                         , out0
                             [ fetchNode apis rootnameid OnGetNode
                             , sendSleep (SetIsActive2 True) 10
@@ -313,7 +345,7 @@ update_ apis message model =
 
                     else if method == InviteOne then
                         -- Invite
-                        ( { model | step = method, isPending = isPndg } |> openModal
+                        ( { model | step = method, isPending = isPndg, form = newForm, comments = newComments } |> openModal
                         , out0
                             [ fetchNode apis rootnameid OnGetNode
                             , Cmd.map UserInputMsg (send UserInput.OnLoad)
@@ -345,18 +377,13 @@ update_ apis message model =
         OnReset ->
             ( resetModel model, noOut )
 
-        OnCloseSafe link onCloseTxt ->
+        OnCloseSafe link _ ->
             if canExitSafe model then
                 ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
 
             else
                 ( model
-                , out0
-                    [ send
-                        (DoModalConfirmOpen (OnClose { reset = True, link = link })
-                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
-                        )
-                    ]
+                , out0 [ send (DoModalConfirm3Open link) ]
                 )
 
         OnRedirectPending rootnameid ->
@@ -465,6 +492,7 @@ update_ apis message model =
                         [ send (OnCloseSafe "" "") ]
                         [ --Contract based event (DoLoad for pendings nodes)...
                           DoUpdateNode model.form.node.nameid identity
+                        , DoUpdateDraft ClearNewInvite
                         , DoPushSystemNotif
                             { cls = "is-success"
                             , content =
@@ -492,6 +520,24 @@ update_ apis message model =
                 _ ->
                     ( { model | join_result = result }, noOut )
 
+        -- Draft
+        SaveDraftDelayed timer ->
+            if timer == model.draftSaveTimer then
+                let
+                    msg_ =
+                        Dict.get "message" model.form.post
+                            |> Maybe.map String.trim
+                            |> withDefault ""
+                in
+                if msg_ == "" then
+                    ( model, out1 [ DoUpdateDraft ClearNewInvite ] )
+
+                else
+                    ( model, out1 [ DoUpdateDraft (SaveNewInvite { message = msg_, updatedAt = "" }) ] )
+
+            else
+                ( model, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -501,6 +547,34 @@ update_ apis message model =
 
         DoModalConfirmSend ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
+
+        DoModalConfirm3Open link ->
+            ( { model
+                | modal_confirm = ModalConfirm.open NoMsg { message = Nothing, txts = [ ( T.confirmUnsavedDraft, "" ) ] } model.modal_confirm
+                , modal_confirm3_link = link
+              }
+            , noOut
+            )
+
+        DoModalConfirm3Discard ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
+            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft ClearNewInvite ] Nothing
+            )
+
+        DoModalConfirm3SaveDraft ->
+            let
+                draftMessage =
+                    Dict.get "message" model.form.post |> withDefault ""
+
+                draft =
+                    CommentDraft draftMessage ""
+            in
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }
+            , Out [ send (OnClose { reset = True, link = model.modal_confirm3_link }) ] [ DoUpdateDraft (SaveNewInvite draft) ] Nothing
+            )
+
+        DoModalConfirm3KeepEditing ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
 
         -- Common
         NoMsg ->
@@ -573,20 +647,30 @@ update_ apis message model =
                     Comments.update apis msg model.comments
 
                 -- Sync message from Comments to JoinOrga.form when it changes
-                newForm =
+                ( newForm, draftCmds, newTimer ) =
                     case out.result of
                         Just (Comments.PostChanged ( "message", v )) ->
                             let
                                 form =
                                     model.form
+
+                                updatedForm =
+                                    { form | post = Dict.insert "message" v form.post }
+
+                                timer =
+                                    model.draftSaveTimer + 1
                             in
-                            { form | post = Dict.insert "message" v form.post }
+                            if String.trim v == "" then
+                                ( updatedForm, [ send (SaveDraftDelayed timer) ], timer )
+
+                            else
+                                ( updatedForm, [ sendSleep (SaveDraftDelayed timer) 3500 ], timer )
 
                         _ ->
-                            model.form
+                            ( model.form, [], model.draftSaveTimer )
             in
-            ( { model | comments = newComments, form = newForm }
-            , out2 (out.cmds |> List.map (Cmd.map CommentsMsg)) out.gcmds
+            ( { model | comments = newComments, form = newForm, draftSaveTimer = newTimer }
+            , out2 (out.cmds |> List.map (Cmd.map CommentsMsg) |> List.append draftCmds) out.gcmds
             )
 
 
@@ -622,7 +706,12 @@ view op (State model) =
     if model.isActive2 then
         div []
             [ viewModal op (State model)
-            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , ModalConfirm.view3
+                { data = model.modal_confirm
+                , onDiscard = DoModalConfirm3Discard
+                , onSaveDraft = DoModalConfirm3SaveDraft
+                , onKeepEditing = DoModalConfirm3KeepEditing
+                }
             ]
 
     else

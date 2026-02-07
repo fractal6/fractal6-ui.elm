@@ -92,6 +92,7 @@ type alias Model =
     , path_data : GqlData LocalGraph
     , action_result : GqlData IdPayload
     , draft : Maybe ProjectDraft
+    , currentDraft : Maybe TensionDraft
     , isTargetOpen : String
     , isTypeOpen : String
     , expanded_lines : ExpandedLines
@@ -194,6 +195,7 @@ initModel session =
     , withUsers = []
     , simplifiedView = False
     , draft = Nothing
+    , currentDraft = Nothing
     , isTargetOpen = ""
     , isTypeOpen = ""
     , expanded_lines = Dict.empty
@@ -226,6 +228,11 @@ initModel session =
 -- Global methods
 --  nothing here
 -- State Controls
+
+
+setCurrentDraft : Maybe TensionDraft -> State -> State
+setCurrentDraft draft (State model) =
+    State { model | currentDraft = draft }
 
 
 setPath : LocalGraph -> Model -> Model
@@ -735,7 +742,7 @@ update_ apis message model =
 
                                 Nothing ->
                                     -- Check for saved tension draft
-                                    case model.session.drafts.newTension of
+                                    case model.currentDraft of
                                         Just tensionDraft ->
                                             { model
                                                 | nodeDoc =
@@ -747,7 +754,7 @@ update_ apis message model =
                                         Nothing ->
                                             model
 
-                        cmd =
+                        restoreDraftCmd =
                             case Dict.get "message" newModel.nodeDoc.form.post of
                                 Just m ->
                                     send (Comments.OnChangeComment "message" m) |> Cmd.map CommentsMsg
@@ -757,7 +764,7 @@ update_ apis message model =
                     in
                     case t of
                         FromNameid nameid ->
-                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True), cmd ] )
+                            ( newModel, out0 [ queryLocalGraph apis nameid True (GotPath True), restoreDraftCmd ] )
 
                         FromPath p ->
                             let
@@ -776,7 +783,7 @@ update_ apis message model =
 
                             else
                                 let
-                                    switch_cmd =
+                                    switchCmd =
                                         case model.activeTab of
                                             NewTensionTab ->
                                                 Cmd.none
@@ -791,7 +798,8 @@ update_ apis message model =
                                 , out0
                                     [ sendSleep (SetIsActive2 True) 10
                                     , Cmd.map CommentsMsg (send <| Comments.OnSetTarget (List.map .nameid p.path))
-                                    , switch_cmd
+                                    , switchCmd
+                                    , restoreDraftCmd
                                     ]
                                 )
 
@@ -1353,7 +1361,7 @@ update_ apis message model =
                 -- Read current message content (may have been modified by rich text ports)
                 let
                     draftTitle =
-                        Dict.get "title" model.nodeDoc.form.post |> withDefault ""
+                        Dict.get "title" model.nodeDoc.form.post |> withDefault "" |> String.trim
 
                     draftMessage =
                         Dict.get "message" model.nodeDoc.form.post |> withDefault "" |> String.trim
