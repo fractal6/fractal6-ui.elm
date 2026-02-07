@@ -39,6 +39,7 @@ import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.NodeDoc as NodeDoc
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar exposing (viewSearchBarLevel)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
@@ -198,6 +199,9 @@ type alias Model =
     , node_hovered : Maybe Node
     , next_focus : Maybe String
     , recent_activity_tab : RecentActivityTab
+    , activity_pattern : String
+    , activity_pattern_init : String
+    , activity_searching : Bool
     , depth : Maybe Int
     , legend : Bool
     , leaders : List User
@@ -285,6 +289,9 @@ init global flags =
             , node_hovered = Nothing
             , next_focus = Nothing
             , recent_activity_tab = session.data.recent_activity_tab |> withDefault TensionTab
+            , activity_pattern = ""
+            , activity_pattern_init = ""
+            , activity_searching = False
             , depth = Nothing
             , legend = False
             , leaders = []
@@ -400,6 +407,9 @@ type Msg
     | ChangeNodeLookup (List Node)
     | SearchKeyDown Int
     | ChangeActivityTab RecentActivityTab
+    | ChangeActivityPattern String
+    | SearchActivityKeyDown Int
+    | OnClearActivitySearch
     | GotJournal (GqlData (List EventNotif))
       -- Node Action
     | OpenActionPanel String String (Maybe ( Int, Int ))
@@ -511,10 +521,10 @@ update global message model =
         GotTensions result ->
             case result of
                 Success data ->
-                    ( { model | tensions_data = result, init_tensions = False }, Cmd.none, send (UpdateSessionTensions (Just data)) )
+                    ( { model | tensions_data = result, init_tensions = False, activity_searching = False }, Cmd.none, send (UpdateSessionTensions (Just data)) )
 
                 _ ->
-                    ( { model | tensions_data = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
+                    ( { model | tensions_data = result, activity_searching = False }, Cmd.none, send (UpdateSessionTensions Nothing) )
 
         GotData result ->
             case result of
@@ -648,6 +658,13 @@ update global message model =
 
         ChangeActivityTab tab ->
             let
+                patternQuery =
+                    if String.trim model.activity_pattern_init /= "" then
+                        Just (String.trim model.activity_pattern_init)
+
+                    else
+                        Nothing
+
                 ( tensions_data, journal_data, cmd ) =
                     case tab of
                         TensionTab ->
@@ -663,7 +680,7 @@ update global message model =
                                 in
                                 ( LoadingSlowly
                                 , model.journal_data
-                                , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                                , queryAllTension apis nameids nfirstTensions 0 patternQuery (Just TensionStatus.Open) Nothing GotTensions
                                 )
 
                             else
@@ -688,6 +705,62 @@ update global message model =
             ( { model | recent_activity_tab = tab, tensions_data = tensions_data, journal_data = journal_data }
             , cmd
             , send (UpdateSessionRecentActivityTab (Just tab))
+            )
+
+        ChangeActivityPattern val ->
+            ( { model | activity_pattern = val }, Cmd.none, Cmd.none )
+
+        SearchActivityKeyDown key ->
+            case key of
+                13 ->
+                    let
+                        trimmed =
+                            String.trim model.activity_pattern
+
+                        pattern =
+                            if trimmed /= "" then
+                                Just trimmed
+
+                            else
+                                Nothing
+                    in
+                    if trimmed /= model.activity_pattern_init then
+                        let
+                            nameids =
+                                withMaybeMapData
+                                    (\path ->
+                                        path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                                    )
+                                    model.path_data
+                                    |> withDefault []
+                        in
+                        ( { model | activity_searching = True, activity_pattern_init = trimmed }
+                        , queryAllTension apis nameids nfirstTensions 0 pattern (Just TensionStatus.Open) Nothing GotTensions
+                        , Cmd.none
+                        )
+
+                    else
+                        ( model, Cmd.none, Cmd.none )
+
+                27 ->
+                    ( { model | activity_pattern = "" }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnClearActivitySearch ->
+            let
+                nameids =
+                    withMaybeMapData
+                        (\path ->
+                            path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                        )
+                        model.path_data
+                        |> withDefault []
+            in
+            ( { model | activity_pattern = "", activity_pattern_init = "", activity_searching = True }
+            , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+            , Cmd.none
             )
 
         GotJournal result ->
@@ -737,7 +810,7 @@ update global message model =
                         path_data =
                             Success { path | focus = { focus | pinned = pinned } }
                     in
-                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data }
+                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_pattern = "", activity_pattern_init = "", activity_searching = False }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
@@ -1055,7 +1128,7 @@ view_ global model =
     in
     div [ id "overview", class "columns is-centered" ]
         [ div [ class "column is-6 is-5-fullhd" ]
-            [ --viewSearchBar global.session.common.user model
+            [ --viewQuickSearchBar global.session.common.user model
               viewCanvas global.session.common.user model
             , viewFromPos model.window_pos.bottomLeft
             ]
@@ -1067,8 +1140,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : UserState -> Model -> Html Msg
-viewSearchBar us model =
+viewQuickSearchBar : UserState -> Model -> Html Msg
+viewQuickSearchBar us model =
     div
         [ id "searchBarOverview" ]
         [ div
@@ -1451,39 +1524,56 @@ viewCanvas us model =
 
 viewActivies : Model -> Html Msg
 viewActivies model =
-    div
-        [ id "activities", class "box is-shrinked2 is-flex-grow" ]
-        [ div [ class "title ml-4 pt-2 mb-3" ]
-            [ div [ class "level" ]
-                [ div [ class "level-left" ]
-                    [ div
-                        [ class "tooltip"
-                        , case model.path_data of
-                            Success p ->
-                                title ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
+    let
+        searchOp =
+            { onChangePattern = ChangeActivityPattern
+            , onSearchKeyDown = SearchActivityKeyDown
+            , onSubmitText = \_ -> OnClearActivitySearch
+            , id_name = "searchBarActivities"
+            , column_class = ""
+            , field_class = "mb-0 mr-5 is-flex-grow"
+            , placeholder_txt = T.searchTensions model.session.lexicon
+            }
 
-                            _ ->
-                                class ""
+        tabsView =
+            div [ class "tabs is-small" ]
+                [ ul []
+                    [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
+                        [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank" ]
+                            [ A.icon1 "icon-exchange icon-sm" (T.tensions model.session.lexicon) ]
                         ]
-                        [ span [ class "help-label" ] [ text T.recentActivities, text ":" ] ]
-                    ]
-                , div [ class "level-right" ]
-                    [ div [ class "tabs is-small" ]
-                        [ ul []
-                            [ li [ classList [ ( "is-active", model.recent_activity_tab == TensionTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank" ]
-                                    [ A.icon1 "icon-exchange icon-sm" (T.tensions model.session.lexicon) ]
-                                ]
-                            , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
-                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank" ]
-                                    [ A.icon1 "icon-history icon-sm" T.activity ]
-                                ]
-                            ]
+                    , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
+                        [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank" ]
+                            [ A.icon1 "icon-history icon-sm" T.activity ]
                         ]
                     ]
                 ]
+    in
+    div
+        [ id "activities", class "box is-shrinked2 is-flex-grow" ]
+        [ div [ class "title ml-4 pt-2 mb-3" ]
+            [ case model.recent_activity_tab of
+                TensionTab ->
+                    viewSearchBarLevel searchOp model.activity_pattern_init model.activity_pattern [ tabsView ]
+
+                JournalTab ->
+                    div [ class "level" ]
+                        [ div [ class "level-left" ]
+                            [ div
+                                [ class "tooltip"
+                                , case model.path_data of
+                                    Success p ->
+                                        title ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
+
+                                    _ ->
+                                        class ""
+                                ]
+                                [ span [ class "help-label" ] [ text T.recentActivities, text ":" ] ]
+                            ]
+                        , div [ class "level-right" ] [ tabsView ]
+                        ]
             ]
-        , div [ class "content is-size-7", classList [ ( "spinner", isRecentTabLoading model ), ( "is-lazy", isRecentTabLazy model ) ] ]
+        , div [ class "content is-size-7", classList [ ( "spinner", isRecentTabLoading model ), ( "is-lazy", isRecentTabLazy model || model.activity_searching ) ] ]
             [ case model.recent_activity_tab of
                 TensionTab ->
                     case model.tensions_data of
@@ -1497,6 +1587,9 @@ viewActivies model =
                                             ]
                                        ]
                                     |> div [ id "tensionsTab" ]
+
+                            else if model.activity_pattern_init /= "" then
+                                div [ class "m-4" ] [ text T.noResultsFor, text " \"", text model.activity_pattern_init, text "\"" ]
 
                             else
                                 case model.node_focus.type_ of

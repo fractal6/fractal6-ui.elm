@@ -36,7 +36,7 @@ import Components.ConfirmOwner as ConfirmOwner
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
-import Components.SearchBar exposing (viewSearchBar)
+import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
@@ -825,6 +825,8 @@ view_ global model =
             , onSearchKeyDown = SearchKeyDown
             , onSubmitText = SubmitTextSearch
             , id_name = "searchBarMembers"
+            , column_class = "is-8"
+            , field_class = ""
             , placeholder_txt = T.searchMembers
             }
 
@@ -861,7 +863,7 @@ view_ global model =
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
-                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
+                    [ viewSearchBarCol opSearch model.pattern_init model.pattern ]
                 , if isAdmin then
                     div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
                         [ div

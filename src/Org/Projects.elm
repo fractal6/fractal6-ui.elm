@@ -36,7 +36,7 @@ import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.OrgaMenu as OrgaMenu
-import Components.SearchBar exposing (viewSearchBar)
+import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
@@ -1240,13 +1240,15 @@ viewDefault user model =
             , onSearchKeyDown = SearchKeyDown
             , onSubmitText = SubmitTextSearch
             , id_name = "searchBarProjects"
+            , column_class = "is-8"
+            , field_class = ""
             , placeholder_txt = T.searchProjects
             }
     in
     div []
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-tree-quarter" ]
-                [ viewSearchBar opSearch model.pattern_init model.pattern ]
+                [ viewSearchBarCol opSearch model.pattern_init model.pattern ]
             , if isAdmin then
                 div [ class "column is-one-quarter is-flex is-align-self-flex-start" ]
                     [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]

@@ -37,7 +37,7 @@ import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
-import Components.SearchBar exposing (viewSearchBar)
+
 import Components.TreeMenu as TreeMenu
 import Dict
 import Extra exposing (insertAt, ternary, unwrap)

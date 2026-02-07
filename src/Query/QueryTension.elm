@@ -651,7 +651,7 @@ subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
                         , type_ = type_ |> Maybe.map (\t -> { eq = Present t, in_ = Absent }) |> fromMaybe
                         , and =
                             Present
-                                [ Input.buildTensionFilter
+                                ([ Input.buildTensionFilter
                                     (\d1 ->
                                         { d1
                                             | receiverid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present }
@@ -666,7 +666,32 @@ subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
                                         }
                                     )
                                     |> Just
-                                ]
+                                 ]
+                                    ++ (query_
+                                            |> Maybe.map
+                                                (\q ->
+                                                    [ Input.buildTensionFilter
+                                                        (\d3 ->
+                                                            { d3
+                                                                | title = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                , or =
+                                                                    Present
+                                                                        [ Input.buildTensionFilter
+                                                                            (\d4 ->
+                                                                                { d4
+                                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                                }
+                                                                            )
+                                                                            |> Just
+                                                                        ]
+                                                            }
+                                                        )
+                                                        |> Just
+                                                    ]
+                                                )
+                                            |> withDefault []
+                                       )
+                                )
                     }
                 )
                 |> Present

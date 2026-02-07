@@ -36,6 +36,7 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
+import Components.SearchBar exposing (viewSearchField)
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
@@ -1749,35 +1750,21 @@ viewCatMenu typeFilter =
 
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
+    let
+        opSearch =
+            { onChangePattern = ChangePattern
+            , onSearchKeyDown = SearchKeyDown
+            , onSubmitText = SubmitTextSearch
+            , id_name = "searchBarTensions"
+            , column_class = "is-5"
+            , field_class = ""
+            , placeholder_txt = T.searchTensions model.session.lexicon
+            }
+    in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mb-0" ]
             [ div [ class "column is-5" ]
-                [ div [ class "field has-addons" ]
-                    [ div [ class "control is-expanded" ]
-                        [ input
-                            [ class "is-rounded input is-small pr-6"
-                            , type_ "search"
-                            , autocomplete False
-                            , autofocus False
-                            , placeholder (T.searchTensions model.session.lexicon)
-                            , value model.pattern
-                            , onInput ChangePattern
-                            , onKeydown SearchKeyDown
-                            ]
-                            []
-                        , span [ class "icon-input-flex-right" ]
-                            [ if model.pattern_init /= "" then
-                                span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
-
-                              else
-                                text ""
-                            , span [ class "vbar" ] []
-                            , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
-                                [ A.icon "icon-search" ]
-                            ]
-                        ]
-                    ]
-                ]
+                [ viewSearchField opSearch model.pattern_init model.pattern ]
             , div [ class "column is-7 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
