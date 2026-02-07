@@ -446,10 +446,11 @@ typeFilter2Text x =
 type SortFilter
     = NewestSort
     | OldestSort
+    | ActivitySort
 
 
 sortFilterList =
-    [ NewestSort, OldestSort ]
+    [ NewestSort, OldestSort, ActivitySort ]
 
 
 sortFilterEncoder : SortFilter -> String
@@ -461,12 +462,18 @@ sortFilterEncoder x =
         OldestSort ->
             "oldest"
 
+        ActivitySort ->
+            "activity"
+
 
 sortFilterDecoder : String -> SortFilter
 sortFilterDecoder x =
     case x of
         "oldest" ->
             OldestSort
+
+        "activity" ->
+            ActivitySort
 
         _ ->
             NewestSort
@@ -489,6 +496,9 @@ sortFilter2Text x =
 
         OldestSort ->
             T.oldest
+
+        ActivitySort ->
+            T.recently_updated
 
 
 
@@ -937,7 +947,7 @@ update global message model =
 
                 newTensions =
                     withMapData
-                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        identity
                         newTensions_
             in
             ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
@@ -959,7 +969,7 @@ update global message model =
 
                 newTensions =
                     withMapData
-                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        identity
                         newTensions_
             in
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
@@ -1920,7 +1930,8 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
                     [ div [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
-                        [ text T.sort
+                        [ text (T.sort ++ " ")
+                        , span [ class "has-text-weight-bold" ] [ text (sortFilter2Text sortFilter) ]
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
                     , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]

@@ -566,6 +566,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Journal"
   fr="Journal"
 
+[activity]
+  en="Activity"
+  fr="Activité"
+
 [labels]
   en="Labels"
   fr="Etiquettes"
@@ -1224,8 +1228,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="On y est presque"
 
 [sort]
-  en="Sort"
-  fr="Trier"
+  en="Sort by"
+  fr="Trier par"
 
 [oldest]
   en="Oldest"
@@ -1234,6 +1238,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [newest]
   en="Newest"
   fr="Plus récent"
+
+[recently_updated]
+  en="Recently updated"
+  fr="Récemment mis à jour"
 
 [reviewAndValidate]
   en="Review and validate"

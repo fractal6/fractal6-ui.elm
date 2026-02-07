@@ -957,6 +957,7 @@ port nodeFocusedFromJs : (( String, Int ) -> msg) -> Sub msg
 
 -- Send to Javascript
 
+
 port sendToggleGraphReverse : () -> Cmd msg
 
 
@@ -1475,7 +1476,7 @@ viewActivies model =
                                 ]
                             , li [ classList [ ( "is-active", model.recent_activity_tab == JournalTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank" ]
-                                    [ A.icon1 "icon-history icon-sm" T.journal ]
+                                    [ A.icon1 "icon-history icon-sm" T.activity ]
                                 ]
                             ]
                         ]
