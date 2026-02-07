@@ -183,6 +183,7 @@ type alias CommentPatchForm =
     , uctx : UserCtx
     , post : Post
     , viewMode : InputViewMode
+    , linkCopied : String
     }
 
 
@@ -192,6 +193,7 @@ initCommentPatchForm user data =
     , id = ""
     , post = Dict.fromList data
     , viewMode = Write
+    , linkCopied = ""
     }
 
 

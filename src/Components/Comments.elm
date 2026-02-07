@@ -59,7 +59,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow)
+import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, value)
 import Html.Events exposing (onClick, onInput)
@@ -224,6 +224,9 @@ type Msg
     | OnCancelComment String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
+      -- Clipboard
+    | OnCopyLink String
+    | OnClearCopyLink
       -- Reaction
     | OnAddReaction String Int
     | OnAddReactionAck (GqlData ReactionResponse)
@@ -598,6 +601,20 @@ update_ apis message model =
                 _ ->
                     ( model, noOut )
 
+        OnCopyLink cid ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | linkCopied = cid } }, out0 [ sendSleep OnClearCopyLink 2000 ] )
+
+        OnClearCopyLink ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | linkCopied = "" } }, noOut )
+
         OnAddReaction cid type_ ->
             case model.session.user of
                 LoggedIn uctx ->
@@ -938,16 +955,21 @@ viewComment session c form result highlightedCommentId userInput =
                                     ]
                                 , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ] <|
-                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
+                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink, onClick (OnCopyLink c.id) ] [ A.icon1 "icon-link" "Copy link" ] ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ text T.edit ]
+                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
                                                     ]
 
                                                 else
                                                     []
                                                )
                                     ]
+                                , if form.linkCopied == c.id then
+                                    span [ class "copy-notif is-size-7 has-text-success" ] [ text "Copied!" ]
+
+                                  else
+                                    text ""
                                 ]
                             ]
                         ]

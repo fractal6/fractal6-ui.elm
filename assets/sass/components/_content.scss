@@ -157,6 +157,14 @@
                 opacity: 0.75 !important;
                 &:hover { opacity: 1 !important; }
             }
+
+            .copy-notif {
+                position: absolute;
+                top: calc(100% + 15px);
+                right: 0;
+                white-space: nowrap;
+                pointer-events: none;
+            }
         }
 
         .message-body {
