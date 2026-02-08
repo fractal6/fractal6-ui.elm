@@ -1401,13 +1401,16 @@ journalDecoder data =
             )
 
 
-queryJournal url nameid msg =
+queryJournal url nameid textQuery msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nameid)
             (SelectionSet.map2 JournalNode
                 Fractal.Object.Node.nameid
-                (Fractal.Object.Node.events_history identity tensionEventPayload)
+                (Fractal.Object.Node.events_history
+                    (\args -> { args | query = fromMaybe textQuery })
+                    tensionEventPayload
+                )
             )
         )
         (RemoteData.fromResult >> decodeResponse journalDecoder >> msg)

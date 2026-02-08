@@ -298,10 +298,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Select a color"
   fr="Selectionnez une couleur"
 
-[recentActivities]
-  en="Recent activities"
-  fr="Activités récentes"
-
 [createLabel]
   en="Create label"
   fr="Créer l’étiquette"
@@ -862,6 +858,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [searchLabels]
   en="Search labels"
   fr="Rechercher des étiquettes"
+
+[searchRecentActivities]
+  en="Search recent activities"
+  fr="Rechercher des activités récentes"
 
 [editLabels]
   en="Edit labels"

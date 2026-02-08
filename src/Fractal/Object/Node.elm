@@ -435,11 +435,7 @@ contracts fillInOptionals____ object____ =
 
 
 type alias EventsHistoryOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.EventFilter
-    , order : OptionalArgument Fractal.InputObject.EventOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
+    { query : OptionalArgument String }
 
 
 events_history :
@@ -449,10 +445,10 @@ events_history :
 events_history fillInOptionals____ object____ =
     let
         filledInOptionals____ =
-            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+            fillInOptionals____ { query = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+            [ Argument.optional "query" filledInOptionals____.query Encode.string ]
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "events_history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)

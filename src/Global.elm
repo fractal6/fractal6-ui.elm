@@ -140,6 +140,7 @@ type Msg
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
+    | UpdateSessionActivityPattern (Maybe String)
     | UpdateSessionMenuOrga (Maybe Bool)
     | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
     | UpdateSessionScreen Screen
@@ -533,6 +534,16 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | recent_activity_tab = data } } }, Ports.saveRecentActivityTab data )
+
+        UpdateSessionActivityPattern data ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+            in
+            ( { model | session = { session | data = { sessionData | activity_pattern = data } } }, Cmd.none )
 
         UpdateSessionMenuOrga data ->
             let

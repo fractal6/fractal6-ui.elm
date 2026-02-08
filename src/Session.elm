@@ -182,6 +182,7 @@ type alias SessionData =
     , node_quickSearch : Maybe NodesQuickSearch
     , window_pos : Maybe WindowPos
     , recent_activity_tab : Maybe RecentActivityTab
+    , activity_pattern : Maybe String
     , orga_menu : Maybe Bool
     , tree_menu : Maybe TreeMenuSchema.PersistentModel
     , drafts : DraftStore
@@ -300,6 +301,7 @@ resetSession session flags =
         , node_quickSearch = Nothing
         , window_pos = Nothing
         , recent_activity_tab = Nothing
+        , activity_pattern = Nothing
         , orga_menu = Nothing
         , tree_menu = session.data.tree_menu
         , drafts = session.data.drafts
@@ -459,6 +461,7 @@ fromLocalSession url flags =
             , node_quickSearch = Nothing
             , window_pos = window_pos
             , recent_activity_tab = recent_activity_tab
+            , activity_pattern = Nothing
             , orga_menu = flags.orga_menu
             , tree_menu =
                 flags.tree_menu

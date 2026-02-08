@@ -258,6 +258,13 @@ init global flags =
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
 
+        activity_pattern_m =
+            if fs.orgChange || fs.menuChange then
+                Just ""
+
+            else
+                session.data.activity_pattern
+
         --d1 = Debug.log "isInit, orgChange, focuChange, menuChange" [ fs.isInit, fs.orgChange, fs.focusChange, fs.menuChange ]
         --d2 = Debug.log "newfocus" [ newFocus ]
         -- QuickSearch
@@ -289,8 +296,8 @@ init global flags =
             , node_hovered = Nothing
             , next_focus = Nothing
             , recent_activity_tab = session.data.recent_activity_tab |> withDefault TensionTab
-            , activity_pattern = ""
-            , activity_pattern_init = ""
+            , activity_pattern = withDefault "" activity_pattern_m
+            , activity_pattern_init = withDefault "" activity_pattern_m
             , activity_searching = False
             , depth = Nothing
             , legend = False
@@ -372,11 +379,18 @@ init global flags =
     in
     ( model2
     , Cmd.batch cmds
-    , if fs.refresh then
-        send (UpdateSessionFocus (Just newFocus))
+    , Cmd.batch
+        [ if fs.refresh then
+            send (UpdateSessionFocus (Just newFocus))
 
-      else
-        Cmd.none
+          else
+            Cmd.none
+        , if fs.orgChange || fs.menuChange then
+            send (UpdateSessionActivityPattern activity_pattern_m)
+
+          else
+            Cmd.none
+        ]
     )
 
 
@@ -668,7 +682,7 @@ update global message model =
                 ( tensions_data, journal_data, cmd ) =
                     case tab of
                         TensionTab ->
-                            if withMaybeData model.tensions_data == Nothing then
+                            if withMaybeData model.tensions_data == Nothing || patternQuery /= Nothing then
                                 let
                                     nameids =
                                         withMaybeMapData
@@ -690,10 +704,10 @@ update global message model =
                                 )
 
                         JournalTab ->
-                            if withMaybeData model.journal_data == Nothing then
+                            if withMaybeData model.journal_data == Nothing || patternQuery /= Nothing then
                                 ( model.tensions_data
                                 , LoadingSlowly
-                                , queryJournal apis model.node_focus.nameid GotJournal
+                                , queryJournal apis model.node_focus.nameid patternQuery GotJournal
                                 )
 
                             else
@@ -726,17 +740,34 @@ update global message model =
                     in
                     if trimmed /= model.activity_pattern_init then
                         let
-                            nameids =
-                                withMaybeMapData
-                                    (\path ->
-                                        path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
-                                    )
-                                    model.path_data
-                                    |> withDefault []
+                            cmd =
+                                case model.recent_activity_tab of
+                                    TensionTab ->
+                                        let
+                                            nameids =
+                                                withMaybeMapData
+                                                    (\path ->
+                                                        path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                                                    )
+                                                    model.path_data
+                                                    |> withDefault []
+                                        in
+                                        queryAllTension apis nameids nfirstTensions 0 pattern (Just TensionStatus.Open) Nothing GotTensions
+
+                                    JournalTab ->
+                                        queryJournal apis model.node_focus.nameid pattern GotJournal
+
+                            data =
+                                case model.recent_activity_tab of
+                                    TensionTab ->
+                                        { model | activity_searching = True, activity_pattern_init = trimmed, tensions_data = LoadingSlowly }
+
+                                    JournalTab ->
+                                        { model | activity_searching = True, activity_pattern_init = trimmed, journal_data = LoadingSlowly }
                         in
-                        ( { model | activity_searching = True, activity_pattern_init = trimmed }
-                        , queryAllTension apis nameids nfirstTensions 0 pattern (Just TensionStatus.Open) Nothing GotTensions
-                        , Cmd.none
+                        ( data
+                        , cmd
+                        , send (UpdateSessionActivityPattern pattern)
                         )
 
                     else
@@ -750,21 +781,34 @@ update global message model =
 
         OnClearActivitySearch ->
             let
-                nameids =
-                    withMaybeMapData
-                        (\path ->
-                            path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
-                        )
-                        model.path_data
-                        |> withDefault []
+                ( data, cmd ) =
+                    case model.recent_activity_tab of
+                        TensionTab ->
+                            let
+                                nameids =
+                                    withMaybeMapData
+                                        (\path ->
+                                            path.focus.children |> List.map .nameid |> List.append [ path.focus.nameid ]
+                                        )
+                                        model.path_data
+                                        |> withDefault []
+                            in
+                            ( { model | activity_pattern = "", activity_pattern_init = "", activity_searching = True, tensions_data = LoadingSlowly }
+                            , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                            )
+
+                        JournalTab ->
+                            ( { model | activity_pattern = "", activity_pattern_init = "", activity_searching = True, journal_data = LoadingSlowly }
+                            , queryJournal apis model.node_focus.nameid Nothing GotJournal
+                            )
             in
-            ( { model | activity_pattern = "", activity_pattern_init = "", activity_searching = True }
-            , queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-            , Cmd.none
+            ( data
+            , cmd
+            , send (UpdateSessionActivityPattern Nothing)
             )
 
         GotJournal result ->
-            ( { model | journal_data = result, init_journal = False }, Cmd.none, Cmd.none )
+            ( { model | journal_data = result, init_journal = False, activity_searching = False }, Cmd.none, Cmd.none )
 
         -- Node Action
         OpenActionPanel domid nameid pos ->
@@ -809,15 +853,22 @@ update global message model =
 
                         path_data =
                             Success { path | focus = { focus | pinned = pinned } }
+
+                        patternQuery =
+                            if String.trim model.activity_pattern_init /= "" then
+                                Just (String.trim model.activity_pattern_init)
+
+                            else
+                                Nothing
                     in
-                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_pattern = "", activity_pattern_init = "", activity_searching = False }
+                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_searching = False }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
-                            queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                            queryAllTension apis nameids nfirstTensions 0 patternQuery (Just TensionStatus.Open) Nothing GotTensions
 
                           else if model.recent_activity_tab == JournalTab && (isPathNew || model.init_journal) then
-                            queryJournal apis model.node_focus.nameid GotJournal
+                            queryJournal apis model.node_focus.nameid patternQuery GotJournal
 
                           else
                             Cmd.none
@@ -1532,7 +1583,13 @@ viewActivies model =
             , id_name = "searchBarActivities"
             , column_class = ""
             , field_class = "mb-0 mr-5 is-flex-grow"
-            , placeholder_txt = T.searchTensions model.session.lexicon
+            , placeholder_txt =
+                case model.recent_activity_tab of
+                    TensionTab ->
+                        T.searchTensions model.session.lexicon
+
+                    JournalTab ->
+                        T.searchRecentActivities
             }
 
         tabsView =
@@ -1552,26 +1609,7 @@ viewActivies model =
     div
         [ id "activities", class "box is-shrinked2 is-flex-grow" ]
         [ div [ class "title ml-4 pt-2 mb-3" ]
-            [ case model.recent_activity_tab of
-                TensionTab ->
-                    viewSearchBarLevel searchOp model.activity_pattern_init model.activity_pattern [ tabsView ]
-
-                JournalTab ->
-                    div [ class "level" ]
-                        [ div [ class "level-left" ]
-                            [ div
-                                [ class "tooltip"
-                                , case model.path_data of
-                                    Success p ->
-                                        title ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
-
-                                    _ ->
-                                        class ""
-                                ]
-                                [ span [ class "help-label" ] [ text T.recentActivities, text ":" ] ]
-                            ]
-                        , div [ class "level-right" ] [ tabsView ]
-                        ]
+            [ viewSearchBarLevel searchOp model.activity_pattern_init model.activity_pattern [ tabsView ]
             ]
         , div [ class "content is-size-7", classList [ ( "spinner", isRecentTabLoading model ), ( "is-lazy", isRecentTabLazy model || model.activity_searching ) ] ]
             [ case model.recent_activity_tab of
@@ -1608,8 +1646,15 @@ viewActivies model =
                 JournalTab ->
                     case model.journal_data of
                         Success events ->
-                            List.map (\x -> Lazy.lazy2 viewEventNotif model.session x) events
-                                |> div [ id "journalTab" ]
+                            if List.length events > 0 then
+                                List.map (\x -> Lazy.lazy2 viewEventNotif model.session x) events
+                                    |> div [ id "journalTab" ]
+
+                            else if model.activity_pattern_init /= "" then
+                                div [ class "m-4" ] [ text T.noResultsFor, text " \"", text model.activity_pattern_init, text "\"" ]
+
+                            else
+                                text ""
 
                         Failure err ->
                             viewGqlErrors err
