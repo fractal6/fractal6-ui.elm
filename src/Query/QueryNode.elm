@@ -229,10 +229,10 @@ nodeOrgaExtPayload =
 --
 
 
-queryNodeExt url nameids msg =
+queryNodeExt url nameids orderBy msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeExtFilter nameids)
+            (nodeExtFilter nameids orderBy)
             nodeOrgaExtPayload
         )
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
@@ -241,7 +241,7 @@ queryNodeExt url nameids msg =
 queryOrgaNode url nameids msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeExtFilter nameids)
+            (nodeExtFilter nameids NodeOrderable.UpdatedAt)
             (SelectionSet.map2 OrgaNode
                 Fractal.Object.Node.name
                 Fractal.Object.Node.nameid
@@ -250,8 +250,8 @@ queryOrgaNode url nameids msg =
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
 
 
-nodeExtFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nodeExtFilter nameids a =
+nodeExtFilter : List String -> NodeOrderable.NodeOrderable -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeExtFilter nameids orderBy a =
     { a
         | filter =
             Input.buildNodeFilter
@@ -262,7 +262,7 @@ nodeExtFilter nameids a =
                 )
                 |> Present
         , order =
-            Input.buildNodeOrder (\b -> { b | desc = Present NodeOrderable.UpdatedAt })
+            Input.buildNodeOrder (\b -> { b | desc = Present orderBy })
                 |> Present
     }
 

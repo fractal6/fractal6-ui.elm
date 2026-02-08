@@ -1239,9 +1239,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Newest"
   fr="Plus récent"
 
-[recently_updated]
-  en="Recently updated"
-  fr="Récemment mis à jour"
+[lastUpdate]
+  en="Last update"
+  fr="Dernière modification"
 
 [reviewAndValidate]
   en="Review and validate"

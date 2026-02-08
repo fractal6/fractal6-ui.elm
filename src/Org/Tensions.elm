@@ -36,14 +36,14 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.SearchBar exposing (viewSearchField)
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar exposing (viewSearchField)
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (showIf, space_, ternary, upH)
+import Extra exposing (showIf, space_, ternary, unwrap, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -73,7 +73,6 @@ import Task
 import Text as T
 import Time
 import Url exposing (Url)
-import Extra exposing (unwrap)
 
 
 
@@ -499,7 +498,7 @@ sortFilter2Text x =
             T.oldest
 
         ActivitySort ->
-            T.recently_updated
+            T.lastUpdate
 
 
 
@@ -1636,8 +1635,7 @@ view global model =
                 unwrap org_id .name path.root ++ " · " ++ T.tensions_
 
             _ ->
-                org_id ++ " · " ++  T.tensions_
-
+                org_id ++ " · " ++ T.tensions_
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
@@ -1918,7 +1916,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                 [ div [ class "control dropdown" ]
                     [ div [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
                         [ text (T.sort ++ " ")
-                        , span [ class "has-text-weight-bold" ] [ text (sortFilter2Text sortFilter) ]
+                        , span [ class "has-text-weight-bold" ] [ text (sortFilter2Text sortFilter |> String.toLower) ]
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
                     , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
