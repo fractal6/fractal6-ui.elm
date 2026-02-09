@@ -44,6 +44,7 @@ import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -67,17 +68,18 @@ import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown, setMdCheckbox)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
+import ModelSchema exposing (Comment, Event, IdPayload, Label, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
 import Ports
 import Query.PatchContract exposing (pushContractComment)
-import Query.PatchTension exposing (patchComment, pushTensionPatch)
+import Query.PatchTension exposing (deleteComment, patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile, toReflink)
 import String.Extra as SE
 import String.Format as Format
+import Task
 import Text as T
 import Time
 
@@ -120,8 +122,15 @@ type alias Model =
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
 
+    -- Delete Comment (cid, result)
+    , comment_delete_result : ( String, GqlData IdPayload )
+
     -- Components
     , userInput : UserInput.State
+    , modal_confirm : ModalConfirm Msg
+
+    -- Fade-out animation for deleted comments
+    , fadingOut : List String
 
     -- Backup for checkbox operations (stores comment id and message being edited)
     , post_backup : Maybe { id : String, message : String }
@@ -144,9 +153,14 @@ initModel nameid tensionid session =
     , contract_form = initCommentPatchForm session.user []
     , comment_form = initCommentPatchForm session.user [ ( "focusid", nameid ) ]
     , comment_result = NotAsked
+    , comment_delete_result = ( "", NotAsked )
 
     -- Components
     , userInput = UserInput.init [ nameid ] False False session
+    , modal_confirm = ModalConfirm.init NoMsg
+
+    -- Fade-out animation for deleted comments
+    , fadingOut = []
 
     -- Backup for checkbox operations
     , post_backup = Nothing
@@ -224,6 +238,10 @@ type Msg
     | OnCancelComment String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
+      -- Delete comment
+    | OnDeleteComment String
+    | SubmitDeleteComment String Time.Posix
+    | DeleteCommentAck String (GqlData IdPayload)
       -- Clipboard
     | OnCopyLink String
     | OnClearCopyLink
@@ -243,6 +261,10 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
     | OnToggleMdHelp String
+      -- Confirm Modal
+    | DoModalConfirmOpen Msg TextMessage
+    | DoModalConfirmClose ModalData
+    | DoModalConfirmSend
       -- Components
     | UserInputMsg UserInput.Msg
 
@@ -533,6 +555,36 @@ update_ apis message model =
                 _ ->
                     ( { model | comment_result = result, post_backup = Nothing }, noOut )
 
+        -- Delete comment
+        OnDeleteComment cid ->
+            if List.head model.comments |> Maybe.map (\c -> c.id == cid) |> withDefault False then
+                let
+                    form =
+                        model.comment_form
+                in
+                ( { model | comment_form = { form | id = cid, post = Dict.insert "message" "" form.post } }
+                , out0 [ sendNow SubmitCommentPatch ]
+                )
+
+            else
+                ( model, out0 [ sendNow (SubmitDeleteComment cid) ] )
+
+        SubmitDeleteComment cid time ->
+            ( { model | comment_delete_result = ( cid, LoadingSlowly ) }
+            , out0 [ deleteComment apis model.tension_form.id cid (uctxFromUser model.session.user) time (DeleteCommentAck cid) ]
+            )
+
+        DeleteCommentAck cid result ->
+            case parseErr result 2 of
+                OkAuth _ ->
+                    ( { model | fadingOut = cid :: model.fadingOut, comment_delete_result = ( cid, result ) }, noOut )
+
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ] )
+
+                _ ->
+                    ( { model | comment_delete_result = ( cid, result ) }, noOut )
+
         -- Common
         NoMsg ->
             ( model, noOut )
@@ -697,6 +749,16 @@ update_ apis message model =
                 Nothing ->
                     ( model, noOut )
 
+        -- Confirm Modal
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
+
+        DoModalConfirmClose _ ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
+
         -- Components
         UserInputMsg msg ->
             let
@@ -753,6 +815,7 @@ subscriptions (State model) =
                 []
            )
         ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose ]
 
 
 
@@ -763,17 +826,23 @@ subscriptions (State model) =
 
 viewCommentsContract : SessionCommon -> State -> Html Msg
 viewCommentsContract session (State model) =
-    model.comments
-        |> List.map
-            (\c ->
-                Lazy.lazy6 viewComment session c model.comment_form model.comment_result model.highlightedCommentId model.userInput
-            )
-        |> div []
+    div []
+        [ model.comments
+            |> List.map
+                (\c ->
+                    Lazy.lazy8 viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput (List.member c.id model.fadingOut)
+                )
+            |> div []
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
 
 
 viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension session action (State model) =
-    viewComments_ session action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
+    div []
+        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.fadingOut
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
 
 
 viewComments_ :
@@ -783,11 +852,13 @@ viewComments_ :
     -> List Comment
     -> CommentPatchForm
     -> GqlData Comment
+    -> ( String, GqlData IdPayload )
     -> List Int
     -> String
     -> UserInput.State
+    -> List String
     -> Html Msg
-viewComments_ session action history comments comment_form comment_result expandedEvents highlightedCommentId userInput =
+viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput fadingOut =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -813,7 +884,7 @@ viewComments_ session action history comments comment_form comment_result expand
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            Lazy.lazy6 viewComment session c comment_form comment_result highlightedCommentId userInput
+                            Lazy.lazy8 viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -888,8 +959,8 @@ viewComments_ session action history comments comment_form comment_result expand
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
-viewComment session c form result highlightedCommentId userInput =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -900,7 +971,7 @@ viewComment session c form result highlightedCommentId userInput =
         isFocused =
             c.createdAt == highlightedCommentId
     in
-    div [ id c.createdAt, class "media section p-0" ]
+    div [ id c.createdAt, class "media section p-0", classList [ ( "comment-fadeout", isFadingOut ) ] ]
         [ div
             [ class "media-left is-hidden-mobile"
             , classList [ ( "is-hidden", isMobile session.screen ) ]
@@ -959,6 +1030,15 @@ viewComment session c form result highlightedCommentId userInput =
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
                                                     , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
+                                                    , div
+                                                        [ class "dropdown-item"
+                                                        , onClick <|
+                                                            DoModalConfirmOpen (OnDeleteComment c.id)
+                                                                { message = Nothing
+                                                                , txts = [ ( T.confirmDeleteComment, "" ) ]
+                                                                }
+                                                        ]
+                                                        [ A.icon1 "icon-trash" T.delete ]
                                                     ]
 
                                                 else
@@ -1029,8 +1109,29 @@ viewComment session c form result highlightedCommentId userInput =
                                 c.reactions
                         ]
                     ]
+            , showIf (c.id == Tuple.first delete_result) <|
+                case Tuple.second delete_result of
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        text ""
             ]
         ]
+
+
+viewDeleteCommentError : String -> ( String, GqlData IdPayload ) -> Html Msg
+viewDeleteCommentError cid ( targetCid, result ) =
+    if cid == targetCid then
+        case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+
+    else
+        text ""
 
 
 viewNewTensionCommentInput : SessionCommon -> CommentOpts -> State -> Html Msg

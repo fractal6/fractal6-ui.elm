@@ -76,7 +76,7 @@
                 content: '';
                 position: fixed;  // Match the navbar's fixed positioning
                 inset: 0;  // Shorthand for top/right/bottom/left
-                background: var(--body-background-color);
+                background: transparent;
                 height: calc(58px + #{$size-small}); // navbar height + margins
                 z-index: 100;
             }

@@ -75,6 +75,19 @@
     animation: fadeIn 0.25s ease-out;
 }
 
+// Fade-out and collapse animation for deleted comments
+.comment-fadeout {
+    animation: commentFadeOut 0.5s ease-in forwards;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@keyframes commentFadeOut {
+    0%   { opacity: 1; max-height: 1000px; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+    40%  { opacity: 0; }
+    100% { opacity: 0; max-height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+}
+
 // Settings row animation for newly created/updated items
 // Applied to td cells via parent tr class (transforms don't work on tr elements)
 @keyframes settingsRowEnter {

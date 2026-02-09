@@ -14,6 +14,7 @@ type TensionEvent
     | TitleUpdated
     | TypeUpdated
     | CommentPushed
+    | CommentDeleted
     | AssigneeAdded
     | AssigneeRemoved
     | LabelAdded
@@ -37,7 +38,7 @@ type TensionEvent
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Mentioned, Pinned, Unpinned, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
+    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, CommentDeleted, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Mentioned, Pinned, Unpinned, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -63,6 +64,9 @@ decoder =
 
                     "CommentPushed" ->
                         Decode.succeed CommentPushed
+
+                    "CommentDeleted" ->
+                        Decode.succeed CommentDeleted
 
                     "AssigneeAdded" ->
                         Decode.succeed AssigneeAdded
@@ -148,6 +152,9 @@ toString enum____ =
 
         CommentPushed ->
             "CommentPushed"
+
+        CommentDeleted ->
+            "CommentDeleted"
 
         AssigneeAdded ->
             "AssigneeAdded"
@@ -238,6 +245,9 @@ fromString enumString____ =
 
         "CommentPushed" ->
             Just CommentPushed
+
+        "CommentDeleted" ->
+            Just CommentDeleted
 
         "AssigneeAdded" ->
             Just AssigneeAdded
