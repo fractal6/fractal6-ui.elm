@@ -158,12 +158,7 @@ init global flags =
 
         -- Fetch static welcome content if not logged in
         fetchCmd =
-            case global.session.common.user of
-                LoggedIn _ ->
-                    Cmd.none
-
-                LoggedOut ->
-                    Cmd.none
+            Cmd.none
     in
     ( model
     , fetchCmd

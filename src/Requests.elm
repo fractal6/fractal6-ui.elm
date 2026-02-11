@@ -24,6 +24,7 @@ module Requests exposing (..)
 import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -604,12 +605,12 @@ getQuickDoc api lang msg =
     Static pages are stored on the assets server (api.assets) as HTML files.
     Example: fetchStaticPage api "welcome" msg -> fetches {api.assets}/welcome.html
 -}
-fetchStaticPage : Apis -> String -> (Result Http.Error String -> msg) -> Cmd msg
-fetchStaticPage api pagePath msg =
+fetchStaticPage : Apis -> Lang.Lang -> String -> (Result Http.Error String -> msg) -> Cmd msg
+fetchStaticPage api lang pagePath msg =
     Http.request
         { method = "GET"
         , headers = setHeaders api
-        , url = api.assets ++ "/" ++ pagePath ++ ".html"
+        , url = api.assets ++ "/" ++ (Lang.toString lang |> String.toLower) ++ "/" ++ pagePath ++ ".html"
         , body = Http.emptyBody
         , expect = Http.expectString msg
         , timeout = Nothing

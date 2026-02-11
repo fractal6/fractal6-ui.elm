@@ -117,15 +117,6 @@ window.addEventListener('load', _ => {
                 }
             });
 
-            app.ports.setInnerHtml.subscribe(function(data) {
-                requestAnimationFrame(function() {
-                    var el = document.getElementById(data.id);
-                    if (el) {
-                        el.innerHTML = data.html;
-                    }
-                });
-            });
-
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
 

@@ -9,29 +9,6 @@
  *
  */
 
-// Modal
-html.has-modal-active, html.has-modal-active2 {
-    @include desktop {
-        // @DEBUG: breaks the body scroll on mobile
-        // is user click "< precedent pag"...
-        overflow: hidden !important;
-        padding-right: 14px; /* Avoid width reflow */
-    }
-
-    .tabs:not(.modal .tabs), .table-container {
-        overflow: hidden;
-    }
-    .modal .tabs {
-        overflow-x: auto;
-    }
-}
-#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
-    @include desktop {
-        .navbar {
-            padding-right: 14px; /* Avoid width reflow */
-        }
-    }
-}
 
 @include mobile {
     .reverse-columns {

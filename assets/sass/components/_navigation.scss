@@ -9,6 +9,15 @@
  *
  */
 
+#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
+    @include desktop {
+        .navbar {
+            padding-right: 14px; /* Avoid width reflow */
+        }
+    }
+}
+
+
 #navbarTop {
 
     // Logged-in navbar
@@ -109,8 +118,9 @@
                     width: calc(11 / 12 * 100%); // is-6-fullhd (50%)
                 }
 
-                .navbar-item {
-                    height: 58px !important;
+                .navbar-item, .navbar-link {
+                    max-height: 39px; // prevent button (.signup) to change the heigt here
+                    border-radius: 12px;
                 }
 
                 // Fix colors
@@ -127,6 +137,10 @@
                 }
                 .navbar-brand > .navbar-item {
                     background-color: inherit !important;
+                }
+                .navbar-brand:first-child {
+                  // Fix bad alignement in mobile (because navbar-brand wrap all the navbar ?)
+                  padding: 0 0.75rem;
                 }
 
 
@@ -509,9 +523,7 @@
 }
 
 .logo-fractale-text {
-    position: relative;
-    bottom: 1px;
-    left: -5px;
+    transform: translate(-5px, -1px);
     font-weight: 500;
     color: var(--text-strong);
 }

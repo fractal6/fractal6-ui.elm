@@ -1035,6 +1035,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Please confirm to cancel this contract"
   fr="Êtes-vous sûr de vouloir annuler ce contrat"
 
+[confirmDeleteComment]
+  en="Please confirm to delete this comment"
+  fr="Êtes-vous sûr de vouloir supprimer ce commentaire"
+
 [confirmLeaveOrga]
   en="""Please confirm to leave this organisation:
 - You will be unassigned to any {{_tension_}}s in this organisation.
