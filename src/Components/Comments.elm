@@ -1036,6 +1036,8 @@ viewComment session c form result delete_result highlightedCommentId userInput i
                                                             DoModalConfirmOpen (OnDeleteComment c.id)
                                                                 { message = Nothing
                                                                 , txts = [ ( T.confirmDeleteComment, "" ) ]
+                                                                , confirmClass = "is-danger"
+                                                                , confirmLabel = T.delete
                                                                 }
                                                         ]
                                                         [ A.icon1 "icon-trash" T.delete ]

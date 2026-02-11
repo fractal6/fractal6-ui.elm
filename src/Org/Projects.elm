@@ -552,6 +552,8 @@ update global message model =
                     DoModalConfirmOpen (SafeSend msg)
                         { message = Nothing
                         , txts = [ ( T.confirmUnsafe, "" ) ]
+                        , confirmClass = "is-success"
+                        , confirmLabel = T.confirm
                         }
                 , Cmd.none
                 )

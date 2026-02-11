@@ -42,12 +42,14 @@ type alias ModalConfirm msg =
 type alias TextMessage =
     { message : Maybe ( String, String )
     , txts : List ( String, String )
+    , confirmClass : String
+    , confirmLabel : String
     }
 
 
 init : msg -> ModalConfirm msg
 init m =
-    { isOpen = False, msg = m, mess = { message = Nothing, txts = [ ( "", "" ) ] } }
+    { isOpen = False, msg = m, mess = { message = Nothing, txts = [ ( "", "" ) ], confirmClass = "is-success", confirmLabel = T.confirm } }
 
 
 open : msg -> TextMessage -> ModalConfirm msg -> ModalConfirm msg
@@ -109,8 +111,8 @@ viewConfirm op =
             , div [ class "field is-grouped is-grouped-right mt-2" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button is-small is-success", onClick op.onConfirm ]
-                        [ text T.confirm ]
+                        [ class ("button is-small " ++ op.data.mess.confirmClass), onClick op.onConfirm ]
+                        [ text op.data.mess.confirmLabel ]
                     , button
                         [ class "button is-small", onClick (op.onClose { reset = True, link = "" }) ]
                         [ text T.cancel ]

@@ -944,7 +944,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ], confirmClass = "is-success", confirmLabel = T.confirm }) ]
                 )
 
         -- Components

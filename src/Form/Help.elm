@@ -366,7 +366,7 @@ update_ apis message model =
             in
             if doClose then
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ], confirmClass = "is-success", confirmLabel = T.confirm }) ]
                 )
 
             else

@@ -600,6 +600,8 @@ update global message model =
                     DoModalConfirmOpen (SafeSend msg)
                         { message = Nothing
                         , txts = [ ( T.confirmUnsafe, "" ) ]
+                        , confirmClass = "is-success"
+                        , confirmLabel = T.confirm
                         }
                 , Cmd.none
                 )
@@ -1033,6 +1035,8 @@ update global message model =
                     DoModalConfirmOpen (SwitchUserCanJoin i True)
                         { message = Just ( "Please confirm the change", "" )
                         , txts = [ ( "Enabling this setting will make the visibility of the root circle ", "" ), ( "Public", "is-strong" ), ( ".", "" ) ]
+                        , confirmClass = "is-success"
+                        , confirmLabel = T.confirm
                         }
                 , Cmd.none
                 )
@@ -1542,6 +1546,8 @@ viewLabels model =
                                                             DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
                                                                 { message = Just ( T.labelDeleteInfoHeader, "" )
                                                                 , txts = [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                , confirmClass = "is-danger"
+                                                                , confirmLabel = T.delete
                                                                 }
                                                         ]
                                                         [ text T.remove ]
@@ -1806,6 +1812,8 @@ viewRoles model =
                                                             DoModalConfirmOpen (Submit <| SubmitDeleteRole d.id)
                                                                 { message = Just ( T.roleDeleteInfoHeader, "" )
                                                                 , txts = [ ( T.confirmDeleteRole, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                , confirmClass = "is-danger"
+                                                                , confirmLabel = T.delete
                                                                 }
                                                         ]
                                                         [ text T.remove ]

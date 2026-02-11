@@ -659,7 +659,7 @@ viewRow d op model =
                 in
                 span
                     [ class "button-light"
-                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ], confirmClass = "is-danger", confirmLabel = T.delete }
                     ]
                     [ span [ class "button-light is-small is-danger", title T.deleteThisContract ] [ A.icon "icon-trash", loadingSpin deleteLoading ] ]
 
@@ -880,7 +880,7 @@ viewContractBox c op model =
                         [ br [] []
                         , div
                             [ class "is-pulled-right button-light is-danger"
-                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ], confirmClass = "is-danger", confirmLabel = T.delete }
                             ]
                             [ A.icon1 "icon-trash" T.deleteThisContract ]
                         ]

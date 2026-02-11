@@ -550,7 +550,7 @@ update_ apis message model =
 
         DoModalConfirm3Open link ->
             ( { model
-                | modal_confirm = ModalConfirm.open NoMsg { message = Nothing, txts = [ ( T.confirmUnsavedDraft, "" ) ] } model.modal_confirm
+                | modal_confirm = ModalConfirm.open NoMsg { message = Nothing, txts = [ ( T.confirmUnsavedDraft, "" ) ], confirmClass = "is-success", confirmLabel = T.confirm } model.modal_confirm
                 , modal_confirm3_link = link
               }
             , noOut
