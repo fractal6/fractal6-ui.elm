@@ -70,9 +70,14 @@
     }
 }
 
-// Subtle fade-in for new comments and events in conversation thread
-.comments > div > .media {
-    animation: fadeIn 0.25s ease-out;
+// Subtle fade-in for new comments in conversation thread
+.comments .media:not(.actionComment):not(.comment-fadeout) {
+    animation: commentFadeIn 0.35s ease-out;
+}
+
+@keyframes commentFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 // Fade-out and collapse animation for deleted comments
