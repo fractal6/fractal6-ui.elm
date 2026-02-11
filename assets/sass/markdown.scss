@@ -107,7 +107,25 @@
     em {
         font-style: italic !important;
     }
-	.table-container {
+	details.md-details {
+		margin-top: 0;
+		margin-bottom: 16px;
+
+		summary {
+			cursor: pointer;
+			font-weight: 600;
+			display: list-item;
+
+			> p {
+				display: inline;
+			}
+		}
+
+		&:not([open]) > *:not(summary) {
+			display: none !important;
+		}
+	}
+.table-container {
 		overflow: auto !important;
 	}
 	table {
