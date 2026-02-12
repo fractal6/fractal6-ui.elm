@@ -570,8 +570,16 @@ update_ apis message model =
                 ( model, out0 [ sendNow (SubmitDeleteComment cid) ] )
 
         SubmitDeleteComment cid time ->
+            let
+                commentCreatedAt =
+                    model.comments
+                        |> List.filter (\c -> c.id == cid)
+                        |> List.head
+                        |> Maybe.map .createdAt
+                        |> withDefault ""
+            in
             ( { model | comment_delete_result = ( cid, LoadingSlowly ) }
-            , out0 [ deleteComment apis model.tension_form.id cid (uctxFromUser model.session.user) time (DeleteCommentAck cid) ]
+            , out0 [ deleteComment apis model.tension_form.id cid commentCreatedAt (uctxFromUser model.session.user) time (DeleteCommentAck cid) ]
             )
 
         DeleteCommentAck cid result ->
@@ -863,7 +871,20 @@ viewComments_ session action history comments comment_form comment_result commen
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
             List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
+                ++ List.indexedMap
+                    (\i e ->
+                        { type_ = Just e.event_type
+                        , createdAt =
+                            if e.event_type == TensionEvent.CommentDeleted then
+                                e.new |> withDefault e.createdAt
+
+                            else
+                                e.createdAt
+                        , i = i
+                        , n = 0
+                        }
+                    )
+                    history
                 |> List.sortBy .createdAt
 
         viewCommentOrEvent : EventTracker -> Html Msg
@@ -1579,6 +1600,9 @@ viewEvent session focusid_m action event =
                 TensionEvent.Mentioned ->
                     viewEventMentioned session event
 
+                TensionEvent.CommentDeleted ->
+                    viewEventCommentDeleted session event
+
                 _ ->
                     []
     in
@@ -1899,6 +1923,20 @@ viewEventMentioned session event =
 
         Nothing ->
             []
+
+
+viewEventCommentDeleted : SessionCommon -> Event -> List (Html Msg)
+viewEventCommentDeleted session event =
+    [ div [ class "media-left" ] [ A.icon "icon-message-circle" ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text T.deletedAComment ]
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
 
 
 

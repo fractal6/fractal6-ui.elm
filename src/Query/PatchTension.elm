@@ -273,13 +273,13 @@ patchCommentInputEncoder f =
 -}
 
 
-deleteComment url tid cid uctx time msg =
+deleteComment url tid cid commentCreatedAt uctx time msg =
     let
         createdAt =
             Fractal.Scalar.DateTime (Iso8601.fromTime time)
 
         events =
-            buildEvents createdAt uctx.username [ Ev TensionEvent.CommentDeleted cid "" ]
+            buildEvents createdAt uctx.username [ Ev TensionEvent.CommentDeleted cid commentCreatedAt ]
 
         inputReq =
             { filter =

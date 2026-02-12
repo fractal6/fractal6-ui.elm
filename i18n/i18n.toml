@@ -915,6 +915,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="removed the label"
   fr="a retiré l’étiquette"
 
+[deletedAComment]
+  en="deleted a comment"
+  fr="a supprimé un commentaire"
+
 [archived2]
   en="archived"
   fr="a archivé"
