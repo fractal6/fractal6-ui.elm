@@ -1,0 +1,221 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Selectors: dropdowns, panels, color picker, action panels, tag inputs
+ *
+ */
+
+.dropList {
+    position: absolute;
+    background: var(--background-evidence);
+    border: $border-size solid var(--border-color);
+    max-width: 450px;
+    z-index: 25;
+    @include tablet {
+        min-width: 300px;
+    }
+    @include touch {
+        min-width: 250px;
+    }
+
+    .control {
+        .icon { color: var(--text-weak) !important; }
+    }
+
+    &.is-right {
+        left: auto;
+        right: 0;
+    }
+}
+
+.is-reversed > .dropList {
+    bottom: 2rem;
+}
+
+// Better positioning when is-reversed is on the wrapper containing the button
+.panel-selector-wrapper {
+    position: relative;
+    display: inline-block;
+
+    > .is-reversed {
+        position: absolute;
+        bottom: calc(100% - 1.5rem);  // Position slightly above the button
+        left: 0;
+        z-index: 25;
+    }
+}
+
+.panel {
+    .panel-heading {
+        background-color: inherit;
+        font-weight: 500;
+    }
+
+    .panel-block.is-top {
+        border-bottom: 2px solid var(--border-color);
+    }
+    .panel-block.no-border {
+        border-bottom: none;
+    }
+
+}
+
+.selectors {
+    max-height: 250px;
+    overflow-y: auto;
+
+    .panel-block, .panel-icon {
+        &:hover:not(.is-static) {
+            cursor: pointer;
+            background: var(--header-background-color);
+        }
+    }
+    .panel-block {
+        border-bottom-color: var(--border-color);
+        &.is-active .panel-icon, &:hover .panel-icon {
+            color: var(--link) !important;
+        }
+    }
+    .panel-icon {
+        font-size: 1.5rem;
+    }
+
+    .panel-block:first-child {
+       border-top-left-radius: var(--bulma-panel-radius);
+       border-top-right-radius: var(--bulma-panel-radius);
+    }
+    .panel-block:last-child {
+        border-bottom-left-radius: var(--bulma-panel-radius);
+        border-bottom-right-radius: var(--bulma-panel-radius);
+    }
+}
+
+.searchInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    & .panel-block.is-active {
+        background-color: var(--body-background-color) !important;
+    }
+}
+.searchInput::after {
+    content: " ";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+}
+
+#colorPicker {
+    position: absolute;
+    z-index: 25;
+    background-color: var(--background-evidence);
+    border-radius: 5px !important;
+    border: $border-size solid var(--border-color);
+    padding: 10px;
+
+    .colorBoxes {
+        width: 256px;
+    }
+
+    @include mobile { // is-right
+        left: auto;
+        right: 0;
+    }
+
+}
+.buttonColor {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    border-width: 0 !important;
+    margin: 0px 8px 5px 0px;
+    &:hover {cursor: pointer; }
+}
+
+.actionPanelStyle {
+    .dropdown-content {
+        position: absolute;
+        z-index: 25;
+        overflow: unset;
+        min-width: 12rem;
+        max-height: none;
+        width: auto;
+        height: auto;
+        animation: dropdownFadeIn 0.15s ease-out forwards;
+        &.is-right {
+            left: auto;
+            right: 0;
+        }
+    }
+
+    .dropdown-item {
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+}
+
+.tagsinput {
+    display: inline-flex;
+
+    .box {
+        border: none !important;
+    }
+
+    .tag {
+        margin-bottom: $size-small;
+        height: 2.2em;
+        font-size: 0.9rem;
+        &.is-delete {
+            &:hover {
+                cursor: pointer;
+                color: var(--danger);
+                background-color: var(--background-evidence);
+            }
+        }
+    }
+
+    &.singleSelection {
+        position: absolute;
+        top: 4px;
+        left: 11px;
+        z-index: 80;
+    }
+}
+
+// Dropleft components
+.right-hoverable {
+    &.button-light:active {
+        filter:none !important;
+    }
+
+    .dropdown-content {
+        min-width: 7rem !important;
+    }
+}
+.right-hoverable:hover > .dropdown-menu {
+    display: block;
+}
+.right-hoverable > .dropdown-menu {
+    top: -10px;
+    left: 100%;
+    .dropdown-item:active {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
+}
+.right-hoverable *:nth-child(1):hover + .dropdown-menu {
+    .dropdown-item:first-child {
+        background-color: var(--dropdown-item-hover-background-color);
+    }
+}
+.right-hoverable *:nth-child(1):active + .dropdown-menu {
+    .dropdown-item:first-child {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
+    }
+}

@@ -11,11 +11,13 @@
 // Content components
 @forward "content";
 @forward "tensions";
+@forward "comments";
 @forward "boards";
 @forward "canvas";
 
 // UI components
 @forward "modals";
+@forward "selectors";
 @forward "search";
 
 // Visual elements
@@ -24,6 +26,7 @@
 @forward "emoji";
 @forward "loading";
 @forward "accordion";
+@forward "notifications";
 
 // Utilities (last as priority rules)
 @forward "utilities";

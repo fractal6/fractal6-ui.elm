@@ -120,6 +120,11 @@ input:checked + .acc .acc-content {
         transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         opacity: 0.6;
         top: calc(50% - 4px);
+
+        // thicker arrows
+        color: var(--text-evidence);
+        border-right-width: 4px;
+        border-bottom-width: 4px;
     }
 
     input:checked + section.acc .acc-title:before {

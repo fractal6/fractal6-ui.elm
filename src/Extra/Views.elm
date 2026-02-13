@@ -33,7 +33,7 @@ showMsg : String -> String -> String -> String -> String -> Html msg
 showMsg id_ cls icon header message =
     if message == "" then
         div [ class ("f6-help-message notification p-4 m-0 mb-4 is-flex is-align-items-start " ++ cls) ]
-            [ span [ class "mr-3", style "margin-top" "0.15em" ] [ A.icon icon ]
+            [ span [ class "mr-3 has-text-strong", style "margin-top" "0.15em" ] [ A.icon icon ]
             , renderMarkdown "" header
             ]
 
@@ -61,7 +61,7 @@ showMsg id_ cls icon header message =
                     , for did
                     ]
                     [ span [ class "is-flex is-align-items-center" ]
-                        [ span [ class "mr-3" ] [ A.icon icon ]
+                        [ span [ class "mr-3 has-text-strong" ] [ A.icon icon ]
                         , text (upH header)
                         ]
                     ]

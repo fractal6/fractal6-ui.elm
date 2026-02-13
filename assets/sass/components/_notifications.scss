@@ -1,0 +1,89 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Notifications: toast notifications, help messages
+ *
+ */
+
+.f6-notification {
+    border: $border-size solid var(--border-color-light);
+    border-radius: 10px !important;
+
+    position: fixed;
+    top: calc(#{$navbar-height} + 0.33em);
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    max-width: 50%;
+    min-width: 250px;
+    z-index: 9999; // Ensure a high z-index value to place the element on top
+
+
+    /* Add a pseudo-element for the progress bar */
+    &.has-timer::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 5px;
+        right: 5px;
+        height: 2px;
+        width: 0; /* Start with 0 width */
+        background-color: currentcolor;
+        opacity: 0.5;
+        animation: notification-timer 5s linear forwards; /* 6 seconds animation */
+    }
+}
+
+/* Progress bar animation */
+@keyframes notification-timer {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: calc(100% - 10px);
+    }
+}
+
+.f6-notification, .f6-help-message {
+    @each $name, $pair in $colors {
+        &.notification.is-#{$name} {
+            color: var(--bulma-text) !important;
+            background: var(--bulma-#{$name}-soft) !important;
+        }
+        .message.is-#{$name} {
+            .message-header {
+                color: var(--bulma-text) !important;
+                background: var(--bulma-#{$name}-soft) !important;
+            }
+        }
+    }
+
+}
+
+.f6-help-message {
+    & > .message, &.notification {
+        font-size: 0.9rem;
+    }
+}
+
+.notification {
+    & > div {
+        // do not hide delete button when there is overflow.
+        max-height: 200px;
+        overflow: auto;
+    }
+
+    a:not(.stealth-link):not(.button):not(.button-light) {
+        color: var(--link) !important;
+        text-decoration: none !important;
+    }
+
+    .stealth-link, .button-light {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+}

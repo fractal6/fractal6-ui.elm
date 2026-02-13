@@ -1006,7 +1006,7 @@ viewComment session c form result delete_result highlightedCommentId userInput i
                 viewUpdateInput session c form result userInput
 
               else
-                div [ id c.id, class "message", classList [ ( "is-focusing", isFocused ) ] ]
+                div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span
                             [ --class "is-hidden-tablet"
@@ -1166,7 +1166,7 @@ viewNewTensionCommentInput session opts (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ class "message" ]
+    div [ class "message commentMessage" ]
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
@@ -1211,7 +1211,7 @@ viewUpdateInput session comment form_ result userInput =
         commentOpts =
             {}
     in
-    div [ class "message commentInput" ]
+    div [ class "message commentMessage commentInput" ]
         [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "updateCommentInput" form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
@@ -1286,7 +1286,7 @@ viewTensionCommentInput session tension (State model) =
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message commentInput" ]
+            [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
@@ -1349,7 +1349,7 @@ viewContractCommentInput session (State model) =
     div [ id "tensionCommentInput", class "media section p-0" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message commentInput" ]
+            [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentContractInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]

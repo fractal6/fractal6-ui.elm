@@ -122,3 +122,80 @@
 #labelsTable {
     .tag { font-size: 85%;}
 }
+
+//
+// Tension/Blob Page
+//
+
+.tensionTitle > .is-human,
+.tensionTitle.is-human {
+    color: var(--text-strong);
+    font-size: 2rem !important;
+    // Zen font
+    //font-size: 2.5rem !important;
+}
+
+.tensionSubtitle {
+    font-size: 14px !important;
+    & > span:not(:last-child) {
+        margin-right: 12px !important;
+    }
+
+    .level-left > .level-item {
+        margin-right: $size-small;
+    }
+
+    .tag {
+        height: 1.7rem !important;
+    }
+}
+
+.tensionSidePane {
+
+    .media:first-child {
+        border-top: 1px solid var(--border-color-light) !important;
+        padding-top: 1rem !important;
+    }
+
+    .media {
+        border-top: 1px solid var(--border-color-light) !important;
+        margin: 0;
+        padding-bottom: 2rem;
+
+        &.is-w2:hover {
+            cursor: pointer;
+            .subtitle {
+                color: var(--text-strong);
+            }
+        }
+    }
+
+    .media-content {
+        font-size: 14px !important;
+        .subtitle {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: var(--text-weak);
+            margin-bottom: 1rem !important;
+        }
+    }
+
+
+    > .level {
+        justify-content: start;
+        .level-left {
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-basis: 33%;
+            padding-right: var(--size-small);
+        }
+        .level-item {
+            flex-grow: 0 !important;
+            justify-content: left;
+        }
+
+        .help {
+            margin-top: 0;
+        }
+    }
+}

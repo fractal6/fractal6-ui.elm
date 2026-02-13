@@ -321,41 +321,6 @@ a {
     }
 }
 
-.is-event-badge {
-    color: var(--link);
-    &.badge {
-        background-color: var(--link);
-        right: 3px !important;
-    }
-
-    @include touch { // @debug: why it goes up on mobile ?
-      top: 8px !important;
-    }
-}
-.is-event-badge-bg {
-    .tag {
-        background-color: var(--link) !important;
-    }
-}
-
-.is-contract-badge {
-    color: var(--warning);
-    &.badge {
-        background-color: var(--warning);
-        left: 3px !important;
-    }
-
-    @include touch { // @debug: why it goes up on mobile ?
-      top: 8px !important;
-    }
-}
-.is-contract-badge-bg {
-    .tag {
-        color: $dark !important;
-        background-color: var(--warning) !important;
-    }
-}
-
 .is-success-light { // @deprecated
     background-color: var(--success-light);
     color: color.adjust($dark, $lightness: 10%);
@@ -696,39 +661,6 @@ i.va {
 }
 
 
-// Dropleft components
-.right-hoverable {
-    &.button-light:active {
-        filter:none !important;
-    }
-
-    .dropdown-content {
-        min-width: 7rem !important;
-    }
-}
-.right-hoverable:hover > .dropdown-menu {
-    display: block;
-}
-.right-hoverable > .dropdown-menu {
-    top: -10px;
-    left: 100%;
-    .dropdown-item:active {
-        -webkit-filter: invert(10%);
-        filter: invert(10%);
-    }
-}
-.right-hoverable *:nth-child(1):hover + .dropdown-menu {
-    .dropdown-item:first-child {
-        background-color: var(--dropdown-item-hover-background-color);
-    }
-}
-.right-hoverable *:nth-child(1):active + .dropdown-menu {
-    .dropdown-item:first-child {
-        -webkit-filter: invert(10%);
-        filter: invert(10%);
-    }
-}
-
 .tabs, .tabs.is-boxed  {
     a {
         text-decoration: none !important;
@@ -902,39 +834,6 @@ tr.mediaBox {
     font-weight: bold !important;
 }
 
-// Message
-.message {
-    .message-header {
-        color: var(--text-weak) !important;
-        background-color: var(--header-background-color);
-        &.is-author {
-            background-color: var(--author) !important;
-        }
-
-        .dropdown-item {
-            font-weight: normal !important;
-        }
-    }
-
-    .message-body {
-        overflow-wrap: break-word;
-        background-color: var(--body-background-color);
-    }
-}
-.message:not(.acc) {
-    border: $border-size-small solid var(--border-color-light);
-    border-radius: 8px !important;
-    .message-body {
-        border-radius: 8px;
-    }
-    .message-header {
-        border-radius: 8px 8px 0 0 !important;
-    }
-    .message-header + .message-body {
-        border-radius: 0 0 8px 8px !important;
-    }
-}
-
 .subtitle {
     .icon-more-horizontal, .icon-more-vertical {
         color: var(--text);
@@ -1012,87 +911,6 @@ tr.mediaBox {
     right: auto !important;
     -webkit-transform: translate(-50%, 0) !important;
     transform: translate(-50%, 0) !important;
-}
-
-// Notification
-
-.f6-notification {
-    border: $border-size solid var(--border-color-light);
-    border-radius: 10px !important;
-
-    position: fixed;
-    top: calc(#{$navbar-height} + 0.33em);
-    left: 50%;
-    -webkit-transform: translateX(-50%);
-    transform: translateX(-50%);
-    max-width: 50%;
-    min-width: 250px;
-    z-index: 9999; // Ensure a high z-index value to place the element on top
-
-
-    /* Add a pseudo-element for the progress bar */
-    &.has-timer::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 5px;
-        right: 5px;
-        height: 2px;
-        width: 0; /* Start with 0 width */
-        background-color: currentcolor;
-        opacity: 0.5;
-        animation: notification-timer 5s linear forwards; /* 6 seconds animation */
-    }
-}
-
-/* Progress bar animation */
-@keyframes notification-timer {
-    0% {
-        width: 0;
-    }
-    100% {
-        width: calc(100% - 10px);
-    }
-}
-
-.f6-notification, .f6-help-message {
-    @each $name, $pair in $colors {
-        &.notification.is-#{$name} {
-            color: var(--bulma-text) !important;
-            background: var(--bulma-#{$name}-soft) !important;
-        }
-        .message.is-#{$name} {
-            .message-header {
-                color: var(--bulma-text) !important;
-                background: var(--bulma-#{$name}-soft) !important;
-            }
-        }
-    }
-
-}
-
-.f6-help-message {
-    & > .message, &.notification {
-        font-size: 0.85rem;
-    }
-}
-
-.notification {
-    & > div {
-        // do not hide delete button when there is overflow.
-        max-height: 200px;
-        overflow: auto;
-    }
-
-    a:not(.stealth-link):not(.button):not(.button-light) {
-        color: var(--link) !important;
-        text-decoration: none !important;
-    }
-
-    .stealth-link, .button-light {
-        color: inherit !important;
-        text-decoration: none !important;
-    }
 }
 
 .ml--1 {

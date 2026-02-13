@@ -184,20 +184,22 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    // Textarea zone & preview
-    .modal-content, .modal-card {
-        width: auto;
-        .textarea {
-            resize: both;
+    // Textarea zone & preview (scoped to tensionModal to avoid expanding other modals)
+    &#tensionModal {
+        .modal-content, .modal-card {
+            width: auto;
+            .textarea {
+                resize: both;
+            }
+            .hidden-textarea {
+                max-width: calc(#{$modal-width} - 80px);
+                resize: both;
+            }
         }
-        .hidden-textarea {
-            max-width: calc(#{$modal-width} - 80px);
-            resize: both;
+        // Don't let columns set their width automatically
+        .modal-content .columns, .modal-card .columns {
+            max-width: calc(#{$modal-width} - 40px);
         }
-    }
-    // Don't let columns set their width automatically
-    .modal-content .columns, .modal-card .columns {
-        max-width: calc(#{$modal-width} - 40px);
     }
 
 
@@ -249,31 +251,25 @@ html.has-modal-active, html.has-modal-active2 {
         margin-top: 0 !important;
     }
 
-    // Input Message
-    .modal-card-body {
-        .message {
-            border-color: transparent !important;
-            .tabs, .tabs.is-boxed  {
-                li a  {
-                    text-decoration: none !important;
-                }
-                li.is-active a {
-                    border-top-width: 2px !important;
-                }
-            }
+    // Comment message overrides in modals
+    .modal-card-body .commentMessage {
+        border-color: transparent !important;
+        .tabs, .tabs.is-boxed {
+            li a { text-decoration: none !important; }
+            li.is-active a { border-top-width: 2px !important; }
         }
-        .message-header {
-            font-weight: 500 !important;
-            padding: 0 !important;
-            a {
-                font-weight: 600 !important;
-                text-decoration: none !important;
-                &:hover { text-decoration: underline !important; }
-            }
+    }
+    .modal-card-body .commentMessage > .message-header {
+        font-weight: 500 !important;
+        padding: 0 .5rem 0 0 !important;
+        a {
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            &:hover { text-decoration: underline !important; }
         }
-        .message-body {
-            padding: 0 !important;
-        }
+    }
+    .modal-card-body .commentMessage > .message-body {
+        padding: 0 !important;
     }
 }
 

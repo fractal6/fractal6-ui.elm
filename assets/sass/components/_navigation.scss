@@ -527,3 +527,39 @@
     font-weight: 500;
     color: var(--text-strong);
 }
+
+// Notification badges
+.is-event-badge {
+    color: var(--link);
+    &.badge {
+        background-color: var(--link);
+        right: 3px !important;
+    }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
+    }
+}
+.is-event-badge-bg {
+    .tag {
+        background-color: var(--link) !important;
+    }
+}
+
+.is-contract-badge {
+    color: var(--warning);
+    &.badge {
+        background-color: var(--warning);
+        left: 3px !important;
+    }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
+    }
+}
+.is-contract-badge-bg {
+    .tag {
+        color: $dark !important;
+        background-color: var(--warning) !important;
+    }
+}

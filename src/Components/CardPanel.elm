@@ -1154,7 +1154,7 @@ viewDraftComment session isAdmin isEdit result form draft =
         viewMessageEdit session new message form result
 
     else
-        div [ class "message" ]
+        div [ class "message commentMessage" ]
             [ div [ class "message-body" ]
                 [ div []
                     [ showIf (isAdmin || isAuthor) <|
@@ -1199,7 +1199,7 @@ viewMessageEdit session new old form result =
             }
     in
     div [ class "submitFocus" ]
-        [ div [ class "message" ]
+        [ div [ class "message commentMessage" ]
             [ div [ class "message-header pb-0" ] [ viewCommentInputHeader opHeader "draftInput" form ]
             , div [ class "message-body" ]
                 [ textarea
