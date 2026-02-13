@@ -2241,10 +2241,11 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon1 "icon-pin" <|
+                                    [ A.icon1_noflex "icon-pin" <|
                                         ternary t.isPinned
                                             (T.unpinTension model.session.lexicon)
                                             (T.pinTension model.session.lexicon)
+                                    , showIf t.isPinned <| A.icon "icon-disc has-text-success ml-2"
                                     ]
                                 ]
 
@@ -2267,7 +2268,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
-                                    [ A.icon1 "icon-disc" T.updateType ]
+                                    [ A.icon1 "icon-diamond" T.updateType ]
                                 ]
 
                             else
