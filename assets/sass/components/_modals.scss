@@ -135,6 +135,11 @@ html.has-modal-active, html.has-modal-active2 {
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
     }
+    // Apply border-radius to modal-card-body when it's the last child (no footer)
+    .modal-card > .modal-card-body:last-child {
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
 
     .modal-content, .modal-card {
         @include mobile {
