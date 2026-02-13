@@ -69,8 +69,17 @@ type alias Model =
 
 initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> SessionCommon -> Model
 initModel focus isActive orgs session =
-    { isActive = withDefault False isActive
-    , isActive2 = withDefault False isActive
+    let
+        active =
+            case session.user of
+                LoggedOut ->
+                    False
+
+                _ ->
+                    withDefault False isActive
+    in
+    { isActive = active
+    , isActive2 = active
     , focus = focus
     , orgs_result =
         case orgs of

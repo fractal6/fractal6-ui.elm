@@ -31,6 +31,7 @@ import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
+import Html.Keyed
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
@@ -77,37 +78,40 @@ view apis session notif orga_info tension_head handlers =
              ]
                 ++ ternary isLoggedOut [ attribute "data-theme" "light" ] []
             )
-            [ div [ class "navbar-brand" ]
-                ([ a [ class "navbar-item", href "/" ]
-                    --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ if isLoggedOut then
-                        A.logo_inline
+            [ Html.Keyed.node "div"
+                [ class "navbar-brand" ]
+                ([ ( "logo"
+                   , a [ class "navbar-item", href "/" ]
+                        --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
+                        [ if isLoggedOut then
+                            A.logo_inline
 
-                      else
-                        A.logo0
-                    , showIf isLoggedOut <|
-                        span [ class "logo-fractale-text" ]
-                            [-- text "Fractale"
-                             --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                             --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
-                            ]
-                    ]
+                          else
+                            A.logo0
+                        , showIf isLoggedOut <|
+                            span [ class "logo-fractale-text" ]
+                                [-- text "Fractale"
+                                 --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                                 --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                                ]
+                        ]
+                   )
                  ]
                     ++ (if orgUrl then
                             case session.user of
                                 LoggedIn _ ->
-                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-git-commit icon-rotate-90 icon-bg" ]
-                                    , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
+                                    [ ( "orga-trigger", div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-git-commit icon-rotate-90 icon-bg" ] )
+                                    , ( "tree-trigger", div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] )
                                     ]
 
                                 LoggedOut ->
-                                    [ div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] ]
+                                    [ ( "tree-trigger", div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] ) ]
 
                         else
                             []
                        )
-                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" session.user notif session.url ]
-                       , A.burger "userMenu"
+                    ++ [ ( "touch-end", div [ class "navbar-touch-end" ] [ notificationButton "" session.user notif session.url ] )
+                       , ( "burger", A.burger "userMenu" )
                        ]
                 )
             , showIf hasVersionOutdated <|
