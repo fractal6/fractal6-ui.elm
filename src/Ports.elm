@@ -200,6 +200,9 @@ port cancelColorFromJs : (() -> msg) -> Sub msg
 port relogErr : (String -> msg) -> Sub msg
 
 
+port navigateFromJs : (String -> msg) -> Sub msg
+
+
 
 {-
    Outgoing Ports

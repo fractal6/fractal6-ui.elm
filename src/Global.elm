@@ -1019,6 +1019,7 @@ subscriptions _ =
         , Ports.updateLangFromJs UpdateSessionLang
         , Ports.updateThemeFromJs UpdateSessionTheme
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
+        , Ports.navigateFromJs NavigateRaw
         , Ports.scrollPositionFromJs UpdateSessionScrollPosition
         ]
 

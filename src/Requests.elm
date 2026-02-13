@@ -602,8 +602,8 @@ getQuickDoc api lang msg =
 
 
 {-| Fetch static HTML page from assets server.
-    Static pages are stored on the assets server (api.assets) as HTML files.
-    Example: fetchStaticPage api "welcome" msg -> fetches {api.assets}/welcome.html
+Static pages are stored on the assets server (api.assets) as HTML files.
+Example: fetchStaticPage api "welcome" msg -> fetches {api.assets}/welcome.html
 -}
 fetchStaticPage : Apis -> Lang.Lang -> String -> (Result Http.Error String -> msg) -> Cmd msg
 fetchStaticPage api lang pagePath msg =
