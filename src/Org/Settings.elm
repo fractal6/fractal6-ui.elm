@@ -1941,7 +1941,7 @@ viewOrgaSettings orga_rights switch_result switch_index =
 
                                     _ ->
                                         text ""
-                                , span [ class "help" ] [ text x.help ]
+                                , div [ class "help-label" ] [ text x.help ]
                                 ]
                             ]
                     )

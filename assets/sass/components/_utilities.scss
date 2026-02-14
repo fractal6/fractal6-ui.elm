@@ -182,13 +182,14 @@ input[type="checkbox"] {
 
 .help-label {
     color: var(--text-weak) !important;
-    //display: block !important;
-    font-size: $size-small !important;
+    //font-size: $size-small !important;
+    font-size: 0.8rem !important;
     margin-top: 0.25rem !important;
 }
 .help {
     // Avoid font-weight < 400 as is wont work with certain font (QuickSand, Cantarell)
     //font-weight: 300 !important;
+    //font-size: 0.85rem !important;
     color: var(--text-weak);
 }
 .is-link-back {

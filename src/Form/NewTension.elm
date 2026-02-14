@@ -1709,8 +1709,8 @@ viewTension tree_data model =
                 , p [ class "help-label" ] [ text form.txt.name_help ]
                 , br [] []
                 ]
-            , br [] [] -- allows selectors panel to display without overlap
             , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
+            , br [] [] -- allows selectors panel to display without overlap
             , let
                 labelsOp =
                     { selectedLabels = form.labels
