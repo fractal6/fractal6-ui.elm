@@ -959,6 +959,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="left"
   fr="a quitté"
 
+[pinned2]
+  en="pinned"
+  fr="a épinglé"
+
+[unpinned2]
+  en="unpinned"
+  fr="a désépinglé"
+
 [mentioned2]
   en="mentioned this {{_tension_}}"
   fr="a mentionné cette {{_tension_}}"
@@ -2391,6 +2399,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [userLeft_orga_event]
   en="An user left us"
   fr="Un utilisateur nous a quitté"
+
+[pinned_event]
+  en="Tension pinned"
+  fr="Tension épinglée"
+
+[unpinned_event]
+  en="Tension unpinned"
+  fr="Tension désépinglée"
 
 
 

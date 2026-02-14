@@ -23,19 +23,23 @@ module Bulk.Event exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), nid2rootid)
-import Bulk.View exposing (byAt, statusColor, viewCircleSimple)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
+import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewLabel, viewNodeRefShort, viewUsernameLink)
 import Dict exposing (Dict)
-import Extra exposing (space_)
+import Extra exposing (decap, space_, textD)
+import Extra.Date exposing (formatDate)
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, div, p, small, span, strong, text)
-import Html.Attributes exposing (class, classList, href)
+import Html exposing (Html, a, div, i, p, small, span, strong, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, style)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (ContractNotif, EventFragment, EventNotif, UserEvent, Username)
+import ModelSchema exposing (ContractNotif, Event, EventFragment, EventNotif, Label, UserEvent, Username)
 import Session exposing (SessionCommon)
 import String.Extra as SE
 import Text as T
@@ -55,6 +59,8 @@ eventToLink ue e =
             , TensionEvent.MemberUnlinked
             , TensionEvent.Visibility
             , TensionEvent.Authority
+            , TensionEvent.Pinned
+            , TensionEvent.Unpinned
             ]
     then
         (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
@@ -203,6 +209,12 @@ eventTypeToText e =
 
         TensionEvent.UserLeft ->
             T.userLeft_event
+
+        TensionEvent.Pinned ->
+            T.pinned_event
+
+        TensionEvent.Unpinned ->
+            T.unpinned_event
 
         _ ->
             e |> TensionEvent.toString |> SE.humanize
@@ -382,5 +394,454 @@ eventToIcon ev =
         TensionEvent.Moved ->
             "arrow-right2 pl-0 pr-0 mr-0"
 
+        TensionEvent.Pinned ->
+            "icon-pin"
+
+        TensionEvent.Unpinned ->
+            "icon-pin"
+
         _ ->
             ""
+
+
+
+--
+-- <View Event>
+--
+--
+
+
+viewEvent : SessionCommon -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html msg
+viewEvent session focusid_m action event =
+    let
+        eventView =
+            case event.event_type of
+                TensionEvent.Reopened ->
+                    viewEventStatus session event TensionStatus.Open
+
+                TensionEvent.Closed ->
+                    viewEventStatus session event TensionStatus.Closed
+
+                TensionEvent.TitleUpdated ->
+                    viewEventTitle session event
+
+                TensionEvent.TypeUpdated ->
+                    viewEventType session event
+
+                TensionEvent.Visibility ->
+                    viewEventVisibility session event
+
+                TensionEvent.Authority ->
+                    viewEventAuthority session event action
+
+                TensionEvent.AssigneeAdded ->
+                    viewEventAssignee session event True
+
+                TensionEvent.AssigneeRemoved ->
+                    viewEventAssignee session event False
+
+                TensionEvent.LabelAdded ->
+                    viewEventLabel focusid_m session event True
+
+                TensionEvent.LabelRemoved ->
+                    viewEventLabel focusid_m session event False
+
+                TensionEvent.BlobPushed ->
+                    viewEventPushed session event action
+
+                TensionEvent.BlobArchived ->
+                    viewEventArchived session event action True
+
+                TensionEvent.BlobUnarchived ->
+                    viewEventArchived session event action False
+
+                TensionEvent.MemberLinked ->
+                    viewEventMemberLinked session event action
+
+                TensionEvent.MemberUnlinked ->
+                    viewEventMemberUnlinked session event action
+
+                TensionEvent.UserJoined ->
+                    viewEventUserJoined session event action
+
+                TensionEvent.UserLeft ->
+                    viewEventUserLeft session event action
+
+                TensionEvent.Moved ->
+                    viewEventMoved session event
+
+                TensionEvent.Mentioned ->
+                    viewEventMentioned session event
+
+                TensionEvent.CommentDeleted ->
+                    viewEventCommentDeleted session event
+
+                TensionEvent.Pinned ->
+                    viewEventPinned session event True
+
+                TensionEvent.Unpinned ->
+                    viewEventPinned session event False
+
+                _ ->
+                    []
+    in
+    if eventView == [] then
+        text ""
+
+    else
+        div [ id event.createdAt, class "media p-0 actionComment" ] eventView
+
+
+viewEventStatus : SessionCommon -> Event -> TensionStatus.TensionStatus -> List (Html msg)
+viewEventStatus session event status =
+    let
+        actionText =
+            case status of
+                TensionStatus.Open ->
+                    T.reopened2
+
+                TensionStatus.Closed ->
+                    T.closed2
+    in
+    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon ("icon-alert-circle icon-1half has-text-" ++ statusColor status) ]
+    , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventTitle : SessionCommon -> Event -> List (Html msg)
+viewEventTitle session event =
+    let
+        icon =
+            A.icon "icon-edit-2"
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate session.lang session.now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "arrow-right mx-1" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
+            ]
+        ]
+    ]
+
+
+viewEventType : SessionCommon -> Event -> List (Html msg)
+viewEventType session event =
+    let
+        icon =
+            A.icon "icon-edit-2"
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate session.lang session.now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
+            , span [ class "arrow-right mx-1" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
+            ]
+        ]
+    ]
+
+
+viewEventVisibility : SessionCommon -> Event -> List (Html msg)
+viewEventVisibility session event =
+    let
+        icon =
+            A.icon "icon-eye"
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate session.lang session.now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "arrow-right mx-1" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
+            ]
+        ]
+    ]
+
+
+viewEventAuthority : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventAuthority session event action =
+    let
+        ( icon, eventText ) =
+            case tensionAction2NodeType action of
+                Just NodeType.Circle ->
+                    ( A.icon "icon-shield", T.theGovernance )
+
+                Just NodeType.Role ->
+                    ( A.icon "icon-key", T.theAuthority )
+
+                _ ->
+                    ( A.icon "icon-key", "unknown action" )
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate session.lang session.now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "arrow-right mx-1" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
+            ]
+        ]
+    ]
+
+
+viewEventAssignee : SessionCommon -> Event -> Bool -> List (Html msg)
+viewEventAssignee session event isNew =
+    let
+        icon =
+            A.icon "icon-user"
+
+        ( actionText, value ) =
+            if isNew then
+                ( T.assigned2, withDefault "" event.new )
+
+            else
+                ( T.unassigned2, withDefault "" event.old )
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewUsernameLink value, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventLabel : Maybe String -> SessionCommon -> Event -> Bool -> List (Html msg)
+viewEventLabel focusid_m session event isNew =
+    let
+        icon =
+            A.icon "icon-tag"
+
+        ( actionText, value ) =
+            if isNew then
+                ( T.addedTheLabel, withDefault "unknown" event.new )
+
+            else
+                ( T.removedTheLabel, withDefault "unknown" event.old )
+
+        label =
+            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
+
+        link =
+            Maybe.map
+                (\nid ->
+                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ label.name)
+                )
+                focusid_m
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [ class "labelsList" ] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewLabel "" link label, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventPushed : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventPushed session event action_m =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+    in
+    [ div [ class "media-left" ] [ A.icon "icon-share" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventArchived : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html msg)
+viewEventArchived session event action_m isArchived =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+
+        ( icon, txt ) =
+            if isArchived then
+                ( A.icon "icon-archive", T.archived2 )
+
+            else
+                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived2 )
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventMemberLinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventMemberLinked session event action_m =
+    [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventMemberUnlinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventMemberUnlinked session event action_m =
+    let
+        action_txt =
+            case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
+                NODE NodeType.Circle ->
+                    T.toThisOrganisation
+
+                _ ->
+                    T.toThisRole
+    in
+    [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.unlinked2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventUserJoined : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventUserJoined session event action_m =
+    let
+        action_txt =
+            T.theOrganisation
+    in
+    [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.joined2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventUserLeft : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
+viewEventUserLeft session event action_m =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+
+        action_txt =
+            case event.new of
+                Just type_ ->
+                    case RoleType.fromString type_ of
+                        Just RoleType.Guest ->
+                            T.theOrganisation
+
+                        Just RoleType.Owner ->
+                            T.theOwnerRole
+
+                        _ ->
+                            T.this ++ " " ++ decap T.role
+
+                Nothing ->
+                    action2str action |> decap
+    in
+    [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.left2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventMoved : SessionCommon -> Event -> List (Html msg)
+viewEventMoved session event =
+    [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text T.moved2 ]
+                , text T.from
+                , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                , text T.to
+                , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
+
+
+viewEventMentioned : SessionCommon -> Event -> List (Html msg)
+viewEventMentioned session event =
+    case event.mentioned of
+        Just { id, status, title, receiverid } ->
+            let
+                goto =
+                    withDefault "" event.new
+            in
+            [ div [ class "media-left" ] [ A.icon "icon-message-square" ]
+            , div [ class "media-content" ]
+                [ span [] <|
+                    List.intersperse (text " ")
+                        [ viewUsernameLink event.createdBy.username
+                        , strong [ class "has-text-evidence" ] [ text (T.mentioned2 session.lexicon) ]
+                        , text (formatDate session.lang session.now event.createdAt)
+                        ]
+                , div [ class "level ml-4 mt-1" ] <|
+                    List.singleton <|
+                        div [ class "level-left" ] <|
+                            [ a
+                                [ class "is-strong is-size-6 discrete-link mr-4 level-item"
+                                , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
+                                ]
+                                [ span [ Html.Attributes.title (tensionStatus2str status) ]
+                                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
+                                , text title
+                                ]
+                            , a
+                                [ class "discrete-link is-discrete level-item"
+                                , href (toLink OverviewBaseUri receiverid [])
+                                ]
+                                [ receiverid |> String.replace "#" "/" |> text ]
+                            ]
+                ]
+            ]
+
+        Nothing ->
+            []
+
+
+viewEventCommentDeleted : SessionCommon -> Event -> List (Html msg)
+viewEventCommentDeleted session event =
+    [ div [ class "media-left" ] [ A.icon "icon-message-circle" ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text T.deletedAComment ]
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
+
+
+viewEventPinned : SessionCommon -> Event -> Bool -> List (Html msg)
+viewEventPinned session event isPinned =
+    let
+        ( icon, actionText ) =
+            if isPinned then
+                ( A.icon "icon-pin has-text-success", T.pinned2 )
+
+            else
+                ( A.icon "icon-pin", T.unpinned2 )
+    in
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text actionText ]
+                , text T.this
+                , textD (T.tension session.lexicon)
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
+
+
+--
+-- </ View Event>
+--
