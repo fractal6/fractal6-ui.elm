@@ -57,6 +57,7 @@
  */
 
 .slider {
+    z-index: 1; // Ensure stacking context (created by transform) sits above footbar
     @include tablet {
         transition: transform .5s ease-out, opacity .5s ease-out;
         &.is-slide-left {
