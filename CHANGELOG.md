@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.0]
+
+### Features
+
+- **Persistent tension drafts**: New tensions and comments are automatically saved as drafts. A confirmation dialog (discard / save draft / stay) appears when leaving unsaved work.
+- **Full-text search**: Search tensions and journal entries directly from the Overview page, with session persistence.
+- **Delete comments**: Comments in tension conversations can now be deleted.
+- **Tension title in navbar**: The tension title is shown in the top navigation bar when scrolling down.
+- **Organisation sorting**: Sort organisations by last updated or newest in your profile view.
+- **Markdown improvements**: TAB key cycles through user mentions, support for `<details>`/`<summary>` tags, and better edit/insertion behavior.
+- **Browser tab titles**: Organisation pages now display the real organisation name in the browser tab, making it easier to find them in your browser history and search bar.
+- **Assignees at creation**: Assign users directly when creating a new tension, with an improved selector panel.
+- **Custom terminology**: Organisations can customise their terminology (e.g. rename "Tension" or "Mandate") to match their own vocabulary.
+
+### Bug Fixes
+
+- Fix browser language detection at first visit.
+- Show login button when no user data is available.
+- Fix sidebar tooltip position when scrolling.
+- Fix side menu state confusion when logging out.
+- Fix checkbox clicks overwriting the current comment being edited.
+- Prevent UI flickering in the tree menu.
+- Show deleted events in tension history.
+- Support pin/unpin tension events in conversation view.
+
+### Improvements
+
+- Smoother animations for comments (add, remove, expand) and conversation events.
+- Better draft handling for Invite/Join flows.
+- Improved tensions and activity sorting and filtering.
+- Row animations in organisation settings on add/delete.
+- Better mobile layout for navbar, footer, and notifications.
+- Various UI polish: modal styling, button colors, icon updates, and CSS cleanup.
+
+
 ## [0.8.8] - 2026-01-04
 
 ### 🐛 Bug Fixes
