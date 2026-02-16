@@ -473,7 +473,7 @@ update_ apis message model =
                             txt =
                                 case model.blob of
                                     Nothing ->
-                                        T.move_action_success
+                                        T.move_action_success model.session.lexicon
 
                                     Just blob ->
                                         case blob.node of

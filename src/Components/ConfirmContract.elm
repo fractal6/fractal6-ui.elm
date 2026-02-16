@@ -452,7 +452,7 @@ viewModalContent op (State model) =
             ]
         , div [ class "modal-card-body" ]
             [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
-            , showContractForm model.form
+            , showContractForm model.session.lexicon model.form
             , div [ class "field" ]
                 [ div [ class "control" ]
                     [ textarea
@@ -496,8 +496,8 @@ viewModalContent op (State model) =
         ]
 
 
-showContractForm : ContractForm -> Html Msg
-showContractForm f =
+showContractForm : Dict.Dict String String -> ContractForm -> Html Msg
+showContractForm lexicon f =
     form [ class "box form" ]
         [ div [ class "field is-horizontal" ]
             [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractType ] ]
@@ -520,7 +520,7 @@ showContractForm f =
                                 f.event.new |> withDefault "unkown" |> nid2eor
                         in
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (contractEventToText f.node_type f.event.event_type), disabled True ] []
+                            [ input [ class "input", value (contractEventToText lexicon f.node_type f.event.event_type), disabled True ] []
                             ]
                         , viewTensionArrow True "is-pulled-right" emitter receiver
                         ]

@@ -1855,7 +1855,7 @@ viewSearchBar model =
                     , style "margin-left" "auto"
                     , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
                     ]
-                    [ text T.newTension ]
+                    [ text (T.newTension model.session.lexicon) ]
                 ]
             ]
         , div [ class "tabs no-overflow is-md bulma-issue-33" ]
@@ -1863,7 +1863,7 @@ viewSearchBar model =
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsListTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsListTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-list" T.list ]
                         ]
                     ]
@@ -1871,20 +1871,20 @@ viewSearchBar model =
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
                 --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
                 --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                --        [ div [ class "tooltip is-left", title T.tensionsIntExtTooltip ]
+                --        [ div [ class "tooltip is-left", title (T.tensionsIntExtTooltip model.session.lexicon) ]
                 --        [ text "Internal/External" ] ]
                 --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsCircleTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsCircleTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter AssigneeView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsAssigneeTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsAssigneeTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-users" T.byAssignee ]
                         ]
                     ]
@@ -2091,7 +2091,7 @@ viewCircleTensions model =
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
-                    [ text T.noTensionsYet
+                    [ text (T.noTensionsYet model.session.lexicon)
                     , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
                         (viewGoRoot "" OnGoRoot)
                     ]
@@ -2160,7 +2160,7 @@ viewAssigneeTensions model =
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
-                    [ text T.noTensionsAssigneesYet
+                    [ text (T.noTensionsAssigneesYet model.session.lexicon)
                     , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
                         (viewGoRoot "" OnGoRoot)
                     ]
@@ -2217,13 +2217,13 @@ viewTensions tensionDir model =
                             in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                         NodeType.Circle ->
                             let
@@ -2232,13 +2232,13 @@ viewTensions tensionDir model =
                             in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
             Failure err ->
                 div []

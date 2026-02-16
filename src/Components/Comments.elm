@@ -142,7 +142,7 @@ initModel nameid tensionid session =
     , history = []
     , expandedEvents = []
     , highlightedCommentId = ""
-    , tension_form = initTensionForm tensionid Nothing session.user
+    , tension_form = initTensionForm session.lexicon tensionid Nothing session.user
     , tension_patch = NotAsked
     , contract_form = initCommentPatchForm session.user []
     , comment_form = initCommentPatchForm session.user [ ( "focusid", nameid ) ]
@@ -412,7 +412,7 @@ update_ apis message model =
                 OkAuth tp ->
                     let
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | comments =

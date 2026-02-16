@@ -641,7 +641,7 @@ viewRow d op model =
                 [ class "discrete-link"
                 , href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref)
                 ]
-                (text (contractEventToText Nothing d.event.event_type)
+                (text (contractEventToText model.session.lexicon Nothing d.event.event_type)
                     :: (Maybe.map (\x -> [ text " ・ ", x ]) (contractEventToValue d.event) |> withDefault [])
                 )
             ]
@@ -735,8 +735,8 @@ viewContractPage c op model =
                 div [ class "notification is-success is-soft" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , ternary isCandidate
-                        (text (cev2c n.type_ c.event.event_type))
-                        (text (cev2p n.type_ c.event.event_type))
+                        (text (cev2c model.session.lexicon n.type_ c.event.event_type))
+                        (text (cev2p model.session.lexicon n.type_ c.event.event_type))
                     ]
 
             else if isVoteSuccess && model.voteForm.vote == 0 then
@@ -791,7 +791,7 @@ viewContractBox c op model =
                     [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractEvent ] ]
                     , div [ class "field-bod" ]
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (contractEventToText n.type_ c.event.event_type), disabled True ] [] ]
+                            [ input [ class "input", value (contractEventToText model.session.lexicon n.type_ c.event.event_type), disabled True ] [] ]
                         ]
                     ]
                 ]

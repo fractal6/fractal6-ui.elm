@@ -569,7 +569,7 @@ view_ global model =
                     case model.assigned_data of
                         Success assigned ->
                             if Dict.size assigned == 0 then
-                                p [ class "content" ] [ text T.noAssignedYet ]
+                                p [ class "content" ] [ text (T.noAssignedYet model.session.lexicon) ]
 
                             else
                                 viewAssigned model.commonOp model.session assigned
@@ -669,7 +669,7 @@ viewUserEvent session ue =
                                     ( "title", "Unknow UserLeft event, please report." )
 
                           else
-                            ( "title", eventTypeToText e.event_type )
+                            ( "title", eventTypeToText session.lexicon e.event_type )
                         , ( "title_", e.tension.title )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
@@ -691,7 +691,7 @@ viewUserEvent session ue =
                         [ ( "id", ue.id )
                         , ( "contract", contractTypeToText c.contract_type )
                         , ( "jonction", contractToJonction c.contract_type )
-                        , ( "title", contractEventToText Nothing c.event.event_type )
+                        , ( "title", contractEventToText session.lexicon Nothing c.event.event_type )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )
                         , ( "date", c.createdAt )

@@ -1511,3 +1511,4 @@ orgaInfoPayload username =
                 )
             )
         |> hardcoded ""
+        |> with Fractal.Object.Node.lexicon

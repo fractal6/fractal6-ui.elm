@@ -38,7 +38,7 @@ window.addEventListener('load', _ => {
         lang = supportedLangs.includes(browserLang) ? browserLang : DEFAULT_LANG;
     }
     // Lexicon
-    var lexicon = localStorage.getItem("lexicon");
+    var lexicon = JSON.parse(localStorage.getItem("lexicon"));
 
     // Init Elm
     // --

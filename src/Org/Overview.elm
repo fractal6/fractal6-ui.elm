@@ -1146,6 +1146,7 @@ view_ global model =
             , node = focus_m
             , node_data = withDefaultData initNodeData model.node_data
             , leads = model.leaders
+            , lexicon = global.session.common.lexicon
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
@@ -1448,7 +1449,7 @@ viewCanvas us model =
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpen p Nothing)
                                 ]
-                                [ text T.createNewTension ]
+                                [ text (T.createNewTension model.session.lexicon) ]
                             , div [ class "hbar", classList [ ( "is-invisible", not isAdmin ) ] ] []
                             , div
                                 [ class "button is-success"
@@ -1632,10 +1633,10 @@ viewActivies model =
                             else
                                 case model.node_focus.type_ of
                                     NodeType.Role ->
-                                        div [ class "m-4" ] [ text T.noOpenTensionRole ]
+                                        div [ class "m-4" ] [ text (T.noOpenTensionRole model.session.lexicon) ]
 
                                     NodeType.Circle ->
-                                        div [ class "m-4" ] [ text T.noOpenTensionCircle ]
+                                        div [ class "m-4" ] [ text (T.noOpenTensionCircle model.session.lexicon) ]
 
                         Failure err ->
                             viewGqlErrors err
@@ -1680,7 +1681,7 @@ viewEventNotif session e =
         ev =
             Dict.fromList
                 [ ( "id", ue.id )
-                , ( "title", e.event_type |> eventTypeToText )
+                , ( "title", e.event_type |> eventTypeToText session.lexicon )
                 , ( "title_", e.tension.title )
                 , ( "target", e.tension.receiver.name )
                 , ( "orga", nid2rootid e.tension.receiver.nameid )

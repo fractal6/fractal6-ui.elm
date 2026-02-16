@@ -38,7 +38,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMa
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Dict
-import Extra exposing (showIf, space_, ternary, textT, unwrap, unwrap2)
+import Extra exposing (showIf, space_, ternary, textT, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
@@ -49,10 +49,11 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, target, type_, value)
+import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
+import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
@@ -62,7 +63,7 @@ import Ports
 import Query.PatchNode exposing (addOneLabel, addOneRole, removeOneLabel, removeOneRole, updateOneLabel, updateOneRole)
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setUserCanJoin)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setLexicon, setUserCanJoin)
 import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
@@ -205,6 +206,10 @@ type alias Model =
     , orga_rights : GqlData NodeRights
     , switch_result : RestData Bool
     , switch_index : Int
+    , lexicon : Dict.Dict String String
+    , lexicon_input : String
+    , mandate_input : String
+    , lexicon_result : RestData Bool
 
     -- Common
     , modal_confirm : ModalConfirm Msg
@@ -372,7 +377,7 @@ init global flags =
             , label_anim_enter = Nothing
 
             -- Roles
-            , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView session.common.user
+            , nodeDoc = NodeDoc.init session.common.lexicon "" Nothing NodeDoc.NoView session.common.user
             , showMandate = ""
             , roles = Loading
             , roles_top = RemoteData.Loading
@@ -384,9 +389,13 @@ init global flags =
             , role_anim_enter = Nothing
 
             -- Orga
-            , orga_rights = NotAsked
+            , orga_rights = Loading
             , switch_result = RemoteData.NotAsked
             , switch_index = -1
+            , lexicon = session.common.lexicon
+            , lexicon_input = Dict.get "Tension" session.common.lexicon |> withDefault ""
+            , mandate_input = Dict.get "Mandate" session.common.lexicon |> withDefault ""
+            , lexicon_result = RemoteData.NotAsked
 
             -- Common
             , refresh_trial = 0
@@ -491,6 +500,10 @@ type Msg
     | SwitchGuestCanCreateTension Int Bool
     | GotUserCanJoin (RestData Bool)
     | GotGuestCanCreateTension (RestData Bool)
+    | OnLexiconInput String
+    | OnMandateInput String
+    | SubmitLexicon
+    | GotLexicon (RestData Bool)
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -872,7 +885,7 @@ update global message model =
                 , role_result = NotAsked
                 , role_result_del = NotAsked
                 , role_anim_enter = Nothing
-                , nodeDoc = NodeDoc.init "" Nothing NodeDoc.NoView global.session.common.user
+                , nodeDoc = NodeDoc.init global.session.common.lexicon "" Nothing NodeDoc.NoView global.session.common.user
               }
                 |> resetForm
             , Cmd.none
@@ -1080,6 +1093,76 @@ update global message model =
 
                 _ ->
                     ( data, Cmd.none, Cmd.none )
+
+        OnLexiconInput val ->
+            ( { model | lexicon_input = val }, Cmd.none, Cmd.none )
+
+        OnMandateInput val ->
+            ( { model | mandate_input = val }, Cmd.none, Cmd.none )
+
+        SubmitLexicon ->
+            let
+                tensionVal =
+                    String.trim model.lexicon_input
+
+                mandateVal =
+                    String.trim model.mandate_input
+
+                dict =
+                    (if tensionVal /= "" then
+                        [ ( "Tension", upH tensionVal ), ( "tension", String.toLower tensionVal ) ]
+
+                     else
+                        []
+                    )
+                        ++ (if mandateVal /= "" then
+                                [ ( "Mandate", upH mandateVal ), ( "mandate", String.toLower mandateVal ) ]
+
+                            else
+                                []
+                           )
+                        |> Dict.fromList
+
+                jsonStr =
+                    JE.encode 0 (JE.dict identity JE.string dict)
+            in
+            ( { model | lexicon_result = RemoteData.Loading }
+            , setLexicon apis (nid2rootid model.node_focus.nameid) jsonStr GotLexicon
+            , Cmd.none
+            )
+
+        GotLexicon result ->
+            case result of
+                RemoteData.Success _ ->
+                    let
+                        tensionVal =
+                            String.trim model.lexicon_input
+
+                        mandateVal =
+                            String.trim model.mandate_input
+
+                        newLexicon =
+                            (if tensionVal /= "" then
+                                [ ( "Tension", upH tensionVal ), ( "tension", String.toLower tensionVal ) ]
+
+                             else
+                                []
+                            )
+                                ++ (if mandateVal /= "" then
+                                        [ ( "Mandate", upH mandateVal ), ( "mandate", String.toLower mandateVal ) ]
+
+                                    else
+                                        []
+                                   )
+                                |> Dict.fromList
+                    in
+                    ( { model | lexicon_result = result }
+                    , Ports.saveLexicon newLexicon
+                    , send (UpdateSessionLexicon newLexicon)
+                    )
+
+                _ ->
+                    ( { model | lexicon_result = result }, Cmd.none, Cmd.none )
 
         -- Color Picker
         OpenColor ->
@@ -1332,7 +1415,7 @@ viewSettingsMenu model =
                     (\x ->
                         [ case x of
                             GlobalMenu ->
-                                hr [ class "dropdown-divider has-background-border-light" ] []
+                                hr [ class "dropdown-divider" ] []
 
                             _ ->
                                 text ""
@@ -1368,7 +1451,9 @@ viewSettingsContent model =
         GlobalMenu ->
             div []
                 [ h2 [ class "subtitle is-size-3" ] [ text T.organisationSettings ]
-                , viewOrgaSettings model.orga_rights model.switch_result model.switch_index
+                , viewOrgaSettings model.lexicon model.orga_rights model.switch_result model.switch_index
+                , hr [] []
+                , viewLexiconSettings model.lexicon_input model.mandate_input model.lexicon_result
                 ]
 
         EditMenu ->
@@ -1492,7 +1577,7 @@ viewLabels model =
     div [ id "labelsTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
         , div [ class "level" ]
-            [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4 is-info" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
+            [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4 is-info" "icon-info" (T.labelsInfoHeader model.lexicon) (T.labelsInfoDoc model.lexicon) ]
             , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
             ]
         , if model.label_add then
@@ -1544,7 +1629,7 @@ viewLabels model =
                                                         [ class "button-light"
                                                         , onClick <|
                                                             DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
-                                                                { message = Just ( T.labelDeleteInfoHeader, "" )
+                                                                { message = Just ( T.labelDeleteInfoHeader model.lexicon, "" )
                                                                 , txts = [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
                                                                 , confirmClass = "is-danger"
                                                                 , confirmLabel = T.delete
@@ -1705,7 +1790,7 @@ viewRoleAddBox model =
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ text T.authority, helperButton "ml-2 is-right" T.authorityHelper ]
+                [ label [ class "label is-small" ] [ text T.authority, helperButton "ml-2 is-right" (T.authorityHelper model.lexicon) ]
                 , viewSelectAuthority
                     { onChangePost = UpdateNodePost
                     , data = model.nodeDoc
@@ -1716,7 +1801,7 @@ viewRoleAddBox model =
             [ span [ class "help-label" ] [ text T.preview, text ": " ]
             , viewRoleExt model.commonOp "is-small" Nothing { nameid = "", name = ternary (name == "") "role name" name, color = color, role_type = role_type }
             ]
-        , viewMandateInput (initFormText (Just NodeType.Role))
+        , viewMandateInput (initFormText model.lexicon (Just NodeType.Role))
             (Just form.mandate)
             { onChangePost = UpdateNodePost
             , onAddResponsabilities = AddResponsabilities
@@ -1821,7 +1906,7 @@ viewRoles model =
                                                 ]
                                         ]
                                             ++ (if model.showMandate == d.id then
-                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection (Just d.role_type) d.mandate Nothing ] ] ]
+                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection model.lexicon (Just d.role_type) d.mandate Nothing ] ] ]
 
                                                 else
                                                     []
@@ -1904,12 +1989,12 @@ type alias SwitchRecord =
     }
 
 
-viewOrgaSettings : GqlData NodeRights -> RestData Bool -> Int -> Html Msg
-viewOrgaSettings orga_rights switch_result switch_index =
+viewOrgaSettings : Dict.Dict String String -> GqlData NodeRights -> RestData Bool -> Int -> Html Msg
+viewOrgaSettings lexicon orga_rights switch_result switch_index =
     let
         switches =
             [ SwitchRecord 0 SwitchUserCanJoin T.orgaUserInvitation T.orgaUserInvitationHelp .userCanJoin
-            , SwitchRecord 1 SwitchGuestCanCreateTension T.guestCanCreateTension T.guestCanCreateTensionHelp .guestCanCreateTension
+            , SwitchRecord 1 SwitchGuestCanCreateTension (T.guestCanCreateTension lexicon) T.guestCanCreateTensionHelp .guestCanCreateTension
             ]
     in
     case orga_rights of
@@ -1958,3 +2043,74 @@ viewOrgaSettings orga_rights switch_result switch_index =
 
         NotAsked ->
             text ""
+
+
+viewLexiconSettings : String -> String -> RestData Bool -> Html Msg
+viewLexiconSettings lexicon_input mandate_input lexicon_result =
+    div []
+        [ h3 [ class "subtitle is-size-4" ] [ text T.terminology, span [ class "help" ] [ text T.terminologyHelp ] ]
+        , div [ class "field is-horizontal" ]
+            [ div [ class "field-label is-inline-flex is-small", style "max-width" "5rem" ]
+                [ label [ class "label" ] [ text "Tension" ] ]
+            , div [ class "field-body " ]
+                [ div [ class "field has-addons" ]
+                    [ div [ class "control is-expanded is-form-narrow" ]
+                        [ input
+                            [ class "input is-small"
+                            , type_ "text"
+                            , placeholder T.tensionTerminologyPlaceholder
+                            , value lexicon_input
+                            , onInput OnLexiconInput
+                            ]
+                            []
+                        ]
+                    , div [ class "control" ]
+                        [ button
+                            [ class "button is-small is-success"
+                            , classList [ ( "is-loading", lexicon_result == RemoteData.Loading ) ]
+                            , onClick SubmitLexicon
+                            ]
+                            [ text T.save ]
+                        ]
+                    ]
+                ]
+            ]
+        , div [ class "help-label mb-5" ] [ text T.tensionTerminologyHelp ]
+        , div [ class "field is-horizontal" ]
+            [ div [ class "field-label is-inline-flex is-small", style "max-width" "5rem" ]
+                [ label [ class "label" ] [ text "Mandate" ] ]
+            , div [ class "field-body" ]
+                [ div [ class "field has-addons" ]
+                    [ div [ class "control is-expanded is-form-narrow" ]
+                        [ input
+                            [ class "input is-small"
+                            , type_ "text"
+                            , placeholder T.mandateTerminologyPlaceholder
+                            , value mandate_input
+                            , onInput OnMandateInput
+                            ]
+                            []
+                        ]
+                    , div [ class "control" ]
+                        [ button
+                            [ class "button is-small is-success"
+                            , classList [ ( "is-loading", lexicon_result == RemoteData.Loading ) ]
+                            , onClick SubmitLexicon
+                            ]
+                            [ text T.save ]
+                        ]
+                    ]
+                ]
+            ]
+        , div [ class "help-label mb-5" ] [ text T.mandateTerminologyHelp ]
+        , case lexicon_result of
+            RemoteData.Success _ ->
+                p [ class "help has-text-success" ]
+                    [ A.icon1 "icon-check" "", text T.settingsSavedRefresh ]
+
+            RemoteData.Failure err ->
+                viewHttpErrors err
+
+            _ ->
+                text ""
+        ]

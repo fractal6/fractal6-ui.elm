@@ -423,6 +423,18 @@ setGuestCanCreateTension api nameid val msg =
         }
 
 
+setLexicon api nameid val msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/setlexicon"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "val", JE.string val ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 
 --
 -- User management

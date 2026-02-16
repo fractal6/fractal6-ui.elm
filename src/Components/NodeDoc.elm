@@ -26,7 +26,7 @@ import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, in
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm, viewUser, viewUsers)
-import Dict
+import Dict exposing (Dict)
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
@@ -86,10 +86,10 @@ type NodeEdit
     | EditMandate
 
 
-init : String -> Maybe NodeType.NodeType -> NodeView -> UserState -> NodeDoc
-init tid node_type mode user =
+init : Dict.Dict String String -> String -> Maybe NodeType.NodeType -> NodeView -> UserState -> NodeDoc
+init lexicon tid node_type mode user =
     { node = initNodeFragment Nothing
-    , form = initTensionForm tid node_type user
+    , form = initTensionForm lexicon tid node_type user
     , result = NotAsked
     , editMode = Nothing
     , mode = mode
@@ -99,15 +99,15 @@ init tid node_type mode user =
     }
 
 
-initBlob : NodeFragment -> NodeDoc -> NodeDoc
-initBlob nf data =
+initBlob : Dict.Dict String String -> NodeFragment -> NodeDoc -> NodeDoc
+initBlob lexicon nf data =
     let
         form =
             data.form
     in
     { data
         | node = nf
-        , form = { form | node = nf, txt = initFormText nf.type_ }
+        , form = { form | node = nf, txt = initFormText lexicon nf.type_ }
         , result = NotAsked
     }
 
@@ -449,6 +449,7 @@ type alias OrgaNodeData =
     , leads : List User
 
     --
+    , lexicon : Dict String String
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
@@ -680,7 +681,7 @@ viewBlob data op_m =
                                     ]
 
                                 else
-                                    [ viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
+                                    [ viewMandateSection op.session.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
                                )
 
                 NodeVersions ->
@@ -748,7 +749,7 @@ viewBlob data op_m =
                             ]
                     )
                 , hr [ class "has-background-border-light" ] []
-                , viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
+                , viewMandateSection data.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
 
 
@@ -797,13 +798,13 @@ viewAboutSection node data op_m =
         ]
 
 
-viewMandateSection : Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
-viewMandateSection role_type_m mandate_m op_m =
+viewMandateSection : Dict String String -> Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
+viewMandateSection lexicon role_type_m mandate_m op_m =
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
-                , text T.mandate
+                , text (T.mandate lexicon)
                 ]
             , Maybe.map
                 (\onChangeEdit ->
@@ -937,7 +938,7 @@ viewAboutInput2 txt node op =
                 Just NodeType.Role ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ text T.authority, helperButton "ml-2 is-right" T.authorityHelper ]
+                            [ label [ class "label is-pulled-left" ] [ text T.authority, helperButton "ml-2 is-right" (T.authorityHelper op.session.lexicon) ]
                             , viewSelectAuthority op
                             ]
                         ]
@@ -977,8 +978,6 @@ viewAboutInput2 txt node op =
 
 -- @TODO
 -- viewAboutInput3 (the view use in Org.Settings)
-
-
 
 
 viewMandateInput txt mandate op =
@@ -1268,7 +1267,7 @@ viewVersions_ session blobsData =
 viewVerRow : SessionCommon -> Int -> Blob -> List (Html msg)
 viewVerRow session i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr session.lexicon blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->

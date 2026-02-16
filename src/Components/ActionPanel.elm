@@ -1493,7 +1493,7 @@ viewCircleAuthority : Op -> Model -> Html Msg
 viewCircleAuthority op model =
     div []
         [ -- Show the help information
-          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
+          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader (T.circleAuthorityDoc model.session.lexicon)
 
         -- Show the choices as card.
         , NodeMode.list

@@ -937,7 +937,7 @@ viewBoard op model =
                         -- @debug: allow move card in empty collumn
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
-                        [ viewHeader model.isProjectAdmin (model.colEdit == colid) col ]
+                        [ viewHeader model.session.lexicon model.isProjectAdmin (model.colEdit == colid) col ]
                     , col.cards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
@@ -1057,8 +1057,8 @@ viewBoard op model =
             ]
 
 
-viewHeader : Bool -> Bool -> ProjectColumn -> Html Msg
-viewHeader isAdmin isEdited col =
+viewHeader : Dict.Dict String String -> Bool -> Bool -> ProjectColumn -> Html Msg
+viewHeader lexicon isAdmin isEdited col =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3" ]
@@ -1094,7 +1094,7 @@ viewHeader isAdmin isEdited col =
                                     [ class "dropdown-item button-light"
                                     , onClick (OpenTensionPane (Just { id = col.id, cards_len = List.length col.cards }))
                                     ]
-                                    [ A.icon1 "icon-plus" T.addTensionColumn ]
+                                    [ A.icon1 "icon-plus" (T.addTensionColumn lexicon) ]
                                 , hr [ class "dropdown-divider my-4" ] []
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
                                     [ A.icon1 "icon-trash" T.deleteColumn ]
@@ -1283,7 +1283,7 @@ viewCardDropdown model =
 
                     CardDraft d ->
                         div [ class "dropdown-content p-0" ]
-                            [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" T.convertDraft ]
+                            [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                             , hr [ class "dropdown-divider" ] []
                             , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]
                             ]

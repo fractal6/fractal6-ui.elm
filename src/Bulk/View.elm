@@ -23,6 +23,7 @@ module Bulk.View exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Dict exposing (Dict)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
@@ -324,14 +325,14 @@ tensionType2str s =
             T.announcement
 
 
-tensionType2descr : TensionType.TensionType -> String
-tensionType2descr s =
+tensionType2descr : Dict String String -> TensionType.TensionType -> String
+tensionType2descr lexicon s =
     case s of
         TensionType.Operational ->
             T.operationalHint
 
         TensionType.Governance ->
-            T.governanceHint
+            T.governanceHint lexicon
 
         TensionType.Help ->
             T.helpHint
@@ -1150,8 +1151,8 @@ archiveActionToggle action_m =
 --
 
 
-blobTypeStr : BlobType.BlobType -> String
-blobTypeStr btype =
+blobTypeStr : Dict String String -> BlobType.BlobType -> String
+blobTypeStr lexicon btype =
     case btype of
         BlobType.OnNode ->
             T.onNode_blob
@@ -1160,10 +1161,10 @@ blobTypeStr btype =
             T.onAbout_blob
 
         BlobType.OnMandate ->
-            T.onMandate_blob
+            T.onMandate_blob lexicon
 
         BlobType.OnAboutAndMandate ->
-            T.onAboutAndMandate_blob
+            T.onAboutAndMandate_blob lexicon
 
         BlobType.OnDoc ->
             T.onDoc_blob

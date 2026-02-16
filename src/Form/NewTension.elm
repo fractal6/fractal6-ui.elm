@@ -188,7 +188,7 @@ initModel session =
     , isActive2 = False
     , activeTab = NewTensionTab
     , activeButton = Nothing
-    , nodeDoc = NodeDoc.init "" Nothing NodeEdit session.user
+    , nodeDoc = NodeDoc.init session.lexicon "" Nothing NodeEdit session.user
     , path_data = NotAsked -- may be different than the current path_data (op.path_data)
     , action_result = NotAsked
     , doInvite = False
@@ -307,7 +307,7 @@ switchTab tab model =
                             , action = Nothing
                             , blob_type = Nothing
                             , users = []
-                            , txt = initFormText Nothing
+                            , txt = initFormText model.session.lexicon Nothing
                         }
 
                     NewRoleTab ->
@@ -317,7 +317,7 @@ switchTab tab model =
                             , node = { node | type_ = Just NodeType.Role }
                             , action = Just TensionAction.NewRole
                             , users = []
-                            , txt = initFormText (Just NodeType.Role)
+                            , txt = initFormText model.session.lexicon (Just NodeType.Role)
                         }
                             |> NodeDoc.updateNodeForm "name" (Dict.get "title" form.post |> withDefault "")
 
@@ -328,7 +328,7 @@ switchTab tab model =
                             , node = { node | type_ = Just NodeType.Circle }
                             , action = Just TensionAction.NewCircle
                             , users = []
-                            , txt = initFormText (Just NodeType.Circle)
+                            , txt = initFormText model.session.lexicon (Just NodeType.Circle)
                         }
                             |> NodeDoc.updateNodeForm "name" (Dict.get "title" form.post |> withDefault "")
 
@@ -1521,7 +1521,7 @@ viewTensionTabs session isAdmin tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip", title T.newTensionHelp, onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                [ a [ class "tootltip", title (T.newTensionHelp session.lexicon), onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" (T.tension session.lexicon) ]
                 ]
             , if isAdmin && type_ == NodeType.Circle then
@@ -1589,7 +1589,7 @@ viewTensionType model =
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
                                             , div [ class "content" ]
-                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
+                                                [ text (tensionType2descr model.session.lexicon x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1609,7 +1609,7 @@ viewTensionType model =
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
                                             , div [ class "content" ]
-                                                [ text (tensionType2descr x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
+                                                [ text (tensionType2descr model.session.lexicon x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
@@ -1932,7 +1932,8 @@ viewNodeValidate model =
             model.nodeDoc.form
 
         op =
-            { data = model.nodeDoc
+            { session = model.session
+            , data = model.nodeDoc
             , result = model.result
             , onChangePost = OnChangePost
             , onAddDomains = OnAddDomains

@@ -593,7 +593,7 @@ viewPanel tree_data model =
     in
     div [ class "panel" ] <|
         [ div [ class "header-block" ]
-            [ div [ class "panel-heading" ] [ text T.addLinkedTensions, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+            [ div [ class "panel-heading" ] [ text (T.addLinkedTensions model.session.lexicon), button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
                 [ B.dropdown
                     { dropdown_id = "link-circle-source"

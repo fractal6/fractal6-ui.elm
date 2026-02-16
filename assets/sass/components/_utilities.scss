@@ -9,6 +9,10 @@
  *
  */
 
+.is-form-narrow {
+    max-width: 12rem;
+}
+
 
 @include mobile {
     .reverse-columns {
@@ -83,6 +87,7 @@
 }
 
 hr {
+    background-color: var(--border-color-light);
     height: 1px !important;
     &.is-2 {
         height: 2px !important

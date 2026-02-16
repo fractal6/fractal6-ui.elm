@@ -22,6 +22,7 @@
 port module Ports exposing (..)
 
 import Codecs exposing (DraftStore, RecentActivityTab, WindowPos, draftStoreEncoder, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
+import Dict
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
@@ -375,6 +376,18 @@ saveMenuTree x =
             JE.object
                 [ ( "key", JE.string "tree_menu" )
                 , ( "val", TreeMenuSchema.encode x )
+                ]
+        }
+
+
+saveLexicon : Dict.Dict String String -> Cmd msg
+saveLexicon dict =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "lexicon" )
+                , ( "val", JE.dict identity JE.string dict )
                 ]
         }
 

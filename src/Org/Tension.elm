@@ -355,7 +355,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form
-            , tension_form = initTensionForm tid Nothing session.common.user
+            , tension_form = initTensionForm session.common.lexicon tid Nothing session.common.user
 
             -- Title Result
             , isTitleEdit = False
@@ -363,11 +363,11 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init tid Nothing nodeView session.common.user
+                NodeDoc.init session.common.lexicon tid Nothing nodeView session.common.user
                     |> (\x ->
                             case session.data.tension_head of
                                 Just th ->
-                                    NodeDoc.initBlob (nodeFromTension th) x
+                                    NodeDoc.initBlob session.common.lexicon (nodeFromTension th) x
 
                                 Nothing ->
                                     x
@@ -727,7 +727,7 @@ update global message model =
                                                     nodeFromTension th
                                             in
                                             ( ternary th.hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
-                                            , NodeDoc.initBlob node model.nodeDoc
+                                            , NodeDoc.initBlob model.session.lexicon node model.nodeDoc
                                             )
 
                                         MD ->
@@ -945,7 +945,7 @@ update global message model =
                         th =
                             withMapData (\x -> { x | isPinned = v }) model.tension_head
                     in
-                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid Nothing global.session.common.user }
+                    ( { model | tension_head = th, tension_form = initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user }
                     , Cmd.none
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -968,7 +968,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
 
         SubmitTitle time ->
             let
@@ -1008,7 +1008,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid Nothing global.session.common.user
+                            initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , Cmd.none
@@ -1075,7 +1075,7 @@ update global message model =
                         nd =
                             case th of
                                 Success t ->
-                                    NodeDoc.initBlob (nodeFromTension t) newDoc
+                                    NodeDoc.initBlob model.session.lexicon (nodeFromTension t) newDoc
 
                                 _ ->
                                     newDoc
@@ -1137,7 +1137,7 @@ update global message model =
                                     { th | blobs = blobs, title = r.title, hasBeenPushed = True }
 
                                 resetForm =
-                                    initTensionForm model.tensionid Nothing global.session.common.user
+                                    initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user
                             in
                             ( { model
                                 | tension_head = Success newTh
@@ -1637,7 +1637,7 @@ view_ global model =
             , if isSuccess model.unsubscribe_result && model.unsubscribe /= "" then
                 div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
-                    , text T.beenUnsubscribe
+                    , text (T.beenUnsubscribe model.session.lexicon)
                     ]
 
               else
@@ -1876,6 +1876,7 @@ viewDocument u t b model =
                 , node = b.node |> Maybe.map (nodeFromFragment t.receiver.nameid)
                 , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault initNodeData
                 , leads = []
+                , lexicon = model.session.lexicon
                 , isLazy = False
                 , source = model.baseUri
                 , hasBeenPushed = t.hasBeenPushed

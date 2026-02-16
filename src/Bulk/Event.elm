@@ -150,23 +150,23 @@ viewNotifMedia session ev =
         ]
 
 
-eventTypeToText : TensionEvent.TensionEvent -> String
-eventTypeToText e =
+eventTypeToText : Dict.Dict String String -> TensionEvent.TensionEvent -> String
+eventTypeToText lexicon e =
     case e of
         TensionEvent.Created ->
-            T.created_event
+            T.created_event lexicon
 
         TensionEvent.Closed ->
-            T.closed_event
+            T.closed_event lexicon
 
         TensionEvent.Reopened ->
-            T.reopened_event
+            T.reopened_event lexicon
 
         TensionEvent.CommentPushed ->
             T.commentPushed_event
 
         TensionEvent.Moved ->
-            T.moved_event
+            T.moved_event lexicon
 
         TensionEvent.TitleUpdated ->
             T.titleUpdated_event
@@ -193,10 +193,10 @@ eventTypeToText e =
             T.assigneeRemoved_event
 
         TensionEvent.BlobCommitted ->
-            T.blobCommitted_event
+            T.blobCommitted_event lexicon
 
         TensionEvent.BlobPushed ->
-            T.blobCommitted_event
+            T.blobCommitted_event lexicon
 
         TensionEvent.MemberLinked ->
             T.memberLinked_event
@@ -211,10 +211,10 @@ eventTypeToText e =
             T.userLeft_event
 
         TensionEvent.Pinned ->
-            T.pinned_event
+            T.pinned_event lexicon
 
         TensionEvent.Unpinned ->
-            T.unpinned_event
+            T.unpinned_event lexicon
 
         _ ->
             e |> TensionEvent.toString |> SE.humanize
@@ -236,13 +236,13 @@ contractTypeToText c =
             "Coordinator validation needed"
 
 
-contractEventToText : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
-contractEventToText ntm c =
+contractEventToText : Dict.Dict String String -> Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+contractEventToText lexicon ntm c =
     case c of
         TensionEvent.Moved ->
             case ntm of
                 Nothing ->
-                    T.moved_contract
+                    T.moved_contract lexicon
 
                 Just NodeType.Circle ->
                     T.moved_circle
@@ -288,13 +288,13 @@ contractToJonction c =
             T.to
 
 
-cev2c : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
-cev2c ntm c =
+cev2c : Dict String String -> Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+cev2c lexicon ntm c =
     case c of
         TensionEvent.Moved ->
             case ntm of
                 Nothing ->
-                    T.moved_contract_success
+                    T.moved_contract_success lexicon
 
                 Just NodeType.Circle ->
                     T.moved_circle_contract_success
@@ -315,8 +315,8 @@ cev2c ntm c =
             "@TODO contractEventToText"
 
 
-cev2p : Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
-cev2p ntm c =
+cev2p : Dict String String -> Maybe NodeType.NodeType -> TensionEvent.TensionEvent -> String
+cev2p lexicon ntm c =
     case c of
         TensionEvent.MemberLinked ->
             T.memberLinked_contract_success_ext
@@ -325,7 +325,7 @@ cev2p ntm c =
             T.userJoined_contract_success_ext
 
         _ ->
-            cev2c ntm c
+            cev2c lexicon ntm c
 
 
 eventToIcon : TensionEvent.TensionEvent -> String

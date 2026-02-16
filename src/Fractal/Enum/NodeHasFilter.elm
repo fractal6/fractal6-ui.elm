@@ -29,6 +29,7 @@ type NodeHasFilter
     | IsPersonal
     | UserCanJoin
     | GuestCanCreateTension
+    | Lexicon
     | Watchers
     | Children
     | Labels
@@ -41,12 +42,13 @@ type NodeHasFilter
     | First_link
     | Contracts
     | Events_history
+    | Activity
     | Cascade_directive
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -118,6 +120,9 @@ decoder =
                     "guestCanCreateTension" ->
                         Decode.succeed GuestCanCreateTension
 
+                    "lexicon" ->
+                        Decode.succeed Lexicon
+
                     "watchers" ->
                         Decode.succeed Watchers
 
@@ -153,6 +158,9 @@ decoder =
 
                     "events_history" ->
                         Decode.succeed Events_history
+
+                    "activity" ->
+                        Decode.succeed Activity
 
                     "cascade_directive" ->
                         Decode.succeed Cascade_directive
@@ -230,6 +238,9 @@ toString enum____ =
         GuestCanCreateTension ->
             "guestCanCreateTension"
 
+        Lexicon ->
+            "lexicon"
+
         Watchers ->
             "watchers"
 
@@ -265,6 +276,9 @@ toString enum____ =
 
         Events_history ->
             "events_history"
+
+        Activity ->
+            "activity"
 
         Cascade_directive ->
             "cascade_directive"
@@ -347,6 +361,9 @@ fromString enumString____ =
         "guestCanCreateTension" ->
             Just GuestCanCreateTension
 
+        "lexicon" ->
+            Just Lexicon
+
         "watchers" ->
             Just Watchers
 
@@ -382,6 +399,9 @@ fromString enumString____ =
 
         "events_history" ->
             Just Events_history
+
+        "activity" ->
+            Just Activity
 
         "cascade_directive" ->
             Just Cascade_directive

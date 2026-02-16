@@ -116,7 +116,7 @@ initModel path focus session =
     , subscribe_result = NotAsked
 
     -- Title / Draft message
-    , tension_form = initTensionForm "" Nothing session.user
+    , tension_form = initTensionForm session.lexicon "" Nothing session.user
     , isTitleEdit = False
     , title_result = NotAsked
     , isMessageEdit = False
@@ -362,7 +362,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "title" value form.post } }, noOut )
 
         OnCancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
 
         SubmitTitle time ->
             let
@@ -421,7 +421,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -448,7 +448,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "message" value form.post } }, noOut )
 
         OnCancelMessage ->
-            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
+            ( { model | isMessageEdit = False, tension_form = initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
 
         SubmitMessage time ->
             let
@@ -482,7 +482,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -1264,7 +1264,7 @@ viewDraftSidePane d model =
                         [ class "is-smaller has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
-                        [ A.icon1 "icon-exchange" T.convertDraft ]
+                        [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                     , div
                         [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoRemoveDraft card.id)

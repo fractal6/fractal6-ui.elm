@@ -69,7 +69,7 @@ initModel tid session =
     { isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionForm tid Nothing session.user
+    , form = initTensionForm session.lexicon tid Nothing session.user
 
     -- Common
     , session = session
@@ -397,7 +397,7 @@ viewModalContent op (State model) =
                 [ text (T.changeTensionType model.session.lexicon) ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            [ showMsg "selectType-0" "is-info" "icon-info" (T.tensionTypeHeader model.session.lexicon) (T.tensionTypeDoc model.session.lexicon)
             , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->

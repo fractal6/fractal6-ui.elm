@@ -53,6 +53,7 @@ import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, errorHttpToString, isFailure, withMapData)
 import Maybe exposing (withDefault)
@@ -143,6 +144,7 @@ type Msg
     | UpdateSessionActivityPattern (Maybe String)
     | UpdateSessionMenuOrga (Maybe Bool)
     | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
+    | UpdateSessionLexicon (Dict.Dict String String)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
     | UpdateSessionTheme String
@@ -565,6 +567,16 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | tree_menu = data } } }, Cmd.none )
 
+        UpdateSessionLexicon data ->
+            let
+                session =
+                    model.session
+
+                sessionCommon =
+                    session.common
+            in
+            ( { model | session = { session | common = { sessionCommon | lexicon = data } } }, Cmd.none )
+
         UpdateSessionScreen data ->
             let
                 session =
@@ -707,8 +719,26 @@ update msg model =
 
                         sessionData =
                             session.data
+
+                        newLexicon =
+                            data.lexicon
+                                |> Maybe.andThen
+                                    (\raw ->
+                                        case JD.decodeString (JD.dict JD.string) raw of
+                                            Ok dict ->
+                                                Just dict
+
+                                            Err _ ->
+                                                Nothing
+                                    )
+                                |> withDefault Dict.empty
+
+                        sessionCommon =
+                            session.common
                     in
-                    ( { model | session = { session | data = { sessionData | orgaInfo = Just oi } } }, Cmd.none )
+                    ( { model | session = { session | common = { sessionCommon | lexicon = newLexicon }, data = { sessionData | orgaInfo = Just oi } } }
+                    , Ports.saveLexicon newLexicon
+                    )
 
                 _ ->
                     ( model, Cmd.none )
