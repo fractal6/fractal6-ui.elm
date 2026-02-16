@@ -32,11 +32,12 @@ type UserHasFilter
     | Events
     | MarkAllAsRead
     | Event_count
+    | Activity
 
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Tensions_created, Tensions_assigned, Contracts, Reactions, Events, MarkAllAsRead, Event_count ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Watching, Rights, Roles, Tensions_created, Tensions_assigned, Contracts, Reactions, Events, MarkAllAsRead, Event_count, Activity ]
 
 
 decoder : Decoder UserHasFilter
@@ -116,6 +117,9 @@ decoder =
 
                     "event_count" ->
                         Decode.succeed Event_count
+
+                    "activity" ->
+                        Decode.succeed Activity
 
                     _ ->
                         Decode.fail ("Invalid UserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -198,6 +202,9 @@ toString enum____ =
 
         Event_count ->
             "event_count"
+
+        Activity ->
+            "activity"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -285,6 +292,9 @@ fromString enumString____ =
 
         "event_count" ->
             Just Event_count
+
+        "activity" ->
+            Just Activity
 
         _ ->
             Nothing

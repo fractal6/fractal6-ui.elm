@@ -1,0 +1,123 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Search Bar and QuickSearch
+ *
+ */
+
+.searchBar {
+    .input, .button, select {
+        height: 2.2rem !important;
+    }
+}
+
+#searchBarOverview {
+    width: 100.25% !important;
+    margin-bottom: 12px !important;
+
+    #searchList {
+        margin-top: -12px !important;
+    }
+    .searchBar > div:first-child {
+        display: inline-flex;
+        position: relative;
+        vertical-align: top;
+    }
+    .controlButtons {
+        //display: flex;
+        //flex-grow: 1;
+        //flex-direction: column;
+        max-width: 55% !important;
+        & > .button:first-child {
+            padding-right: 0 !important;
+        }
+
+    }
+    .custom-style {
+        margin-left: 5px !important;
+        margin-right: 8px !important;
+        color: var(--link) !important;
+    }
+    #actionPanelContentSearchBar {
+        margin-left: -1px;
+    }
+}
+
+.filterBar.has-addons {
+    .control {
+        &:first-child .button {
+            border-top-left-radius: 15px !important;
+            border-bottom-left-radius: 15px !important;
+        }
+        &:not(:first-child):not(:last-child) .button {
+            border-radius: 0px !important;
+            border-radius: 0px !important;
+        }
+        &:last-child .button {
+            border-top-right-radius: 15px !important;
+            border-bottom-right-radius: 15px !important;
+        }
+    }
+
+    @include mobile {
+        display: contents;
+    }
+}
+
+#searchList {
+    //top: 100% !important;
+    position: absolute !important;
+    z-index: 20 !important;
+    width: 99.9% !important;
+    height: 412px;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+
+    .table, .table.is-fullwidth {
+        //flex-grow: 1;
+        //flex-shrink: 1;
+        display: inline-table;
+        background-color: #fffffdf6 !important;
+        line-height: 1.4 !important;
+        font-size: 0.775rem !important;
+
+        .help {
+            border-bottom: 1px solid #22222222;
+        }
+    }
+
+    // @debug don't work !
+    //tbody {
+    //    max-height: 400px !important;
+    //    overflow-y: auto !important;
+    //}
+
+    thead th,
+    thead td {
+        color: #acb6c1 !important;
+        background-color: #eeeeedf2 !important;
+    }
+    tbody th,
+    tbody td {
+        border: 0 !important;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
+        color: #24292e !important;
+    }
+
+    a:hover,& a:focus,
+    tr:hover,& tr:focus,
+    span:hover,&  span:focus {
+        background-color: #eee9d8 !important;
+    }
+
+    a.is-active,
+    tr.is-active,
+    span.is-active {
+        background-color: #dfdfdf !important;
+    }
+}

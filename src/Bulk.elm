@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -126,11 +126,12 @@ type alias TensionForm =
     , md : Maybe String
     , users : List UserForm
     , labels : List Label
+    , assignees : List User
     }
 
 
-initTensionForm : String -> Maybe NodeType.NodeType -> UserState -> TensionForm
-initTensionForm tid node_type user =
+initTensionForm : Dict.Dict String String -> String -> Maybe NodeType.NodeType -> UserState -> TensionForm
+initTensionForm lexicon tid node_type user =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -150,11 +151,12 @@ initTensionForm tid node_type user =
     , users = []
     , events = []
     , labels = []
+    , assignees = []
     , blob_type = Nothing
     , node = initNodeFragment node_type
     , md = Nothing
     , viewMode = Write
-    , txt = initFormText node_type
+    , txt = initFormText lexicon node_type
     }
 
 
@@ -181,6 +183,7 @@ type alias CommentPatchForm =
     , uctx : UserCtx
     , post : Post
     , viewMode : InputViewMode
+    , linkCopied : String
     }
 
 
@@ -190,6 +193,7 @@ initCommentPatchForm user data =
     , id = ""
     , post = Dict.fromList data
     , viewMode = Write
+    , linkCopied = ""
     }
 
 
@@ -531,21 +535,21 @@ type alias FormText =
     }
 
 
-initFormText : Maybe NodeType.NodeType -> FormText
-initFormText node_type =
+initFormText : Dict.Dict String String -> Maybe NodeType.NodeType -> FormText
+initFormText lexicon node_type =
     case node_type of
         Nothing ->
             FormText
-                T.newTension
-                T.tensionAdded
-                T.tensionTitleHelp
+                (T.newTension lexicon)
+                (T.tensionAdded lexicon)
+                (T.tensionTitleHelp lexicon)
                 ""
                 T.tensionMessageHelp
                 ""
                 ""
                 ""
                 ""
-                T.tensionSubmit
+                (T.tensionSubmit lexicon)
                 ""
                 T.orgaSubject
 
@@ -560,7 +564,7 @@ initFormText node_type =
                 T.phRoleResponsabilities
                 T.phRoleDomains
                 T.phRolePolicies
-                T.tensionSubmit
+                (T.tensionSubmit lexicon)
                 T.tensionRoleCloseSubmit
                 T.roleSubject
 
@@ -575,7 +579,7 @@ initFormText node_type =
                 T.phCircleResponsabilities
                 T.phCircleDomains
                 T.phCirclePolicies
-                T.tensionSubmit
+                (T.tensionSubmit lexicon)
                 T.tensionCircleCloseSubmit
                 T.circleSubject
 

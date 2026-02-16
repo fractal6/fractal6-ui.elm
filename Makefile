@@ -196,11 +196,18 @@ $(RELEASE_BUILD_DIRS): releases/%:
 
 assets: icon css js
 
+setup_wortree:
+	path_to_main=$$(git worktree list | head -n1 | awk '{print $$1}')
+	cp $$path_to_main/.envrc .
+	cp $$path_to_main/.CLAUDE.md .
+	cp -r $$path_to_main/.claude .
+
 install:
-	# Node.js
-	npm install
-	# Python
-	pip install -r requirements.txt
+	# Check if .envrc exists
+	@if [ ! -f .envrc ]; then echo "Error: .envrc file not found"; exit 1; fi
+	npm install # Node dependencies
+	pip install -r requirements.txt # Python dependencies
+	./i18n.py gen -l fr -w  # generate the Text.elm from i18n
 
 
 elm-spa:
@@ -235,6 +242,7 @@ _elm-spa-org-alias:
 
 clean:
 	rm -rf dist/
+	rm -rf node_modules/.cache
 
 clean_npm:
 	#rm ./package-lock.json

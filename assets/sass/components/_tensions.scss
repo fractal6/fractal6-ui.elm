@@ -1,0 +1,201 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Tensions: tensionsTab, labels ...
+ *
+ */
+
+#tensionsTab  {
+    .tooltip {
+        &::before,
+        &::after {
+            font-size: $size-7 !important;
+        }
+    }
+
+    .t-o{
+        font-size: 1rem !important;
+    }
+}
+
+#journalTab {
+    .content {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .content + .content {
+        border-top: 1px var(--border-color-light) solid;
+    }
+}
+
+
+.labelsList {
+    .tag + .tag {
+        margin-left: 8px !important;
+    }
+
+    .tag {
+        border: 2px solid transparent;
+        &:hover {
+            cursor: pointer !important;
+            border-color: var(--link);
+        }
+    }
+}
+.tension-labelsList {
+    margin-top: -8px;
+    .labelsList .tag {
+        margin-top: 8px;
+        &:hover {
+        border-color: transparent;
+    }
+    }
+    .help {
+        margin-top: 22px !important;
+    }
+}
+
+.usersList {
+    //line-height: 2.5;
+    span  {
+        margin-right: 5px !important;
+        margin-bottom: 5px !important; // doesn't work
+    }
+}
+
+.marginTensionStatus {
+    margin-left: -24px;
+    padding-right: 5px;
+
+    position: relative;
+    top: 1px;
+}
+
+.icons-list {
+    .level-item:not(:last-child) {
+        margin-right: $size-small !important;
+    }
+}
+
+.tensionButton {
+    position: fixed;
+    // https://benfrain.com/easy-css-fix-fixed-positioning-android-2-2-2-3/
+    -webkit-backface-visibility: hidden;
+    bottom: 0;
+    right: 0;
+    margin: 50px;
+    z-index: 1;
+    @include touch {
+        margin: 15px;
+    }
+    @include desktop-only {
+        margin: 40px;
+    }
+    @include widescreen-only {
+        margin: 40px;
+    }
+
+    & > .button {
+        height: 50px;
+        width: 50px;
+        border-radius: 25px;
+        opacity: 0.9;
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+.tensionLight {
+    font-size: var(--small-font-size);
+}
+
+//
+// Members
+//
+
+#labelsTable {
+    .tag { font-size: 85%;}
+}
+
+//
+// Tension/Blob Page
+//
+
+.tensionTitle > .is-human,
+.tensionTitle.is-human {
+    color: var(--text-strong);
+    font-size: 2rem !important;
+    // Zen font
+    //font-size: 2.5rem !important;
+}
+
+.tensionSubtitle {
+    font-size: 14px !important;
+    & > span:not(:last-child) {
+        margin-right: 12px !important;
+    }
+
+    .level-left > .level-item {
+        margin-right: $size-small;
+    }
+
+    .tag {
+        height: 1.7rem !important;
+    }
+}
+
+.tensionSidePane {
+
+    .media:first-child {
+        border-top: 1px solid var(--border-color-light) !important;
+        padding-top: 1rem !important;
+    }
+
+    .media {
+        border-top: 1px solid var(--border-color-light) !important;
+        margin: 0;
+        padding-bottom: 2rem;
+
+        &.is-w2:hover {
+            cursor: pointer;
+            .subtitle {
+                color: var(--text-strong);
+            }
+        }
+    }
+
+    .media-content {
+        font-size: 14px !important;
+        .subtitle {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: var(--text-weak);
+            margin-bottom: 1rem !important;
+        }
+    }
+
+
+    > .level {
+        justify-content: start;
+        .level-left {
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-basis: 33%;
+            padding-right: var(--size-small);
+        }
+        .level-item {
+            flex-grow: 0 !important;
+            justify-content: left;
+        }
+
+        .help {
+            margin-top: 0;
+        }
+    }
+}

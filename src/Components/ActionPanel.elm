@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -944,7 +944,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ], confirmClass = "is-success", confirmLabel = T.confirm }) ]
                 )
 
         -- Components
@@ -1402,12 +1402,25 @@ viewComment model =
         line_len =
             List.length (String.lines message)
 
+        isModal = True
+
+        -- Calculate max rows based on ~75% of screen height
+        -- Assuming ~30px per line (font + padding)
+        --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile model.session.screen then
-                ( 5, 2 )
+                if isModal then
+                    ( model.session.screen.h // 2 // 38, 2 )
+
+                else
+                    ( model.session.screen.h * 2 // 3 // 38, 4 )
+
+            else if isModal then
+                ( model.session.screen.h * 2 // 3 // 38, 4 )
+
 
             else
-                ( 10, 3 )
+                ( model.session.screen.h * 5 // 6 // 39, 6 )
     in
     div [ class "field" ]
         [ div [ class "control" ]
@@ -1480,7 +1493,7 @@ viewCircleAuthority : Op -> Model -> Html Msg
 viewCircleAuthority op model =
     div []
         [ -- Show the help information
-          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
+          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader (T.circleAuthorityDoc model.session.lexicon)
 
         -- Show the choices as card.
         , NodeMode.list

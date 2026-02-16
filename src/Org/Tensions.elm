@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -38,11 +38,12 @@ import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
+import Components.SearchBar exposing (viewSearchField)
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (showIf, space_, ternary, upH)
+import Extra exposing (showIf, space_, ternary, unwrap, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -52,13 +53,14 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -163,6 +165,9 @@ mapGlobalOutcmds gcmds =
                     -- App
                     DoPushTension tension ->
                         ( send (PushTension tension), Cmd.none )
+
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -441,10 +446,11 @@ typeFilter2Text x =
 type SortFilter
     = NewestSort
     | OldestSort
+    | ActivitySort
 
 
 sortFilterList =
-    [ NewestSort, OldestSort ]
+    [ NewestSort, OldestSort, ActivitySort ]
 
 
 sortFilterEncoder : SortFilter -> String
@@ -456,12 +462,18 @@ sortFilterEncoder x =
         OldestSort ->
             "oldest"
 
+        ActivitySort ->
+            "activity"
+
 
 sortFilterDecoder : String -> SortFilter
 sortFilterDecoder x =
     case x of
         "oldest" ->
             OldestSort
+
+        "activity" ->
+            ActivitySort
 
         _ ->
             NewestSort
@@ -484,6 +496,9 @@ sortFilter2Text x =
 
         OldestSort ->
             T.oldest
+
+        ActivitySort ->
+            T.lastUpdate
 
 
 
@@ -932,7 +947,7 @@ update global message model =
 
                 newTensions =
                     withMapData
-                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        identity
                         newTensions_
             in
             ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
@@ -954,7 +969,7 @@ update global message model =
 
                 newTensions =
                     withMapData
-                        (\tensions -> tensions |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l))
+                        identity
                         newTensions_
             in
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
@@ -1407,8 +1422,16 @@ update global message model =
 
         NewTensionMsg msg ->
             let
+                state =
+                    case msg of
+                        NTF.OnOpen _ _ ->
+                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+
+                        _ ->
+                            model.tensionForm
+
                 ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
+                    NTF.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -1427,8 +1450,16 @@ update global message model =
 
         JoinOrgaMsg msg ->
             let
+                state =
+                    case msg of
+                        JoinOrga.OnOpen _ _ ->
+                            JoinOrga.setCurrentDraft global.session.data.drafts.newInvite model.joinOrga
+
+                        _ ->
+                            model.joinOrga
+
                 ( data, out ) =
-                    JoinOrga.update apis msg model.joinOrga
+                    JoinOrga.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -1594,11 +1625,17 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
+
+        org_id =
+            String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ]
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.tensions model.session.lexicon
+        case model.path_data of
+            Success path ->
+                unwrap org_id .name path.root ++ " · " ++ T.tensions_
+
+            _ ->
+                org_id ++ " · " ++ T.tensions_
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
@@ -1711,35 +1748,21 @@ viewCatMenu typeFilter =
 
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
+    let
+        opSearch =
+            { onChangePattern = ChangePattern
+            , onSearchKeyDown = SearchKeyDown
+            , onSubmitText = SubmitTextSearch
+            , id_name = "searchBarTensions"
+            , column_class = "is-5"
+            , field_class = ""
+            , placeholder_txt = T.searchTensions model.session.lexicon
+            }
+    in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mb-0" ]
             [ div [ class "column is-5" ]
-                [ div [ class "field has-addons" ]
-                    [ div [ class "control is-expanded" ]
-                        [ input
-                            [ class "is-rounded input is-small pr-6"
-                            , type_ "search"
-                            , autocomplete False
-                            , autofocus False
-                            , placeholder (T.searchTensions model.session.lexicon)
-                            , value model.pattern
-                            , onInput ChangePattern
-                            , onKeydown SearchKeyDown
-                            ]
-                            []
-                        , span [ class "icon-input-flex-right" ]
-                            [ if model.pattern_init /= "" then
-                                span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
-
-                              else
-                                text ""
-                            , span [ class "vbar" ] []
-                            , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
-                                [ A.icon "icon-search" ]
-                            ]
-                        ]
-                    ]
-                ]
+                [ viewSearchField opSearch model.pattern_init model.pattern ]
             , div [ class "column is-7 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
@@ -1832,7 +1855,7 @@ viewSearchBar model =
                     , style "margin-left" "auto"
                     , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
                     ]
-                    [ text T.newTension ]
+                    [ text (T.newTension model.session.lexicon) ]
                 ]
             ]
         , div [ class "tabs no-overflow is-md bulma-issue-33" ]
@@ -1840,7 +1863,7 @@ viewSearchBar model =
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsListTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsListTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-list" T.list ]
                         ]
                     ]
@@ -1848,20 +1871,20 @@ viewSearchBar model =
                 --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
                 --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
                 --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                --        [ div [ class "tooltip is-left", title T.tensionsIntExtTooltip ]
+                --        [ div [ class "tooltip is-left", title (T.tensionsIntExtTooltip model.session.lexicon) ]
                 --        [ text "Internal/External" ] ]
                 --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsCircleTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsCircleTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter AssigneeView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
-                        [ div [ class "tooltip is-left", title T.tensionsAssigneeTooltip ]
+                        [ div [ class "tooltip is-left", title (T.tensionsAssigneeTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-users" T.byAssignee ]
                         ]
                     ]
@@ -1892,7 +1915,8 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
             , div [ class "level-right px-3" ]
                 [ div [ class "control dropdown" ]
                     [ div [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
-                        [ text T.sort
+                        [ text (T.sort ++ " ")
+                        , span [ class "has-text-weight-bold" ] [ text (sortFilter2Text sortFilter |> String.toLower) ]
                         , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                         ]
                     , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
@@ -2067,7 +2091,7 @@ viewCircleTensions model =
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
-                    [ text T.noTensionsYet
+                    [ text (T.noTensionsYet model.session.lexicon)
                     , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
                         (viewGoRoot "" OnGoRoot)
                     ]
@@ -2136,7 +2160,7 @@ viewAssigneeTensions model =
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
-                    [ text T.noTensionsAssigneesYet
+                    [ text (T.noTensionsAssigneesYet model.session.lexicon)
                     , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
                         (viewGoRoot "" OnGoRoot)
                     ]
@@ -2193,13 +2217,13 @@ viewTensions tensionDir model =
                             in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionRole, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                         NodeType.Circle ->
                             let
@@ -2208,16 +2232,20 @@ viewTensions tensionDir model =
                             in
                             case tensionDir of
                                 InternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
                                 ExternalTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text T.noTensionCircle, clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
             Failure err ->
-                viewGqlErrors err
+                div []
+                    [ viewGqlErrors err
+                    , showIf (errorIsNoDataFound err) <|
+                        a [ class "button is-rounded is-primary is-center", href (toHref Login) ] [ text T.signin ]
+                    ]
 
             _ ->
                 div [] []

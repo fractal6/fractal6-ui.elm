@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -41,7 +41,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
 import Bulk.Error exposing (viewGqlErrorsLight)
-import Codecs exposing (RecentActivityTab, WindowPos)
+import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
 import Dict
 import Extra exposing (showIf, showMaybe, ternary, unwrap2)
@@ -52,6 +52,8 @@ import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
+import Iso8601 exposing (fromTime)
+import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), RestData, errorHttpToString, isFailure, withMapData)
 import Maybe exposing (withDefault)
@@ -65,6 +67,7 @@ import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
 import Requests exposing (tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
+import Scroll
 import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
 import Task
 import Time
@@ -138,12 +141,15 @@ type Msg
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
+    | UpdateSessionActivityPattern (Maybe String)
     | UpdateSessionMenuOrga (Maybe Bool)
     | UpdateSessionMenuTree (Maybe TreeMenuSchema.PersistentModel)
+    | UpdateSessionLexicon (Dict.Dict String String)
     | UpdateSessionScreen Screen
     | UpdateSessionLang String
     | UpdateSessionTheme String
     | UpdateSessionNotif NotifCount
+    | UpdateSessionScrollPosition String
     | GotOrgaInfo (GqlData OrgaInfo)
     | RefreshNotifCount
     | AckNotifCount (GqlData NotifCount)
@@ -162,6 +168,8 @@ type Msg
     | OnCloseOutdatedVersion
     | OnPushSystemNotif SystemNotification
     | OnClearSystemNotif
+    | ScrollToTop
+    | ScrollToBottom
       -- utils
     | VOID
     | LogErr String
@@ -169,6 +177,8 @@ type Msg
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
     | UpdateSessionNewOrgaData (Maybe OrgaForm)
+      -- Draft persistence
+    | UpdateDraft DraftUpdate
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -527,6 +537,16 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | recent_activity_tab = data } } }, Ports.saveRecentActivityTab data )
 
+        UpdateSessionActivityPattern data ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+            in
+            ( { model | session = { session | data = { sessionData | activity_pattern = data } } }, Cmd.none )
+
         UpdateSessionMenuOrga data ->
             let
                 session =
@@ -546,6 +566,16 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | tree_menu = data } } }, Cmd.none )
+
+        UpdateSessionLexicon data ->
+            let
+                session =
+                    model.session
+
+                sessionCommon =
+                    session.common
+            in
+            ( { model | session = { session | common = { sessionCommon | lexicon = data } } }, Cmd.none )
 
         UpdateSessionScreen data ->
             let
@@ -605,6 +635,19 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | notif = data } } }, Cmd.none )
+
+        UpdateSessionScrollPosition posStr ->
+            let
+                pos =
+                    Ports.decodeScrollPosition posStr
+
+                session =
+                    model.session
+
+                common =
+                    session.common
+            in
+            ( { model | session = { session | common = { common | scrollPosition = pos } } }, Cmd.none )
 
         RefreshNotifCount ->
             case model.session.common.user of
@@ -676,8 +719,26 @@ update msg model =
 
                         sessionData =
                             session.data
+
+                        newLexicon =
+                            data.lexicon
+                                |> Maybe.andThen
+                                    (\raw ->
+                                        case JD.decodeString (JD.dict JD.string) raw of
+                                            Ok dict ->
+                                                Just dict
+
+                                            Err _ ->
+                                                Nothing
+                                    )
+                                |> withDefault Dict.empty
+
+                        sessionCommon =
+                            session.common
                     in
-                    ( { model | session = { session | data = { sessionData | orgaInfo = Just oi } } }, Cmd.none )
+                    ( { model | session = { session | common = { sessionCommon | lexicon = newLexicon }, data = { sessionData | orgaInfo = Just oi } } }
+                    , Ports.saveLexicon newLexicon
+                    )
 
                 _ ->
                     ( model, Cmd.none )
@@ -846,6 +907,12 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | system_notification = withDefault [] (List.tail sessionData.system_notification) } } }, Cmd.none )
 
+        ScrollToTop ->
+            ( model, Scroll.scrollToTop VOID )
+
+        ScrollToBottom ->
+            ( model, Scroll.scrollToBottom VOID )
+
         -- Utils
         VOID ->
             ( model, Cmd.none )
@@ -883,6 +950,91 @@ update msg model =
             in
             ( { model | session = { session | data = { sessionData | newOrgaData = data } } }, Cmd.none )
 
+        UpdateDraft draftUpdate ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+
+                currentDrafts =
+                    sessionData.drafts
+
+                now =
+                    fromTime session.common.now
+
+                ( newDrafts, saveCmd ) =
+                    case draftUpdate of
+                        SaveNewTension draft ->
+                            let
+                                updated =
+                                    { currentDrafts | newTension = Just { draft | updatedAt = now } }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearNewTension ->
+                            let
+                                updated =
+                                    { currentDrafts | newTension = Nothing }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        SaveComment tensionId draft ->
+                            let
+                                updatedComments =
+                                    Dict.insert tensionId { draft | updatedAt = now } currentDrafts.comments
+
+                                -- Enforce max drafts limit
+                                finalComments =
+                                    if Dict.size updatedComments > maxCommentDrafts then
+                                        -- Remove oldest draft
+                                        let
+                                            oldest =
+                                                updatedComments
+                                                    |> Dict.toList
+                                                    |> List.sortBy (\( _, d ) -> d.updatedAt)
+                                                    |> List.head
+                                                    |> Maybe.map Tuple.first
+                                        in
+                                        case oldest of
+                                            Just key ->
+                                                Dict.remove key updatedComments
+
+                                            Nothing ->
+                                                updatedComments
+
+                                    else
+                                        updatedComments
+
+                                updated =
+                                    { currentDrafts | comments = finalComments }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearComment tensionId ->
+                            let
+                                updated =
+                                    { currentDrafts | comments = Dict.remove tensionId currentDrafts.comments }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        SaveNewInvite draft ->
+                            let
+                                updated =
+                                    { currentDrafts | newInvite = Just { draft | updatedAt = now } }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+
+                        ClearNewInvite ->
+                            let
+                                updated =
+                                    { currentDrafts | newInvite = Nothing }
+                            in
+                            ( updated, Ports.saveDrafts updated )
+            in
+            ( { model | session = { session | data = { sessionData | drafts = newDrafts } } }, saveCmd )
+
 
 
 -- SUBSCRIPTIONS
@@ -897,6 +1049,8 @@ subscriptions _ =
         , Ports.updateLangFromJs UpdateSessionLang
         , Ports.updateThemeFromJs UpdateSessionTheme
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
+        , Ports.navigateFromJs NavigateRaw
+        , Ports.scrollPositionFromJs UpdateSessionScrollPosition
         ]
 
 
@@ -905,24 +1059,23 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
-view { page, global, url, msg1, msg2, onClearNotif } =
+view : { page : Document msg, global : Model, url : Url, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg } -> Document msg
+view { page, global, url, navbarHandlers, onClearNotif } =
     layout
         { page = page
         , url = url
         , session = global.session
-        , msg1 = msg1
-        , msg2 = msg2
+        , navbarHandlers = navbarHandlers
         , onClearNotif = onClearNotif
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg, msg2 : msg, onClearNotif : msg } -> Document msg
-layout { page, url, session, msg1, msg2, onClearNotif } =
+layout : { page : Document msg, url : Url, session : Session, navbarHandlers : Navbar.NavbarHandlers msg, onClearNotif : msg } -> Document msg
+layout { page, url, session, navbarHandlers, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Lazy.lazy6 Navbar.view session.apis session.common session.data.notif session.data.orgaInfo msg1 msg2
+            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.orgaInfo session.data.tension_head navbarHandlers
             , showIf (session.data.system_notification /= [])
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body

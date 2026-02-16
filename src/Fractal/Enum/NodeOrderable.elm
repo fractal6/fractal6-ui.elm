@@ -15,12 +15,13 @@ type NodeOrderable
     | Name
     | About
     | Rights
+    | Lexicon
     | Color
 
 
 list : List NodeOrderable
 list =
-    [ CreatedAt, UpdatedAt, Nameid, Rootnameid, Name, About, Rights, Color ]
+    [ CreatedAt, UpdatedAt, Nameid, Rootnameid, Name, About, Rights, Lexicon, Color ]
 
 
 decoder : Decoder NodeOrderable
@@ -49,6 +50,9 @@ decoder =
 
                     "rights" ->
                         Decode.succeed Rights
+
+                    "lexicon" ->
+                        Decode.succeed Lexicon
 
                     "color" ->
                         Decode.succeed Color
@@ -83,6 +87,9 @@ toString enum____ =
 
         Rights ->
             "rights"
+
+        Lexicon ->
+            "lexicon"
 
         Color ->
             "color"
@@ -122,6 +129,9 @@ fromString enumString____ =
 
         "rights" ->
             Just Rights
+
+        "lexicon" ->
+            Just Lexicon
 
         "color" ->
             Just Color

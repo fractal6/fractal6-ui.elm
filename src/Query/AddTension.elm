@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -110,6 +110,11 @@ addTensionInputEncoder f =
                         Ev TensionEvent.LabelAdded "" (encodeLabel l)
                     )
                     f.labels
+                ++ List.map
+                    (\u ->
+                        Ev TensionEvent.AssigneeAdded "" u.username
+                    )
+                    f.assignees
 
         inputReq =
             { createdAt = createdAt
@@ -130,6 +135,7 @@ addTensionInputEncoder f =
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                     , labels = buildLabels f
+                    , assignees = buildAssignees f
                     , history = buildEvents createdAt f.uctx.username events
                 }
     in
@@ -148,6 +154,20 @@ buildLabels form =
                 Input.buildLabelRef
                     (\x ->
                         { x | id = Present (encodeId label.id) }
+                    )
+            )
+        |> listToMaybe
+        |> fromMaybe
+
+
+buildAssignees : TensionForm -> OptionalArgument (List Input.UserRef)
+buildAssignees form =
+    form.assignees
+        |> List.map
+            (\user ->
+                Input.buildUserRef
+                    (\x ->
+                        { x | username = Present user.username }
                     )
             )
         |> listToMaybe

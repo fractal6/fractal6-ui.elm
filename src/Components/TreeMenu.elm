@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -38,7 +38,7 @@ import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), errorIsNoDataFound, isSuccess, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -641,9 +641,13 @@ view op (State model) =
             ]
 
     else
-        div [ id "tree-hinter", class "is-hidden-mobile", onMouseEnter (OnToggleHover True) ]
-            [ div [ class "hinter-tree is-hidden-touch" ]
-                [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+        -- Use a parent wrapper for hover detection to prevent flickering.
+        -- The hover listener is on the stable parent, visual effects are on the child.
+        div [ id "tree-hinter", class "is-hidden-mobile" ]
+            [ div [ class "hinter-zone", onMouseEnter (OnToggleHover True) ]
+                [ div [ class "hinter-tree is-hidden-touch" ]
+                    [ div [ class "half-circle" ] [ A.icon "icon-git-branch" ] ]
+                ]
             ]
 
 
@@ -671,7 +675,7 @@ viewTreeMenu model =
                         text ""
 
                     f :: _ ->
-                        if f |> String.toLower |> String.startsWith "no data returned" then
+                        if errorIsNoDataFound err then
                             ul [ class "menu-list" ]
                                 [ li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
                                 , li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]

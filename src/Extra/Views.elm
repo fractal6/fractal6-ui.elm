@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -23,8 +23,8 @@ module Extra.Views exposing (..)
 
 import Assets as A
 import Extra exposing (upH)
-import Html exposing (Html, div, input, label, section)
-import Html.Attributes exposing (attribute, class, for, id, name, type_)
+import Html exposing (Html, div, input, label, section, span, text)
+import Html.Attributes exposing (attribute, class, for, id, name, style, type_)
 import Markdown exposing (renderMarkdown)
 import Text as T
 
@@ -32,7 +32,10 @@ import Text as T
 showMsg : String -> String -> String -> String -> String -> Html msg
 showMsg id_ cls icon header message =
     if message == "" then
-        div [ class ("f6-help-message notification p-4 m-0 mb-2 is-size-7 " ++ cls) ] [ renderMarkdown "" (" <i class=\"" ++ icon ++ "\"></i> <i class=\"is-space\"></i> " ++ header) ]
+        div [ class ("f6-help-message notification p-4 m-0 mb-4 is-flex is-align-items-start " ++ cls) ]
+            [ span [ class "mr-3 has-text-strong", style "margin-top" "0.15em" ] [ A.icon icon ]
+            , renderMarkdown "" header
+            ]
 
     else
         let
@@ -51,13 +54,17 @@ showMsg id_ cls icon header message =
         in
         div [ class "f6-help-message accordion arrows-right" ]
             [ input [ id did, name "accordion", type_ "radio" ] []
-            , section [ class ("acc message is-small " ++ cls) ]
+            , section [ class ("acc message " ++ cls) ]
                 [ label
                     [ class "acc-title message-header"
                     , attribute "title" T.clickMe
                     , for did
                     ]
-                    [ A.icon1 icon (upH header) ]
+                    [ span [ class "is-flex is-align-items-center" ]
+                        [ span [ class "mr-3 has-text-strong" ] [ A.icon icon ]
+                        , text (upH header)
+                        ]
+                    ]
                 , label [ class "acc-close", for "acc-close" ] []
                 , div [ class "acc-content " ]
                     [ renderMarkdown ("message-body " ++ mkdCls) message ]

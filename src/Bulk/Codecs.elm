@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -66,6 +66,25 @@ isTensionBaseUri r =
 isProjectBaseUri : FractalBaseRoute -> Bool
 isProjectBaseUri r =
     List.member r [ ProjectBaseUri ]
+
+
+isTensionUrl : Url -> Bool
+isTensionUrl url =
+    urlToFractalRoute url
+        |> Maybe.map isTensionBaseUri
+        |> withDefault False
+
+
+isOrgUrl : Url -> Bool
+isOrgUrl url =
+    urlToFractalRoute url
+        |> Maybe.map
+            (\u ->
+                List.member u [ OverviewBaseUri, TensionsBaseUri, ProjectsBaseUri, MembersBaseUri, SettingsBaseUri ]
+                    || isTensionBaseUri u
+                    || isProjectBaseUri u
+            )
+        |> withDefault False
 
 
 
@@ -207,18 +226,6 @@ urlToFractalRoute url =
                         Nothing
             )
         |> withDefault Nothing
-
-
-isOrgUrl : Url -> Bool
-isOrgUrl url =
-    urlToFractalRoute url
-        |> Maybe.map
-            (\u ->
-                List.member u [ OverviewBaseUri, TensionsBaseUri, ProjectsBaseUri, MembersBaseUri, SettingsBaseUri ]
-                    || isTensionBaseUri u
-                    || isProjectBaseUri u
-            )
-        |> withDefault False
 
 
 focusState : FractalBaseRoute -> Maybe Url -> Url -> Maybe NodeFocus -> NodeFocus -> FocusState

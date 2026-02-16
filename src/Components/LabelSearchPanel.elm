@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -28,7 +28,7 @@ import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewLabel, viewLabels)
-import Codecs exposing (LookupResult, labelDecoder)
+import Codecs exposing (labelDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -446,6 +446,42 @@ type alias Op =
     }
 
 
+view : Op -> State -> Html Msg
+view op (State model) =
+    div [ id id_target_name ]
+        [ if model.isOpen then
+            view_ False op model
+
+          else
+            text ""
+        ]
+
+
+viewNew : Op -> State -> Html Msg
+viewNew op (State model) =
+    span []
+        [ span [ class "panel-selector-wrapper" ]
+            [ div [ id id_target_name, class "is-reversed" ]
+                [ if model.isOpen then
+                    view_ True op model
+
+                  else
+                    text ""
+                ]
+            , div
+                [ class "button is-small mr-2"
+                , onClick (OnOpen op.targets Nothing)
+                ]
+                [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
+            ]
+        , if List.length op.selectedLabels > 0 then
+            viewLabels Nothing op.selectedLabels
+
+          else
+            text ""
+        ]
+
+
 view_ : Bool -> Op -> Model -> Html Msg
 view_ isInternal op model =
     nav [ id "labelSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
@@ -572,44 +608,4 @@ viewLabelSelectors isInternal labels op model =
                                 ]
                         )
         , ternary isInternal (text "") viewEdit
-        ]
-
-
-
---
--- Input View
---
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
-    div [ id id_target_name ]
-        [ if model.isOpen then
-            view_ False op model
-
-          else
-            text ""
-        ]
-
-
-viewNew : Op -> State -> Html Msg
-viewNew op (State model) =
-    div []
-        [ div [ id id_target_name, class "is-reversed" ]
-            [ if model.isOpen then
-                view_ True op model
-
-              else
-                text ""
-            ]
-        , div
-            [ class "button is-small  mr-2"
-            , onClick (OnOpen op.targets Nothing)
-            ]
-            [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
-        , if List.length op.selectedLabels > 0 then
-            viewLabels Nothing op.selectedLabels
-
-          else
-            text ""
         ]

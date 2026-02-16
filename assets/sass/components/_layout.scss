@@ -1,0 +1,88 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Body Layout and Menu Adjustments
+ *
+ */
+
+#app:not(.embed) #body {
+    // For discrete footer.
+    min-height: calc(100vh - #{$navbar-height}) !important;
+
+    // FIX the fix-top-navbar padding (for the #mainPane}
+    padding-top: calc(#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
+}
+
+
+#body {
+    @include desktop {
+        // Orga Menu adjustments
+        @include until-fullhd {
+            &.has-orga-menu > .orgPane {
+                margin-left: 40px;
+
+                .kb-board {
+                    margin-left: calc(#{$orga-menu-width} - 40px) !important;
+                }
+            }
+        }
+
+        // Tree Menu adjustments
+        &.has-tree-menu > .orgPane {
+            margin-left: $tree-menu-width !important;
+        }
+        &.has-tree-menu.has-orga-menu > .orgPane {
+            margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
+        }
+
+        #helperBar.has-tree-menu,
+        #mainPane.has-tree-menu > *:not(.kb-board) {
+            padding-left: 2%;
+        }
+        #helperBar.has-tree-menu,
+        #mainPane.has-tree-menu > .columns {
+            justify-content: normal;
+            &:not(#overview):not(.kb-board) > .column:first-child {
+                width: 97%;
+            }
+            &#overview {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                & > .column {
+                    width: 48.75%;
+                    &:first-child {
+                        padding-left:0;
+                    }
+                }
+            }
+        }
+        &.has-orga-menu #tree-menu {
+            margin-left: $orga-menu-width !important;
+        }
+
+        // Footbar adjustment with menus
+        // @DEBUG: :has selector is not well supported yet, especially by firefox...
+        // &.has-tree-menu:has(.orgPane) ~ #footBar {
+        &.has-tree-menu ~ #footBar {
+            padding-left: calc(#{$tree-menu-width} + #{$size-medium}) !important;
+        }
+        &.has-orga-menu ~ #footBar {
+            padding-left: calc(#{$orga-menu-width} + #{$size-medium}) !important;
+        }
+        &.has-tree-menu.has-orga-menu ~ #footBar {
+            padding-left: calc(#{$tree-menu-width} + #{$orga-menu-width} + #{$size-medium}) !important;
+        }
+
+    }
+
+    // KB board adjustments with menus
+    @include fullhd {
+        &.has-orga-menu:not(.has-tree-menu) .kb-board {
+            margin-left: $orga-menu-width !important;
+        }
+    }
+}

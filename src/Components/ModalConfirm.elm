@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -42,12 +42,14 @@ type alias ModalConfirm msg =
 type alias TextMessage =
     { message : Maybe ( String, String )
     , txts : List ( String, String )
+    , confirmClass : String
+    , confirmLabel : String
     }
 
 
 init : msg -> ModalConfirm msg
 init m =
-    { isOpen = False, msg = m, mess = { message = Nothing, txts = [ ( "", "" ) ] } }
+    { isOpen = False, msg = m, mess = { message = Nothing, txts = [ ( "", "" ) ], confirmClass = "is-success", confirmLabel = T.confirm } }
 
 
 open : msg -> TextMessage -> ModalConfirm msg -> ModalConfirm msg
@@ -64,6 +66,14 @@ type alias Op msg =
     { data : ModalConfirm msg
     , onClose : ModalData -> msg
     , onConfirm : msg
+    }
+
+
+type alias Op3 msg =
+    { data : ModalConfirm msg
+    , onDiscard : msg
+    , onSaveDraft : msg
+    , onKeepEditing : msg
     }
 
 
@@ -98,14 +108,62 @@ viewConfirm op =
                 Nothing ->
                     text ""
             , op.data.mess.txts |> List.map (\( x, y ) -> span [ class y ] [ text x ]) |> List.intersperse (text " ") |> span []
-            , div [ class "field is-grouped is-grouped-right" ]
+            , div [ class "field is-grouped is-grouped-right mt-2" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button is-small is-success", onClick op.onConfirm ]
-                        [ text T.confirm ]
+                        [ class ("button is-small " ++ op.data.mess.confirmClass), onClick op.onConfirm ]
+                        [ text op.data.mess.confirmLabel ]
                     , button
                         [ class "button is-small", onClick (op.onClose { reset = True, link = "" }) ]
                         [ text T.cancel ]
+                    ]
+                ]
+            ]
+        ]
+
+
+view3 : Op3 msg -> Html msg
+view3 op =
+    div
+        [ id "confirmModal"
+        , class "modal modal-fx-fadeIn"
+        , classList [ ( "is-active", op.data.isOpen ) ]
+        , attribute "data-modal-close" "closeModalConfirmFromJs"
+        ]
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "confirmModal"
+            , onClick op.onKeepEditing
+            ]
+            []
+        , div [ class "modal-content" ]
+            [ viewConfirm3 op ]
+        , button [ class "modal-close is-large", onClick op.onKeepEditing ] []
+        ]
+
+
+viewConfirm3 : Op3 msg -> Html msg
+viewConfirm3 op =
+    div [ class "modal-card" ]
+        [ div [ class "modal-card-body" ]
+            [ case op.data.mess.message of
+                Just m ->
+                    showMsg "0" "is-info" "icon-info" (Tuple.first m) (Tuple.second m)
+
+                Nothing ->
+                    text ""
+            , op.data.mess.txts |> List.map (\( x, y ) -> span [ class y ] [ text x ]) |> List.intersperse (text " ") |> span []
+            , div [ class "field is-grouped is-grouped-right mt-2" ]
+                [ div [ class "buttons" ]
+                    [ button
+                        [ class "button is-small", onClick op.onKeepEditing ]
+                        [ text T.keepEditing ]
+                    , button
+                        [ class "button is-small is-info", onClick op.onSaveDraft ]
+                        [ text T.saveAsDraft ]
+                    , button
+                        [ class "button is-small is-danger", onClick op.onDiscard ]
+                        [ text T.discard ]
                     ]
                 ]
             ]

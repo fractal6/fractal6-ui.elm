@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -69,7 +69,7 @@ initModel tid session =
     { isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionForm tid Nothing session.user
+    , form = initTensionForm session.lexicon tid Nothing session.user
 
     -- Common
     , session = session
@@ -233,7 +233,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ], confirmClass = "is-success", confirmLabel = T.confirm }) ]
                 )
 
         -- Data
@@ -397,7 +397,7 @@ viewModalContent op (State model) =
                 [ text (T.changeTensionType model.session.lexicon) ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            [ showMsg "selectType-0" "is-info" "icon-info" (T.tensionTypeHeader model.session.lexicon) (T.tensionTypeDoc model.session.lexicon)
             , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->

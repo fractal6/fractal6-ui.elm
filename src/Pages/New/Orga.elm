@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -27,9 +27,8 @@ import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
 import Bulk.Error exposing (viewHttpErrors)
-import Bulk.View exposing (helperButton, visibility2descr, visibility2extra, visibility2icon)
+import Bulk.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
-import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -172,7 +172,7 @@ almostThere username aim link =
         [ div [ class "title is-aligned-center" ] [ text (T.almostThere ++ "...") ]
         , div [ class "notification is-soft is-info" ]
             [ text (T.checkYourEmail |> Format.value username |> Format.value aim)
-            , hr [ class "has-background-border mt-5 mb-5" ] []
+            , hr [ class "mt-5 mb-5" ] []
             , small []
                 [ text T.checkConfirmationEmail
                 , text (" " ++ T.or_ ++ " ")

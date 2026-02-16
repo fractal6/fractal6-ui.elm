@@ -1,7 +1,7 @@
 {-
 
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -263,6 +263,7 @@ type alias OrgaInfo =
     , -- is logged user watching the orga
       isWatching : Maybe Bool
     , client_version : String
+    , lexicon : Maybe String
     }
 
 

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -641,7 +641,7 @@ viewRow d op model =
                 [ class "discrete-link"
                 , href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref)
                 ]
-                (text (contractEventToText Nothing d.event.event_type)
+                (text (contractEventToText model.session.lexicon Nothing d.event.event_type)
                     :: (Maybe.map (\x -> [ text " ・ ", x ]) (contractEventToValue d.event) |> withDefault [])
                 )
             ]
@@ -659,7 +659,7 @@ viewRow d op model =
                 in
                 span
                     [ class "button-light"
-                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ], confirmClass = "is-danger", confirmLabel = T.delete }
                     ]
                     [ span [ class "button-light is-small is-danger", title T.deleteThisContract ] [ A.icon "icon-trash", loadingSpin deleteLoading ] ]
 
@@ -735,8 +735,8 @@ viewContractPage c op model =
                 div [ class "notification is-success is-soft" ]
                     [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , ternary isCandidate
-                        (text (cev2c n.type_ c.event.event_type))
-                        (text (cev2p n.type_ c.event.event_type))
+                        (text (cev2c model.session.lexicon n.type_ c.event.event_type))
+                        (text (cev2p model.session.lexicon n.type_ c.event.event_type))
                     ]
 
             else if isVoteSuccess && model.voteForm.vote == 0 then
@@ -754,7 +754,7 @@ viewContractPage c op model =
             -- Close, Cancelled or no auth.
             text ""
         , Comments.viewCommentsContract model.session model.comments |> Html.map CommentsMsg
-        , hr [ class "has-background-border-light is-2" ] []
+        , hr [ class "is-2" ] []
         , case model.session.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then
@@ -791,7 +791,7 @@ viewContractBox c op model =
                     [ div [ class "field-label" ] [ label [ class "label" ] [ text T.contractEvent ] ]
                     , div [ class "field-bod" ]
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value (contractEventToText n.type_ c.event.event_type), disabled True ] [] ]
+                            [ input [ class "input", value (contractEventToText model.session.lexicon n.type_ c.event.event_type), disabled True ] [] ]
                         ]
                     ]
                 ]
@@ -880,7 +880,7 @@ viewContractBox c op model =
                         [ br [] []
                         , div
                             [ class "is-pulled-right button-light is-danger"
-                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                            , onClick <| DoModalConfirmOpen (DoDeleteContract c.id) { message = Nothing, txts = [ ( T.confirmDeleteContract, "" ), ( "?", "" ) ], confirmClass = "is-danger", confirmLabel = T.delete }
                             ]
                             [ A.icon1 "icon-trash" T.deleteThisContract ]
                         ]

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -23,7 +23,9 @@ module Components.Comments exposing
     ( Msg(..)
     , OutType(..)
     , State
+    , getCurrentMessage
     , init
+    , initWithDraft
     , subscriptions
     , update
     , viewCommentInputHeader
@@ -38,43 +40,40 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2str, statusColor, statusColorReverse, tensionIcon2, tensionStatus2str, viewLabel, viewNodeRefShort, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2, viewUsernameLink)
+import Bulk.Event exposing (viewEvent)
+import Bulk.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (decap, ternary, textD)
-import Extra.Date exposing (formatDate)
+import Extra exposing (showIf, ternary)
 import Extra.Events exposing (onClickSafe)
 import Form exposing (isPostSendable)
 import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow)
-import Html exposing (Html, a, br, button, div, hr, i, li, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, value)
+import Global exposing (send, sendNow, sendSleep)
+import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, textarea, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, title, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withMapData, withMaybeMapData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown, setMdCheckbox)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, Event, Label, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
+import ModelSchema exposing (Comment, Event, IdPayload, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
 import Ports
 import Query.PatchContract exposing (pushContractComment)
-import Query.PatchTension exposing (patchComment, pushTensionPatch)
+import Query.PatchTension exposing (deleteComment, patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
-import Session exposing (Apis, GlobalCmd, SessionCommon, isMobile, toReflink)
-import String.Extra as SE
+import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile, toReflink)
 import String.Format as Format
+import Task
 import Text as T
 import Time
 
@@ -117,8 +116,18 @@ type alias Model =
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
 
+    -- Delete Comment (cid, result)
+    , comment_delete_result : ( String, GqlData IdPayload )
+
     -- Components
     , userInput : UserInput.State
+    , modal_confirm : ModalConfirm Msg
+
+    -- Fade-out animation for deleted comments
+    , fadingOut : List String
+
+    -- Backup for checkbox operations (stores comment id and message being edited)
+    , post_backup : Maybe { id : String, message : String }
 
     -- Common
     , session : SessionCommon
@@ -133,14 +142,22 @@ initModel nameid tensionid session =
     , history = []
     , expandedEvents = []
     , highlightedCommentId = ""
-    , tension_form = initTensionForm tensionid Nothing session.user
+    , tension_form = initTensionForm session.lexicon tensionid Nothing session.user
     , tension_patch = NotAsked
     , contract_form = initCommentPatchForm session.user []
     , comment_form = initCommentPatchForm session.user [ ( "focusid", nameid ) ]
     , comment_result = NotAsked
+    , comment_delete_result = ( "", NotAsked )
 
     -- Components
     , userInput = UserInput.init [ nameid ] False False session
+    , modal_confirm = ModalConfirm.init NoMsg
+
+    -- Fade-out animation for deleted comments
+    , fadingOut = []
+
+    -- Backup for checkbox operations
+    , post_backup = Nothing
 
     -- Common
     , session = session
@@ -153,9 +170,37 @@ init nameid tensionid session =
     initModel nameid tensionid session |> State
 
 
+initWithDraft : String -> String -> SessionCommon -> Maybe CommentDraft -> State
+initWithDraft nameid tensionid session maybeDraft =
+    let
+        model =
+            initModel nameid tensionid session
+
+        tension_form =
+            case maybeDraft of
+                Just draft ->
+                    let
+                        f =
+                            model.tension_form
+                    in
+                    { f | post = Dict.insert "message" draft.message f.post }
+
+                Nothing ->
+                    model.tension_form
+    in
+    State { model | tension_form = tension_form }
+
+
 
 -- Global methods
--- not yet
+
+
+getCurrentMessage : State -> Maybe String
+getCurrentMessage (State model) =
+    Dict.get "message" model.tension_form.post |> Maybe.map String.trim
+
+
+
 -- State Controls
 
 
@@ -176,7 +221,7 @@ type Msg
       -- Change Post
     | OnChangeComment String String
     | OnChangeContractComment String String
-    | OnChangeCommentPatch String String
+    | OnChangePatchComment String String
       -- Push Comment
     | SubmitTensionComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | TensionCommentAck (GqlData PatchTensionPayloadID)
@@ -187,6 +232,13 @@ type Msg
     | OnCancelComment String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
+      -- Delete comment
+    | OnDeleteComment String
+    | SubmitDeleteComment String Time.Posix
+    | DeleteCommentAck String (GqlData IdPayload)
+      -- Clipboard
+    | OnCopyLink String
+    | OnClearCopyLink
       -- Reaction
     | OnAddReaction String Int
     | OnAddReactionAck (GqlData ReactionResponse)
@@ -203,6 +255,10 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | OnRichText String String
     | OnToggleMdHelp String
+      -- Confirm Modal
+    | DoModalConfirmOpen Msg TextMessage
+    | DoModalConfirmClose ModalData
+    | DoModalConfirmSend
       -- Components
     | UserInputMsg UserInput.Msg
 
@@ -356,7 +412,7 @@ update_ apis message model =
                 OkAuth tp ->
                     let
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | comments =
@@ -371,7 +427,7 @@ update_ apis message model =
                         , tension_form = resetForm
                         , tension_patch = result
                       }
-                    , Out [ Ports.bulma_driver "" ] [] (Just (TensionCommentAdded model.tension_form.status))
+                    , Out [ Ports.bulma_driver "" ] [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -441,7 +497,7 @@ update_ apis message model =
             in
             ( { model | comment_form = { form | id = "", post = Dict.remove "message" form.post }, comment_result = NotAsked }, out0 [ Ports.bulma_driver createdAt ] )
 
-        OnChangeCommentPatch field value ->
+        OnChangePatchComment field value ->
             let
                 form =
                     model.comment_form
@@ -473,15 +529,63 @@ update_ apis message model =
                             in
                             LE.setAt n comment model.comments
 
+                        -- Restore backup if this was a stealth (checkbox) operation
                         resetForm =
-                            initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
+                            case ( Dict.get "stealth" model.comment_form.post, model.post_backup ) of
+                                ( Just "true", Just backup ) ->
+                                    let
+                                        f =
+                                            initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
+                                    in
+                                    { f | id = backup.id, post = Dict.insert "message" backup.message f.post }
+
+                                _ ->
+                                    initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result }
+                    ( { model | comments = comments, comment_form = resetForm, comment_result = result, post_backup = Nothing }
                     , out0 [ Ports.bulma_driver comment.createdAt ]
                     )
 
                 _ ->
-                    ( { model | comment_result = result }, noOut )
+                    ( { model | comment_result = result, post_backup = Nothing }, noOut )
+
+        -- Delete comment
+        OnDeleteComment cid ->
+            if List.head model.comments |> Maybe.map (\c -> c.id == cid) |> withDefault False then
+                let
+                    form =
+                        model.comment_form
+                in
+                ( { model | comment_form = { form | id = cid, post = Dict.insert "message" "" form.post } }
+                , out0 [ sendNow SubmitCommentPatch ]
+                )
+
+            else
+                ( model, out0 [ sendNow (SubmitDeleteComment cid) ] )
+
+        SubmitDeleteComment cid time ->
+            let
+                commentCreatedAt =
+                    model.comments
+                        |> List.filter (\c -> c.id == cid)
+                        |> List.head
+                        |> Maybe.map .createdAt
+                        |> withDefault ""
+            in
+            ( { model | comment_delete_result = ( cid, LoadingSlowly ) }
+            , out0 [ deleteComment apis model.tension_form.id cid commentCreatedAt (uctxFromUser model.session.user) time (DeleteCommentAck cid) ]
+            )
+
+        DeleteCommentAck cid result ->
+            case parseErr result 2 of
+                OkAuth _ ->
+                    ( { model | fadingOut = cid :: model.fadingOut, comment_delete_result = ( cid, result ) }, noOut )
+
+                Authenticate ->
+                    ( model, out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ] )
+
+                _ ->
+                    ( { model | comment_delete_result = ( cid, result ) }, noOut )
 
         -- Common
         NoMsg ->
@@ -515,41 +619,44 @@ update_ apis message model =
             ( model, out0 [ Ports.richText targetid command ] )
 
         OnToggleMdHelp targetid ->
+            let
+                toggleMdHelp form =
+                    let
+                        field =
+                            "isMdHelpOpen" ++ targetid
+
+                        v =
+                            Dict.get field form.post |> withDefault "false"
+
+                        value =
+                            ternary (v == "true") "false" "true"
+                    in
+                    { form | post = Dict.insert field value form.post }
+            in
             case targetid of
-                "commentInput" ->
-                    let
-                        form =
-                            model.tension_form
-
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | tension_form = { form | post = Dict.insert field value form.post } }, noOut )
-
                 "updateCommentInput" ->
-                    let
-                        form =
-                            model.comment_form
+                    ( { model | comment_form = toggleMdHelp model.comment_form }, noOut )
 
-                        field =
-                            "isMdHelpOpen" ++ targetid
-
-                        v =
-                            Dict.get field form.post |> withDefault "false"
-
-                        value =
-                            ternary (v == "true") "false" "true"
-                    in
-                    ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
+                "commentContractInput" ->
+                    ( { model | contract_form = toggleMdHelp model.contract_form }, noOut )
 
                 _ ->
-                    ( model, noOut )
+                    -- Handles "commentInput", "textAreaModal", and any future tension_form targets
+                    ( { model | tension_form = toggleMdHelp model.tension_form }, noOut )
+
+        OnCopyLink cid ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | linkCopied = cid } }, out0 [ sendSleep OnClearCopyLink 2000 ] )
+
+        OnClearCopyLink ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | linkCopied = "" } }, noOut )
 
         OnAddReaction cid type_ ->
             case model.session.user of
@@ -602,8 +709,16 @@ update_ apis message model =
             case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
                 Just c ->
                     let
+                        -- Backup the current comment_form if user is editing a comment
+                        backup =
+                            if model.comment_form.id /= "" then
+                                Dict.get "message" model.comment_form.post
+                                    |> Maybe.map (\msg -> { id = model.comment_form.id, message = msg })
+
+                            else
+                                Nothing
+
                         -- Simulate comment updated
-                        --
                         form =
                             model.comment_form
 
@@ -616,15 +731,24 @@ update_ apis message model =
                                         |> Dict.insert "stealth" "true"
                             }
 
-                        --
                         -- send SubmitCommentPatch
                     in
-                    ( { model | comment_form = comment_form }
+                    ( { model | comment_form = comment_form, post_backup = backup }
                     , out0 [ send (OnSubmit True SubmitCommentPatch) ]
                     )
 
                 Nothing ->
                     ( model, noOut )
+
+        -- Confirm Modal
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
+
+        DoModalConfirmClose _ ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
         -- Components
         UserInputMsg msg ->
@@ -682,6 +806,7 @@ subscriptions (State model) =
                 []
            )
         ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose ]
 
 
 
@@ -692,17 +817,23 @@ subscriptions (State model) =
 
 viewCommentsContract : SessionCommon -> State -> Html Msg
 viewCommentsContract session (State model) =
-    model.comments
-        |> List.map
-            (\c ->
-                Lazy.lazy6 viewComment session c model.comment_form model.comment_result model.highlightedCommentId model.userInput
-            )
-        |> div []
+    div []
+        [ model.comments
+            |> List.map
+                (\c ->
+                    Lazy.lazy8 viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput (List.member c.id model.fadingOut)
+                )
+            |> div []
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
 
 
 viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension session action (State model) =
-    viewComments_ session action model.history model.comments model.comment_form model.comment_result model.expandedEvents model.highlightedCommentId model.userInput
+    div []
+        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.fadingOut
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
 
 
 viewComments_ :
@@ -712,16 +843,31 @@ viewComments_ :
     -> List Comment
     -> CommentPatchForm
     -> GqlData Comment
+    -> ( String, GqlData IdPayload )
     -> List Int
     -> String
     -> UserInput.State
+    -> List String
     -> Html Msg
-viewComments_ session action history comments comment_form comment_result expandedEvents highlightedCommentId userInput =
+viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput fadingOut =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
             List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
+                ++ List.indexedMap
+                    (\i e ->
+                        { type_ = Just e.event_type
+                        , createdAt =
+                            if e.event_type == TensionEvent.CommentDeleted then
+                                e.new |> withDefault e.createdAt
+
+                            else
+                                e.createdAt
+                        , i = i
+                        , n = 0
+                        }
+                    )
+                    history
                 |> List.sortBy .createdAt
 
         viewCommentOrEvent : EventTracker -> Html Msg
@@ -742,7 +888,7 @@ viewComments_ session action history comments comment_form comment_result expand
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            Lazy.lazy6 viewComment session c comment_form comment_result highlightedCommentId userInput
+                            Lazy.lazy8 viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -817,8 +963,8 @@ viewComments_ session action history comments comment_form comment_result expand
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> String -> UserInput.State -> Html Msg
-viewComment session c form result highlightedCommentId userInput =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -829,7 +975,7 @@ viewComment session c form result highlightedCommentId userInput =
         isFocused =
             c.createdAt == highlightedCommentId
     in
-    div [ id c.createdAt, class "media section p-0" ]
+    div [ id c.createdAt, class "media section p-0", classList [ ( "comment-fadeout", isFadingOut ) ] ]
         [ div
             [ class "media-left is-hidden-mobile"
             , classList [ ( "is-hidden", isMobile session.screen ) ]
@@ -843,7 +989,7 @@ viewComment session c form result highlightedCommentId userInput =
                 viewUpdateInput session c form result userInput
 
               else
-                div [ id c.id, class "message", classList [ ( "is-focusing", isFocused ) ] ]
+                div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
                     [ div [ class "message-header has-arrow-left pl-1-mobile", classList [ ( "is-author", isAuthor ) ] ]
                         [ span
                             [ --class "is-hidden-tablet"
@@ -884,16 +1030,32 @@ viewComment session c form result highlightedCommentId userInput =
                                     ]
                                 , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ] <|
-                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink ] [ text "Copy link" ] ]
+                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink, onClick (OnCopyLink c.id) ] [ A.icon1 "icon-link" "Copy link" ] ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
-                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ text T.edit ]
+                                                    , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
+                                                    , div
+                                                        [ class "dropdown-item"
+                                                        , onClick <|
+                                                            DoModalConfirmOpen (OnDeleteComment c.id)
+                                                                { message = Nothing
+                                                                , txts = [ ( T.confirmDeleteComment, "" ) ]
+                                                                , confirmClass = "is-danger"
+                                                                , confirmLabel = T.delete
+                                                                }
+                                                        ]
+                                                        [ A.icon1 "icon-trash" T.delete ]
                                                     ]
 
                                                 else
                                                     []
                                                )
                                     ]
+                                , if form.linkCopied == c.id then
+                                    span [ class "copy-notif is-size-7 has-text-success" ] [ text "Copied!" ]
+
+                                  else
+                                    text ""
                                 ]
                             ]
                         ]
@@ -953,12 +1115,33 @@ viewComment session c form result highlightedCommentId userInput =
                                 c.reactions
                         ]
                     ]
+            , showIf (c.id == Tuple.first delete_result) <|
+                case Tuple.second delete_result of
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        text ""
             ]
         ]
 
 
-viewNewTensionCommentInput : SessionCommon -> State -> Html Msg
-viewNewTensionCommentInput session (State model) =
+viewDeleteCommentError : String -> ( String, GqlData IdPayload ) -> Html Msg
+viewDeleteCommentError cid ( targetCid, result ) =
+    if cid == targetCid then
+        case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+
+    else
+        text ""
+
+
+viewNewTensionCommentInput : SessionCommon -> CommentOpts -> State -> Html Msg
+viewNewTensionCommentInput session opts (State model) =
     let
         opHeader =
             { onChangeViewMode = ChangeInputViewMode
@@ -966,18 +1149,20 @@ viewNewTensionCommentInput session (State model) =
             , onToggleMdHelp = OnToggleMdHelp
             }
     in
-    div [ class "message" ]
+    div [ class "message commentMessage" ]
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" True T.leaveCommentOpt model.tension_form model.userInput ]
-                , p [ class "help-label" ] [ text model.tension_form.txt.message_help ]
-                , div
-                    [ class "is-hidden-mobile is-pulled-right help"
-                    , classList [ ( "is-hidden", isMobile session.screen ) ]
-                    , style "font-size" "10px"
-                    ]
-                    [ text "Tips: <C+Enter> to submit" ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput ]
+                , showIf (opts.messageHelper /= "") <|
+                    p [ class "help-label" ] [ text opts.messageHelper ]
+                , showIf opts.hasTips <|
+                    div
+                        [ class "is-hidden-mobile is-pulled-right help"
+                        , classList [ ( "is-hidden", isMobile session.screen ) ]
+                        , style "font-size" "10px"
+                        ]
+                        [ text "Tips: <C+Enter> to submit" ]
                 , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
                     []
                 ]
@@ -1005,13 +1190,16 @@ viewUpdateInput session comment form_ result userInput =
             , onRichText = OnRichText
             , onToggleMdHelp = OnToggleMdHelp
             }
+
+        commentOpts =
+            {}
     in
-    div [ class "message commentInput" ]
+    div [ class "message commentMessage commentInput" ]
         [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "updateCommentInput" form ]
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea session "updateCommentInput" False T.leaveComment form userInput ]
+                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput ]
                 ]
             , case result of
                 Failure err ->
@@ -1081,12 +1269,12 @@ viewTensionCommentInput session tension (State model) =
         [ div [ class "media-left is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
             [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message commentInput" ]
+            [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput ]
                         ]
                     , case model.tension_patch of
                         Failure err ->
@@ -1144,12 +1332,12 @@ viewContractCommentInput session (State model) =
     div [ id "tensionCommentInput", class "media section p-0" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 form.uctx.username ]
         , div [ class "media-content" ]
-            [ div [ class "message commentInput" ]
+            [ div [ class "message commentMessage commentInput" ]
                 [ div [ class "message-header has-arrow-left" ] [ viewCommentInputHeader opHeader "commentContractInput" form ]
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" False T.leaveComment form model.userInput ]
+                            [ viewCommentTextarea session "commentContractInput" defaultCommentOpts form model.userInput ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1193,14 +1381,31 @@ type alias FormCommon a =
     }
 
 
-type alias OpInputHeader msg =
+type alias OpCommentHeader msg =
     { onChangeViewMode : InputViewMode -> msg
     , onRichText : String -> String -> msg
     , onToggleMdHelp : String -> msg
     }
 
 
-viewCommentInputHeader : OpInputHeader msg -> String -> FormCommon a -> Html msg
+type alias CommentOpts =
+    { isModal : Bool
+    , hasTips : Bool
+    , placeholderText : String
+    , messageHelper : String
+    }
+
+
+defaultCommentOpts : CommentOpts
+defaultCommentOpts =
+    { isModal = False
+    , placeholderText = T.leaveComment
+    , messageHelper = ""
+    , hasTips = False
+    }
+
+
+viewCommentInputHeader : OpCommentHeader msg -> String -> FormCommon a -> Html msg
 viewCommentInputHeader op targetid form =
     let
         isMdHelpOpen =
@@ -1246,8 +1451,8 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : SessionCommon -> String -> Bool -> String -> FormCommon a -> UserInput.State -> Html Msg
-viewCommentTextarea session targetid isModal placeholder_txt form userInput =
+viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> Html Msg
+viewCommentTextarea session targetid opts form userInput =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -1255,26 +1460,29 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
         line_len =
             List.length <| String.lines message
 
+        -- Calculate max rows based on ~75% of screen height
+        -- Assuming ~30px per line (font + padding)
+        --session.screen.h*3//4 // 40
         ( max_len, min_len ) =
             if isMobile session.screen then
-                if isModal then
-                    ( 4, 2 )
+                if opts.isModal then
+                    ( session.screen.h // 2 // 38, 2 )
 
                 else
-                    ( 6, 4 )
+                    ( session.screen.h * 2 // 3 // 38, 4 )
 
-            else if isModal then
-                ( 10, 4 )
+            else if opts.isModal then
+                ( session.screen.h * 2 // 3 // 38, 4 )
 
             else if targetid == "commentContractInput" then
-                ( 15, 4 )
+                ( session.screen.h * 5 // 6 // 39, 4 )
 
             else
-                ( 15, 6 )
+                ( session.screen.h * 5 // 6 // 39, 6 )
 
         onChangePost =
             if String.startsWith "update" targetid then
-                OnChangeCommentPatch
+                OnChangePatchComment
 
             else if targetid == "commentContractInput" then
                 OnChangeContractComment
@@ -1288,7 +1496,7 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
             , class "textarea"
             , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
             , rows (min max_len (max line_len min_len))
-            , placeholder placeholder_txt
+            , placeholder opts.placeholderText
             , value message
             , onInput (onChangePost "message")
 
@@ -1297,407 +1505,10 @@ viewCommentTextarea session targetid isModal placeholder_txt form userInput =
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]
-                [ renderMarkdown "is-human hidden-textarea" message, hr [ class "has-background-border-light" ] [] ]
+                [ renderMarkdown "is-human hidden-textarea" message, hr [] [] ]
 
           else
             text ""
         , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
         ]
-
-
-
---
--- <View Event>
---
---
-
-
-viewEvent : SessionCommon -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html Msg
-viewEvent session focusid_m action event =
-    let
-        eventView =
-            case event.event_type of
-                TensionEvent.Reopened ->
-                    viewEventStatus session event TensionStatus.Open
-
-                TensionEvent.Closed ->
-                    viewEventStatus session event TensionStatus.Closed
-
-                TensionEvent.TitleUpdated ->
-                    viewEventTitle session event
-
-                TensionEvent.TypeUpdated ->
-                    viewEventType session event
-
-                TensionEvent.Visibility ->
-                    viewEventVisibility session event
-
-                TensionEvent.Authority ->
-                    viewEventAuthority session event action
-
-                TensionEvent.AssigneeAdded ->
-                    viewEventAssignee session event True
-
-                TensionEvent.AssigneeRemoved ->
-                    viewEventAssignee session event False
-
-                TensionEvent.LabelAdded ->
-                    viewEventLabel focusid_m session event True
-
-                TensionEvent.LabelRemoved ->
-                    viewEventLabel focusid_m session event False
-
-                TensionEvent.BlobPushed ->
-                    viewEventPushed session event action
-
-                TensionEvent.BlobArchived ->
-                    viewEventArchived session event action True
-
-                TensionEvent.BlobUnarchived ->
-                    viewEventArchived session event action False
-
-                TensionEvent.MemberLinked ->
-                    viewEventMemberLinked session event action
-
-                TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked session event action
-
-                TensionEvent.UserJoined ->
-                    viewEventUserJoined session event action
-
-                TensionEvent.UserLeft ->
-                    viewEventUserLeft session event action
-
-                TensionEvent.Moved ->
-                    viewEventMoved session event
-
-                TensionEvent.Mentioned ->
-                    viewEventMentioned session event
-
-                _ ->
-                    []
-    in
-    if eventView == [] then
-        text ""
-
-    else
-        div [ id event.createdAt, class "media p-0 actionComment" ] eventView
-
-
-viewEventStatus : SessionCommon -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
-viewEventStatus session event status =
-    let
-        actionText =
-            case status of
-                TensionStatus.Open ->
-                    T.reopened2
-
-                TensionStatus.Closed ->
-                    T.closed2
-    in
-    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon ("icon-alert-circle icon-1half has-text-" ++ statusColor status) ]
-    , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventTitle : SessionCommon -> Event -> List (Html Msg)
-viewEventTitle session event =
-    let
-        icon =
-            A.icon "icon-edit-2"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated2, span [ class "is-strong" ] [ text T.theSubject ], text (formatDate session.lang session.now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventType : SessionCommon -> Event -> List (Html Msg)
-viewEventType session event =
-    let
-        icon =
-            A.icon "icon-edit-2"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theType_ ], text (formatDate session.lang session.now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            ]
-        ]
-    ]
-
-
-viewEventVisibility : SessionCommon -> Event -> List (Html Msg)
-viewEventVisibility session event =
-    let
-        icon =
-            A.icon "icon-eye"
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text T.theVisibility ], text (formatDate session.lang session.now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventAuthority : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventAuthority session event action =
-    let
-        ( icon, eventText ) =
-            case tensionAction2NodeType action of
-                Just NodeType.Circle ->
-                    ( A.icon "icon-shield", T.theGovernance )
-
-                Just NodeType.Role ->
-                    ( A.icon "icon-key", T.theAuthority )
-
-                _ ->
-                    ( A.icon "icon-key", "unknown action" )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.changed2, span [ class "is-strong" ] [ text eventText ], text (formatDate session.lang session.now event.createdAt) ]
-        , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "arrow-right mx-1" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-            ]
-        ]
-    ]
-
-
-viewEventAssignee : SessionCommon -> Event -> Bool -> List (Html Msg)
-viewEventAssignee session event isNew =
-    let
-        icon =
-            A.icon "icon-user"
-
-        ( actionText, value ) =
-            if isNew then
-                ( T.assigned2, withDefault "" event.new )
-
-            else
-                ( T.unassigned2, withDefault "" event.old )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewUsernameLink value, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventLabel : Maybe String -> SessionCommon -> Event -> Bool -> List (Html Msg)
-viewEventLabel focusid_m session event isNew =
-    let
-        icon =
-            A.icon "icon-tag"
-
-        ( actionText, value ) =
-            if isNew then
-                ( T.addedTheLabel, withDefault "unknown" event.new )
-
-            else
-                ( T.removedTheLabel, withDefault "unknown" event.old )
-
-        label =
-            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
-
-        link =
-            Maybe.map
-                (\nid ->
-                    toLink TensionsBaseUri nid [] ++ ("?l=" ++ label.name)
-                )
-                focusid_m
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [ class "labelsList" ] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text actionText ], viewLabel "" link label, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventPushed : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventPushed session event action_m =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-share" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventArchived : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
-viewEventArchived session event action_m isArchived =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-
-        ( icon, txt ) =
-            if isArchived then
-                ( A.icon "icon-archive", T.archived2 )
-
-            else
-                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived2 )
-    in
-    [ div [ class "media-left" ] [ icon ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMemberLinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberLinked session event action_m =
-    [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMemberUnlinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventMemberUnlinked session event action_m =
-    let
-        action_txt =
-            case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
-                NODE NodeType.Circle ->
-                    T.toThisOrganisation
-
-                _ ->
-                    T.toThisRole
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.unlinked2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventUserJoined : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserJoined session event action_m =
-    let
-        action_txt =
-            T.theOrganisation
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.joined2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventUserLeft : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
-viewEventUserLeft session event action_m =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-
-        action_txt =
-            case event.new of
-                Just type_ ->
-                    case RoleType.fromString type_ of
-                        Just RoleType.Guest ->
-                            T.theOrganisation
-
-                        Just RoleType.Owner ->
-                            T.theOwnerRole
-
-                        _ ->
-                            T.this ++ " " ++ decap T.role
-
-                Nothing ->
-                    action2str action |> decap
-    in
-    [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
-    , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), strong [ class "has-text-evidence" ] [ text T.left2 ], text action_txt, text (formatDate session.lang session.now event.createdAt) ]
-        ]
-    ]
-
-
-viewEventMoved : SessionCommon -> Event -> List (Html Msg)
-viewEventMoved session event =
-    [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
-    , div [ class "media-content" ]
-        [ span [] <|
-            List.intersperse (text " ")
-                [ viewUsernameLink event.createdBy.username
-                , strong [ class "has-text-evidence" ] [ text T.moved2 ]
-                , text T.from
-                , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text T.to
-                , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                , text (formatDate session.lang session.now event.createdAt)
-                ]
-        ]
-    ]
-
-
-viewEventMentioned : SessionCommon -> Event -> List (Html Msg)
-viewEventMentioned session event =
-    case event.mentioned of
-        Just { id, status, title, receiverid } ->
-            let
-                goto =
-                    withDefault "" event.new
-            in
-            [ div [ class "media-left" ] [ A.icon "icon-message-square" ]
-            , div [ class "media-content" ]
-                [ span [] <|
-                    List.intersperse (text " ")
-                        [ viewUsernameLink event.createdBy.username
-                        , strong [ class "has-text-evidence" ] [ text (T.mentioned2 session.lexicon) ]
-                        , text (formatDate session.lang session.now event.createdAt)
-                        ]
-                , div [ class "level ml-4 mt-1" ] <|
-                    List.singleton <|
-                        div [ class "level-left" ] <|
-                            [ a
-                                [ class "is-strong is-size-6 discrete-link mr-4 level-item"
-                                , href ((Route.Tension_Dynamic_Dynamic { param1 = nid2rootid receiverid, param2 = id } |> toHref) ++ "?goto=" ++ goto)
-                                ]
-                                [ span [ Html.Attributes.title (tensionStatus2str status) ]
-                                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor status) ]
-                                , text title
-                                ]
-                            , a
-                                [ class "discrete-link is-discrete level-item"
-                                , href (toLink OverviewBaseUri receiverid [])
-                                ]
-                                [ receiverid |> String.replace "#" "/" |> text ]
-                            ]
-                ]
-            ]
-
-        Nothing ->
-            []
-
-
-
---
--- </ View Event>
---

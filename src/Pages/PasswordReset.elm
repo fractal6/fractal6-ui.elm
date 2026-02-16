@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -327,7 +327,7 @@ view_ global model =
 viewResetForm : Global.Model -> Model -> Html Msg
 viewResetForm global model =
     div [ id "loginForm" ]
-        [ div [ class "card" ]
+        [ div [ class "card has-background-evidence" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
                     [ text T.passwordForgotten ]
@@ -436,7 +436,7 @@ viewResetForm global model =
 viewResetForm2 : Global.Model -> Model -> Html Msg
 viewResetForm2 global model =
     div [ id "loginForm" ]
-        [ div [ class "card" ]
+        [ div [ class "card has-background-evidence" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
                     [ text T.updatePassword2 ]

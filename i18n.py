@@ -56,6 +56,9 @@ elm_entry_dict_template = """\
 default_lexicon = {
     "tension": "tension",
     "Tension": "Tension",
+    "mandate": "mandate",
+    "Mandate": "Mandate",
+    "void": "",
 }
 
 

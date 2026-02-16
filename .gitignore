@@ -7,6 +7,9 @@ dist/
 releases/
 review/
 
+# Tests
+tests/robotresults/
+
 # Auto-generated
 src/Text.elm
 src/.tags

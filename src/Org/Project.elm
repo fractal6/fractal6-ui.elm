@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -37,8 +37,9 @@ import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
-import Components.SearchBar exposing (viewSearchBar)
+
 import Components.TreeMenu as TreeMenu
+import Dict
 import Extra exposing (insertAt, ternary, unwrap)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -140,7 +141,7 @@ mapGlobalOutcmds gcmds =
                         ( [ send <| OpenTensionPane a ], Cmd.none )
 
                     DoOpenCardPanel a ->
-                        ( [ Cmd.map CardPanelMsg (send (CardPanel.OnOpen a)) ], Cmd.none )
+                        ( [ send (OnOpenCardPanel a) ], Cmd.none )
 
                     DoToggleTreeMenu ->
                         ( [ Cmd.map TreeMenuMsg <| send TreeMenu.OnToggle ], Cmd.none )
@@ -159,6 +160,9 @@ mapGlobalOutcmds gcmds =
 
                     DoMoveNode a b c ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c) ], Cmd.none )
+
+                    DoUpdateDraft draftUpdate ->
+                        ( [], send (Global.UpdateDraft draftUpdate) )
 
                     _ ->
                         ( [], Cmd.none )
@@ -300,6 +304,7 @@ type Msg
     | GotProject (GqlData ProjectData) -- Rest
     | OpenTensionPane (Maybe ColTarget)
     | OnClearBoardResult
+    | OnOpenCardPanel ProjectCard
       -- Common
     | NoMsg
     | LogErr String
@@ -411,6 +416,21 @@ update global message model =
         OnClearBoardResult ->
             ( model, Cmd.map BoardMsg (send Board.OnClearBoardResult), Cmd.none )
 
+        OnOpenCardPanel card ->
+            let
+                maybeDraft =
+                    case card.card of
+                        CardTension t ->
+                            Dict.get t.id global.session.data.drafts.comments
+
+                        _ ->
+                            Nothing
+            in
+            ( model
+            , Cmd.map CardPanelMsg (send (CardPanel.OnOpen card maybeDraft))
+            , Cmd.none
+            )
+
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -441,8 +461,16 @@ update global message model =
 
         NewTensionMsg msg ->
             let
+                state =
+                    case msg of
+                        NTF.OnOpen _ _ ->
+                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+
+                        _ ->
+                            model.tensionForm
+
                 ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
+                    NTF.update apis msg state
 
                 convert_draft_cmd =
                     case out.result of
@@ -477,8 +505,16 @@ update global message model =
 
         JoinOrgaMsg msg ->
             let
+                state =
+                    case msg of
+                        JoinOrga.OnOpen _ _ ->
+                            JoinOrga.setCurrentDraft global.session.data.drafts.newInvite model.joinOrga
+
+                        _ ->
+                            model.joinOrga
+
                 ( data, out ) =
-                    JoinOrga.update apis msg model.joinOrga
+                    JoinOrga.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -615,8 +651,7 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    []
-        ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
+    (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))

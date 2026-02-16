@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Bulk exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull)
-import Codecs exposing (LookupResult, userDecoder)
+import Codecs exposing (userDecoder)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Extra exposing (space_, ternary)
 import Extra.Events exposing (onMousedownPD)
@@ -333,6 +333,9 @@ update_ apis message model =
                                 model.activePos - 1
 
                             "down" ->
+                                model.activePos + 1
+
+                            "tab" ->
                                 model.activePos + 1
 
                             _ ->

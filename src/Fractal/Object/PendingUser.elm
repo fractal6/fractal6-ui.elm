@@ -4,6 +4,7 @@
 
 module Fractal.Object.PendingUser exposing (..)
 
+import Fractal.Enum.Lang
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -81,6 +82,11 @@ contracts fillInOptionals____ object____ =
 subscribe : SelectionSet (Maybe Bool) Fractal.Object.PendingUser
 subscribe =
     Object.selectionForField "(Maybe Bool)" "subscribe" [] (Decode.bool |> Decode.nullable)
+
+
+lang : SelectionSet (Maybe Fractal.Enum.Lang.Lang) Fractal.Object.PendingUser
+lang =
+    Object.selectionForField "(Maybe Enum.Lang.Lang)" "lang" [] (Fractal.Enum.Lang.decoder |> Decode.nullable)
 
 
 type alias ContractsAggregateOptionalArguments =

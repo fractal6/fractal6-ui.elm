@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -24,7 +24,7 @@ module Markdown exposing (renderMarkdown, setMdCheckbox)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, div, i, input, label, li, span, table, text, u, ul)
+import Html exposing (Html, a, details, div, i, input, label, li, span, summary, table, text, u, ul)
 import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -221,6 +221,14 @@ frac6Renderer style recursive =
                         div [ class (withDefault "" cls) ] content
                     )
                     |> Markdown.Html.withOptionalAttribute "class"
+                , Markdown.Html.tag "details"
+                    (\content ->
+                        details [ class "md-details" ] content
+                    )
+                , Markdown.Html.tag "summary"
+                    (\content ->
+                        summary [] content
+                    )
                 ]
     }
 

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -25,8 +25,8 @@ import Assets as A
 import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUser, viewUsers)
-import Dict
+import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm, viewUser, viewUsers)
+import Dict exposing (Dict)
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
@@ -86,10 +86,10 @@ type NodeEdit
     | EditMandate
 
 
-init : String -> Maybe NodeType.NodeType -> NodeView -> UserState -> NodeDoc
-init tid node_type mode user =
+init : Dict.Dict String String -> String -> Maybe NodeType.NodeType -> NodeView -> UserState -> NodeDoc
+init lexicon tid node_type mode user =
     { node = initNodeFragment Nothing
-    , form = initTensionForm tid node_type user
+    , form = initTensionForm lexicon tid node_type user
     , result = NotAsked
     , editMode = Nothing
     , mode = mode
@@ -99,15 +99,15 @@ init tid node_type mode user =
     }
 
 
-initBlob : NodeFragment -> NodeDoc -> NodeDoc
-initBlob nf data =
+initBlob : Dict.Dict String String -> NodeFragment -> NodeDoc -> NodeDoc
+initBlob lexicon nf data =
     let
         form =
             data.form
     in
     { data
         | node = nf
-        , form = { form | node = nf, txt = initFormText nf.type_ }
+        , form = { form | node = nf, txt = initFormText lexicon nf.type_ }
         , result = NotAsked
     }
 
@@ -407,6 +407,33 @@ removeLabel label data =
     { data | form = { f | labels = LE.remove label f.labels } }
 
 
+setAssignees : List User -> NodeDoc -> NodeDoc
+setAssignees assignees data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = assignees } }
+
+
+addAssignee : User -> NodeDoc -> NodeDoc
+addAssignee assignee data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = f.assignees ++ [ assignee ] } }
+
+
+removeAssignee : User -> NodeDoc -> NodeDoc
+removeAssignee assignee data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | assignees = LE.remove assignee f.assignees } }
+
+
 
 --
 
@@ -422,6 +449,7 @@ type alias OrgaNodeData =
     , leads : List User
 
     --
+    , lexicon : Dict String String
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
@@ -639,7 +667,7 @@ viewBlob data op_m =
                          else
                             [ showMaybe data.node (\node -> viewAboutSection node data (Just op.onChangeEdit)) ]
                         )
-                            ++ [ hr [ class "has-background-border-light" ] [] ]
+                            ++ [ hr [] [] ]
                             ++ (if op.data.editMode == Just EditMandate then
                                     let
                                         isSendable =
@@ -653,7 +681,7 @@ viewBlob data op_m =
                                     ]
 
                                 else
-                                    [ viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
+                                    [ viewMandateSection op.session.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
                                )
 
                 NodeVersions ->
@@ -720,8 +748,8 @@ viewBlob data op_m =
                                 text ""
                             ]
                     )
-                , hr [ class "has-background-border-light" ] []
-                , viewMandateSection (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
+                , hr [] []
+                , viewMandateSection data.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
 
 
@@ -770,13 +798,13 @@ viewAboutSection node data op_m =
         ]
 
 
-viewMandateSection : Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
-viewMandateSection role_type_m mandate_m op_m =
+viewMandateSection : Dict String String -> Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
+viewMandateSection lexicon role_type_m mandate_m op_m =
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
-                , text T.mandate
+                , text (T.mandate lexicon)
                 ]
             , Maybe.map
                 (\onChangeEdit ->
@@ -910,7 +938,7 @@ viewAboutInput2 txt node op =
                 Just NodeType.Role ->
                     div [ class "control" ]
                         [ div [ class "field mb-5" ]
-                            [ label [ class "label is-pulled-left" ] [ text T.authority, helperButton "ml-2 is-right" T.authorityHelper ]
+                            [ label [ class "label is-pulled-left" ] [ text T.authority, helperButton "ml-2 is-right" (T.authorityHelper op.session.lexicon) ]
                             , viewSelectAuthority op
                             ]
                         ]
@@ -950,36 +978,6 @@ viewAboutInput2 txt node op =
 
 -- @TODO
 -- viewAboutInput3 (the view use in Org.Settings)
-
-
-viewUrlForm nameid_m onChangePost hasBorderDanger =
-    div [ class "urlForm" ]
-        [ div [ class "field is-horizontal" ]
-            [ div [ class "field-body control has-icons-right" ]
-                [ div [] [ text "DOMAIN" ]
-                , input
-                    [ class "input px-0"
-                    , disabled True
-                    , value "  fractale.co/o/"
-                    , attribute "style" "width: 8em"
-                    ]
-                    []
-                , input
-                    [ class "input pl-1"
-                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
-                    , type_ "text"
-                    , value (withDefault "" nameid_m)
-                    , onInput <| onChangePost
-                    ]
-                    []
-                , if not hasBorderDanger then
-                    span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
-
-                  else
-                    text ""
-                ]
-            ]
-        ]
 
 
 viewMandateInput txt mandate op =
@@ -1140,7 +1138,7 @@ viewBlobButtons blob_type isSendable isLoading op =
 
             _ ->
                 text ""
-        , div [ class "field is-grouped is-grouped-right" ]
+        , div [ class "field is-grouped is-grouped-right mt-1" ]
             [ div [ class "control" ]
                 [ div [ class "buttons" ]
                     [ button [ class "button", onClick op.onCancelBlob ]
@@ -1269,7 +1267,7 @@ viewVersions_ session blobsData =
 viewVerRow : SessionCommon -> Int -> Blob -> List (Html msg)
 viewVerRow session i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr session.lexicon blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->

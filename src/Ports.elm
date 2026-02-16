@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -21,7 +21,8 @@
 
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, RecentActivityTab, WindowPos, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
+import Codecs exposing (DraftStore, RecentActivityTab, WindowPos, draftStoreEncoder, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, recentActivityTabToString, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder, windowEncoder)
+import Dict
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
@@ -165,6 +166,32 @@ port checkboxFromJs : (JD.Value -> a) -> Sub a
 
 
 
+-- Scroll
+
+
+type ScrollPosition
+    = ScrollTop
+    | ScrollMiddle
+    | ScrollBottom
+
+
+decodeScrollPosition : String -> ScrollPosition
+decodeScrollPosition str =
+    case str of
+        "top" ->
+            ScrollTop
+
+        "bottom" ->
+            ScrollBottom
+
+        _ ->
+            ScrollMiddle
+
+
+port scrollPositionFromJs : (String -> msg) -> Sub msg
+
+
+
 -- Utils
 
 
@@ -174,10 +201,22 @@ port cancelColorFromJs : (() -> msg) -> Sub msg
 port relogErr : (String -> msg) -> Sub msg
 
 
+port navigateFromJs : (String -> msg) -> Sub msg
+
+
 
 {-
    Outgoing Ports
 -}
+
+
+port setInnerHtml : { id : String, html : String } -> Cmd msg
+
+
+port dragstart : { effectAllowed : String, event : JD.Value } -> Cmd msg
+
+
+port dragover : { dropEffect : String, event : JD.Value } -> Cmd msg
 
 
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
@@ -341,8 +380,30 @@ saveMenuTree x =
         }
 
 
-{-| Used to propage change in components
--}
+saveLexicon : Dict.Dict String String -> Cmd msg
+saveLexicon dict =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "lexicon" )
+                , ( "val", JE.dict identity JE.string dict )
+                ]
+        }
+
+
+saveDrafts : DraftStore -> Cmd msg
+saveDrafts store =
+    outgoing
+        { action = "SAVE_DRAFTS"
+        , data = draftStoreEncoder store
+        }
+
+
+
+-- Session propagation (to components)
+
+
 updateNotif : NotifCount -> Cmd msg
 updateNotif notif =
     outgoing
@@ -368,7 +429,6 @@ propagatePath targets =
                 [ ( "data", JE.list JE.string targets )
                 ]
         }
-
 
 
 --- Modal

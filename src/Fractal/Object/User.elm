@@ -327,6 +327,28 @@ event_count fillInOptionals____ object____ =
     Object.selectionForCompositeField "event_count" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias ActivityOptionalArguments =
+    { from : OptionalArgument String
+    , to : OptionalArgument String
+    }
+
+
+activity :
+    (ActivityOptionalArguments -> ActivityOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Activity
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+activity fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { from = Absent, to = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "from" filledInOptionals____.from Encode.string, Argument.optional "to" filledInOptionals____.to Encode.string ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "activity" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias SubscriptionsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 
@@ -485,3 +507,23 @@ eventsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "eventsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias ActivityAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ActivityFilter }
+
+
+activityAggregate :
+    (ActivityAggregateOptionalArguments -> ActivityAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ActivityAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+activityAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeActivityFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "activityAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

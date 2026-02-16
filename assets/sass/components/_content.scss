@@ -1,0 +1,96 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Content: overview, roles, documents
+ *
+ */
+
+#overview {
+    margin-top: 0.1rem;
+    & > .column {
+        margin-top: 0;
+        padding-top: 0;
+        & > * {
+            margin-top: 21px;
+            margin-bottom: 21px;
+        }
+    }
+
+    @include desktop-only {
+        margin-left: 4.16% !important;
+        margin-right: 4.16% !important;
+    }
+    @include widescreen-only {
+        margin-left: 4.16% !important;
+        margin-right: 4.16% !important;
+    }
+}
+
+.buttonRole {
+    height: 2.4em;
+    font-weight: 500;
+    border-radius: 10px !important;
+    // Border transparency get overwirtten somewhere.
+    border: 2px solid transparent !important;
+
+    // fix alignement default introduced by
+    // .flex.align-center in icon bellow buttonRole
+    padding-top: 4px;
+    padding-bottom: 6px;
+
+    &:hover {
+        filter: brightness(0.92);
+    }
+
+}
+
+.tagHint {
+    border-radius: 9999px !important;
+    background-color: var(--author) !important;
+}
+
+.pending-border {
+    border: 2px dashed var(--border-color-light) !important;
+}
+
+.docToolbar {
+    .button {
+        background-color: var(--background-evidence) !important;
+        &.is-active {
+            color: var(--link) !important;
+            border: 1px solid var(--link);
+        }
+    }
+}
+
+.doc-container {
+    .subtitle {
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 1.25rem;
+    }
+
+    .level {
+        margin-bottom: 1rem;
+    }
+
+    .is-small .docToolbar {
+        .button {
+            font-size: 0.6rem !important;
+        }
+    }
+}
+
+.subSection {
+    .label {
+        color: var(--text-strong);
+    }
+
+    &:not(last-child) {
+        margin-bottom: 1rem;
+    }
+}

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -103,6 +103,21 @@ type HttpError body
     | BadStatus Int body
       --| BadBody Http.Metadata body String
     | BadBody String
+
+
+errorIsNoDataFound : ErrorData -> Bool
+errorIsNoDataFound err =
+    let
+        acceptedPrefixes =
+            [ "no data returned"
+            , "aucune donnée n’est retournée"
+            ]
+    in
+    err
+        |> List.any
+            (String.toLower
+                >> (\s -> List.any (\prefix -> String.startsWith prefix s) acceptedPrefixes)
+            )
 
 
 

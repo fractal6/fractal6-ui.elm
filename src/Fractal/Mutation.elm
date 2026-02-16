@@ -1055,3 +1055,52 @@ deleteEventCount :
     -> SelectionSet (Maybe decodesTo) RootMutation
 deleteEventCount requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteEventCount" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeEventCountFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddActivityOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
+type alias AddActivityRequiredArguments =
+    { input : List Fractal.InputObject.AddActivityInput }
+
+
+addActivity :
+    (AddActivityOptionalArguments -> AddActivityOptionalArguments)
+    -> AddActivityRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddActivityPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addActivity fillInOptionals____ requiredArgs____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "addActivity" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddActivityInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateActivityRequiredArguments =
+    { input : Fractal.InputObject.UpdateActivityInput }
+
+
+updateActivity :
+    UpdateActivityRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateActivityPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateActivity requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateActivity" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateActivityInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteActivityRequiredArguments =
+    { filter : Fractal.InputObject.ActivityFilter }
+
+
+deleteActivity :
+    DeleteActivityRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteActivityPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteActivity requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteActivity" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeActivityFilter ] object____ (Basics.identity >> Decode.nullable)

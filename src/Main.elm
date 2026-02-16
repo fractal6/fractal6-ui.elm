@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -23,6 +23,7 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
+import Components.Navbar as Navbar
 import Extra.Url exposing (getUrlQueryParam, queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
@@ -59,8 +60,7 @@ type alias Model =
     , url : Url
     , global : Global.Model
     , page : Pages.Model
-    , nvt_msg1 : String -> Msg
-    , nvt_msg2 : Msg
+    , navbarHandlers : Navbar.NavbarHandlers Msg
     , onClearNotif : Msg
     }
 
@@ -74,7 +74,13 @@ init flags url key =
         ( page, pageCmd, pageGlobalCmd ) =
             Pages.init (fromUrl url) global
     in
-    ( Model key url global page (Global << ReplaceUrl) (Global OnCloseOutdatedVersion) (Global OnClearSystemNotif)
+    ( Model key url global page
+        { onReplaceUrl = Global << ReplaceUrl
+        , onCloseOutdated = Global OnCloseOutdatedVersion
+        , onScrollToTop = Global ScrollToTop
+        , onScrollToBottom = Global ScrollToBottom
+        }
+        (Global OnClearSystemNotif)
     , Cmd.batch
         [ Cmd.map Global globalCmd
         , Cmd.map Global pageGlobalCmd
@@ -213,8 +219,7 @@ view model =
         { page = Pages.view model.page model.global |> documentMap Page
         , global = model.global
         , url = model.url
-        , msg1 = model.nvt_msg1
-        , msg2 = model.nvt_msg2
+        , navbarHandlers = model.navbarHandlers
         , onClearNotif = model.onClearNotif
         }
 

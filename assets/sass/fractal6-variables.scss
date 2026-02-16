@@ -116,6 +116,7 @@ $f6-light-theme: (
   // Borders
   border-color: var(--bulma-text-60),
   border-color-light: var(--bulma-text-80),
+  border-color-lighter: hsl(220, 14%, 92%),
 
   // Markdown
   code-color: $background-header-light,
@@ -209,6 +210,8 @@ $f6-dark-theme: (
   // Borders
   border-color: var(--bulma-border),
   border-color-light: var(--bulma-border-weak),
+  border-color-lighter: hsl(221, 14%, 18%),
+
 
   // Markdown
   code-color: $background-header-dark,
@@ -253,7 +256,7 @@ $bulma-dark-theme: (
 // Commons/Mixins
 //
 
-$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal);
+$bulma-override-classes: (footer, box, navbar, card, breadcrumb, button, table, modal, hero);
 $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 
 // Mixin to apply theme overrides to classes
@@ -317,6 +320,7 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
     --acc-height-subtitle: #{$acc-height-subtitle};
     --acc-height: #{$acc-height};
 
+
 }
 
 
@@ -372,7 +376,7 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 }
 
 //
-// Initial theme setup
+// Initial theme setup (order matters)
 //
 
 // Setup the light theme as the default theme

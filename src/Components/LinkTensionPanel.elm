@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -593,7 +593,7 @@ viewPanel tree_data model =
     in
     div [ class "panel" ] <|
         [ div [ class "header-block" ]
-            [ div [ class "panel-heading" ] [ text T.addLinkedTensions, button [ class "delete is-pulled-right", onClick OnClose ] [] ]
+            [ div [ class "panel-heading" ] [ text (T.addLinkedTensions model.session.lexicon), button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
                 [ B.dropdown
                     { dropdown_id = "link-circle-source"
@@ -625,7 +625,7 @@ viewPanel tree_data model =
                     if List.length data > 0 then
                         -- @warning: height of this element manually to be able to work on relative
                         -- height percentage for .parent-block (100% of the parent height).
-                        div [ class "panel-block is-top is-size-7" ]
+                        div [ class "panel-block no-radius is-top is-size-7" ]
                             [ label [ class "is-w", onClickPD OnSelectAll ]
                                 [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
@@ -634,7 +634,7 @@ viewPanel tree_data model =
                             ]
 
                     else
-                        p [ class "panel-block" ] [ text T.noResults, span [ class "is-pushed-right" ] filters_html ]
+                        p [ class "panel-block no-radius" ] [ text T.noResults, span [ class "is-pushed-right" ] filters_html ]
 
                 _ ->
                     text ""

@@ -1,0 +1,138 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+
+
+/*
+ *
+ * Animations
+ *
+ */
+
+@keyframes growBox {
+    from { height: 0; }
+    to { height: 4rem; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+// Accordion slide-down animation for tree menu expansions
+@keyframes accordionSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+    }
+}
+
+// Dropdown animation - ease-out on open
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/*
+ * Slider
+ */
+
+.slider {
+    z-index: 1; // Ensure stacking context (created by transform) sits above footbar
+    @include tablet {
+        transition: transform .5s ease-out, opacity .5s ease-out;
+        &.is-slide-left {
+            -webkit-transform: translateX(-100%);
+            transform: translateX(-100%);
+        }
+        &.is-slide-right {
+            -webkit-transform: translateX(100%);
+            transform: translateX(100%);
+        }
+    }
+}
+
+// Subtle fade-in for new comments in conversation thread
+.comments .media:not(.actionComment):not(.comment-fadeout) {
+    animation: commentFadeIn 0.35s ease-out;
+}
+
+@keyframes commentFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+// Fade-out and collapse animation for deleted comments
+.comment-fadeout {
+    animation: commentFadeOut 0.5s ease-in forwards;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@keyframes commentFadeOut {
+    0%   { opacity: 1; max-height: 1000px; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+    40%  { opacity: 0; }
+    100% { opacity: 0; max-height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+}
+
+// Settings row animation for newly created/updated items
+// Applied to td cells via parent tr class (transforms don't work on tr elements)
+@keyframes settingsRowEnter {
+    0% {
+        opacity: 0;
+        background-color: color-mix(in srgb, var(--link) 30%, transparent);
+    }
+    15% {
+        opacity: 1;
+        background-color: color-mix(in srgb, var(--link) 25%, transparent);
+    }
+    100% {
+        opacity: 1;
+        background-color: transparent;
+    }
+}
+
+// Target td cells inside the animated row
+tr.settings-row-enter > td {
+    animation: settingsRowEnter 1s ease-out forwards;
+}
+
+// Settings box animation for add/edit forms
+// Elegant slide-down with fade for the form box
+@keyframes settingsBoxEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Apply to boxes in settings context (labels and roles tables)
+#labelsTable > .box,
+#rolesTable > .box,
+#labelsTable .table .box,
+#rolesTable .table .box {
+    animation: settingsBoxEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}

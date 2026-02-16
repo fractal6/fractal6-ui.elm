@@ -1,6 +1,6 @@
 /*
  * Fractale - Self-organisation for humans.
- * Copyright (C) 2025 Fractale Co
+ * Copyright (C) 2026 Fractale Co
  *
  * This file is part of Fractale.
  *
@@ -71,6 +71,9 @@ window.addEventListener('load', _ => {
                 rtime: null,
                 timeout: false,
                 delta: 200,
+                // Scroll position tracking
+                scrollTicking: false,
+                lastScrollPosition: "top",
                 // Graphpack
                 gp: Object.create(GraphPack),
 
@@ -101,7 +104,11 @@ window.addEventListener('load', _ => {
                 }),
             };
 
+            //
+            // OUTGOING PORTS
+            // --
             // Subscribe to Elm outgoing ports
+            //
             app.ports.outgoing.subscribe(({ action, data }) => {
                 if (actions[action]) {
                     actions[action](app, session, data)
@@ -112,6 +119,35 @@ window.addEventListener('load', _ => {
 
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
+
+            // Scroll position detection with throttling
+            window.addEventListener('scroll', function() {
+                if (!session.scrollTicking) {
+                    window.requestAnimationFrame(function() {
+                        var scrollY = window.scrollY;
+                        var windowHeight = window.innerHeight;
+                        var documentHeight = document.documentElement.scrollHeight;
+
+                        var position;
+                        // It seems that in modern browser, we have ~100 px per wheel notch
+                        if (scrollY <= 200) {
+                            position = "top";
+                        } else if (scrollY + windowHeight >= documentHeight - 5) {
+                            position = "bottom";
+                        } else {
+                            position = "middle";
+                        }
+
+                        // Only send if position changed (reduce Elm updates)
+                        if (position !== session.lastScrollPosition) {
+                            session.lastScrollPosition = position;
+                            app.ports.scrollPositionFromJs.send(position);
+                        }
+                        session.scrollTicking = false;
+                    });
+                    session.scrollTicking = true;
+                }
+            }, { passive: true });
 
         }
     }
@@ -250,7 +286,7 @@ export const actions = {
 		$i.selectionStart =
 			$i.selectionEnd = start + replacer.length;
 
-        // Propagate change to Elm.
+        // Immediately propagate change to Elm
         $i.dispatchEvent(new Event('input', {
             bubbles: true,
             cancelable: true,
@@ -402,6 +438,9 @@ export const actions = {
 
         if (resizePage)
             setTimeout(() => session.gp.resizeMe(), 333);
+    },
+    'SAVE_DRAFTS' : (app, session, data) => {
+        localStorage.setItem('drafts', JSON.stringify(data));
     },
     'REMOVE_SESSION' : (app, session, _) => {
         // Remove volatile items
@@ -635,6 +674,8 @@ export const actions = {
         }
     },
     'RICH_TEXT': (app, session, msg) => {
+        // Markdown insert from the tool menu
+
         var target = msg.target;
         var c = msg.command;
         var $input = document.getElementById(target);
@@ -669,7 +710,7 @@ export const actions = {
             return
         }
 
-        //app.ports[msg.toMsg].send($input.value);
+        // Immediately propagate change to Elm
         $input.dispatchEvent(new Event('input', {
             bubbles: true,
             cancelable: true,
@@ -741,13 +782,32 @@ function toggleMarkup(obj, mark, prefix, suffix) {
         //selection.addRange(range);
         //
         // Works...
+        // Save original start position before editing
+        var insertPos = obj.selectionStart;
+
         obj.setRangeText("");
         // @deprecated...
         document.execCommand("insertText", false, prefix + replacement + suffix);
 
         // Put caret at right position again
-        obj.selectionStart =
-            obj.selectionEnd = end + pad + prefix.length;
+        if (mark == "[") {
+            if (selection.length > 0) {
+                // Link with selection: cursor inside () to type URL → [text](|)
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + replacement.length + 1;
+            } else {
+                // Link without selection: cursor inside [] → [|]()
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
+            }
+        } else {
+            if (selection.length > 0) {
+                // Bold/italic with selection: cursor after closing marker → **text**|
+                var totalLength = prefix.length + replacement.length + suffix.length;
+                obj.selectionStart = obj.selectionEnd = insertPos + totalLength;
+            } else {
+                // Bold/italic without selection: cursor inside delimiters → **|**
+                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
+            }
+        }
     }
 }
 

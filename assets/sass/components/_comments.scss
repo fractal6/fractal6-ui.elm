@@ -1,0 +1,185 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Comments: comment display, comment inputs, card panel
+ *
+ */
+
+.comments {
+    .media + .media {
+        margin-top: 1.5rem !important;
+        border: 0 !important;
+    }
+
+    .commentMessage:not(.commentInput) {
+        > .message-header {
+            display: inherit !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            border-bottom: solid 1px var(--border-color-light);
+            a {
+                color: var(--text);
+                text-decoration: none !important;
+                font-weight: 600 !important;
+                &:hover { text-decoration: underline !important; }
+            }
+            li a {
+                font-weight: 500 !important;
+            }
+
+            .dropdown-trigger {
+                padding-top: 3px;
+            }
+
+            .dropdown-menu {
+                margin-top: -3px;
+                margin-right: -$size-small !important;
+            }
+
+            .ellipsis {
+                opacity: 0.75 !important;
+                &:hover { opacity: 1 !important; }
+            }
+
+            .copy-notif {
+                position: absolute;
+                top: calc(100% + 15px);
+                right: 0;
+                white-space: nowrap;
+                pointer-events: none;
+            }
+        }
+
+        > .message-body {
+            font-size: 15px;
+        }
+    }
+}
+
+.panel .message-body {
+    // Draft Card
+    padding: 1rem 0.9rem !important;
+    font-size: 15px;
+}
+
+.commentMessage.commentInput {
+    > .message-header {
+        font-weight: 500 !important;
+        border: 0 !important;
+        padding: 0 0.75rem !important;
+
+        a:hover {
+            text-decoration: none !important;
+        }
+    }
+    > .message-body {
+        padding: 0.75rem !important;
+    }
+    .textarea {
+        resize: both;
+    }
+}
+
+.commentHeader {
+    margin-top: 4px;
+    width: 100%;
+    .level-right {
+        font-size: 15px;
+        font-family: "Times New Roman", Times, serif !important;
+        *:not(:last-child) {
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
+            font-weight: 600;
+            &:hover {
+                cursor: pointer;
+                background: var(--background-hover);
+                color: var(--text-strong);
+            }
+        }
+    }
+}
+
+#cardPanel {
+    .comments, .main-block, .header-block {
+        background: var(--body-background-color);
+    }
+
+    .media {
+        padding: 0 0rem !important;
+    }
+
+    .commentMessage > .message-header {
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+        .dropdown-trigger {
+            padding-top: 8px;
+        }
+    }
+
+    // Ignore has-arrow-left
+    .has-arrow-left:after, .has-arrow-left:before {
+        display: none;
+    }
+
+}
+
+.panel-background {
+    opacity: 0.75;
+}
+
+.actionComment {
+    font-size: 14px !important;
+    align-items: center;
+    margin-left: 1rem !important;
+    @include tablet {
+        margin-left: 5rem !important;
+    }
+
+    .media-left {
+        position: relative;
+        top: 2px;
+        align-self: flex-start;
+    }
+}
+#cardPanel {
+    .actionComment {
+        margin-left: 1rem !important;
+    }
+}
+
+// Base message styling (Bulma .message overrides)
+.message {
+    .message-header {
+        color: var(--text-weak) !important;
+        background-color: var(--header-background-color);
+        &.is-author {
+            background-color: var(--author) !important;
+        }
+
+        .dropdown-item {
+            font-weight: normal !important;
+        }
+    }
+
+    .message-body {
+        overflow-wrap: break-word;
+        background-color: var(--body-background-color);
+    }
+}
+.message:not(.acc) {
+    border: $border-size-small solid var(--border-color-light);
+    border-radius: 8px !important;
+    .message-body {
+        border-radius: 8px;
+    }
+    .message-header {
+        border-radius: 8px 8px 0 0 !important;
+    }
+    .message-header + .message-body {
+        border-radius: 0 0 8px 8px !important;
+    }
+}

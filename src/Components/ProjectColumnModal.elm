@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -347,7 +347,7 @@ update_ apis message model =
                 , out0
                     [ send
                         (DoModalConfirmOpen (OnClose { reset = True, link = link })
-                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ] }
+                            { message = Nothing, txts = [ ( T.confirmUnsaved, onCloseTxt ) ], confirmClass = "is-success", confirmLabel = T.confirm }
                         )
                     ]
                 )

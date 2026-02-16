@@ -1,0 +1,33 @@
+// Fractal6 Component Modules
+// This file forwards all component stylesheets
+
+// Base layout
+@forward "layout";
+
+// Navigation components
+@forward "navigation";
+@forward "sidebar";
+
+// Content components
+@forward "content";
+@forward "tensions";
+@forward "comments";
+@forward "boards";
+@forward "canvas";
+
+// UI components
+@forward "modals";
+@forward "selectors";
+@forward "search";
+@forward "switch";
+
+// Visual elements
+@forward "animations";
+@forward "shapes";
+@forward "emoji";
+@forward "loading";
+@forward "accordion";
+@forward "notifications";
+
+// Utilities (last as priority rules)
+@forward "utilities";

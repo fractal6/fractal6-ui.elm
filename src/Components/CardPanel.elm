@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -28,6 +28,7 @@ import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewTensionLight, viewUsers)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -98,6 +99,7 @@ type alias Model =
     , session : SessionCommon
     , mobileConf : SessionCommon
     , refresh_trial : Int -- use to refresh user token
+    , draftSaveTimer : Int
     , modal_confirm : ModalConfirm Msg
     , commonOp : CommonMsg Msg
     }
@@ -114,7 +116,7 @@ initModel path focus session =
     , subscribe_result = NotAsked
 
     -- Title / Draft message
-    , tension_form = initTensionForm "" Nothing session.user
+    , tension_form = initTensionForm session.lexicon "" Nothing session.user
     , isTitleEdit = False
     , title_result = NotAsked
     , isMessageEdit = False
@@ -127,8 +129,9 @@ initModel path focus session =
 
     -- Common
     , session = session
-    , mobileConf = { session | screen = { w = 1, h = 1 } }
+    , mobileConf = { session | screen = { w = 600, h = session.screen.h } }
     , refresh_trial = 0
+    , draftSaveTimer = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , commonOp = CommonMsg NoMsg LogErr
     }
@@ -157,7 +160,7 @@ resetModel model =
 
 
 type Msg
-    = OnOpen ProjectCard
+    = OnOpen ProjectCard (Maybe CommentDraft)
     | OnOutsideClickClose
     | OnClose
     | OnSetPath (GqlData LocalGraph)
@@ -200,6 +203,7 @@ type Msg
     | DoLabelEdit
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | CommentsMsg Comments.Msg
+    | SaveDraftDelayed Int
 
 
 type alias Out =
@@ -244,18 +248,27 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnOpen card ->
+        OnOpen card maybeDraft ->
             let
                 form =
                     model.tension_form
             in
             case card.card of
                 CardTension a ->
-                    ( { model | isOpen = True, card = card, tension_form = { form | id = a.id } }
+                    let
+                        newComments =
+                            Comments.initWithDraft model.node_focus.nameid a.id model.session maybeDraft
+                    in
+                    ( { model
+                        | isOpen = True
+                        , card = card
+                        , tension_form = { form | id = a.id }
+                        , comments = newComments
+                        , draftSaveTimer = 0
+                      }
                     , out0
                         [ sendSleep OnOutsideClickClose 500
                         , send (OnQueryTension a.id)
-                        , Cmd.map CommentsMsg (send <| Comments.SetTensionid a.id)
                         , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
                         , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
                         ]
@@ -349,7 +362,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "title" value form.post } }, noOut )
 
         OnCancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user, title_result = NotAsked }, noOut )
 
         SubmitTitle time ->
             let
@@ -408,7 +421,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -435,7 +448,7 @@ update_ apis message model =
             ( { model | tension_form = { form | post = Dict.insert "message" value form.post } }, noOut )
 
         OnCancelMessage ->
-            ( { model | isMessageEdit = False, tension_form = initTensionForm model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
+            ( { model | isMessageEdit = False, tension_form = initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user, message_result = NotAsked }, noOut )
 
         SubmitMessage time ->
             let
@@ -469,7 +482,7 @@ update_ apis message model =
                             { card | card = card_r }
 
                         resetForm =
-                            initTensionForm model.tension_form.id Nothing model.session.user
+                            initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
                     in
                     ( { model
                         | card = newCard
@@ -660,10 +673,43 @@ update_ apis message model =
 
                         _ ->
                             model.tension_result
+
+                ( draftTimer, draftSaveCmd ) =
+                    case out.result of
+                        Just (PostChanged ( "message", v )) ->
+                            let
+                                newTimer =
+                                    model.draftSaveTimer + 1
+
+                                time_delay =
+                                    ternary (v == "") 0 3500
+                            in
+                            ( newTimer, sendSleep (SaveDraftDelayed newTimer) time_delay )
+
+                        _ ->
+                            ( model.draftSaveTimer, Cmd.none )
             in
-            ( { model | comments = data, tension_result = tension_result }
-            , out2 (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m)) out.gcmds
+            ( { model | comments = data, tension_result = tension_result, draftSaveTimer = draftTimer }
+            , Out (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m))) out.gcmds Nothing
             )
+
+        SaveDraftDelayed timerValue ->
+            if timerValue == model.draftSaveTimer then
+                let
+                    draftMessage =
+                        Comments.getCurrentMessage model.comments |> withDefault ""
+
+                    draft =
+                        CommentDraft draftMessage ""
+                in
+                if draftMessage == "" then
+                    ( model, out1 [ DoUpdateDraft (ClearComment model.tension_form.id) ] )
+
+                else
+                    ( model, out1 [ DoUpdateDraft (SaveComment model.tension_form.id draft) ] )
+
+            else
+                ( model, noOut )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -896,7 +942,7 @@ viewTensionComments path_data t model =
     in
     div [ class "comments" ]
         [ Comments.viewCommentsTension model.mobileConf t.action model.comments |> Html.map CommentsMsg
-        , hr [ class "has-background-border-light is-2" ] []
+        , hr [ class "is-2" ] []
         , userInput
         ]
 
@@ -980,7 +1026,7 @@ viewTensionSidePane t model =
             ]
 
         -- Subscriptions
-        , hr [ class "has-background-border-light my-5" ] []
+        , hr [ class "my-5" ] []
         , case model.session.user of
             LoggedIn _ ->
                 let
@@ -1015,7 +1061,7 @@ viewTensionSidePane t model =
                 text ""
 
         -- Extras
-        , hr [ class "has-background-border-light my-5" ] []
+        , hr [ class "my-5" ] []
         , a
             [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
@@ -1108,7 +1154,7 @@ viewDraftComment session isAdmin isEdit result form draft =
         viewMessageEdit session new message form result
 
     else
-        div [ class "message" ]
+        div [ class "message commentMessage" ]
             [ div [ class "message-body" ]
                 [ div []
                     [ showIf (isAdmin || isAuthor) <|
@@ -1153,7 +1199,7 @@ viewMessageEdit session new old form result =
             }
     in
     div [ class "submitFocus" ]
-        [ div [ class "message" ]
+        [ div [ class "message commentMessage" ]
             [ div [ class "message-header pb-0" ] [ viewCommentInputHeader opHeader "draftInput" form ]
             , div [ class "message-body" ]
                 [ textarea
@@ -1211,14 +1257,14 @@ viewDraftSidePane d model =
     in
     div [ class "tensionSidePane" ]
         ([ -- Extras
-           hr [ class "is-transparent has-background-border-light my-5" ] []
+           hr [ class "is-transparent my-5" ] []
          ]
             ++ (if isAdmin || isAuthor then
                     [ div
                         [ class "is-smaller has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)
                         ]
-                        [ A.icon1 "icon-exchange" T.convertDraft ]
+                        [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                     , div
                         [ class "is-smaller2 has-text-weight-semibold button-light mb-4"
                         , onClick (DoRemoveDraft card.id)

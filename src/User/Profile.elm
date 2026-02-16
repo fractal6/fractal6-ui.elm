@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -21,6 +21,7 @@
 
 module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
@@ -30,9 +31,11 @@ import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Extra exposing (ternary, unwrap)
 import Form.Help as Help
+import Fractal.Enum.NodeOrderable as NodeOrderable
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, div, h1, i, p, text)
-import Html.Attributes exposing (class, id)
+import Html exposing (Html, a, div, h1, i, p, span, text)
+import Html.Attributes exposing (attribute, class, id)
+import Html.Events exposing (onClick)
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Markdown exposing (renderMarkdown)
@@ -46,6 +49,36 @@ import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
+
+
+type OrgaSortFilter
+    = ActivitySort
+    | NewestSort
+
+
+orgaSortFilterList : List OrgaSortFilter
+orgaSortFilterList =
+    [ ActivitySort, NewestSort ]
+
+
+orgaSortFilter2Text : OrgaSortFilter -> String
+orgaSortFilter2Text x =
+    case x of
+        ActivitySort ->
+            T.lastUpdate
+
+        NewestSort ->
+            T.newest
+
+
+orgaSortFilter2Order : OrgaSortFilter -> NodeOrderable.NodeOrderable
+orgaSortFilter2Order x =
+    case x of
+        ActivitySort ->
+            NodeOrderable.UpdatedAt
+
+        NewestSort ->
+            NodeOrderable.CreatedAt
 
 
 
@@ -98,6 +131,7 @@ type alias Model =
     { username : String
     , user : GqlData UserProfile
     , orgas : GqlData (List NodeExt)
+    , sortFilter : OrgaSortFilter
 
     -- Common
     , help : Help.State
@@ -125,6 +159,7 @@ init global flags =
             { username = username
             , user = Loading
             , orgas = Loading
+            , sortFilter = ActivitySort
 
             -- common
             , refresh_trial = 0
@@ -155,6 +190,7 @@ type Msg
     | LoadNodes (List UserRole)
     | GotNodes (GqlData (List NodeExt))
     | GotProfile (GqlData UserProfile)
+    | OnChangeSortFilter OrgaSortFilter
       -- Common
     | NoMsg
     | LogErr String
@@ -182,7 +218,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
                 rootids ->
-                    ( model, queryNodeExt apis rootids GotNodes, Cmd.none )
+                    ( model, queryNodeExt apis rootids (orgaSortFilter2Order model.sortFilter) GotNodes, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -219,6 +255,24 @@ update global message model =
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )
+
+        OnChangeSortFilter value ->
+            let
+                roles =
+                    withMaybeData model.user |> unwrap [] .roles
+
+                rootids =
+                    getRootids roles
+            in
+            ( { model | sortFilter = value, orgas = Loading }
+            , case rootids of
+                [] ->
+                    Cmd.none
+
+                _ ->
+                    queryNodeExt apis rootids (orgaSortFilter2Order value) GotNodes
+            , Ports.bulma_driver "org_sort_dropdown"
+            )
 
         -- Common
         NoMsg ->
@@ -331,7 +385,16 @@ view_ user_s user model =
 viewProfileRight : UserState -> UserProfile -> Model -> Html Msg
 viewProfileRight user_s user model =
     div []
-        [ h1 [ class "subtitle" ] [ text T.organisations ]
+        [ div [ class "level" ]
+            [ div [ class "level-left" ]
+                [ h1 [ class "subtitle mb-0" ] [ text T.organisations ] ]
+            , case model.orgas of
+                Success _ ->
+                    div [ class "level-right" ] [ viewSortFilter model.sortFilter ]
+
+                _ ->
+                    text ""
+            ]
         , if List.length (getRoles user) == 0 then
             p [ class "section content" ]
                 [ if (uctxFromUser user_s).username == model.username then
@@ -393,6 +456,31 @@ viewProfileRight user_s user model =
                                 ]
                             ]
                         ]
+        ]
+
+
+viewSortFilter : OrgaSortFilter -> Html Msg
+viewSortFilter sortFilter =
+    div [ id "org_sort_dropdown", class "control dropdown" ]
+        [ div
+            [ class "dropdown-trigger button-light is-size-7 has-text-weight-semibold"
+            , attribute "aria-controls" "sort-filter"
+            ]
+            [ text (T.sort ++ " ")
+            , span [ class "has-text-weight-bold" ] [ text (orgaSortFilter2Text sortFilter |> String.toLower) ]
+            , A.icon "ml-1 icon-chevron-down1 icon-tiny"
+            ]
+        , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
+            [ div [ class "dropdown-content" ] <|
+                List.map
+                    (\t ->
+                        div [ class "dropdown-item button-light", onClick <| OnChangeSortFilter t ]
+                            [ ternary (sortFilter == t) A.checked A.unchecked
+                            , t |> orgaSortFilter2Text |> text
+                            ]
+                    )
+                    orgaSortFilterList
+            ]
         ]
 
 

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -19,28 +19,41 @@
 -}
 
 
-module Components.Navbar exposing (view)
+module Components.Navbar exposing (NavbarHandlers, view)
 
 import Assets as A
 import Assets.Logo as Logo
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toLink)
+import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isTensionUrl, toLink)
 import Bulk.Error exposing (viewGqlErrorsLight)
-import Bulk.View exposing (lang2str)
+import Bulk.View exposing (lang2str, statusColor, tensionIcon)
 import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
+import Html.Keyed
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onClick)
-import ModelSchema exposing (NotifCount, OrgaInfo)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (NotifCount, OrgaInfo, TensionHead)
+import Ports
 import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
 import Url exposing (Url)
 
 
-view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> (String -> msg) -> msg -> Html msg
-view apis session notif orga_info replaceUrl onCloseOutdated =
+{-| Handlers for navbar actions passed from parent.
+-}
+type alias NavbarHandlers msg =
+    { onReplaceUrl : String -> msg
+    , onCloseOutdated : msg
+    , onScrollToTop : msg
+    , onScrollToBottom : msg
+    }
+
+
+view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+view apis session notif orga_info tension_head handlers =
     let
         orgUrl =
             isOrgUrl session.url
@@ -65,42 +78,45 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
              ]
                 ++ ternary isLoggedOut [ attribute "data-theme" "light" ] []
             )
-            [ div [ class "navbar-brand" ]
-                ([ a [ class "navbar-item", href "/" ]
-                    --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ if isLoggedOut then
-                        A.logo_inline
+            [ Html.Keyed.node "div"
+                [ class "navbar-brand" ]
+                ([ ( "logo"
+                   , a [ class "navbar-item", href "/" ]
+                        --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
+                        [ if isLoggedOut then
+                            A.logo_inline
 
-                      else
-                        A.logo0
-                    , showIf isLoggedOut <|
-                        span [ class "logo-fractale-text" ]
-                            [-- text "Fractale"
-                             --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
-                             --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
-                            ]
-                    ]
+                          else
+                            A.logo0
+                        , showIf isLoggedOut <|
+                            span [ class "logo-fractale-text" ]
+                                [-- text "Fractale"
+                                 --, span [ class "has-text-warning", attribute "style" "padding-top:10px;font-size:0.65rem;margin-left:-2px;" ] [ text "alpha" ]
+                                 --, span [ class "has-text-warning", attribute "style" "position:relative;top:-10px;font-size:0.65rem;" ] [ text "beta" ]
+                                ]
+                        ]
+                   )
                  ]
                     ++ (if orgUrl then
                             case session.user of
                                 LoggedIn _ ->
-                                    [ div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-git-commit icon-rotate-90 icon-bg" ]
-                                    , div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ]
+                                    [ ( "orga-trigger", div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger", title T.showOrgaMenu ] [ A.icon "icon-git-commit icon-rotate-90 icon-bg" ] )
+                                    , ( "tree-trigger", div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] )
                                     ]
 
                                 LoggedOut ->
-                                    [ div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] ]
+                                    [ ( "tree-trigger", div [ class "navbar-item button-light menuTreeTrigger", title T.showCircleMenu ] [ A.icon "icon-git-branch icon-bg" ] ) ]
 
                         else
                             []
                        )
-                    ++ [ div [ class "navbar-touch-end" ] [ notificationButton "" session.user notif session.url ]
-                       , A.burger "userMenu"
+                    ++ [ ( "touch-end", div [ class "navbar-touch-end" ] [ notificationButton "" session.user notif session.url ] )
+                       , ( "burger", A.burger "userMenu" )
                        ]
                 )
             , showIf hasVersionOutdated <|
                 div [ class "f6-notification notification has-background-warning-soft" ]
-                    [ button [ class "delete", onClick onCloseOutdated ] []
+                    [ button [ class "delete", onClick handlers.onCloseOutdated ] []
                     , a [ class "button-light is-light" ]
                         -- https://github.com/surprisetalk/elm-bulma/issues/17
                         [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]
@@ -142,11 +158,9 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                                 [ text T.explore ]
                            ]
                         ++ (if isLoggedOut then
-                                [ span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
-                                , a
+                                [ a
                                     [ class "navbar-item", target "_blank", href "https://doc.fractale.co" ]
                                     [ text "Docs" ]
-                                , span [ class "vbar", attribute "style" "margin-top: 21px !important; margin-left: 0; padding-left: 0; " ] []
                                 , a
                                     [ class "navbar-item", href "https://github.com/fractal6/fractal6.go", target "_blank" ]
                                     [ text "Open Source" ]
@@ -155,14 +169,56 @@ view apis session notif orga_info replaceUrl onCloseOutdated =
                             else
                                 []
                            )
+                , viewTensionTitle session tension_head handlers
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
                     , helpButton session.user
                     ]
-                        ++ userButtons session replaceUrl
+                        ++ userButtons session handlers.onReplaceUrl
                 ]
             ]
         ]
+
+
+viewTensionTitle : SessionCommon -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+viewTensionTitle session tension_head handlers =
+    let
+        isTensionPage =
+            isTensionUrl session.url
+
+        shouldShow =
+            isTensionPage
+                && session.scrollPosition
+                /= Ports.ScrollTop
+                && tension_head
+                /= Nothing
+    in
+    case ( shouldShow, tension_head ) of
+        ( True, Just th ) ->
+            div [ class "navbar-tension-title is-hidden-mobile" ]
+                [ span [ class "tension-type-status" ]
+                    [ A.icon
+                        ("icon-alert-circle icon-sm has-text-"
+                            ++ statusColor th.status
+                        )
+                    , tensionIcon th.type_
+                    ]
+                , span
+                    [ class "tension-title-text"
+                    , title T.scrollToTop
+                    , onClick handlers.onScrollToTop
+                    ]
+                    [ text th.title ]
+                , button
+                    [ class "button is-small ml-2"
+                    , title T.scrollToBottom
+                    , onClick handlers.onScrollToBottom
+                    ]
+                    [ A.icon "icon-chevron-down" ]
+                ]
+
+        _ ->
+            text ""
 
 
 notificationButton : String -> UserState -> NotifCount -> Url -> Html msg

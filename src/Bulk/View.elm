@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -24,6 +24,7 @@ module Bulk.View exposing (..)
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPos)
@@ -38,9 +39,9 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, target, title)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, br, div, hr, input, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -324,14 +325,14 @@ tensionType2str s =
             T.announcement
 
 
-tensionType2descr : TensionType.TensionType -> String
-tensionType2descr s =
+tensionType2descr : Dict String String -> TensionType.TensionType -> String
+tensionType2descr lexicon s =
     case s of
         TensionType.Operational ->
             T.operationalHint
 
         TensionType.Governance ->
-            T.governanceHint
+            T.governanceHint lexicon
 
         TensionType.Help ->
             T.helpHint
@@ -865,7 +866,7 @@ mediaOrga commonOp user_m root =
                                 roles =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
-                            [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
+                            [ ternary (List.length roles > 0) (hr [ class "mb-3" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
                                     |> List.map
@@ -1150,8 +1151,8 @@ archiveActionToggle action_m =
 --
 
 
-blobTypeStr : BlobType.BlobType -> String
-blobTypeStr btype =
+blobTypeStr : Dict String String -> BlobType.BlobType -> String
+blobTypeStr lexicon btype =
     case btype of
         BlobType.OnNode ->
             T.onNode_blob
@@ -1160,10 +1161,10 @@ blobTypeStr btype =
             T.onAbout_blob
 
         BlobType.OnMandate ->
-            T.onMandate_blob
+            T.onMandate_blob lexicon
 
         BlobType.OnAboutAndMandate ->
-            T.onAboutAndMandate_blob
+            T.onAboutAndMandate_blob lexicon
 
         BlobType.OnDoc ->
             T.onDoc_blob
@@ -1196,3 +1197,34 @@ viewGoRoot cls cmd =
     in
     span [ class combinedClasses, onClick cmd ]
         [ A.icon "arrow-up", text T.goRoot ]
+
+
+viewUrlForm : Maybe String -> (String -> msg) -> Bool -> Html msg
+viewUrlForm nameid_m onChangePost hasBorderDanger =
+    div [ class "urlForm" ]
+        [ div [ class "field is-horizontal" ]
+            [ div [ class "field-body control has-icons-right" ]
+                [ div [] [ text "DOMAIN" ]
+                , input
+                    [ class "input px-0"
+                    , disabled True
+                    , value "  fractale.co/o/"
+                    , attribute "style" "width: 8em"
+                    ]
+                    []
+                , input
+                    [ class "input pl-1"
+                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
+                    , type_ "text"
+                    , value (withDefault "" nameid_m)
+                    , onInput <| onChangePost
+                    ]
+                    []
+                , if not hasBorderDanger then
+                    span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
+
+                  else
+                    text ""
+                ]
+            ]
+        ]

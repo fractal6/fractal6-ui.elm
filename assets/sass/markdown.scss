@@ -8,10 +8,8 @@
 	}
     // Fix list margins
     ul, ol {
-		margin-left: 1.25rem;
-    }
-    ul ol {
         margin-top: 0.5rem;
+		margin-left: 1.25rem;
     }
 	& > ul, & > ol {
         margin-top: 0;
@@ -109,7 +107,44 @@
     em {
         font-style: italic !important;
     }
-	.table-container {
+	details.md-details {
+		margin-top: 0;
+		margin-bottom: 16px;
+
+		summary {
+			cursor: pointer;
+			font-weight: 600;
+			display: list-item;
+
+			> p {
+				display: inline;
+			}
+		}
+
+		// Animate expand via @starting-style; collapse uses allow-discrete
+		// (collapse animation depends on browser support — falls back to instant close)
+		> *:not(summary) {
+			overflow: hidden;
+			opacity: 1;
+			max-height: 500px;
+			transition: opacity 0.3s ease, max-height 0.4s ease,
+						display 0.4s allow-discrete;
+		}
+
+		&:not([open]) > *:not(summary) {
+			display: none !important;
+			opacity: 0;
+			max-height: 0;
+		}
+
+		@starting-style {
+			&[open] > *:not(summary) {
+				opacity: 0;
+				max-height: 0;
+			}
+		}
+	}
+.table-container {
 		overflow: auto !important;
 	}
 	table {

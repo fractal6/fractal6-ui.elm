@@ -1,0 +1,420 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Sidebar: orga-menu, tree-menu, side-menu
+ *
+ */
+
+#orga-menu {
+    z-index: 11;
+    //position: sticky;
+    position: fixed;
+    height: 100%;
+    width: $orga-menu-width;
+    top: calc(#{$navbar-height});
+    left: 0;
+    transition: width .2s ease-out;
+    background-color: var(--orga-menu-background-color);
+    border-right: $border-size-small solid var(--border-color-light);
+
+    // Keep overflow visible so tooltip (rendered outside inner scroll div) isn't clipped
+    overflow: visible;
+
+    // Copy from mattermost ?
+    display: flex;
+    justify-content: space-around;
+    //align-items: center;
+    //flex: 1 1 auto;
+
+    &.off {
+        width: 0 !important;
+    }
+
+    // Inner scroll container (first child div from viewOrgaMenu)
+    > div:first-child {
+        height: 100%;
+        width: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none; /* for Firefox */
+        &::-webkit-scrollbar {
+            display: none; /* for Chrome, Safari, and Opera */
+        }
+    }
+}
+
+.orgaMenu {
+    margin-top: $size-small !important;
+    margin-left: 3px;
+    margin-right: 6px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-left: solid 4px var(--orga-menu-background-color);
+    transition: top,height .2s ease-out;
+
+    &:hover {
+        border-left: solid 4px var(--text) !important;
+    }
+
+    &.is-active {
+        border-left: solid 4px var(--link);
+    }
+}
+
+#tree-menu {
+    z-index: 10;
+    position: fixed;
+    height: 100%;
+    width: $tree-menu-width;
+    top: calc(#{$navbar-height});
+    left: 0;
+    transition: width .2s ease-out;
+    background-color: var(--tree-menu-background-color);
+    border-right: $border-size-small solid var(--border-color-light);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none; /* for Firefox */
+    &::-webkit-scrollbar {
+        display: none; /* for Chrome, Safari, and Opera */
+    }
+
+    &.off {
+        width: 0 !important;
+    }
+
+    padding-top: 12px;
+    // First level child
+    & .menu > .menu-list > li > ul,
+    & .menu > .menu-list > ul {
+        margin-left: 0.75em;
+        border-left: none;
+    }
+    & .menu-list {
+        font-size: 0.95em;
+        border-left: 1px solid var(--background-hover);
+        & li ul {
+            padding: 0 0 0 0em;
+            margin: 0;
+            margin-left: 1em;
+        }
+
+        &.is-boxed, > .is-boxed {
+            li:not(:first-child) {
+                font-size: 0.95em;
+                padding-left: 0.25em;
+                margin-right: 0.7em;
+                border-right: 1px solid var(--border-color);
+                // Accordion animation for expanded roles
+                animation: accordionSlideDown 0.2s ease-out forwards;
+            }
+        }
+
+        .tag {
+            font-size: 70% !important;
+        }
+    }
+
+    .bottom-button {
+        width: $tree-menu-width;
+        height: 35px;
+        position: fixed;
+        bottom: 1px;
+        background-color: var(--tree-menu-background-color);
+    }
+}
+
+.treeMenu {
+    padding: .6em .5em;
+    transition: top,height .2s ease-out;
+
+    &.pt-0 {
+        padding-top: 0.25em !important;
+    }
+
+    .here {
+        height: 1em; // prevent the tag. to increase the line height when hovering
+        &:hover > .tag {
+            color: var(--link) !important;
+        }
+    }
+}
+// Make tree-menu hover button (+= overflow the text and in fixed hozizontal position
+.treeMenu {
+    position: relative;
+}
+.treeMenu .level {
+    position: static; /* Override Bulma's positioning if needed */
+}
+.treeMenu .here {
+    position: absolute;
+    right: 5%; /* 95% from left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: auto; /* Ensure button is clickable */
+}
+.treeMenu .level-left {
+  /* Prevent the level-left from taking full width and pushing button */
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+// Fix the mobile centering menu
+.treeMenu .level-left {
+  flex-direction: row;
+}
+
+
+#tree-selector {
+    li, li a {
+        font-size: var(--small-font-size);
+    }
+
+    //Common with #tree-menu
+    // --
+    width: $tree-menu-width;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    // First level child
+    &.menu > .menu-list > li > ul,
+    &.menu > .menu-list > ul {
+        margin-left: 0.5em;
+        border-left: none;
+    }
+    & .menu-list {
+        font-size: 0.95em;
+        border-left: 1px solid var(--background-hover);
+        & li ul {
+            padding: 0 0 0 0;
+            margin: 0;
+            margin-left: 1em;
+            a {
+                padding-left: 1em !important;
+                padding-top: 5px !important;
+                padding-bottom: 5px !important;
+            }
+        }
+
+        &.is-boxed, > .is-boxed {
+            li:not(:first-child) {
+                font-size: 0.95em;
+                padding-left: 0.25em;
+                margin-right: 0.88em;
+                border-right: 1px solid var(--border-color-light);
+                // Accordion animation for expanded roles
+                animation: accordionSlideDown 0.2s ease-out forwards;
+            }
+        }
+
+        a.is-active:hover {
+            cursor: default;
+        }
+
+    }
+}
+
+.menu-list {
+    a {
+        &.is-active {
+            color: var(--link);
+            background-color: var(--background-hover) !important;
+        }
+    }
+}
+
+#target-menu .dropdown-content {
+    width: calc(#{$tree-menu-width} + 15px);
+}
+
+.border-hinter {
+    z-index: 10;
+    position: fixed;
+    height: 100%;
+    width: 0;
+    top: calc(#{$navbar-height});
+    left: 0;
+    transition: width .2s ease-out;
+    background-color: var(--tree-menu-background-color);
+    box-shadow: inset -1px 0 0 var(--border-color-light);
+    &:hover::after {
+        position: relative;
+        top: 40%;
+        content: "\00BB";
+        font-weight: 700;
+        font-size: 1.4rem;
+        padding-left: 4px;
+    }
+}
+
+// The tree-hinter uses a parent/child pattern to prevent hover flickering.
+// The parent (#tree-hinter) is the stable container, .hinter-zone handles hover detection,
+// and .hinter-tree/.half-circle are the animated visual elements.
+#tree-hinter {
+    z-index: 5;
+    position: fixed;
+    height: 100%;
+    width: 30px; // Larger stable zone to overlap with tree-menu appearance area
+    top: calc(#{$navbar-height});
+    left: 0;
+    pointer-events: none; // Parent doesn't capture events
+
+    .hinter-tree {
+        height: 100%;
+        width: 5px;
+        position: relative;
+
+        .half-circle {
+            position: absolute;
+            top: 35%;
+            left: -24px;
+            width: 50px;
+            height: 72px;
+            background-color: transparent;
+            border: 2px solid var(--border-color-light);
+            border-left: none;
+            border-radius: 0 50px 50px 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            transform: translateX(0);
+            transition: transform 0.3s ease-out, border-color 0.2s ease-out;
+            z-index: 1;
+
+            i {
+                margin-left: 25px; /* Adjust to center the icon in the visible part */
+                color: var(--border-color-light);
+                font-size: 18px;
+                transition: color 0.2s ease-out;
+            }
+        }
+    }
+
+    .hinter-zone {
+        height: 100%;
+        width: 18px; // Reduced hover trigger zone (was 100% = 30px) @debug: do not change the half-circle trigger zone...?
+        pointer-events: auto; // Only the zone captures hover events
+    }
+
+    // Hover effect on the zone animates the child visual element
+    .hinter-zone:hover .half-circle {
+        border-color: var(--link);
+        transform: translateX(5px);
+
+        i {
+            color: var(--link);
+        }
+    }
+}
+
+// Right side menu
+.side-menu-background {
+    z-index: 10;
+    //position: sticky;
+    position: fixed;
+    height: calc(100% - #{$navbar-height});
+    left: 0;
+    width: 100%;
+    top: calc(#{$navbar-height});
+    opacity: 0.5;
+    background-color: var(--modal-background-background-color);
+}
+.side-menu {
+    z-index: 11;
+    //position: sticky;
+    position: fixed;
+    height: calc(100% - #{$navbar-height});
+
+    top: calc(#{$navbar-height});
+    right: 0;
+    transition: all .33s ease-out;
+    background-color: var(--orga-menu-background-color);
+    border-left: $border-size solid var(--border-color);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none; /* for Firefox */
+    &::-webkit-scrollbar {
+        display: none; /* for Chrome, Safari, and Opera */
+    }
+
+    // Copy from mattermost ?
+    display: flex;
+    justify-content: space-around;
+    //align-items: center;
+    //flex: 1 1 auto;
+
+    &.off {
+        width: 0 !important;
+        min-width: 0 !important;
+    }
+
+    & > .panel {
+        margin: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .header-block {
+        flex-shrink: 0;
+    }
+    .main-block {
+        flex-grow: 1;
+        overflow-y: auto;
+        min-height: 2em;
+
+    }
+    .footer-block {
+        flex-shrink: 0;
+    }
+}
+
+.side-menu.is-medium {
+    @include tablet {
+        width: 75%;
+        min-width: 600px;
+        max-width: 1000px;
+    }
+    @include mobile {
+        width: 100%;
+    }
+}
+
+.side-menu.is-large {
+    @include tablet {
+        width: 82%;
+        min-width: 600px;
+        max-width: 1300px;
+    }
+    @include mobile {
+        width: 100%;
+    }
+}
+
+#menuSettings {
+    border-right: solid 1px var(--border-color-light) !important;
+    margin-right: 2rem;
+    .menu-list {
+        li {
+            padding-bottom: $size-small;
+        }
+        a.is-active {
+            font-weight: 600;
+        }
+    }
+}
+
+.list-settings {
+    .menu-list {
+        font-size: 88% !important;
+        a.is-active {
+            font-weight: 600;
+        }
+    }
+}

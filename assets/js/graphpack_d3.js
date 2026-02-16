@@ -1,6 +1,6 @@
 /*
  * Fractale - Self-organisation for humans.
- * Copyright (C) 2025 Fractale Co
+ * Copyright (C) 2026 Fractale Co
  *
  * This file is part of Fractale.
  *
@@ -303,22 +303,22 @@ export const GraphPack = {
     },
 
     drawButtons() {
-        var b = document.querySelector("body").getBoundingClientRect();
-        var scrollLeft = b.left;
-        var scrollTop = b.top;
         var r = this.$canvas.getBoundingClientRect();
+        var p = this.$canvasParent.getBoundingClientRect();
+        var offsetLeft = r.left - p.left;
+        var offsetTop = r.top - p.top;
 
         // Draw canvas buttons
         var buttonMargin = 13;
         this.$canvasButtons.style.height = this.height - 20 + "px";
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth - buttonMargin - scrollLeft + "px";
-        this.$canvasButtons.style.top = r.top + buttonMargin - scrollTop + "px";
+        this.$canvasButtons.style.left = offsetLeft + r.width - this.$canvasButtons.offsetWidth - buttonMargin + "px";
+        this.$canvasButtons.style.top = offsetTop + buttonMargin + "px";
         this.$canvasButtons.classList.remove("is-invisible");
 
         // Draw welcome buttons
         if (this.$welcomeButtons) {
-            this.$welcomeButtons.style.left = r.left + r.width / 2 - this.$welcomeButtons.offsetWidth / 2 + 8 - scrollLeft + "px";
-            this.$welcomeButtons.style.top = r.top + this.$welcomeButtons.offsetHeight * 0.75 - scrollTop + "px";
+            this.$welcomeButtons.style.left = offsetLeft + r.width / 2 - this.$welcomeButtons.offsetWidth / 2 + 8 + "px";
+            this.$welcomeButtons.style.top = offsetTop + this.$welcomeButtons.offsetHeight * 0.75 + "px";
             this.$welcomeButtons.classList.remove("is-invisible");
         }
 
@@ -790,31 +790,31 @@ export const GraphPack = {
         $subTooltip.childNodes[0].textContent = node.data.name;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
-        // --
-        var bodyRect = document.querySelector("body").getBoundingClientRect();
-        var scrollLeft = bodyRect.left;
-        var scrollTop = bodyRect.top;
+        // -- Position relative to canvasParent (the positioned ancestor)
         var r = this.$canvas.getBoundingClientRect();
+        var p = this.$canvasParent.getBoundingClientRect();
+        var offsetLeft = r.left - p.left;
+        var offsetTop = r.top - p.top;
         var tw = $tooltip.clientWidth;
-        var l = (node.ctx.centerX + r.left - scrollLeft - (tw / 2 + 1));
+        var l = (node.ctx.centerX + offsetLeft - (tw / 2 + 1));
         if (node == this.focusedNode == this.zoomedNode) {
             // below the circle
             var hw = (-$tooltip.clientHeight + 2 * node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
+            var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
         } else {
             // above the circle
             var hw = ($tooltip.clientHeight + 2 * node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
+            var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
         }
 
-        if (l + tw / 2 - r.left < 0 || r.left + r.width - tw / 2 - l < 0) {
+        if (l + tw / 2 - offsetLeft < 0 || offsetLeft + r.width - tw / 2 - l < 0) {
             // the tooltip overflow "too much" outside the canvas. (left/right
             this.clearNodeTooltip();
             return
-        } else if (t + $tooltip.clientHeight / 3 - r.top < 0) {
+        } else if (t + $tooltip.clientHeight / 3 - offsetTop < 0) {
             // Overflow on top
             var hw = (-$tooltip.clientHeight / 2 + 2 * node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top - scrollTop - (hw / 2 + 23));
+            var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
         }
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";

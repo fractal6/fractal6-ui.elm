@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -36,7 +36,7 @@ import Components.ConfirmOwner as ConfirmOwner
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.OrgaMenu as OrgaMenu
-import Components.SearchBar exposing (viewSearchBar)
+import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
@@ -158,6 +158,9 @@ mapGlobalOutcmds gcmds =
                     -- App
                     DoUpdateNode nameid fun ->
                         ( [ Cmd.map TreeMenuMsg <| send (TreeMenu.UpdateNode nameid fun), send DoLoad ], Cmd.none )
+
+                    DoUpdateDraft draftUpdate ->
+                        ( [], send (Global.UpdateDraft draftUpdate) )
 
                     _ ->
                         ( [], Cmd.none )
@@ -622,8 +625,16 @@ update global message model =
 
         NewTensionMsg msg ->
             let
+                state =
+                    case msg of
+                        NTF.OnOpen _ _ ->
+                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+
+                        _ ->
+                            model.tensionForm
+
                 ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
+                    NTF.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -642,8 +653,16 @@ update global message model =
 
         JoinOrgaMsg msg ->
             let
+                state =
+                    case msg of
+                        JoinOrga.OnOpen _ _ ->
+                            JoinOrga.setCurrentDraft global.session.data.drafts.newInvite model.joinOrga
+
+                        _ ->
+                            model.joinOrga
+
                 ( data, out ) =
-                    JoinOrga.update apis msg model.joinOrga
+                    JoinOrga.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -756,11 +775,17 @@ view global model =
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
             }
+
+        org_id =
+            String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ]
     in
     { title =
-        (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> LE.last |> withDefault "" ])
-            ++ " · "
-            ++ T.members
+        case model.path_data of
+            Success path ->
+                unwrap org_id .name path.root ++ " · " ++ T.members
+
+            _ ->
+                org_id ++ " · " ++ T.members
     , body =
         [ div [ class "orgPane" ]
             [ HelperBar.view helperData model.helperBar |> Html.map HelperBarMsg
@@ -800,6 +825,8 @@ view_ global model =
             , onSearchKeyDown = SearchKeyDown
             , onSubmitText = SubmitTextSearch
             , id_name = "searchBarMembers"
+            , column_class = "is-8"
+            , field_class = ""
             , placeholder_txt = T.searchMembers
             }
 
@@ -836,7 +863,7 @@ view_ global model =
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "columns is-centered" ]
                 [ div [ class "column is-four-fifth" ]
-                    [ viewSearchBar opSearch model.pattern_init model.pattern ]
+                    [ viewSearchBarCol opSearch model.pattern_init model.pattern ]
                 , if isAdmin then
                     div [ class "column is-one-fifth is-flex is-align-self-flex-start" ]
                         [ div

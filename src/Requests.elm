@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -24,6 +24,7 @@ module Requests exposing (..)
 import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -422,6 +423,18 @@ setGuestCanCreateTension api nameid val msg =
         }
 
 
+setLexicon api nameid val msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/setlexicon"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "val", JE.string val ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 
 --
 -- User management
@@ -589,6 +602,29 @@ getQuickDoc api lang msg =
         , url = api.assets ++ ("/quickdoc." ++ lang ++ ".json")
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) quickDocDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+--
+-- Static Pages
+--
+
+
+{-| Fetch static HTML page from assets server.
+Static pages are stored on the assets server (api.assets) as HTML files.
+Example: fetchStaticPage api "welcome" msg -> fetches {api.assets}/welcome.html
+-}
+fetchStaticPage : Apis -> Lang.Lang -> String -> (Result Http.Error String -> msg) -> Cmd msg
+fetchStaticPage api lang pagePath msg =
+    Http.request
+        { method = "GET"
+        , headers = setHeaders api
+        , url = api.assets ++ "/" ++ (Lang.toString lang |> String.toLower) ++ "/" ++ pagePath ++ ".html"
+        , body = Http.emptyBody
+        , expect = Http.expectString msg
         , timeout = Nothing
         , tracker = Nothing
         }

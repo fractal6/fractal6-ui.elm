@@ -1,0 +1,109 @@
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ * Custom Toggle Switch Component
+ *
+ * Styled replacement for native checkboxes when using class="switch".
+ * Supports modifiers: .is-rounded, .is-success, .is-small, .is-medium, .is-large
+ * Works with both light and dark themes.
+ *
+ * HTML pattern:
+ *   <input id="mySwitch" class="switch is-rounded is-success" type="checkbox">
+ *   <label for="mySwitch">Label text</label>
+ */
+
+$switch-width: 2.75rem;
+$switch-height: 1.25rem;
+$switch-thumb-size: 1.25rem;
+$switch-thumb-offset: 0.125rem;
+$switch-travel: $switch-width - $switch-thumb-size - ($switch-thumb-offset * 2);
+$switch-transition: 0.2s ease;
+
+// Hide native checkbox, position for accessibility
+input[type="checkbox"].switch {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+
+  // The track (rendered via label::before)
+  + label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding-left: calc(#{$switch-width} + 0.5rem);
+    cursor: pointer;
+    user-select: none;
+    min-height: $switch-height;
+    line-height: $switch-height;
+
+    // Track
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: $switch-width;
+      height: $switch-height;
+      background-color: var(--bulma-border);
+      border-radius: $switch-height;
+      transition: background-color $switch-transition;
+    }
+
+    // Thumb
+    &::after {
+      content: "";
+      position: absolute;
+      left: $switch-thumb-offset;
+      top: 50%;
+      transform: translateY(-50%);
+      width: $switch-thumb-size;
+      height: $switch-thumb-size;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transition: transform $switch-transition;
+    }
+  }
+
+  // Checked state
+  &:checked + label {
+    &::before {
+      background-color: var(--bulma-primary);
+    }
+    &::after {
+      transform: translateY(-50%) translateX(#{$switch-travel});
+    }
+  }
+
+  // Color modifiers (checked state)
+  &.is-success:checked + label::before {
+    background-color: var(--bulma-success);
+  }
+  &.is-info:checked + label::before {
+    background-color: var(--bulma-info);
+  }
+  &.is-warning:checked + label::before {
+    background-color: var(--bulma-warning);
+  }
+  &.is-danger:checked + label::before {
+    background-color: var(--bulma-danger);
+  }
+  &.is-primary:checked + label::before {
+    background-color: var(--bulma-primary);
+  }
+
+  // Focus ring for keyboard navigation
+  &:focus-visible + label::before {
+    outline: 2px solid var(--bulma-link);
+    outline-offset: 2px;
+  }
+
+  // Disabled state
+  &:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

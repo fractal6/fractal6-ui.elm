@@ -1,0 +1,232 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Accordion
+ *
+ */
+
+// ===================
+// Base Structure
+// ===================
+.accordion {
+    //margin: auto;
+}
+.accordion input {
+    display: none;
+}
+.acc {
+    position: relative;
+    transition: all .15s ease-in-out;
+}
+.acc::before {
+    content: '';
+    position: absolute;
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+header.acc {
+    z-index: 50;
+    cursor: initial;
+}
+header .acc-title {
+    margin: 0;
+    cursor: initial;
+}
+
+// ===================
+// Title Styles
+// ===================
+.acc-title {
+    position: relative;  // Anchor for :before pseudo-element (arrow)
+    width: 100%;
+    //display: inline-block;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background-color: var(--background-hover-discrete);
+    }
+
+    &:hover:before {
+        opacity: 0.9;
+    }
+}
+
+// ===================
+// Content Transitions
+// ===================
+.acc-content {
+    // About using overflow and max-height for making transition.
+    //https://stackoverflow.com/questions/3508605/how-can-i-transition-height-0-to-height-auto-using-css?page=1&tab=active#tab-top
+    overflow: hidden;
+    max-height: 0;
+    // Use opacity transition for smooth visual effect, avoiding padding glitch
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease;
+    opacity: 0;
+    background-color: inherit;
+}
+.acc-close {
+    display: none;
+    position: absolute;
+    height: var(--acc-height-subtitle);
+    width: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+input:checked + .acc {
+    height: auto;
+}
+input:checked + .acc .acc-content,
+input:checked + .acc .acc-close {
+    display: inline-block;
+}
+input:checked + .acc .acc-content {
+    overflow: auto;
+    max-height: 800px;
+    opacity: 1;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease 0.1s;
+}
+
+// ===================
+// Arrow/Chevron Styles
+// ===================
+.arrows-left,
+.arrows-right {
+    section .acc-title:before {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0.6;
+        top: calc(50% - 4px);
+
+        // thicker arrows
+        color: var(--text-evidence);
+        border-right-width: 4px;
+        border-bottom-width: 4px;
+    }
+
+    input:checked + section.acc .acc-title:before {
+        transform: rotate(45deg);
+    }
+}
+
+.arrows-left section .acc-title {
+    padding-left: 44px;
+    &:before { left: 22px; }
+}
+
+.arrows-right {
+    .acc-title { padding-right: 20px; }
+    section .acc-title:before { right: 18px; }
+}
+
+// ===================
+// Context: quickHelp
+// ===================
+.quickHelp {
+    header.acc {
+        height: var(--acc-height-title) !important;
+    }
+    header .acc-title {
+        height: var(--acc-height-title) !important;
+        line-height: var(--acc-height-title) !important;
+        font-weight: 600;
+        font-size: 12pt;
+    }
+    .acc-title {
+        display: block;
+        height: var(--acc-height);
+        line-height: var(--acc-height);
+        padding: 0 20px;
+    }
+    // Set base styles and transition for padding to prevent flickering
+    .acc-content {
+        width: calc(100% - 20px);
+        font-size: 11pt;
+        padding: 0 10px 0 20px;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease,
+                    padding 0.2s ease;
+    }
+    input:checked + .acc .acc-content {
+        padding: 20px 10px 20px 20px;
+        border-radius: 0 0 4px 4px;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.25s ease 0.1s,
+                    padding 0.2s ease;
+    }
+
+    section.acc {
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--border-light, rgba(0,0,0,.12));
+            pointer-events: none;
+        }
+    }
+    input:checked + section.acc {
+        background-color: var(--background-evidence);
+        border-radius: 4px;
+    }
+    input:checked + section.acc .acc-title {
+        background-color: var(--background-evidence);
+        border-radius: 4px 4px 0 0;
+    }
+}
+
+// ===================
+// Context: message-header
+// ===================
+.accordion {
+    .message-header {
+        border-radius: 5px;
+        transition: box-shadow 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+    }
+}
+
+// ===================
+// Self-managed accordion
+// ===================
+// (does not work on table - mandate settings!)
+.is-accordion {
+    .is-child {
+        overflow: hidden;
+        height: 0 !important;
+        max-height: 0 !important;
+        transition: max-height 0.4s ease-out;
+        &.is-open {
+            height: 800px !important;
+            max-height: 800px !important ;
+        }
+    }
+}

@@ -20,6 +20,10 @@
     font-weight: 600;
 }
 
+.button.is-outlined:hover {
+    --bulma-button-border-width: 1px !important; // fix is-outline glitch
+}
+
 .button, .tag {
     box-shadow: none;
     &:not(.is-light):not(.is-ghost):not(.is-soft) {

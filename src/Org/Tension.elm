@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -28,6 +28,7 @@ import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
+import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Comments as Comments exposing (OutType(..))
@@ -54,7 +55,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
+import Generated.Route as Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
@@ -62,7 +63,7 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), errorIsNoDataFound, fromMaybeData, isSuccess, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -176,6 +177,9 @@ mapGlobalOutcmds gcmds =
                     DoMoveNode a b c ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
 
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -231,6 +235,7 @@ type alias Model =
     -- Common
     , refresh_trial : Int
     , session : SessionCommon
+    , draftSaveTimer : Int
     , comments : Comments.State
     , empty : {}
     , commonOp : CommonMsg Msg
@@ -350,7 +355,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form
-            , tension_form = initTensionForm tid Nothing session.common.user
+            , tension_form = initTensionForm session.common.lexicon tid Nothing session.common.user
 
             -- Title Result
             , isTitleEdit = False
@@ -358,11 +363,11 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init tid Nothing nodeView session.common.user
+                NodeDoc.init session.common.lexicon tid Nothing nodeView session.common.user
                     |> (\x ->
                             case session.data.tension_head of
                                 Just th ->
-                                    NodeDoc.initBlob (nodeFromTension th) x
+                                    NodeDoc.initBlob session.common.lexicon (nodeFromTension th) x
 
                                 Nothing ->
                                     x
@@ -394,7 +399,13 @@ init global flags =
             , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) session.common
             , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
             , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
-            , comments = Comments.init focusid tid session.common
+            , draftSaveTimer = 0
+            , comments =
+                let
+                    maybeDraft =
+                        Dict.get tid session.data.drafts.comments
+                in
+                Comments.initWithDraft focusid tid session.common maybeDraft
             }
 
         refresh =
@@ -556,6 +567,8 @@ type Msg
     | LogErr String
     | ScrollToElement String
     | UpdateUctx UserCtx
+      -- Draft persistence
+    | SaveDraftDelayed Int
       -- Components
     | HelperBarMsg HelperBar.Msg
     | HelpMsg Help.Msg
@@ -714,7 +727,7 @@ update global message model =
                                                     nodeFromTension th
                                             in
                                             ( ternary th.hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
-                                            , NodeDoc.initBlob node model.nodeDoc
+                                            , NodeDoc.initBlob model.session.lexicon node model.nodeDoc
                                             )
 
                                         MD ->
@@ -932,7 +945,7 @@ update global message model =
                         th =
                             withMapData (\x -> { x | isPinned = v }) model.tension_head
                     in
-                    ( { model | tension_head = th, tension_form = initTensionForm model.tensionid Nothing global.session.common.user }
+                    ( { model | tension_head = th, tension_form = initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user }
                     , Cmd.none
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -955,7 +968,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user, title_result = NotAsked }, Cmd.none, Cmd.none )
 
         SubmitTitle time ->
             let
@@ -995,7 +1008,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid Nothing global.session.common.user
+                            initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , Cmd.none
@@ -1062,7 +1075,7 @@ update global message model =
                         nd =
                             case th of
                                 Success t ->
-                                    NodeDoc.initBlob (nodeFromTension t) newDoc
+                                    NodeDoc.initBlob model.session.lexicon (nodeFromTension t) newDoc
 
                                 _ ->
                                     newDoc
@@ -1124,7 +1137,7 @@ update global message model =
                                     { th | blobs = blobs, title = r.title, hasBeenPushed = True }
 
                                 resetForm =
-                                    initTensionForm model.tensionid Nothing global.session.common.user
+                                    initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user
                             in
                             ( { model
                                 | tension_head = Success newTh
@@ -1269,6 +1282,26 @@ update global message model =
             , Cmd.none
             )
 
+        SaveDraftDelayed timerValue ->
+            -- Only save if this is the most recent scheduled save (debounce)
+            if timerValue == model.draftSaveTimer then
+                -- Read current message content (may have been modified by rich text ports)
+                let
+                    draftMessage =
+                        Comments.getCurrentMessage model.comments |> withDefault ""
+
+                    draft =
+                        CommentDraft draftMessage ""
+                in
+                if draftMessage == "" then
+                    ( model, Cmd.none, send (Global.UpdateDraft (ClearComment model.tensionid)) )
+
+                else
+                    ( model, Cmd.none, send (Global.UpdateDraft (SaveComment model.tensionid draft)) )
+
+            else
+                ( model, Cmd.none, Cmd.none )
+
         -- Components
         HelperBarMsg msg ->
             let
@@ -1282,8 +1315,16 @@ update global message model =
 
         NewTensionMsg msg ->
             let
+                state =
+                    case msg of
+                        NTF.OnOpen _ _ ->
+                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+
+                        _ ->
+                            model.tensionForm
+
                 ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
+                    NTF.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -1381,8 +1422,16 @@ update global message model =
 
         JoinOrgaMsg msg ->
             let
+                state =
+                    case msg of
+                        JoinOrga.OnOpen _ _ ->
+                            JoinOrga.setCurrentDraft global.session.data.drafts.newInvite model.joinOrga
+
+                        _ ->
+                            model.joinOrga
+
                 ( data, out ) =
-                    JoinOrga.update apis msg model.joinOrga
+                    JoinOrga.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -1451,10 +1500,29 @@ update global message model =
                         _ ->
                             ( model.tension_head, Cmd.none )
 
+                -- Schedule debounced draft save when comment content changes
+                ( draftTimer, draftSaveCmd ) =
+                    case out.result of
+                        Just (PostChanged ( "message", v )) ->
+                            let
+                                newTimer =
+                                    model.draftSaveTimer + 1
+
+                                time_delay =
+                                    ternary (v == "") 0 3500
+                            in
+                            ( newTimer, sendSleep (SaveDraftDelayed newTimer) time_delay )
+
+                        _ ->
+                            ( model.draftSaveTimer, Cmd.none )
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | comments = data, tension_head = tension_head }, out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch (gcmd :: gcmds) )
+            ( { model | comments = data, tension_head = tension_head, draftSaveTimer = draftTimer }
+            , (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds |> (::) draftSaveCmd) |> Cmd.batch
+            , Cmd.batch (gcmd :: gcmds)
+            )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1553,7 +1621,11 @@ view_ global model =
                     --    ContractsPage.view { emitterid = "", receiverid = "", isAdmin = model.isTensionAdmin, now = model.now } model.contractsPage
                     --        |> Html.map ContractsPageMsg
                     --else
-                    viewGqlErrors err
+                    div []
+                        [ viewGqlErrors err
+                        , showIf (errorIsNoDataFound err) <|
+                            a [ class "button is-rounded is-primary is-center", href (toHref Login) ] [ text T.signin ]
+                        ]
 
                 LoadingSlowly ->
                     div [ class "spinner" ] []
@@ -1565,7 +1637,7 @@ view_ global model =
             , if isSuccess model.unsubscribe_result && model.unsubscribe /= "" then
                 div [ class "f6-notification notification has-timer is-success" ]
                     [ button [ class "delete", onClick OnCloseUnsubscribe ] []
-                    , text T.beenUnsubscribe
+                    , text (T.beenUnsubscribe model.session.lexicon)
                     ]
 
               else
@@ -1775,7 +1847,7 @@ viewConversation u t model =
         Success t_comments ->
             div [ class "comments" ]
                 [ Lazy.lazy3 Comments.viewCommentsTension model.session t.action model.comments |> Html.map CommentsMsg
-                , hr [ class "has-background-border-light is-2" ] []
+                , hr [ class "is-2" ] []
                 , userInput
                 ]
 
@@ -1804,6 +1876,7 @@ viewDocument u t b model =
                 , node = b.node |> Maybe.map (nodeFromFragment t.receiver.nameid)
                 , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault initNodeData
                 , leads = []
+                , lexicon = model.session.lexicon
                 , isLazy = False
                 , source = model.baseUri
                 , hasBeenPushed = t.hasBeenPushed
@@ -2169,10 +2242,11 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
-                                    [ A.icon1 "icon-pin" <|
+                                    [ A.icon1_noflex "icon-pin" <|
                                         ternary t.isPinned
                                             (T.unpinTension model.session.lexicon)
                                             (T.pinTension model.session.lexicon)
+                                    , showIf t.isPinned <| A.icon "icon-disc has-text-success ml-2"
                                     ]
                                 ]
 
@@ -2195,7 +2269,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
-                                    [ A.icon1 "icon-disc" T.updateType ]
+                                    [ A.icon1 "icon-diamond" T.updateType ]
                                 ]
 
                             else

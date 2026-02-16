@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -19,7 +19,7 @@
 -}
 
 
-module Components.SearchBar exposing (viewSearchBar)
+module Components.SearchBar exposing (Op, viewSearchBarCol, viewSearchBarLevel, viewSearchField)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -27,7 +27,7 @@ import Bulk exposing (UserState(..))
 import Bulk.Error exposing (viewGqlErrors)
 import Dict
 import Extra exposing (ternary)
-import Extra.Events exposing (onKeydown)
+import Extra.Events exposing (onKeydown, onMousedownPD)
 import Html exposing (Html, button, div, i, input, span, text)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, disabled, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -41,6 +41,8 @@ import Time
 
 type alias Op msg =
     { id_name : String
+    , column_class : String
+    , field_class : String
     , placeholder_txt : String
     , onChangePattern : String -> msg
     , onSearchKeyDown : Int -> msg
@@ -48,36 +50,58 @@ type alias Op msg =
     }
 
 
-viewSearchBar : Op msg -> String -> String -> Html msg
-viewSearchBar op pattern_init pattern =
-    div [ id op.id_name, class "searchBar" ]
-        [ div [ class "columns mb-0" ]
-            [ div [ class "column is-8" ]
-                [ div [ class "field has-addons" ]
-                    [ div [ class "control is-expanded" ]
-                        [ input
-                            [ class "is-rounded input is-small pr-6"
-                            , type_ "search"
-                            , autocomplete False
-                            , autofocus False
-                            , placeholder op.placeholder_txt
-                            , value pattern
-                            , onInput op.onChangePattern
-                            , onKeydown op.onSearchKeyDown
-                            ]
-                            []
-                        , span [ class "icon-input-flex-right" ]
-                            [ if pattern_init /= "" then
-                                span [ class "delete is-hidden-mobile", onClick (op.onSubmitText "") ] []
+{-| Bare search field (no layout wrapper). For embedding in custom layouts.
+-}
+viewSearchField : Op msg -> String -> String -> Html msg
+viewSearchField op pattern_init pattern =
+    div [ class ("field has-addons searchBar " ++ op.field_class) ]
+        [ div [ class "control is-expanded" ]
+            [ input
+                [ class "is-rounded input is-small pr-6"
+                , type_ "search"
+                , autocomplete False
+                , autofocus False
+                , placeholder op.placeholder_txt
+                , value pattern
+                , onInput op.onChangePattern
+                , onKeydown op.onSearchKeyDown
+                ]
+                []
 
-                              else
-                                text ""
-                            , span [ class "vbar" ] []
-                            , span [ class "button-light px-1", onClick (op.onSearchKeyDown 13) ]
-                                [ A.icon "icon-search" ]
-                            ]
-                        ]
-                    ]
+            -- onMousedownPD protects from focus stealing on click.
+            , span [ class "icon-input-flex-right", onMousedownPD (op.onSearchKeyDown 0) ]
+                [ if pattern_init /= "" then
+                    span [ class "delete is-hidden-mobile", onClick (op.onSubmitText "") ] []
+
+                  else
+                    text ""
+                , span [ class "vbar" ] []
+                , span [ class "button-light px-1", onClick (op.onSearchKeyDown 13) ]
+                    [ A.icon "icon-search" ]
                 ]
             ]
+        ]
+
+
+{-| Search bar with columns layout wrapper.
+-}
+viewSearchBarCol : Op msg -> String -> String -> Html msg
+viewSearchBarCol op pattern_init pattern =
+    div [ id op.id_name, class "searchBar" ]
+        [ div [ class "columns mb-0" ]
+            [ div [ class ("column " ++ op.column_class) ]
+                [ viewSearchField op pattern_init pattern ]
+            ]
+        ]
+
+
+{-| Search bar with level layout wrapper (search left, custom content right).
+-}
+viewSearchBarLevel : Op msg -> String -> String -> List (Html msg) -> Html msg
+viewSearchBarLevel op pattern_init pattern rightContent =
+    div [ class "level" ]
+        [ div [ class "level-left is-flex-grow" ]
+            [ viewSearchField op pattern_init pattern ]
+        , div [ class "level-right" ]
+            rightContent
         ]

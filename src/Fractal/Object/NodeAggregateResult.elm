@@ -104,6 +104,16 @@ rightsAvg =
     Object.selectionForField "(Maybe Float)" "rightsAvg" [] (Decode.float |> Decode.nullable)
 
 
+lexiconMin : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
+lexiconMin =
+    Object.selectionForField "(Maybe String)" "lexiconMin" [] (Decode.string |> Decode.nullable)
+
+
+lexiconMax : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
+lexiconMax =
+    Object.selectionForField "(Maybe String)" "lexiconMax" [] (Decode.string |> Decode.nullable)
+
+
 colorMin : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
 colorMin =
     Object.selectionForField "(Maybe String)" "colorMin" [] (Decode.string |> Decode.nullable)

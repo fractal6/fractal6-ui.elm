@@ -1,0 +1,565 @@
+@use "sass:color";
+@use "sass:map";
+@use "../shared" as *;
+@use "../fractal6-variables" as *;
+
+/*
+ *
+ * Navigation: navbarTop, footBar, helperBar
+ *
+ */
+
+#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
+    @include desktop {
+        .navbar {
+            padding-right: 14px; /* Avoid width reflow */
+        }
+    }
+}
+
+
+#navbarTop {
+
+    // Logged-in navbar
+    &.is-logged-in {
+        & > .navbar {
+            height: $navbar-height;
+            border-bottom: 1px solid var(--border-color-light);
+
+            .navbar-item, .navbar-link {
+                &:hover {
+                    color: var(--text-strong);
+                }
+            }
+
+            .navbar-item {
+                &.is-active, .navbar-link.is-active { // @bulma's wrong !
+                    background-color: var(--background-hover) !important;
+                }
+            }
+        }
+    }
+
+    // Logged-out navbar
+    &.is-logged-out {
+
+        & > .navbar {
+            .is-signup {
+                border-color: var(--primary);
+                color: var(--primary) !important;
+                background-color: map.get($f6-dark-palette, link) !important;
+                &:hover {
+                    color: var(--bulma-navbar-item-color) !important;
+                    background-color: map.get($f6-dark-palette, link2) !important;
+                }
+            }
+        }
+
+        // Apply logged-in styles on mobile
+        @include mobile {
+            & > .navbar {
+                height: $navbar-height;
+                border-bottom: 1px solid var(--border-color-light);
+
+                .navbar-item, .navbar-link {
+                    color: var(--text);
+                    &:hover {
+                        color: var(--text-strong);
+                    }
+                }
+
+                .navbar-item {
+                    &.is-active, .navbar-link.is-active {
+                        background-color: var(--background-hover) !important;
+                    }
+                }
+            }
+        }
+
+        // Apply logged-out styles on tablet and above
+        @include tablet {
+            margin-bottom: 2rem;
+
+            // invisible background layer behind the navbar
+            &::before {
+                content: '';
+                position: fixed;  // Match the navbar's fixed positioning
+                inset: 0;  // Shorthand for top/right/bottom/left
+                background: transparent;
+                height: calc(58px + #{$size-small}); // navbar height + margins
+                z-index: 100;
+            }
+            & > .navbar {
+                z-index: 101;
+                // Layout
+                //display: inline-flex;
+                height: 58px;
+                padding: 10px 24px;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+                // Style
+                border-radius: 50px;
+                background: var(--primary);
+                margin: $size-small auto 0;
+
+
+                // Bulma responsive width logic
+                @include desktop {
+                    width: calc(11 / 12 * 100%);
+                }
+
+                @include widescreen {
+                    width: calc(11 / 12 * 100%); // is-7-widescreen
+                }
+
+                @include fullhd {
+                    width: calc(11 / 12 * 100%); // is-6-fullhd (50%)
+                }
+
+                .navbar-item, .navbar-link {
+                    max-height: 39px; // prevent button (.signup) to change the heigt here
+                    border-radius: 12px;
+                }
+
+                // Fix colors
+                // --
+                color: var(--bulma-navbar-item-color) !important;
+                .button, .vbar, .logo-fractale-text {
+                    color: var(--bulma-navbar-item-color) !important;
+                }
+                .vbar {
+                    color: var(--bulma-navbar-item-color) !important;
+                }
+                svg {
+                    fill: var(--bulma-navbar-item-color) !important;
+                }
+                .navbar-brand > .navbar-item {
+                    background-color: inherit !important;
+                }
+                .navbar-brand:first-child {
+                  // Fix bad alignement in mobile (because navbar-brand wrap all the navbar ?)
+                  padding: 0 0.75rem;
+                }
+
+
+            }
+        }
+    }
+
+    svg {
+        max-height: $navbar-height !important;
+    }
+
+    // Fix right navbar top on touch
+    .navbar-touch-end {
+        display: none;
+        @include touch {
+            display: flex;
+            position: relative;
+            margin-left: auto;
+            height: $navbar-height;
+            & > * {
+                height: $navbar-height;
+            }
+        }
+    }
+    .navbar-burger {
+        @include touch {
+            margin-left: 0;
+        }
+    }
+
+    .navbar-item {
+        font-size: 0.95rem !important;
+    }
+    .navbar-item, .navbar-link {
+        @include mobile {
+            & > .button {
+                margin-left: -10px;
+            }
+        }
+    }
+
+    .navbar-link:not(.is-arrowless) {
+        &:after {
+            font-size: 12px !important;
+        }
+    }
+
+    // Navbar dropdown animation
+    .navbar-item.has-dropdown.is-active > .navbar-dropdown {
+        animation: dropdownFadeIn 0.15s ease-out forwards;
+    }
+
+    .navbar-dropdown {
+        .navbar-item { // @bulma's wrong !
+            &:hover {
+                cursor: pointer;
+                background-color: var(--background-hover);
+                color: var(--text-strong);
+            }
+            &.is-active {
+                background-color: var(--background-hover);
+            }
+        }
+        .navbar-divider {
+            margin:0;
+        }
+    }
+
+    .navbar-tension-title {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0; // Allow flex item to shrink below content size
+        padding: 0 1rem;
+        gap: 0.5rem;
+
+        .tension-type-status {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
+        }
+
+        .tension-title-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+
+            &:hover {
+                color: var(--link);
+            }
+        }
+
+        .button {
+            flex-shrink: 0;
+            padding: 0.25rem 0.5rem;
+        }
+
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+}
+
+#footBar {
+    z-index: 0;
+    position: relative;
+    border-top: $border-size-small solid var(--border-color-light);
+    margin-top: 3rem;
+    padding: 2rem 1.5rem 2rem;
+
+    // Appears after
+    opacity: 0;
+    animation: fadeIn 0.5s;
+    animation-delay: 0.5s;
+    animation-fill-mode: forwards;
+
+    .contacts {
+        span {
+            font-size: $size-small;
+            a {
+                padding-left: 1rem;
+                color: var(--link2);
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+}
+
+#footBar_i {
+    z-index: 0;
+    position: relative;
+    margin-top: 4rem;
+    padding: 1rem 1rem 1rem;
+}
+
+.breadcrumb.lifeline {
+    a, a:hover {
+        color: var(--link-discrete);
+        cursor: initial;
+    }
+    li.is-active a {
+        font-weight: 600;
+    }
+}
+
+#helperBar {
+    background-color: var(--header-background-color) !important;
+    margin-top: 0;
+    padding-top: 1.85rem;
+
+    .breadcrumb {
+        font-size: 1.15rem;
+        a {
+            color: var(--text-evidence);
+            padding-right: 0.4rem;
+            padding-left: 0.4rem;
+
+            &:hover {
+                background-color: var(--border-color-light);
+                border-radius: 6px;
+            }
+        }
+    }
+
+    nav.level {
+        .navbar-menu {
+            background-color: inherit !important;
+        }
+    }
+
+    nav.tabs {
+        font-size: 0.95rem;
+        ul {
+            border-bottom-color: var(--border-color-light) !important;
+        }
+        li.is-active a {
+            border-color: var(--border-color-light);
+            background: var(--body-background-color);
+        }
+    }
+
+    @include touch {
+        nav.tabs {
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+    }
+
+    .level-left {
+        // level-right is hidden
+        max-width: 100%;
+        @include desktop {
+            // prevent user roles overflow
+            max-width: 75%;
+        }
+    }
+}
+
+#mainPane {
+    // Prevent NavbarTop overflow
+    & > .columns:not(#overview) { // mt-3
+        margin: 0.75rem 0 0 0;
+    }
+    @include mobile {
+        & > .columns { // mt-3
+            margin: 0.75rem 0 0 0;
+        }
+    }
+}
+
+.top-section {
+    margin: 3rem 0 0;
+    padding: 0 10px 0;
+
+    // Prevent NavbarTop overflow
+    & > .columns, &.columns {
+        margin-left: 0;
+        margin-right: 0;
+        & > .column {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+}
+
+.dub-top-section {
+    margin-left: -10px;
+    padding-left: 10px;
+    margin-right: -10px;
+    padding-right: 10px;
+}
+
+#welcome {
+    // Sections
+    scroll-behavior: smooth;
+
+    @include fullhd {
+        .logo svg {
+            //width: 550px;
+        }
+    }
+    @include widescreen-only {
+        .logo svg {
+            width: 450px !important;
+        }
+    }
+    @include desktop-only {
+        .logo svg {
+            margin-top: 50px;
+            width: 350px !important;
+        }
+    }
+    @include touch {
+        .logo svg {
+            width: 350px !important;
+        }
+    }
+    @include mobile {
+        .hero-body {
+            padding-left: 5px;
+            padding-right: 5px;
+            .title {
+                font-size: 2rem;
+            }
+            .content {
+                font-size: 100% !important;
+            }
+        }
+    }
+
+    .custom-b-1 {
+        padding-bottom: 2rem;
+        @include fullhd {
+            padding-bottom: 4.5rem;
+        }
+    }
+
+
+    // Padding bewteen fullheight screen (100vh)
+    #welcome-2 > div > div {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+        @include desktop {
+            & figure:first-child {
+                margin-top: 4rem;
+            }
+        }
+    }
+    // remove margin above the footer
+    & > div:last-child {
+        margin-bottom: calc(-#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
+    }
+
+    .top-title {
+        font-size: 4rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 2rem !important;
+        line-height: 1.1 !important;
+        @include touch {
+            font-size: 3.9rem !important;
+        }
+        @include mobile {
+            font-size: 3rem !important;
+        }
+    }
+    .card h2 {
+        font-size: 1.6rem !important;
+        @include mobile {
+            font-size: 1.3rem !important;
+        }
+    }
+
+}
+
+.is-invisible-force {
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#loginForm, #signupForm {
+    @include desktop {
+        min-width: 400px;
+        & > .card {
+            min-width: 400px;
+        }
+    }
+    @include mobile {
+        margin-top: 10px;
+    }
+}
+
+#createOrga {
+    h1.title {
+        margin-bottom: 3rem !important;
+    }
+}
+
+.nodesList {
+    hr {
+        margin-top: 0.5rem !important;
+    }
+    #icons {
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+.logo-f6 {
+    fill: var(--text-strong);
+    //position: relative;
+    //bottom: 3px;
+}
+#footBar, #footBar_i {
+    .logo-f6 {
+        fill: #375a7f !important;
+    }
+}
+#authModal {
+    .logo-f6 {
+        fill: var(--primary) !important;
+    }
+}
+#welcome {
+    .logo-f6 {
+        fill: var(--primary) !important;
+    }
+}
+
+.logo-fractale-text {
+    transform: translate(-5px, -1px);
+    font-weight: 500;
+    color: var(--text-strong);
+}
+
+// Notification badges
+.is-event-badge {
+    color: var(--link);
+    &.badge {
+        background-color: var(--link);
+        right: 3px !important;
+    }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
+    }
+}
+.is-event-badge-bg {
+    .tag {
+        background-color: var(--link) !important;
+    }
+}
+
+.is-contract-badge {
+    color: var(--warning);
+    &.badge {
+        background-color: var(--warning);
+        left: 3px !important;
+    }
+
+    @include touch { // @debug: why it goes up on mobile ?
+      top: 8px !important;
+    }
+}
+.is-contract-badge-bg {
+    .tag {
+        color: $dark !important;
+        background-color: var(--warning) !important;
+    }
+}

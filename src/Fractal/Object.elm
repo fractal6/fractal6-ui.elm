@@ -5,6 +5,18 @@
 module Fractal.Object exposing (..)
 
 
+type Activity
+    = Activity
+
+
+type ActivityAggregateResult
+    = ActivityAggregateResult
+
+
+type AddActivityPayload
+    = AddActivityPayload
+
+
 type AddBlobPayload
     = AddBlobPayload
 
@@ -139,6 +151,10 @@ type Contract
 
 type ContractAggregateResult
     = ContractAggregateResult
+
+
+type DeleteActivityPayload
+    = DeleteActivityPayload
 
 
 type DeleteBlobPayload
@@ -415,6 +431,10 @@ type Tension
 
 type TensionAggregateResult
     = TensionAggregateResult
+
+
+type UpdateActivityPayload
+    = UpdateActivityPayload
 
 
 type UpdateBlobPayload

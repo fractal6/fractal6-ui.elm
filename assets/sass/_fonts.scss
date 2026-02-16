@@ -215,6 +215,12 @@ i {
 	-ms-transform: rotate(-45deg);
 }
 
+.icon-diamond:before {
+    content: "\e949";
+    display: inline-block;
+    transform: rotate(45deg);
+}
+
 .icon-rotate-45:before {
     display: inline-block;
     transform: rotate(45deg);

@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -366,8 +366,12 @@ quickDocDecoder =
             )
 
 
-{-| Modal Decoder
+
+{-
+   Modal Decoder
 -}
+
+
 modalDataDecoder : JD.Decoder ModalData
 modalDataDecoder =
     JD.map2 ModalData
@@ -376,8 +380,105 @@ modalDataDecoder =
 
 
 
--- Utils
+{-
+   Draft persistence types
+-}
 
 
-type alias LookupResult a =
-    Result String (List a)
+{-| Draft for new tension modal (has title + message)
+-}
+type alias TensionDraft =
+    { title : String
+    , message : String
+    , updatedAt : String
+    }
+
+
+{-| Draft for tension comments (message only)
+-}
+type alias CommentDraft =
+    { message : String
+    , updatedAt : String
+    }
+
+
+{-| Store with explicit separation between new tension and comment drafts
+-}
+type alias DraftStore =
+    { newTension : Maybe TensionDraft
+    , newInvite : Maybe CommentDraft
+    , comments : Dict.Dict String CommentDraft
+    }
+
+
+{-| Type-safe draft update commands
+-}
+type DraftUpdate
+    = SaveNewTension TensionDraft
+    | ClearNewTension
+    | SaveComment String CommentDraft -- tensionId, draft
+    | ClearComment String -- tensionId
+    | SaveNewInvite CommentDraft
+    | ClearNewInvite
+
+
+maxCommentDrafts : Int
+maxCommentDrafts =
+    15
+
+
+initDraftStore : DraftStore
+initDraftStore =
+    { newTension = Nothing
+    , newInvite = Nothing
+    , comments = Dict.empty
+    }
+
+
+tensionDraftDecoder : JD.Decoder TensionDraft
+tensionDraftDecoder =
+    JD.map3 TensionDraft
+        (JD.field "title" JD.string)
+        (JD.field "message" JD.string)
+        (JD.field "updatedAt" JD.string)
+
+
+commentDraftDecoder : JD.Decoder CommentDraft
+commentDraftDecoder =
+    JD.map2 CommentDraft
+        (JD.field "message" JD.string)
+        (JD.field "updatedAt" JD.string)
+
+
+draftStoreDecoder : JD.Decoder DraftStore
+draftStoreDecoder =
+    JD.map3 DraftStore
+        (JD.maybe (JD.field "newTension" tensionDraftDecoder))
+        (JD.maybe (JD.field "newInvite" commentDraftDecoder))
+        (JD.field "comments" (JD.dict commentDraftDecoder))
+
+
+tensionDraftEncoder : TensionDraft -> JE.Value
+tensionDraftEncoder draft =
+    JE.object
+        [ ( "title", JE.string draft.title )
+        , ( "message", JE.string draft.message )
+        , ( "updatedAt", JE.string draft.updatedAt )
+        ]
+
+
+commentDraftEncoder : CommentDraft -> JE.Value
+commentDraftEncoder draft =
+    JE.object
+        [ ( "message", JE.string draft.message )
+        , ( "updatedAt", JE.string draft.updatedAt )
+        ]
+
+
+draftStoreEncoder : DraftStore -> JE.Value
+draftStoreEncoder store =
+    JE.object
+        [ ( "newTension", JEE.maybe tensionDraftEncoder store.newTension )
+        , ( "newInvite", JEE.maybe commentDraftEncoder store.newInvite )
+        , ( "comments", JE.dict identity commentDraftEncoder store.comments )
+        ]

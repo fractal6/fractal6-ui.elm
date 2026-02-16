@@ -1518,3 +1518,69 @@ aggregateEventCount fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "aggregateEventCount" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias GetActivityOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , activityid : OptionalArgument String
+    }
+
+
+getActivity :
+    (GetActivityOptionalArguments -> GetActivityOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Activity
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getActivity fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { id = Absent, activityid = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "id" filledInOptionals____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "activityid" filledInOptionals____.activityid Encode.string ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "getActivity" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryActivityOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ActivityFilter
+    , order : OptionalArgument Fractal.InputObject.ActivityOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryActivity :
+    (QueryActivityOptionalArguments -> QueryActivityOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Activity
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryActivity fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeActivityFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeActivityOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryActivity" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateActivityOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ActivityFilter }
+
+
+aggregateActivity :
+    (AggregateActivityOptionalArguments -> AggregateActivityOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ActivityAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateActivity fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeActivityFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateActivity" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

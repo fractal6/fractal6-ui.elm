@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -29,15 +29,14 @@ import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot)
+import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc exposing (viewUrlForm)
 import Components.OrgaMenu as OrgaMenu
-import Components.SearchBar exposing (viewSearchBar)
+import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
@@ -159,6 +158,9 @@ mapGlobalOutcmds gcmds =
 
                     DoMoveNode a b c ->
                         ( Cmd.map TreeMenuMsg <| send (TreeMenu.MoveNode a b c), Cmd.none )
+
+                    DoUpdateDraft draftUpdate ->
+                        ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
 
                     -- App
                     _ ->
@@ -550,6 +552,8 @@ update global message model =
                     DoModalConfirmOpen (SafeSend msg)
                         { message = Nothing
                         , txts = [ ( T.confirmUnsafe, "" ) ]
+                        , confirmClass = "is-success"
+                        , confirmLabel = T.confirm
                         }
                 , Cmd.none
                 )
@@ -901,8 +905,16 @@ update global message model =
 
         NewTensionMsg msg ->
             let
+                state =
+                    case msg of
+                        NTF.OnOpen _ _ ->
+                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+
+                        _ ->
+                            model.tensionForm
+
                 ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
+                    NTF.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -921,8 +933,16 @@ update global message model =
 
         JoinOrgaMsg msg ->
             let
+                state =
+                    case msg of
+                        JoinOrga.OnOpen _ _ ->
+                            JoinOrga.setCurrentDraft global.session.data.drafts.newInvite model.joinOrga
+
+                        _ ->
+                            model.joinOrga
+
                 ( data, out ) =
-                    JoinOrga.update apis msg model.joinOrga
+                    JoinOrga.update apis msg state
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
@@ -1222,13 +1242,15 @@ viewDefault user model =
             , onSearchKeyDown = SearchKeyDown
             , onSubmitText = SubmitTextSearch
             , id_name = "searchBarProjects"
+            , column_class = "is-8"
+            , field_class = ""
             , placeholder_txt = T.searchProjects
             }
     in
     div []
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-tree-quarter" ]
-                [ viewSearchBar opSearch model.pattern_init model.pattern ]
+                [ viewSearchBarCol opSearch model.pattern_init model.pattern ]
             , if isAdmin then
                 div [ class "column is-one-quarter is-flex is-align-self-flex-start" ]
                     [ button [ class "button is-success is-pushed-right", onClick (SafeEdit AddProject) ] [ textT T.newProject ] ]

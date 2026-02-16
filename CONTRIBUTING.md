@@ -15,7 +15,7 @@ To re-generate the GraphQl parser code for Elm, run (\*):
 ### Elm File structure
 
 The frontend is written in [Elm](https://elm-lang.org/).
-Elm is delightful language, purely functional, typed, with great performance, small assets and that compile to Javascript.
+Elm is delightful language, purely functional, typed, with great performance, small assets and that transpile to Javascript.
 
 
 Elm code is structured inside the `src/` folder:

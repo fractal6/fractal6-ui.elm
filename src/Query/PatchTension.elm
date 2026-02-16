@@ -1,6 +1,6 @@
 {-
    Fractale - Self-organisation for humans.
-   Copyright (C) 2025 Fractale Co
+   Copyright (C) 2026 Fractale Co
 
    This file is part of Fractale.
 
@@ -21,6 +21,7 @@
 
 module Query.PatchTension exposing
     ( actionRequest
+    , deleteComment
     , moveTension
     , patchComment
     , patchLiteral
@@ -49,6 +50,7 @@ import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (with)
+import Iso8601
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
@@ -56,6 +58,7 @@ import Query.QueryContract exposing (contractPayload)
 import Query.QueryNode exposing (tidPayload)
 import Query.QueryTension exposing (blobPayload, commentPayload)
 import RemoteData exposing (RemoteData)
+import Time
 
 
 
@@ -262,6 +265,47 @@ patchCommentInputEncoder f =
                 }
     in
     { input = Input.buildUpdateCommentInput inputReq inputOpt }
+
+
+
+{-
+   Delete comment (via updateTension with CommentDeleted event)
+-}
+
+
+deleteComment url tid cid commentCreatedAt uctx time msg =
+    let
+        createdAt =
+            Fractal.Scalar.DateTime (Iso8601.fromTime time)
+
+        events =
+            buildEvents createdAt uctx.username [ Ev TensionEvent.CommentDeleted cid commentCreatedAt ]
+
+        inputReq =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId tid ] }
+                    )
+            }
+
+        historyPatch =
+            Input.buildTensionPatch (\s -> { s | history = events }) |> Present
+
+        inputOpt =
+            \_ ->
+                { set = historyPatch
+                , remove = Absent
+                }
+    in
+    makeGQLMutation url
+        (Mutation.updateTension
+            { input = Input.buildUpdateTensionInput inputReq inputOpt }
+            (SelectionSet.map TensionIdPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
 
 
 
