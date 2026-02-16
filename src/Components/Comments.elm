@@ -1429,7 +1429,8 @@ viewCommentInputHeader op targetid form =
             , div [ onClick (op.onRichText targetid "Link"), class "", title "Link" ] [ span [] [ A.icon "icon-link icon-sm" ] ]
             , div [ onClick (op.onRichText targetid "List-ul"), class "", title "List" ] [ span [] [ A.icon "icon-list-ul icon-sm" ] ]
             , div [ onClick (op.onRichText targetid "List-ol"), class "", title "Ordered list" ] [ span [] [ A.icon "icon-list-ol icon-sm" ] ]
-            , div [ onClick (op.onRichText targetid "List-check"), class "mr-3", title "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "List-check"), class "", title "Check list" ] [ span [] [ A.icon "icon-check-square icon-sm" ] ]
+            , div [ onClick (op.onRichText targetid "Details"), class "mr-3", title "Collapsible section" ] [ A.icon "icon-chevron-right icon-sm" ]
             , div [ onClick (op.onRichText targetid "MentionUser"), class "", title "Mention an user" ] [ span [] [ A.icon "icon-at-sign icon-sm" ] ]
             , div [ onClick (op.onRichText targetid "MentionTension"), class "mr-3", title "Reference a tension" ] [ A.icon "icon-exchange icon-sm" ]
             , div

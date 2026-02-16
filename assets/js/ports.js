@@ -705,6 +705,9 @@ export const actions = {
             showSearchInput($input, document.getElementById(target + "searchInput"), app);
         } else if (c == "MentionTension") {
             pushLine($input, "0x", true)
+        } else if (c == "Details") {
+            insertBlock($input,
+                "<details>\n<summary>", "</summary>\n\n", "\n</details>")
         } else {
             console.warn("Rich text command not found.")
             return
@@ -912,5 +915,45 @@ function pushLine(obj, mark, isInline) {
         obj.selectionStart =
             obj.selectionEnd = nextLine + replacement.length + prefix.length;
     }
+}
+
+// Insert a block template (e.g. <details><summary>).
+// prefix is inserted before the selection/cursor, middle after the selection,
+// and suffix closes the block. Cursor is placed where the selection content goes.
+function insertBlock(obj, prefix, middle, suffix) {
+    var value = obj.value;
+    var start = obj.selectionStart;
+    var end = obj.selectionEnd;
+    var selection = value.substring(start, end);
+
+    // Ensure block starts on its own line
+    var before = "";
+    if (start > 0 && value[start - 1] !== "\n") {
+        before = value[start - 2] === "\n" ? "\n" : "\n\n";
+    }
+
+    // Ensure block ends before next content
+    var after = "";
+    if (end < value.length && value[end] !== "\n") {
+        after = value[end + 1] === "\n" ? "\n" : "\n\n";
+    }
+
+    var replacement;
+    var cursorPos;
+    if (selection) {
+        // Wrap selection: <details>\n<summary></summary>\n\nSELECTION\n</details>
+        replacement = before + prefix + middle + selection + suffix + after;
+        // Place cursor inside the summary tag
+        cursorPos = start + before.length + prefix.length;
+    } else {
+        // No selection: insert full template with placeholder
+        replacement = before + prefix + middle + suffix + after;
+        // Place cursor after prefix (in the summary area)
+        cursorPos = start + before.length + prefix.length;
+    }
+
+    obj.setRangeText("", start, end);
+    document.execCommand("insertText", false, replacement);
+    obj.selectionStart = obj.selectionEnd = cursorPos;
 }
 
