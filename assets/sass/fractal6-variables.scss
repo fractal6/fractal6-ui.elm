@@ -116,6 +116,7 @@ $f6-light-theme: (
   // Borders
   border-color: var(--bulma-text-60),
   border-color-light: var(--bulma-text-80),
+  border-color-lighter: hsl(220, 14%, 92%),
 
   // Markdown
   code-color: $background-header-light,
@@ -209,6 +210,8 @@ $f6-dark-theme: (
   // Borders
   border-color: var(--bulma-border),
   border-color-light: var(--bulma-border-weak),
+  border-color-lighter: hsl(221, 14%, 18%),
+
 
   // Markdown
   code-color: $background-header-dark,

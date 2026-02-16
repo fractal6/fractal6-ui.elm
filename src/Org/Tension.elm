@@ -1847,7 +1847,7 @@ viewConversation u t model =
         Success t_comments ->
             div [ class "comments" ]
                 [ Lazy.lazy3 Comments.viewCommentsTension model.session t.action model.comments |> Html.map CommentsMsg
-                , hr [ class "has-background-border-light is-2" ] []
+                , hr [ class "is-2" ] []
                 , userInput
                 ]
 

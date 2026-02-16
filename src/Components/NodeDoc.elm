@@ -667,7 +667,7 @@ viewBlob data op_m =
                          else
                             [ showMaybe data.node (\node -> viewAboutSection node data (Just op.onChangeEdit)) ]
                         )
-                            ++ [ hr [ class "has-background-border-light" ] [] ]
+                            ++ [ hr [] [] ]
                             ++ (if op.data.editMode == Just EditMandate then
                                     let
                                         isSendable =
@@ -748,7 +748,7 @@ viewBlob data op_m =
                                 text ""
                             ]
                     )
-                , hr [ class "has-background-border-light" ] []
+                , hr [] []
                 , viewMandateSection data.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
 

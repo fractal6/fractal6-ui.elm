@@ -625,7 +625,7 @@ viewPanel tree_data model =
                     if List.length data > 0 then
                         -- @warning: height of this element manually to be able to work on relative
                         -- height percentage for .parent-block (100% of the parent height).
-                        div [ class "panel-block is-top is-size-7" ]
+                        div [ class "panel-block no-radius is-top is-size-7" ]
                             [ label [ class "is-w", onClickPD OnSelectAll ]
                                 [ input [ type_ "checkbox", checked (List.length model.selected == List.length data) ] []
                                 , text ((List.length data |> String.fromInt) ++ " most recent tensions")
@@ -634,7 +634,7 @@ viewPanel tree_data model =
                             ]
 
                     else
-                        p [ class "panel-block" ] [ text T.noResults, span [ class "is-pushed-right" ] filters_html ]
+                        p [ class "panel-block no-radius" ] [ text T.noResults, span [ class "is-pushed-right" ] filters_html ]
 
                 _ ->
                     text ""

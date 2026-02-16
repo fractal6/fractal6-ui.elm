@@ -942,7 +942,7 @@ viewTensionComments path_data t model =
     in
     div [ class "comments" ]
         [ Comments.viewCommentsTension model.mobileConf t.action model.comments |> Html.map CommentsMsg
-        , hr [ class "has-background-border-light is-2" ] []
+        , hr [ class "is-2" ] []
         , userInput
         ]
 
@@ -1026,7 +1026,7 @@ viewTensionSidePane t model =
             ]
 
         -- Subscriptions
-        , hr [ class "has-background-border-light my-5" ] []
+        , hr [ class "my-5" ] []
         , case model.session.user of
             LoggedIn _ ->
                 let
@@ -1061,7 +1061,7 @@ viewTensionSidePane t model =
                 text ""
 
         -- Extras
-        , hr [ class "has-background-border-light my-5" ] []
+        , hr [ class "my-5" ] []
         , a
             [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
@@ -1257,7 +1257,7 @@ viewDraftSidePane d model =
     in
     div [ class "tensionSidePane" ]
         ([ -- Extras
-           hr [ class "is-transparent has-background-border-light my-5" ] []
+           hr [ class "is-transparent my-5" ] []
          ]
             ++ (if isAdmin || isAuthor then
                     [ div

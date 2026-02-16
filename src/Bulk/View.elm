@@ -23,8 +23,8 @@ module Bulk.View exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
-import Dict exposing (Dict)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPos)
@@ -866,7 +866,7 @@ mediaOrga commonOp user_m root =
                                 roles =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
-                            [ ternary (List.length roles > 0) (hr [ class "has-background-border-light mb-3" ] []) (text "")
+                            [ ternary (List.length roles > 0) (hr [ class "mb-3" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
                                     |> List.map

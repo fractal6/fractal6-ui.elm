@@ -754,7 +754,7 @@ viewContractPage c op model =
             -- Close, Cancelled or no auth.
             text ""
         , Comments.viewCommentsContract model.session model.comments |> Html.map CommentsMsg
-        , hr [ class "has-background-border-light is-2" ] []
+        , hr [ class "is-2" ] []
         , case model.session.user of
             LoggedIn _ ->
                 if isParticipant || isValidator || isCandidate then

@@ -87,7 +87,7 @@
 }
 
 hr {
-    background-color: var(--border-color-light);
+    background-color: var(--border-color-lighter);
     height: 1px !important;
     &.is-2 {
         height: 2px !important
@@ -867,7 +867,6 @@ tr.mediaBox {
         background-color: var(--table-head-background-color);
     }
 
-
     td:first-child, th:first-child {
         //border-left: medium none;
         border-left: $border-size solid var(--border-color-light);
@@ -907,6 +906,9 @@ tr.mediaBox {
     }
     tbody tr:first-child td {
         border-top: $border-size solid var(--border-color-light) !important;
+    }
+    tbody tr:last-child td {
+        border-bottom: $border-size solid var(--border-color-light) !important;
     }
 }
 

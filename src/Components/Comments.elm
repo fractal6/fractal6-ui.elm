@@ -1505,13 +1505,10 @@ viewCommentTextarea session targetid opts form userInput =
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]
-                [ renderMarkdown "is-human hidden-textarea" message, hr [ class "has-background-border-light" ] [] ]
+                [ renderMarkdown "is-human hidden-textarea" message, hr [] [] ]
 
           else
             text ""
         , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
         ]
-
-
-
