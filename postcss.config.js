@@ -32,7 +32,7 @@ module.exports = {
             dynamicAttributes: ['aria-selected'],
             variables: true, // remove unused CSS variables
             safelist: {
-                standard: ['blockquote', 'hero', 'ul', 'ol'],
+                standard: ['blockquote', 'hero', 'ul', 'ol', 'details', 'summary'],
                 variables: cssVarSafeList,
                 deep:  [/^is-/, /^has-/]
             }

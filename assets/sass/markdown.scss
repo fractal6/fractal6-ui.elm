@@ -1,171 +1,194 @@
 @use "shared" as *;
 
 .markdown-body {
-	// Fixes
-	color: var(--bulma-text);
-	&.fix-inline > p {
-		display: inline;
-	}
+    // Fixes
+    color: var(--bulma-text);
+    &.fix-inline > p {
+        display: inline;
+    }
     // Fix list margins
     ul, ol {
         margin-top: 0.5rem;
-		margin-left: 1.25rem;
+        margin-left: 1.25rem;
     }
-	& > ul, & > ol {
+    & > ul, & > ol, details > ul, details > ol {
         margin-top: 0;
-	}
+    }
 
     li {
-      margin-top: 0.4rem;
-      margin-bottom: 0.4rem;
+        margin-top: 0.4rem;
+        margin-bottom: 0.4rem;
     }
 
     h1, h2, h3, h4, h5, h6 {
         color: var(--text-evidence);
     }
     h1 {
-      font-size: 2.5em;
+        font-size: 2.5em;
     }
     h2 {
-      font-size: 2em;
+        font-size: 2em;
     }
     h3 {
-      font-size: 1.5em;
+        font-size: 1.5em;
     }
     h4 {
-      font-size: 1.25em;
+        font-size: 1.25em;
     }
     h5 {
-      font-size: 1em;
+        font-size: 1em;
     }
     h6 {
-      font-size: 0.875em;
+        font-size: 0.875em;
     }
 
-	// Html
+    // Html
     // --
-	pre, code {
-		@include defaultFontFace;
-		font-size: 14px;
-		max-height: 500px;
-		color: currentColor;
-		background-color: var(--code-color) !important;
-	}
-    pre {
-		border-radius: 10px;
+    pre, code {
+        @include defaultFontFace;
+        font-size: 14px;
+        max-height: 500px;
+        color: currentColor;
+        background-color: var(--code-color) !important;
     }
-	a {
+    pre {
+        border-radius: 10px;
+    }
+    a {
         // Having a different color for external and internal link might be a bad idea has it confuses the eyes, finally...
-		//color: var(--info) !important;
-		color: var(--link) !important;
-		text-decoration: none !important;
+        //color: var(--info) !important;
+        color: var(--link) !important;
+        text-decoration: none !important;
         &.is-link {
             color: var(--link) !important;
         }
-	}
-	a:hover {
-		text-decoration: underline !important;
-	}
-	a:visited {
-		color: var(--info-light);
-	}
+    }
+    a:hover {
+        text-decoration: underline !important;
+    }
+    a:visited {
+        color: var(--info-light);
+    }
     blockquote {
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
-		padding-left: 15px;
-		padding-right: 0;
-		background: inherit;
-		font-weight: 600;
-		border-color: var(--border-color-light);
-		//filter: invert(25%);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 15px;
+        padding-right: 0;
+        background: inherit;
+        font-weight: 600;
+        border-color: var(--border-color-light);
+        //filter: invert(25%);
     }
     li.is-checkbox {
         display: flex;
         margin-left: -1rem;
         list-style: none;
     }
-	li input[type="checkbox"] {
-		margin-right: 8px;
-		//accent-color: #00eaff; very recent version !
+    li input[type="checkbox"] {
+        margin-right: 8px;
+        //accent-color: #00eaff; very recent version !
 
-		// Pseudo ing element
-		width: 15px;
-		height: 15px;
-		//cursor: pointer;
+        // Pseudo ing element
+        width: 15px;
+        height: 15px;
+        //cursor: pointer;
 
         &:not(:checked) {
             opacity: 0.75;
         }
-	}
-	li p {
-		// checkbox are defined before <p> (dillonkeans,)
-		display: inline;
-	}
-	strong {
-		font-weight: 700;
-	}
+    }
+    li p {
+        // checkbox are defined before <p> (dillonkeans,)
+        display: inline;
+    }
+    strong {
+        font-weight: 700;
+    }
     em {
         font-style: italic !important;
     }
-	details.md-details {
-		margin-top: 0;
-		margin-bottom: 16px;
+    details.md-details {
+        margin-top: 0;
+        margin-bottom: 16px;
 
-		summary {
-			cursor: pointer;
-			font-weight: 600;
-			display: list-item;
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            display: list-item;
 
-			> p {
-				display: inline;
-			}
-		}
+            > p {
+                display: inline;
+            }
 
-		// Animate expand via @starting-style; collapse uses allow-discrete
-		// (collapse animation depends on browser support — falls back to instant close)
-		> *:not(summary) {
-			overflow: hidden;
-			opacity: 1;
-			max-height: 500px;
-			transition: opacity 0.3s ease, max-height 0.4s ease,
-						display 0.4s allow-discrete;
-		}
+            &::marker {
+                font-size: 1.2rem;
+            }
+        }
 
-		&:not([open]) > *:not(summary) {
-			display: none !important;
-			opacity: 0;
-			max-height: 0;
-		}
+        // Use padding instead of margin for nested lists so markers aren't
+        // clipped by the overflow: hidden needed for the expand animation.
+        > ul, > ol {
+            padding-left: 1.25rem;
+            margin-left: 0;
+        }
 
-		@starting-style {
-			&[open] > *:not(summary) {
-				opacity: 0;
-				max-height: 0;
-			}
-		}
-	}
-.table-container {
-		overflow: auto !important;
-	}
-	table {
-		width: auto !important;
-		border: 1px solid var(--border-color) !important;
-		max-height: 500px;
+        // Animate expand via @starting-style; collapse uses allow-discrete
+        // (collapse animation depends on browser support — falls back to instant close)
+        > *:not(summary) {
+            overflow: hidden;
+            opacity: 1;
+            max-height: 500px;
+            transition: opacity 0.3s ease, max-height 0.4s ease,
+            display 0.4s allow-discrete;
+        }
 
-		thead tr:last-child {
-			//border-bottom-style: double !important;
-		}
-		tr:nth-child(even){
-			background-color: var(--comment-header-background-color) !important;
-		}
-		th {
-			border: 1px solid var(--border-color) !important;
+        &[open] {
+            border-image: linear-gradient(to bottom, transparent 2rem, var(--border-color-lighter) 2rem) 1;
+            border-left: 1px solid;
+            padding-left: 0.75rem;
 
-		}
-		td {
-			border: 1px solid var(--border-color) !important;
-		}
-	}
+            > summary {
+                margin-left: calc(-0.75rem - 1px);
+                margin-bottom: .5rem;
+            }
+        }
+
+        &:not([open]) > *:not(summary) {
+            display: none !important;
+            opacity: 0;
+            max-height: 0;
+        }
+
+        @starting-style {
+            &[open] > *:not(summary) {
+                opacity: 0;
+                max-height: 0;
+            }
+        }
+    }
+
+    .table-container {
+        overflow: auto !important;
+    }
+    table {
+        width: auto !important;
+        border: 1px solid var(--border-color) !important;
+        max-height: 500px;
+
+        thead tr:last-child {
+            //border-bottom-style: double !important;
+        }
+        tr:nth-child(even){
+            background-color: var(--comment-header-background-color) !important;
+        }
+        th {
+            border: 1px solid var(--border-color) !important;
+
+        }
+        td {
+            border: 1px solid var(--border-color) !important;
+        }
+    }
 }
 
 // Fix colors,
@@ -184,8 +207,8 @@
 
 // Fix highlight color in human mardown
 .markdown-body.is-human {
-	strong {
-		color: var(--text-strong);
+    strong {
+        color: var(--text-strong);
     }
 
     em {
