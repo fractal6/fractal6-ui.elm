@@ -457,11 +457,14 @@ update global message model =
         GoBack ->
             ( model
             , Cmd.none
-            , send <|
-                NavigateRaw <|
-                    withDefault "" <|
-                        Maybe.map (\r -> r.path ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")) <|
-                            model.can_referer
+            , case model.can_referer of
+                Just r ->
+                    send <|
+                        NavigateRaw <|
+                            r.path ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")
+
+                Nothing ->
+                    send NavigateBack
             )
 
         -- Help

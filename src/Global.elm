@@ -120,6 +120,7 @@ init flags url key =
 type Msg
     = Navigate Route
     | NavigateRaw String
+    | NavigateBack
     | ReplaceUrl String
     | SetTime Time.Posix
     | UpdateCanReferer (Maybe Url)
@@ -193,6 +194,9 @@ update msg model =
 
         NavigateRaw route ->
             ( model, Nav.pushUrl model.key route )
+
+        NavigateBack ->
+            ( model, Nav.back model.key 1 )
 
         ReplaceUrl url ->
             ( model, Nav.replaceUrl model.key url )
