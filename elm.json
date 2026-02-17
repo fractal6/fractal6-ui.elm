@@ -32,7 +32,6 @@
             "justinmimbs/date": "4.1.0",
             "krisajenkins/remotedata": "6.0.1",
             "rtfeldman/elm-iso8601-date-strings": "1.1.4"
-
         },
         "indirect": {
             "avh4/elm-color": "1.0.0",
@@ -46,9 +45,12 @@
         }
     },
     "test-dependencies": {
-        "direct": {},
+        "direct": {
+            "elm-explorations/test": "2.2.1"
+        },
         "indirect": {
-            "mdgriffith/elm-ui": "1.1.5"
+            "mdgriffith/elm-ui": "1.1.5",
+            "elm/random": "1.0.0"
         }
     }
 }

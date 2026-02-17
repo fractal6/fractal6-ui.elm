@@ -57,6 +57,12 @@ review:
 	mkdir -p review
 	elm-review --ignore-dirs src/Fractal/ --compiler node_modules/.bin/elm > review/reviews.json
 
+test:
+	elm-test tests/Unit/
+
+test_e2e:
+	robot --outputdir tests/robot/robotresults tests/robot/
+
 #
 # Publish builds in public folder for all LANGS
 #

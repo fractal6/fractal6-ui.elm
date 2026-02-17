@@ -8,7 +8,7 @@ releases/
 review/
 
 # Tests
-tests/robotresults/
+tests/robot/robotresults/
 
 # Auto-generated
 src/Text.elm

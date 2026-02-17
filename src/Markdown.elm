@@ -19,7 +19,7 @@
 -}
 
 
-module Markdown exposing (renderMarkdown, setMdCheckbox)
+module Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks, renderMarkdown, setMdCheckbox)
 
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
@@ -51,6 +51,40 @@ userRegex =
 tensionRegex : Regex.Regex
 tensionRegex =
     regexFromString "(^|[^\\w\\[\\`])0x[0-9a-f]+"
+
+
+{-| Match bare '&' that are NOT already part of an HTML entity.
+Negative lookahead skips named (&amp;), decimal (&#123;) and lowercase hex (&#x1f;) entities.
+Uppercase hex (&#x1F;) is intentionally NOT protected because elm-markdown
+rejects it — escaping it to &amp; is safer than letting the parser crash.
+-}
+ampersandRegex : Regex.Regex
+ampersandRegex =
+    regexFromString "&(?![a-zA-Z]+;|#[0-9]+;|#x[0-9a-f]+;)"
+
+
+{-| Match ALL HTML tags registered as custom handlers in frac6Renderer.
+Used to escape them inside code fences within HTML blocks, because
+elm-markdown's HTML scanner does not respect code fences — it sees tags
+in a code fence and tries to parse them as real HTML, breaking the code block.
+The list must stay in sync with the Markdown.Html.oneOf handlers in frac6Renderer.
+-}
+htmlBlockTagRegex : Regex.Regex
+htmlBlockTagRegex =
+    regexFromString "<(/?(?:details|summary|div|span|u|i))\\b"
+
+
+{-| Testable version of the markdown pipeline: preprocess + parse + render.
+Returns Ok on success, Err with the error string on failure.
+-}
+parseMarkdown : String -> Result String (List (Html msg))
+parseMarkdown content =
+    content
+        |> frac6Parser
+        |> Markdown.parse
+        |> Result.mapError deadEndsToString
+        |> Result.andThen
+            (\ast -> Markdown.Renderer.render (frac6Renderer "" True) ast)
 
 
 renderMarkdown : String -> String -> Html msg
@@ -289,19 +323,33 @@ mardownRoutine style rep next_replacers content =
 --
 
 
+{-| Preprocess raw markdown before passing it to the elm-markdown parser.
+
+escapeAmpersandsInHtmlBlocks runs first on the FULL content (it has its own
+code-fence tracking) because elm-markdown's HTML block parser scans content
+inside <details>/<div> — including code fences — before identifying markdown
+structures. A bare '&' anywhere inside an HTML block will crash the parser.
+
+The remaining transformations (escapeLinks, forced line breaks) are wrapped
+in processOutsideCodeBlocks so they don't modify fenced code block content.
+-}
 frac6Parser : String -> String
 frac6Parser content =
     content
-        -- Username format
-        --|> Regex.replace (regexFromString "(^|\\s|[^\\w\\[\\`])@([\\w\\-\\.]+)\\b") userLink
-        -- Tension format
-        --|> Regex.replace (regexFromString "\\b0x[0-9a-f]+") tensionLink
-        -- Autolink
-        --|> Regex.replace urlRegex autoLink
-        -- Escape "_" in link to give the priority to autolink
-        |> escapeLinks
-        -- Force line break (except for Table)
-        |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)
+        -- Escape bare '&' inside HTML block tags (<details>, <div>)
+        -- so the elm-markdown HTML parser doesn't choke on them
+        -- (e.g. URLs with &param=value would produce "No entity named …" errors).
+        -- Must run on the full content including code fences (see docstring).
+        |> escapeAmpersandsInHtmlBlocks
+        -- Apply the remaining transformations only outside code fences
+        |> processOutsideCodeBlocks
+            (\segment ->
+                segment
+                    -- Escape "_" in link to give the priority to autolink
+                    |> escapeLinks
+                    -- Force line break (except for Table rows starting with |)
+                    |> Regex.replace (regexFromString "\n[^\n|]") (\m -> "  " ++ m.match)
+            )
 
 
 autoLink : Regex.Match -> String -> String
@@ -436,6 +484,142 @@ escapeLinks input =
     input
         |> Regex.find urlRegex
         |> List.foldl (\match acc -> replaceUnderscores match.match acc) input
+
+
+{-| Apply a transformation only to content outside fenced code blocks (``` or ~~~).
+Lines inside code fences are passed through unchanged. This prevents the
+preprocessor from mangling code examples that contain HTML tags, URLs, etc.
+-}
+processOutsideCodeBlocks : (String -> String) -> String -> String
+processOutsideCodeBlocks transform content =
+    let
+        fencePattern =
+            "^\\s*(```|~~~)"
+
+        -- Walk lines, toggling inFence on each fence delimiter.
+        -- Accumulate (isCode, lines) segments that are later joined back.
+        folder line ( inFence, currentLines, acc ) =
+            if regexContains fencePattern line then
+                if inFence then
+                    -- Closing fence: finish the code segment (include this fence line)
+                    ( False, [], acc ++ [ ( True, List.reverse (line :: currentLines) ) ] )
+
+                else
+                    -- Opening fence: flush the preceding non-code segment, start code
+                    ( True, [ line ], acc ++ [ ( False, List.reverse currentLines ) ] )
+
+            else
+                ( inFence, line :: currentLines, acc )
+
+        ( finalInFence, finalLines, segments ) =
+            List.foldl folder ( False, [], [] ) (String.lines content)
+
+        allSegments =
+            segments ++ [ ( finalInFence, List.reverse finalLines ) ]
+    in
+    allSegments
+        |> List.filterMap
+            (\( isCode, segLines ) ->
+                if List.isEmpty segLines then
+                    -- Drop empty segments to avoid spurious newlines at boundaries
+                    Nothing
+
+                else if isCode then
+                    Just (String.join "\n" segLines)
+
+                else
+                    Just (transform (String.join "\n" segLines))
+            )
+        |> String.join "\n"
+
+
+{-| Escape bare '&' to '&amp;' but only on lines that sit inside an HTML
+block element (<details> or <div>). This is needed because elm-markdown's
+HTML block parser requires proper entity encoding — a bare '&' followed by
+letters (like in ?a=1&bar=2) is rejected as an invalid entity reference.
+
+Lines outside HTML blocks are left untouched since the regular markdown
+parser accepts bare '&' without issue.
+
+This function tracks fenced code blocks (``` / ~~~) so that:
+  - <details> tags inside a code fence do NOT change the HTML depth
+  - '&' inside a code fence that is itself inside an HTML block IS escaped,
+    because elm-markdown's HTML scanner sees it before identifying the fence
+-}
+escapeAmpersandsInHtmlBlocks : String -> String
+escapeAmpersandsInHtmlBlocks content =
+    let
+        -- Only target block-level elements that elm-markdown parses as HTML blocks
+        openPattern =
+            "^\\s*<(details|div)\\b"
+
+        closePattern =
+            "</(details|div)>"
+
+        fencePattern =
+            "^\\s*(```|~~~)"
+
+        folder line ( depth, inFence, result ) =
+            let
+                -- Toggle fence state on fence delimiters
+                isFence =
+                    regexContains fencePattern line
+
+                newInFence =
+                    if isFence then
+                        not inFence
+
+                    else
+                        inFence
+
+                -- Only count HTML open/close tags when outside code fences,
+                -- so that <details> appearing in code examples doesn't alter depth
+                opens =
+                    if not inFence && not newInFence && regexContains openPattern line then
+                        1
+
+                    else
+                        0
+
+                closes =
+                    if not inFence && not newInFence && regexContains closePattern line then
+                        1
+
+                    else
+                        0
+
+                -- Escape '&' when we are currently inside (or entering) an HTML block,
+                -- regardless of whether we are also inside a code fence.
+                -- Additionally, when inside a code fence within an HTML block,
+                -- escape block-level opening/closing tags (<details>, <div>) to &lt;
+                -- because elm-markdown's HTML scanner doesn't respect code fences —
+                -- it would see <details> in the code and try to parse a nested HTML block.
+                -- The visual trade-off: <details> in code renders as &lt;details>
+                -- but that's better than a parse crash for this rare edge case.
+                processedLine =
+                    if depth + opens > 0 then
+                        let
+                            ampEscaped =
+                                Regex.replace ampersandRegex (\_ -> "&amp;") line
+                        in
+                        if inFence || newInFence then
+                            Regex.replace htmlBlockTagRegex (\m -> "&lt;" ++ String.dropLeft 1 m.match) ampEscaped
+
+                        else
+                            ampEscaped
+
+                    else
+                        line
+
+                newDepth =
+                    max 0 (depth + opens - closes)
+            in
+            ( newDepth, newInFence, result ++ [ processedLine ] )
+
+        ( _, _, processedLines ) =
+            List.foldl folder ( 0, False, [] ) (String.lines content)
+    in
+    String.join "\n" processedLines
 
 
 {-| Function to set checkbox at the checkbox posisiont (checkbox count)
