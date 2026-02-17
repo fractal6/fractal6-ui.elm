@@ -834,12 +834,13 @@ viewEventPinned session event isPinned =
             List.intersperse (text " ")
                 [ viewUsernameLink event.createdBy.username
                 , strong [ class "has-text-evidence" ] [ text actionText ]
-                , text T.this
+                , text T.thisF
                 , textD (T.tension session.lexicon)
                 , text (formatDate session.lang session.now event.createdAt)
                 ]
         ]
     ]
+
 
 
 --

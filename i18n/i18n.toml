@@ -1015,9 +1015,17 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="the"
   fr="le"
 
+[theF]
+  en="the"
+  fr="la"
+
 [this]
   en="this"
   fr="ce"
+
+[thisF]
+  en="this"
+  fr="cette"
 
 [write]
   en="Write"
