@@ -1270,11 +1270,20 @@ viewDefault user model =
 
 viewProjects : Model -> Html Msg
 viewProjects model =
+    let
+        canEditProject project =
+            case model.session.user of
+                LoggedIn uctx ->
+                    getProjectRights uctx project model.path_data
+
+                LoggedOut ->
+                    False
+    in
     div [ class "columns" ]
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
-            , viewProjectsList model.session model.node_focus model.pattern_init model.statusFilter model.projects
-            , viewProjectsSub model.commonOp model.session model.node_focus model.projects_sub
+            , viewProjectsList canEditProject model.session model.node_focus model.pattern_init model.statusFilter model.projects
+            , viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.projects_sub
             ]
         ]
 
@@ -1342,8 +1351,8 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
-viewProjectsList session focus pattern statusFilter data =
+viewProjectsList : (ProjectFull -> Bool) -> SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList canEditProject session focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -1353,7 +1362,7 @@ viewProjectsList session focus pattern statusFilter data =
             Success items ->
                 if List.length items > 0 then
                     items
-                        |> List.map (\x -> Lazy.lazy4 mediaProject session focus statusFilter x)
+                        |> List.map (\x -> Lazy.lazy5 mediaProject (canEditProject x) session focus statusFilter x)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= "" then
@@ -1376,15 +1385,15 @@ viewProjectsList session focus pattern statusFilter data =
         ]
 
 
-viewProjectsSub : CommonMsg Msg -> SessionCommon -> NodeFocus -> RestData (List ProjectFull) -> Html Msg
-viewProjectsSub commonOp session focus data =
+viewProjectsSub : (ProjectFull -> Bool) -> CommonMsg Msg -> SessionCommon -> NodeFocus -> RestData (List ProjectFull) -> Html Msg
+viewProjectsSub canEditProject commonOp session focus data =
     case data of
         RemoteData.Success items ->
             if List.length items > 0 then
                 div [ class "mt-6" ]
                     [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text T.subProjects ]
                     , div [ class "box is-shrinked" ]
-                        (List.map (viewProjectSubRow commonOp session focus) items)
+                        (List.map (\p -> viewProjectSubRow (canEditProject p) commonOp session focus p) items)
                     ]
 
             else
@@ -1397,8 +1406,8 @@ viewProjectsSub commonOp session focus data =
             text ""
 
 
-viewProjectSubRow : CommonMsg Msg -> SessionCommon -> NodeFocus -> ProjectFull -> Html Msg
-viewProjectSubRow commonOp session focus project =
+viewProjectSubRow : Bool -> CommonMsg Msg -> SessionCommon -> NodeFocus -> ProjectFull -> Html Msg
+viewProjectSubRow canEdit commonOp session focus project =
     div
         [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] []
@@ -1431,11 +1440,34 @@ viewProjectSubRow commonOp session focus project =
                     ]
                 ]
             ]
+        , if canEdit then
+            div [ class "media-right wrapped-container-33" ]
+                [ div [ class "dropdown is-right" ]
+                    [ div [ class "dropdown-trigger is-w is-h" ]
+                        [ div
+                            [ class "ellipsis"
+                            , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
+                            , attribute "aria-haspopup" "true"
+                            ]
+                            [ A.icon "icon-more-horizontal icon-lg" ]
+                        ]
+                    , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
+                        [ div [ class "dropdown-content p-0" ] <|
+                            [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (ChangeStatus ProjectStatus.Closed project) ] [ text T.close ]
+                            ]
+                        ]
+                    ]
+                ]
+
+          else
+            text ""
         ]
 
 
-mediaProject : SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
-mediaProject session focus statusFilter project =
+mediaProject : Bool -> SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject canEdit session focus statusFilter project =
     let
         ( status_new, status_txt ) =
             case statusDecoder statusFilter of
@@ -1474,23 +1506,27 @@ mediaProject session focus statusFilter project =
                 , div [ class "level-right" ] []
                 ]
             ]
-        , div [ class "media-right wrapped-container-33" ]
-            [ div [ class "dropdown is-right" ]
-                [ div [ class "dropdown-trigger is-w is-h" ]
-                    [ div
-                        [ class "ellipsis"
-                        , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
-                        , attribute "aria-haspopup" "true"
+        , if canEdit then
+            div [ class "media-right wrapped-container-33" ]
+                [ div [ class "dropdown is-right" ]
+                    [ div [ class "dropdown-trigger is-w is-h" ]
+                        [ div
+                            [ class "ellipsis"
+                            , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
+                            , attribute "aria-haspopup" "true"
+                            ]
+                            [ A.icon "icon-more-horizontal icon-lg" ]
                         ]
-                        [ A.icon "icon-more-horizontal icon-lg" ]
-                    ]
-                , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
-                    [ div [ class "dropdown-content p-0" ] <|
-                        [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
-                        , hr [ class "dropdown-divider" ] []
-                        , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
+                    , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
+                        [ div [ class "dropdown-content p-0" ] <|
+                            [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
+                            , hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
+                            ]
                         ]
                     ]
                 ]
-            ]
+
+          else
+            text ""
         ]
