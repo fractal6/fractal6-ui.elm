@@ -23,7 +23,8 @@ module Requests exposing (..)
 
 import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
-import Codecs exposing (emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Dict exposing (Dict)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
@@ -36,9 +37,9 @@ import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
-import Loading exposing (expectJson, fromResult, mapRest2Gql)
+import Loading exposing (GqlData, RestData, expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, ProjectsCount, Tension, TensionLight, TensionsCount, User, Username)
+import ModelSchema exposing (Label, Member, NodeId, ProjectFull, ProjectsCount, RoleExt, Tension, TensionLight, TensionsCount, User, UserCtx, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
 import Session exposing (Apis)
@@ -70,6 +71,7 @@ setHeaders api =
     Get all children ** Nodes ** below the given node recursively
 
 -}
+fetchChildren : Apis -> String -> (RestData (List NodeId) -> msg) -> Cmd msg
 fetchChildren api targetid msg =
     Http.riskyRequest
         { method = "POST"
@@ -87,6 +89,7 @@ fetchChildren api targetid msg =
     Get all member ** Nodes ** below the given node (role with lead link) recursively
 
 -}
+fetchMembersSub : Apis -> String -> Bool -> (GqlData (List Member) -> msg) -> Cmd msg
 fetchMembersSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -117,6 +120,7 @@ membersDecoder =
     Get all ** Labels ** from the parent, until the root node
 
 -}
+fetchLabelsTop : Apis -> String -> Bool -> (RestData (List Label) -> msg) -> Cmd msg
 fetchLabelsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -134,6 +138,7 @@ fetchLabelsTop api targetid include_self msg =
     Get all ** Labels ** below the given node recursively
 
 -}
+fetchLabelsSub : Apis -> String -> Bool -> (RestData (List Label) -> msg) -> Cmd msg
 fetchLabelsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -151,6 +156,7 @@ fetchLabelsSub api targetid include_self msg =
     Get all ** Roles ** from the parent, until the root node
 
 -}
+fetchRolesTop : Apis -> String -> Bool -> (RestData (List RoleExt) -> msg) -> Cmd msg
 fetchRolesTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -168,6 +174,7 @@ fetchRolesTop api targetid include_self msg =
     Get all ** Roles ** below the given node recursively
 
 -}
+fetchRolesSub : Apis -> String -> Bool -> (RestData (List RoleExt) -> msg) -> Cmd msg
 fetchRolesSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -185,6 +192,7 @@ fetchRolesSub api targetid include_self msg =
     Get all ** Project ** from the parent, until the root node
 
 -}
+fetchProjectsTop : Apis -> String -> Bool -> (RestData (List ProjectFull) -> msg) -> Cmd msg
 fetchProjectsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -202,6 +210,7 @@ fetchProjectsTop api targetid include_self msg =
     Get all ** Project ** below the given node recursively
 
 -}
+fetchProjectsSub : Apis -> String -> Bool -> (RestData (List ProjectFull) -> msg) -> Cmd msg
 fetchProjectsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
@@ -276,6 +285,7 @@ fetchTensionsCount api q msg =
     fetchTension api "tensions_count" q msg (JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int))
 
 
+fetchTension : Apis -> String -> TensionQuery -> (GqlData a -> msg) -> JD.Decoder a -> Cmd msg
 fetchTension api route q msg decoder =
     Http.riskyRequest
         { method = "POST"
@@ -337,6 +347,7 @@ tensionLightDecoder =
 --
 
 
+fetchProjectCount : Apis -> List String -> Maybe String -> Maybe String -> (GqlData ProjectsCount -> msg) -> Cmd msg
 fetchProjectCount api targetids query_ sort_ msg =
     Http.riskyRequest
         { method = "POST"
@@ -365,6 +376,7 @@ projectEncoder nameids first offset query_ status_ sort_ =
 --
 
 
+makeOwner : Apis -> String -> String -> (RestData Bool -> msg) -> Cmd msg
 makeOwner api nameid username msg =
     let
         rootnameid =
@@ -387,6 +399,7 @@ makeOwner api nameid username msg =
 --
 
 
+createOrga : Apis -> Dict String String -> (RestData NodeId -> msg) -> Cmd msg
 createOrga api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -399,6 +412,7 @@ createOrga api post msg =
         }
 
 
+setUserCanJoin : Apis -> String -> Bool -> (RestData Bool -> msg) -> Cmd msg
 setUserCanJoin api nameid val msg =
     Http.riskyRequest
         { method = "POST"
@@ -411,6 +425,7 @@ setUserCanJoin api nameid val msg =
         }
 
 
+setGuestCanCreateTension : Apis -> String -> Bool -> (RestData Bool -> msg) -> Cmd msg
 setGuestCanCreateTension api nameid val msg =
     Http.riskyRequest
         { method = "POST"
@@ -423,6 +438,7 @@ setGuestCanCreateTension api nameid val msg =
         }
 
 
+setLexicon : Apis -> String -> String -> (RestData Bool -> msg) -> Cmd msg
 setLexicon api nameid val msg =
     Http.riskyRequest
         { method = "POST"
@@ -441,6 +457,7 @@ setLexicon api nameid val msg =
 --
 
 
+login : Apis -> Dict String String -> (RestData UserCtx -> msg) -> Cmd msg
 login api post msg =
     --, Http.post
     --    { url = "http://localhost:8888/login"
@@ -458,6 +475,7 @@ login api post msg =
         }
 
 
+logout : Apis -> msg -> Cmd msg
 logout api msg =
     Http.riskyRequest
         { method = "GET"
@@ -470,6 +488,7 @@ logout api msg =
         }
 
 
+signup : Apis -> Dict String String -> (RestData Bool -> msg) -> Cmd msg
 signup api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -482,6 +501,7 @@ signup api post msg =
         }
 
 
+signupValidate : Apis -> Dict String String -> (RestData UserCtx -> msg) -> Cmd msg
 signupValidate api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -494,6 +514,7 @@ signupValidate api post msg =
         }
 
 
+tokenack : Apis -> (RestData UserCtx -> msg) -> Cmd msg
 tokenack api msg =
     Http.riskyRequest
         { method = "POST"
@@ -506,6 +527,7 @@ tokenack api msg =
         }
 
 
+uuidCheck : Apis -> Dict String String -> (RestData Bool -> msg) -> Cmd msg
 uuidCheck api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -518,6 +540,7 @@ uuidCheck api post msg =
         }
 
 
+resetPassword : Apis -> Dict String String -> (RestData Bool -> msg) -> Cmd msg
 resetPassword api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -530,6 +553,7 @@ resetPassword api post msg =
         }
 
 
+resetPassword2 : Apis -> Dict String String -> (RestData UserCtx -> msg) -> Cmd msg
 resetPassword2 api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -542,6 +566,7 @@ resetPassword2 api post msg =
         }
 
 
+resetPasswordChallenge : Apis -> (RemoteData.WebData (Maybe Image) -> msg) -> Cmd msg
 resetPasswordChallenge api msg =
     Http.riskyRequest
         { method = "POST"
@@ -577,6 +602,7 @@ httpReponseToImage response =
             Err (Http.BadStatus metadata.statusCode)
 
 
+updatePassword : Apis -> Dict String String -> (RestData UserCtx -> msg) -> Cmd msg
 updatePassword api post msg =
     Http.riskyRequest
         { method = "POST"
@@ -595,6 +621,7 @@ updatePassword api post msg =
 --
 
 
+getQuickDoc : Apis -> String -> (RestData QuickDoc -> msg) -> Cmd msg
 getQuickDoc api lang msg =
     Http.request
         { method = "GET"
