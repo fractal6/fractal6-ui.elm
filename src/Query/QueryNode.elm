@@ -1243,11 +1243,14 @@ nodeProjectsFullPayload pattern status =
 
 projectFullPayload : SelectionSet ProjectFull Fractal.Object.Project
 projectFullPayload =
-    SelectionSet.map4 ProjectFull
-        (Fractal.Object.Project.id |> SelectionSet.map decodedId)
-        (Fractal.Object.Project.updatedAt |> SelectionSet.map decodedTime)
-        Fractal.Object.Project.name
-        Fractal.Object.Project.description
+    SelectionSet.succeed ProjectFull
+        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Project.updatedAt |> SelectionSet.map decodedTime)
+        |> with Fractal.Object.Project.name
+        |> with Fractal.Object.Project.description
+        |> with (Fractal.Object.Project.parentnameid |> SelectionSet.map Just)
+        |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
+        |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
 
 
 

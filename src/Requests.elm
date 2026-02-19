@@ -87,12 +87,12 @@ fetchChildren api targetid msg =
     Get all member ** Nodes ** below the given node (role with lead link) recursively
 
 -}
-fetchMembersSub api targetid msg =
+fetchMembersSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.rest ++ "/sub_members"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> mapRest2Gql membersNodeDecoder >> msg) membersDecoder
         , timeout = Nothing
         , tracker = Nothing
@@ -134,12 +134,12 @@ fetchLabelsTop api targetid include_self msg =
     Get all ** Labels ** below the given node recursively
 
 -}
-fetchLabelsSub api targetid msg =
+fetchLabelsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.rest ++ "/sub_labels"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
         , tracker = Nothing
@@ -168,12 +168,12 @@ fetchRolesTop api targetid include_self msg =
     Get all ** Roles ** below the given node recursively
 
 -}
-fetchRolesSub api targetid msg =
+fetchRolesSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.rest ++ "/sub_roles"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
         , timeout = Nothing
         , tracker = Nothing
@@ -185,12 +185,12 @@ fetchRolesSub api targetid msg =
     Get all ** Project ** from the parent, until the root node
 
 -}
-fetchProjectsTop api targetid msg =
+fetchProjectsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.rest ++ "/top_projects"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
         , timeout = Nothing
         , tracker = Nothing
@@ -202,12 +202,12 @@ fetchProjectsTop api targetid msg =
     Get all ** Project ** below the given node recursively
 
 -}
-fetchProjectsSub api targetid msg =
+fetchProjectsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
         , url = api.rest ++ "/sub_projects"
-        , body = Http.jsonBody <| JE.string targetid
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
         , timeout = Nothing
         , tracker = Nothing

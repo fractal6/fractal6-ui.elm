@@ -546,6 +546,14 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Project"
   fr="Projet"
 
+[subProjects]
+  en="Sub-circle projects"
+  fr="Projets des sous-cercles"
+
+[circles]
+  en="Circles"
+  fr="Cercles"
+
 [members]
   en="Members"
   fr="Membres"

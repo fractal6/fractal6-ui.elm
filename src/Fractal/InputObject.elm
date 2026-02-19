@@ -1319,9 +1319,9 @@ buildAddProjectInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { description = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
+                { description = Absent, columns = Absent, fields = Absent, nodes = Absent, collaborators = Absent }
     in
-    AddProjectInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = required____.updatedAt, rootnameid = required____.rootnameid, parentnameid = required____.parentnameid, nameid = required____.nameid, name = required____.name, description = optionals____.description, status = required____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    AddProjectInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = required____.updatedAt, rootnameid = required____.rootnameid, parentnameid = required____.parentnameid, nameid = required____.nameid, name = required____.name, description = optionals____.description, status = required____.status, columns = optionals____.columns, fields = optionals____.fields, nodes = optionals____.nodes, collaborators = optionals____.collaborators }
 
 
 type alias AddProjectInputRequiredFields =
@@ -1340,8 +1340,8 @@ type alias AddProjectInputOptionalFields =
     { description : OptionalArgument String
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -1362,8 +1362,8 @@ type alias AddProjectInputRaw =
     , status : Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -1378,7 +1378,7 @@ type AddProjectInput
 encodeAddProjectInput : AddProjectInput -> Value
 encodeAddProjectInput (AddProjectInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.updatedAt |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "parentnameid", Encode.string input____.parentnameid |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString input____.status |> Just ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.updatedAt |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "parentnameid", Encode.string input____.parentnameid |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString input____.status |> Just ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "collaborators", (encodeUserRef |> Encode.list) |> Encode.optional input____.collaborators ) ]
 
 
 buildAddReactionInput :
@@ -6882,9 +6882,9 @@ buildProjectPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, nodes = Absent, collaborators = Absent }
     in
-    ProjectPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    ProjectPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, nodes = optionals____.nodes, collaborators = optionals____.collaborators }
 
 
 type alias ProjectPatchOptionalFields =
@@ -6899,8 +6899,8 @@ type alias ProjectPatchOptionalFields =
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -6921,8 +6921,8 @@ type alias ProjectPatchRaw =
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -6937,7 +6937,7 @@ type ProjectPatch
 encodeProjectPatch : ProjectPatch -> Value
 encodeProjectPatch (ProjectPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "collaborators", (encodeUserRef |> Encode.list) |> Encode.optional input____.collaborators ) ]
 
 
 buildProjectRef :
@@ -6947,9 +6947,9 @@ buildProjectRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, leaders = Absent, nodes = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, parentnameid = Absent, nameid = Absent, name = Absent, description = Absent, status = Absent, columns = Absent, fields = Absent, nodes = Absent, collaborators = Absent }
     in
-    ProjectRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, leaders = optionals____.leaders, nodes = optionals____.nodes }
+    ProjectRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, parentnameid = optionals____.parentnameid, nameid = optionals____.nameid, name = optionals____.name, description = optionals____.description, status = optionals____.status, columns = optionals____.columns, fields = optionals____.fields, nodes = optionals____.nodes, collaborators = optionals____.collaborators }
 
 
 type alias ProjectRefOptionalFields =
@@ -6965,8 +6965,8 @@ type alias ProjectRefOptionalFields =
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -6988,8 +6988,8 @@ type alias ProjectRefRaw =
     , status : OptionalArgument Fractal.Enum.ProjectStatus.ProjectStatus
     , columns : OptionalArgument (List ProjectColumnRef)
     , fields : OptionalArgument (List ProjectFieldRef)
-    , leaders : OptionalArgument (List NodeRef)
     , nodes : OptionalArgument (List NodeRef)
+    , collaborators : OptionalArgument (List UserRef)
     }
 
 
@@ -7004,7 +7004,7 @@ type ProjectRef
 encodeProjectRef : ProjectRef -> Value
 encodeProjectRef (ProjectRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "leaders", (encodeNodeRef |> Encode.list) |> Encode.optional input____.leaders ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parentnameid", Encode.string |> Encode.optional input____.parentnameid ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "status", Encode.enum Fractal.Enum.ProjectStatus.toString |> Encode.optional input____.status ), ( "columns", (encodeProjectColumnRef |> Encode.list) |> Encode.optional input____.columns ), ( "fields", (encodeProjectFieldRef |> Encode.list) |> Encode.optional input____.fields ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "collaborators", (encodeUserRef |> Encode.list) |> Encode.optional input____.collaborators ) ]
 
 
 buildProjectStatus_hash :

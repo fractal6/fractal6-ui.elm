@@ -423,13 +423,13 @@ init global flags =
                         LabelsMenu ->
                             [ getLabels apis newFocus.nameid GotLabels
                             , fetchLabelsTop apis newFocus.nameid False GotLabelsTop
-                            , fetchLabelsSub apis newFocus.nameid GotLabelsSub
+                            , fetchLabelsSub apis newFocus.nameid False GotLabelsSub
                             ]
 
                         RolesMenu ->
                             [ getRoles apis newFocus.nameid GotRoles
                             , fetchRolesTop apis newFocus.nameid False GotRolesTop
-                            , fetchRolesSub apis newFocus.nameid GotRolesSub
+                            , fetchRolesSub apis newFocus.nameid False GotRolesSub
                             ]
 
                         GlobalMenu ->
@@ -1593,7 +1593,7 @@ viewLabels model =
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
-                            [ thead [ class "is-size-7" ]
+                            [ thead [ class "is-size-6" ]
                                 [ tr []
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.description ]
@@ -1678,7 +1678,7 @@ viewLabelsExt url txt_yes list_ext_d =
                         url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
-                    [ text (txt_yes ++ " ")
+                    [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text (txt_yes ++ " ") ]
                     , data
                         |> List.map
                             (\d ->
@@ -1857,7 +1857,7 @@ viewRoles model =
                 else
                     div [ class "table-container" ]
                         [ table [ class "table is-fullwidth" ]
-                            [ thead [ class "is-size-7" ]
+                            [ thead [ class "is-size-6" ]
                                 [ tr []
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.description ]
@@ -1950,7 +1950,7 @@ viewRolesExt commonOp url txt_yes list_ext_d =
                         url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
                 div [ class "mt-6" ]
-                    [ text (txt_yes ++ " ")
+                    [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text (txt_yes ++ " ") ]
                     , data
                         |> List.map
                             (\d ->

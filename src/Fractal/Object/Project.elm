@@ -132,30 +132,6 @@ fields fillInOptionals____ object____ =
     Object.selectionForCompositeField "fields" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-type alias LeadersOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter
-    , order : OptionalArgument Fractal.InputObject.NodeOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-leaders :
-    (LeadersOptionalArguments -> LeadersOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Node
-    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Project
-leaders fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "leaders" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
-
-
 type alias NodesOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter
     , order : OptionalArgument Fractal.InputObject.NodeOrder
@@ -178,6 +154,30 @@ nodes fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "nodes" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+type alias CollaboratorsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter
+    , order : OptionalArgument Fractal.InputObject.UserOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+collaborators :
+    (CollaboratorsOptionalArguments -> CollaboratorsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Project
+collaborators fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "collaborators" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 type alias ColumnsAggregateOptionalArguments =
@@ -220,26 +220,6 @@ fieldsAggregate fillInOptionals____ object____ =
     Object.selectionForCompositeField "fieldsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
-type alias LeadersAggregateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
-
-
-leadersAggregate :
-    (LeadersAggregateOptionalArguments -> LeadersAggregateOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Project
-leadersAggregate fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "leadersAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
 type alias NodesAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -258,3 +238,23 @@ nodesAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "nodesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias CollaboratorsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+collaboratorsAggregate :
+    (CollaboratorsAggregateOptionalArguments -> CollaboratorsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Project
+collaboratorsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "collaboratorsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

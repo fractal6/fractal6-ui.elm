@@ -40,7 +40,7 @@ import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, Node, NodesDict, ProjectAuth, TensionAuth, TensionHead, UserCtx, UserRole, initNode)
+import ModelSchema exposing (LocalGraph, Node, NodesDict, TensionAuth, TensionHead, UserCtx, UserRole, initNode)
 import RemoteData
 import String exposing (contains, startsWith)
 import String.Extra as SE
@@ -392,11 +392,11 @@ getTensionRights uctx th_d path_d =
 
   - Orga owner.
   - Coordo of the circles where the projects is linked.
-  - @TODO the projects leaders (members)
+  - the projects collaborators (users)
 
 -}
-getProjectRights : UserCtx -> ProjectAuth a -> GqlData LocalGraph -> Bool
-getProjectRights uctx pauth path_d =
+getProjectRights : UserCtx -> { a | nodes : List { b | nameid : String }, collaborators : List { c | username : String } } -> GqlData LocalGraph -> Bool
+getProjectRights uctx path path_d =
     case path_d of
         Success p ->
             let
@@ -410,13 +410,13 @@ getProjectRights uctx pauth path_d =
                     List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
                 circleRoles =
-                    getCircleRoles (List.map .nameid pauth.nodes) orgaRoles
+                    getCircleRoles (List.map .nameid path.nodes) orgaRoles
 
                 coordoRoles =
                     getCoordoRoles circleRoles
             in
-            if List.member uctx.username (pauth.leaders |> List.map .username) then
-                -- Leaders
+            if List.member uctx.username (path.collaborators |> List.map .username) then
+                -- Collaborators
                 True
 
             else if isOwner uctx p.focus.nameid then

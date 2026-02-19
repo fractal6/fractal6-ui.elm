@@ -29,7 +29,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str, viewGoRoot, viewUrlForm)
+import Bulk.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -50,7 +50,7 @@ import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
@@ -65,7 +65,7 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
-import Session exposing (GlobalCmd(..), SessionCommon, Theme(..))
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
@@ -200,6 +200,7 @@ type alias Model =
 
     -- Common
     , session : SessionCommon
+    , commonOp : CommonMsg Msg
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
@@ -417,6 +418,7 @@ init global flags =
             , session = session.common
             , refresh_trial = 0
             , url = global.url
+            , commonOp = CommonMsg NoMsg LogErr
             , empty = {}
             , tensionForm = NTF.init session.common
             , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.common
@@ -515,7 +517,8 @@ update global message model =
                 [ getProjects apis model.node_focus.nameid pattern_m status GotProjects
 
                 --, fetchProjectsTop apis model.node_focus.nameid GotProjectsTop
-                --, fetchProjectsSub apis model.node_focus.nameid GotProjectsSub
+                , fetchProjectsSub apis model.node_focus.nameid False GotProjectsSub
+
                 --, fetchProjectCount apis nameids model.pattern Nothing GotProjectCount
                 , Ports.bulma_driver ""
                 ]
@@ -1271,6 +1274,7 @@ viewProjects model =
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
             , viewProjectsList model.session model.node_focus model.pattern_init model.statusFilter model.projects
+            , viewProjectsSub model.commonOp model.session model.node_focus model.projects_sub
             ]
         ]
 
@@ -1369,6 +1373,64 @@ viewProjectsList session focus pattern statusFilter data =
 
             _ ->
                 div [] []
+        ]
+
+
+viewProjectsSub : CommonMsg Msg -> SessionCommon -> NodeFocus -> RestData (List ProjectFull) -> Html Msg
+viewProjectsSub commonOp session focus data =
+    case data of
+        RemoteData.Success items ->
+            if List.length items > 0 then
+                div [ class "mt-6" ]
+                    [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text T.subProjects ]
+                    , div [ class "box is-shrinked" ]
+                        (List.map (viewProjectSubRow commonOp session focus) items)
+                    ]
+
+            else
+                text ""
+
+        RemoteData.Failure _ ->
+            text ""
+
+        _ ->
+            text ""
+
+
+viewProjectSubRow : CommonMsg Msg -> SessionCommon -> NodeFocus -> ProjectFull -> Html Msg
+viewProjectSubRow commonOp session focus project =
+    div
+        [ class "media mediaBox is-hoverable" ]
+        [ div [ class "media-left" ] []
+        , div [ class "media-content" ]
+            [ div [ class "columns mb-1" ]
+                [ div [ class ("column pb-0 " ++ ternary (project.description == Nothing) "is-8" "is-4") ]
+                    [ a
+                        [ class "has-text-weight-semibold is-human discrete-link"
+                        , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
+                        ]
+                        [ text project.name ]
+                    ]
+                , case project.description of
+                    Just x ->
+                        div [ class "column pb-0 is-4" ]
+                            [ span [ class "is-discret is-smaller" ] [ text x ] ]
+
+                    Nothing ->
+                        text ""
+                , div [ class "column pb-0 is-4 has-text-right" ]
+                    (project.nodes
+                        |> List.map (\node -> viewCircleTarget commonOp "is-small" node)
+                    )
+                ]
+            , div [ class "level is-smaller2 is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ span [ class "is-discrete" ] <|
+                        List.intersperse (text " ") <|
+                            [ textH T.updated, text (formatDate session.lang session.now project.updateAt) ]
+                    ]
+                ]
+            ]
         ]
 
 

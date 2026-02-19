@@ -408,7 +408,7 @@ update global message model =
                 [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
 
                 -- @deprecated : we use gql queryUserRoles now (allow to search users too..to be tested)
-                , fetchMembersSub apis model.node_focus.nameid GotMembersSub
+                , fetchMembersSub apis model.node_focus.nameid False GotMembersSub
                 , queryOpenInvitation apis model.node_focus.nameid GotOpenContracts
                 ]
             , Cmd.none

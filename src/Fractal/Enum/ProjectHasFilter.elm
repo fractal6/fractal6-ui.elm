@@ -19,13 +19,13 @@ type ProjectHasFilter
     | Status
     | Columns
     | Fields
-    | Leaders
     | Nodes
+    | Collaborators
 
 
 list : List ProjectHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description, Status, Columns, Fields, Leaders, Nodes ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Rootnameid, Parentnameid, Nameid, Name, Description, Status, Columns, Fields, Nodes, Collaborators ]
 
 
 decoder : Decoder ProjectHasFilter
@@ -67,11 +67,11 @@ decoder =
                     "fields" ->
                         Decode.succeed Fields
 
-                    "leaders" ->
-                        Decode.succeed Leaders
-
                     "nodes" ->
                         Decode.succeed Nodes
+
+                    "collaborators" ->
+                        Decode.succeed Collaborators
 
                     _ ->
                         Decode.fail ("Invalid ProjectHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -116,11 +116,11 @@ toString enum____ =
         Fields ->
             "fields"
 
-        Leaders ->
-            "leaders"
-
         Nodes ->
             "nodes"
+
+        Collaborators ->
+            "collaborators"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -170,11 +170,11 @@ fromString enumString____ =
         "fields" ->
             Just Fields
 
-        "leaders" ->
-            Just Leaders
-
         "nodes" ->
             Just Nodes
+
+        "collaborators" ->
+            Just Collaborators
 
         _ ->
             Nothing

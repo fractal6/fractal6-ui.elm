@@ -43,12 +43,14 @@ import ModelSchema
         , Node
         , NodeId
         , NodesDict
+
         , ProjectFull
         , RoleExt
         , User
         , UserCtx
         , UserRights
         , UserRole
+        , Username
         )
 
 
@@ -107,11 +109,15 @@ roleDecoder =
 
 projectDecoder : JD.Decoder ProjectFull
 projectDecoder =
-    JD.map4 ProjectFull
-        (JD.field "id" JD.string)
-        (JD.field "updatedAt" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "description" JD.string |> JD.maybe)
+    JD.succeed ProjectFull
+        |> JDE.andMap (JD.field "id" JD.string)
+        |> JDE.andMap (JD.field "updatedAt" JD.string)
+        |> JDE.andMap (JD.field "name" JD.string)
+        |> JDE.andMap (JD.maybe (JD.field "description" JD.string))
+        |> JDE.andMap (JD.maybe (JD.field "parentnameid" JD.string))
+        |> JDE.andMap (JD.field "nodes" (JD.list emitterOrReceiverDecoder) |> JDE.withDefault [])
+        |> JDE.andMap (JD.field "collaborators" (JD.list (JD.map Username (JD.field "username" JD.string))) |> JDE.withDefault [])
+
 
 
 
