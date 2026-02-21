@@ -76,7 +76,7 @@ fetchChildren api targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/sub_nodes"
+        , url = api.rest ++ "/nodes/sub"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list nodeIdDecoder
         , timeout = Nothing
@@ -94,7 +94,7 @@ fetchMembersSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/sub_members"
+        , url = api.rest ++ "/members/sub"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> mapRest2Gql membersNodeDecoder >> msg) membersDecoder
         , timeout = Nothing
@@ -125,7 +125,7 @@ fetchLabelsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/top_labels"
+        , url = api.rest ++ "/labels/top"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
@@ -143,7 +143,7 @@ fetchLabelsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/sub_labels"
+        , url = api.rest ++ "/labels/sub"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
@@ -161,7 +161,7 @@ fetchRolesTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/top_roles"
+        , url = api.rest ++ "/roles/top"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
         , timeout = Nothing
@@ -179,7 +179,7 @@ fetchRolesSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/sub_roles"
+        , url = api.rest ++ "/roles/sub"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
         , timeout = Nothing
@@ -197,7 +197,7 @@ fetchProjectsTop api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/top_projects"
+        , url = api.rest ++ "/projects/top"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
         , timeout = Nothing
@@ -215,7 +215,7 @@ fetchProjectsSub api targetid include_self msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/sub_projects"
+        , url = api.rest ++ "/projects/sub"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list projectDecoder
         , timeout = Nothing
@@ -262,27 +262,27 @@ initTensionQuery =
 
 fetchTensionsLight : Apis -> TensionQuery -> (Loading.GqlData (List TensionLight) -> msg) -> Cmd msg
 fetchTensionsLight api q msg =
-    fetchTension api "tensions_light" q msg (JD.list tensionLightDecoder)
+    fetchTension api "tensions/light" q msg (JD.list tensionLightDecoder)
 
 
 fetchTensionsInt : Apis -> TensionQuery -> (Loading.GqlData (List Tension) -> msg) -> Cmd msg
 fetchTensionsInt api q msg =
-    fetchTension api "tensions_int" q msg (JD.list tensionDecoder)
+    fetchTension api "tensions/int" q msg (JD.list tensionDecoder)
 
 
 fetchTensionsExt : Apis -> TensionQuery -> (Loading.GqlData (List Tension) -> msg) -> Cmd msg
 fetchTensionsExt api q msg =
-    fetchTension api "tensions_ext" q msg (JD.list tensionDecoder)
+    fetchTension api "tensions/ext" q msg (JD.list tensionDecoder)
 
 
 fetchTensionsAll : Apis -> TensionQuery -> (Loading.GqlData (List Tension) -> msg) -> Cmd msg
 fetchTensionsAll api q msg =
-    fetchTension api "tensions_all" q msg (JD.list tensionDecoder)
+    fetchTension api "tensions/all" q msg (JD.list tensionDecoder)
 
 
 fetchTensionsCount : Apis -> TensionQuery -> (Loading.GqlData TensionsCount -> msg) -> Cmd msg
 fetchTensionsCount api q msg =
-    fetchTension api "tensions_count" q msg (JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int))
+    fetchTension api "tensions/count" q msg (JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int))
 
 
 fetchTension : Apis -> String -> TensionQuery -> (GqlData a -> msg) -> JD.Decoder a -> Cmd msg
@@ -352,7 +352,7 @@ fetchProjectCount api targetids query_ sort_ msg =
     Http.riskyRequest
         { method = "POST"
         , headers = setHeaders api
-        , url = api.rest ++ "/projects_count"
+        , url = api.rest ++ "/projects/count"
         , body = Http.jsonBody <| JE.object <| projectEncoder targetids 0 0 query_ Nothing sort_
         , expect = expectJson (fromResult >> msg) <| JD.map2 ProjectsCount (JD.field "open" JD.int) (JD.field "closed" JD.int)
         , timeout = Nothing
