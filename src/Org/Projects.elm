@@ -1151,7 +1151,7 @@ viewNewOrEditProject session isNew model =
                         nid =
                             Dict.get "nameid" post |> withDefault ""
                     in
-                    div [ class "f6-error message is-danger is-light is-small mt-1" ]
+                    div [ class "f6-error message is-danger is-small mt-1" ]
                         [ p [ class "message-body" ]
                             (if String.length nid > 42 then
                                 [ text T.nameTooLongError ]

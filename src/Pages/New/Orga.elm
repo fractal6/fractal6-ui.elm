@@ -562,7 +562,7 @@ viewOrgaValidate model =
                     username =
                         model.form.uctx.username
                 in
-                div [ class "message is-danger is-light is-small mt-1" ]
+                div [ class "message is-danger is-small mt-1" ]
                     [ p [ class "message-body" ]
                         (if String.length nid > 42 then
                             [ text T.nameTooLongError ]

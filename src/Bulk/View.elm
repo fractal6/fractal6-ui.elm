@@ -1204,7 +1204,7 @@ viewUrlForm nameid_m onChangePost hasBorderDanger =
     div [ class "urlForm" ]
         [ div [ class "field is-horizontal" ]
             [ div [ class "field-body control has-icons-right" ]
-                [ div [] [ text "DOMAIN" ]
+                [ div [] [ text "URL" ]
                 , input
                     [ class "input px-0"
                     , disabled True

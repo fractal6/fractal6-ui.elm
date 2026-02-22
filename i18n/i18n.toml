@@ -1480,12 +1480,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Définir les politiques du rôle"
 
 [duplicateNameError]
-  en="⚠️ This name (DOMAIN) already exists, please choose another one."
-  fr="⚠️ Ce nom (DOMAIN) existe déja, veuillez en choisir un autre."
+  en="⚠️ This name already exists, please choose another one."
+  fr="⚠️ Ce nom existe déja, veuillez en choisir un autre."
 
 [nameTooLongError]
-  en="⚠️ This name (DOMAIN) is too long, please enter a shorter one."
-  fr="⚠️ Ce nom (DOMAIN) est trop long, veuillez en entrer un plus court."
+  en="⚠️ This name is too long, please enter a shorter one."
+  fr="⚠️ Ce nom est trop long, veuillez en entrer un plus court."
 
 [duplicateOrgHint]
   en="""
@@ -2202,7 +2202,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Leave {{type}}"
   fr="Quitter le {{type}}"
 
--- Success
+# Success
 
 [tensionType_action_success]
   en="{{_Tension_}} type changed."
@@ -2458,7 +2458,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 # Contract Event Text
 #
 
--- Open contract
+# Open contract
 
 [moved_contract]
   en="Move {{_tension_}}"
@@ -2484,7 +2484,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="New member"
   fr="Nouveau membre"
 
--- Completed Success
+# Completed Success
 
 [moved_contract_success]
   en="Congratulations, {{_tension_}} has been moved."
