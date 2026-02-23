@@ -1609,7 +1609,7 @@ viewTensionType model =
                                         [ div [ class "card-content p-3" ]
                                             [ h2 [ class "is-strong is-size-6" ] [ tensionIcon2 x ]
                                             , div [ class "content" ]
-                                                [ text (tensionType2descr model.session.lexicon x), br [] [], br [] [], span [ class "help-label" ] [ text (tensionType2notif x) ] ]
+                                                [ text (tensionType2descr model.session.lexicon x), br [] [], br [] [], span [ class "help-label" ] [ A.icon1 "icon-alert-triangle" "", text (tensionType2notif x) ] ]
                                             ]
                                         ]
                                 )
