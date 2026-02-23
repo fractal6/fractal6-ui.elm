@@ -1541,36 +1541,42 @@ update global message model =
                                 ( move, fifo ) =
                                     Fifo.remove model.moveFifo
                             in
-                            ( withMapData
-                                -- Add the moved tension to list
-                                (Dict.update new_nid
-                                    (\ts_m ->
-                                        Maybe.map2
-                                            (\ts ( pos, tension ) ->
-                                                let
-                                                    r =
-                                                        List.head ts
-                                                            |> Maybe.map .receiver
-                                                            |> withDefault tension.receiver
+                            case move of
+                                Just ( pos, tension ) ->
+                                    ( withMapData
+                                        -- Add the moved tension to list
+                                        (Dict.update new_nid
+                                            (\ts_m ->
+                                                Maybe.map
+                                                    (\ts ->
+                                                        let
+                                                            r =
+                                                                List.head ts
+                                                                    |> Maybe.map .receiver
+                                                                    |> withDefault tension.receiver
 
-                                                    t =
-                                                        { tension | receiver = r }
-                                                in
-                                                if pos < 0 then
-                                                    ts ++ [ t ]
+                                                            t =
+                                                                { tension | receiver = r }
+                                                        in
+                                                        if pos < 0 then
+                                                            ts ++ [ t ]
 
-                                                else
-                                                    LE.splitAt pos ts |> (\( a, b ) -> a ++ [ t ] ++ b)
+                                                        else
+                                                            LE.splitAt pos ts |> (\( a, b ) -> a ++ [ t ] ++ b)
+                                                    )
+                                                    ts_m
                                             )
-                                            ts_m
-                                            move
+                                            -- Remove the moved tension from list
+                                            >> Dict.update old_nid (Maybe.map (List.filter (\t -> t.id /= tid)))
+                                        )
+                                        model.tensions_all
+                                    , fifo
                                     )
-                                    -- Remove the moved tension from list
-                                    >> Dict.update old_nid (Maybe.map (List.filter (\t -> t.id /= tid)))
-                                )
-                                model.tensions_all
-                            , fifo
-                            )
+
+                                Nothing ->
+                                    -- Fifo is empty (e.g. duplicate result from MoveTension),
+                                    -- skip dict manipulation to avoid removing the column key.
+                                    ( model.tensions_all, fifo )
                         )
                         (Maybe.map Tuple.second out.result |> withDefault Nothing)
                         |> withDefault ( model.tensions_all, model.moveFifo )
