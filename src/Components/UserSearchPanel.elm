@@ -31,6 +31,7 @@ import Codecs exposing (userDecoder)
 import Dict
 import Dom
 import Extra exposing (ternary)
+import Extra.Events exposing (onMousedownPD)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, div, i, input, nav, p, span, text)
@@ -484,7 +485,7 @@ view_ op model =
                 in
                 div []
                     [ div [ class "panel-block" ]
-                        [ p [ class "control has-icons-left" ]
+                        [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
                             [ input
                                 [ id "userInput"
                                 , class "input autofocus is-small"
@@ -495,6 +496,11 @@ view_ op model =
                                 ]
                                 []
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
+                            , if model.pattern /= "" then
+                                span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
+
+                              else
+                                text ""
                             ]
                         ]
                     , case model.click_result of

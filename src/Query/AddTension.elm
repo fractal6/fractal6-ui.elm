@@ -136,6 +136,7 @@ addTensionInputEncoder f =
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                     , labels = buildLabels f
                     , assignees = buildAssignees f
+                    , message = fromMaybe (Dict.get "message" f.post)
                     , history = buildEvents createdAt f.uctx.username events
                 }
     in
