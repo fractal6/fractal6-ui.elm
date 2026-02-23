@@ -651,6 +651,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="By circles"
   fr="Par cercles"
 
+[byLabel]
+  en="By labels"
+  fr="Par étiquettes"
+
 [byAssignee]
   en="By assignees"
   fr="Par assignés"
@@ -1925,6 +1929,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No {{_tension_}}s assigned yet."
   fr="Aucune {{_tension_}} assignée pour le moment"
 
+[noTensionsLabelsYet]
+  en="No {{_tension_}}s with labels yet."
+  fr="Aucune {{_tension_}} étiquetée pour le moment"
+
 [rolesHere]
   en="Roles in this circle"
   fr="Roles dans ce cercle"
@@ -2028,6 +2036,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [tensionsAssigneeTooltip]
   en="Display {{_tension_}}s by assigned members."
   fr="Afficher les {{_tension_}}s par membres assignés."
+
+[tensionsLabelTooltip]
+  en="Display {{_tension_}}s by labels."
+  fr="Afficher les {{_tension_}}s par étiquettes."
 
 [explainJoin]
   en="Explain your motivations for joining this organisation ?"

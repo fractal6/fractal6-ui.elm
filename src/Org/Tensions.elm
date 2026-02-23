@@ -30,7 +30,7 @@ import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewLabel, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -257,6 +257,7 @@ type TensionsView
     = ListView
     | IntExtView
     | CircleView
+    | LabelView
     | AssigneeView
 
 
@@ -272,6 +273,9 @@ viewModeEncoder x =
         CircleView ->
             "circle"
 
+        LabelView ->
+            "label"
+
         AssigneeView ->
             "assignee"
 
@@ -284,6 +288,9 @@ viewModeDecoder x =
 
         "circle" ->
             CircleView
+
+        "label" ->
+            LabelView
 
         "assignee" ->
             AssigneeView
@@ -724,6 +731,9 @@ init global flags =
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
 
+              else if model.viewMode == LabelView then
+                [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsLabel") ]
+
               else if model.viewMode == AssigneeView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsAssignee") ]
 
@@ -763,6 +773,9 @@ dataNeedLoad model =
             not (isSuccess model.tensions_int)
 
         CircleView ->
+            not (isSuccess model.tensions_all)
+
+        LabelView ->
             not (isSuccess model.tensions_all)
 
         AssigneeView ->
@@ -990,6 +1003,9 @@ update global message model =
                         CircleView ->
                             "tensionsCircle"
 
+                        LabelView ->
+                            "tensionsLabel"
+
                         AssigneeView ->
                             "tensionsAssignee"
 
@@ -1049,7 +1065,7 @@ update global message model =
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
 
-            else if List.member model.viewMode [ CircleView, AssigneeView ] then
+            else if List.member model.viewMode [ CircleView, LabelView, AssigneeView ] then
                 ( { model | tensions_all = LoadingSlowly }
                 , fetchTensionsAll apis { query | first = nfirstC, offset = 0 } GotTensionsAll
                 , Ports.hide "footBar"
@@ -1206,6 +1222,9 @@ update global message model =
                         CircleView ->
                             ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
 
+                        LabelView ->
+                            ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsLabel") ] )
+
                         AssigneeView ->
                             ( not (isSuccess model.tensions_all), [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsAssignee") ] )
             in
@@ -1233,6 +1252,9 @@ update global message model =
                     case model.viewMode of
                         CircleView ->
                             "tensionsCircle"
+
+                        LabelView ->
+                            "tensionsLabel"
 
                         AssigneeView ->
                             "tensionsAssignee"
@@ -1650,6 +1672,9 @@ view global model =
                 , if model.viewMode == CircleView then
                     viewCircleTensions model
 
+                  else if model.viewMode == LabelView then
+                    viewLabelTensions model
+
                   else if model.viewMode == AssigneeView then
                     viewAssigneeTensions model
 
@@ -1672,7 +1697,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         isFullwidth =
-            List.member model.viewMode [ CircleView, AssigneeView ]
+            List.member model.viewMode [ CircleView, LabelView, AssigneeView ]
     in
     div [ id "tensions", class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
@@ -1708,6 +1733,9 @@ view_ global model =
                     viewIntExtTensions model
 
                 CircleView ->
+                    text ""
+
+                LabelView ->
                     text ""
 
                 AssigneeView ->
@@ -1885,6 +1913,12 @@ viewSearchBar model =
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
                         [ div [ class "tooltip is-left", title (T.tensionsCircleTooltip model.session.lexicon) ]
                             [ A.icon1 "icon-list icon-rotate" T.byCircle ]
+                        ]
+                    ]
+                , li [ classList [ ( "is-active", model.viewMode == LabelView ) ] ]
+                    [ a [ onClickPD (ChangeViewFilter LabelView), target "_blank" ]
+                        [ div [ class "tooltip is-left", title (T.tensionsLabelTooltip model.session.lexicon) ]
+                            [ A.icon1 "icon-tag" T.byLabel ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == AssigneeView ) ] ]
@@ -2098,6 +2132,75 @@ viewCircleTensions model =
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
                     [ text (T.noTensionsYet model.session.lexicon)
+                    , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                        (viewGoRoot "" OnGoRoot)
+                    ]
+
+            else
+                viewBoard op model.commonOp header (LE.zip keys keys) data
+
+        Failure err ->
+            viewGqlErrors err
+
+        _ ->
+            div [ class "spinner" ] []
+
+
+viewLabelTensions : Model -> Html Msg
+viewLabelTensions model =
+    case model.tensions_all of
+        Success data_ ->
+            let
+                -- Build a dict of (label.name, tensions)
+                data =
+                    Dict.values data_
+                        |> List.concat
+                        |> List.map (\t -> withDefault [] t.labels |> List.map (\x -> ( x.name, [ t ] )))
+                        |> List.concat
+                        |> DE.fromListDedupe (\a b -> a ++ b)
+
+                keys =
+                    Dict.keys data
+
+                header : String -> String -> Maybe Tension -> Html Msg
+                header n _ t_m =
+                    let
+                        label_m =
+                            Maybe.map (.labels >> withDefault [] >> LE.find (\l -> l.name == n)) t_m
+                                |> withDefault Nothing
+                    in
+                    span []
+                        [ label_m
+                            |> Maybe.map (viewLabel "" Nothing)
+                            |> withDefault (text n)
+                        ]
+
+                op =
+                    { hasTaskMove = False
+                    , hasNewCol = False
+                    , session = model.session
+                    , node_focus = model.node_focus
+                    , boardId = "tensionsLabel"
+                    , boardHeight = model.boardHeight
+                    , movingTension = model.movingTension
+                    , movingHoverCol = model.movingHoverCol
+                    , movingHoverT = model.movingHoverT
+
+                    -- Board Msg
+                    , onColumnHover = OnColumnHover
+                    , onMove = OnMove
+                    , onCancelHov = OnCancelHov
+                    , onEndMove = OnEndMove
+                    , onMoveEnterCol = OnMoveEnterCol
+                    , onMoveLeaveCol = OnMoveLeaveCol
+                    , onMoveEnterT = OnMoveEnterT
+                    , onMoveDrop = OnMoveDrop
+                    , onAddCol = NoMsg
+                    }
+            in
+            if List.length keys == 0 then
+                div [ class "ml-6 p-6" ]
+                    [ text (T.noTensionsLabelsYet model.session.lexicon)
                     , showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
                         (viewGoRoot "" OnGoRoot)
                     ]
