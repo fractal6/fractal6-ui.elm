@@ -1,0 +1,56 @@
+.resources-tree {
+    margin-top: 1.25rem;
+    .resources-row {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+
+        .row-chevron,
+        .row-icon {
+            margin-right: 0.5rem;
+        }
+
+        .row-name {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .row-firstlink {
+            margin-left: auto;
+            color: var(--text-light);
+            font-size: 0.75rem;
+        }
+
+        .color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+    }
+
+    .resources-item {
+        &.is-nested {
+            border-left: 1px solid var(--border-color-light);
+            padding-left: 0.5rem;
+        }
+
+        &.is-expanded {
+            border-bottom: 1px solid var(--border-color-light);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.25rem;
+        }
+    }
+
+    .resources-content {
+        padding-left: 1rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .resources-subchildren {
+        margin-top: 0.75rem;
+    }
+}

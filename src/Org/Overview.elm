@@ -53,13 +53,14 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, canvas, div, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
+import Html exposing (Html, a, br, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), errorIsNoDataFound, fromMaybeData, isFailure, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), errorIsNoDataFound, fromMaybeData, isFailure, loadingSpin, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -67,6 +68,7 @@ import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
 import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, SessionCommon, isMobile)
+import Set exposing (Set)
 import String
 import Text as T
 import Time
@@ -205,6 +207,8 @@ type alias Model =
     , depth : Maybe Int
     , legend : Bool
     , leaders : List User
+    , children_expanded : Set String
+    , children_data : Dict.Dict String (GqlData NodeData)
 
     -- common
     , session : SessionCommon
@@ -302,6 +306,8 @@ init global flags =
             , depth = Nothing
             , legend = False
             , leaders = []
+            , children_expanded = Set.empty
+            , children_data = Dict.empty
 
             -- Common
             , session = session.common
@@ -408,6 +414,9 @@ type Msg
     | GotOrga (GqlData NodesDict)
     | GotTensions (GqlData (List Tension))
     | GotData (GqlData NodeData)
+      -- Children Explorer
+    | ToggleChildExpand String
+    | GotChildData String (GqlData NodeData)
       -- Page
     | SwitchWindow
     | SetLegend Bool
@@ -547,6 +556,25 @@ update global message model =
 
                 _ ->
                     ( { model | node_data = result }, Cmd.none, Cmd.none )
+
+        ToggleChildExpand nameid ->
+            if Set.member nameid model.children_expanded then
+                ( { model | children_expanded = Set.remove nameid model.children_expanded }, Cmd.none, Cmd.none )
+
+            else
+                let
+                    cmd =
+                        case Dict.get nameid model.children_data of
+                            Nothing ->
+                                fetchNodeData global.session.apis nameid (GotChildData nameid)
+
+                            _ ->
+                                Cmd.none
+                in
+                ( { model | children_expanded = Set.insert nameid model.children_expanded }, cmd, Cmd.none )
+
+        GotChildData nameid result ->
+            ( { model | children_data = Dict.insert nameid result model.children_data }, Cmd.none, Cmd.none )
 
         -- Search
         ToggleLookup ->
@@ -861,7 +889,7 @@ update global message model =
                             else
                                 Nothing
                     in
-                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_searching = False }
+                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_searching = False, children_expanded = Set.empty, children_data = Dict.empty }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
@@ -1159,7 +1187,10 @@ view_ global model =
         viewFromPos pos =
             case pos of
                 "doc" ->
-                    NodeDoc.view nodeData Nothing
+                    div []
+                        [ NodeDoc.view nodeData Nothing
+                        , viewChildrenExplorer model
+                        ]
 
                 "activities" ->
                     div []
@@ -1571,6 +1602,152 @@ viewCanvas us model =
                     ]
                 ]
             ]
+        ]
+
+
+viewChildrenExplorer : Model -> Html Msg
+viewChildrenExplorer model =
+    case model.path_data of
+        Success path ->
+            let
+                children =
+                    path.focus.children
+            in
+            if List.isEmpty children then
+                text ""
+
+            else
+                div [ class "box doc-container resources-tree" ]
+                    [ div [ class "subtitle" ]
+                        [ text T.resources ]
+                    , viewChildrenList model 0 children
+                    ]
+
+        _ ->
+            text ""
+
+
+viewChildrenList : Model -> Int -> List EmitterOrReceiver -> Html Msg
+viewChildrenList model depth children =
+    let
+        circles =
+            List.filter (\c -> c.role_type == Nothing) children
+
+        roles =
+            List.filter (\c -> c.role_type /= Nothing) children
+    in
+    div []
+        [ showIf (not (List.isEmpty circles)) <|
+            div [] (List.map (viewChildRow model depth) circles)
+        , showIf (not (List.isEmpty roles)) <|
+            div [] (List.map (viewChildRow model depth) roles)
+        ]
+
+
+viewChildRow : Model -> Int -> EmitterOrReceiver -> Html Msg
+viewChildRow model depth child =
+    let
+        isExpanded =
+            Set.member child.nameid model.children_expanded
+
+        isCircle =
+            child.role_type == Nothing
+
+        nodeIcon =
+            ternary isCircle "icon-git-branch" "icon-leaf"
+
+        chevronIcon =
+            if isExpanded then
+                "icon-chevron-down"
+
+            else
+                "icon-chevron-right"
+
+        firstLink =
+            getNode child.nameid model.tree_data
+                |> Maybe.andThen .first_link
+                |> Maybe.map (\u -> "@" ++ u.username)
+                |> withDefault ""
+
+        colorDot =
+            case child.color of
+                Just c ->
+                    span [ class "color-dot", style "background-color" c ] []
+
+                Nothing ->
+                    text ""
+    in
+    div
+        [ classList
+            [ ( "resources-item", True )
+            , ( "is-nested", depth > 0 )
+            , ( "is-expanded", isExpanded )
+            ]
+        ]
+        [ div
+            [ class "resources-row button-light"
+            , onClick (ToggleChildExpand child.nameid)
+            ]
+            [ span [ class "row-chevron" ] [ A.icon chevronIcon ]
+            , span [ class "row-icon" ] [ A.icon nodeIcon ]
+            , span [ class "row-name" ] [ text child.name ]
+            , colorDot
+            , span [ class "row-firstlink" ] [ text firstLink ]
+            ]
+        , showIf isExpanded <|
+            viewChildExpandedContent model depth child
+        ]
+
+
+getChildrenFromTree : String -> GqlData NodesDict -> List EmitterOrReceiver
+getChildrenFromTree nameid tree_data =
+    case tree_data of
+        Success orga ->
+            orga
+                |> Dict.values
+                |> List.filter (\n -> Maybe.map .nameid n.parent == Just nameid)
+                |> List.map (\n -> { name = n.name, nameid = n.nameid, role_type = n.role_type, color = n.color })
+
+        _ ->
+            []
+
+
+viewChildExpandedContent : Model -> Int -> EmitterOrReceiver -> Html Msg
+viewChildExpandedContent model depth child =
+    let
+        lexicon =
+            model.session.lexicon
+
+        subChildren =
+            getChildrenFromTree child.nameid model.tree_data
+    in
+    div [ class "resources-content" ]
+        [ case Dict.get child.nameid model.children_data of
+            Just (Success data) ->
+                div []
+                    [ case data.about of
+                        Just about ->
+                            renderMarkdown "is-human" about
+
+                        Nothing ->
+                            text ""
+                    , NodeDoc.viewMandateSection lexicon child.role_type data.mandate Nothing
+                    , showIf (not (List.isEmpty subChildren)) <|
+                        div [ class "resources-subchildren" ]
+                            [ viewChildrenList model (depth + 1) subChildren ]
+                    ]
+
+            Just (Failure err) ->
+                viewGqlErrors err
+
+            Just Loading ->
+                loadingSpin True
+
+            Just LoadingSlowly ->
+                loadingSpin True
+
+            _ ->
+                loadingSpin True
         ]
 
 
