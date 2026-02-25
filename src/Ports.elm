@@ -562,6 +562,14 @@ pushInputSelection name =
         }
 
 
+pushEmojiSelection : String -> Cmd msg
+pushEmojiSelection emoji =
+    outgoing
+        { action = "PUSH_EMOJI_SELECTION"
+        , data = JE.string emoji
+        }
+
+
 
 --- Popups
 

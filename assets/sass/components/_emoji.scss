@@ -9,6 +9,33 @@
  *
  */
 
+.emojiPicker {
+    min-width: 305px;
+    max-width: 305px;
+    max-height: 235px;
+    .selectors {
+        max-height: 235px;
+    }
+}
+.emojiGrid {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 5px;
+}
+.emojiItem {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    border-radius: 5px;
+    &:hover {
+        background: var(--body-background-color);
+    }
+}
+
 .emojis {
     max-width: 400px !important;
     .dropdown-content {

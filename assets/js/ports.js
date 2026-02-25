@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput } from './bulma_drivers'
+import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -295,6 +295,36 @@ export const actions = {
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
         hideSearchInput(userTooltip, app);
+    },
+    'PUSH_EMOJI_SELECTION': (app, session, emoji) => {
+        var $i = document.activeElement;
+        var start = $i.selectionStart;
+        var end = $i.selectionEnd;
+        if (!$i || start == null) return
+
+        // Find :pattern before cursor and replace with emoji
+        var m = $i.value.slice(Math.max(0, start - 50), start).match(/:[\w-]*$/);
+        if (m) {
+            var matchLen = m[m.length - 1].length;
+            start -= matchLen;
+        }
+        var replacer = emoji;
+        $i.value = $i.value.substring(0, start) +
+            replacer + $i.value.substring(end);
+
+        // Put caret at right position again
+        $i.selectionStart =
+            $i.selectionEnd = start + replacer.length;
+
+        // Immediately propagate change to Elm
+        $i.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true,
+        }));
+
+        // Remove the emoji input
+        const emojiTooltip = document.getElementById($i.id + "emojiInput");
+        hideEmojiInput(emojiTooltip, app);
     },
 
     //

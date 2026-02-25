@@ -512,6 +512,7 @@ function markupRichText(e, el, app) {
      */
 
     const userTooltip = document.getElementById(el.id + "searchInput");
+    const emojiTooltip = document.getElementById(el.id + "emojiInput");
 
     if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
         // Handle backspace/removing character
@@ -567,11 +568,56 @@ function markupRichText(e, el, app) {
         }
     }
 
+    /*
+     * Emoji search input
+     * tooltip helper.
+     */
+
+    else if (!isHidden(emojiTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        var start = el.selectionStart;
+
+        // Handle toggle down tooltip
+        if (e.key == " " ||
+            e.key == "Tab" ||
+            e.key == "Enter" ||
+            e.key == "Return" ||
+            e.key == "Escape" ||
+            // Check if : keyword has been deleted
+            (e.key == "Backspace" && el.value[start - 1] == ":")
+        ) {
+            hideEmojiInput(emojiTooltip, app);
+            return
+        }
+
+        // Update emoji pattern
+        var pattern = "";
+        var extra = "";
+        var m = null;
+        if (e.key === "Backspace") {
+            m = el.value.slice(Math.max(0, start - 50), start - 1).match(/:[\w-]*$/);
+        } else if (e.key.match(/[\w-]/)) {
+            m = el.value.slice(Math.max(0, start - 50), start).match(/:[\w-]*$/);
+            extra = e.key;
+        }
+
+        if (m) {
+            pattern = m[m.length - 1] + extra;
+            pattern = pattern.slice(1);
+            app.ports.changeEmojiPatternFromJs.send(pattern);
+        }
+    }
+
     // Handle toggle up tooltip
     if (e.key == "@" &&
         (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart - 1]))) {
         // Show user search input
         showSearchInput(el, userTooltip, app);
+    }
+
+    // Handle toggle up emoji tooltip
+    if (e.key == ":" &&
+        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart - 1]))) {
+        showEmojiInput(el, emojiTooltip, app);
     }
 
     /*
@@ -834,6 +880,23 @@ export function hideSearchInput(input, app) {
     input.setAttribute("style", "display: none;");
 
     app.ports.closeMembersFromJs.send(null);
+}
+
+export function showEmojiInput(content, input, app) {
+    if (!input) return
+    const { x, y } = getCaretCoordinates(content, content.selectionStart);
+    input.setAttribute("aria-hidden", "false");
+    input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+
+    app.ports.openEmojiPickerFromJs.send(null);
+}
+
+export function hideEmojiInput(input, app) {
+    if (!input) return
+    input.setAttribute("aria-hidden", "true");
+    input.setAttribute("style", "display: none;");
+
+    app.ports.closeEmojiPickerFromJs.send(null);
 }
 
 // Where el is the DOM element you'd like to test for visibility.

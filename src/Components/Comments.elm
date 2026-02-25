@@ -45,6 +45,7 @@ import Bulk.Event exposing (viewEvent)
 import Bulk.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.EmojiPicker as EmojiPicker
 import Components.UserInput as UserInput
 import Dict
 import Dom
@@ -121,6 +122,7 @@ type alias Model =
 
     -- Components
     , userInput : UserInput.State
+    , emojiPicker : EmojiPicker.State
     , modal_confirm : ModalConfirm Msg
 
     -- Fade-out animation for deleted comments
@@ -151,6 +153,7 @@ initModel nameid tensionid session =
 
     -- Components
     , userInput = UserInput.init [ nameid ] False False session
+    , emojiPicker = EmojiPicker.init
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Fade-out animation for deleted comments
@@ -261,6 +264,7 @@ type Msg
     | DoModalConfirmSend
       -- Components
     | UserInputMsg UserInput.Msg
+    | EmojiPickerMsg EmojiPicker.Msg
 
 
 type alias Out =
@@ -778,6 +782,21 @@ update_ apis message model =
             in
             ( { model | userInput = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map UserInputMsg m))) out.gcmds )
 
+        EmojiPickerMsg msg ->
+            let
+                ( data, out ) =
+                    EmojiPicker.update msg model.emojiPicker
+
+                cmd =
+                    case out.result of
+                        Just emoji ->
+                            Ports.pushEmojiSelection emoji
+
+                        Nothing ->
+                            Cmd.none
+            in
+            ( { model | emojiPicker = data }, out2 (cmd :: (out.cmds |> List.map (\m -> Cmd.map EmojiPickerMsg m))) out.gcmds )
+
 
 type alias Checkbox =
     { isChecked : Bool
@@ -806,6 +825,7 @@ subscriptions (State model) =
                 []
            )
         ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
+        ++ (EmojiPicker.subscriptions model.emojiPicker |> List.map (\s -> Sub.map EmojiPickerMsg s))
         ++ [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose ]
 
 
@@ -821,7 +841,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    Lazy.lazy8 viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -831,7 +851,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension session action (State model) =
     div []
-        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.fadingOut
+        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -847,9 +867,10 @@ viewComments_ :
     -> List Int
     -> String
     -> UserInput.State
+    -> EmojiPicker.State
     -> List String
     -> Html Msg
-viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput fadingOut =
+viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker fadingOut =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -888,7 +909,7 @@ viewComments_ session action history comments comment_form comment_result commen
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            Lazy.lazy8 viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput (List.member c.id fadingOut)
+                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -963,8 +984,8 @@ viewComments_ session action history comments comment_form comment_result commen
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> Bool -> Html Msg
-viewComment session c form result delete_result highlightedCommentId userInput isFadingOut =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput emojiPicker isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -986,7 +1007,7 @@ viewComment session c form result delete_result highlightedCommentId userInput i
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
-                viewUpdateInput session c form result userInput
+                viewUpdateInput session c form result userInput emojiPicker
 
               else
                 div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
@@ -1153,7 +1174,7 @@ viewNewTensionCommentInput session opts (State model) =
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker ]
                 , showIf (opts.messageHelper /= "") <|
                     p [ class "help-label" ] [ text opts.messageHelper ]
                 , showIf opts.hasTips <|
@@ -1170,8 +1191,8 @@ viewNewTensionCommentInput session opts (State model) =
         ]
 
 
-viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> Html Msg
-viewUpdateInput session comment form_ result userInput =
+viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> Html Msg
+viewUpdateInput session comment form_ result userInput emojiPicker =
     let
         message =
             Dict.get "message" form_.post |> withDefault comment.message
@@ -1199,7 +1220,7 @@ viewUpdateInput session comment form_ result userInput =
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput ]
+                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker ]
                 ]
             , case result of
                 Failure err ->
@@ -1274,7 +1295,7 @@ viewTensionCommentInput session tension (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput ]
+                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker ]
                         ]
                     , case model.tension_patch of
                         Failure err ->
@@ -1337,7 +1358,7 @@ viewContractCommentInput session (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" defaultCommentOpts form model.userInput ]
+                            [ viewCommentTextarea session "commentContractInput" defaultCommentOpts form model.userInput model.emojiPicker ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1452,8 +1473,8 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> Html Msg
-viewCommentTextarea session targetid opts form userInput =
+viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> EmojiPicker.State -> Html Msg
+viewCommentTextarea session targetid opts form userInput emojiPicker =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
@@ -1512,4 +1533,6 @@ viewCommentTextarea session targetid opts form userInput =
             text ""
         , span [ id (targetid ++ "searchInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
             [ UserInput.viewUserSeeker userInput |> Html.map UserInputMsg ]
+        , span [ id (targetid ++ "emojiInput"), class "searchInput", attribute "aria-hidden" "true", attribute "style" "display:none;" ]
+            [ EmojiPicker.viewEmojiSeeker emojiPicker |> Html.map EmojiPickerMsg ]
         ]
