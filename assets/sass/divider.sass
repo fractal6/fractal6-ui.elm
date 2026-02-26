@@ -50,13 +50,19 @@ $divider-width: 5px !default
             height: auto
             width: $divider-width
 
+        // fix the rule text position in the vertical divider.
+        //
+        // - The `::before` pseudo-element (top line) now has `flex: 0 0 50vh`, which fixes it at 50% of the viewport height
+        // - The `::after` pseudo-element (bottom line) now has `flex: 999`, which makes it grow to fill the remaining space
         &::after
             margin-left: 0
             margin-top: $divider-margin-inner-size
+            flex: 999
 
         &::before
             margin-right: 0
             margin-bottom: $divider-margin-inner-size
+            flex: 0 0 50vh
 
     &.is-vertical2
         flex-direction: column
@@ -87,3 +93,4 @@ $divider-width: 5px !default
     //                &::after,
     //                &::before
     //                    background-color: $color-light
+
