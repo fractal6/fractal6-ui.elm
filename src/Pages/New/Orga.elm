@@ -25,15 +25,18 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
+import Bulk.Bulma exposing (dropdownLight)
 import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
 import Bulk.Error exposing (viewHttpErrors)
 import Bulk.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
 import Extra exposing (ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onKeydown)
+import Extra.Events exposing (onClickPD, onDragOverPD, onKeydown)
 import Extra.Update as Update
 import Extra.Url exposing (queryBuilder, queryParser)
+import File exposing (File)
+import File.Select as Select
 import Form exposing (isLoginSendable, isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
@@ -45,11 +48,12 @@ import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
-import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Events exposing (onBlur, onClick, onInput, preventDefaultOn)
 import Html.Lazy as Lazy
 import Http
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, HttpError(..), RequestResult(..), RestData)
+import Json.Decode as JD
+import Loading exposing (GqlData, HttpError(..), RequestResult(..), RestData, loadingDiv)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -57,7 +61,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
-import Requests exposing (createOrga)
+import Requests exposing (createOrga, importOrgaSpreadsheet)
 import Session exposing (GlobalCmd(..), Session)
 import String.Format as Format
 import Task exposing (Task)
@@ -114,6 +118,9 @@ type alias Model =
     , hasBeenDuplicate : Bool
     , isWriting : Maybe Bool
     , exist_result : GqlData IdPayload
+    , isImportOpen : Bool
+    , importFile : Maybe File
+    , importResult : RestData NodeId
     , empty : {}
 
     -- common
@@ -126,6 +133,7 @@ type alias Model =
 type OrgaStep
     = OrgaVisibilityStep
     | OrgaValidateStep
+    | OrgaImportStep
 
 
 stepEncoder : OrgaStep -> String
@@ -137,12 +145,18 @@ stepEncoder menu =
         OrgaValidateStep ->
             "1"
 
+        OrgaImportStep ->
+            "2"
+
 
 stepDecoder : String -> OrgaStep
 stepDecoder menu =
     case menu of
         "1" ->
             OrgaValidateStep
+
+        "2" ->
+            OrgaImportStep
 
         _ ->
             OrgaVisibilityStep
@@ -164,6 +178,9 @@ orgaStepToString form step =
         OrgaValidateStep ->
             T.reviewAndValidate
 
+        OrgaImportStep ->
+            T.reviewAndValidate
+
 
 initModel : Session -> Maybe OrgaForm -> Model
 initModel session form_m =
@@ -174,6 +191,9 @@ initModel session form_m =
     , hasBeenDuplicate = False
     , isWriting = Nothing
     , exist_result = NotAsked
+    , isImportOpen = False
+    , importFile = Nothing
+    , importResult = RemoteData.NotAsked
     , empty = {}
     , help = Help.init session.common
     , refresh_trial = 0
@@ -234,6 +254,15 @@ type Msg
     | CheckExistAck (GqlData NodeId)
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (RestData NodeId)
+      -- Import
+    | OnToggleImportMenu
+    | OnImportOtherFormat
+    | OnImportPickFile
+    | OnImportFileSelected File
+    | OnImportFileDrop File
+    | OnImportClearFile
+    | SubmitImport Time.Posix
+    | ImportOrgaAck (RestData NodeId)
       -- Common
     | NoMsg
       -- Help
@@ -382,6 +411,83 @@ update global message model =
                 _ ->
                     ( { model | hasDuplicate = False }, Cmd.none, Cmd.none )
 
+        -- Import
+        OnToggleImportMenu ->
+            ( { model | isImportOpen = not model.isImportOpen }, Cmd.none, Cmd.none )
+
+        OnImportOtherFormat ->
+            ( { model | isImportOpen = False }
+            , send (HelpMsg (Help.OnOpenPrefill "AskQuestion" T.importOrgaRequestTitle T.importOrgaRequestMessage))
+            , Cmd.none
+            )
+
+        OnImportPickFile ->
+            ( model
+            , Select.file [ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "application/vnd.oasis.opendocument.spreadsheet", "text/csv", ".csv" ] OnImportFileSelected
+            , Cmd.none
+            )
+
+        OnImportFileSelected file ->
+            ( { model | importFile = Just file }, Cmd.none, Cmd.none )
+
+        OnImportFileDrop file ->
+            ( { model | importFile = Just file }, Cmd.none, Cmd.none )
+
+        OnImportClearFile ->
+            ( { model | importFile = Nothing }, Cmd.none, Cmd.none )
+
+        SubmitImport _ ->
+            case model.importFile of
+                Just file ->
+                    let
+                        post =
+                            model.form.post
+                                |> Dict.insert "format" "holaspirit"
+                    in
+                    ( { model | importResult = RemoteData.Loading }
+                    , importOrgaSpreadsheet apis file post ImportOrgaAck
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
+
+        ImportOrgaAck result ->
+            case parseErr2 result model.refresh_trial of
+                OkAuth n ->
+                    ( { model | importResult = result }
+                    , Cmd.none
+                    , Cmd.batch
+                        [ send UpdateUserToken
+                        , send (UpdateSessionOrgs Nothing)
+                        , send (UpdateSessionNewOrgaData Nothing)
+                        , sendSleep (NavigateRaw (toLink OverviewBaseUri n.nameid [])) 500
+                        ]
+                    )
+
+                DuplicateErr ->
+                    ( { model
+                        | importResult = RemoteData.Failure (BadBody T.duplicateNameError)
+                        , hasDuplicate = True
+                        , hasBeenDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                NameTooLong ->
+                    ( { model
+                        | importResult = RemoteData.Failure (BadBody T.nameTooLongError)
+                        , hasDuplicate = True
+                        , hasBeenDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | importResult = result }, Cmd.none, Cmd.none )
+
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -445,12 +551,22 @@ view_ global model =
         [ div [ class "column is-4-fullhd is-5-desktop" ]
             [ h1 [ class "title has-text-centered" ] [ text T.createYourOrganisation ]
             , viewBreadcrumb model
-            , case model.step of
-                OrgaVisibilityStep ->
-                    viewOrgaVisibility model
+            , if model.importResult == RemoteData.Loading then
+                viewImportLoading
 
-                OrgaValidateStep ->
-                    viewOrgaValidate model
+              else
+                case model.step of
+                    OrgaVisibilityStep ->
+                        viewOrgaVisibility model
+
+                    OrgaValidateStep ->
+                        div []
+                            [ viewImportOrga model
+                            , viewOrgaValidate model
+                            ]
+
+                    OrgaImportStep ->
+                        viewOrgaImport model
             ]
         ]
 
@@ -459,7 +575,12 @@ viewBreadcrumb : Model -> Html Msg
 viewBreadcrumb model =
     let
         path =
-            [ OrgaVisibilityStep, OrgaValidateStep ]
+            case model.step of
+                OrgaImportStep ->
+                    [ OrgaVisibilityStep, OrgaImportStep ]
+
+                _ ->
+                    [ OrgaVisibilityStep, OrgaValidateStep ]
     in
     nav [ class "breadcrumb has-succeeds-separator lifeline is-small", attribute "aria-labels" "breadcrumbs" ]
         [ ul [] <|
@@ -468,6 +589,185 @@ viewBreadcrumb model =
                     li [ classList [ ( "is-active", x == model.step ) ] ] [ a [ onClickPD NoMsg, target "_blank" ] [ text (orgaStepToString model.form x) ] ]
                 )
                 path
+        ]
+
+
+viewImportLoading : Html Msg
+viewImportLoading =
+    div [ class "has-text-centered mt-6" ]
+        [ loadingDiv
+        , p [ class "mt-4 is-size-5 has-text-grey" ] [ text T.importOrgaLoading ]
+        ]
+
+
+viewImportOrga : Model -> Html Msg
+viewImportOrga model =
+    div [ class "is-smaller mb-5" ]
+        [ text (T.haveProjectElsewhere ++ " ")
+        , dropdownLight
+            { dropdown_id = "importOrgaMenu"
+            , isOpen = model.isImportOpen
+            , dropdown_cls = ""
+            , button_cls = ""
+            , button_html =
+                span [ class "button-light is-link" ]
+                    [ text T.importExistingOrga ]
+            , menu_cls = ""
+            , content_cls = "has-text-left"
+            , content_html =
+                div []
+                    [ a [ class "dropdown-item", onClickPD (OnChangeStep OrgaImportStep), target "_blank" ]
+                        [ text T.importFromHolaspirit ]
+                    , a [ class "dropdown-item", onClickPD OnImportOtherFormat, target "_blank" ]
+                        [ text T.importOtherFormat ]
+                    ]
+            , msg = OnToggleImportMenu
+            }
+        ]
+
+
+viewOrgaImport : Model -> Html Msg
+viewOrgaImport model =
+    let
+        post =
+            model.form.post
+
+        nameVal =
+            Dict.get "name" post |> withDefault ""
+
+        aboutVal =
+            Dict.get "about" post |> withDefault ""
+
+        hasFile =
+            model.importFile /= Nothing
+
+        isSendable =
+            isPostSendable [ "name" ] post && hasFile
+
+        isLoading =
+            model.importResult == RemoteData.Loading
+
+        submitImport =
+            ternary isSendable [ onClick (Submit SubmitImport) ] []
+
+        onFileDrop =
+            preventDefaultOn "drop"
+                (JD.at [ "dataTransfer", "files" ] (JD.oneOrMore (\f _ -> f) File.decoder)
+                    |> JD.map (\f -> ( OnImportFileDrop f, True ))
+                )
+    in
+    div []
+        [ div [ class "field" ]
+            [ div [ class "label" ] [ text T.name ]
+            , div [ class "control" ]
+                [ input
+                    [ class "input autofocus followFocus"
+                    , attribute "data-nextfocus" "aboutField"
+                    , autocomplete False
+                    , type_ "text"
+                    , placeholder T.name
+                    , value nameVal
+                    , onInput <| ChangeNodePost "name"
+                    , onBlur SaveData
+                    , required True
+                    ]
+                    []
+                , p [ class "help" ] [ text T.orgaNameHelp ]
+                ]
+            , if model.hasDuplicate || model.hasBeenDuplicate then
+                div [ class "mt-3" ]
+                    [ viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.hasDuplicate ]
+
+              else
+                text ""
+            , if model.hasDuplicate then
+                let
+                    nid =
+                        Dict.get "nameid" post |> withDefault ""
+
+                    username =
+                        model.form.uctx.username
+                in
+                div [ class "message is-danger is-small mt-1" ]
+                    [ p [ class "message-body" ]
+                        (if String.length nid > 42 then
+                            [ text T.nameTooLongError ]
+
+                         else
+                            [ text T.duplicateNameError
+                            , p [ class "mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            ]
+                        )
+                    ]
+
+              else
+                text ""
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.about ]
+            , div [ class "control" ]
+                [ input
+                    [ id "aboutField"
+                    , class "input"
+                    , autocomplete False
+                    , type_ "text"
+                    , placeholder T.aboutOpt
+                    , value aboutVal
+                    , onInput <| ChangeNodePost "about"
+                    , onBlur SaveData
+                    ]
+                    []
+                ]
+            , p [ class "help" ] [ text T.aboutHelp ]
+            ]
+        , div [ class "field my-5" ]
+            [ div [ class "label" ] [ text T.spreadsheetFormats ]
+            , case model.importFile of
+                Just file ->
+                    div
+                        [ class "box has-text-centered is-success is-soft" ]
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                        , text (File.name file)
+                        , span [ class "ml-3 button-light has-text-danger is-smaller", onClickPD OnImportClearFile, target "_blank" ] [ A.icon0 "icon-x" ]
+                        ]
+
+                Nothing ->
+                    div
+                        [ class "box has-text-centered is-clickable"
+                        , onClick OnImportPickFile
+                        , onDragOverPD NoMsg
+                        , onFileDrop
+                        ]
+                        [ div [ class "has-text-grey" ]
+                            [ p [] [ A.icon "icon-file icon-2x" ]
+                            , p [] [ text T.clickOrDropFile ]
+                            ]
+                        ]
+            ]
+        , div [ class "field pt-3 level is-mobile" ]
+            [ div [ class "level-left" ]
+                [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
+                    [ A.icon0 "icon-chevron-left", text T.back ]
+                ]
+            , div [ class "level-right" ]
+                [ div [ class "buttons" ]
+                    [ button
+                        ([ class "button has-text-weight-semibold"
+                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                         , disabled (not isSendable)
+                         ]
+                            ++ submitImport
+                        )
+                        [ text T.import_ ]
+                    ]
+                ]
+            ]
+        , case model.importResult of
+            RemoteData.Failure err ->
+                viewHttpErrors err
+
+            _ ->
+                text ""
         ]
 
 

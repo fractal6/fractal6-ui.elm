@@ -251,6 +251,7 @@ setLabelsFeedback data =
 type Msg
     = SetIsActive2 Bool
     | OnOpen String
+    | OnOpenPrefill String String String -- tab, title, message
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -331,6 +332,22 @@ update_ apis message model =
 
                   else
                     send NoMsg
+                ]
+            )
+
+        OnOpenPrefill tab_s prefillTitle prefillMessage ->
+            let
+                tab =
+                    withDefault AskQuestion (fromString tab_s)
+
+                newModel =
+                    { model | isActive2 = True, activeTab = tab }
+                        |> postAsk "title" prefillTitle
+                        |> postAsk "message" prefillMessage
+            in
+            ( newModel
+            , out0
+                [ sendSleep (SetIsActive2 True) 10
                 ]
             )
 

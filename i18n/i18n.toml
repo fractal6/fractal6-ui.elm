@@ -410,6 +410,50 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Organisation visibility"
   fr="Visibilité de l’organisation"
 
+[haveProjectElsewhere]
+  en="Have a project elsewhere?"
+  fr="Vous avez un projet ailleurs ?"
+
+[importExistingOrga]
+  en="Import an organisation"
+  fr="Importer une organisation"
+
+[importFromHolaspirit]
+  en="Import from HolaSpirit (spreadsheet)"
+  fr="Importer depuis HolaSpirit (tableur)"
+
+[importOtherFormat]
+  en="I have another format"
+  fr="J’ai un autre format"
+
+[importOrgaLoading]
+  en="Importing your organisation, please wait..."
+  fr="Import de votre organisation en cours, veuillez patienter..."
+
+[clickOrDropFile]
+  en="Click or drop a file here"
+  fr="Cliquez ou déposez un fichier ici"
+
+[spreadsheetFormats]
+  en=".xlsx or .csv export from HolaSpirit"
+  fr="export .xlsx ou .csv depuis HolaSpirit"
+
+[import_]
+  en="Import"
+  fr="Importer"
+
+[importOrgaRequestTitle]
+  en="Organisation import request"
+  fr="Demande d’import d’organisation"
+
+[importOrgaRequestMessage]
+  en="""I’d like to import my organisation into Fractale. Here is my data:
+
+"""
+  fr="""J’aimerais importer mon organisation dans Fractale. Voici mes données :
+
+"""
+
 [organisationSettings]
   en="Organisation settings"
   fr="Paramètres de l’organisation"
@@ -1284,8 +1328,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Dernière modification"
 
 [reviewAndValidate]
-  en="Review and validate"
-  fr="Vérifier et valider"
+  en="Create / Import"
+  fr="Créer / Importer"
 
 [subject]
   en="Subject"

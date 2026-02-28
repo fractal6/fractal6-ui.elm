@@ -24,6 +24,7 @@ module Requests exposing (..)
 import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import File exposing (File)
 import Dict exposing (Dict)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.ProjectStatus as ProjectStatus
@@ -406,6 +407,35 @@ createOrga api post msg =
         , headers = setHeaders api
         , url = api.auth ++ "/createorga"
         , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+importOrgaSpreadsheet : Apis -> File -> Dict String String -> (RestData NodeId -> msg) -> Cmd msg
+importOrgaSpreadsheet api file post msg =
+    let
+        stringParts =
+            [ "name", "nameid", "format", "visibility", "about" ]
+                |> List.filterMap
+                    (\k ->
+                        Dict.get k post
+                            |> Maybe.andThen
+                                (\v ->
+                                    if v == "" then
+                                        Nothing
+
+                                    else
+                                        Just (Http.stringPart k v)
+                                )
+                    )
+    in
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/createorga/spreadsheet"
+        , body = Http.multipartBody (Http.filePart "file" file :: stringParts)
         , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
         , timeout = Nothing
         , tracker = Nothing
