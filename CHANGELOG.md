@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.1]
+
+### Features
+
+- **Import**: Added organization import from spreadsheets (HolaSpirit format).
+- **Markdown**: Added emoticon support triggered with `:` in the editor.
+- **Overview**: Added a recursive Resources explorer below the node document, so you can browse nested resources directly.
+- **Projects**: Sub-circle projects now appear in the projects list view, and edits to sub-projects are supported with proper authorization checks.
+- **Tensions**: Added a "By Labels" board view to the tensions page, letting you organize tensions grouped by their labels.
+- **Search**: Added a clear button to label and user search panels for easier filtering.
+
+### Bug Fixes
+
+- **Markdown**: Improved details/summary parsing, styling, and added a toolbar helper button with documentation.
+- **Navigation**: Improved back navigation behavior after page refresh.
+- **Tensions**: Fixed circle columns disappearing when a tension is moved across columns.
+- **UI**: Added alert icon hints for Alert and Announcement tension types.
+- **UI**: Fixed vertical rule text shifting when page height changes (e.g. expanding rows).
+- **i18n**: Improved French gendered articles and lexicon language defaults.
+
+
 ## [0.9.0]
 
 ### Features
