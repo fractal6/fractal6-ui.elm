@@ -24,8 +24,8 @@ module Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdo
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, details, div, i, input, label, li, span, summary, table, text, u, ul)
-import Html.Attributes exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
+import Html exposing (Html, a, details, div, i, input, label, li, ol, span, summary, table, text, u, ul)
+import Html.Attributes as Attr exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Markdown.Block as Block
@@ -141,6 +141,8 @@ deadEndsToString deadEnds =
 
 frac6Renderer : String -> Bool -> Markdown.Renderer.Renderer (Html msg)
 frac6Renderer style recursive =
+    -- see https://github.com/dillonkearns/elm-markdown/blob/master/README.md
+    -- for default markdown renderer details
     { defaultHtmlRenderer
         | link =
             -- Differential external and internal link
@@ -165,6 +167,16 @@ frac6Renderer style recursive =
 
                     Nothing ->
                         a attrs content
+        , orderedList =
+            \startingIndex items ->
+                ol
+                    [ Attr.start startingIndex ]
+                    (items
+                        |> List.map
+                            (\itemBlocks ->
+                                li [] itemBlocks
+                            )
+                    )
         , unorderedList =
             \items ->
                 ul []
@@ -332,6 +344,7 @@ structures. A bare '&' anywhere inside an HTML block will crash the parser.
 
 The remaining transformations (escapeLinks, forced line breaks) are wrapped
 in processOutsideCodeBlocks so they don't modify fenced code block content.
+
 -}
 frac6Parser : String -> String
 frac6Parser content =
@@ -486,7 +499,7 @@ escapeLinks input =
         |> List.foldl (\match acc -> replaceUnderscores match.match acc) input
 
 
-{-| Apply a transformation only to content outside fenced code blocks (``` or ~~~).
+{-| Apply a transformation only to content outside fenced code blocks (\`\`\` or ~~~).
 Lines inside code fences are passed through unchanged. This prevents the
 preprocessor from mangling code examples that contain HTML tags, URLs, etc.
 -}
@@ -541,10 +554,12 @@ letters (like in ?a=1&bar=2) is rejected as an invalid entity reference.
 Lines outside HTML blocks are left untouched since the regular markdown
 parser accepts bare '&' without issue.
 
-This function tracks fenced code blocks (``` / ~~~) so that:
+This function tracks fenced code blocks (\`\`\` / ~~~) so that:
+
   - <details> tags inside a code fence do NOT change the HTML depth
   - '&' inside a code fence that is itself inside an HTML block IS escaped,
     because elm-markdown's HTML scanner sees it before identifying the fence
+
 -}
 escapeAmpersandsInHtmlBlocks : String -> String
 escapeAmpersandsInHtmlBlocks content =

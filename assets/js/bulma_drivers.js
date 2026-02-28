@@ -731,7 +731,7 @@ function markupRichText(e, el, app) {
             } else if (s.slice(0, 2) == "> ") {
                 currentMarker = ">";
                 replacer = "\n" + leadingWhitespace + "> ";
-            } else if (parseInt(s)) {
+            } else if (/^\d+\. /.test(trimmedLine)) {
                 var i = parseInt(s)
                 currentMarker = i + ".";
                 replacer = "\n" + leadingWhitespace + (i + 1) + ". ";
