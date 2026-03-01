@@ -97,7 +97,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 ]
             , span [ class "level is-smaller2 is-mobile" ]
                 [ div [ class "level-left" ]
-                    [ if showStatus then
+                    [ if showStatus && (tension.type_ /= TensionType.Governance || tension.status == TensionStatus.Open) then
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
                             , title (tensionStatus2str tension.status)

@@ -1657,7 +1657,10 @@ viewChildRow model depth child =
             ternary isCircle "icon-git-branch" "icon-leaf"
 
         chevronIcon =
-            if isExpanded then
+            if not isCircle then
+                ternary isExpanded "icon-minus icon-rotate-90" "icon-minus"
+
+            else if isExpanded then
                 "icon-chevron-down"
 
             else
