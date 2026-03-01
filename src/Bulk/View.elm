@@ -25,7 +25,7 @@ import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
 import Dict exposing (Dict)
-import Extra exposing (colorAttr, ternary, upH)
+import Extra exposing (colorAttr, showIf, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPos)
 import Fractal.Enum.BlobType as BlobType
@@ -70,6 +70,21 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
 
         rootnameid =
             nid2rootid tension.receiver.nameid
+
+        -- Governance tensions with a circle/role blob get auto-closed on creation,
+        -- so showing "Closed" status is misleading since the object exists.
+        isAutoClosedGov =
+            tension.type_
+                == TensionType.Governance
+                && tension.status
+                == TensionStatus.Closed
+                && (case Maybe.map (\a -> (getTensionCharac a).doc_type) tension.action of
+                        Just (NODE _) ->
+                            True
+
+                        _ ->
+                            False
+                   )
     in
     div
         [ class ("media mediaBox is-hoverable " ++ size) ]
@@ -97,15 +112,12 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 ]
             , span [ class "level is-smaller2 is-mobile" ]
                 [ div [ class "level-left" ]
-                    [ if showStatus && (tension.type_ /= TensionType.Governance || tension.status == TensionStatus.Open) then
+                    [ showIf (showStatus && not isAutoClosedGov) <|
                         span
                             [ class "tooltip has-tooltip-arrow has-tooltip-right"
                             , title (tensionStatus2str tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-
-                      else
-                        text ""
                     , if showRecip then
                         viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy
 
@@ -116,7 +128,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
-            [ ternary showRecip (viewCircleTarget commonOp "is-small" tension.receiver) (text "")
+            [ showIf showRecip (viewCircleTarget commonOp "is-small" tension.receiver)
             , br [] []
             , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
@@ -135,16 +147,13 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
 
                     Nothing ->
                         div [ class "level-item" ] []
-                , if n_comments > 1 then
+                , showIf (n_comments > 1) <|
                     a
                         [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
                         , title (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                         ]
                         [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
-
-                  else
-                    text ""
                 ]
             ]
         ]
@@ -852,11 +861,8 @@ mediaOrga commonOp user_m root =
                 ]
              , div [ id "icons", class "level is-mobile" ]
                 [ div [ class "level-left" ]
-                    [ if root.visibility == NodeVisibility.Private then
+                    [ showIf (root.visibility == NodeVisibility.Private) <|
                         span [ class "level-item" ] [ A.icon "icon-lock" ]
-
-                      else
-                        text ""
                     ]
                 ]
              ]
@@ -866,7 +872,7 @@ mediaOrga commonOp user_m root =
                                 roles =
                                     getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
-                            [ ternary (List.length roles > 0) (hr [ class "mb-3" ] []) (text "")
+                            [ showIf (List.length roles > 0) (hr [ class "mb-3" ] [])
                             , div [ class "buttons" ] <|
                                 (roles
                                     |> List.map
@@ -1220,11 +1226,8 @@ viewUrlForm nameid_m onChangePost hasBorderDanger =
                     , onInput <| onChangePost
                     ]
                     []
-                , if not hasBorderDanger then
+                , showIf (not hasBorderDanger) <|
                     span [ class "icon is-small is-right", attribute "style" "height:1.75em; width:2em;" ] [ A.icon "icon-check has-text-success" ]
-
-                  else
-                    text ""
                 ]
             ]
         ]

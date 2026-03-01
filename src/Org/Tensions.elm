@@ -1912,7 +1912,7 @@ viewSearchBar model =
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
                         [ div [ class "tooltip is-left", title (T.tensionsCircleTooltip model.session.lexicon) ]
-                            [ A.icon1 "icon-list icon-rotate" T.byCircle ]
+                            [ A.icon1 "icon-list icon-rotate-90" T.byCircle ]
                         ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == LabelView ) ] ]

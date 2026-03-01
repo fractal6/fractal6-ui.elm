@@ -1738,9 +1738,23 @@ viewTension u t model =
                                 , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                                 ]
                                 [ tensionIcon2 t.type_ ]
-                            , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
-                                -- As Governance tension get automatically closed when there are created,
-                                -- there status is not relevant, I can cause confusion to user as the object exists.
+                            , let
+                                -- Governance tensions with a circle/role blob get auto-closed on creation,
+                                -- so showing "Closed" status is misleading since the object exists.
+                                isAutoClosedGov =
+                                    t.type_
+                                        == TensionType.Governance
+                                        && t.status
+                                        == TensionStatus.Closed
+                                        && (case Maybe.map (\a -> (getTensionCharac a).doc_type) t.action of
+                                                Just (NODE _) ->
+                                                    True
+
+                                                _ ->
+                                                    False
+                                           )
+                              in
+                              if not isAutoClosedGov then
                                 span [ class ("tag is-rounded is-w  is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
                                     [ t.status |> tensionStatus2str |> text ]
 
