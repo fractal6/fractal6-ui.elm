@@ -627,47 +627,96 @@ function markupRichText(e, el, app) {
      */
 
     if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
-        // Allow indentions (as space) - usefull to enter list level
-        // or indent for code - after two line break
         var start = el.selectionStart;
         var end = el.selectionEnd;
-        var replacer;
-        var offset = 0; // bacward index to insert the replacer text
 
-        if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start - 1])) return
+        if (start != end) {
+            // Selection exists: indent all selected lines by adding 2 spaces at line starts
+            e.preventDefault();
+            e.stopPropagation();
 
-        // Try to see if we are at the beginning of list/blockquote pattern
-        var backward = el.value.slice(Math.max(0, start - 12), start);
-        var isLineList = backward.search(/\n\s*[-\*\+] $|\n\s*- \[[x ]\] $|\n\s*[0-9]+\. $|\n\s*> $/) >= 0
-        if (isLineList) {
-            // Assumes we are in a **list content** or blockquote
-            // 2 space for sublist indentation
-            var lastIndex = backward.lastIndexOf("\n");
-            var offset = backward.length - lastIndex - 1;
-            replacer = "  ";
+            var beforeSel = el.value.substring(0, start);
+            var afterSel = el.value.substring(end);
+
+            // Extend selection to the beginning of the first selected line
+            var lineStart = beforeSel.lastIndexOf("\n") + 1;
+            var selected = el.value.substring(lineStart, end);
+            beforeSel = el.value.substring(0, lineStart);
+
+            var indented = selected.replace(/^/gm, "  ");
+            el.value = beforeSel + indented + afterSel;
+
+            // Restore selection over the indented block
+            el.selectionStart = lineStart;
+            el.selectionEnd = lineStart + indented.length;
+
+            // Immediately propagate change to Elm
+            el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
         } else {
-            // /[^\S\r\n]/ -> all whitespace but without newline
-            var isLastLineList = el.value.slice(Math.max(0, start - 500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*- \[[x ]\] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*> [^\n]*\n[^\S\r\n]*$/) >= 0
-            if (isLastLineList) {
+            // No selection: allow indentation in list/blockquote context
+            var replacer;
+            var offset = 0; // bacward index to insert the replacer text
+
+            if (el.value.length < 3 || start == 0 || !["\n", " "].includes(el.value[start - 1])) return
+
+            // Try to see if we are at the beginning of list/blockquote pattern
+            var backward = el.value.slice(Math.max(0, start - 12), start);
+            var isLineList = backward.search(/\n\s*[-\*\+] $|\n\s*- \[[x ]\] $|\n\s*[0-9]+\. $|\n\s*> $/) >= 0
+            if (isLineList) {
+                // Assumes we are in a **list content** or blockquote
+                // 2 space for sublist indentation
+                var lastIndex = backward.lastIndexOf("\n");
+                var offset = backward.length - lastIndex - 1;
                 replacer = "  ";
-                //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
-                //    // Tab (4 space) for **code** indentation
-                //    replacer = "\t";
             } else {
-                return
+                // /[^\S\r\n]/ -> all whitespace but without newline
+                var isLastLineList = el.value.slice(Math.max(0, start - 500), start).search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*- \[[x ]\] [^\n]*\n[^\S\r\n]*$|(^|\n)[^\S\r\n]*> [^\n]*\n[^\S\r\n]*$/) >= 0
+                if (isLastLineList) {
+                    replacer = "  ";
+                    //} else if (el.value.slice(el.selectionStart-2, el.selectionStart) == "\n\n") {
+                    //    // Tab (4 space) for **code** indentation
+                    //    replacer = "\t";
+                } else {
+                    return
+                }
             }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            el.value = el.value.substring(0, start - offset) +
+                replacer + el.value.substring(end - offset);
+
+            // put caret at right position again
+            el.selectionStart =
+                el.selectionEnd = start + replacer.length;
+
+            // Immediately propagate change to Elm
+            el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
         }
+    } else if (e.key == "Tab" && !e.ctrlKey && e.shiftKey) {
+        // Shift+Tab: dedent selected lines by removing up to 2 leading spaces
+        var start = el.selectionStart;
+        var end = el.selectionEnd;
+        if (start == end) return; // no selection, let default behavior handle it
+
+        var beforeSel = el.value.substring(0, start);
+        var afterSel = el.value.substring(end);
+
+        // Extend selection to the beginning of the first selected line
+        var lineStart = beforeSel.lastIndexOf("\n") + 1;
+        var selected = el.value.substring(lineStart, end);
+        beforeSel = el.value.substring(0, lineStart);
 
         e.preventDefault();
         e.stopPropagation();
 
-        // set textarea value to: text before caret + tab + text after caret
-        el.value = el.value.substring(0, start - offset) +
-            replacer + el.value.substring(end - offset);
+        var dedented = selected.replace(/^( {1,2})/gm, "");
+        el.value = beforeSel + dedented + afterSel;
 
-        // put caret at right position again
-        el.selectionStart =
-            el.selectionEnd = start + replacer.length;
+        // Restore selection over the dedented block
+        el.selectionStart = lineStart;
+        el.selectionEnd = lineStart + dedented.length;
 
         // Immediately propagate change to Elm
         el.dispatchEvent(new Event('input', {
