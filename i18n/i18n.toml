@@ -1925,6 +1925,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Confirm to unlink user"
   fr="Confirmer pour détacher l’utilisateur"
 
+[confirmDetachProject]
+  en="Please confirm to detach this project from this circle."
+  fr="Veuillez confirmer pour détacher ce projet de ce cercle."
+
 [goHome]
   en="Go to home page."
   fr="Aller à la page d’accueil."

@@ -668,12 +668,12 @@ update global message model =
                 newForm =
                     { f
                         | id = project.id
+                        , nameid = project.parentnameid |> withDefault f.nameid
                         , post =
                             Dict.fromList
                                 ([ ( "name", project.name ) ]
                                     ++ (project.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
-                                    ++ [ ( "old_name", project.name ) ]
-                                    ++ [ ( "old_nameid", nameidEncoder project.name ) ]
+                                    ++ [ ( "old_name", project.name ), ( "old_nameid", nameidEncoder project.name ) ]
                                 )
                     }
             in
@@ -693,8 +693,9 @@ update global message model =
 
                 newForm =
                     { form
-                        | status = Just status
-                        , post = Dict.insert "nameid" (nameidEncoder project.name) form.post
+                        | id = project.id
+                        , nameid = project.parentnameid |> withDefault form.nameid
+                        , status = Just status
                     }
             in
             ( { model | project_result = LoadingSlowly, project_form = newForm }
@@ -810,7 +811,15 @@ update global message model =
                             else
                                 Cmd.none
                     in
-                    ( { model | project_result = result, projects = Success new_d, projects_count = Success new_c, project_add = False, project_edit = Nothing } |> resetForm
+                    ( { model
+                        | project_result = result
+                        , projects = Success new_d
+                        , projects_count = Success new_c
+                        , projects_sub = RemoteData.map (LE.setIf (\x -> x.id == project.id) project) model.projects_sub
+                        , project_add = False
+                        , project_edit = Nothing
+                      }
+                        |> resetForm
                     , Cmd.batch [ Ports.bulma_driver "" ]
                     , redirect
                     )
@@ -1085,7 +1094,7 @@ viewNewOrEditProject session isNew model =
             ternary isNew T.newProject T.editProject
 
         submit_txt =
-            ternary isNew T.create T.edit
+            ternary isNew T.create T.save
 
         --
         post =
@@ -1523,6 +1532,25 @@ mediaProject canEdit session focus statusFilter project =
                             , hr [ class "dropdown-divider" ] []
                             , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
                             ]
+                                ++ (if List.length project.nodes > 1 then
+                                        [ hr [ class "dropdown-divider" ] []
+                                        , div
+                                            [ class "dropdown-item button-light has-text-warning"
+                                            , onClick
+                                                (DoModalConfirmOpen (Submit <| SubmitDeleteProject project.id)
+                                                    { message = Nothing
+                                                    , txts = [ ( T.confirmDetachProject, "" ) ]
+                                                    , confirmClass = "is-warning"
+                                                    , confirmLabel = T.confirm
+                                                    }
+                                                )
+                                            ]
+                                            [ text T.unlink ]
+                                        ]
+
+                                    else
+                                        []
+                                   )
                         ]
                     ]
                 ]

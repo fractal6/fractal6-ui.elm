@@ -571,7 +571,13 @@ updateProjectInputEncoder form =
                                 , nameid = fromMaybe (Dict.get "nameid" post)
                                 , description = fromMaybe (Dict.get "description" post)
                                 , status = fromMaybe form.status
-                                , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                                , nodes =
+                                    if form.id == "" then
+                                        -- Only set nodes for duplicate handler (registering project in a node)
+                                        Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+
+                                    else
+                                        Absent
                             }
                         )
                         |> Present
