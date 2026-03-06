@@ -539,7 +539,7 @@ viewToolbar mode data =
     in
     div [ class "field has-addons docToolbar" ]
         [ p
-            [ class "control tooltip has-tooltip-arrow"
+            [ class "control"
             , title T.edit
             ]
             [ a
@@ -551,7 +551,7 @@ viewToolbar mode data =
                 [ A.icon ("icon-edit-2 " ++ iconOpts) ]
             ]
         , p
-            [ class "control tooltip has-tooltip-arrow"
+            [ class "control"
             , title T.revisions
             ]
             [ a
@@ -1272,8 +1272,7 @@ viewVerRow session i blob =
             [ case blob.pushedFlag of
                 Just flag ->
                     div
-                        [ class "tooltip has-tooltip-arrow"
-                        , attribute "style" "cursor: inherit;"
+                        [ attribute "style" "cursor: inherit;"
                         , title (T.published ++ " " ++ formatDate session.lang session.now flag)
                         ]
                         [ A.icon "icon-flag" ]

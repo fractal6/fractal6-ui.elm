@@ -90,8 +90,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
         [ class ("media mediaBox is-hoverable " ++ size) ]
         [ div [ class "media-left mr-3" ]
             [ div
-                [ class "tooltip is-left has-tooltip-arrow"
-                , title (tensionType2str tension.type_)
+                [ title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -114,8 +113,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 [ div [ class "level-left" ]
                     [ showIf (showStatus && not isAutoClosedGov) <|
                         span
-                            [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                            , title (tensionStatus2str tension.status)
+                            [ title (tensionStatus2str tension.status)
                             ]
                             [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                     , if showRecip then
@@ -138,7 +136,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                                 getTensionCharac action
                         in
                         a
-                            [ class "level-item discrete-link tooltip has-tooltip-arrow"
+                            [ class "level-item discrete-link"
                             , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
                             , title ("1 " ++ action2str action ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
@@ -149,7 +147,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                         div [ class "level-item" ] []
                 , showIf (n_comments > 1) <|
                     a
-                        [ class "level-right is-pulled-right discrete-link tooltip has-tooltip-arrow"
+                        [ class "level-right is-pulled-right discrete-link"
                         , title (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
                         ]
@@ -221,8 +219,7 @@ viewPin session focus tension =
     div [ class "box media mediaBox p-4 is-h", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
             [ div
-                [ class "tooltip is-left has-tooltip-arrow"
-                , title (tensionType2str tension.type_)
+                [ title (tensionType2str tension.type_)
                 , style "width" "10px"
                 ]
                 [ tensionIcon tension.type_ ]
@@ -235,8 +232,7 @@ viewPin session focus tension =
                 [ text tension.title ]
             , div [ class "is-smaller2 mt-2" ]
                 [ span
-                    [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                    , title (tensionStatus2str tension.status)
+                    [ title (tensionStatus2str tension.status)
                     ]
                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                 , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
@@ -598,12 +594,7 @@ viewRole cls_ hasTooltip isSelf now_m link_m msg r =
     -- link and msg are mutually exclusive
     let
         cls =
-            if hasTooltip then
-                String.split " " cls_
-                    ++ String.split " " "tooltip has-tooltip-arrow is-multiline has-tooltip-text-left"
-
-            else
-                String.split " " cls_
+            String.split " " cls_
 
         since =
             case now_m of

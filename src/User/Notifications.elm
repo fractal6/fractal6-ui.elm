@@ -196,12 +196,11 @@ menuToCount menu notif =
             in
             span []
                 [ span
-                    [ class "tooltip"
-                    , title T.unreadNotif
+                    [ title T.unreadNotif
                     ]
                     [ c_event ]
                 , span
-                    [ class "is-contract-badge-bg tootltip"
+                    [ class "is-contract-badge-bg"
                     , title T.pendingContract
                     ]
                     [ c_contract ]
@@ -767,7 +766,7 @@ viewNotif isContract ue node content =
         , div [ class "media-content" ] [ content ]
         , if not ue.isRead then
             div
-                [ class "media-right tooltip"
+                [ class "media-right"
                 , title tooltip_txt
                 , if isContract then
                     onClick NoMsg

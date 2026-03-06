@@ -822,7 +822,7 @@ viewTitle t model =
         , div [ class "is-pulled-right" ]
             [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
                 span
-                    [ class "is-small button-light tooltip mr-4"
+                    [ class "is-small button-light mr-4"
                     , title T.editTitle
                     , onClick DoChangeTitle
                     ]
@@ -1106,7 +1106,7 @@ viewPanelDraft draft model =
                             , div [ class "level-right" ]
                                 [ if model.isTensionAdmin || isAuthor then
                                     div
-                                        [ class "is-small button-light tooltip mr-4"
+                                        [ class "is-small button-light mr-4"
                                         , title T.editTitle
                                         , onClick DoChangeTitle
                                         ]

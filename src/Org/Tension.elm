@@ -1719,7 +1719,7 @@ viewTension u t model =
                         [ span [ class "is-human" ] [ text t.title ]
                         , if (model.isTensionAdmin || isAuthor) && blob_m == Nothing then
                             div
-                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip is-hidden-embed"
+                                [ class "button has-text-weight-normal is-pulled-right is-small is-hidden-embed"
                                 , title T.editTitle
                                 , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
@@ -2253,7 +2253,7 @@ viewSidePane u t model =
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ (if isAdmin then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , title <|
                                         ternary t.isPinned
                                             (T.unpinTensionHelp model.session.lexicon)
@@ -2273,7 +2273,7 @@ viewSidePane u t model =
                            )
                         ++ (if not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , title (T.moveTensionHelp model.session.lexicon)
                                     , onClick (DoMove t)
                                     ]
@@ -2285,7 +2285,7 @@ viewSidePane u t model =
                            )
                         ++ (if isAdmin && not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , title T.updateTypeHelp
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]

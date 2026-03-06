@@ -1504,7 +1504,7 @@ viewCanvas us model =
             ((withMaybeMapData
                 (\path ->
                     [ div
-                        [ class "button tooltip "
+                        [ class "button"
                         , title (T.add ++ "...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path) Nothing)
                         ]
@@ -1516,7 +1516,7 @@ viewCanvas us model =
              )
                 ++ (if isAdmin then
                         [ div
-                            [ class "button tooltip"
+                            [ class "button"
                             , title T.inviteMembers
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
@@ -1540,7 +1540,7 @@ viewCanvas us model =
                             ]
                             [ A.icon "icon-chevrons-up" ]
                         , div
-                            [ class "button tooltip"
+                            [ class "button"
                             , title T.goParent
                             , case model.path_data of
                                 Success g ->
@@ -1558,7 +1558,7 @@ viewCanvas us model =
                    )
                 ++ (if isComplex then
                         [ div
-                            [ class "button buttonToggle tooltip"
+                            [ class "button buttonToggle"
                             , title T.reverseTooltip
                             , onClick ToggleGraphReverse
                             ]
@@ -1569,7 +1569,7 @@ viewCanvas us model =
                         []
                    )
                 ++ [ div
-                        [ class "tag is-small is-w tooltip has-tooltip-arrow"
+                        [ class "tag is-small is-w"
 
                         -- Pushed to bottom in flex/column parent.
                         , attribute "style" "margin-top:auto; user-select:none;"

@@ -1442,7 +1442,7 @@ viewCommentInputHeader op targetid form =
                 ]
             ]
         , div [ class "level-right is-hidden-mobile" ]
-            [ div [ onClick (op.onRichText targetid "Heading"), class "tooltip has-tooltip-bottom", title "Heading text" ] [ text "H" ]
+            [ div [ onClick (op.onRichText targetid "Heading"), title "Heading text" ] [ text "H" ]
             , div [ onClick (op.onRichText targetid "Bold"), class "", title "Bold text" ] [ strong [] [ text "B" ] ]
             , div [ onClick (op.onRichText targetid "Italic"), class "", title "Italic text" ] [ span [ class "is-italic" ] [ text "I" ] ]
             , div [ onClick (op.onRichText targetid "Strikethrough"), class "", title "Strikethrough" ] [ span [] [ text ("̶" ++ "S" ++ "̶") ] ]

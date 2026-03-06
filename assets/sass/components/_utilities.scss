@@ -597,50 +597,6 @@ i.va {
     animation-fill-mode: forwards;
 }
 
-.tooltip.has-tooltip-multiline::before {
-    white-space: pre-line !important;
-}
-
-[data-tooltip] {
-    @include mobile {
-        // Prevent navbartop overflow
-        &::after,&::before {
-            width:0 !important;
-            visibility: hidden !important;
-        }
-    }
-
-    //border-bottom-style: none !important; // NO, will remove border on non span tooltip
-
-    // solve the markown tooltip **tabs**
-    &.is-right::before {
-        left: auto !important;
-        right: 0 !important;
-    }
-    // solve the modal tabs header tooltip (and partially the board status tooltip)
-    &.is-left::before {
-        right: auto !important;
-        left: 100% !important;
-    }
-}
-.tooltip {
-    // Tooltip has fadin, and no fadout
-    transition: none !important;
-    transition-delay: none !important;
-    font-weight: 500;
-
-    &.has-tooltip-active,
-    &:focus,
-    &:hover {
-        &::after,
-        &::before {
-            transition: all .15s linear !important;
-            transition-delay: var(--tooltip-transition-duration) !important;
-        }
-    }
-}
-
-
 
 .arrow {
     border: solid;
@@ -814,13 +770,6 @@ tr.mediaBox {
 }
 
 
-.bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
-    @include desktop {
-        &:hover {
-            overflow: visible !important;
-        }
-    }
-}
 
 .scrollbar-thin {
     // @debug see : https://bugzilla.mozilla.org/show_bug.cgi?id=1460109

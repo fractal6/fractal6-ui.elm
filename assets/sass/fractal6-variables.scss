@@ -47,13 +47,6 @@ $modal-out-duration: 0.33s;
 $modal-width: 650px;
 $modal-width-large: 790px;
 
-// Tooltip
-$tooltip-background-opacity: 0.92;
-$tooltip-background-color: var(--grey-dark);
-$tooltip-color: white;
-//-- Node tooltip
-$tooltip-transition-duration: 0.1s;
-
 // quick help
 $acc-height-title: 42px;
 $acc-height-subtitle: 48px;
@@ -311,9 +304,6 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
     --bulma-modal-out-duration: #{$modal-out-duration};
     --bulma-modal-width: #{$modal-width};
     --bulma-modal-width-large: #{$modal-width-large};
-
-    //-- Node tooltip
-    --tooltip-transition-duration: #{$tooltip-transition-duration};
 
     // quick help
     --acc-height-title: #{$acc-height-title};
