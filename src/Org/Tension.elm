@@ -2272,7 +2272,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (T.moveTension model.session.lexicon) ]
+                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], text (T.moveTension model.session.lexicon) ]
                                 ]
 
                             else

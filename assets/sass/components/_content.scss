@@ -37,10 +37,10 @@
     // Border transparency get overwirtten somewhere.
     border: 2px solid transparent !important;
 
-    // fix alignement default introduced by
-    // .flex.align-center in icon bellow buttonRole
-    padding-top: 4px;
-    padding-bottom: 6px;
+    // Ensure vertical centering of icon + text
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
         filter: brightness(0.92);
