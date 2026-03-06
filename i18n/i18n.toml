@@ -322,6 +322,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Change type"
   fr="Modifier le type"
 
+[updateTypeHelp]
+  en="Change the type of this tension (e.g. Operational, Governance, etc.)"
+  fr="Changer le type de cette tension (ex. Opérationnel, Gouvernance, etc.)"
+
 [messageSent]
   en="Message sent"
   fr="Message envoyé"
@@ -1157,13 +1161,25 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Move {{_tension_}}"
   fr="Déplacer la {{_tension_}}"
 
+[moveTensionHelp]
+  en="Move this {{_tension_}} to a different circle"
+  fr="Déplacer cette {{_tension_}} vers un autre cercle"
+
 [pinTension]
   en="Pin {{_tension_}}"
   fr="Epingler la {{_tension_}}"
 
+[pinTensionHelp]
+  en="Pin this {{_tension_}} to show it at the top of the list"
+  fr="Épingler cette {{_tension_}} pour l'afficher en haut de la liste"
+
 [unpinTension]
   en="Unpin {{_tension_}}"
   fr="Désépingler la {{_tension_}}"
+
+[unpinTensionHelp]
+  en="Unpin this {{_tension_}} from the top of the list"
+  fr="Désépingler cette {{_tension_}} du haut de la liste"
 
 [moveCircle]
   en="Move circle"

@@ -2253,7 +2253,11 @@ viewSidePane u t model =
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ (if isAdmin then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    , title <|
+                                        ternary t.isPinned
+                                            (T.unpinTensionHelp model.session.lexicon)
+                                            (T.pinTensionHelp model.session.lexicon)
                                     , onClick (Submit True <| ternary t.isPinned UnpinTension PinTension)
                                     ]
                                     [ A.icon1_noflex "icon-pin" <|
@@ -2269,7 +2273,8 @@ viewSidePane u t model =
                            )
                         ++ (if not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    , title (T.moveTensionHelp model.session.lexicon)
                                     , onClick (DoMove t)
                                     ]
                                     [ span [ class "arrow-right2 pl-0 pr-2" ] [], text (T.moveTension model.session.lexicon) ]
@@ -2280,7 +2285,8 @@ viewSidePane u t model =
                            )
                         ++ (if isAdmin && not hasNode then
                                 [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4"
+                                    [ class "is-smaller2 has-text-weight-semibold button-light discrete-link mb-4 tooltip has-tooltip-left"
+                                    , title T.updateTypeHelp
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                     ]
                                     [ A.icon1 "icon-diamond" T.updateType ]
