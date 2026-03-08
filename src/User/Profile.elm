@@ -243,7 +243,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (LoadNodes roles) 500, send UpdateUserToken )
 
                 OkAuth _ ->
-                    ( { model | orgas = result }, Cmd.none, Cmd.none )
+                    ( { model | orgas = result }, Ports.bulma_driver "org_sort_dropdown", Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
