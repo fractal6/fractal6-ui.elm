@@ -534,8 +534,19 @@ export const actions = {
             removeClickListener();
         }
 
+        // Track whether mousedown started inside the panel.
+        // If so, ignore the subsequent click (e.g. text selection drag ending outside).
+        let mouseDownInsideTarget = false;
+        const mouseDownListener = event => {
+            mouseDownInsideTarget = event.target.closest("#"+id) !== null;
+        }
+
         // outside click listener
         const outsideClickListener = event => {
+            if (mouseDownInsideTarget) {
+                mouseDownInsideTarget = false;
+                return;
+            }
             if (event.target.closest("#"+id) === null) {
                 // @debug; doesnt work with elm events!
                 //event.stopPropagation();
@@ -550,17 +561,20 @@ export const actions = {
 
         // Remove the listener on close
         const removeClickListener = () => {
+            document.removeEventListener('mousedown', mouseDownListener);
             document.removeEventListener('click', outsideClickListener);
             document.removeEventListener('keydown', escListener);
         }
 
         // add the listener
         setTimeout(() => {
+            document.addEventListener('mousedown', mouseDownListener);
             document.addEventListener('click', outsideClickListener);
             document.addEventListener('keydown', escListener);
 
             // add listenner to global handlers LUT to clean it on navigation
             var handlers = session.bulmaHandlers;
+            handlers.push(["mousedown", mouseDownListener, document, mouseDownListener])
             handlers.push(["click", outsideClickListener, document, outsideClickListener])
             handlers.push(["keydown", escListener, document, escListener])
 
