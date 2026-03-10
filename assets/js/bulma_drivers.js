@@ -525,6 +525,9 @@ function markupRichText(e, el, app) {
             // Check if @ keyword has been deleted
             e.key == "Backspace" && el.value[start - 1] == "@"
         ) {
+            if (e.key == "Escape") {
+                e.stopPropagation();
+            }
             hideSearchInput(userTooltip, app);
             return
         }
@@ -573,7 +576,7 @@ function markupRichText(e, el, app) {
      * tooltip helper.
      */
 
-    else if (!isHidden(emojiTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+    else if (!isHidden(emojiTooltip) && !e.shiftKey && !e.altKey) {
         var start = el.selectionStart;
 
         // Handle toggle down tooltip
@@ -582,9 +585,16 @@ function markupRichText(e, el, app) {
             e.key == "Enter" ||
             e.key == "Return" ||
             e.key == "Escape" ||
+            e.key == "ArrowUp" ||
+            e.key == "ArrowDown" ||
+            e.key == "ArrowLeft" ||
+            e.key == "ArrowRight" ||
             // Check if : keyword has been deleted
             (e.key == "Backspace" && el.value[start - 1] == ":")
         ) {
+            if (e.key == "Escape") {
+                e.stopPropagation();
+            }
             hideEmojiInput(emojiTooltip, app);
             return
         }
@@ -1048,6 +1058,14 @@ function closeModal(e, modal, app) {
     }
 
     if (!modal.classList.contains("is-active")) {
+        return
+    }
+
+    // Skip closing the modal if a search panel (labels, users, emoji, etc.) is open inside it.
+    // The panel's own Escape handler will close just the panel.
+    var panels = modal.querySelectorAll(".panel.dropList");
+    var hasOpenPanel = Array.from(panels).some(el => !isHidden(el));
+    if (hasOpenPanel) {
         return
     }
 
