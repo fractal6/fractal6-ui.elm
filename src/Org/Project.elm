@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewGqlErrorsLight)
-import Bulk.View exposing (viewRole, viewUserFull)
+import Bulk.View exposing (viewCircleTarget, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
@@ -63,7 +63,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryProject exposing (getProject)
-import Session exposing (GlobalCmd(..), SessionCommon)
+import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
 import Url
@@ -737,14 +737,23 @@ view_ global model =
                         _ ->
                             text ""
                     ]
-                , if model.isProjectAdmin then
-                    div [ class "column is-one-quarter is-flex is-align-self-flex-start pt-0 pb-1" ]
-                        [ div [ class "button is-small is-pushed-right", onClick (OpenTensionPane Nothing) ]
-                            [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
-                        ]
+                , div [ class "column is-one-quarter is-flex is-align-self-flex-start is-align-items-center is-justify-content-flex-end pt-0 pb-1" ]
+                    ((case model.project_data of
+                        Success p ->
+                            List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes
 
-                  else
-                    text ""
+                        _ ->
+                            []
+                     )
+                        ++ (if model.isProjectAdmin then
+                                [ div [ class "button is-small", onClick (OpenTensionPane Nothing) ]
+                                    [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
+                                ]
+
+                            else
+                                []
+                           )
+                    )
                 ]
 
             -- User notification

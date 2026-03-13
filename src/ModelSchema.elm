@@ -702,6 +702,7 @@ type alias ProjectFull =
 type alias ProjectData =
     { id : String
     , name : String
+    , nodes : List EmitterOrReceiver
     , columns : List ProjectColumn
     }
 

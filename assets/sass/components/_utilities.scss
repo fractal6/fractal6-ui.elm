@@ -272,6 +272,7 @@ a {
 }
 
 .tag-circle {
+    min-width: 4.5rem;
     border: 1px solid #ffffff00;
     &:hover {
         border: 1px solid var(--link2);
