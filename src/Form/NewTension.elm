@@ -1499,7 +1499,7 @@ viewStep tree_data (State model) =
 
 viewHeader : GqlData NodesDict -> Model -> Html Msg
 viewHeader tree_data model =
-    div [ class "panel-heading pt-2 pb-2", style "border-radius" "0" ]
+    div [ class "panel-heading pt-2 pb-2" ]
         [ div [ class "level modal-card-title is-size-6" ]
             [ -- div [ class "level-left is-hidden" ]
               --   [ div [ class "has-text-weight-semibold", style "margin-left" "-8px" ] [ textT model.txt.title ] ]
@@ -1632,9 +1632,9 @@ viewRecipients tree_data model =
         isOpen =
             model.isTargetOpen /= ""
     in
-    div [ attribute "style" "max-width: 285px;" ]
+    div [ class "recipients-wrapper" ]
         [ -- @DEBUG: emitter is ignored now...
-          span [ class "is-discrete", attribute "style" "position:relative;top:7px;" ] [ textH (T.to_in ++ ":" ++ space_) ]
+          span [ class "is-discrete recipients-label" ] [ textH (T.to_in ++ ":" ++ space_) ]
         , B.dropdownLight
             { dropdown_id = "target-menu"
             , isOpen = isOpen
@@ -1760,7 +1760,7 @@ viewTension tree_data model =
                     ]
                 ]
             ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+        , div [ class "modal-card-foot" ]
             [ case model.result of
                 Failure err ->
                     viewGqlErrors err
@@ -1817,7 +1817,7 @@ viewCircle tree_data model =
             ++ (case model.nodeStep of
                     RoleAuthorityStep ->
                         [ viewRolesExt model
-                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                        , div [ class "modal-card-foot" ]
                             [ div [ class "field" ]
                                 [ div [ class "is-pulled-left" ]
                                     [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
@@ -1827,7 +1827,7 @@ viewCircle tree_data model =
 
                     CircleVisibilityStep ->
                         [ viewCircleVisibility model
-                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                        , div [ class "modal-card-foot" ]
                             [ div [ class "field" ]
                                 [ div [ class "is-pulled-left" ]
                                     [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
@@ -1850,7 +1850,7 @@ viewCircle tree_data model =
                                     ""
                         in
                         [ viewNodeValidate model
-                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                        , div [ class "modal-card-foot" ]
                             [ case model.result of
                                 Failure err ->
                                     viewGqlErrors err
@@ -1984,9 +1984,8 @@ viewRolesExt model =
                 List.map
                     (\role ->
                         div
-                            [ class "card has-border column p-0 m-3 is-h is-clickable"
+                            [ class "card has-border column p-0 m-3 is-h is-clickable role-ext-card"
                             , classList [ ( "is-selected", Just role.id == form.node.role_ext ) ]
-                            , attribute "style" "min-width: 150px;"
                             ]
                             [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
                                 [ h2 [ class "mb-3" ] [ viewRoleExt model.commonOp "" Nothing role ]

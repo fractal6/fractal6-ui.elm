@@ -608,7 +608,7 @@ viewModalContent op model =
                     ]
                 ]
             ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+        , div [ class "modal-card-foot" ]
             [ case model.data_result of
                 Failure err ->
                     div [ class "field" ] [ viewGqlErrors err ]

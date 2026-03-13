@@ -69,6 +69,7 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .modal-card-foot {
+        display: block;
         padding-top: 15px;
         padding-bottom: 15px;
         @include mobile {
@@ -199,6 +200,19 @@ html.has-modal-active, html.has-modal-active2 {
         // Don't let columns set their width automatically
         .modal-content .columns, .modal-card .columns {
             max-width: calc(#{$modal-width} - 40px);
+        }
+        .panel-heading {
+            border-radius: 0;
+        }
+        .recipients-wrapper {
+            max-width: 285px;
+        }
+        .recipients-label {
+            position: relative;
+            top: 7px;
+        }
+        .role-ext-card {
+            min-width: 150px;
         }
     }
 
@@ -411,9 +425,6 @@ html.has-modal-active, html.has-modal-active2 {
 #MoveTensionModal {
     .modal-card {
         min-height: 450px;
-    }
-    .modal-card-foot {
-        display: block;
     }
 }
 

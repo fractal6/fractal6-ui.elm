@@ -354,7 +354,7 @@ viewModalContent op model =
             ]
         , div [ class "modal-card-body" ]
             [ viewBody op model ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+        , div [ class "modal-card-foot" ]
             [ div [ class "field level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ button

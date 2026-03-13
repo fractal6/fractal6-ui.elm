@@ -144,7 +144,6 @@ viewBoard op commonOp header keys_title data =
                                     draggingDiv =
                                         div
                                             [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing"
-                                            , style "opacity" "0.6"
 
                                             --, style "height" "0rem"
                                             ]

@@ -575,6 +575,7 @@ i.va {
 }
 
 .is-dragging {
+    opacity: 0.6;
     * {
         pointer-events: none;
     }

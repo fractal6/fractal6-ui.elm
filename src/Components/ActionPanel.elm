@@ -1364,7 +1364,7 @@ viewStep1 op model =
 
                 UnarchiveAction ->
                     [ viewComment model ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+        , div [ class "modal-card-foot" ]
             [ case model.action_result of
                 Failure err ->
                     div [ class "field" ] [ viewGqlErrors err ]

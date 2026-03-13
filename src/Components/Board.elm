@@ -1114,7 +1114,6 @@ draggingDiv : Html Msg
 draggingDiv =
     div
         [ class "box is-shrinked2 mb-2 mx-2 is-dragging is-growing has-border-link"
-        , style "opacity" "0.6"
 
         --, style "height" "0rem"
         ]
