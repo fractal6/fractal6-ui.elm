@@ -62,8 +62,8 @@ import Text as T
 --
 
 
-mediaTension : CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> String -> Html msg
-mediaTension commonOp session focusid tension showStatus showRecip size =
+mediaTension : FractalBaseRoute -> CommonMsg msg -> SessionCommon -> String -> Tension -> Bool -> Bool -> String -> Html msg
+mediaTension baseUri commonOp session focusid tension showStatus showRecip size =
     let
         n_comments =
             withDefault 0 tension.n_comments
@@ -126,7 +126,7 @@ mediaTension commonOp session focusid tension showStatus showRecip size =
                 ]
             ]
         , div [ class "media-right wrapped-container-33" ]
-            [ showIf showRecip (viewCircleTarget commonOp "is-small" tension.receiver)
+            [ showIf showRecip (viewCircleTarget baseUri commonOp "is-small" tension.receiver)
             , br [] []
             , span [ class "level is-mobile icons-list" ]
                 [ case tension.action of
@@ -176,14 +176,14 @@ viewTensionLight t =
         ]
 
 
-viewCircleTarget : CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
-viewCircleTarget commonOp cls er =
+viewCircleTarget : FractalBaseRoute -> CommonMsg msg -> String -> EmitterOrReceiver -> Html msg
+viewCircleTarget baseUri commonOp cls er =
     case nid2type er.nameid of
         NodeType.Circle ->
-            span [ class ("tag tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False OverviewBaseUri er ]
+            span [ class ("tag tag-circle is-rounded is-wrapped " ++ cls) ] [ viewNodeRef False baseUri er ]
 
         NodeType.Role ->
-            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink OverviewBaseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
+            viewRole ("is-tiny is-wrapped " ++ cls) False False Nothing (Just <| toLink baseUri er.nameid []) (\_ _ _ -> commonOp.noMsg) (eor2ur er)
 
 
 viewCircleSimple : String -> Html msg

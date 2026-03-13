@@ -897,7 +897,7 @@ viewSubTitle session t model =
                 ]
         , div [ class "level-right" ] <|
             List.map (div [ class "level-item" ] << List.singleton) <|
-                [ viewCircleTarget model.commonOp "" t.receiver ]
+                [ viewCircleTarget OverviewBaseUri model.commonOp "" t.receiver ]
         ]
 
 

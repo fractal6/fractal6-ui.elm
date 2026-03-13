@@ -27,7 +27,8 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (ProjectForm, UserState(..), initProjectForm)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, shortId, toLink)
+import Bulk.Bulma as B
+import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
@@ -37,7 +38,7 @@ import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarCol)
-import Components.TreeMenu as TreeMenu
+import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Dict exposing (Dict)
 import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
@@ -58,13 +59,14 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, NewTensionInput(..), ProjectFull, ProjectsCount)
+import ModelSchema exposing (LocalGraph, NewTensionInput(..), Node, ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
+import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
 import Text as T
@@ -198,6 +200,13 @@ type alias Model =
     , project_result : GqlData ProjectFull
     , project_result_del : GqlData ProjectFull
 
+    -- Move
+    , project_move : Maybe ProjectFull
+    , move_target : Maybe Node
+    , isMoveTargetOpen : Bool
+    , move_expanded_lines : ExpandedLines
+    , project_result_move : GqlData ProjectFull
+
     -- Common
     , session : SessionCommon
     , commonOp : CommonMsg Msg
@@ -292,6 +301,11 @@ resetForm model =
         , hasUnsavedData = False
         , project_result = NotAsked
         , project_result_del = NotAsked
+        , project_move = Nothing
+        , move_target = Nothing
+        , isMoveTargetOpen = False
+        , move_expanded_lines = Dict.empty
+        , project_result_move = NotAsked
     }
 
 
@@ -331,9 +345,17 @@ type Msg
     | CancelProject
     | SubmitAddProject Time.Posix
     | SubmitEditProject Time.Posix
-    | SubmitDeleteProject String Time.Posix
+    | SubmitDeleteProject String String Time.Posix
     | GotProject (GqlData ProjectFull)
     | GotProjectDel (GqlData ProjectFull)
+      -- Move
+    | MoveProject ProjectFull
+    | OnMoveTargetClick String
+    | OnChangeMoveTarget Node
+    | OnMoveExpandToggle String
+    | CancelMoveProject
+    | SubmitMoveProject Time.Posix
+    | GotProjectMove (GqlData ProjectFull)
       -- Search
     | ChangePattern String
     | ChangeStatusFilter StatusFilter
@@ -413,6 +435,13 @@ init global flags =
             , project_edit = Nothing
             , project_result = NotAsked
             , project_result_del = NotAsked
+
+            -- Move
+            , project_move = Nothing
+            , move_target = Nothing
+            , isMoveTargetOpen = False
+            , move_expanded_lines = Dict.empty
+            , project_result_move = NotAsked
 
             -- Common
             , session = session.common
@@ -747,13 +776,13 @@ update global message model =
             , Cmd.none
             )
 
-        SubmitDeleteProject id _ ->
+        SubmitDeleteProject id nodeNameid _ ->
             let
                 f =
                     model.project_form
 
                 newForm =
-                    { f | id = id }
+                    { f | id = id, nameid = nodeNameid }
             in
             ( { model | project_result_del = LoadingSlowly, project_form = newForm }, removeOneProject apis newForm GotProjectDel, Cmd.none )
 
@@ -859,23 +888,130 @@ update global message model =
                     ( { model | project_result_del = NotAsked }, Ports.raiseAuthModal model.project_form.uctx, Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteProject model.project_form.id) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteProject model.project_form.id model.project_form.nameid) 500, send UpdateUserToken )
 
                 OkAuth _ ->
                     let
-                        d =
-                            withDefaultData [] model.projects
+                        projectId =
+                            model.project_form.id
 
-                        new =
-                            List.filter (\x -> x.id /= model.project_form.id) d
+                        newProjects =
+                            withDefaultData [] model.projects
+                                |> List.filter (\x -> x.id /= projectId)
+
+                        newSub =
+                            RemoteData.map (List.filter (\x -> x.id /= projectId)) model.projects_sub
                     in
-                    ( { model | project_result_del = NotAsked, projects = Success new, project_add = False, project_edit = Nothing } |> resetForm
+                    ( { model | project_result_del = NotAsked, projects = Success newProjects, projects_sub = newSub, project_add = False, project_edit = Nothing } |> resetForm
                     , Cmd.none
                     , Cmd.none
                     )
 
                 _ ->
                     ( { model | project_result_del = result }, Cmd.none, Cmd.none )
+
+        -- Move
+        MoveProject project ->
+            ( { model | project_move = Just project, project_result_move = NotAsked, move_target = Nothing, isMoveTargetOpen = False }
+            , Cmd.batch [ Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData), Ports.open_modal "MoveProjectModal" ]
+            , Cmd.none
+            )
+
+        OnMoveTargetClick _ ->
+            ( { model | isMoveTargetOpen = not model.isMoveTargetOpen }, Cmd.none, Cmd.none )
+
+        OnChangeMoveTarget node ->
+            ( { model | move_target = Just node, isMoveTargetOpen = False }, Cmd.none, Cmd.none )
+
+        OnMoveExpandToggle nid ->
+            ( { model
+                | move_expanded_lines =
+                    if Dict.member nid model.move_expanded_lines then
+                        Dict.remove nid model.move_expanded_lines
+
+                    else
+                        Dict.insert nid False model.move_expanded_lines
+              }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        CancelMoveProject ->
+            ( { model | project_move = Nothing, move_target = Nothing, isMoveTargetOpen = False, move_expanded_lines = Dict.empty, project_result_move = NotAsked }
+            , Ports.close_modal
+            , Cmd.none
+            )
+
+        SubmitMoveProject _ ->
+            case ( model.project_move, model.move_target ) of
+                ( Just project, Just target ) ->
+                    let
+                        f =
+                            model.project_form
+
+                        oldParent =
+                            project.nodes |> List.head |> Maybe.map .nameid |> withDefault model.node_focus.nameid
+
+                        newForm =
+                            { f
+                                | id = project.id
+                                , nameid = target.nameid
+                                , post = Dict.insert "move_from" oldParent f.post
+                            }
+                    in
+                    ( { model | project_result_move = LoadingSlowly, project_form = newForm }
+                    , updateOneProject apis newForm GotProjectMove
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        GotProjectMove result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | project_result_move = NotAsked }, Ports.raiseAuthModal model.project_form.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit SubmitMoveProject) 500, send UpdateUserToken )
+
+                OkAuth project ->
+                    let
+                        projectId =
+                            model.project_form.id
+
+                        targetNameid =
+                            model.project_form.nameid
+
+                        -- Remove from both lists
+                        mainList =
+                            withDefaultData [] model.projects
+                                |> List.filter (\x -> x.id /= projectId)
+
+                        subList =
+                            RemoteData.map (List.filter (\x -> x.id /= projectId)) model.projects_sub
+
+                        -- Add to the appropriate list based on target
+                        ( newMain, newSub ) =
+                            if targetNameid == model.node_focus.nameid then
+                                -- Moved to current circle -> add to main list
+                                ( project :: mainList, subList )
+
+                            else if String.startsWith model.node_focus.nameid targetNameid then
+                                -- Moved to a sub-circle -> add to sub list
+                                ( mainList, RemoteData.map (\l -> project :: l) subList )
+
+                            else
+                                -- Moved elsewhere -> just remove
+                                ( mainList, subList )
+                    in
+                    ( { model | project_result_move = NotAsked, projects = Success newMain, projects_sub = newSub } |> resetForm
+                    , Ports.close_modal
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | project_result_move = result }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -1019,6 +1155,12 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+        ++ (if model.project_move /= Nothing then
+                [ Ports.mcPD Ports.closeModalFromJs LogErr (\_ -> CancelMoveProject) ]
+
+            else
+                []
+           )
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -1066,6 +1208,7 @@ view global model =
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
         , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+        , viewMoveProjectModal model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
@@ -1287,12 +1430,16 @@ viewProjects model =
 
                 LoggedOut ->
                     False
+
+        statusFilter =
+            statusDecoder model.statusFilter
     in
     div [ class "columns" ]
         [ div [ class "column is-12" ]
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
-            , viewProjectsList canEditProject model.session model.node_focus model.pattern_init model.statusFilter model.projects
-            , viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.projects_sub
+            , viewProjectsList canEditProject model.commonOp model.session model.node_focus model.pattern_init model.statusFilter model.projects
+            , showIf (model.statusFilter == OpenStatus) <|
+                viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.projects_sub
             ]
         ]
 
@@ -1360,8 +1507,8 @@ viewProjectsCount counts statusFilter =
             div [] []
 
 
-viewProjectsList : (ProjectFull -> Bool) -> SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
-viewProjectsList canEditProject session focus pattern statusFilter data =
+viewProjectsList : (ProjectFull -> Bool) -> CommonMsg Msg -> SessionCommon -> NodeFocus -> String -> StatusFilter -> GqlData (List ProjectFull) -> Html Msg
+viewProjectsList canEditProject commonOp session focus pattern statusFilter data =
     div
         [ class "box is-shrinked"
         , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
@@ -1371,7 +1518,7 @@ viewProjectsList canEditProject session focus pattern statusFilter data =
             Success items ->
                 if List.length items > 0 then
                     items
-                        |> List.map (\x -> Lazy.lazy5 mediaProject (canEditProject x) session focus statusFilter x)
+                        |> List.map (\x -> Lazy.lazy6 mediaProject (canEditProject x) commonOp session focus statusFilter x)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= "" then
@@ -1417,6 +1564,50 @@ viewProjectsSub canEditProject commonOp session focus data =
 
 viewProjectSubRow : Bool -> CommonMsg Msg -> SessionCommon -> NodeFocus -> ProjectFull -> Html Msg
 viewProjectSubRow canEdit commonOp session focus project =
+    viewProjectRow canEdit commonOp session focus project <|
+        [ hr [ class "dropdown-divider" ] []
+        , div [ class "dropdown-item button-light", onClick (ChangeStatus ProjectStatus.Closed project) ] [ text T.close ]
+        ]
+
+
+mediaProject : Bool -> CommonMsg Msg -> SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
+mediaProject canEdit commonOp session focus statusFilter project =
+    let
+        ( status_new, status_txt ) =
+            case statusDecoder statusFilter of
+                ProjectStatus.Open ->
+                    ( ProjectStatus.Closed, T.close )
+
+                ProjectStatus.Closed ->
+                    ( ProjectStatus.Open, T.reopen )
+    in
+    viewProjectRow canEdit commonOp session focus project <|
+        [ hr [ class "dropdown-divider" ] []
+        , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
+        ]
+            ++ (if List.length project.nodes > 1 then
+                    [ hr [ class "dropdown-divider" ] []
+                    , div
+                        [ class "dropdown-item button-light has-text-warning"
+                        , onClick
+                            (DoModalConfirmOpen (Submit <| SubmitDeleteProject project.id focus.nameid)
+                                { message = Nothing
+                                , txts = [ ( T.confirmDetachProject, "" ) ]
+                                , confirmClass = "is-warning"
+                                , confirmLabel = T.confirm
+                                }
+                            )
+                        ]
+                        [ text T.unlink ]
+                    ]
+
+                else
+                    []
+               )
+
+
+viewProjectRow : Bool -> CommonMsg Msg -> SessionCommon -> NodeFocus -> ProjectFull -> List (Html Msg) -> Html Msg
+viewProjectRow canEdit commonOp session focus project extraMenuItems =
     div
         [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] []
@@ -1438,7 +1629,7 @@ viewProjectSubRow canEdit commonOp session focus project =
                         text ""
                 , div [ class "column pb-0 is-4 has-text-right" ]
                     (project.nodes
-                        |> List.map (\node -> viewCircleTarget commonOp "is-small" node)
+                        |> List.map (\node -> viewCircleTarget ProjectsBaseUri commonOp "is-small" node)
                     )
                 ]
             , div [ class "level is-smaller2 is-mobile" ]
@@ -1463,94 +1654,14 @@ viewProjectSubRow canEdit commonOp session focus project =
                     , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
                         [ div [ class "dropdown-content p-0" ] <|
                             [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
-                            , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (ChangeStatus ProjectStatus.Closed project) ] [ text T.close ]
                             ]
-                        ]
-                    ]
-                ]
-
-          else
-            text ""
-        ]
-
-
-mediaProject : Bool -> SessionCommon -> NodeFocus -> StatusFilter -> ProjectFull -> Html Msg
-mediaProject canEdit session focus statusFilter project =
-    let
-        ( status_new, status_txt ) =
-            case statusDecoder statusFilter of
-                ProjectStatus.Open ->
-                    ( ProjectStatus.Closed, T.close )
-
-                ProjectStatus.Closed ->
-                    ( ProjectStatus.Open, T.reopen )
-    in
-    div
-        [ class "media mediaBox is-hoverable" ]
-        [ div [ class "media-left" ] []
-        , div [ class "media-content " ]
-            [ div [ class "columns mb-1" ]
-                [ div [ class ("column pb-0 " ++ ternary (project.description == Nothing) "is-11" "is-4") ]
-                    [ a
-                        [ class "has-text-weight-semibold is-human discrete-link"
-                        , href (Route.Project_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = shortId project.id } |> toHref)
-                        ]
-                        [ text project.name ]
-                    ]
-                , case project.description of
-                    Just x ->
-                        div [ class "column pb-0 is-8" ]
-                            [ span [ class "is-discret is-smaller" ] [ text x ] ]
-
-                    Nothing ->
-                        text ""
-                ]
-            , div [ class "level is-smaller2 is-mobile" ]
-                [ div [ class "level-left" ]
-                    [ span [ class "is-discrete" ] <|
-                        List.intersperse (text " ") <|
-                            [ textH T.updated, text (formatDate session.lang session.now project.updateAt) ]
-                    ]
-                , div [ class "level-right" ] []
-                ]
-            ]
-        , if canEdit then
-            div [ class "media-right wrapped-container-33" ]
-                [ div [ class "dropdown is-right" ]
-                    [ div [ class "dropdown-trigger is-w is-h" ]
-                        [ div
-                            [ class "ellipsis"
-                            , attribute "aria-controls" ("edit-ellipsis-" ++ project.id)
-                            , attribute "aria-haspopup" "true"
-                            ]
-                            [ A.icon "icon-more-horizontal icon-lg" ]
-                        ]
-                    , div [ id ("edit-ellipsis-" ++ project.id), class "dropdown-menu", attribute "role" "menu" ]
-                        [ div [ class "dropdown-content p-0" ] <|
-                            [ div [ class "dropdown-item button-light", onClick (EditProject project) ] [ text T.edit ]
-                            , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (ChangeStatus status_new project) ] [ text status_txt ]
-                            ]
-                                ++ (if List.length project.nodes > 1 then
-                                        [ hr [ class "dropdown-divider" ] []
-                                        , div
-                                            [ class "dropdown-item button-light has-text-warning"
-                                            , onClick
-                                                (DoModalConfirmOpen (Submit <| SubmitDeleteProject project.id)
-                                                    { message = Nothing
-                                                    , txts = [ ( T.confirmDetachProject, "" ) ]
-                                                    , confirmClass = "is-warning"
-                                                    , confirmLabel = T.confirm
-                                                    }
-                                                )
-                                            ]
-                                            [ text T.unlink ]
-                                        ]
+                                ++ (if List.length project.nodes == 1 then
+                                        [ div [ class "dropdown-item button-light", onClick (MoveProject project) ] [ text T.move ] ]
 
                                     else
                                         []
                                    )
+                                ++ extraMenuItems
                         ]
                     ]
                 ]
@@ -1558,3 +1669,97 @@ mediaProject canEdit session focus statusFilter project =
           else
             text ""
         ]
+
+
+viewMoveProjectModal : Model -> Html Msg
+viewMoveProjectModal model =
+    case model.project_move of
+        Nothing ->
+            text ""
+
+        Just project ->
+            let
+                isTargetOpen =
+                    model.isMoveTargetOpen
+
+                tree_data =
+                    TreeMenu.getOrgaData_ model.treeMenu
+
+                linkedNodes =
+                    List.map .nameid project.nodes
+
+                selected =
+                    case model.move_target of
+                        Just t ->
+                            t.nameid :: linkedNodes
+
+                        Nothing ->
+                            linkedNodes
+
+                isSendable =
+                    case model.move_target of
+                        Just t ->
+                            not (List.member t.nameid linkedNodes)
+
+                        Nothing ->
+                            False
+
+                isLoading =
+                    model.project_result_move == LoadingSlowly
+            in
+            div [ id "MoveProjectModal", class "modal modal-fx-fadeIn is-active", attribute "data-modal-close" "closeModalFromJs" ]
+                [ div [ class "modal-background modal-escape", attribute "data-modal" "MoveProjectModal", onClick CancelMoveProject ] []
+                , div [ class "modal-card submitFocus" ]
+                    [ div [ class "modal-card-head" ]
+                        [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
+                            [ span [] [ text (T.moveProject ++ ": "), span [ class "has-text-primary has-text-weight-extrabold" ] [ text project.name ] ]
+                            ]
+                        ]
+                    , div [ class "modal-card-body" ]
+                        [ div [ class "level is-flex-inline" ]
+                            [ span [ class "level-right" ] [ text (T.newReceiver ++ ":") ]
+                            , div [ class "level-item" ]
+                                [ B.dropdownLight
+                                    { dropdown_id = "move-project-target-menu"
+                                    , isOpen = isTargetOpen
+                                    , dropdown_cls = ""
+                                    , button_cls = ""
+                                    , button_html =
+                                        case model.move_target of
+                                            Nothing ->
+                                                span [ class "button" ] [ text T.selectADestination, span [ class "ml-2 icon-chevron-down" ] [] ]
+
+                                            Just t ->
+                                                span [ class "button is-rounded has-border" ] [ text t.name, span [ class "ml-2 icon-chevron-down" ] [] ]
+                                    , menu_cls = ""
+                                    , content_cls = "p-0 has-border-light"
+                                    , content_html = viewSelectorTree OnChangeMoveTarget OnMoveExpandToggle selected model.move_expanded_lines tree_data
+                                    , msg = ternary isTargetOpen (OnMoveTargetClick "") (OnMoveTargetClick "open")
+                                    }
+                                ]
+                            ]
+                        ]
+                    , div [ class "modal-card-foot" ]
+                        [ case model.project_result_move of
+                            Failure err ->
+                                div [ class "field" ] [ viewGqlErrors err ]
+
+                            _ ->
+                                text ""
+                        , div [ class "field level is-mobile" ]
+                            [ div [ class "level-left" ]
+                                [ button [ class "button", onClick CancelMoveProject ] [ text T.cancel ]
+                                ]
+                            , div [ class "level-right" ]
+                                [ button
+                                    [ class "button defaultSubmit is-success"
+                                    , classList [ ( "is-loading", isLoading ) ]
+                                    , disabled (not isSendable || isLoading)
+                                    , onClick (Submit SubmitMoveProject)
+                                    ]
+                                    [ text T.move ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]

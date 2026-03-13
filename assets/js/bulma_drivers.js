@@ -41,15 +41,13 @@ export function InitBulma(app, session, eltId) {
 }
 
 export function catchEsc(e, fun, ...args) {
-    let evt = event || window.event;
-    if (evt.key === 'Esc' || evt.key === 'Escape') {
+    if (e.key === 'Esc' || e.key === 'Escape') {
         fun(e, ...args);
     }
 }
 
 export function catchEnter(e, fun, ...args) {
-    let evt = event || window.event;
-    if (evt.key === 'Enter') {
+    if (e.key === 'Enter') {
         fun(e, ...args);
     }
 }
@@ -95,15 +93,17 @@ export function BulmaDriver(app, target, handlers) {
             nvt.classList.remove('has-modal-active');
             nvt.classList.remove('has-modal-active2');
         }
-    } else if (document.getElementById(target)) {
+    } else {
+        var targetEl = document.getElementById(target);
+        if (!targetEl) {
+            console.log("Bulma init target not found");
+            return
+        }
         // @DEBUG: document handler may be added several times here...
         // --
         // Use parentNode to be sure to not miss the target in the case
         // where the eltId is defined at the same level of the wanted selector.
-        $doc = document.getElementById(target).parentNode;
-    } else {
-        console.log("Bulma init target not found");
-        return
+        $doc = targetEl.parentNode;
     }
 
     //
@@ -443,7 +443,16 @@ if ($autofocuses.length > 0) {
     }
     if ($modal_esc.length > 0) {
         $modal_esc.forEach(el => {
-            var $modal = document.getElementById(el.dataset.modal);
+            var modalId = el.dataset.modal;
+            if (!modalId) {
+                console.error("modal-escape element missing data-modal attribute:", el);
+                return
+            }
+            var $modal = document.getElementById(modalId);
+            if (!$modal) {
+                console.error("modal-escape data-modal references unknown element:", modalId);
+                return
+            }
             setupHandler("esc", closeModal, document, $modal, app);
         });
     }
@@ -1054,6 +1063,11 @@ function triggerModal(e, el) {
 function closeModal(e, modal, app) {
     // except this one
     if (document.documentElement.classList.contains("has-modal-active2")) {
+        return
+    }
+
+    if (!modal) {
+        console.error("closeModal: modal element is null (missing data-modal attribute?)");
         return
     }
 

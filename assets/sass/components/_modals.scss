@@ -407,6 +407,16 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+#MoveProjectModal,
+#MoveTensionModal {
+    .modal-card {
+        min-height: 450px;
+    }
+    .modal-card-foot {
+        display: block;
+    }
+}
+
 i.is-liked {
     color: var(--warning);
 }

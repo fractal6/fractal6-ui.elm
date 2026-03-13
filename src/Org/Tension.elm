@@ -1764,7 +1764,7 @@ viewTension u t model =
                             ]
                     , div [ class "level-right" ] <|
                         List.map (div [ class "level-item" ] << List.singleton) <|
-                            [ viewCircleTarget model.commonOp "" t.receiver ]
+                            [ viewCircleTarget OverviewBaseUri model.commonOp "" t.receiver ]
                     ]
                 ]
             ]
@@ -2140,7 +2140,7 @@ viewSidePane u t model =
                                         NodeType.Circle ->
                                             -- @debug: can't center item :/
                                             div [ class "is-flex" ]
-                                                [ viewCircleTarget model.commonOp "mb-3 is-medium is-align-self-center" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
+                                                [ viewCircleTarget OverviewBaseUri model.commonOp "mb-3 is-medium is-align-self-center" { name = node.name, nameid = node.nameid, role_type = node.role_type, color = node.color }
                                                 ]
 
                                         NodeType.Role ->

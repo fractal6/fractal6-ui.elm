@@ -561,6 +561,9 @@ updateProjectInputEncoder form =
             else
                 form.post
 
+        moveFrom =
+            Dict.get "move_from" form.post
+
         inputOpt =
             \_ ->
                 { set =
@@ -576,12 +579,31 @@ updateProjectInputEncoder form =
                                         -- Only set nodes for duplicate handler (registering project in a node)
                                         Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
 
+                                    else if moveFrom /= Nothing then
+                                        -- Move: attach to new parent node
+                                        Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+
                                     else
                                         Absent
                             }
                         )
                         |> Present
-                , remove = Absent
+                , remove =
+                    case moveFrom of
+                        Just oldNameid ->
+                            -- Move: detach from old parent node
+                            Input.buildProjectPatch
+                                (\i ->
+                                    { i
+                                        | nodes =
+                                            Present
+                                                [ Input.buildNodeRef (\j -> { j | nameid = Present oldNameid }) ]
+                                    }
+                                )
+                                |> Present
+
+                        Nothing ->
+                            Absent
                 }
     in
     { input = Input.buildUpdateProjectInput inputReq inputOpt }

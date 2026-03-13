@@ -40,7 +40,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, i, p, span, text, textarea)
-import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, target, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withMaybeData, withMaybeMapData)
@@ -649,7 +649,7 @@ viewModalContent tree_data model =
         isTargetOpen =
             model.isTargetOpen /= ""
     in
-    div [ class "modal-card submitFocus", style "min-height" "450px" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class ("modal-card-head is-" ++ color) ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ case model.blob of
@@ -715,7 +715,7 @@ viewModalContent tree_data model =
                 , p [ class "help-label" ] [ text T.tensionMessageHelp ]
                 ]
             ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+        , div [ class "modal-card-foot" ]
             [ case model.move_result of
                 Failure err ->
                     div [ class "field" ] [ viewGqlErrors err ]

@@ -2105,7 +2105,8 @@ viewCircleTensions model =
                         ]
 
                 op =
-                    { hasTaskMove = True
+                    { baseUri = TensionsBaseUri
+                    , hasTaskMove = True
                     , hasNewCol = False
                     , session = model.session
                     , node_focus = model.node_focus
@@ -2176,7 +2177,8 @@ viewLabelTensions model =
                         ]
 
                 op =
-                    { hasTaskMove = False
+                    { baseUri = TensionsBaseUri
+                    , hasTaskMove = False
                     , hasNewCol = False
                     , session = model.session
                     , node_focus = model.node_focus
@@ -2245,7 +2247,8 @@ viewAssigneeTensions model =
                         ]
 
                 op =
-                    { hasTaskMove = False
+                    { baseUri = TensionsBaseUri
+                    , hasTaskMove = False
                     , hasNewCol = False
                     , session = model.session
                     , node_focus = model.node_focus
@@ -2311,7 +2314,7 @@ viewTensions tensionDir model =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> Lazy.lazy7 mediaTension model.commonOp model.session model.node_focus.nameid t True True "is-size-6 t-o")
+                        |> List.map (\t -> mediaTension TensionsBaseUri model.commonOp model.session model.node_focus.nameid t True True "is-size-6 t-o")
                         |> div [ id "tensionsTab" ]
 
                 else if model.pattern_init /= "" then

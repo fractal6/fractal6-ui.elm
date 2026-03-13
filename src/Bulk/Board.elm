@@ -23,7 +23,7 @@ module Bulk.Board exposing (..)
 
 import Assets as A
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (NodeFocus)
+import Bulk.Codecs exposing (FractalBaseRoute, NodeFocus)
 import Bulk.View exposing (mediaTension)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -39,7 +39,8 @@ import Text as T
 
 
 type alias Op msg =
-    { hasTaskMove : Bool
+    { baseUri : FractalBaseRoute
+    , hasTaskMove : Bool
     , hasNewCol : Bool
     , session : SessionCommon
     , node_focus : NodeFocus
@@ -166,7 +167,7 @@ viewBoard op commonOp header keys_title data =
                                             [ onDragLeave (op.onMoveEnterCol { pos = i, to_receiverid = t.receiver.nameid } True) ]
                                             []
                                     )
-                                    [ mediaTension commonOp op.session op.node_focus.nameid t True False "is-size-6" ]
+                                    [ mediaTension op.baseUri commonOp op.session op.node_focus.nameid t True False "is-size-6" ]
                                 , ternary hasLastColumn draggingDiv (text "")
                                 ]
                             )
