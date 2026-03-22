@@ -72,6 +72,7 @@ $f6-light-palette: (
     danger: #ff5338,
     link: #1293d8, // #1293d8 elm(blue)
     link2: #1293d8,
+    background: #f0f2f4,
 );
 $f6-light-theme: (
   // Background
@@ -81,7 +82,7 @@ $f6-light-theme: (
   orga-menu-background-color: $background-secondary-light,
   tree-menu-background-color: $background-secondary-light,
   background-evidence: $background-evidence-light,
-  background-hover: var(--bulma-background),
+  background-hover: #f0f2f4,
   background-hover-discrete: var(--bulma-scheme-main-bis),
   user-emoticon-bg: #eeeeff,
   orga-emoticon-bg: #71beee, // #6da8d6
