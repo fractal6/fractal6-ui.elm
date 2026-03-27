@@ -59,6 +59,7 @@ type alias Model =
     , focus : NodeFocus
     , orgs_result : GqlData (List OrgaNode)
     , tooltip : Maybe TooltipInfo
+    , isHovering : Bool
 
     -- Common
     , session : SessionCommon
@@ -94,6 +95,7 @@ initModel focus isActive orgs session =
                     LoggedOut ->
                         NotAsked
     , tooltip = Nothing
+    , isHovering = False
 
     -- Common
     , session = session
@@ -263,7 +265,7 @@ update_ apis message model =
                 Just nameid ->
                     -- Calculate position relative to #orga-menu container (which is fixed)
                     -- This ensures main window scroll doesn't affect tooltip position
-                    ( model
+                    ( { model | isHovering = True }
                     , out0
                         [ Task.map2
                             (\elementInfo containerInfo ->
@@ -282,15 +284,19 @@ update_ apis message model =
                     )
 
                 Nothing ->
-                    ( clearTooltip model, noOut )
+                    ( clearTooltip { model | isHovering = False }, noOut )
 
         OnOrgHoverResult result ->
-            case result of
-                Ok info ->
-                    ( { model | tooltip = Just info }, noOut )
+            if not model.isHovering then
+                ( model, noOut )
 
-                Err _ ->
-                    ( clearTooltip model, noOut )
+            else
+                case result of
+                    Ok info ->
+                        ( { model | tooltip = Just info }, noOut )
+
+                    Err _ ->
+                        ( clearTooltip model, noOut )
 
         OnUpdateFocus focus ->
             if isSuccess model.orgs_result then
@@ -366,6 +372,7 @@ viewTooltip maybeTooltip =
                 , style "z-index" "100"
                 , style "white-space" "nowrap"
                 , style "padding" "10px"
+                , style "pointer-events" "none"
                 ]
                 [ text name ]
 
@@ -412,6 +419,7 @@ viewOrga focus x =
         , class "orgaMenu"
         , classList [ ( "is-active", focus.rootnameid == x.nameid ) ]
         , onMouseEnter (OnOrgHover (Just x.nameid) x.name)
+        , onMouseLeave (OnOrgHover Nothing "")
         ]
         [ viewOrga0 True x.nameid
         ]
