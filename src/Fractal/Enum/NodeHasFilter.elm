@@ -30,12 +30,14 @@ type NodeHasFilter
     | UserCanJoin
     | GuestCanCreateTension
     | Lexicon
+    | IsTemplateTensionOnly
     | Watchers
     | Children
-    | Labels
-    | Roles
     | Projects
     | Pinned
+    | Labels
+    | Roles
+    | Tension_templates
     | Role_ext
     | Role_type
     | Color
@@ -48,7 +50,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, Watchers, Children, Labels, Roles, Projects, Pinned, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -123,11 +125,20 @@ decoder =
                     "lexicon" ->
                         Decode.succeed Lexicon
 
+                    "isTemplateTensionOnly" ->
+                        Decode.succeed IsTemplateTensionOnly
+
                     "watchers" ->
                         Decode.succeed Watchers
 
                     "children" ->
                         Decode.succeed Children
+
+                    "projects" ->
+                        Decode.succeed Projects
+
+                    "pinned" ->
+                        Decode.succeed Pinned
 
                     "labels" ->
                         Decode.succeed Labels
@@ -135,11 +146,8 @@ decoder =
                     "roles" ->
                         Decode.succeed Roles
 
-                    "projects" ->
-                        Decode.succeed Projects
-
-                    "pinned" ->
-                        Decode.succeed Pinned
+                    "tension_templates" ->
+                        Decode.succeed Tension_templates
 
                     "role_ext" ->
                         Decode.succeed Role_ext
@@ -241,11 +249,20 @@ toString enum____ =
         Lexicon ->
             "lexicon"
 
+        IsTemplateTensionOnly ->
+            "isTemplateTensionOnly"
+
         Watchers ->
             "watchers"
 
         Children ->
             "children"
+
+        Projects ->
+            "projects"
+
+        Pinned ->
+            "pinned"
 
         Labels ->
             "labels"
@@ -253,11 +270,8 @@ toString enum____ =
         Roles ->
             "roles"
 
-        Projects ->
-            "projects"
-
-        Pinned ->
-            "pinned"
+        Tension_templates ->
+            "tension_templates"
 
         Role_ext ->
             "role_ext"
@@ -364,11 +378,20 @@ fromString enumString____ =
         "lexicon" ->
             Just Lexicon
 
+        "isTemplateTensionOnly" ->
+            Just IsTemplateTensionOnly
+
         "watchers" ->
             Just Watchers
 
         "children" ->
             Just Children
+
+        "projects" ->
+            Just Projects
+
+        "pinned" ->
+            Just Pinned
 
         "labels" ->
             Just Labels
@@ -376,11 +399,8 @@ fromString enumString____ =
         "roles" ->
             Just Roles
 
-        "projects" ->
-            Just Projects
-
-        "pinned" ->
-            Just Pinned
+        "tension_templates" ->
+            Just Tension_templates
 
         "role_ext" ->
             Just Role_ext

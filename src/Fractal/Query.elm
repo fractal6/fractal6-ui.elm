@@ -353,6 +353,62 @@ aggregateRoleExt fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateRoleExt" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetTensionTemplateRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getTensionTemplate :
+    GetTensionTemplateRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.TensionTemplate
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getTensionTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "getTensionTemplate" [ Argument.required "id" requiredArgs____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryTensionTemplateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionTemplateFilter
+    , order : OptionalArgument Fractal.InputObject.TensionTemplateOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryTensionTemplate :
+    (QueryTensionTemplateOptionalArguments -> QueryTensionTemplateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionTemplate
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryTensionTemplate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionTemplateFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeTensionTemplateOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryTensionTemplate" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateTensionTemplateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionTemplateFilter }
+
+
+aggregateTensionTemplate :
+    (AggregateTensionTemplateOptionalArguments -> AggregateTensionTemplateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionTemplateAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateTensionTemplate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionTemplateFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateTensionTemplate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetProjectRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 

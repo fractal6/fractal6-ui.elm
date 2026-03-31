@@ -105,6 +105,10 @@ type AddTensionPayload
     = AddTensionPayload
 
 
+type AddTensionTemplatePayload
+    = AddTensionTemplatePayload
+
+
 type AddUserEventPayload
     = AddUserEventPayload
 
@@ -247,6 +251,10 @@ type DeleteRoleExtPayload
 
 type DeleteTensionPayload
     = DeleteTensionPayload
+
+
+type DeleteTensionTemplatePayload
+    = DeleteTensionTemplatePayload
 
 
 type DeleteUserEventPayload
@@ -433,6 +441,14 @@ type TensionAggregateResult
     = TensionAggregateResult
 
 
+type TensionTemplate
+    = TensionTemplate
+
+
+type TensionTemplateAggregateResult
+    = TensionTemplateAggregateResult
+
+
 type UpdateActivityPayload
     = UpdateActivityPayload
 
@@ -527,6 +543,10 @@ type UpdateRoleExtPayload
 
 type UpdateTensionPayload
     = UpdateTensionPayload
+
+
+type UpdateTensionTemplatePayload
+    = UpdateTensionTemplatePayload
 
 
 type UpdateUserEventPayload

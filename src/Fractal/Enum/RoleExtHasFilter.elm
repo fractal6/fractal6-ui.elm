@@ -10,17 +10,17 @@ import Json.Decode as Decode exposing (Decoder)
 type RoleExtHasFilter
     = Rootnameid
     | Name
+    | Nodes
     | About
     | Role_type
     | Color
     | Mandate
     | Roles
-    | Nodes
 
 
 list : List RoleExtHasFilter
 list =
-    [ Rootnameid, Name, About, Role_type, Color, Mandate, Roles, Nodes ]
+    [ Rootnameid, Name, Nodes, About, Role_type, Color, Mandate, Roles ]
 
 
 decoder : Decoder RoleExtHasFilter
@@ -34,6 +34,9 @@ decoder =
 
                     "name" ->
                         Decode.succeed Name
+
+                    "nodes" ->
+                        Decode.succeed Nodes
 
                     "about" ->
                         Decode.succeed About
@@ -49,9 +52,6 @@ decoder =
 
                     "roles" ->
                         Decode.succeed Roles
-
-                    "nodes" ->
-                        Decode.succeed Nodes
 
                     _ ->
                         Decode.fail ("Invalid RoleExtHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -69,6 +69,9 @@ toString enum____ =
         Name ->
             "name"
 
+        Nodes ->
+            "nodes"
+
         About ->
             "about"
 
@@ -83,9 +86,6 @@ toString enum____ =
 
         Roles ->
             "roles"
-
-        Nodes ->
-            "nodes"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -108,6 +108,9 @@ fromString enumString____ =
         "name" ->
             Just Name
 
+        "nodes" ->
+            Just Nodes
+
         "about" ->
             Just About
 
@@ -122,9 +125,6 @@ fromString enumString____ =
 
         "roles" ->
             Just Roles
-
-        "nodes" ->
-            Just Nodes
 
         _ ->
             Nothing

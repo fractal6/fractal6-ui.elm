@@ -248,6 +248,42 @@ deleteRoleExt requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteRoleExt" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeRoleExtFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddTensionTemplateRequiredArguments =
+    { input : List Fractal.InputObject.AddTensionTemplateInput }
+
+
+addTensionTemplate :
+    AddTensionTemplateRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddTensionTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addTensionTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "addTensionTemplate" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddTensionTemplateInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateTensionTemplateRequiredArguments =
+    { input : Fractal.InputObject.UpdateTensionTemplateInput }
+
+
+updateTensionTemplate :
+    UpdateTensionTemplateRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateTensionTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateTensionTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateTensionTemplate" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateTensionTemplateInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteTensionTemplateRequiredArguments =
+    { filter : Fractal.InputObject.TensionTemplateFilter }
+
+
+deleteTensionTemplate :
+    DeleteTensionTemplateRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteTensionTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteTensionTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteTensionTemplate" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeTensionTemplateFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddProjectRequiredArguments =
     { input : List Fractal.InputObject.AddProjectInput }
 

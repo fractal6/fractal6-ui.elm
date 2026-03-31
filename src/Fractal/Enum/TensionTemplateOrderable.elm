@@ -2,26 +2,24 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.LabelHasFilter exposing (..)
+module Fractal.Enum.TensionTemplateOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type LabelHasFilter
+type TensionTemplateOrderable
     = Rootnameid
     | Name
-    | Nodes
-    | Description
-    | Color
-    | Tensions
+    | Title
+    | Comment
 
 
-list : List LabelHasFilter
+list : List TensionTemplateOrderable
 list =
-    [ Rootnameid, Name, Nodes, Description, Color, Tensions ]
+    [ Rootnameid, Name, Title, Comment ]
 
 
-decoder : Decoder LabelHasFilter
+decoder : Decoder TensionTemplateOrderable
 decoder =
     Decode.string
         |> Decode.andThen
@@ -33,26 +31,20 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
-                    "nodes" ->
-                        Decode.succeed Nodes
+                    "title" ->
+                        Decode.succeed Title
 
-                    "description" ->
-                        Decode.succeed Description
-
-                    "color" ->
-                        Decode.succeed Color
-
-                    "tensions" ->
-                        Decode.succeed Tensions
+                    "comment" ->
+                        Decode.succeed Comment
 
                     _ ->
-                        Decode.fail ("Invalid LabelHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid TensionTemplateOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : LabelHasFilter -> String
+toString : TensionTemplateOrderable -> String
 toString enum____ =
     case enum____ of
         Rootnameid ->
@@ -61,17 +53,11 @@ toString enum____ =
         Name ->
             "name"
 
-        Nodes ->
-            "nodes"
+        Title ->
+            "title"
 
-        Description ->
-            "description"
-
-        Color ->
-            "color"
-
-        Tensions ->
-            "tensions"
+        Comment ->
+            "comment"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -85,7 +71,7 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe LabelHasFilter
+fromString : String -> Maybe TensionTemplateOrderable
 fromString enumString____ =
     case enumString____ of
         "rootnameid" ->
@@ -94,17 +80,11 @@ fromString enumString____ =
         "name" ->
             Just Name
 
-        "nodes" ->
-            Just Nodes
+        "title" ->
+            Just Title
 
-        "description" ->
-            Just Description
-
-        "color" ->
-            Just Color
-
-        "tensions" ->
-            Just Tensions
+        "comment" ->
+            Just Comment
 
         _ ->
             Nothing
