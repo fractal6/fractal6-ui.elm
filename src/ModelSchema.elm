@@ -170,6 +170,7 @@ type alias RNode =
     , nameid : String
     , userCanJoin : Maybe Bool
     , mode : NodeMode.NodeMode
+    , isTemplateTensionOnly : Maybe Bool
     }
 
 
@@ -242,6 +243,7 @@ type alias NodeRights =
     { visibility : NodeVisibility.NodeVisibility
     , userCanJoin : Maybe Bool
     , guestCanCreateTension : Maybe Bool
+    , isTemplateTensionOnly : Maybe Bool
     }
 
 
@@ -388,6 +390,29 @@ type alias RoleExtCommon a =
         | name : String
         , color : Maybe String
         , role_type : RoleType.RoleType
+    }
+
+
+type alias TensionTemplateLite =
+    { id : String
+    , name : String
+    , title : String
+    , comment : String
+    , type_ : TensionType.TensionType
+    , is_recursive : Bool
+    }
+
+
+type alias TensionTemplateFull =
+    { id : String
+    , name : String
+    , title : String
+    , comment : String
+    , type_ : TensionType.TensionType
+    , is_recursive : Bool
+    , labels : Maybe (List Label)
+    , assignees : Maybe (List User)
+    , n_nodes : Maybe Int
     }
 
 

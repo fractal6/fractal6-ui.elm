@@ -468,6 +468,19 @@ setGuestCanCreateTension api nameid val msg =
         }
 
 
+setIsTemplateTensionOnly : Apis -> String -> Bool -> (RestData Bool -> msg) -> Cmd msg
+setIsTemplateTensionOnly api nameid val msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/setistemplatetensiononly"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "val", JE.bool val ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 setLexicon : Apis -> String -> String -> (RestData Bool -> msg) -> Cmd msg
 setLexicon api nameid val msg =
     Http.riskyRequest

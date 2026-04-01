@@ -1915,6 +1915,7 @@ viewDocument u t b model =
                 , onAddDomains = AddDomains
                 , onAddPolicies = AddPolicies
                 , onAddResponsabilities = AddResponsabilities
+                , mdOps = Nothing
                 }
         in
         NodeDoc.view nodeData (Just op)
@@ -2187,6 +2188,7 @@ viewSidePane u t model =
                                     , onAddDomains = AddDomains
                                     , onAddPolicies = AddPolicies
                                     , onAddResponsabilities = AddResponsabilities
+                                    , mdOps = Nothing
                                     }
                             in
                             div [ class "is-flex mt-3" ]

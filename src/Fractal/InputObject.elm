@@ -1585,9 +1585,9 @@ buildAddTensionTemplateInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { nodes = Absent, labels = Absent, assignees = Absent }
+                { description = Absent, nodes = Absent, labels = Absent, assignees = Absent }
     in
-    AddTensionTemplateInput { rootnameid = required____.rootnameid, name = required____.name, nodes = optionals____.nodes, is_recursive = required____.is_recursive, title = required____.title, comment = required____.comment, type_ = required____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
+    AddTensionTemplateInput { rootnameid = required____.rootnameid, name = required____.name, description = optionals____.description, nodes = optionals____.nodes, is_recursive = required____.is_recursive, title = required____.title, comment = required____.comment, type_ = required____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
 
 
 type alias AddTensionTemplateInputRequiredFields =
@@ -1601,7 +1601,8 @@ type alias AddTensionTemplateInputRequiredFields =
 
 
 type alias AddTensionTemplateInputOptionalFields =
-    { nodes : OptionalArgument (List NodeRef)
+    { description : OptionalArgument String
+    , nodes : OptionalArgument (List NodeRef)
     , labels : OptionalArgument (List LabelRef)
     , assignees : OptionalArgument (List UserRef)
     }
@@ -1615,6 +1616,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias AddTensionTemplateInputRaw =
     { rootnameid : String
     , name : String
+    , description : OptionalArgument String
     , nodes : OptionalArgument (List NodeRef)
     , is_recursive : Bool
     , title : String
@@ -1636,7 +1638,7 @@ type AddTensionTemplateInput
 encodeAddTensionTemplateInput : AddTensionTemplateInput -> Value
 encodeAddTensionTemplateInput (AddTensionTemplateInput input____) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool input____.is_recursive |> Just ), ( "title", Encode.string input____.title |> Just ), ( "comment", Encode.string input____.comment |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input____.type_ |> Just ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
+        [ ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "description", Encode.string |> Encode.optional input____.description ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool input____.is_recursive |> Just ), ( "title", Encode.string input____.title |> Just ), ( "comment", Encode.string input____.comment |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input____.type_ |> Just ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
 
 
 buildAddUserEventInput :
@@ -8181,15 +8183,14 @@ buildTensionTemplateFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, rootnameid = Absent, name = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, rootnameid = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    TensionTemplateFilter { id = optionals____.id, rootnameid = optionals____.rootnameid, name = optionals____.name, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    TensionTemplateFilter { id = optionals____.id, rootnameid = optionals____.rootnameid, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias TensionTemplateFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , rootnameid : OptionalArgument StringHashFilter
-    , name : OptionalArgument StringHashFilter_StringTermFilter
     , has : OptionalArgument (List (Maybe Fractal.Enum.TensionTemplateHasFilter.TensionTemplateHasFilter))
     , and : OptionalArgument (List (Maybe TensionTemplateFilter))
     , or : OptionalArgument (List (Maybe TensionTemplateFilter))
@@ -8205,7 +8206,6 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias TensionTemplateFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , rootnameid : OptionalArgument StringHashFilter
-    , name : OptionalArgument StringHashFilter_StringTermFilter
     , has : OptionalArgument (List (Maybe Fractal.Enum.TensionTemplateHasFilter.TensionTemplateHasFilter))
     , and : OptionalArgument (List (Maybe TensionTemplateFilter))
     , or : OptionalArgument (List (Maybe TensionTemplateFilter))
@@ -8224,7 +8224,7 @@ type TensionTemplateFilter
 encodeTensionTemplateFilter : TensionTemplateFilter -> Value
 encodeTensionTemplateFilter (TensionTemplateFilter input____) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input____.rootnameid ), ( "name", encodeStringHashFilter_StringTermFilter |> Encode.optional input____.name ), ( "has", (Encode.enum Fractal.Enum.TensionTemplateHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeTensionTemplateFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeTensionTemplateFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeTensionTemplateFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input____.rootnameid ), ( "has", (Encode.enum Fractal.Enum.TensionTemplateHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeTensionTemplateFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeTensionTemplateFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeTensionTemplateFilter |> Encode.optional input____.not ) ]
 
 
 buildTensionTemplateOrder :
@@ -8279,14 +8279,15 @@ buildTensionTemplatePatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { rootnameid = Absent, name = Absent, nodes = Absent, is_recursive = Absent, title = Absent, comment = Absent, type_ = Absent, labels = Absent, assignees = Absent }
+                { rootnameid = Absent, name = Absent, description = Absent, nodes = Absent, is_recursive = Absent, title = Absent, comment = Absent, type_ = Absent, labels = Absent, assignees = Absent }
     in
-    TensionTemplatePatch { rootnameid = optionals____.rootnameid, name = optionals____.name, nodes = optionals____.nodes, is_recursive = optionals____.is_recursive, title = optionals____.title, comment = optionals____.comment, type_ = optionals____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
+    TensionTemplatePatch { rootnameid = optionals____.rootnameid, name = optionals____.name, description = optionals____.description, nodes = optionals____.nodes, is_recursive = optionals____.is_recursive, title = optionals____.title, comment = optionals____.comment, type_ = optionals____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
 
 
 type alias TensionTemplatePatchOptionalFields =
     { rootnameid : OptionalArgument String
     , name : OptionalArgument String
+    , description : OptionalArgument String
     , nodes : OptionalArgument (List NodeRef)
     , is_recursive : OptionalArgument Bool
     , title : OptionalArgument String
@@ -8305,6 +8306,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias TensionTemplatePatchRaw =
     { rootnameid : OptionalArgument String
     , name : OptionalArgument String
+    , description : OptionalArgument String
     , nodes : OptionalArgument (List NodeRef)
     , is_recursive : OptionalArgument Bool
     , title : OptionalArgument String
@@ -8326,7 +8328,7 @@ type TensionTemplatePatch
 encodeTensionTemplatePatch : TensionTemplatePatch -> Value
 encodeTensionTemplatePatch (TensionTemplatePatch input____) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool |> Encode.optional input____.is_recursive ), ( "title", Encode.string |> Encode.optional input____.title ), ( "comment", Encode.string |> Encode.optional input____.comment ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input____.type_ ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
+        [ ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool |> Encode.optional input____.is_recursive ), ( "title", Encode.string |> Encode.optional input____.title ), ( "comment", Encode.string |> Encode.optional input____.comment ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input____.type_ ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
 
 
 buildTensionTemplateRef :
@@ -8336,15 +8338,16 @@ buildTensionTemplateRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, rootnameid = Absent, name = Absent, nodes = Absent, is_recursive = Absent, title = Absent, comment = Absent, type_ = Absent, labels = Absent, assignees = Absent }
+                { id = Absent, rootnameid = Absent, name = Absent, description = Absent, nodes = Absent, is_recursive = Absent, title = Absent, comment = Absent, type_ = Absent, labels = Absent, assignees = Absent }
     in
-    TensionTemplateRef { id = optionals____.id, rootnameid = optionals____.rootnameid, name = optionals____.name, nodes = optionals____.nodes, is_recursive = optionals____.is_recursive, title = optionals____.title, comment = optionals____.comment, type_ = optionals____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
+    TensionTemplateRef { id = optionals____.id, rootnameid = optionals____.rootnameid, name = optionals____.name, description = optionals____.description, nodes = optionals____.nodes, is_recursive = optionals____.is_recursive, title = optionals____.title, comment = optionals____.comment, type_ = optionals____.type_, labels = optionals____.labels, assignees = optionals____.assignees }
 
 
 type alias TensionTemplateRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , rootnameid : OptionalArgument String
     , name : OptionalArgument String
+    , description : OptionalArgument String
     , nodes : OptionalArgument (List NodeRef)
     , is_recursive : OptionalArgument Bool
     , title : OptionalArgument String
@@ -8364,6 +8367,7 @@ type alias TensionTemplateRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , rootnameid : OptionalArgument String
     , name : OptionalArgument String
+    , description : OptionalArgument String
     , nodes : OptionalArgument (List NodeRef)
     , is_recursive : OptionalArgument Bool
     , title : OptionalArgument String
@@ -8385,7 +8389,7 @@ type TensionTemplateRef
 encodeTensionTemplateRef : TensionTemplateRef -> Value
 encodeTensionTemplateRef (TensionTemplateRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool |> Encode.optional input____.is_recursive ), ( "title", Encode.string |> Encode.optional input____.title ), ( "comment", Encode.string |> Encode.optional input____.comment ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input____.type_ ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "description", Encode.string |> Encode.optional input____.description ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "is_recursive", Encode.bool |> Encode.optional input____.is_recursive ), ( "title", Encode.string |> Encode.optional input____.title ), ( "comment", Encode.string |> Encode.optional input____.comment ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input____.type_ ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ) ]
 
 
 buildTensionType_hash :

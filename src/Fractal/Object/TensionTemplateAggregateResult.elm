@@ -44,6 +44,16 @@ nameMax =
     Object.selectionForField "(Maybe String)" "nameMax" [] (Decode.string |> Decode.nullable)
 
 
+descriptionMin : SelectionSet (Maybe String) Fractal.Object.TensionTemplateAggregateResult
+descriptionMin =
+    Object.selectionForField "(Maybe String)" "descriptionMin" [] (Decode.string |> Decode.nullable)
+
+
+descriptionMax : SelectionSet (Maybe String) Fractal.Object.TensionTemplateAggregateResult
+descriptionMax =
+    Object.selectionForField "(Maybe String)" "descriptionMax" [] (Decode.string |> Decode.nullable)
+
+
 titleMin : SelectionSet (Maybe String) Fractal.Object.TensionTemplateAggregateResult
 titleMin =
     Object.selectionForField "(Maybe String)" "titleMin" [] (Decode.string |> Decode.nullable)

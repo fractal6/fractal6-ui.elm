@@ -319,6 +319,43 @@ initArtefactNodeForm user nameid initColor =
 
 
 
+-- Tension Template Form
+
+
+type alias TensionTemplateForm =
+    { uctx : UserCtx
+    , id : String
+    , nameid : String -- circle nameid for rootnameid derivation
+    , post : Post -- "name", "title", "comment"
+    , viewMode : InputViewMode
+    , type_ : TensionType.TensionType
+    , is_recursive : Bool
+    , labels : List Label
+    , assignees : List User
+    }
+
+
+initTensionTemplateForm : UserState -> String -> TensionTemplateForm
+initTensionTemplateForm user nameid =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                initUserctx
+    , id = ""
+    , nameid = nameid
+    , post = Dict.empty
+    , viewMode = Write
+    , type_ = TensionType.Operational
+    , is_recursive = True
+    , labels = []
+    , assignees = []
+    }
+
+
+
 -- Join Form
 
 
@@ -763,6 +800,7 @@ localGraphFromOrga nameid orga_d =
                                 , nameid = n.nameid
                                 , userCanJoin = n.userCanJoin
                                 , mode = n.mode
+                                , isTemplateTensionOnly = Nothing
                                 }
                             )
 

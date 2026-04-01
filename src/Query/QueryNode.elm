@@ -64,6 +64,9 @@ module Query.QueryNode exposing
     , roleFullPayload
     , searchUserFilter
     , tensionEventPayload
+    , tensionTemplateFullPayload
+    , tensionTemplateLitePayload
+    , getTensionTemplates
     , tidPayload
     , userPayload
     )
@@ -80,6 +83,7 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.ProjectOrderable as ProjectOrderable
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
+import Fractal.Enum.TensionTemplateOrderable as TensionTemplateOrderable
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.InputObject as Input
@@ -99,6 +103,8 @@ import Fractal.Object.Notif
 import Fractal.Object.Project
 import Fractal.Object.ProjectAggregateResult
 import Fractal.Object.RoleExt
+import Fractal.Object.TensionTemplate
+import Fractal.Object.TensionTemplateAggregateResult
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
 import Fractal.Object.User
@@ -627,6 +633,7 @@ type alias LocalRootNode =
     , nameid : String
     , userCanJoin : Maybe Bool
     , mode : NodeMode.NodeMode
+    , isTemplateTensionOnly : Maybe Bool
     , source : Maybe BlobId
     }
 
@@ -644,7 +651,7 @@ lgDecoder data =
                 case n.parent of
                     Just p ->
                         if p.isRoot then
-                            { root = RNode p.name p.nameid p.userCanJoin p.mode |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly |> Just
                             , path = [ shrinkNode p, shrinkNode n ]
                             , focus = ln2fn n
                             }
@@ -658,7 +665,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin n.mode |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode Nothing |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -706,6 +713,7 @@ lg2Payload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.userCanJoin
         |> with Fractal.Object.Node.mode
+        |> with Fractal.Object.Node.isTemplateTensionOnly
         |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
@@ -800,6 +808,7 @@ nodeRightsPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.userCanJoin
         |> with Fractal.Object.Node.guestCanCreateTension
+        |> with Fractal.Object.Node.isTemplateTensionOnly
 
 
 
@@ -1154,6 +1163,76 @@ labelFullPayload =
             Fractal.Object.Label.nodesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
+
+
+
+--
+-- Query Tension Templates (Full)
+--
+
+
+type alias NodeTensionTemplatesFull =
+    { tension_templates : Maybe (List TensionTemplateFull) }
+
+
+tensionTemplatesFullDecoder : Maybe NodeTensionTemplatesFull -> Maybe (List TensionTemplateFull)
+tensionTemplatesFullDecoder data =
+    data
+        |> Maybe.map (\d -> withDefault [] d.tension_templates)
+
+
+getTensionTemplates url nid msg =
+    -- Fetch on the given node
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeTensionTemplatesFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse tensionTemplatesFullDecoder >> msg)
+
+
+nodeTensionTemplatesFullPayload : SelectionSet NodeTensionTemplatesFull Fractal.Object.Node
+nodeTensionTemplatesFullPayload =
+    SelectionSet.map NodeTensionTemplatesFull
+        (Fractal.Object.Node.tension_templates
+            (\args ->
+                { args
+                    | order =
+                        Input.buildTensionTemplateOrder (\b -> { b | asc = Present TensionTemplateOrderable.Name })
+                            |> Present
+                }
+            )
+            tensionTemplateFullPayload
+        )
+
+
+tensionTemplateFullPayload : SelectionSet TensionTemplateFull Fractal.Object.TensionTemplate
+tensionTemplateFullPayload =
+    SelectionSet.succeed TensionTemplateFull
+        |> with (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.TensionTemplate.name
+        |> with Fractal.Object.TensionTemplate.title
+        |> with Fractal.Object.TensionTemplate.comment
+        |> with Fractal.Object.TensionTemplate.type_
+        |> with Fractal.Object.TensionTemplate.is_recursive
+        |> with (Fractal.Object.TensionTemplate.labels identity labelPayload)
+        |> with (Fractal.Object.TensionTemplate.assignees identity userPayload)
+        |> with
+            (SelectionSet.map (unwrap Nothing .count) <|
+                Fractal.Object.TensionTemplate.nodesAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            )
+
+
+tensionTemplateLitePayload : SelectionSet TensionTemplateLite Fractal.Object.TensionTemplate
+tensionTemplateLitePayload =
+    SelectionSet.map6 TensionTemplateLite
+        (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
+        Fractal.Object.TensionTemplate.name
+        Fractal.Object.TensionTemplate.title
+        Fractal.Object.TensionTemplate.comment
+        Fractal.Object.TensionTemplate.type_
+        Fractal.Object.TensionTemplate.is_recursive
 
 
 

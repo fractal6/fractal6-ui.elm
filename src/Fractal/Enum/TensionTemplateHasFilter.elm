@@ -10,6 +10,7 @@ import Json.Decode as Decode exposing (Decoder)
 type TensionTemplateHasFilter
     = Rootnameid
     | Name
+    | Description
     | Nodes
     | Is_recursive
     | Title
@@ -21,7 +22,7 @@ type TensionTemplateHasFilter
 
 list : List TensionTemplateHasFilter
 list =
-    [ Rootnameid, Name, Nodes, Is_recursive, Title, Comment, Type_, Labels, Assignees ]
+    [ Rootnameid, Name, Description, Nodes, Is_recursive, Title, Comment, Type_, Labels, Assignees ]
 
 
 decoder : Decoder TensionTemplateHasFilter
@@ -35,6 +36,9 @@ decoder =
 
                     "name" ->
                         Decode.succeed Name
+
+                    "description" ->
+                        Decode.succeed Description
 
                     "nodes" ->
                         Decode.succeed Nodes
@@ -72,6 +76,9 @@ toString enum____ =
 
         Name ->
             "name"
+
+        Description ->
+            "description"
 
         Nodes ->
             "nodes"
@@ -114,6 +121,9 @@ fromString enumString____ =
 
         "name" ->
             Just Name
+
+        "description" ->
+            Just Description
 
         "nodes" ->
             Just Nodes

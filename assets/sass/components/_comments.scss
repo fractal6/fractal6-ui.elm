@@ -75,6 +75,9 @@
         a:hover {
             text-decoration: none !important;
         }
+        .commentHeader {
+            margin-top: 4px;
+        }
     }
     > .message-body {
         padding: 0.75rem !important;
@@ -85,7 +88,8 @@
 }
 
 .commentHeader {
-    margin-top: 4px;
+    margin-top: 0;
+    margin-bottom: 0 !important;
     width: 100%;
     .level-right {
         font-size: 15px;
@@ -99,6 +103,22 @@
                 background: var(--background-hover);
                 color: var(--text-strong);
             }
+        }
+    }
+}
+
+.md-editor {
+    .commentHeader {
+        padding: 0 0.5rem 0 0;
+    }
+    .tabs, .tabs.is-boxed {
+        ul { border-bottom: 0; }
+        li a { text-decoration: none !important; }
+        li:not(.is-active) a:hover {
+            border-bottom-color: var(--text-strong) !important;
+        }
+        li.is-active a:hover {
+            background: inherit !important;
         }
     }
 }

@@ -22,10 +22,11 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Bulk exposing (Ev, TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
+import Bulk exposing (Ev, InputViewMode(..), TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
 import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm, viewUser, viewUsers)
+import Components.Comments exposing (viewCommentInputHeader)
 import Dict exposing (Dict)
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
@@ -479,6 +480,14 @@ type alias Op msg =
     , onAddResponsabilities : msg
     , onAddDomains : msg
     , onAddPolicies : msg
+
+    , mdOps :
+        Maybe
+            { onChangeViewMode : String -> InputViewMode -> msg
+            , onRichText : String -> String -> msg
+            , onToggleMdHelp : String -> msg
+            , post : Dict String String
+            }
     }
 
 
@@ -1005,15 +1014,55 @@ viewMandateInput txt mandate op =
 
         purpose_len =
             List.length <| String.lines purpose
+
+        mdField targetid =
+            case op.mdOps of
+                Just mdOps ->
+                    let
+                        isP =
+                            Dict.get ("viewMode:" ++ targetid) mdOps.post == Just "Preview"
+                    in
+                    { fieldClass = "field md-editor"
+                    , header =
+                        viewCommentInputHeader
+                            { onChangeViewMode = mdOps.onChangeViewMode targetid
+                            , onRichText = mdOps.onRichText
+                            , onToggleMdHelp = mdOps.onToggleMdHelp
+                            }
+                            targetid
+                            { viewMode = ternary isP Preview Write, post = mdOps.post }
+                    , isPreview = isP
+                    , preview = \val -> ternary isP (div [] [ hr [] [], div [ class "mt-2 mx-3" ] [ renderMarkdown "is-human hidden-textarea" val ] ]) (text "")
+                    }
+
+                Nothing ->
+                    { fieldClass = "field"
+                    , header = text ""
+                    , isPreview = False
+                    , preview = \_ -> text ""
+                    }
+        md_purpose =
+            mdField "mandatePurpose"
+
+        md_responsabilities =
+            mdField "mandateResponsabilities"
+
+        md_domains =
+            mdField "mandateDomains"
+
+        md_policies =
+            mdField "mandatePolicies"
     in
     div []
-        [ div [ class "field" ]
+        [ div [ class md_purpose.fieldClass ]
             [ div [ class "label" ]
                 [ text T.purpose, helperButton "ml-2" (T.purposeHelper |> Format.value txt.purposeSubject) ]
+            , md_purpose.header
             , div [ class "control" ]
                 [ textarea
-                    [ id "textAreaModal"
+                    [ id "mandatePurpose"
                     , class "textarea"
+                    , classList [ ( "is-invisible-force", md_purpose.isPreview ) ]
                     , rows (min 15 (max purpose_len 2))
                     , placeholder txt.ph_purpose
                     , value purpose
@@ -1021,6 +1070,7 @@ viewMandateInput txt mandate op =
                     , required True
                     ]
                     []
+                , md_purpose.preview purpose
                 ]
             ]
         , if showResponsabilities then
@@ -1028,17 +1078,21 @@ viewMandateInput txt mandate op =
                 input_len =
                     List.length <| String.lines purpose
             in
-            div [ class "field" ]
+            div [ class md_responsabilities.fieldClass ]
                 [ div [ class "label" ] [ text T.responsabilities, helperButton "ml-2" T.responsabilitiesHelper ]
+                , md_responsabilities.header
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea autofocus"
+                        [ id "mandateResponsabilities"
+                        , class "textarea autofocus"
+                        , classList [ ( "is-invisible-force", md_responsabilities.isPreview ) ]
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_responsabilities
                         , value responsabilities
                         , onInput <| op.onChangePost "responsabilities"
                         ]
                         []
+                    , md_responsabilities.preview responsabilities
                     ]
                 ]
 
@@ -1049,17 +1103,21 @@ viewMandateInput txt mandate op =
                 input_len =
                     List.length <| String.lines purpose
             in
-            div [ class "field" ]
+            div [ class md_domains.fieldClass ]
                 [ div [ class "label" ] [ text T.domains, helperButton "ml-2" T.domainsHelper ]
+                , md_domains.header
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea autofocus"
+                        [ id "mandateDomains"
+                        , class "textarea autofocus"
+                        , classList [ ( "is-invisible-force", md_domains.isPreview ) ]
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_domains
                         , value domains
                         , onInput <| op.onChangePost "domains"
                         ]
                         []
+                    , md_domains.preview domains
                     ]
                 ]
 
@@ -1070,17 +1128,21 @@ viewMandateInput txt mandate op =
                 input_len =
                     List.length <| String.lines purpose
             in
-            div [ class "field" ]
+            div [ class md_policies.fieldClass ]
                 [ div [ class "label" ] [ text T.policies, helperButton "ml-2" T.policiesHelper ]
+                , md_policies.header
                 , div [ class "control" ]
                     [ textarea
-                        [ class "textarea autofocus"
+                        [ id "mandatePolicies"
+                        , class "textarea autofocus"
+                        , classList [ ( "is-invisible-force", md_policies.isPreview ) ]
                         , rows (min 15 (max input_len 2))
                         , placeholder txt.ph_policies
                         , value policies
                         , onInput <| op.onChangePost "policies"
                         ]
                         []
+                    , md_policies.preview policies
                     ]
                 ]
 

@@ -23,15 +23,18 @@ module Query.PatchNode exposing
     ( addOneLabel
     , addOneProject
     , addOneRole
+    , addOneTensionTemplate
     , removeOneLabel
     , removeOneProject
     , removeOneRole
+    , removeOneTensionTemplate
     , updateOneLabel
     , updateOneProject
     , updateOneRole
+    , updateOneTensionTemplate
     )
 
-import Bulk exposing (ArtefactNodeForm, ProjectForm)
+import Bulk exposing (ArtefactNodeForm, ProjectForm, TensionTemplateForm)
 import Bulk.Codecs exposing (nid2rootid)
 import Dict
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
@@ -42,9 +45,11 @@ import Fractal.Object
 import Fractal.Object.AddLabelPayload
 import Fractal.Object.AddProjectPayload
 import Fractal.Object.AddRoleExtPayload
+import Fractal.Object.AddTensionTemplatePayload
 import Fractal.Object.UpdateLabelPayload
 import Fractal.Object.UpdateProjectPayload
 import Fractal.Object.UpdateRoleExtPayload
+import Fractal.Object.UpdateTensionTemplatePayload
 import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
@@ -52,7 +57,7 @@ import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate)
-import Query.QueryNode exposing (labelFullPayload, projectFullPayload, roleFullPayload)
+import Query.QueryNode exposing (labelFullPayload, projectFullPayload, roleFullPayload, tensionTemplateFullPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -651,3 +656,180 @@ removeProjectInputEncoder form =
                 }
     in
     { input = Input.buildUpdateProjectInput inputReq inputOpt }
+
+
+
+--
+-- Node TensionTemplate Operation
+--
+{-
+   Add one Tension Template
+-}
+
+
+type alias TensionTemplatesFullPayload =
+    { tensionTemplate : Maybe (List (Maybe TensionTemplateFull)) }
+
+
+tensionTemplateMutDecoder : Maybe TensionTemplatesFullPayload -> Maybe TensionTemplateFull
+tensionTemplateMutDecoder data =
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.tensionTemplate
+                    |> Maybe.map List.head
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
+
+
+addOneTensionTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.addTensionTemplate
+            (addTensionTemplateInputEncoder form)
+            (SelectionSet.map TensionTemplatesFullPayload <|
+                Fractal.Object.AddTensionTemplatePayload.tensionTemplate identity tensionTemplateFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionTemplateMutDecoder >> msg)
+
+
+addTensionTemplateInputEncoder : TensionTemplateForm -> Mutation.AddTensionTemplateRequiredArguments
+addTensionTemplateInputEncoder form =
+    let
+        inputReq =
+            { rootnameid = nid2rootid form.nameid
+            , name = Dict.get "name" form.post |> withDefault ""
+            , is_recursive = form.is_recursive
+            , title = Dict.get "title" form.post |> withDefault ""
+            , comment = Dict.get "comment" form.post |> withDefault ""
+            , type_ = form.type_
+            }
+
+        inputOpt =
+            \x ->
+                { x
+                    | nodes =
+                        Present
+                            [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                    , labels =
+                        if List.isEmpty form.labels then
+                            Absent
+
+                        else
+                            Present
+                                (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
+                    , assignees =
+                        if List.isEmpty form.assignees then
+                            Absent
+
+                        else
+                            Present
+                                (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
+                }
+    in
+    { input = [ Input.buildAddTensionTemplateInput inputReq inputOpt ] }
+
+
+
+{-
+   Update Tension Template
+-}
+
+
+updateOneTensionTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.updateTensionTemplate
+            (updateTensionTemplateInputEncoder form)
+            (SelectionSet.map TensionTemplatesFullPayload <|
+                Fractal.Object.UpdateTensionTemplatePayload.tensionTemplate identity <|
+                    tensionTemplateFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionTemplateMutDecoder >> msg)
+
+
+updateTensionTemplateInputEncoder : TensionTemplateForm -> Mutation.UpdateTensionTemplateRequiredArguments
+updateTensionTemplateInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildTensionTemplateFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        post =
+            if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                form.post |> Dict.remove "name"
+
+            else
+                form.post
+
+        inputOpt =
+            \_ ->
+                { set =
+                    Input.buildTensionTemplatePatch
+                        (\i ->
+                            { i
+                                | name = fromMaybe (Dict.get "name" post)
+                                , title = fromMaybe (Dict.get "title" post)
+                                , comment = fromMaybe (Dict.get "comment" post)
+                                , type_ = Present form.type_
+                                , is_recursive = Present form.is_recursive
+                                , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                                , labels =
+                                    Present
+                                        (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
+                                , assignees =
+                                    Present
+                                        (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateTensionTemplateInput inputReq inputOpt }
+
+
+
+{-
+   Remove Tension Template
+-}
+
+
+removeOneTensionTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.updateTensionTemplate
+            (removeTensionTemplateInputEncoder form)
+            (SelectionSet.map TensionTemplatesFullPayload <|
+                Fractal.Object.UpdateTensionTemplatePayload.tensionTemplate identity <|
+                    tensionTemplateFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionTemplateMutDecoder >> msg)
+
+
+removeTensionTemplateInputEncoder : TensionTemplateForm -> Mutation.UpdateTensionTemplateRequiredArguments
+removeTensionTemplateInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildTensionTemplateFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        inputOpt =
+            \_ ->
+                { set = Absent
+                , remove =
+                    Input.buildTensionTemplatePatch
+                        (\i ->
+                            { i
+                                | nodes =
+                                    Present
+                                        [ Input.buildNodeRef (\j -> { j | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                }
+    in
+    { input = Input.buildUpdateTensionTemplateInput inputReq inputOpt }

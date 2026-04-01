@@ -10,13 +10,14 @@ import Json.Decode as Decode exposing (Decoder)
 type TensionTemplateOrderable
     = Rootnameid
     | Name
+    | Description
     | Title
     | Comment
 
 
 list : List TensionTemplateOrderable
 list =
-    [ Rootnameid, Name, Title, Comment ]
+    [ Rootnameid, Name, Description, Title, Comment ]
 
 
 decoder : Decoder TensionTemplateOrderable
@@ -30,6 +31,9 @@ decoder =
 
                     "name" ->
                         Decode.succeed Name
+
+                    "description" ->
+                        Decode.succeed Description
 
                     "title" ->
                         Decode.succeed Title
@@ -52,6 +56,9 @@ toString enum____ =
 
         Name ->
             "name"
+
+        Description ->
+            "description"
 
         Title ->
             "title"
@@ -79,6 +86,9 @@ fromString enumString____ =
 
         "name" ->
             Just Name
+
+        "description" ->
+            Just Description
 
         "title" ->
             Just Title

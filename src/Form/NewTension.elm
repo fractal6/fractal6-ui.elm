@@ -65,7 +65,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (queryLocalGraph, queryRolesFull)
+import Query.QueryNode exposing (getTensionTemplates, queryLocalGraph, queryRolesFull)
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
@@ -109,6 +109,12 @@ type alias Model =
     , doInvite : Bool
     , withUsers : List String
     , simplifiedView : Bool
+
+    -- Templates
+    , templates : GqlData (List TensionTemplateFull)
+    , selectedTemplate : Maybe TensionTemplateFull
+    , isTemplateTensionOnly : Bool
+    , showTemplatePicker : Bool
 
     -- Draft persistence (debounce timer for saving)
     , draftSaveTimer : Int
@@ -205,6 +211,12 @@ initModel session =
     , nodeStep = RoleAuthorityStep -- will change
     , roles_result = Loading
     , force_init = False
+
+    -- Templates
+    , templates = NotAsked
+    , selectedTemplate = Nothing
+    , isTemplateTensionOnly = False
+    , showTemplatePicker = False
 
     -- Draft persistence
     , draftSaveTimer = 0
@@ -600,6 +612,11 @@ type Msg
     | NoMsg
     | LogErr String
     | UpdateUctx UserCtx
+      -- Templates
+    | GotTemplatesForPicker (GqlData (List TensionTemplateFull))
+    | OnSelectTemplate TensionTemplateFull
+    | OnSelectBlankTension
+    | OnClearTemplate
       -- Draft persistence
     | SaveDraftDelayed Int
       -- Components
@@ -793,13 +810,26 @@ update_ apis message model =
 
                                             NewCircleTab ->
                                                 send (OnSwitchTab NewCircleTab)
+
+                                    -- Fetch templates for path nodes
+                                    templateCmd =
+                                        case model.activeTab of
+                                            NewTensionTab ->
+                                                getTensionTemplates apis p.focus.nameid GotTemplatesForPicker
+
+                                            _ ->
+                                                Cmd.none
+
+                                    isTemplateTensionOnly_ =
+                                        p.root |> Maybe.andThen .isTemplateTensionOnly |> withDefault False
                                 in
-                                ( { data | isActive2 = True } |> setUctx uctx
+                                ( { data | isActive2 = True, isTemplateTensionOnly = isTemplateTensionOnly_ } |> setUctx uctx
                                 , out0
                                     [ sendSleep (SetIsActive2 True) 10
                                     , Cmd.map CommentsMsg (send <| Comments.OnSetTarget (List.map .nameid p.path))
                                     , switchCmd
                                     , restoreDraftCmd
+                                    , templateCmd
                                     ]
                                 )
 
@@ -1296,6 +1326,62 @@ update_ apis message model =
             , out2 (draftSaveCmd :: (out.cmds |> List.map (\m -> Cmd.map CommentsMsg m) |> List.append cmds)) out.gcmds
             )
 
+        -- Templates
+        GotTemplatesForPicker result ->
+            case result of
+                Success templates ->
+                    if List.isEmpty templates then
+                        ( { model | templates = result, showTemplatePicker = False }, noOut )
+
+                    else
+                        ( { model | templates = result, showTemplatePicker = True }, noOut )
+
+                _ ->
+                    ( { model | templates = result, showTemplatePicker = False }, noOut )
+
+        OnSelectTemplate tpl ->
+            let
+                newModel =
+                    { model
+                        | selectedTemplate = Just tpl
+                        , showTemplatePicker = False
+                        , nodeDoc =
+                            model.nodeDoc
+                                |> NodeDoc.updatePost "title" tpl.title
+                                |> NodeDoc.updatePost "message" tpl.comment
+                    }
+
+                form =
+                    newModel.nodeDoc.form
+
+                newForm =
+                    { form
+                        | labels = withDefault [] tpl.labels
+                        , assignees = withDefault [] tpl.assignees
+                    }
+
+                commentCmd =
+                    send (Comments.OnChangeComment "message" tpl.comment) |> Cmd.map CommentsMsg
+            in
+            ( { newModel | nodeDoc = NodeDoc.setForm newForm newModel.nodeDoc }
+            , out0 [ send (OnChangeTensionType tpl.type_), commentCmd ]
+            )
+
+        OnSelectBlankTension ->
+            ( { model | showTemplatePicker = False, selectedTemplate = Nothing }, noOut )
+
+        OnClearTemplate ->
+            ( { model
+                | showTemplatePicker = True
+                , selectedTemplate = Nothing
+                , nodeDoc =
+                    model.nodeDoc
+                        |> NodeDoc.updatePost "title" ""
+                        |> NodeDoc.updatePost "message" ""
+              }
+            , out0 [ send (Comments.OnChangeComment "message" "") |> Cmd.map CommentsMsg ]
+            )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -1473,7 +1559,11 @@ viewStep tree_data (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    viewTension tree_data model
+                    if model.showTemplatePicker then
+                        viewTemplatePicker model
+
+                    else
+                        viewTension tree_data model
 
                 NewRoleTab ->
                     viewCircle tree_data model
@@ -1659,6 +1749,59 @@ viewRecipients tree_data model =
 ---
 
 
+viewTemplatePicker : Model -> Html Msg
+viewTemplatePicker model =
+    div [ class "panel modal-card submitFocus" ]
+        [ div [ class "panel-heading" ]
+            [ span [ class "has-text-weight-semibold" ] [ text T.selectTemplate ] ]
+        , div [ class "modal-card-body" ]
+            [ case model.templates of
+                Success templates ->
+                    div [ class "columns is-multiline" ] <|
+                        (templates
+                            |> List.map
+                                (\t ->
+                                    div [ class "column is-half" ]
+                                        [ div
+                                            [ class "box is-clickable"
+                                            , onClick (OnSelectTemplate t)
+                                            ]
+                                            [ p [ class "has-text-weight-semibold" ] [ text t.name ]
+                                            , p [ class "help" ] [ text t.title ]
+                                            ]
+                                        ]
+                                )
+                        )
+                            ++ (if not model.isTemplateTensionOnly then
+                                    [ div [ class "column is-half" ]
+                                        [ div
+                                            [ class "box is-clickable"
+                                            , onClick OnSelectBlankTension
+                                            ]
+                                            [ p [ class "has-text-weight-semibold" ] [ text T.blankTension ]
+                                            , p [ class "help" ] [ text T.blankTensionHelp ]
+                                            ]
+                                        ]
+                                    ]
+
+                                else
+                                    []
+                               )
+
+                Loading ->
+                    div [ class "spinner" ] []
+
+                LoadingSlowly ->
+                    div [ class "spinner" ] []
+
+                _ ->
+                    text ""
+            ]
+        , div [ class "panel-footer has-text-right" ]
+            [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
+        ]
+
+
 viewTension : GqlData NodesDict -> Model -> Html Msg
 viewTension tree_data model =
     let
@@ -1691,6 +1834,17 @@ viewTension tree_data model =
           else
             Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
         , Lazy.lazy2 viewHeader tree_data model
+        , case model.selectedTemplate of
+            Just tpl ->
+                div [ class "px-4 pt-2" ]
+                    [ span [ class "tag is-info is-light" ]
+                        [ text (T.tensionTemplate ++ ": " ++ tpl.name)
+                        , button [ class "delete is-small", onClick OnClearTemplate ] []
+                        ]
+                    ]
+
+            Nothing ->
+                text ""
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
@@ -1939,6 +2093,7 @@ viewNodeValidate model =
             , onAddDomains = OnAddDomains
             , onAddPolicies = OnAddPolicies
             , onAddResponsabilities = OnAddResponsabilities
+            , mdOps = Nothing
             }
     in
     div [ class "modal-card-body" ]

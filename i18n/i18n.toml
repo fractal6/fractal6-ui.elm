@@ -1904,6 +1904,78 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Role templates"
   fr="Modèles de Rôles"
 
+[tensionTemplate]
+  en="Tension template"
+  fr="Modèle de Tension"
+
+[tensionTemplates]
+  en="Tension templates"
+  fr="Modèles de Tensions"
+
+[newTensionTemplate]
+  en="New template"
+  fr="Nouveau modèle"
+
+[noTensionTemplates]
+  en="No tension templates"
+  fr="Aucun modèle de tension"
+
+[tensionTemplatesInfoHeader]
+  en="Tension templates allow to pre-fill tension forms with predefined values."
+  fr="Les modèles de tension permettent de pré-remplir les formulaires de tension avec des valeurs prédéfinies."
+
+[tensionTemplatesInfoDoc]
+  en="Templates defined in a circle with the recursive flag enabled are also available in sub-circles."
+  fr="Les modèles définis dans un cercle avec l'option récursive sont également disponibles dans les sous-cercles."
+
+[templateDeleteInfoHeader]
+  en="This will remove the template from this circle."
+  fr="Cela supprimera le modèle de ce cercle."
+
+[confirmDeleteTemplate]
+  en="Are you sure you want to delete "
+  fr="Êtes-vous sûr de vouloir supprimer "
+
+[isRecursive]
+  en="Recursive"
+  fr="Récursif"
+
+[isRecursiveHelp]
+  en="When enabled, this template is also available in sub-circles."
+  fr="Lorsqu'activé, ce modèle est aussi disponible dans les sous-cercles."
+
+[selectTemplate]
+  en="Select a template"
+  fr="Sélectionner un modèle"
+
+[blankTension]
+  en="Blank tension"
+  fr="Tension vierge"
+
+[blankTensionHelp]
+  en="Start from scratch without a template."
+  fr="Commencer à partir de zéro sans modèle."
+
+[isTemplateTensionOnly]
+  en="Only allow template-based tensions"
+  fr="N'autoriser que les tensions basées sur des modèles"
+
+[isTemplateTensionOnlyHelp]
+  en="When enabled and templates exist, users must pick a template to create a tension."
+  fr="Lorsqu'activé et que des modèles existent, les utilisateurs doivent choisir un modèle pour créer une tension."
+
+[templateName]
+  en="Template name"
+  fr="Nom du modèle"
+
+[templateTitle]
+  en="Pre-filled title"
+  fr="Titre pré-rempli"
+
+[templateComment]
+  en="Pre-filled description"
+  fr="Description pré-remplie"
+
 [adhocRole]
   en="Ad-hoc Role"
   fr="Rôle ad-hoc"

@@ -31,6 +31,7 @@ import Bulk.View exposing (helperButton, viewGoRoot, viewLabel, viewRoleExt)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
+import Components.Comments exposing (viewCommentInputHeader)
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -47,23 +48,25 @@ import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, p, span, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, style, target, type_, value)
+import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchNode exposing (addOneLabel, addOneRole, removeOneLabel, removeOneRole, updateOneLabel, updateOneRole)
-import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, queryLocalGraph)
+import Query.PatchNode exposing (addOneLabel, addOneRole, addOneTensionTemplate, removeOneLabel, removeOneRole, removeOneTensionTemplate, updateOneLabel, updateOneRole, updateOneTensionTemplate)
+import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setLexicon, setUserCanJoin)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
 import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
@@ -202,6 +205,15 @@ type alias Model =
     , role_result_del : GqlData RoleExtFull
     , role_anim_enter : Maybe String
 
+    -- Templates
+    , template_form : TensionTemplateForm
+    , templates : GqlData (List TensionTemplateFull)
+    , template_add : Bool
+    , template_edit : Maybe TensionTemplateFull
+    , template_result : GqlData TensionTemplateFull
+    , template_result_del : GqlData TensionTemplateFull
+    , template_anim_enter : Maybe String
+
     -- Orga
     , orga_rights : GqlData NodeRights
     , switch_result : RestData Bool
@@ -233,13 +245,14 @@ type alias Model =
 type MenuSettings
     = LabelsMenu
     | RolesMenu
+    | TemplatesMenu
     | GlobalMenu
     | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, RolesMenu, EditMenu, GlobalMenu ]
+    [ LabelsMenu, RolesMenu, TemplatesMenu, EditMenu, GlobalMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -250,6 +263,9 @@ menuEncoder menu =
 
         RolesMenu ->
             "roles"
+
+        TemplatesMenu ->
+            "templates"
 
         GlobalMenu ->
             "global"
@@ -268,6 +284,9 @@ menuDecoder menu =
         "roles" ->
             RolesMenu
 
+        "templates" ->
+            TemplatesMenu
+
         "global" ->
             GlobalMenu
 
@@ -283,6 +302,9 @@ menuToString menu =
 
         RolesMenu ->
             T.templateRoles
+
+        TemplatesMenu ->
+            T.tensionTemplates
 
         GlobalMenu ->
             T.organisation
@@ -300,6 +322,9 @@ menuToIcon menu =
         RolesMenu ->
             "icon-user"
 
+        TemplatesMenu ->
+            "icon-exchange"
+
         GlobalMenu ->
             "icon-shield"
 
@@ -316,6 +341,9 @@ resetForm model =
         , label_result_del = NotAsked
         , role_result = NotAsked
         , role_result_del = NotAsked
+        , template_form = initTensionTemplateForm (LoggedIn model.template_form.uctx) model.node_focus.nameid
+        , template_result = NotAsked
+        , template_result_del = NotAsked
     }
 
 
@@ -388,6 +416,15 @@ init global flags =
             , role_result_del = NotAsked
             , role_anim_enter = Nothing
 
+            -- Templates
+            , template_form = initTensionTemplateForm session.common.user newFocus.nameid
+            , templates = NotAsked
+            , template_add = action == "new" && menu == TemplatesMenu
+            , template_edit = Nothing
+            , template_result = NotAsked
+            , template_result_del = NotAsked
+            , template_anim_enter = Nothing
+
             -- Orga
             , orga_rights = Loading
             , switch_result = RemoteData.NotAsked
@@ -431,6 +468,9 @@ init global flags =
                             , fetchRolesTop apis newFocus.nameid False GotRolesTop
                             , fetchRolesSub apis newFocus.nameid False GotRolesSub
                             ]
+
+                        TemplatesMenu ->
+                            [ getTensionTemplates apis newFocus.nameid GotTemplates ]
 
                         GlobalMenu ->
                             [ getCircleRights apis (nid2rootid newFocus.nameid) GotRootRights ]
@@ -494,12 +534,33 @@ type Msg
     | AddPolicies
     | AddResponsabilities
     | UpdateNodePost String String
+    | ChangeMandateViewMode String InputViewMode
+    | OnMandateRichText String String
+    | OnToggleMandateMdHelp String
+      -- Templates
+    | GotTemplates (GqlData (List TensionTemplateFull))
+    | AddTemplate
+    | EditTemplate TensionTemplateFull
+    | CancelTemplate
+    | ChangeTemplatePost String String
+    | ChangeTemplateType String
+    | ChangeTemplateRecursive Bool
+    | ChangeTemplateViewMode InputViewMode
+    | OnTemplateRichText String String
+    | OnToggleTemplateMdHelp String
+    | SubmitAddTemplate Time.Posix
+    | SubmitEditTemplate Time.Posix
+    | SubmitDeleteTemplate String Time.Posix
+    | GotTemplate (GqlData TensionTemplateFull)
+    | GotTemplateDel (GqlData TensionTemplateFull)
       -- Orga
     | GotRootRights (GqlData NodeRights)
     | SwitchUserCanJoin Int Bool
     | SwitchGuestCanCreateTension Int Bool
+    | SwitchIsTemplateTensionOnly Int Bool
     | GotUserCanJoin (RestData Bool)
     | GotGuestCanCreateTension (RestData Bool)
+    | GotIsTemplateTensionOnly (RestData Bool)
     | OnLexiconInput String
     | OnMandateInput String
     | SubmitLexicon
@@ -1029,6 +1090,233 @@ update global message model =
             , Cmd.none
             )
 
+        ChangeMandateViewMode targetid viewMode ->
+            let
+                f =
+                    model.artefact_form
+
+                val =
+                    case viewMode of
+                        Write ->
+                            "Write"
+
+                        Preview ->
+                            "Preview"
+            in
+            ( { model | artefact_form = { f | post = Dict.insert ("viewMode:" ++ targetid) val f.post } }, Cmd.none, Cmd.none )
+
+        OnMandateRichText targetid command ->
+            ( model, Ports.richText targetid command, Cmd.none )
+
+        OnToggleMandateMdHelp targetid ->
+            let
+                f =
+                    model.artefact_form
+
+                field =
+                    "isMdHelpOpen" ++ targetid
+
+                v =
+                    Dict.get field f.post |> withDefault "false"
+
+                val =
+                    ternary (v == "true") "false" "true"
+            in
+            ( { model | artefact_form = { f | post = Dict.insert field val f.post } }, Cmd.none, Cmd.none )
+
+        -- Templates
+        GotTemplates result ->
+            ( { model | templates = result }, Cmd.none, Cmd.none )
+
+        AddTemplate ->
+            if model.template_add then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model
+                    | template_add = True
+                    , template_edit = Nothing
+                    , template_anim_enter = Nothing
+                  }
+                , Ports.bulma_driver "templatesTable"
+                , Cmd.none
+                )
+
+        EditTemplate tpl ->
+            let
+                f =
+                    model.template_form
+
+                newForm =
+                    { f
+                        | id = tpl.id
+                        , post =
+                            Dict.fromList
+                                [ ( "name", tpl.name )
+                                , ( "title", tpl.title )
+                                , ( "comment", tpl.comment )
+                                , ( "old_name", tpl.name )
+                                ]
+                        , type_ = tpl.type_
+                        , is_recursive = tpl.is_recursive
+                        , labels = withDefault [] tpl.labels
+                        , assignees = withDefault [] tpl.assignees
+                    }
+            in
+            ( { model
+                | template_add = False
+                , template_edit = Just tpl
+                , template_form = newForm
+              }
+            , Ports.bulma_driver "templatesTable"
+            , Cmd.none
+            )
+
+        CancelTemplate ->
+            ( { model
+                | template_add = False
+                , template_edit = Nothing
+                , template_result = NotAsked
+                , template_result_del = NotAsked
+                , template_anim_enter = Nothing
+              }
+                |> resetForm
+            , Cmd.none
+            , Cmd.none
+            )
+
+        ChangeTemplatePost field value ->
+            let
+                f =
+                    model.template_form
+            in
+            ( { model | template_form = { f | post = Dict.insert field value f.post } }, Cmd.none, Cmd.none )
+
+        ChangeTemplateType val ->
+            let
+                f =
+                    model.template_form
+
+                type_ =
+                    TensionType.fromString val |> withDefault TensionType.Operational
+            in
+            ( { model | template_form = { f | type_ = type_ } }, Cmd.none, Cmd.none )
+
+        ChangeTemplateRecursive val ->
+            let
+                f =
+                    model.template_form
+            in
+            ( { model | template_form = { f | is_recursive = val } }, Cmd.none, Cmd.none )
+
+        ChangeTemplateViewMode viewMode ->
+            let
+                f =
+                    model.template_form
+            in
+            ( { model | template_form = { f | viewMode = viewMode } }, Cmd.none, Cmd.none )
+
+        OnTemplateRichText targetid command ->
+            ( model, Ports.richText targetid command, Cmd.none )
+
+        OnToggleTemplateMdHelp targetid ->
+            let
+                f =
+                    model.template_form
+
+                field =
+                    "isMdHelpOpen" ++ targetid
+
+                v =
+                    Dict.get field f.post |> withDefault "false"
+
+                val =
+                    ternary (v == "true") "false" "true"
+            in
+            ( { model | template_form = { f | post = Dict.insert field val f.post } }, Cmd.none, Cmd.none )
+
+        SubmitAddTemplate _ ->
+            ( { model | template_result = LoadingSlowly }, addOneTensionTemplate apis model.template_form GotTemplate, Cmd.none )
+
+        SubmitEditTemplate _ ->
+            ( { model | template_result = LoadingSlowly }, updateOneTensionTemplate apis model.template_form GotTemplate, Cmd.none )
+
+        SubmitDeleteTemplate id_ _ ->
+            let
+                f =
+                    model.template_form
+
+                newForm =
+                    { f | id = id_ }
+            in
+            ( { model | template_result_del = LoadingSlowly, template_form = newForm }, removeOneTensionTemplate apis newForm GotTemplateDel, Cmd.none )
+
+        GotTemplate result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | template_result = NotAsked }, Ports.raiseAuthModal model.template_form.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    if model.template_add then
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddTemplate) 500, send UpdateUserToken )
+
+                    else
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditTemplate) 500, send UpdateUserToken )
+
+                OkAuth tpl ->
+                    let
+                        d =
+                            withDefaultData [] model.templates
+
+                        new =
+                            if model.template_add then
+                                [ tpl ] ++ d
+
+                            else
+                                LE.setIf (\x -> x.id == tpl.id) tpl d
+                    in
+                    ( { model
+                        | template_result = result
+                        , templates = Success new
+                        , template_add = False
+                        , template_edit = Nothing
+                        , template_anim_enter = Just tpl.id
+                      }
+                        |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                DuplicateErr ->
+                    ( { model | template_result = Failure [ T.duplicateNameError ] }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | template_result = result }, Cmd.none, Cmd.none )
+
+        GotTemplateDel result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | template_result_del = NotAsked }, Ports.raiseAuthModal model.template_form.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteTemplate model.template_form.id) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    let
+                        d =
+                            withDefaultData [] model.templates
+
+                        new =
+                            List.filter (\x -> x.id /= model.template_form.id) d
+                    in
+                    ( { model | template_result_del = NotAsked, templates = Success new, template_add = False, template_edit = Nothing } |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | template_result_del = result }, Cmd.none, Cmd.none )
+
         -- Orga
         GotRootRights result ->
             ( { model | orga_rights = result }, Cmd.none, Cmd.none )
@@ -1087,6 +1375,28 @@ update global message model =
             case result of
                 RemoteData.Success v ->
                     ( { data | switch_index = -1, orga_rights = withMapData (\x -> { x | guestCanCreateTension = Just v }) model.orga_rights }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( data, Cmd.none, Cmd.none )
+
+        SwitchIsTemplateTensionOnly i _ ->
+            let
+                val =
+                    withMaybeData model.orga_rights |> unwrap2 False .isTemplateTensionOnly
+            in
+            ( { model | switch_result = RemoteData.Loading, switch_index = i }, setIsTemplateTensionOnly apis (nid2rootid model.node_focus.nameid) (not val) GotIsTemplateTensionOnly, Cmd.none )
+
+        GotIsTemplateTensionOnly result ->
+            let
+                data =
+                    { model | switch_result = result }
+            in
+            case result of
+                RemoteData.Success v ->
+                    ( { data | switch_index = -1, orga_rights = withMapData (\x -> { x | isTemplateTensionOnly = Just v }) model.orga_rights }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -1446,6 +1756,11 @@ viewSettingsContent model =
                   viewRoles model
                 , viewRolesExt model.commonOp model.url T.rolesTop model.roles_top
                 , viewRolesExt model.commonOp model.url T.rolesSub model.roles_sub
+                ]
+
+        TemplatesMenu ->
+            div []
+                [ viewTemplates model
                 ]
 
         GlobalMenu ->
@@ -1808,6 +2123,13 @@ viewRoleAddBox model =
             , onAddDomains = AddDomains
             , onAddPolicies = AddPolicies
             , data = model.nodeDoc
+            , mdOps =
+                Just
+                    { onChangeViewMode = ChangeMandateViewMode
+                    , onRichText = OnMandateRichText
+                    , onToggleMdHelp = OnToggleMandateMdHelp
+                    , post = model.artefact_form.post
+                    }
             }
         , div [ class "field is-grouped is-grouped-right mt-1" ]
             [ p [ class "control buttons" ]
@@ -1977,6 +2299,221 @@ viewRolesExt commonOp url txt_yes list_ext_d =
             text ""
 
 
+
+{-
+   TEMPLATE VIEW
+-}
+
+
+viewTemplateAddBox : Model -> Html Msg
+viewTemplateAddBox model =
+    let
+        isAdd =
+            model.template_add
+
+        form =
+            model.template_form
+
+        result =
+            model.template_result
+
+        tplName =
+            Dict.get "name" form.post |> withDefault ""
+
+        title =
+            Dict.get "title" form.post |> withDefault ""
+
+        comment =
+            Dict.get "comment" form.post |> withDefault ""
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            tplName /= "" && (title /= "" || comment /= "")
+
+        submitMsg =
+            ternary isAdd (Submit SubmitAddTemplate) (Submit SubmitEditTemplate)
+    in
+    div [ class "box" ]
+        [ div [ class "field" ]
+            [ label [ class "label" ] [ text T.templateName, text "*" ]
+            , div [ class "control" ]
+                [ input [ class "input", type_ "text", placeholder T.templateName, value tplName, onInput (ChangeTemplatePost "name"), autofocus True ] []
+                ]
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ text T.templateTitle ]
+            , div [ class "control" ]
+                [ input [ class "input", type_ "text", placeholder T.templateTitle, value title, onInput (ChangeTemplatePost "title") ] []
+                ]
+            ]
+        , div [ class "field md-editor" ]
+            [ label [ class "label" ] [ text T.templateComment ]
+            , viewCommentInputHeader
+                { onChangeViewMode = ChangeTemplateViewMode
+                , onRichText = OnTemplateRichText
+                , onToggleMdHelp = OnToggleTemplateMdHelp
+                }
+                "templateCommentInput"
+                form
+            , div [ class "control" ]
+                [ textarea
+                    [ id "templateCommentInput"
+                    , class "textarea"
+                    , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
+                    , placeholder T.templateComment
+                    , value comment
+                    , onInput (ChangeTemplatePost "comment")
+                    , rows 3
+                    ]
+                    []
+                , if form.viewMode == Preview then
+                    div []
+                        [ hr [] []
+                        , div [ class "mt-2 mx-3" ]
+                            [ renderMarkdown "is-human hidden-textarea" comment ]
+                        ]
+
+                  else
+                    text ""
+                ]
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ text T.type_ ]
+            , div [ class "control" ]
+                [ div [ class "select" ]
+                    [ select [ onInput ChangeTemplateType ]
+                        (TensionType.list
+                            |> List.map
+                                (\t ->
+                                    option [ value (TensionType.toString t), selected (t == form.type_) ] [ text (TensionType.toString t) ]
+                                )
+                        )
+                    ]
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "control" ]
+                [ label [ class "checkbox" ]
+                    [ input [ type_ "checkbox", checked form.is_recursive, onClick (ChangeTemplateRecursive (not form.is_recursive)) ] []
+                    , text (" " ++ T.isRecursive)
+                    ]
+                , p [ class "help" ] [ text T.isRecursiveHelp ]
+                ]
+            ]
+        , div [ class "field is-grouped" ]
+            [ div [ class "control" ]
+                [ button
+                    [ class "button is-success"
+                    , classList [ ( "is-loading", isLoading ) ]
+                    , disabled (not isSendable || isLoading)
+                    , onClick submitMsg
+                    ]
+                    [ text (ternary isAdd T.newTensionTemplate T.save) ]
+                ]
+            , div [ class "control" ]
+                [ button [ class "button", onClick CancelTemplate ] [ text T.cancel ] ]
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
+
+
+viewTemplates : Model -> Html Msg
+viewTemplates model =
+    let
+        goToParent =
+            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
+                (viewGoRoot "" OnGoRoot)
+    in
+    div [ id "templatesTable" ]
+        [ h2 [ class "subtitle is-size-3" ] [ text T.tensionTemplates, goToParent ]
+        , div [ class "level" ]
+            [ div [ class "mr-4" ] [ showMsg "templates-help" "mb-4 is-info" "icon-info" T.tensionTemplatesInfoHeader T.tensionTemplatesInfoDoc ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.template_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddTemplate) ] [ textT T.newTensionTemplate ] ]
+            ]
+        , if model.template_add then
+            viewTemplateAddBox model
+
+          else
+            text ""
+        , case model.templates of
+            Success templates ->
+                if List.isEmpty templates then
+                    div [] [ text T.noTensionTemplates, text "." ]
+
+                else
+                    div [ class "table-container" ]
+                        [ table [ class "table is-fullwidth" ]
+                            ([ thead [ class "is-size-6" ]
+                                [ tr []
+                                    [ th [] [ text T.name ]
+                                    , th [] [ text T.templateTitle ]
+                                    , th [] [ text T.type_ ]
+                                    , th [] [ text T.isRecursive ]
+                                    , th [] []
+                                    ]
+                                ]
+                             ]
+                                ++ (templates
+                                        |> List.concatMap
+                                            (\d ->
+                                                [ tr [ classList [ ( "settings-row-enter", model.template_anim_enter == Just d.id ) ] ] <|
+                                                    if model.template_edit == Just d then
+                                                        [ td [ colspan 5 ] [ viewTemplateAddBox model ] ]
+
+                                                    else
+                                                        [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
+                                                        , td [] [ text d.title ]
+                                                        , td [] [ text (TensionType.toString d.type_) ]
+                                                        , td []
+                                                            [ if d.is_recursive then
+                                                                A.icon "icon-check"
+
+                                                              else
+                                                                text ""
+                                                            ]
+                                                        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
+                                                            [ span [ class "button-light", onClick (SafeEdit <| EditTemplate d) ] [ text T.edit ]
+                                                            , text " · "
+                                                            , span
+                                                                [ class "button-light"
+                                                                , onClick <|
+                                                                    DoModalConfirmOpen (Submit <| SubmitDeleteTemplate d.id)
+                                                                        { message = Just ( T.templateDeleteInfoHeader, "" )
+                                                                        , txts = [ ( T.confirmDeleteTemplate, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                        , confirmClass = "is-danger"
+                                                                        , confirmLabel = T.delete
+                                                                        }
+                                                                ]
+                                                                [ text T.remove ]
+                                                            ]
+                                                        ]
+                                                ]
+                                            )
+                                   )
+                            )
+                        ]
+
+            Loading ->
+                div [ class "spinner" ] []
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            Failure err ->
+                viewGqlErrors err
+
+            NotAsked ->
+                text ""
+        ]
+
+
 type alias SwitchRecord =
     { index : Int -- reference index
     , msg :
@@ -1995,6 +2532,7 @@ viewOrgaSettings lexicon orga_rights switch_result switch_index =
         switches =
             [ SwitchRecord 0 SwitchUserCanJoin T.orgaUserInvitation T.orgaUserInvitationHelp .userCanJoin
             , SwitchRecord 1 SwitchGuestCanCreateTension (T.guestCanCreateTension lexicon) T.guestCanCreateTensionHelp .guestCanCreateTension
+            , SwitchRecord 2 SwitchIsTemplateTensionOnly T.isTemplateTensionOnly T.isTemplateTensionOnlyHelp .isTemplateTensionOnly
             ]
     in
     case orga_rights of

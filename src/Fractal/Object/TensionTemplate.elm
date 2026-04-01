@@ -35,6 +35,11 @@ name =
     Object.selectionForField "String" "name" [] Decode.string
 
 
+description : SelectionSet (Maybe String) Fractal.Object.TensionTemplate
+description =
+    Object.selectionForField "(Maybe String)" "description" [] (Decode.string |> Decode.nullable)
+
+
 type alias NodesOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter
     , order : OptionalArgument Fractal.InputObject.NodeOrder
