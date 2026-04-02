@@ -23,7 +23,7 @@ module Requests exposing (..)
 
 import Bulk.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
-import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, userCtxDecoder, userDecoder)
+import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, tensionTemplateLiteDecoder, userCtxDecoder, userDecoder)
 import File exposing (File)
 import Dict exposing (Dict)
 import Fractal.Enum.Lang as Lang
@@ -40,7 +40,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (GqlData, RestData, expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, Member, NodeId, ProjectFull, ProjectsCount, RoleExt, Tension, TensionLight, TensionsCount, User, UserCtx, Username)
+import ModelSchema exposing (Label, Member, NodeId, ProjectFull, ProjectsCount, RoleExt, Tension, TensionLight, TensionTemplateLite, TensionsCount, User, UserCtx, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
 import Session exposing (Apis)
@@ -183,6 +183,42 @@ fetchRolesSub api targetid include_self msg =
         , url = api.rest ++ "/roles/sub"
         , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-|
+
+    Get all ** Tension Templates ** from the parent, until the root node
+
+-}
+fetchTensionTemplatesTop : Apis -> String -> Bool -> (RestData (List TensionTemplateLite) -> msg) -> Cmd msg
+fetchTensionTemplatesTop api targetid include_self msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tension_templates/top"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list tensionTemplateLiteDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-|
+
+    Get all ** Tension Templates ** below the given node recursively
+
+-}
+fetchTensionTemplatesSub : Apis -> String -> Bool -> (RestData (List TensionTemplateLite) -> msg) -> Cmd msg
+fetchTensionTemplatesSub api targetid include_self msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tension_templates/sub"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string targetid ), ( "include_self", JE.bool include_self ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list tensionTemplateLiteDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

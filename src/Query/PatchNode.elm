@@ -712,6 +712,7 @@ addTensionTemplateInputEncoder form =
                     | nodes =
                         Present
                             [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                    , description = fromMaybe form.description
                     , labels =
                         if List.isEmpty form.labels then
                             Absent
@@ -771,6 +772,7 @@ updateTensionTemplateInputEncoder form =
                         (\i ->
                             { i
                                 | name = fromMaybe (Dict.get "name" post)
+                                , description = fromMaybe form.description
                                 , title = fromMaybe (Dict.get "title" post)
                                 , comment = fromMaybe (Dict.get "comment" post)
                                 , type_ = Present form.type_

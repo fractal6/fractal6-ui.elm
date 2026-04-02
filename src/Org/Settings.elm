@@ -52,7 +52,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, id, name, placeholder, rows, selected, style, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, href, id, name, placeholder, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Encode as JE
@@ -66,7 +66,7 @@ import Ports
 import Query.PatchNode exposing (addOneLabel, addOneRole, addOneTensionTemplate, removeOneLabel, removeOneRole, removeOneTensionTemplate, updateOneLabel, updateOneRole, updateOneTensionTemplate)
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, setGuestCanCreateTension, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
 import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
@@ -208,6 +208,8 @@ type alias Model =
     -- Templates
     , template_form : TensionTemplateForm
     , templates : GqlData (List TensionTemplateFull)
+    , templates_top : RestData (List TensionTemplateLite)
+    , templates_sub : RestData (List TensionTemplateLite)
     , template_add : Bool
     , template_edit : Maybe TensionTemplateFull
     , template_result : GqlData TensionTemplateFull
@@ -419,6 +421,8 @@ init global flags =
             -- Templates
             , template_form = initTensionTemplateForm session.common.user newFocus.nameid
             , templates = NotAsked
+            , templates_top = RemoteData.NotAsked
+            , templates_sub = RemoteData.NotAsked
             , template_add = action == "new" && menu == TemplatesMenu
             , template_edit = Nothing
             , template_result = NotAsked
@@ -470,7 +474,10 @@ init global flags =
                             ]
 
                         TemplatesMenu ->
-                            [ getTensionTemplates apis newFocus.nameid GotTemplates ]
+                            [ getTensionTemplates apis newFocus.nameid GotTemplates
+                            , fetchTensionTemplatesTop apis newFocus.nameid False GotTemplatesTop
+                            , fetchTensionTemplatesSub apis newFocus.nameid False GotTemplatesSub
+                            ]
 
                         GlobalMenu ->
                             [ getCircleRights apis (nid2rootid newFocus.nameid) GotRootRights ]
@@ -543,6 +550,7 @@ type Msg
     | EditTemplate TensionTemplateFull
     | CancelTemplate
     | ChangeTemplatePost String String
+    | ChangeTemplateDescription String
     | ChangeTemplateType String
     | ChangeTemplateRecursive Bool
     | ChangeTemplateViewMode InputViewMode
@@ -553,6 +561,8 @@ type Msg
     | SubmitDeleteTemplate String Time.Posix
     | GotTemplate (GqlData TensionTemplateFull)
     | GotTemplateDel (GqlData TensionTemplateFull)
+    | GotTemplatesTop (RestData (List TensionTemplateLite))
+    | GotTemplatesSub (RestData (List TensionTemplateLite))
       -- Orga
     | GotRootRights (GqlData NodeRights)
     | SwitchUserCanJoin Int Bool
@@ -1157,6 +1167,7 @@ update global message model =
                                 , ( "comment", tpl.comment )
                                 , ( "old_name", tpl.name )
                                 ]
+                        , description = tpl.description
                         , type_ = tpl.type_
                         , is_recursive = tpl.is_recursive
                         , labels = withDefault [] tpl.labels
@@ -1191,6 +1202,13 @@ update global message model =
                     model.template_form
             in
             ( { model | template_form = { f | post = Dict.insert field value f.post } }, Cmd.none, Cmd.none )
+
+        ChangeTemplateDescription value ->
+            let
+                f =
+                    model.template_form
+            in
+            ( { model | template_form = { f | description = ternary (value == "") Nothing (Just value) } }, Cmd.none, Cmd.none )
 
         ChangeTemplateType val ->
             let
@@ -1316,6 +1334,12 @@ update global message model =
 
                 _ ->
                     ( { model | template_result_del = result }, Cmd.none, Cmd.none )
+
+        GotTemplatesTop result ->
+            ( { model | templates_top = result }, Cmd.none, Cmd.none )
+
+        GotTemplatesSub result ->
+            ( { model | templates_sub = result }, Cmd.none, Cmd.none )
 
         -- Orga
         GotRootRights result ->
@@ -1761,6 +1785,8 @@ viewSettingsContent model =
         TemplatesMenu ->
             div []
                 [ viewTemplates model
+                , viewTensionTemplatesExt model.url T.inheritedTemplates model.templates_top
+                , viewTensionTemplatesExt model.url T.subTemplates model.templates_sub
                 ]
 
         GlobalMenu ->
@@ -2320,6 +2346,9 @@ viewTemplateAddBox model =
         tplName =
             Dict.get "name" form.post |> withDefault ""
 
+        description =
+            form.description |> withDefault ""
+
         title =
             Dict.get "title" form.post |> withDefault ""
 
@@ -2340,6 +2369,12 @@ viewTemplateAddBox model =
             [ label [ class "label" ] [ text T.templateName, text "*" ]
             , div [ class "control" ]
                 [ input [ class "input", type_ "text", placeholder T.templateName, value tplName, onInput (ChangeTemplatePost "name"), autofocus True ] []
+                ]
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ text T.templateDescription ]
+            , div [ class "control" ]
+                [ input [ class "input", type_ "text", placeholder T.templateDescriptionHelp, value description, onInput ChangeTemplateDescription ] []
                 ]
             ]
         , div [ class "field" ]
@@ -2453,6 +2488,7 @@ viewTemplates model =
                             ([ thead [ class "is-size-6" ]
                                 [ tr []
                                     [ th [] [ text T.name ]
+                                    , th [] [ text T.templateDescription ]
                                     , th [] [ text T.templateTitle ]
                                     , th [] [ text T.type_ ]
                                     , th [] [ text T.isRecursive ]
@@ -2465,10 +2501,11 @@ viewTemplates model =
                                             (\d ->
                                                 [ tr [ classList [ ( "settings-row-enter", model.template_anim_enter == Just d.id ) ] ] <|
                                                     if model.template_edit == Just d then
-                                                        [ td [ colspan 5 ] [ viewTemplateAddBox model ] ]
+                                                        [ td [ colspan 6 ] [ viewTemplateAddBox model ] ]
 
                                                     else
                                                         [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
+                                                        , td [] [ text (withDefault "" d.description) ]
                                                         , td [] [ text d.title ]
                                                         , td [] [ text (TensionType.toString d.type_) ]
                                                         , td []
@@ -2512,6 +2549,53 @@ viewTemplates model =
             NotAsked ->
                 text ""
         ]
+
+
+viewTensionTemplatesExt : Url -> String -> RestData (List TensionTemplateLite) -> Html Msg
+viewTensionTemplatesExt url txt_yes list_ext_d =
+    case list_ext_d of
+        RemoteData.Success data ->
+            if List.isEmpty data then
+                text ""
+
+            else
+                let
+                    q =
+                        url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+                in
+                div [ class "mt-6" ]
+                    [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text (txt_yes ++ " ") ]
+                    , data
+                        |> List.map
+                            (\d ->
+                                let
+                                    link_m =
+                                        List.head d.nodes
+                                            |> Maybe.map
+                                                (\n ->
+                                                    toLink SettingsBaseUri n.nameid [] ++ q
+                                                )
+                                in
+                                span [ class "ml-2" ]
+                                    [ case link_m of
+                                        Just link ->
+                                            a [ href link ] [ text d.name ]
+
+                                        Nothing ->
+                                            text d.name
+                                    ]
+                            )
+                        |> span []
+                    ]
+
+        RemoteData.Failure err ->
+            viewHttpErrors err
+
+        RemoteData.Loading ->
+            div [ class "spinner" ] []
+
+        _ ->
+            text ""
 
 
 type alias SwitchRecord =

@@ -327,6 +327,7 @@ type alias TensionTemplateForm =
     , id : String
     , nameid : String -- circle nameid for rootnameid derivation
     , post : Post -- "name", "title", "comment"
+    , description : Maybe String
     , viewMode : InputViewMode
     , type_ : TensionType.TensionType
     , is_recursive : Bool
@@ -347,6 +348,7 @@ initTensionTemplateForm user nameid =
     , id = ""
     , nameid = nameid
     , post = Dict.empty
+    , description = Nothing
     , viewMode = Write
     , type_ = TensionType.Operational
     , is_recursive = True

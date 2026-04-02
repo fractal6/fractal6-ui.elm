@@ -58,14 +58,16 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
-import Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccess, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
+import RemoteData
 import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (getTensionTemplates, queryLocalGraph, queryRolesFull)
+import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, queryLocalGraph, queryRolesFull)
+import Requests exposing (fetchTensionTemplatesTop)
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
@@ -111,8 +113,10 @@ type alias Model =
     , simplifiedView : Bool
 
     -- Templates
-    , templates : GqlData (List TensionTemplateFull)
+    , templates : RestData (List TensionTemplateLite)
     , selectedTemplate : Maybe TensionTemplateFull
+    , templateLoading : Bool
+    , templatesLoadingSlow : Bool
     , isTemplateTensionOnly : Bool
     , showTemplatePicker : Bool
 
@@ -213,8 +217,10 @@ initModel session =
     , force_init = False
 
     -- Templates
-    , templates = NotAsked
+    , templates = RemoteData.NotAsked
     , selectedTemplate = Nothing
+    , templateLoading = False
+    , templatesLoadingSlow = False
     , isTemplateTensionOnly = False
     , showTemplatePicker = False
 
@@ -613,8 +619,10 @@ type Msg
     | LogErr String
     | UpdateUctx UserCtx
       -- Templates
-    | GotTemplatesForPicker (GqlData (List TensionTemplateFull))
-    | OnSelectTemplate TensionTemplateFull
+    | GotTemplatesForPicker (RestData (List TensionTemplateLite))
+    | TemplatesLoadingSlow
+    | OnSelectTemplate TensionTemplateLite
+    | GotTemplateContent (GqlData TensionTemplateFull)
     | OnSelectBlankTension
     | OnClearTemplate
       -- Draft persistence
@@ -811,11 +819,14 @@ update_ apis message model =
                                             NewCircleTab ->
                                                 send (OnSwitchTab NewCircleTab)
 
-                                    -- Fetch templates for path nodes
+                                    -- Fetch templates for path nodes (with caching)
                                     templateCmd =
-                                        case model.activeTab of
-                                            NewTensionTab ->
-                                                getTensionTemplates apis p.focus.nameid GotTemplatesForPicker
+                                        case ( model.activeTab, model.templates ) of
+                                            ( NewTensionTab, RemoteData.NotAsked ) ->
+                                                Cmd.batch
+                                                    [ fetchTensionTemplatesTop apis p.focus.nameid True GotTemplatesForPicker
+                                                    , sendSleep TemplatesLoadingSlow 500
+                                                    ]
 
                                             _ ->
                                                 Cmd.none
@@ -1053,12 +1064,16 @@ update_ apis message model =
             ( setSource source model, noOut )
 
         OnChangeTensionTarget odata target ->
+            let
+                resetTemplates m =
+                    { m | templates = RemoteData.NotAsked, selectedTemplate = Nothing, templatesLoadingSlow = False, showTemplatePicker = False }
+            in
             case localGraphFromOrga target.nameid odata of
                 Just path ->
-                    ( setPath path model, out0 [ send (OnTargetClick "") ] )
+                    ( setPath path model |> resetTemplates, out0 [ send (OnTargetClick "") ] )
 
                 Nothing ->
-                    ( setTarget (shrinkNode target) model, out0 [ send (OnTargetClick "") ] )
+                    ( setTarget (shrinkNode target) model |> resetTemplates, out0 [ send (OnTargetClick "") ] )
 
         OnChangePost field value ->
             let
@@ -1329,43 +1344,69 @@ update_ apis message model =
         -- Templates
         GotTemplatesForPicker result ->
             case result of
-                Success templates ->
+                RemoteData.Success templates ->
                     if List.isEmpty templates then
-                        ( { model | templates = result, showTemplatePicker = False }, noOut )
+                        ( { model | templates = result, templatesLoadingSlow = False, showTemplatePicker = False }, noOut )
 
                     else
-                        ( { model | templates = result, showTemplatePicker = True }, noOut )
+                        ( { model | templates = result, templatesLoadingSlow = False, showTemplatePicker = True }, noOut )
 
                 _ ->
                     ( { model | templates = result, showTemplatePicker = False }, noOut )
 
+        TemplatesLoadingSlow ->
+            case model.templates of
+                RemoteData.Loading ->
+                    ( { model | templatesLoadingSlow = True }, noOut )
+
+                RemoteData.NotAsked ->
+                    ( { model | templatesLoadingSlow = True }, noOut )
+
+                _ ->
+                    ( model, noOut )
+
         OnSelectTemplate tpl ->
-            let
-                newModel =
-                    { model
-                        | selectedTemplate = Just tpl
-                        , showTemplatePicker = False
-                        , nodeDoc =
-                            model.nodeDoc
-                                |> NodeDoc.updatePost "title" tpl.title
-                                |> NodeDoc.updatePost "message" tpl.comment
-                    }
-
-                form =
-                    newModel.nodeDoc.form
-
-                newForm =
-                    { form
-                        | labels = withDefault [] tpl.labels
-                        , assignees = withDefault [] tpl.assignees
-                    }
-
-                commentCmd =
-                    send (Comments.OnChangeComment "message" tpl.comment) |> Cmd.map CommentsMsg
-            in
-            ( { newModel | nodeDoc = NodeDoc.setForm newForm newModel.nodeDoc }
-            , out0 [ send (OnChangeTensionType tpl.type_), commentCmd ]
+            -- Two-step: select lite template, then fetch full content via GQL
+            ( { model | templateLoading = True }
+            , out0 [ getTensionTemplateById apis tpl.id GotTemplateContent ]
             )
+
+        GotTemplateContent result ->
+            case result of
+                Success tpl ->
+                    let
+                        newModel =
+                            { model
+                                | selectedTemplate = Just tpl
+                                , showTemplatePicker = False
+                                , templateLoading = False
+                                , nodeDoc =
+                                    model.nodeDoc
+                                        |> NodeDoc.updatePost "title" tpl.title
+                                        |> NodeDoc.updatePost "message" tpl.comment
+                            }
+
+                        form =
+                            newModel.nodeDoc.form
+
+                        newForm =
+                            { form
+                                | labels = withDefault [] tpl.labels
+                                , assignees = withDefault [] tpl.assignees
+                            }
+
+                        commentCmd =
+                            send (Comments.OnChangeComment "message" tpl.comment) |> Cmd.map CommentsMsg
+                    in
+                    ( { newModel | nodeDoc = NodeDoc.setForm newForm newModel.nodeDoc }
+                    , out0 [ send (OnChangeTensionType tpl.type_), commentCmd ]
+                    )
+
+                Failure err ->
+                    ( { model | templateLoading = False }, out0 [ Ports.logErr (String.join " " err) ] )
+
+                _ ->
+                    ( { model | templateLoading = False }, noOut )
 
         OnSelectBlankTension ->
             ( { model | showTemplatePicker = False, selectedTemplate = Nothing }, noOut )
@@ -1559,11 +1600,20 @@ viewStep tree_data (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    if model.showTemplatePicker then
-                        viewTemplatePicker model
+                    case ( model.showTemplatePicker, model.templates ) of
+                        ( _, RemoteData.NotAsked ) ->
+                            -- Templates not yet requested, show loading to avoid blank form flash
+                            viewTemplatePicker model
 
-                    else
-                        viewTension tree_data model
+                        ( _, RemoteData.Loading ) ->
+                            -- Templates are loading, show picker with spinner
+                            viewTemplatePicker model
+
+                        ( True, _ ) ->
+                            viewTemplatePicker model
+
+                        _ ->
+                            viewTension tree_data model
 
                 NewRoleTab ->
                     viewCircle tree_data model
@@ -1751,54 +1801,63 @@ viewRecipients tree_data model =
 
 viewTemplatePicker : Model -> Html Msg
 viewTemplatePicker model =
-    div [ class "panel modal-card submitFocus" ]
-        [ div [ class "panel-heading" ]
-            [ span [ class "has-text-weight-semibold" ] [ text T.selectTemplate ] ]
+    div [ class "modal-card submitFocus" ]
+        [ div [ class "modal-card-head" ]
+            [ span [ class "modal-card-title has-text-weight-semibold" ] [ text T.selectTemplate ] ]
         , div [ class "modal-card-body" ]
-            [ case model.templates of
-                Success templates ->
-                    div [ class "columns is-multiline" ] <|
-                        (templates
-                            |> List.map
-                                (\t ->
-                                    div [ class "column is-half" ]
-                                        [ div
-                                            [ class "box is-clickable"
+            [ if model.templateLoading then
+                div [ class "spinner" ] []
+
+              else
+                case model.templates of
+                    RemoteData.Success templates ->
+                        div [] <|
+                            (templates
+                                |> List.map
+                                    (\t ->
+                                        div
+                                            [ class "box is-clickable mb-3"
+                                            , tabindex 0
                                             , onClick (OnSelectTemplate t)
+                                            , onEnter (OnSelectTemplate t)
                                             ]
                                             [ p [ class "has-text-weight-semibold" ] [ text t.name ]
-                                            , p [ class "help" ] [ text t.title ]
+                                            , t.description
+                                                |> unwrap (text "") (\desc -> p [ class "help" ] [ text desc ])
                                             ]
-                                        ]
-                                )
-                        )
-                            ++ (if not model.isTemplateTensionOnly then
-                                    [ div [ class "column is-half" ]
+                                    )
+                            )
+                                ++ (if not model.isTemplateTensionOnly then
                                         [ div
-                                            [ class "box is-clickable"
+                                            [ class "box is-clickable mb-3"
+                                            , tabindex 0
                                             , onClick OnSelectBlankTension
+                                            , onEnter OnSelectBlankTension
                                             ]
                                             [ p [ class "has-text-weight-semibold" ] [ text T.blankTension ]
                                             , p [ class "help" ] [ text T.blankTensionHelp ]
                                             ]
                                         ]
-                                    ]
 
-                                else
-                                    []
-                               )
+                                    else
+                                        []
+                                   )
 
-                Loading ->
-                    div [ class "spinner" ] []
+                    RemoteData.Loading ->
+                        showIf model.templatesLoadingSlow (div [ class "spinner" ] [])
 
-                LoadingSlowly ->
-                    div [ class "spinner" ] []
+                    RemoteData.NotAsked ->
+                        showIf model.templatesLoadingSlow (div [ class "spinner" ] [])
 
-                _ ->
-                    text ""
+                    _ ->
+                        text ""
             ]
-        , div [ class "panel-footer has-text-right" ]
-            [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
+        , div [ class "modal-card-foot" ]
+            [ div [ class "field level is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ button [ class "button", onClick (OnCloseSafe "" "") ] [ text T.cancel ] ]
+                ]
+            ]
         ]
 
 
@@ -1834,19 +1893,19 @@ viewTension tree_data model =
           else
             Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
         , Lazy.lazy2 viewHeader tree_data model
-        , case model.selectedTemplate of
-            Just tpl ->
-                div [ class "px-4 pt-2" ]
-                    [ span [ class "tag is-info is-light" ]
-                        [ text (T.tensionTemplate ++ ": " ++ tpl.name)
-                        , button [ class "delete is-small", onClick OnClearTemplate ] []
-                        ]
-                    ]
-
-            Nothing ->
-                text ""
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
+            [ case model.selectedTemplate of
+                Just tpl ->
+                    div [ class "mb-3" ]
+                        [ span [ class "tag is-info is-light" ]
+                            [ text (T.tensionTemplate ++ ": " ++ tpl.name)
+                            , button [ class "delete is-small", onClick OnClearTemplate ] []
+                            ]
+                        ]
+
+                Nothing ->
+                    text ""
+            , div [ class "field" ]
                 [ div [ class "control" ]
                     [ input
                         [ class "input autofocus followFocus"

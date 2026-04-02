@@ -1976,6 +1976,22 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Pre-filled description"
   fr="Description pré-remplie"
 
+[templateDescription]
+  en="Description"
+  fr="Description"
+
+[templateDescriptionHelp]
+  en="Short description to help identify this template."
+  fr="Courte description pour identifier ce modèle."
+
+[inheritedTemplates]
+  en="Inherited templates"
+  fr="Modèles hérités"
+
+[subTemplates]
+  en="Sub-circle templates"
+  fr="Modèles des sous-cercles"
+
 [adhocRole]
   en="Ad-hoc Role"
   fr="Rôle ad-hoc"

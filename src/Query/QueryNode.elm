@@ -67,6 +67,7 @@ module Query.QueryNode exposing
     , tensionTemplateFullPayload
     , tensionTemplateLitePayload
     , getTensionTemplates
+    , getTensionTemplateById
     , tidPayload
     , userPayload
     )
@@ -1191,6 +1192,15 @@ getTensionTemplates url nid msg =
         (RemoteData.fromResult >> decodeResponse tensionTemplatesFullDecoder >> msg)
 
 
+getTensionTemplateById url tid msg =
+    makeGQLQuery url
+        (Query.getTensionTemplate
+            { id = encodeId tid }
+            tensionTemplateFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
 nodeTensionTemplatesFullPayload : SelectionSet NodeTensionTemplatesFull Fractal.Object.Node
 nodeTensionTemplatesFullPayload =
     SelectionSet.map NodeTensionTemplatesFull
@@ -1211,6 +1221,7 @@ tensionTemplateFullPayload =
     SelectionSet.succeed TensionTemplateFull
         |> with (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.TensionTemplate.name
+        |> with Fractal.Object.TensionTemplate.description
         |> with Fractal.Object.TensionTemplate.title
         |> with Fractal.Object.TensionTemplate.comment
         |> with Fractal.Object.TensionTemplate.type_
@@ -1226,13 +1237,12 @@ tensionTemplateFullPayload =
 
 tensionTemplateLitePayload : SelectionSet TensionTemplateLite Fractal.Object.TensionTemplate
 tensionTemplateLitePayload =
-    SelectionSet.map6 TensionTemplateLite
+    SelectionSet.map5 TensionTemplateLite
         (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
         Fractal.Object.TensionTemplate.name
-        Fractal.Object.TensionTemplate.title
-        Fractal.Object.TensionTemplate.comment
-        Fractal.Object.TensionTemplate.type_
+        Fractal.Object.TensionTemplate.description
         Fractal.Object.TensionTemplate.is_recursive
+        (SelectionSet.map (withDefault []) <| Fractal.Object.TensionTemplate.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
 
 
 

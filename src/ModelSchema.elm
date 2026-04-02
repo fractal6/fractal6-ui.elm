@@ -396,16 +396,16 @@ type alias RoleExtCommon a =
 type alias TensionTemplateLite =
     { id : String
     , name : String
-    , title : String
-    , comment : String
-    , type_ : TensionType.TensionType
+    , description : Maybe String
     , is_recursive : Bool
+    , nodes : List NameidPayload
     }
 
 
 type alias TensionTemplateFull =
     { id : String
     , name : String
+    , description : Maybe String
     , title : String
     , comment : String
     , type_ : TensionType.TensionType

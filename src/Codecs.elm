@@ -46,6 +46,7 @@ import ModelSchema
 
         , ProjectFull
         , RoleExt
+        , TensionTemplateLite
         , User
         , UserCtx
         , UserRights
@@ -99,6 +100,22 @@ roleDecoder =
         (JD.field "color" JD.string |> JD.maybe)
         (JD.field "role_type" RoleType.decoder)
         (JD.field "nodes" (JD.list <| JD.map NameidPayload (JD.field "nameid" JD.string)))
+
+
+
+{-
+   TensionTemplate decoder
+-}
+
+
+tensionTemplateLiteDecoder : JD.Decoder TensionTemplateLite
+tensionTemplateLiteDecoder =
+    JD.map5 TensionTemplateLite
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.maybe <| JD.field "description" JD.string)
+        (JD.field "is_recursive" JD.bool)
+        (JD.field "nodes" (JD.list (JD.map NameidPayload (JD.field "nameid" JD.string))) |> JDE.withDefault [])
 
 
 
