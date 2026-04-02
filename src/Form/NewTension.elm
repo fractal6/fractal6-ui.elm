@@ -52,7 +52,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h2, i, input, label, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
@@ -62,11 +62,11 @@ import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSucc
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
-import RemoteData
 import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, queryLocalGraph, queryRolesFull)
+import RemoteData
 import Requests exposing (fetchTensionTemplatesTop)
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
@@ -624,7 +624,7 @@ type Msg
     | OnSelectTemplate TensionTemplateLite
     | GotTemplateContent (GqlData TensionTemplateFull)
     | OnSelectBlankTension
-    | OnClearTemplate
+
       -- Draft persistence
     | SaveDraftDelayed Int
       -- Components
@@ -819,10 +819,13 @@ update_ apis message model =
                                             NewCircleTab ->
                                                 send (OnSwitchTab NewCircleTab)
 
-                                    -- Fetch templates for path nodes (with caching)
+                                    -- Fetch templates for path nodes (with caching), skip if draft exists
+                                    hasDraft =
+                                        newModel.draft /= Nothing || newModel.currentDraft /= Nothing
+
                                     templateCmd =
-                                        case ( model.activeTab, model.templates ) of
-                                            ( NewTensionTab, RemoteData.NotAsked ) ->
+                                        case ( model.activeTab, model.templates, hasDraft ) of
+                                            ( NewTensionTab, RemoteData.NotAsked, False ) ->
                                                 Cmd.batch
                                                     [ fetchTensionTemplatesTop apis p.focus.nameid True GotTemplatesForPicker
                                                     , sendSleep TemplatesLoadingSlow 500
@@ -913,8 +916,24 @@ update_ apis message model =
 
         OnSwitchTab tab ->
             let
+                hasDraft =
+                    model.draft /= Nothing || model.currentDraft /= Nothing
+
                 cmds =
                     case tab of
+                        NewTensionTab ->
+                            if model.templates == RemoteData.NotAsked && not hasDraft then
+                                let
+                                    focusNameid =
+                                        withMaybeData model.path_data |> Maybe.map .focus |> Maybe.map .nameid |> withDefault ""
+                                in
+                                [ fetchTensionTemplatesTop apis focusNameid True GotTemplatesForPicker
+                                , sendSleep TemplatesLoadingSlow 500
+                                ]
+
+                            else
+                                []
+
                         NewRoleTab ->
                             if withMaybeData model.roles_result == Nothing then
                                 let
@@ -1411,18 +1430,6 @@ update_ apis message model =
         OnSelectBlankTension ->
             ( { model | showTemplatePicker = False, selectedTemplate = Nothing }, noOut )
 
-        OnClearTemplate ->
-            ( { model
-                | showTemplatePicker = True
-                , selectedTemplate = Nothing
-                , nodeDoc =
-                    model.nodeDoc
-                        |> NodeDoc.updatePost "title" ""
-                        |> NodeDoc.updatePost "message" ""
-              }
-            , out0 [ send (Comments.OnChangeComment "message" "") |> Cmd.map CommentsMsg ]
-            )
-
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -1600,20 +1607,24 @@ viewStep tree_data (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    case ( model.showTemplatePicker, model.templates ) of
-                        ( _, RemoteData.NotAsked ) ->
-                            -- Templates not yet requested, show loading to avoid blank form flash
-                            viewTemplatePicker model
+                    if model.draft /= Nothing || model.currentDraft /= Nothing then
+                        viewTension tree_data model
 
-                        ( _, RemoteData.Loading ) ->
-                            -- Templates are loading, show picker with spinner
-                            viewTemplatePicker model
+                    else
+                        case ( model.showTemplatePicker, model.templates ) of
+                            ( _, RemoteData.NotAsked ) ->
+                                -- Templates not yet requested, show loading to avoid blank form flash
+                                viewTemplatePicker model
 
-                        ( True, _ ) ->
-                            viewTemplatePicker model
+                            ( _, RemoteData.Loading ) ->
+                                -- Templates are loading, show picker with spinner
+                                viewTemplatePicker model
 
-                        _ ->
-                            viewTension tree_data model
+                            ( True, _ ) ->
+                                viewTemplatePicker model
+
+                            _ ->
+                                viewTension tree_data model
 
                 NewRoleTab ->
                     viewCircle tree_data model
@@ -1801,8 +1812,20 @@ viewRecipients tree_data model =
 
 viewTemplatePicker : Model -> Html Msg
 viewTemplatePicker model =
-    div [ class "modal-card submitFocus" ]
-        [ div [ class "modal-card-head" ]
+    let
+        form =
+            model.nodeDoc.form
+
+        isAdmin =
+            hasLazyAdminRole form.uctx Nothing form.target.nameid
+    in
+    div [ class "panel modal-card submitFocus" ]
+        [ if not model.simplifiedView && isAdmin then
+            Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
+
+          else
+            text ""
+        , div [ class "modal-card-head" ]
             [ span [ class "modal-card-title has-text-weight-semibold" ] [ text T.selectTemplate ] ]
         , div [ class "modal-card-body" ]
             [ if model.templateLoading then
@@ -1828,7 +1851,8 @@ viewTemplatePicker model =
                                     )
                             )
                                 ++ (if not model.isTemplateTensionOnly then
-                                        [ div
+                                        [ hr [ style "width" "50%", style "margin" "1rem auto" ] []
+                                        , div
                                             [ class "box is-clickable mb-3"
                                             , tabindex 0
                                             , onClick OnSelectBlankTension
@@ -1894,18 +1918,7 @@ viewTension tree_data model =
             Lazy.lazy4 viewTensionTabs model.session isAdmin model.activeTab form.target
         , Lazy.lazy2 viewHeader tree_data model
         , div [ class "modal-card-body" ]
-            [ case model.selectedTemplate of
-                Just tpl ->
-                    div [ class "mb-3" ]
-                        [ span [ class "tag is-info is-light" ]
-                            [ text (T.tensionTemplate ++ ": " ++ tpl.name)
-                            , button [ class "delete is-small", onClick OnClearTemplate ] []
-                            ]
-                        ]
-
-                Nothing ->
-                    text ""
-            , div [ class "field" ]
+            [ div [ class "field" ]
                 [ div [ class "control" ]
                     [ input
                         [ class "input autofocus followFocus"

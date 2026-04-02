@@ -621,6 +621,7 @@ type alias LocalNode =
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
     , userCanJoin : Maybe Bool
+    , isTemplateTensionOnly : Maybe Bool
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
     , children : Maybe (List EmitterOrReceiver)
@@ -666,7 +667,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin n.mode Nothing |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -691,6 +692,7 @@ lgPayload isInit =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.userCanJoin
+        |> with Fractal.Object.Node.isTemplateTensionOnly
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
         |> (\x ->

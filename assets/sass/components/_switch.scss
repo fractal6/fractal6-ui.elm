@@ -13,9 +13,9 @@
  *   <label for="mySwitch">Label text</label>
  */
 
-$switch-width: 2.75rem;
-$switch-height: 1.25rem;
-$switch-thumb-size: 1.25rem;
+$switch-width: 2.5rem;
+$switch-height: 1.2rem;
+$switch-thumb-size: 1rem;
 $switch-thumb-offset: 0.125rem;
 $switch-travel: $switch-width - $switch-thumb-size - ($switch-thumb-offset * 2);
 $switch-transition: 0.2s ease;

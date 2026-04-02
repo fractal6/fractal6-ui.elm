@@ -132,6 +132,10 @@ html.has-modal-active, html.has-modal-active2 {
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
     }
+    #tensionTabTop + .modal-card-head {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
     .modal-card-foot {
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
