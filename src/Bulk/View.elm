@@ -441,6 +441,26 @@ tensionIcon3 type_ =
     span [ class "is-inline-flex" ] [ A.icon1 (tensionTypeIcon type_ ++ " " ++ tensionTypeColor "text" type_) (tensionType2str type_) ]
 
 
+viewTensionTypePicker : String -> TensionType.TensionType -> (TensionType.TensionType -> msg) -> Html msg
+viewTensionTypePicker menuId selected toMsg =
+    div [ class "control dropdown" ]
+        [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" menuId ]
+            [ tensionIcon3 selected
+            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
+            ]
+        , div [ id menuId, class "dropdown-menu", attribute "role" "menu" ]
+            [ div [ class "dropdown-content" ]
+                (TensionType.list
+                    |> List.map
+                        (\t ->
+                            div [ class "dropdown-item button-light", onClick (toMsg t) ]
+                                [ tensionIcon3 t ]
+                        )
+                )
+            ]
+        ]
+
+
 
 --
 -- Users

@@ -779,11 +779,19 @@ updateTensionTemplateInputEncoder form =
                                 , is_recursive = Present form.is_recursive
                                 , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                                 , labels =
-                                    Present
-                                        (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
+                                    if List.isEmpty form.labels then
+                                        Absent
+
+                                    else
+                                        Present
+                                            (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
                                 , assignees =
-                                    Present
-                                        (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
+                                    if List.isEmpty form.assignees then
+                                        Absent
+
+                                    else
+                                        Present
+                                            (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
                             }
                         )
                         |> Present

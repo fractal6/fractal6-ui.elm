@@ -27,7 +27,7 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (helperButton, viewGoRoot, viewLabel, viewRoleExt)
+import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewLabel, viewRoleExt, viewTensionTypePicker)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -551,7 +551,7 @@ type Msg
     | CancelTemplate
     | ChangeTemplatePost String String
     | ChangeTemplateDescription String
-    | ChangeTemplateType String
+    | ChangeTemplateType TensionType.TensionType
     | ChangeTemplateRecursive Bool
     | ChangeTemplateViewMode InputViewMode
     | OnTemplateRichText String String
@@ -1210,13 +1210,10 @@ update global message model =
             in
             ( { model | template_form = { f | description = ternary (value == "") Nothing (Just value) } }, Cmd.none, Cmd.none )
 
-        ChangeTemplateType val ->
+        ChangeTemplateType type_ ->
             let
                 f =
                     model.template_form
-
-                type_ =
-                    TensionType.fromString val |> withDefault TensionType.Operational
             in
             ( { model | template_form = { f | type_ = type_ } }, Cmd.none, Cmd.none )
 
@@ -2416,17 +2413,7 @@ viewTemplateAddBox model =
             ]
         , div [ class "field" ]
             [ label [ class "label" ] [ text T.type_ ]
-            , div [ class "control" ]
-                [ div [ class "select" ]
-                    [ select [ onInput ChangeTemplateType ]
-                        (TensionType.list
-                            |> List.map
-                                (\t ->
-                                    option [ value (TensionType.toString t), selected (t == form.type_) ] [ text (TensionType.toString t) ]
-                                )
-                        )
-                    ]
-                ]
+            , viewTensionTypePicker "template-type-menu" form.type_ ChangeTemplateType
             ]
         , div [ class "field" ]
             [ div [ class "control" ]
@@ -2489,7 +2476,6 @@ viewTemplates model =
                                 [ tr []
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.templateDescription ]
-                                    , th [] [ text T.templateTitle ]
                                     , th [] [ text T.type_ ]
                                     , th [] [ text T.isRecursive ]
                                     , th [] []
@@ -2501,13 +2487,12 @@ viewTemplates model =
                                             (\d ->
                                                 [ tr [ classList [ ( "settings-row-enter", model.template_anim_enter == Just d.id ) ] ] <|
                                                     if model.template_edit == Just d then
-                                                        [ td [ colspan 6 ] [ viewTemplateAddBox model ] ]
+                                                        [ td [ colspan 5 ] [ viewTemplateAddBox model ] ]
 
                                                     else
                                                         [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
                                                         , td [] [ text (withDefault "" d.description) ]
-                                                        , td [] [ text d.title ]
-                                                        , td [] [ text (TensionType.toString d.type_) ]
+                                                        , td [] [ tensionIcon2 d.type_ ]
                                                         , td []
                                                             [ if d.is_recursive then
                                                                 A.icon "icon-check"
