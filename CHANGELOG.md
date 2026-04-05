@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## [0.9.2] - 2026-04-06
+
+### New Features
+
+- **Tension templates management** -- Create, edit, and organize tension templates with markdown toolbar support, REST-based inheritance across circles, description field, and an improved template picker with draft bypass and tab navigation.
+- **Project settings panel** -- New side menu for project settings with permission flags: peers and guests can now be granted edit access to projects.
+- **Organisation search on profile** -- Fuzzy search bar to quickly filter organisations on the user profile page.
+- **Markdown block indent/dedent** -- Use Tab/Shift+Tab to indent or dedent selected text blocks in textareas.
+
+### Bug Fixes & Improvements
+
+- Fix project move/detach with multi-node awareness; preserve circle assignments on edit and add a detach option.
+- Show target circles in the project page.
+- Prevent panel close when dragging a text selection outside the panel area.
+- Fix closing panel selector with ESC when a modal is open (modal takes precedence).
+- Fix tooltip getting stuck on organisation menu hover.
+- Fix stale organisation data when switching between organisations.
+- Hide closed-status badge for auto-closed governance tensions.
+- Light background color adjustment for warm color monitor mode.
+- Minor button alignment and tooltip fixes.
+- Centralize modal inline styles into SCSS.
+
 ## [0.9.1]
 
 ### Features
