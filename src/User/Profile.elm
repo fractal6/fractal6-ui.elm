@@ -29,6 +29,7 @@ import Bulk.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
+import Components.SearchBar exposing (viewSearchField)
 import Extra exposing (ternary, unwrap)
 import Form.Help as Help
 import Fractal.Enum.NodeOrderable as NodeOrderable
@@ -36,6 +37,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h1, i, p, span, text)
 import Html.Attributes exposing (attribute, class, id)
 import Html.Events exposing (onClick)
+import Json.Decode as JD
 import Html.Lazy as Lazy
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Markdown exposing (renderMarkdown)
@@ -132,6 +134,8 @@ type alias Model =
     , user : GqlData UserProfile
     , orgas : GqlData (List NodeExt)
     , sortFilter : OrgaSortFilter
+    , orgaFilter : String
+    , orgaLookup : Maybe (List String)
 
     -- Common
     , help : Help.State
@@ -160,6 +164,8 @@ init global flags =
             , user = Loading
             , orgas = Loading
             , sortFilter = ActivitySort
+            , orgaFilter = ""
+            , orgaLookup = Nothing
 
             -- common
             , refresh_trial = 0
@@ -191,6 +197,9 @@ type Msg
     | GotNodes (GqlData (List NodeExt))
     | GotProfile (GqlData UserProfile)
     | OnChangeSortFilter OrgaSortFilter
+    | OnOrgaFilterInput String
+    | OnOrgaSearchKeyDown Int
+    | ChangeOrgaLookup (List String)
       -- Common
     | NoMsg
     | LogErr String
@@ -242,8 +251,19 @@ update global message model =
                     in
                     ( { model | refresh_trial = i }, sendSleep (LoadNodes roles) 500, send UpdateUserToken )
 
-                OkAuth _ ->
-                    ( { model | orgas = result }, Ports.bulma_driver "org_sort_dropdown", Cmd.none )
+                OkAuth orgas ->
+                    let
+                        initCmd =
+                            if List.length orgas >= 5 then
+                                Cmd.batch [ Ports.initOrgaSearch orgas, Ports.focusOn "orgaSearchInput" ]
+
+                            else
+                                Cmd.none
+                    in
+                    ( { model | orgas = result, orgaFilter = "", orgaLookup = Nothing }
+                    , Cmd.batch [ Ports.bulma_driver "org_sort_dropdown", initCmd ]
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -273,6 +293,25 @@ update global message model =
                     queryNodeExt apis rootids (orgaSortFilter2Order value) GotNodes
             , Ports.bulma_driver "org_sort_dropdown"
             )
+
+        OnOrgaFilterInput pattern ->
+            if pattern == "" then
+                ( { model | orgaFilter = "", orgaLookup = Nothing }, Cmd.none, Cmd.none )
+
+            else
+                ( { model | orgaFilter = pattern }, Ports.searchOrga pattern, Cmd.none )
+
+        OnOrgaSearchKeyDown key ->
+            case key of
+                27 ->
+                    -- ESC
+                    ( { model | orgaFilter = "", orgaLookup = Nothing }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        ChangeOrgaLookup nameids ->
+            ( { model | orgaLookup = Just nameids }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -333,6 +372,15 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.lookupOrgaFromJs
+        (\val ->
+            case JD.decodeValue (JD.list (JD.field "nameid" JD.string)) val of
+                Ok nameids ->
+                    ChangeOrgaLookup nameids
+
+                Err err ->
+                    LogErr (JD.errorToString err)
+        )
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
@@ -418,7 +466,25 @@ viewProfileRight user_s user model =
           else
             case model.orgas of
                 Success orgas ->
-                    viewUserOrgas model.commonOp user orgas
+                    let
+                        opSearch =
+                            { onChangePattern = OnOrgaFilterInput
+                            , onSearchKeyDown = OnOrgaSearchKeyDown
+                            , onSubmitText = OnOrgaFilterInput
+                            , id_name = "orgaSearchInput"
+                            , column_class = ""
+                            , field_class = ""
+                            , placeholder_txt = T.searchOrganisations
+                            }
+                    in
+                    div []
+                        [ if List.length orgas >= 5 then
+                            viewSearchField opSearch model.orgaFilter model.orgaFilter
+
+                          else
+                            text ""
+                        , viewUserOrgas model.commonOp user model.orgaLookup orgas
+                        ]
 
                 Failure err ->
                     viewGqlErrors err
@@ -484,8 +550,17 @@ viewSortFilter sortFilter =
         ]
 
 
-viewUserOrgas : CommonMsg Msg -> UserCommon a -> List NodeExt -> Html Msg
-viewUserOrgas commonOp user orgas =
-    orgas
+viewUserOrgas : CommonMsg Msg -> UserCommon a -> Maybe (List String) -> List NodeExt -> Html Msg
+viewUserOrgas commonOp user orgaLookup orgas =
+    let
+        filtered =
+            case orgaLookup of
+                Just nameids ->
+                    List.filter (\o -> List.member o.nameid nameids) orgas
+
+                Nothing ->
+                    orgas
+    in
+    filtered
         |> List.map (\root -> mediaOrga commonOp (Just user) root)
         |> div [ class "nodesList" ]

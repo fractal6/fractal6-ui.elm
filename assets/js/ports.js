@@ -102,6 +102,13 @@ window.addEventListener('load', _ => {
                     storeFields: ['id', 'name', 'color'],
                     searchOptions: { fuzzy: 0.3 },
                 }),
+                // Orga Quick Search
+                qso: new MiniSearch({
+                    idField: 'nameid',
+                    fields: ['name', 'nameid'],
+                    storeFields: ['nameid'],
+                    searchOptions: { fuzzy: 0.3, boost: { name: 2 } },
+                }),
             };
 
             //
@@ -263,6 +270,14 @@ export const actions = {
         var qs = session.qsl;
         var res = qs.search(pattern, {prefix:true}).slice(0,11);
         app.ports.lookupLabelFromJs.send(res);
+    },
+    'INIT_ORGASEARCH': (app, session, data) => {
+        initQuickSearch(session.qso, data);
+    },
+    'SEARCH_ORGAS': (app, session, pattern) => {
+        var qs = session.qso;
+        var res = qs.search(pattern, {prefix:true}).slice(0,11);
+        app.ports.lookupOrgaFromJs.send(res);
     },
     'PUSH_INPUT_SELECTION': (app, session, name) => {
         var $i = document.activeElement;

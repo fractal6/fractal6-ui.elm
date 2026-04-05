@@ -158,6 +158,9 @@ port lookupUserFromJs : (JD.Value -> a) -> Sub a
 port lookupLabelFromJs : (JD.Value -> a) -> Sub a
 
 
+port lookupOrgaFromJs : (JD.Value -> a) -> Sub a
+
+
 
 -- Markdown
 
@@ -552,6 +555,34 @@ searchLabel pattern =
         { action = "SEARCH_LABELS"
         , data = JE.string pattern
         }
+
+
+initOrgaSearch : List ModelSchema.NodeExt -> Cmd msg
+initOrgaSearch data =
+    outgoing
+        { action = "INIT_ORGASEARCH"
+        , data = orgaSearchEncoder data
+        }
+
+
+searchOrga : String -> Cmd msg
+searchOrga pattern =
+    outgoing
+        { action = "SEARCH_ORGAS"
+        , data = JE.string pattern
+        }
+
+
+orgaSearchEncoder : List ModelSchema.NodeExt -> JE.Value
+orgaSearchEncoder orgas =
+    JE.list
+        (\o ->
+            JE.object
+                [ ( "name", JE.string o.name )
+                , ( "nameid", JE.string o.nameid )
+                ]
+        )
+        orgas
 
 
 pushInputSelection : String -> Cmd msg

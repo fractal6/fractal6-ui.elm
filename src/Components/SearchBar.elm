@@ -57,7 +57,8 @@ viewSearchField op pattern_init pattern =
     div [ class ("field has-addons searchBar " ++ op.field_class) ]
         [ div [ class "control is-expanded" ]
             [ input
-                [ class "is-rounded input is-small pr-6"
+                [ id op.id_name
+                , class "is-rounded input is-small pr-6"
                 , type_ "search"
                 , autocomplete False
                 , autofocus False
