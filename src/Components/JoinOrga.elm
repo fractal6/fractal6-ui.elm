@@ -848,7 +848,7 @@ viewJoinStep op model =
                     }
             in
             div [ class "modal-card-body" ]
-                [ UserInput.view { label_text = span [] [ text (T.inviteMembers ++ " " ++ T.in_ ++ " "), strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg
+                [ UserInput.view { label_text = span [] [ text (T.inviteMembers ++ " " ++ T.in_ ++ " "), strong [] [ text name ], text ":" ], showEmail = True, placeholder_text = Nothing } model.userInput |> Html.map UserInputMsg
                 , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
                 , case model.node_data of
                     Failure err ->

@@ -425,6 +425,17 @@ removeRoleInputEncoder form =
 --
 -- Node Project Operation
 --
+
+
+buildUserRefs : List String -> OptionalArgument (List Input.UserRef)
+buildUserRefs usernames =
+    if List.isEmpty usernames then
+        Absent
+
+    else
+        Present (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u })) usernames)
+
+
 {-
    Add one Project
 -}
@@ -503,6 +514,7 @@ addProjectInputEncoder form =
                     , nodes =
                         Present
                             [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                    , collaborators = buildUserRefs form.collaborators_add
                 }
     in
     { input = [ Input.buildAddProjectInput inputReq inputOpt ] }
@@ -590,25 +602,35 @@ updateProjectInputEncoder form =
 
                                     else
                                         Absent
+                                , collaborators =
+                                    if List.isEmpty form.collaborators_add then
+                                        Absent
+
+                                    else
+                                        Present (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u })) form.collaborators_add)
                             }
                         )
                         |> Present
                 , remove =
-                    case moveFrom of
-                        Just oldNameid ->
-                            -- Move: detach from old parent node
-                            Input.buildProjectPatch
-                                (\i ->
-                                    { i
-                                        | nodes =
-                                            Present
-                                                [ Input.buildNodeRef (\j -> { j | nameid = Present oldNameid }) ]
-                                    }
-                                )
-                                |> Present
+                    if moveFrom /= Nothing || not (List.isEmpty form.collaborators_remove) then
+                        Input.buildProjectPatch
+                            (\i ->
+                                { i
+                                    | nodes =
+                                        case moveFrom of
+                                            Just oldNameid ->
+                                                Present
+                                                    [ Input.buildNodeRef (\j -> { j | nameid = Present oldNameid }) ]
 
-                        Nothing ->
-                            Absent
+                                            Nothing ->
+                                                Absent
+                                    , collaborators = buildUserRefs form.collaborators_remove
+                                }
+                            )
+                            |> Present
+
+                    else
+                        Absent
                 }
     in
     { input = Input.buildUpdateProjectInput inputReq inputOpt }

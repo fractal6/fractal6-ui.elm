@@ -39,6 +39,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
+import Components.UserInput as UserInput
 import Dict exposing (Dict)
 import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
@@ -221,6 +222,7 @@ type alias Model =
     , help : Help.State
     , joinOrga : JoinOrga.State
     , tensionForm : NTF.State
+    , userInput : UserInput.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
@@ -306,6 +308,7 @@ resetForm model =
         , isMoveTargetOpen = False
         , move_expanded_lines = Dict.empty
         , project_result_move = NotAsked
+        , userInput = UserInput.init [ model.node_focus.nameid ] True True model.session
     }
 
 
@@ -382,6 +385,7 @@ type Msg
     | OrgaMenuMsg OrgaMenu.Msg
     | TreeMenuMsg TreeMenu.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | UserInputMsg UserInput.Msg
 
 
 
@@ -458,6 +462,7 @@ init global flags =
             , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
             , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
             , actionPanel = ActionPanel.init session.common
+            , userInput = UserInput.init [ newFocus.nameid ] True True session.common
             }
 
         cmds =
@@ -704,14 +709,23 @@ update global message model =
                                     ++ (project.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
                                     ++ [ ( "old_name", project.name ), ( "old_nameid", nameidEncoder project.name ) ]
                                 )
+                        , collaborators_add = List.map .username project.collaborators
                     }
+
+                newUserInput =
+                    UserInput.init [ model.node_focus.nameid ] True True model.session
             in
             ( { model
                 | project_add = False
                 , project_edit = Just project
                 , project_form = newForm
+                , userInput = newUserInput
               }
-            , Cmd.batch [ Ports.bulma_driver "edit-project" ]
+            , Cmd.batch
+                [ Ports.bulma_driver "edit-project"
+                , List.map (\u -> Cmd.map UserInputMsg (send (UserInput.OnClickUser { username = u.username, name = Nothing }))) project.collaborators
+                    |> Cmd.batch
+                ]
             , Cmd.none
             )
 
@@ -765,10 +779,23 @@ update global message model =
                 form =
                     model.project_form
 
+                originalCollabs =
+                    model.project_edit
+                        |> Maybe.map (.collaborators >> List.map .username)
+                        |> withDefault []
+
+                collabsToAdd =
+                    List.filter (\u -> not (List.member u originalCollabs)) form.collaborators_add
+
+                collabsToRemove =
+                    List.filter (\u -> not (List.member u form.collaborators_add)) originalCollabs
+
                 newForm =
                     { form
                         | post =
                             Dict.insert "updatedAt" (fromTime time) form.post
+                        , collaborators_add = collabsToAdd
+                        , collaborators_remove = collabsToRemove
                     }
             in
             ( { model | project_result = LoadingSlowly, project_form = newForm }
@@ -1150,6 +1177,33 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                form =
+                    model.project_form
+
+                newCollabs =
+                    case out.result of
+                        Just ( True, users ) ->
+                            form.collaborators_add ++ List.map .username users
+
+                        Just ( False, users ) ->
+                            List.filter (\u -> not (List.member u (List.map .username users))) form.collaborators_add
+
+                        Nothing ->
+                            form.collaborators_add
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | userInput = data, project_form = { form | collaborators_add = newCollabs } }
+            , out.cmds |> List.map (\m -> Cmd.map UserInputMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch gcmds
+            )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1169,6 +1223,7 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (UserInput.subscriptions model.userInput |> List.map (\s -> Sub.map UserInputMsg s))
         |> Sub.batch
 
 
@@ -1253,6 +1308,14 @@ viewNewOrEditProject session isNew model =
         isLoading =
             model.project_result == LoadingSlowly
 
+        collabsChanged =
+            case model.project_edit of
+                Just p ->
+                    List.sort model.project_form.collaborators_add /= List.sort (List.map .username p.collaborators)
+
+                Nothing ->
+                    not (List.isEmpty model.project_form.collaborators_add)
+
         isSendable =
             if isNew then
                 isPostSendable [ "name" ] post
@@ -1261,6 +1324,7 @@ viewNewOrEditProject session isNew model =
                 isPostSendable [ "name" ] post
                     && ((Just name /= Maybe.map .name model.project_edit)
                             || (Just description /= unwrap Nothing .description model.project_edit)
+                            || collabsChanged
                        )
 
         submitOrga =
@@ -1334,6 +1398,11 @@ viewNewOrEditProject session isNew model =
                     ]
 
                 --, p [ class "help" ] [ text T.purposeHelpOrga ]
+                ]
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text T.collaborators ]
+                , p [ class "help" ] [ text T.collaboratorsHelp ]
+                , UserInput.view { label_text = text "", showEmail = False, placeholder_text = Nothing } model.userInput |> Html.map UserInputMsg
                 ]
             , div [ class "field pt-3 level is-mobile" ]
                 [ div [ class "level-left" ]

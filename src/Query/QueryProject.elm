@@ -93,6 +93,7 @@ projectDataPayload =
     SelectionSet.succeed ProjectData
         |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Project.name
+        |> with Fractal.Object.Project.description
         |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
         |> with
             (Fractal.Object.Project.columns identity columnPayload
@@ -102,6 +103,7 @@ projectDataPayload =
                         >> List.sortBy .pos
                     )
             )
+        |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
 
 
 getProjectColumn url colid msg =

@@ -114,7 +114,7 @@ initModel : String -> NodeFocus -> SessionCommon -> Model
 initModel projectid focus session =
     { node_focus = focus
     , projectid = projectid
-    , project = ProjectData "" "" [] []
+    , project = ProjectData "" "" Nothing [] [] []
     , hasTaskMove = True
     , hasNewCol = True
     , isAddingDraft = Nothing

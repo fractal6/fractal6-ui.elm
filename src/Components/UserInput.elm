@@ -447,7 +447,10 @@ port selectActiveItemFromJs : (() -> msg) -> Sub msg
 
 
 type alias Op =
-    { label_text : Html Msg }
+    { label_text : Html Msg
+    , showEmail : Bool
+    , placeholder_text : Maybe String
+    }
 
 
 view : Op -> State -> Html Msg
@@ -527,7 +530,7 @@ viewInput op model =
                             --, type_ "text"
                             , rows 1
                             , style "resize" "none"
-                            , placeholder <| ternary hasSelected (ternary (not model.multiSelect && hasSelected) "" T.inviteSomeoneElse) T.usernameOrEmail
+                            , placeholder <| ternary hasSelected (ternary (not model.multiSelect && hasSelected) "" T.inviteSomeoneElse) (op.placeholder_text |> Maybe.withDefault (ternary op.showEmail T.usernameOrEmail T.username))
                             , value model.pattern
                             , ternary (not model.multiSelect && hasSelected)
                                 (onClick NoMsg)
@@ -541,8 +544,11 @@ viewInput op model =
             , if model.pattern == "" then
                 text ""
 
-              else if seemsEmail then
+              else if seemsEmail && op.showEmail then
                 viewEmailSelector op model
+
+              else if seemsEmail then
+                text ""
 
               else
                 viewUserSelectors op model

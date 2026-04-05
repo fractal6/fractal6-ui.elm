@@ -2312,7 +2312,7 @@ viewCircleVisibility model =
 viewInviteRole : Model -> Html Msg
 viewInviteRole model =
     div [ class "has-border-hint-primary" ]
-        [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.inviteInput |> Html.map InviteInputMsg
+        [ UserInput.view { label_text = text (T.inviteOrLink ++ ":"), showEmail = True, placeholder_text = Nothing } model.inviteInput |> Html.map InviteInputMsg
         , viewInvitationInput model
         ]
 

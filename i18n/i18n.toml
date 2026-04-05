@@ -1675,6 +1675,22 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Edit project"
   fr="Editer le projet"
 
+[projectSettings]
+  en="Project settings"
+  fr="Paramètres du projet"
+
+[collaborators]
+  en="Collaborators"
+  fr="Collaborateurs"
+
+[collaboratorsHelp]
+  en="Collaborators get write access to this project. Coordinators of linked circles also have access."
+  fr="Les collaborateurs ont un accès en écriture à ce projet. Les coordinateurs des cercles liés y ont aussi accès."
+
+[addACollaborator]
+  en="Add a collaborator"
+  fr="Ajouter un collaborateur"
+
 [assignees]
   en="Assignees"
   fr="Assignés"

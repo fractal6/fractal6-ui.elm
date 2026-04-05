@@ -1341,7 +1341,7 @@ viewStep1 op model =
                             [ viewRoleAuthority op model ]
 
                 LinkAction ->
-                    [ UserInput.view { label_text = text (T.inviteOrLink ++ ":") } model.userInput |> Html.map UserInputMsg
+                    [ UserInput.view { label_text = text (T.inviteOrLink ++ ":"), showEmail = True, placeholder_text = Nothing } model.userInput |> Html.map UserInputMsg
                     , viewComment model
                     ]
 

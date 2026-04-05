@@ -375,6 +375,15 @@
     }
 }
 
+.side-menu.is-small {
+    @include tablet {
+        width: 480px;
+    }
+    @include mobile {
+        width: 100%;
+    }
+}
+
 .side-menu.is-medium {
     @include tablet {
         width: 75%;

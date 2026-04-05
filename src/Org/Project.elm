@@ -22,7 +22,7 @@
 module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), hasLazyAdminRole)
+import Auth exposing (ErrState(..), getProjectRights)
 import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
@@ -37,7 +37,7 @@ import Components.JoinOrga as JoinOrga
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
-
+import Components.ProjectSettingsPanel as ProjectSettingsPanel
 import Components.TreeMenu as TreeMenu
 import Dict
 import Extra exposing (insertAt, ternary, unwrap)
@@ -187,6 +187,7 @@ type alias Model =
     , project_data : GqlData ProjectData
     , linkTensionPanel : LinkTensionPanel.State
     , cardPanel : CardPanel.State
+    , projectSettingsPanel : ProjectSettingsPanel.State
     , isProjectAdmin : Bool
 
     -- Common
@@ -250,6 +251,7 @@ init global flags =
             , project_data = ternary fs.orgChange Loading (fromMaybeData session.data.project_data Loading)
             , linkTensionPanel = LinkTensionPanel.init projectid session.common
             , cardPanel = CardPanel.init path_data newFocus session.common
+            , projectSettingsPanel = ProjectSettingsPanel.init projectid newFocus.nameid session.common
             , board = Board.init projectid newFocus session.common
 
             -- Common
@@ -322,6 +324,8 @@ type Msg
     | BoardMsg Board.Msg
     | LinkTensionPanelMsg LinkTensionPanel.Msg
     | CardPanelMsg CardPanel.Msg
+    | ProjectSettingsPanelMsg ProjectSettingsPanel.Msg
+    | OpenProjectSettings
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -386,8 +390,7 @@ update global message model =
                         isAdmin =
                             case global.session.common.user of
                                 LoggedIn uctx ->
-                                    --hasAdminRole uctx (withMaybeData model.path_data)
-                                    hasLazyAdminRole uctx Nothing model.node_focus.rootnameid
+                                    getProjectRights uctx data model.path_data
 
                                 LoggedOut ->
                                     False
@@ -624,6 +627,38 @@ update global message model =
             in
             ( { model | board = data }, out.cmds |> List.map (\m -> Cmd.map BoardMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        OpenProjectSettings ->
+            case model.project_data of
+                Success p ->
+                    ( model
+                    , Cmd.map ProjectSettingsPanelMsg (send (ProjectSettingsPanel.OnOpen p))
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        ProjectSettingsPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ProjectSettingsPanel.update apis msg model.projectSettingsPanel
+
+                newProjectData =
+                    case out.result of
+                        Just updatedProject ->
+                            Success updatedProject
+
+                        Nothing ->
+                            model.project_data
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | projectSettingsPanel = data, project_data = newProjectData }
+            , out.cmds |> List.map (\m -> Cmd.map ProjectSettingsPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch gcmds
+            )
+
         CardPanelMsg msg ->
             let
                 ( data, out ) =
@@ -662,6 +697,7 @@ subscriptions _ model =
         ++ (LinkTensionPanel.subscriptions model.linkTensionPanel |> List.map (\s -> Sub.map LinkTensionPanelMsg s))
         ++ (Board.subscriptions model.board |> List.map (\s -> Sub.map BoardMsg s))
         ++ (CardPanel.subscriptions model.cardPanel |> List.map (\s -> Sub.map CardPanelMsg s))
+        ++ (ProjectSettingsPanel.subscriptions model.projectSettingsPanel |> List.map (\s -> Sub.map ProjectSettingsPanelMsg s))
         |> Sub.batch
 
 
@@ -719,6 +755,7 @@ view global model =
         , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , Lazy.lazy3 LinkTensionPanel.view tree_data model.path_data model.linkTensionPanel |> Html.map LinkTensionPanelMsg
         , Lazy.lazy3 CardPanel.view tree_data model.path_data model.cardPanel |> Html.map CardPanelMsg
+        , Lazy.lazy ProjectSettingsPanel.view model.projectSettingsPanel |> Html.map ProjectSettingsPanelMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }
@@ -748,6 +785,8 @@ view_ global model =
                         ++ (if model.isProjectAdmin then
                                 [ div [ class "button is-small", onClick (OpenTensionPane Nothing) ]
                                     [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
+                                , div [ class "button-light ml-4", onClick OpenProjectSettings ]
+                                    [ A.icon "icon-menu" ]
                                 ]
 
                             else

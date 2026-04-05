@@ -267,6 +267,8 @@ type alias ProjectForm =
     , status : Maybe ProjectStatus.ProjectStatus
     , post : Post
     , columns : Maybe (List { name : String, description : String, color : Maybe String })
+    , collaborators_add : List String
+    , collaborators_remove : List String
     }
 
 
@@ -284,6 +286,8 @@ initProjectForm user nameid =
     , status = Nothing
     , columns = Nothing
     , post = Dict.fromList []
+    , collaborators_add = []
+    , collaborators_remove = []
     }
 
 
