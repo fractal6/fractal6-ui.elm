@@ -721,6 +721,8 @@ type alias ProjectFull =
     , parentnameid : Maybe String
     , nodes : List EmitterOrReceiver
     , collaborators : List Username
+    , peerCanEditProject : Bool
+    , guestCanEditProject : Bool
     }
 
 
@@ -731,6 +733,8 @@ type alias ProjectData =
     , nodes : List EmitterOrReceiver
     , columns : List ProjectColumn
     , collaborators : List Username
+    , peerCanEditProject : Bool
+    , guestCanEditProject : Bool
     }
 
 

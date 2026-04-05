@@ -53,7 +53,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
+import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -337,6 +337,8 @@ type Msg
     | DoLoad
       -- Projects
     | ChangeProjectPost String String
+    | TogglePeerCanEdit
+    | ToggleGuestCanEdit
     | SafeEdit Msg
     | SafeSend Msg
     | GotProjects (GqlData { projects : List ProjectFull, counts : ProjectsCount })
@@ -582,6 +584,37 @@ update global message model =
             in
             ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
 
+        TogglePeerCanEdit ->
+            let
+                form =
+                    model.project_form
+
+                newVal =
+                    not (form.peerCanEditProject |> Maybe.withDefault False)
+
+                newForm =
+                    { form | peerCanEditProject = Just newVal }
+            in
+            ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        ToggleGuestCanEdit ->
+            let
+                form =
+                    model.project_form
+
+                newVal =
+                    not (form.guestCanEditProject |> Maybe.withDefault False)
+
+                newForm =
+                    if newVal then
+                        -- Enabling guest also enables peer
+                        { form | guestCanEditProject = Just True, peerCanEditProject = Just True }
+
+                    else
+                        { form | guestCanEditProject = Just False }
+            in
+            ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
         SafeEdit msg ->
             if model.hasUnsavedData then
                 ( model
@@ -710,6 +743,8 @@ update global message model =
                                     ++ [ ( "old_name", project.name ), ( "old_nameid", nameidEncoder project.name ) ]
                                 )
                         , collaborators_add = List.map .username project.collaborators
+                        , peerCanEditProject = Just project.peerCanEditProject
+                        , guestCanEditProject = Just project.guestCanEditProject
                     }
 
                 newUserInput =
@@ -1316,6 +1351,15 @@ viewNewOrEditProject session isNew model =
                 Nothing ->
                     not (List.isEmpty model.project_form.collaborators_add)
 
+        permsChanged =
+            case model.project_edit of
+                Just p ->
+                    (model.project_form.peerCanEditProject /= Just p.peerCanEditProject)
+                        || (model.project_form.guestCanEditProject /= Just p.guestCanEditProject)
+
+                Nothing ->
+                    False
+
         isSendable =
             if isNew then
                 isPostSendable [ "name" ] post
@@ -1325,6 +1369,7 @@ viewNewOrEditProject session isNew model =
                     && ((Just name /= Maybe.map .name model.project_edit)
                             || (Just description /= unwrap Nothing .description model.project_edit)
                             || collabsChanged
+                            || permsChanged
                        )
 
         submitOrga =
@@ -1399,10 +1444,37 @@ viewNewOrEditProject session isNew model =
 
                 --, p [ class "help" ] [ text T.purposeHelpOrga ]
                 ]
+            , hr [ class "mt-6 mb-3" ] []
             , div [ class "field" ]
                 [ div [ class "label" ] [ text T.collaborators ]
                 , p [ class "help" ] [ text T.collaboratorsHelp ]
                 , UserInput.view { label_text = text "", showEmail = False, placeholder_text = Nothing } model.userInput |> Html.map UserInputMsg
+                ]
+            , hr [ class "mt-6 mb-3" ] []
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text T.permissions ]
+                , Html.label [ class "checkbox" ]
+                    [ input
+                        [ type_ "checkbox"
+                        , checked (model.project_form.peerCanEditProject |> Maybe.withDefault False)
+                        , onClick TogglePeerCanEdit
+                        ]
+                        []
+                    , span [ class "ml-2" ] [ text T.peerCanEditProject ]
+                    ]
+                , p [ class "help" ] [ text T.peerCanEditProjectHelp ]
+                ]
+            , div [ class "field" ]
+                [ Html.label [ class "checkbox" ]
+                    [ input
+                        [ type_ "checkbox"
+                        , checked (model.project_form.guestCanEditProject |> Maybe.withDefault False)
+                        , onClick ToggleGuestCanEdit
+                        ]
+                        []
+                    , span [ class "ml-2" ] [ text T.guestCanEditProject ]
+                    ]
+                , p [ class "help" ] [ text T.guestCanEditProjectHelp ]
                 ]
             , div [ class "field pt-3 level is-mobile" ]
                 [ div [ class "level-left" ]

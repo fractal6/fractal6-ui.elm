@@ -104,6 +104,8 @@ projectDataPayload =
                     )
             )
         |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with Fractal.Object.Project.peerCanEditProject
+        |> with Fractal.Object.Project.guestCanEditProject
 
 
 getProjectColumn url colid msg =

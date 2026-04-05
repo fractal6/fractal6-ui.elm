@@ -31,7 +31,7 @@ import Components.UserInput as UserInput
 import Dict
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, hr, input, p, span, text, textarea)
-import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, id, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Loading exposing (GqlData, ModalData, RequestResult(..))
@@ -135,6 +135,11 @@ type Msg
     | OnRemoveCollaborator String
     | DoRemoveCollaborator String Time.Posix
     | GotCollabResult (GqlData ProjectFull)
+      -- Permissions
+    | OnTogglePeerCanEdit
+    | OnToggleGuestCanEdit
+    | DoSubmitPermissions Time.Posix
+    | GotPermResult (GqlData ProjectFull)
       -- Components
     | UserInputMsg UserInput.Msg
       -- Confirm Modal
@@ -286,6 +291,8 @@ update_ apis message model =
                                             | name = projectFull.name
                                             , description = projectFull.description
                                             , collaborators = projectFull.collaborators
+                                            , peerCanEditProject = projectFull.peerCanEditProject
+                                            , guestCanEditProject = projectFull.guestCanEditProject
                                         }
                                     )
                     in
@@ -348,6 +355,89 @@ update_ apis message model =
                         | update_result = result
                         , project = updatedProject
                         , userInput = UserInput.init [ model.nameid ] True True model.session
+                      }
+                    , Out [] [] updatedProject
+                    )
+
+                _ ->
+                    ( { model | update_result = result }, noOut )
+
+        -- Permissions
+        OnTogglePeerCanEdit ->
+            let
+                newProject =
+                    model.project
+                        |> Maybe.map (\p -> { p | peerCanEditProject = not p.peerCanEditProject })
+            in
+            ( { model | project = newProject }
+            , out0 [ send (Submit DoSubmitPermissions) ]
+            )
+
+        OnToggleGuestCanEdit ->
+            let
+                newProject =
+                    model.project
+                        |> Maybe.map
+                            (\p ->
+                                if not p.guestCanEditProject then
+                                    { p | guestCanEditProject = True, peerCanEditProject = True }
+
+                                else
+                                    { p | guestCanEditProject = False }
+                            )
+            in
+            ( { model | project = newProject }
+            , out0 [ send (Submit DoSubmitPermissions) ]
+            )
+
+        DoSubmitPermissions time ->
+            case model.project of
+                Just p ->
+                    let
+                        form =
+                            model.form
+
+                        newForm =
+                            { form
+                                | post = Dict.fromList [ ( "updatedAt", fromTime time ) ]
+                                , peerCanEditProject = Just p.peerCanEditProject
+                                , guestCanEditProject = Just p.guestCanEditProject
+                            }
+                    in
+                    ( { model | update_result = LoadingSlowly, form = newForm }
+                    , out0 [ updateOneProject apis newForm GotPermResult ]
+                    )
+
+                Nothing ->
+                    ( model, noOut )
+
+        GotPermResult result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | update_result = NotAsked }
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
+                    )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }
+                    , out2 [ sendSleep (Submit DoSubmitPermissions) 500 ] [ DoUpdateToken ]
+                    )
+
+                OkAuth projectFull ->
+                    let
+                        updatedProject =
+                            model.project
+                                |> Maybe.map
+                                    (\p ->
+                                        { p
+                                            | peerCanEditProject = projectFull.peerCanEditProject
+                                            , guestCanEditProject = projectFull.guestCanEditProject
+                                        }
+                                    )
+                    in
+                    ( { model
+                        | update_result = result
+                        , project = updatedProject
                       }
                     , Out [] [] updatedProject
                     )
@@ -465,6 +555,7 @@ viewPanel model =
                     [ viewTitleSection model project
                     , viewDescriptionSection model project
                     , viewCollaboratorsSection model project
+                    , viewPermissionsSection project
                     ]
                 , case model.update_result of
                     Failure err ->
@@ -591,6 +682,37 @@ viewCollaboratorTag user =
             , onClick (OnRemoveCollaborator user.username)
             ]
             []
+        ]
+
+
+viewPermissionsSection : ProjectData -> Html Msg
+viewPermissionsSection project =
+    div [ class "mt-6", attribute "style" "border-top: 1px solid var(--border-color-light);" ]
+        [ p [ class "help mt-6 is-size-7 has-text-grey mb-2" ] [ text T.permissions ]
+        , div [ class "field" ]
+            [ Html.label [ class "checkbox" ]
+                [ input
+                    [ type_ "checkbox"
+                    , checked project.peerCanEditProject
+                    , onClick OnTogglePeerCanEdit
+                    ]
+                    []
+                , span [ class "ml-2" ] [ text T.peerCanEditProject ]
+                ]
+            , p [ class "help" ] [ text T.peerCanEditProjectHelp ]
+            ]
+        , div [ class "field" ]
+            [ Html.label [ class "checkbox" ]
+                [ input
+                    [ type_ "checkbox"
+                    , checked project.guestCanEditProject
+                    , onClick OnToggleGuestCanEdit
+                    ]
+                    []
+                , span [ class "ml-2" ] [ text T.guestCanEditProject ]
+                ]
+            , p [ class "help" ] [ text T.guestCanEditProjectHelp ]
+            ]
         ]
 
 

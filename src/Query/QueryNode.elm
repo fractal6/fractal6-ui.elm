@@ -1342,6 +1342,8 @@ projectFullPayload =
         |> with (Fractal.Object.Project.parentnameid |> SelectionSet.map Just)
         |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
         |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with Fractal.Object.Project.peerCanEditProject
+        |> with Fractal.Object.Project.guestCanEditProject
 
 
 

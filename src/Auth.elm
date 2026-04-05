@@ -395,7 +395,7 @@ getTensionRights uctx th_d path_d =
   - the projects collaborators (users)
 
 -}
-getProjectRights : UserCtx -> { a | nodes : List { b | nameid : String }, collaborators : List { c | username : String } } -> GqlData LocalGraph -> Bool
+getProjectRights : UserCtx -> { a | nodes : List { b | nameid : String }, collaborators : List { c | username : String }, peerCanEditProject : Bool, guestCanEditProject : Bool } -> GqlData LocalGraph -> Bool
 getProjectRights uctx path path_d =
     case path_d of
         Success p ->
@@ -421,6 +421,14 @@ getProjectRights uctx path path_d =
 
             else if isOwner uctx p.focus.nameid then
                 -- is Owner
+                True
+
+            else if path.guestCanEditProject && List.length orgaRoles > 0 then
+                -- Guest access enabled: any org member (including Guest) can edit
+                True
+
+            else if path.peerCanEditProject && List.any (\r -> r.role_type /= RoleType.Guest) orgaRoles then
+                -- Peer access enabled: any org member except Guest can edit
                 True
 
             else

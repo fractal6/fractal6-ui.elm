@@ -485,6 +485,8 @@ addProjectInputEncoder form =
             , name = Dict.get "name" form.post |> withDefault ""
             , nameid = Dict.get "nameid" form.post |> withDefault ""
             , status = withDefault ProjectStatus.Open form.status
+            , peerCanEditProject = form.peerCanEditProject |> withDefault False
+            , guestCanEditProject = form.guestCanEditProject |> withDefault False
             }
 
         inputOpt =
@@ -608,6 +610,8 @@ updateProjectInputEncoder form =
 
                                     else
                                         Present (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u })) form.collaborators_add)
+                                , peerCanEditProject = fromMaybe form.peerCanEditProject
+                                , guestCanEditProject = fromMaybe form.guestCanEditProject
                             }
                         )
                         |> Present

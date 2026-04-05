@@ -269,6 +269,8 @@ type alias ProjectForm =
     , columns : Maybe (List { name : String, description : String, color : Maybe String })
     , collaborators_add : List String
     , collaborators_remove : List String
+    , peerCanEditProject : Maybe Bool
+    , guestCanEditProject : Maybe Bool
     }
 
 
@@ -288,6 +290,8 @@ initProjectForm user nameid =
     , post = Dict.fromList []
     , collaborators_add = []
     , collaborators_remove = []
+    , peerCanEditProject = Nothing
+    , guestCanEditProject = Nothing
     }
 
 

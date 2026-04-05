@@ -1691,6 +1691,26 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Add a collaborator"
   fr="Ajouter un collaborateur"
 
+[permissions]
+  en="Permissions"
+  fr="Permissions"
+
+[peerCanEditProject]
+  en="Allow peers to edit"
+  fr="Autoriser les pairs à modifier"
+
+[peerCanEditProjectHelp]
+  en="Organization peers can edit this project."
+  fr="Les pairs de l'organisation peuvent modifier ce projet."
+
+[guestCanEditProject]
+  en="Allow guests to edit"
+  fr="Autoriser les invités à modifier"
+
+[guestCanEditProjectHelp]
+  en="Organization guests can edit this project. Enabling this also allows peers."
+  fr="Les invités de l'organisation peuvent modifier ce projet. Activer cette option autorise aussi les pairs."
+
 [assignees]
   en="Assignees"
   fr="Assignés"

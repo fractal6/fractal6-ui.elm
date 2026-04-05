@@ -180,6 +180,16 @@ collaborators fillInOptionals____ object____ =
     Object.selectionForCompositeField "collaborators" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+peerCanEditProject : SelectionSet Bool Fractal.Object.Project
+peerCanEditProject =
+    Object.selectionForField "Bool" "peerCanEditProject" [] Decode.bool
+
+
+guestCanEditProject : SelectionSet Bool Fractal.Object.Project
+guestCanEditProject =
+    Object.selectionForField "Bool" "guestCanEditProject" [] Decode.bool
+
+
 type alias ColumnsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
 
