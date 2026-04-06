@@ -689,21 +689,21 @@ update global message model =
                 newModel =
                     { model | projects = withMapData .projects result, projects_count = withMapData .counts result }
             in
-            ( newModel, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Ports.bulma_driver "" )
 
         GotProjectsTop result ->
             let
                 newModel =
                     { model | projects_top = result }
             in
-            ( newModel, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Ports.bulma_driver "" )
 
         GotProjectsSub result ->
             let
                 newModel =
                     { model | projects_sub = result }
             in
-            ( newModel, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Ports.bulma_driver "" )
 
         AddProject ->
             if model.project_add then
