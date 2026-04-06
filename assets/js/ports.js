@@ -676,7 +676,23 @@ export const actions = {
         if (elt) elt.click();
     },
     'FORCE_RELOAD': (app, session, target) => {
-        window.location.reload(true);
+        // Clear service worker caches and navigate with a cache-busting query param
+        Promise.all([
+            ('serviceWorker' in navigator)
+                ? navigator.serviceWorker.getRegistrations().then(regs =>
+                    Promise.all(regs.map(r => r.unregister()))
+                )
+                : Promise.resolve(),
+            ('caches' in window)
+                ? caches.keys().then(keys =>
+                    Promise.all(keys.map(k => caches.delete(k)))
+                )
+                : Promise.resolve()
+        ]).finally(() => {
+            var url = new URL(window.location.href);
+            url.searchParams.set('version', Date.now());
+            window.location.href = url.toString();
+        });
     },
     'RELOAD_LANG': (app, session, lang) => {
         updateLang(app, lang);

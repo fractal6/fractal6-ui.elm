@@ -167,6 +167,7 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | OnCloseOutdatedVersion
+    | OnForceReload
     | OnPushSystemNotif SystemNotification
     | OnClearSystemNotif
     | ScrollToTop
@@ -890,6 +891,9 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | orgaInfo = orgaInfo } } }, Cmd.none )
+
+        OnForceReload ->
+            ( model, Ports.forceReload )
 
         OnPushSystemNotif result ->
             let

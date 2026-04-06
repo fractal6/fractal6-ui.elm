@@ -77,6 +77,7 @@ init flags url key =
     ( Model key url global page
         { onReplaceUrl = Global << ReplaceUrl
         , onCloseOutdated = Global OnCloseOutdatedVersion
+        , onForceReload = Global OnForceReload
         , onScrollToTop = Global ScrollToTop
         , onScrollToBottom = Global ScrollToBottom
         }

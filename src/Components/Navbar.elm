@@ -47,6 +47,7 @@ import Url exposing (Url)
 type alias NavbarHandlers msg =
     { onReplaceUrl : String -> msg
     , onCloseOutdated : msg
+    , onForceReload : msg
     , onScrollToTop : msg
     , onScrollToBottom : msg
     }
@@ -117,7 +118,7 @@ view apis session notif orga_info tension_head handlers =
             , showIf hasVersionOutdated <|
                 div [ class "f6-notification notification has-background-warning-soft" ]
                     [ button [ class "delete", onClick handlers.onCloseOutdated ] []
-                    , a [ class "button-light is-light" ]
+                    , a [ class "button-light is-light", onClick handlers.onForceReload ]
                         -- https://github.com/surprisetalk/elm-bulma/issues/17
                         [ p [ class "title is-6 mb-2" ] [ text "New Version Released 🎉" ]
                         , viewGqlErrorsLight [ "Refresh now for new features and improvements" ]
