@@ -371,7 +371,7 @@ update_ apis message model =
 
         -- Cards
         OnMove col card ->
-            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card }
+            ( { model | draging = True, dragCount = 0, movingHoverCol = Just col, movingCard = Just card, isAddingDraft = Nothing }
             , noOut
             )
 
@@ -958,7 +958,7 @@ viewBoard op model =
                                      ]
                                         ++ ternary model.hasTaskMove
                                             [ classList
-                                                [ ( "is-dragging", model.movingHoverT /= Nothing )
+                                                [ ( "is-dragging", model.draging && Maybe.map .id model.movingCard == Just card.id )
                                                 , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id )
                                                 ]
                                             , onClick (OnCardClick (Just card))

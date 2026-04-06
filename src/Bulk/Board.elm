@@ -153,7 +153,7 @@ viewBoard op commonOp header keys_title data =
                                 , div
                                     (class "box kb-card is-shrinked2 mb-2 mx-2"
                                         :: ternary op.hasTaskMove
-                                            [ classList [ ( "is-dragging", op.movingHoverT /= Nothing ) ]
+                                            [ classList [ ( "is-dragging", itemDragged ) ]
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
                                             , onDragStart <| op.onMove { pos = i, to_receiverid = t.receiver.nameid } t
