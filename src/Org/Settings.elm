@@ -1299,7 +1299,7 @@ update global message model =
                       }
                         |> resetForm
                     , Cmd.none
-                    , Cmd.none
+                    , send ResetSessionTemplates
                     )
 
                 DuplicateErr ->
@@ -1326,7 +1326,7 @@ update global message model =
                     in
                     ( { model | template_result_del = NotAsked, templates = Success new, template_add = False, template_edit = Nothing } |> resetForm
                     , Cmd.none
-                    , Cmd.none
+                    , send ResetSessionTemplates
                     )
 
                 _ ->
@@ -1567,7 +1567,9 @@ update global message model =
                 state =
                     case msg of
                         NTF.OnOpen _ _ ->
-                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+                            model.tensionForm
+                                |> NTF.setCurrentDraft global.session.data.drafts.newTension
+                                |> NTF.setSessionTemplates global.session.data.tension_templates
 
                         _ ->
                             model.tensionForm

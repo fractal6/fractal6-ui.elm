@@ -628,7 +628,9 @@ update global message model =
                 state =
                     case msg of
                         NTF.OnOpen _ _ ->
-                            NTF.setCurrentDraft global.session.data.drafts.newTension model.tensionForm
+                            model.tensionForm
+                                |> NTF.setCurrentDraft global.session.data.drafts.newTension
+                                |> NTF.setSessionTemplates global.session.data.tension_templates
 
                         _ ->
                             model.tensionForm

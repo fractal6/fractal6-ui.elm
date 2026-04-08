@@ -253,6 +253,11 @@ setCurrentDraft draft (State model) =
     State { model | currentDraft = draft }
 
 
+setSessionTemplates : RestData (List TensionTemplateLite) -> State -> State
+setSessionTemplates tpls (State model) =
+    State { model | templates = tpls }
+
+
 setPath : LocalGraph -> Model -> Model
 setPath p model =
     let
@@ -559,6 +564,26 @@ canExitSafe data =
 hasData : Model -> Bool
 hasData data =
     not (isPostEmpty [ "title", "message", "invitation" ] data.nodeDoc.form.post)
+        && not (isTemplateUnmodified data)
+
+
+{-| Check if the current form content matches the selected template exactly (no user edits).
+-}
+isTemplateUnmodified : Model -> Bool
+isTemplateUnmodified data =
+    case data.selectedTemplate of
+        Just tpl ->
+            let
+                currentTitle =
+                    Dict.get "title" data.nodeDoc.form.post |> withDefault "" |> String.trim
+
+                currentMessage =
+                    Dict.get "message" data.nodeDoc.form.post |> withDefault "" |> String.trim
+            in
+            currentTitle == String.trim tpl.title && currentMessage == String.trim tpl.comment
+
+        Nothing ->
+            False
 
 
 
@@ -819,25 +844,39 @@ update_ apis message model =
                                             NewCircleTab ->
                                                 send (OnSwitchTab NewCircleTab)
 
-                                    -- Fetch templates for path nodes (with caching), skip if draft exists
+                                    -- Use pre-loaded templates from session when available, fallback to fetch
                                     hasDraft =
                                         newModel.draft /= Nothing || newModel.currentDraft /= Nothing
 
-                                    templateCmd =
-                                        case ( model.activeTab, model.templates, hasDraft ) of
-                                            ( NewTensionTab, RemoteData.NotAsked, False ) ->
-                                                Cmd.batch
-                                                    [ fetchTensionTemplatesTop apis p.focus.nameid True GotTemplatesForPicker
-                                                    , sendSleep TemplatesLoadingSlow 500
-                                                    ]
+                                    -- Pre-loaded templates are only valid when the target matches the page focus
+                                    targetMatchesFocus =
+                                        model.session.node_focus
+                                            |> Maybe.map (\nf -> nf.nameid == p.focus.nameid)
+                                            |> withDefault False
 
-                                            _ ->
-                                                Cmd.none
+                                    ( templateCmd, showPicker ) =
+                                        if model.activeTab /= NewTensionTab || hasDraft then
+                                            ( Cmd.none, False )
+
+                                        else
+                                            case ( model.templates, targetMatchesFocus ) of
+                                                ( RemoteData.Success templates, True ) ->
+                                                    -- Pre-loaded from session for same node: decide instantly
+                                                    ( Cmd.none, not (List.isEmpty templates) )
+
+                                                _ ->
+                                                    -- Target differs from page focus or not loaded: fetch for actual target
+                                                    ( Cmd.batch
+                                                        [ fetchTensionTemplatesTop apis p.focus.nameid True GotTemplatesForPicker
+                                                        , sendSleep TemplatesLoadingSlow 500
+                                                        ]
+                                                    , False
+                                                    )
 
                                     isTemplateTensionOnly_ =
                                         p.root |> Maybe.andThen .isTemplateTensionOnly |> withDefault False
                                 in
-                                ( { data | isActive2 = True, isTemplateTensionOnly = isTemplateTensionOnly_ } |> setUctx uctx
+                                ( { data | isActive2 = True, isTemplateTensionOnly = isTemplateTensionOnly_, showTemplatePicker = showPicker } |> setUctx uctx
                                 , out0
                                     [ sendSleep (SetIsActive2 True) 10
                                     , Cmd.map CommentsMsg (send <| Comments.OnSetTarget (List.map .nameid p.path))
@@ -919,20 +958,35 @@ update_ apis message model =
                 hasDraft =
                     model.draft /= Nothing || model.currentDraft /= Nothing
 
-                cmds =
+                targetMatchesFocus =
+                    let
+                        targetNameid =
+                            withMaybeData model.path_data |> Maybe.map .focus |> Maybe.map .nameid
+                    in
+                    Maybe.map2 (\t nf -> t == nf.nameid) targetNameid model.session.node_focus
+                        |> withDefault False
+
+                ( cmds, showPicker ) =
                     case tab of
                         NewTensionTab ->
-                            if model.templates == RemoteData.NotAsked && not hasDraft then
-                                let
-                                    focusNameid =
-                                        withMaybeData model.path_data |> Maybe.map .focus |> Maybe.map .nameid |> withDefault ""
-                                in
-                                [ fetchTensionTemplatesTop apis focusNameid True GotTemplatesForPicker
-                                , sendSleep TemplatesLoadingSlow 500
-                                ]
+                            if hasDraft then
+                                ( [], False )
 
                             else
-                                []
+                                case ( model.templates, targetMatchesFocus ) of
+                                    ( RemoteData.Success templates, True ) ->
+                                        ( [], not (List.isEmpty templates) )
+
+                                    _ ->
+                                        let
+                                            focusNameid =
+                                                withMaybeData model.path_data |> Maybe.map .focus |> Maybe.map .nameid |> withDefault ""
+                                        in
+                                        ( [ fetchTensionTemplatesTop apis focusNameid True GotTemplatesForPicker
+                                          , sendSleep TemplatesLoadingSlow 500
+                                          ]
+                                        , False
+                                        )
 
                         NewRoleTab ->
                             if withMaybeData model.roles_result == Nothing then
@@ -940,15 +994,15 @@ update_ apis message model =
                                     nameids =
                                         getPath model.path_data |> List.map .nameid
                                 in
-                                [ queryRolesFull apis nameids OnGotRoles ]
+                                ( [ queryRolesFull apis nameids OnGotRoles ], False )
 
                             else
-                                []
+                                ( [], False )
 
                         _ ->
-                            []
+                            ( [], False )
             in
-            ( switchTab tab model, out0 (Ports.bulma_driver "tensionModal" :: cmds) )
+            ( switchTab tab { model | showTemplatePicker = showPicker }, out0 (Ports.bulma_driver "tensionModal" :: cmds) )
 
         OnGotRoles result ->
             ( { model | roles_result = result }, noOut )
@@ -1086,13 +1140,21 @@ update_ apis message model =
             let
                 resetTemplates m =
                     { m | templates = RemoteData.NotAsked, selectedTemplate = Nothing, templatesLoadingSlow = False, showTemplatePicker = False }
+
+                -- If the form is empty, fetch templates for the new target and show picker
+                templateCmd =
+                    if model.activeTab == NewTensionTab && not (hasData model) then
+                        fetchTensionTemplatesTop apis target.nameid True GotTemplatesForPicker
+
+                    else
+                        Cmd.none
             in
             case localGraphFromOrga target.nameid odata of
                 Just path ->
-                    ( setPath path model |> resetTemplates, out0 [ send (OnTargetClick "") ] )
+                    ( setPath path model |> resetTemplates, out0 [ send (OnTargetClick ""), templateCmd ] )
 
                 Nothing ->
-                    ( setTarget (shrinkNode target) model |> resetTemplates, out0 [ send (OnTargetClick "") ] )
+                    ( setTarget (shrinkNode target) model |> resetTemplates, out0 [ send (OnTargetClick ""), templateCmd ] )
 
         OnChangePost field value ->
             let
@@ -1503,7 +1565,7 @@ update_ apis message model =
                     draft =
                         TensionDraft draftTitle draftMessage ""
                 in
-                if draftMessage == "" then
+                if draftMessage == "" || isTemplateUnmodified model then
                     ( model, Out [] [ DoUpdateDraft ClearNewTension ] Nothing )
 
                 else
@@ -1610,21 +1672,11 @@ viewStep tree_data (State model) =
                     if model.draft /= Nothing || model.currentDraft /= Nothing then
                         viewTension tree_data model
 
+                    else if model.showTemplatePicker then
+                        viewTemplatePicker model
+
                     else
-                        case ( model.showTemplatePicker, model.templates ) of
-                            ( _, RemoteData.NotAsked ) ->
-                                -- Templates not yet requested, show loading to avoid blank form flash
-                                viewTemplatePicker model
-
-                            ( _, RemoteData.Loading ) ->
-                                -- Templates are loading, show picker with spinner
-                                viewTemplatePicker model
-
-                            ( True, _ ) ->
-                                viewTemplatePicker model
-
-                            _ ->
-                                viewTension tree_data model
+                        viewTension tree_data model
 
                 NewRoleTab ->
                     viewCircle tree_data model
@@ -1867,13 +1919,8 @@ viewTemplatePicker model =
                                         []
                                    )
 
-                    RemoteData.Loading ->
-                        showIf model.templatesLoadingSlow (div [ class "spinner" ] [])
-
-                    RemoteData.NotAsked ->
-                        showIf model.templatesLoadingSlow (div [ class "spinner" ] [])
-
                     _ ->
+                        -- showTemplatePicker is only True when templates are Success with items
                         text ""
             ]
         , div [ class "modal-card-foot" ]

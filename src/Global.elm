@@ -65,7 +65,7 @@ import Query.QueryNode exposing (getOrgaInfo)
 import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
-import Requests exposing (tokenack)
+import Requests exposing (fetchTensionTemplatesTop, tokenack)
 import Schemas.TreeMenu as TreeMenuSchema
 import Scroll
 import Session exposing (LabelSearchPanelModel, Screen, Session, SessionFlags, SystemNotification, Theme(..), UserSearchPanelModel, ViewMode(..), fromLocalSession, resetSession)
@@ -152,6 +152,8 @@ type Msg
     | UpdateSessionNotif NotifCount
     | UpdateSessionScrollPosition String
     | GotOrgaInfo (GqlData OrgaInfo)
+    | GotTensionTemplates (RestData (List TensionTemplateLite))
+    | ResetSessionTemplates
     | RefreshNotifCount
     | AckNotifCount (GqlData NotifCount)
     | ToggleWatchOrga String
@@ -227,6 +229,7 @@ update msg model =
             -- to avoid glitch or bad UX (seeing incoherent tensions data) when navigating app.
             -- * reset Tensions and Tension page data.
             -- * reset Panel data.
+            -- * preload tension templates in background for the new node focus.
             let
                 session =
                     model.session
@@ -237,12 +240,32 @@ update msg model =
                 sessionData =
                     session.data
 
-                cmd =
+                nodeChanged =
+                    case data of
+                        Just n ->
+                            Just n.nameid /= Maybe.map .nameid session.common.node_focus
+
+                        Nothing ->
+                            False
+
+                orgaInfoCmd =
                     case data of
                         Just n ->
                             -- If new orga context
                             if session.data.orgaInfo == Nothing || Just n.rootnameid /= Maybe.map .rootnameid session.common.node_focus then
                                 getOrgaInfo apis (uctxFromUser session.common.user).username n.rootnameid GotOrgaInfo
+
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
+
+                templatesCmd =
+                    case data of
+                        Just n ->
+                            if nodeChanged then
+                                fetchTensionTemplatesTop apis n.nameid True GotTensionTemplates
 
                             else
                                 Cmd.none
@@ -264,10 +287,16 @@ update msg model =
                                 , tensions_all = Nothing
                                 , authorsPanel = Nothing
                                 , labelsPanel = Nothing
+                                , tension_templates =
+                                    if nodeChanged then
+                                        RemoteData.Loading
+
+                                    else
+                                        sessionData.tension_templates
                             }
                     }
               }
-            , cmd
+            , Cmd.batch [ orgaInfoCmd, templatesCmd ]
             )
 
         UpdateSessionFocusOnly data ->
@@ -747,6 +776,26 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        GotTensionTemplates result ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+            in
+            ( { model | session = { session | data = { sessionData | tension_templates = result } } }, Cmd.none )
+
+        ResetSessionTemplates ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+            in
+            ( { model | session = { session | data = { sessionData | tension_templates = RemoteData.NotAsked } } }, Cmd.none )
 
         RefreshPinTension nameid ->
             ( model, queryPinnedTensions apis nameid AckPinTension )
