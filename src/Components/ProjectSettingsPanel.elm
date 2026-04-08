@@ -578,7 +578,7 @@ viewTitleSection model project =
         [ case model.editField of
             Just EditTitle ->
                 div [ class "field" ]
-                    [ p [ class "help is-size-7 has-text-grey mb-1" ] [ text T.name ]
+                    [ p [ class "help is-size-7 mb-1" ] [ text T.name ]
                     , div [ class "control" ]
                         [ input
                             [ class "input"
@@ -603,7 +603,7 @@ viewTitleSection model project =
             _ ->
                 div [ class "is-flex is-align-items-center is-justify-content-space-between" ]
                     [ div []
-                        [ p [ class "help is-size-7 has-text-grey mb-1" ] [ text T.name ]
+                        [ p [ class "help is-size-7 mb-1" ] [ text T.name ]
                         , span [ class "is-size-5 has-text-weight-semibold" ] [ text project.name ]
                         ]
                     , span [ class "button-light", onClick (OnToggleEdit EditTitle) ]
@@ -618,7 +618,7 @@ viewDescriptionSection model project =
         [ case model.editField of
             Just EditDescription ->
                 div [ class "field" ]
-                    [ p [ class "help is-size-7 has-text-grey mb-1" ] [ text T.description ]
+                    [ p [ class "help is-size-7 mb-1" ] [ text T.description ]
                     , div [ class "control" ]
                         [ textarea
                             [ class "textarea"
@@ -643,13 +643,13 @@ viewDescriptionSection model project =
             _ ->
                 div [ class "is-flex is-align-items-center is-justify-content-space-between" ]
                     [ div []
-                        [ p [ class "help is-size-7 has-text-grey mb-1" ] [ text T.description ]
+                        [ p [ class "help is-size-7 mb-1" ] [ text T.description ]
                         , case project.description of
                             Just desc ->
                                 renderMarkdown "is-human" desc
 
                             Nothing ->
-                                span [ class "has-text-grey" ] [ text "—" ]
+                                span [] [ text "—" ]
                         ]
                     , span [ class "button-light", onClick (OnToggleEdit EditDescription) ]
                         [ A.icon "icon-edit-2" ]
@@ -660,10 +660,10 @@ viewDescriptionSection model project =
 viewCollaboratorsSection : Model -> ProjectData -> Html Msg
 viewCollaboratorsSection model project =
     div [ class "mt-6", attribute "style" "border-top: 1px solid var(--border-color-light);" ]
-        [ p [ class "help mt-6 is-size-7 has-text-grey mb-2" ] [ text T.collaborators ]
+        [ p [ class "help mt-6 is-size-7 mb-2" ] [ text T.collaborators ]
         , div []
             (if List.isEmpty project.collaborators then
-                [ p [ class "is-italic has-text-grey" ] [ text "—" ] ]
+                [ p [ class "is-italic" ] [ text "—" ] ]
 
              else
                 List.map viewCollaboratorTag project.collaborators
@@ -688,7 +688,7 @@ viewCollaboratorTag user =
 viewPermissionsSection : ProjectData -> Html Msg
 viewPermissionsSection project =
     div [ class "mt-6", attribute "style" "border-top: 1px solid var(--border-color-light);" ]
-        [ p [ class "help mt-6 is-size-7 has-text-grey mb-2" ] [ text T.permissions ]
+        [ p [ class "help mt-6 is-size-7 mb-2" ] [ text T.permissions ]
         , div [ class "field" ]
             [ Html.label [ class "checkbox" ]
                 [ input
