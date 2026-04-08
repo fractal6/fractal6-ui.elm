@@ -341,6 +341,8 @@ type alias TensionTemplateForm =
     , is_recursive : Bool
     , labels : List Label
     , assignees : List User
+    , orig_labels : List Label -- Dgraph `set` appends to lists; we diff against originals to build `remove` mutations
+    , orig_assignees : List User
     }
 
 
@@ -362,6 +364,8 @@ initTensionTemplateForm user nameid =
     , is_recursive = True
     , labels = []
     , assignees = []
+    , orig_labels = []
+    , orig_assignees = []
     }
 
 

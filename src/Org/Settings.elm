@@ -27,12 +27,14 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewLabel, viewRoleExt, viewTensionTypePicker)
+import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewLabel, viewRoleExt, viewTensionTypePicker, viewUsers)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Comments exposing (viewCommentInputHeader)
 import Components.HelperBar as HelperBar
+import Components.LabelSearchPanel as LabelSearchPanel
+import Components.UserSearchPanel as UserSearchPanel
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
@@ -67,7 +69,7 @@ import Query.PatchNode exposing (addOneLabel, addOneRole, addOneTensionTemplate,
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
-import Session exposing (CommonMsg, GlobalCmd(..))
+import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -208,6 +210,8 @@ type alias Model =
     -- Templates
     , template_form : TensionTemplateForm
     , templates : GqlData (List TensionTemplateFull)
+    , labelsPanel : LabelSearchPanel.State
+    , assigneesPanel : UserSearchPanel.State
     , templates_top : RestData (List TensionTemplateLite)
     , templates_sub : RestData (List TensionTemplateLite)
     , template_add : Bool
@@ -421,6 +425,8 @@ init global flags =
             -- Templates
             , template_form = initTensionTemplateForm session.common.user newFocus.nameid
             , templates = NotAsked
+            , labelsPanel = LabelSearchPanel.init "" SelectLabel session.common.user
+            , assigneesPanel = UserSearchPanel.init "" SelectUser session.common.user
             , templates_top = RemoteData.NotAsked
             , templates_sub = RemoteData.NotAsked
             , template_add = action == "new" && menu == TemplatesMenu
@@ -563,6 +569,8 @@ type Msg
     | GotTemplateDel (GqlData TensionTemplateFull)
     | GotTemplatesTop (RestData (List TensionTemplateLite))
     | GotTemplatesSub (RestData (List TensionTemplateLite))
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
       -- Orga
     | GotRootRights (GqlData NodeRights)
     | SwitchUserCanJoin Int Bool
@@ -1157,6 +1165,12 @@ update global message model =
                 f =
                     model.template_form
 
+                tplLabels =
+                    withDefault [] tpl.labels
+
+                tplAssignees =
+                    withDefault [] tpl.assignees
+
                 newForm =
                     { f
                         | id = tpl.id
@@ -1170,8 +1184,10 @@ update global message model =
                         , description = tpl.description
                         , type_ = tpl.type_
                         , is_recursive = tpl.is_recursive
-                        , labels = withDefault [] tpl.labels
-                        , assignees = withDefault [] tpl.assignees
+                        , labels = tplLabels
+                        , assignees = tplAssignees
+                        , orig_labels = tplLabels
+                        , orig_assignees = tplAssignees
                     }
             in
             ( { model
@@ -1337,6 +1353,62 @@ update global message model =
 
         GotTemplatesSub result ->
             ( { model | templates_sub = result }, Cmd.none, Cmd.none )
+
+        LabelSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    LabelSearchPanel.update apis msg model.labelsPanel
+
+                f =
+                    model.template_form
+
+                newForm =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                { f | labels = f.labels ++ [ Tuple.second r ] }
+
+                            else
+                                { f | labels = List.filter (\l -> l.name /= (Tuple.second r).name) f.labels }
+                        )
+                        out.result
+                        |> withDefault f
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | labelsPanel = panel, template_form = newForm }
+            , Cmd.batch (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds)
+            , Cmd.batch gcmds
+            )
+
+        UserSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    UserSearchPanel.update apis msg model.assigneesPanel
+
+                f =
+                    model.template_form
+
+                newForm =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                { f | assignees = f.assignees ++ [ Tuple.second r ] }
+
+                            else
+                                { f | assignees = List.filter (\u -> u.username /= (Tuple.second r).username) f.assignees }
+                        )
+                        out.result
+                        |> withDefault f
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | assigneesPanel = panel, template_form = newForm }
+            , Cmd.batch (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds)
+            , Cmd.batch gcmds
+            )
 
         -- Orga
         GotRootRights result ->
@@ -1677,6 +1749,8 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         |> Sub.batch
 
 
@@ -2426,6 +2500,39 @@ viewTemplateAddBox model =
                 , p [ class "help" ] [ text T.isRecursiveHelp ]
                 ]
             ]
+        , let
+            targets =
+                getPath model.path_data |> List.map .nameid
+
+            labelsOp =
+                { selectedLabels = form.labels
+                , targets = targets
+                , isRight = False
+                }
+
+            assigneesOp =
+                { selectedAssignees = form.assignees
+                , targets = targets
+                , isRight = False
+                }
+
+            hasLabels =
+                not (List.isEmpty form.labels)
+
+            hasAssignees =
+                not (List.isEmpty form.assignees)
+          in
+          div [ class "field" ]
+            [ label [ class "label" ] [ text T.labels, text " / ", text T.assignees ]
+            , div [ class "control" ]
+                [ div [ classList [ ( "is-flex is-align-items-center", not hasLabels && not hasAssignees ) ], class "mb-2" ]
+                    [ LabelSearchPanel.viewNew labelsOp model.labelsPanel
+                        |> Html.map LabelSearchPanelMsg
+                    , UserSearchPanel.viewNew assigneesOp model.assigneesPanel
+                        |> Html.map UserSearchPanelMsg
+                    ]
+                ]
+            ]
         , div [ class "field is-grouped" ]
             [ div [ class "control" ]
                 [ button
@@ -2479,6 +2586,8 @@ viewTemplates model =
                                     [ th [] [ text T.name ]
                                     , th [] [ text T.templateDescription ]
                                     , th [] [ text T.type_ ]
+                                    , th [] [ text T.labels ]
+                                    , th [] [ text T.assignees ]
                                     , th [] [ text T.isRecursive ]
                                     , th [] []
                                     ]
@@ -2489,12 +2598,14 @@ viewTemplates model =
                                             (\d ->
                                                 [ tr [ classList [ ( "settings-row-enter", model.template_anim_enter == Just d.id ) ] ] <|
                                                     if model.template_edit == Just d then
-                                                        [ td [ colspan 5 ] [ viewTemplateAddBox model ] ]
+                                                        [ td [ colspan 7 ] [ viewTemplateAddBox model ] ]
 
                                                     else
                                                         [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
                                                         , td [] [ text (withDefault "" d.description) ]
                                                         , td [] [ tensionIcon2 d.type_ ]
+                                                        , td [] [ Bulk.View.viewLabels Nothing (withDefault [] d.labels) ]
+                                                        , td [] [ viewUsers False (withDefault [] d.assignees) ]
                                                         , td []
                                                             [ if d.is_recursive then
                                                                 A.icon "icon-check"

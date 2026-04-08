@@ -436,6 +436,24 @@ buildUserRefs usernames =
         Present (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u })) usernames)
 
 
+buildLabelRefs : List Label -> OptionalArgument (List Input.LabelRef)
+buildLabelRefs labels =
+    if List.isEmpty labels then
+        Absent
+
+    else
+        Present (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) labels)
+
+
+buildAssigneeRefs : List User -> OptionalArgument (List Input.UserRef)
+buildAssigneeRefs users =
+    if List.isEmpty users then
+        Absent
+
+    else
+        Present (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) users)
+
+
 {-
    Add one Project
 -}
@@ -739,20 +757,8 @@ addTensionTemplateInputEncoder form =
                         Present
                             [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                     , description = fromMaybe form.description
-                    , labels =
-                        if List.isEmpty form.labels then
-                            Absent
-
-                        else
-                            Present
-                                (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
-                    , assignees =
-                        if List.isEmpty form.assignees then
-                            Absent
-
-                        else
-                            Present
-                                (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
+                    , labels = buildLabelRefs form.labels
+                    , assignees = buildAssigneeRefs form.assignees
                 }
     in
     { input = [ Input.buildAddTensionTemplateInput inputReq inputOpt ] }
@@ -791,6 +797,21 @@ updateTensionTemplateInputEncoder form =
             else
                 form.post
 
+        addedLabels =
+            List.filter (\l -> not (List.any (\ol -> ol.id == l.id) form.orig_labels)) form.labels
+
+        removedLabels =
+            List.filter (\ol -> not (List.any (\l -> l.id == ol.id) form.labels)) form.orig_labels
+
+        addedAssignees =
+            List.filter (\u -> not (List.any (\ou -> ou.username == u.username) form.orig_assignees)) form.assignees
+
+        removedAssignees =
+            List.filter (\ou -> not (List.any (\u -> u.username == ou.username) form.assignees)) form.orig_assignees
+
+        hasRemovals =
+            not (List.isEmpty removedLabels && List.isEmpty removedAssignees)
+
         inputOpt =
             \_ ->
                 { set =
@@ -804,24 +825,24 @@ updateTensionTemplateInputEncoder form =
                                 , type_ = Present form.type_
                                 , is_recursive = Present form.is_recursive
                                 , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
-                                , labels =
-                                    if List.isEmpty form.labels then
-                                        Absent
-
-                                    else
-                                        Present
-                                            (List.map (\l -> Input.buildLabelRef (\r -> { r | id = Present (encodeId l.id) })) form.labels)
-                                , assignees =
-                                    if List.isEmpty form.assignees then
-                                        Absent
-
-                                    else
-                                        Present
-                                            (List.map (\u -> Input.buildUserRef (\r -> { r | username = Present u.username })) form.assignees)
+                                , labels = buildLabelRefs addedLabels
+                                , assignees = buildAssigneeRefs addedAssignees
                             }
                         )
                         |> Present
-                , remove = Absent
+                , remove =
+                    if hasRemovals then
+                        Input.buildTensionTemplatePatch
+                            (\i ->
+                                { i
+                                    | labels = buildLabelRefs removedLabels
+                                    , assignees = buildAssigneeRefs removedAssignees
+                                }
+                            )
+                            |> Present
+
+                    else
+                        Absent
                 }
     in
     { input = Input.buildUpdateTensionTemplateInput inputReq inputOpt }
