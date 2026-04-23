@@ -768,7 +768,7 @@ port closeCardPanelFromJs : (() -> msg) -> Sub msg
 
 view : GqlData NodesDict -> GqlData LocalGraph -> State -> Html Msg
 view tree_data path_data (State model) =
-    div []
+    div [ id "cardPanelContainer" ]
         [ div
             [ id "cardPanel"
             , class "side-menu is-large"

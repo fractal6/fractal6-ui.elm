@@ -83,6 +83,7 @@ type alias Model =
     , board_result : GqlData String -- track board remote result silently
     , cardHover : String
     , cardEdit : String
+    , activeCards : List String
     , colEdit : String
     , cardEditDropdown : Maybe ProjectCard
     , cardEditDropdownX : Float
@@ -133,6 +134,7 @@ initModel projectid focus session =
     , board_result = NotAsked
     , cardHover = ""
     , cardEdit = ""
+    , activeCards = []
     , colEdit = ""
     , cardEditDropdown = Nothing
     , cardEditDropdownX = 0
@@ -417,11 +419,11 @@ update_ apis message model =
             -- Highlight the border and show ellipsis on click
             -- or unselect.
             case c of
-                Just _ ->
-                    ( { model | movingCard = c }, noOut )
+                Just card ->
+                    ( { model | movingCard = c, activeCards = [ card.id ] }, noOut )
 
                 Nothing ->
-                    ( { model | movingCard = Nothing, cardEdit = "" }, noOut )
+                    ( { model | movingCard = Nothing, cardEdit = "", activeCards = [] }, noOut )
 
         OnCancelHov ->
             ( { model | movingHoverCol = Nothing, movingHoverT = Nothing }, noOut )
@@ -634,8 +636,11 @@ update_ apis message model =
                                 )
                                 model.project
                                 cardids
+
+                        activeCards =
+                            List.filter (\x -> not (List.member x cardids)) model.activeCards
                     in
-                    ( { model | board_result = NotAsked, project = pj }, noOut )
+                    ( { model | board_result = NotAsked, project = pj, activeCards = activeCards }, noOut )
 
                 Failure err ->
                     ( { model | board_result = Failure err }, noOut )
@@ -699,7 +704,7 @@ update_ apis message model =
         OpenCardPane cardid ->
             case getCard cardid model.project of
                 Just card ->
-                    ( model, out1 [ DoOpenCardPanel card ] )
+                    ( { model | activeCards = [ cardid ] }, out1 [ DoOpenCardPanel card ] )
 
                 Nothing ->
                     ( model, noOut )
@@ -844,10 +849,13 @@ subscriptions (State model) =
             else
                 []
            )
-        ++ (if model.cardEdit /= "" || model.movingCard /= Nothing then
+        ++ (if model.cardEdit /= "" then
                 [ Events.onMouseUp (JD.succeed (OnCardClick Nothing))
                 , Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing))
                 ]
+
+            else if model.movingCard /= Nothing || model.activeCards /= [] then
+                [ Events.onMouseUp (Dom.outsideClickClose "cardPanelContainer" (OnCardClick Nothing)) ]
 
             else
                 []
@@ -959,7 +967,7 @@ viewBoard op model =
                                         ++ ternary model.hasTaskMove
                                             [ classList
                                                 [ ( "is-dragging", model.draging && Maybe.map .id model.movingCard == Just card.id )
-                                                , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id )
+                                                , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id || List.member card.id model.activeCards )
                                                 ]
                                             , onClick (OnCardClick (Just card))
                                             , onMouseEnter (OnCardHover card.id)

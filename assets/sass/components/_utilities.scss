@@ -663,7 +663,7 @@ i.va {
 }
 
 .box {
-    border: $border-size solid var(--border-color-light) !important;
+    border: $border-size solid var(--border-color-light);
     box-shadow: none;
 
     .tabs {
