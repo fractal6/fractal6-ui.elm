@@ -782,12 +782,26 @@ update_ apis message model =
                         newModel =
                             case d of
                                 Just draft ->
-                                    { model
-                                        | draft = d
-                                        , nodeDoc =
+                                    let
+                                        nodeDocWithDraft =
                                             model.nodeDoc
                                                 |> NodeDoc.updatePost "title" draft.title
                                                 |> NodeDoc.updatePost "message" (withDefault "" draft.message)
+
+                                        formWithDraft =
+                                            nodeDocWithDraft.form
+
+                                        nodeDocWithRefs =
+                                            NodeDoc.setForm
+                                                { formWithDraft
+                                                    | labels = withDefault [] draft.labels
+                                                    , assignees = withDefault [] draft.assignees
+                                                }
+                                                nodeDocWithDraft
+                                    in
+                                    { model
+                                        | draft = d
+                                        , nodeDoc = nodeDocWithRefs
                                     }
 
                                 Nothing ->

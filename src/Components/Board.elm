@@ -1148,8 +1148,14 @@ viewMediaDraft cardid isHovered isEdited d =
             [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
             , div []
-                [ span [ class "link-like is-human", onClick (OpenCardPane cardid) ]
+                [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
                     [ text d.title ]
+                , case d.labels of
+                    Just labels ->
+                        viewLabels Nothing labels
+
+                    Nothing ->
+                        text ""
                 ]
             ]
         , div [ class "media-right wrapped-container-33 is-flex is-flex-direction-column is-align-self-flex-end" ]

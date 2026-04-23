@@ -13,12 +13,14 @@ type ProjectDraftHasFilter
     | UpdatedAt
     | Message
     | Title
+    | Labels
+    | Assignees
     | Project_status
 
 
 list : List ProjectDraftHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Title, Project_status ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Title, Labels, Assignees, Project_status ]
 
 
 decoder : Decoder ProjectDraftHasFilter
@@ -41,6 +43,12 @@ decoder =
 
                     "title" ->
                         Decode.succeed Title
+
+                    "labels" ->
+                        Decode.succeed Labels
+
+                    "assignees" ->
+                        Decode.succeed Assignees
 
                     "project_status" ->
                         Decode.succeed Project_status
@@ -69,6 +77,12 @@ toString enum____ =
 
         Title ->
             "title"
+
+        Labels ->
+            "labels"
+
+        Assignees ->
+            "assignees"
 
         Project_status ->
             "project_status"
@@ -102,6 +116,12 @@ fromString enumString____ =
 
         "title" ->
             Just Title
+
+        "labels" ->
+            Just Labels
+
+        "assignees" ->
+            Just Assignees
 
         "project_status" ->
             Just Project_status

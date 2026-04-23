@@ -47,6 +47,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
+import Query.QueryProject exposing (setProjectDraftLabel)
 import Requests exposing (fetchLabelsTop)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
@@ -197,6 +198,7 @@ type Msg
     | OnClose
     | OnClose_
     | SetTensionid String
+    | SetAction OnClickAction
     | OnChangePattern String
     | ChangeLabelLookup (List Label)
     | OnLabelClick Label Bool Time.Posix
@@ -303,6 +305,9 @@ update_ apis message model =
             in
             ( { model | form = { form | tid = tid } }, noOut )
 
+        SetAction action ->
+            ( { model | action = action }, noOut )
+
         OnGotLabels result ->
             ( { model | labels_data = result }
             , case result of
@@ -344,6 +349,15 @@ update_ apis message model =
                                             (Ev TensionEvent.LabelRemoved (encodeLabel label) "")
                                         ]
                                     |> setClickResult LoadingSlowly
+                        in
+                        ( data
+                        , out0 [ send (SetLabel data.form) ]
+                        )
+
+                    AssignProjectDraftLabel ->
+                        let
+                            data =
+                                newModel |> setClickResult LoadingSlowly
                         in
                         ( data
                         , out0 [ send (SetLabel data.form) ]
@@ -402,7 +416,12 @@ update_ apis message model =
 
         SetLabel form ->
             ( model
-            , out0 [ setLabel apis form OnLabelAck ]
+            , case model.action of
+                AssignProjectDraftLabel ->
+                    out0 [ setProjectDraftLabel apis form OnLabelAck ]
+
+                _ ->
+                    out0 [ setLabel apis form OnLabelAck ]
             )
 
         ResetClickResult ->

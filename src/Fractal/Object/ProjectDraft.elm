@@ -29,6 +29,54 @@ message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
 
 
+type alias LabelsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.LabelFilter
+    , order : OptionalArgument Fractal.InputObject.LabelOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+labels :
+    (LabelsOptionalArguments -> LabelsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Label
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.ProjectDraft
+labels fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeLabelFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeLabelOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "labels" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+type alias AssigneesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter
+    , order : OptionalArgument Fractal.InputObject.UserOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+assignees :
+    (AssigneesOptionalArguments -> AssigneesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.ProjectDraft
+assignees fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "assignees" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias ProjectStatusOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ProjectColumnFilter }
 
@@ -82,3 +130,43 @@ createdAt =
 updatedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ProjectDraft
 updatedAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+type alias LabelsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.LabelFilter }
+
+
+labelsAggregate :
+    (LabelsAggregateOptionalArguments -> LabelsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.LabelAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.ProjectDraft
+labelsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeLabelFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "labelsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AssigneesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+assigneesAggregate :
+    (AssigneesAggregateOptionalArguments -> AssigneesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.ProjectDraft
+assigneesAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "assigneesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

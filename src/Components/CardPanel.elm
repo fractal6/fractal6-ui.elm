@@ -270,13 +270,21 @@ update_ apis message model =
                         [ sendSleep OnOutsideClickClose 500
                         , send (OnQueryTension a.id)
                         , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
+                        , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetAction AssignUser)
                         , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
+                        , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetAction AssignLabel)
                         ]
                     )
 
                 CardDraft a ->
                     ( { model | isOpen = True, card = card, tension_form = { form | id = a.id } }
-                    , out0 [ sendSleep OnOutsideClickClose 500 ]
+                    , out0
+                        [ sendSleep OnOutsideClickClose 500
+                        , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetTensionid a.id)
+                        , Cmd.map UserSearchPanelMsg (send <| UserSearchPanel.SetAction AssignProjectDraftUser)
+                        , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetTensionid a.id)
+                        , Cmd.map LabelSearchPanelMsg (send <| LabelSearchPanel.SetAction AssignProjectDraftLabel)
+                        ]
                     )
 
         OnOutsideClickClose ->
@@ -554,40 +562,51 @@ update_ apis message model =
                 ( panel, out ) =
                     LabelSearchPanel.update apis msg model.labelsPanel
 
-                ( tension_r, mout ) =
-                    Maybe.map2
-                        (\r x ->
-                            let
-                                card =
-                                    model.card
+                card =
+                    model.card
 
+                ( tension_r, newCard, mout ) =
+                    case ( out.result, card.card ) of
+                        ( Just r, CardDraft d ) ->
+                            let
                                 labels =
                                     if Tuple.first r then
-                                        withDefault [] x.labels ++ [ Tuple.second r ]
+                                        withDefault [] d.labels ++ [ Tuple.second r ]
 
                                     else
-                                        LE.remove (Tuple.second r) (withDefault [] x.labels)
+                                        LE.remove (Tuple.second r) (withDefault [] d.labels)
+
+                                newDraft =
+                                    { d | labels = Just labels }
+
+                                c =
+                                    { card | card = CardDraft newDraft }
                             in
-                            ( Success { x | labels = Just labels }
-                            , case card.card of
-                                CardTension t ->
-                                    Just <| UpdateCard { card | card = CardTension { t | labels = Just labels } }
+                            ( model.tension_result, c, Just (UpdateCard c) )
 
-                                CardDraft _ ->
-                                    Nothing
-                            )
-                        )
-                        out.result
-                        (withMaybeData model.tension_result)
-                        |> withDefault ( model.tension_result, Nothing )
+                        ( Just r, CardTension t ) ->
+                            Maybe.map
+                                (\x ->
+                                    let
+                                        labels =
+                                            if Tuple.first r then
+                                                withDefault [] x.labels ++ [ Tuple.second r ]
 
-                --isLabelOpen =
-                --    LabelSearchPanel.isOpen_ panel
-                --
-                --( cmds, gcmds ) =
-                --    mapGlobalOutcmds out.gcmds
+                                            else
+                                                LE.remove (Tuple.second r) (withDefault [] x.labels)
+                                    in
+                                    ( Success { x | labels = Just labels }
+                                    , card
+                                    , Just (UpdateCard { card | card = CardTension { t | labels = Just labels } })
+                                    )
+                                )
+                                (withMaybeData model.tension_result)
+                                |> withDefault ( model.tension_result, card, Nothing )
+
+                        _ ->
+                            ( model.tension_result, card, Nothing )
             in
-            ( { model | labelsPanel = panel, tension_result = tension_r }
+            ( { model | labelsPanel = panel, tension_result = tension_r, card = newCard }
             , Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds mout
             )
 
@@ -625,39 +644,51 @@ update_ apis message model =
                 ( panel, out ) =
                     UserSearchPanel.update apis msg model.assigneesPanel
 
-                ( tension_r, mout ) =
-                    Maybe.map2
-                        (\r x ->
-                            let
-                                card =
-                                    model.card
+                card =
+                    model.card
 
+                ( tension_r, newCard, mout ) =
+                    case ( out.result, card.card ) of
+                        ( Just r, CardDraft d ) ->
+                            let
                                 assignees =
                                     if Tuple.first r then
-                                        withDefault [] x.assignees ++ [ Tuple.second r ]
+                                        withDefault [] d.assignees ++ [ Tuple.second r ]
 
                                     else
-                                        LE.remove (Tuple.second r) (withDefault [] x.assignees)
+                                        LE.remove (Tuple.second r) (withDefault [] d.assignees)
+
+                                newDraft =
+                                    { d | assignees = Just assignees }
+
+                                c =
+                                    { card | card = CardDraft newDraft }
                             in
-                            ( Success { x | assignees = Just assignees }
-                            , case card.card of
-                                CardTension t ->
-                                    Just <| UpdateCard { card | card = CardTension { t | assignees = Just assignees } }
+                            ( model.tension_result, c, Just (UpdateCard c) )
 
-                                CardDraft _ ->
-                                    Nothing
-                            )
-                        )
-                        out.result
-                        (withMaybeData model.tension_result)
-                        |> withDefault ( model.tension_result, Nothing )
+                        ( Just r, CardTension t ) ->
+                            Maybe.map
+                                (\x ->
+                                    let
+                                        assignees =
+                                            if Tuple.first r then
+                                                withDefault [] x.assignees ++ [ Tuple.second r ]
 
-                --isAssigneeOpen =
-                --    UserSearchPanel.isOpen_ panel
-                --( cmds, gcmds ) =
-                --    mapGlobalOutcmds out.gcmds
+                                            else
+                                                LE.remove (Tuple.second r) (withDefault [] x.assignees)
+                                    in
+                                    ( Success { x | assignees = Just assignees }
+                                    , card
+                                    , Just (UpdateCard { card | card = CardTension { t | assignees = Just assignees } })
+                                    )
+                                )
+                                (withMaybeData model.tension_result)
+                                |> withDefault ( model.tension_result, card, Nothing )
+
+                        _ ->
+                            ( model.tension_result, card, Nothing )
             in
-            ( { model | assigneesPanel = panel, tension_result = tension_r }
+            ( { model | assigneesPanel = panel, tension_result = tension_r, card = newCard }
             , Out (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m)) out.gcmds mout
             )
 
@@ -1009,7 +1040,7 @@ viewTensionSidePane t model =
                 , ternary hasLabelRight (onClick DoLabelEdit) (onClick NoMsg)
                 ]
                 [ if List.length labels > 0 then
-                    div [ class "tnesion-labelsList" ] [ viewLabels Nothing labels ]
+                    div [ class "tension-labelsList" ] [ viewLabels Nothing labels ]
 
                   else
                     div [ class "help", classList [ ( "is-w", hasLabelRight ) ] ] [ text T.addLabels ]
@@ -1254,12 +1285,71 @@ viewDraftSidePane d model =
 
         isAdmin =
             model.isTensionAdmin
+
+        canEdit =
+            isAdmin || isAuthor
+
+        assignees =
+            d.assignees |> withDefault []
+
+        labels =
+            d.labels |> withDefault []
     in
     div [ class "tensionSidePane" ]
-        ([ -- Extras
-           hr [ class "is-transparent my-5" ] []
+        ([ -- Assignees/User select
+           div [ class "level" ]
+            [ div [ class "level-left" ] [ text T.assignees ]
+            , div
+                [ class "level-item"
+                , classList [ ( "is-w", canEdit ) ]
+                , ternary canEdit (onClick DoAssigneeEdit) (onClick NoMsg)
+                ]
+                [ if List.length assignees > 0 then
+                    viewUsers False assignees
+
+                  else
+                    div [ class "help", classList [ ( "is-w", canEdit ) ] ] [ text T.addAssignees ]
+                , div [ class "mt-4" ]
+                    [ UserSearchPanel.view
+                        { selectedAssignees = assignees
+                        , targets = model.path_data |> withMaybeMapData (\x -> List.map .nameid x.path) |> withDefault []
+                        , isRight = True
+                        }
+                        model.assigneesPanel
+                        |> Html.map UserSearchPanelMsg
+                    ]
+                ]
+            ]
+
+         -- Label select
+         , div [ class "level" ]
+            [ div [ class "level-left" ] [ text T.labels ]
+            , div
+                [ class "level-item"
+                , classList [ ( "is-w", canEdit ) ]
+                , ternary canEdit (onClick DoLabelEdit) (onClick NoMsg)
+                ]
+                [ if List.length labels > 0 then
+                    div [ class "tension-labelsList" ] [ viewLabels Nothing labels ]
+
+                  else
+                    div [ class "help", classList [ ( "is-w", canEdit ) ] ] [ text T.addLabels ]
+                , div [ class "mt-4" ]
+                    [ LabelSearchPanel.view
+                        { selectedLabels = labels
+                        , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
+                        , isRight = True
+                        }
+                        model.labelsPanel
+                        |> Html.map LabelSearchPanelMsg
+                    ]
+                ]
+            ]
+
+         -- Extras
+         , hr [ class "is-transparent my-5" ] []
          ]
-            ++ (if isAdmin || isAuthor then
+            ++ (if canEdit then
                     [ div
                         [ class "is-smaller has-text-weight-semibold button-light mb-4"
                         , onClick (DoConvertDraft card.id d)

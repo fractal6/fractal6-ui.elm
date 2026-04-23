@@ -779,6 +779,8 @@ type alias ProjectDraft =
     , message : Maybe String
     , createdAt : String
     , createdBy : Username
+    , labels : Maybe (List Label)
+    , assignees : Maybe (List User)
 
     -- hardcoded / only use to track draft conversion to tension
     , cardid : String
@@ -792,7 +794,7 @@ emptyCard =
     { id = ""
     , colid = ""
     , pos = -1
-    , card = CardDraft (ProjectDraft "" "" Nothing "" (Username "") "" "" -1)
+    , card = CardDraft (ProjectDraft "" "" Nothing "" (Username "") Nothing Nothing "" "" -1)
     }
 
 

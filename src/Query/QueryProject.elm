@@ -29,6 +29,8 @@ module Query.QueryProject exposing
     , moveProjectCard
     , moveProjectColumn
     , removeProjectCards
+    , setProjectDraftAssignee
+    , setProjectDraftLabel
     , updateProjectColumn
     , updateProjectDraft
     )
@@ -67,7 +69,8 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload)
+import Bulk exposing (AssigneeForm, LabelForm)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, userPayload)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData
 import String.Extra as SE
@@ -413,6 +416,8 @@ draftPayload =
         |> with Fractal.Object.ProjectDraft.message
         |> with (Fractal.Object.ProjectDraft.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.ProjectDraft.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.ProjectDraft.labels identity labelPayload)
+        |> with (Fractal.Object.ProjectDraft.assignees identity userPayload)
         |> hardcoded ""
         |> hardcoded ""
         |> hardcoded 0
@@ -422,6 +427,97 @@ draftPayload =
 --
 -- Utils
 --
+
+
+--
+-- Patch ProjectDraft labels / assignees
+--
+
+
+setProjectDraftLabel url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectDraft
+            (setProjectDraftLabelEncoder form)
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+setProjectDraftLabelEncoder : LabelForm -> Mutation.UpdateProjectDraftRequiredArguments
+setProjectDraftLabelEncoder f =
+    let
+        inputReq =
+            { filter = Input.buildProjectDraftFilter (oneId f.tid) }
+
+        patch =
+            Input.buildProjectDraftPatch
+                (\s ->
+                    { s
+                        | labels =
+                            Present
+                                [ Input.buildLabelRef
+                                    (\u -> { u | id = Present (encodeId f.label.id) })
+                                ]
+                    }
+                )
+                |> Present
+
+        inputOpt =
+            \_ ->
+                { set = ternary f.isNew patch Absent
+                , remove = ternary (not f.isNew) patch Absent
+                }
+    in
+    { input = Input.buildUpdateProjectDraftInput inputReq inputOpt }
+
+
+setProjectDraftAssignee url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectDraft
+            (setProjectDraftAssigneeEncoder form)
+            (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
+                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                    )
+                )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (withDefault Nothing) >> msg)
+
+
+setProjectDraftAssigneeEncoder : AssigneeForm -> Mutation.UpdateProjectDraftRequiredArguments
+setProjectDraftAssigneeEncoder f =
+    let
+        inputReq =
+            { filter = Input.buildProjectDraftFilter (oneId f.tid) }
+
+        patch =
+            Input.buildProjectDraftPatch
+                (\s ->
+                    { s
+                        | assignees =
+                            Present
+                                [ Input.buildUserRef
+                                    (\u -> { u | username = Present f.assignee.username })
+                                ]
+                    }
+                )
+                |> Present
+
+        inputOpt =
+            \_ ->
+                { set = ternary f.isNew patch Absent
+                , remove = ternary (not f.isNew) patch Absent
+                }
+    in
+    { input = Input.buildUpdateProjectDraftInput inputReq inputOpt }
 
 
 tensionPayload2 : SelectionSet Tension Fractal.Object.Tension

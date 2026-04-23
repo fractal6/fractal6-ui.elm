@@ -46,6 +46,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
+import Query.QueryProject exposing (setProjectDraftAssignee)
 import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -195,6 +196,7 @@ type Msg
     | OnClose
     | OnClose_
     | SetTensionid String
+    | SetAction OnClickAction
     | OnChangePattern String
     | ChangeAssigneeLookup (List User)
     | OnAssigneeClick User Bool Time.Posix
@@ -277,6 +279,9 @@ update_ apis message model =
             in
             ( { model | form = { form | tid = tid } }, noOut )
 
+        SetAction action ->
+            ( { model | action = action }, noOut )
+
         OnGotAssignees result ->
             ( { model | assignees_data = result }
             , case result of
@@ -318,6 +323,15 @@ update_ apis message model =
                                             (Ev TensionEvent.AssigneeRemoved assignee.username "")
                                         ]
                                     |> setClickResult LoadingSlowly
+                        in
+                        ( data
+                        , out0 [ send (SetAssignee data.form) ]
+                        )
+
+                    AssignProjectDraftUser ->
+                        let
+                            data =
+                                newModel |> setClickResult LoadingSlowly
                         in
                         ( data
                         , out0 [ send (SetAssignee data.form) ]
@@ -369,7 +383,12 @@ update_ apis message model =
 
         SetAssignee form ->
             ( model
-            , out0 [ setAssignee apis form OnAssigneeAck ]
+            , case model.action of
+                AssignProjectDraftUser ->
+                    out0 [ setProjectDraftAssignee apis form OnAssigneeAck ]
+
+                _ ->
+                    out0 [ setAssignee apis form OnAssigneeAck ]
             )
 
         ResetClickResult ->

@@ -511,6 +511,7 @@ type alias UserSearchPanelModel =
 
 type UserSearchPanelOnClickAction
     = AssignUser
+    | AssignProjectDraftUser
     | SelectUser
 
 
@@ -540,4 +541,5 @@ type alias LabelSearchPanelModel =
 
 type LabelSearchPanelOnClickAction
     = AssignLabel
+    | AssignProjectDraftLabel
     | SelectLabel
