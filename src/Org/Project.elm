@@ -34,13 +34,16 @@ import Components.Board as Board
 import Components.CardPanel as CardPanel exposing (CardPanelResult(..))
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Components.ProjectSettingsPanel as ProjectSettingsPanel
 import Components.TreeMenu as TreeMenu
+import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (insertAt, ternary, unwrap)
+import Extra.Events exposing (onKeydown, onMousedownPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
@@ -52,8 +55,8 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep, viewNotif)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, href, id, style, type_)
-import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, title, type_, value)
+import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), fromMaybeData, isFailure, isLoading, withDefaultData, withMapData, withMaybeData, withMaybeMapData)
@@ -205,6 +208,13 @@ type alias Model =
     , orgaMenu : OrgaMenu.State
     , treeMenu : TreeMenu.State
     , board : Board.State
+
+    -- Filtering
+    , pattern : String
+    , filterLabels : List Label
+    , filterAssignees : List User
+    , labelsPanel : LabelSearchPanel.State
+    , authorsPanel : UserSearchPanel.State
     }
 
 
@@ -266,6 +276,13 @@ init global flags =
             , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
             , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
             , actionPanel = ActionPanel.init session.common
+
+            -- Filtering
+            , pattern = ""
+            , filterLabels = []
+            , filterAssignees = []
+            , labelsPanel = LabelSearchPanel.load session.data.labelsPanel session.common.user
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common.user
             }
 
         cmds =
@@ -326,6 +343,11 @@ type Msg
     | CardPanelMsg CardPanel.Msg
     | ProjectSettingsPanelMsg ProjectSettingsPanel.Msg
     | OpenProjectSettings
+      -- Filtering
+    | ChangePattern String
+    | SearchKeyDown Int
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -661,6 +683,69 @@ update global message model =
             , Cmd.batch gcmds
             )
 
+        -- Filtering
+        ChangePattern p ->
+            ( { model | pattern = p }, Cmd.none, Cmd.none )
+
+        SearchKeyDown key ->
+            case key of
+                27 ->
+                    -- ESC
+                    ( model, send (ChangePattern ""), Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        LabelSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    LabelSearchPanel.update apis msg model.labelsPanel
+
+                filterLabels =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                model.filterLabels ++ [ Tuple.second r ]
+
+                            else
+                                List.filter (\x -> x.name /= (Tuple.second r).name) model.filterLabels
+                        )
+                        out.result
+                        |> withDefault model.filterLabels
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | labelsPanel = panel, filterLabels = filterLabels }
+            , out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ panel |> LabelSearchPanel.getModel |> Just |> UpdateSessionLabelsPanel |> send ])
+            )
+
+        UserSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    UserSearchPanel.update apis msg model.authorsPanel
+
+                filterAssignees =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r then
+                                model.filterAssignees ++ [ Tuple.second r ]
+
+                            else
+                                List.filter (\x -> x.username /= (Tuple.second r).username) model.filterAssignees
+                        )
+                        out.result
+                        |> withDefault model.filterAssignees
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authorsPanel = panel, filterAssignees = filterAssignees }
+            , out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ panel |> UserSearchPanel.getModel |> Just |> UpdateSessionAuthorsPanel |> send ])
+            )
+
         CardPanelMsg msg ->
             let
                 ( data, out ) =
@@ -700,6 +785,8 @@ subscriptions _ model =
         ++ (Board.subscriptions model.board |> List.map (\s -> Sub.map BoardMsg s))
         ++ (CardPanel.subscriptions model.cardPanel |> List.map (\s -> Sub.map CardPanelMsg s))
         ++ (ProjectSettingsPanel.subscriptions model.projectSettingsPanel |> List.map (\s -> Sub.map ProjectSettingsPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (UserSearchPanel.subscriptions model.authorsPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         |> Sub.batch
 
 
@@ -740,7 +827,8 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        Lazy.lazy2 Board.view model.empty model.board |> Html.map BoardMsg
+                        Lazy.lazy4 Board.view model.pattern model.filterLabels model.filterAssignees model.board
+                            |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
@@ -768,32 +856,32 @@ view_ global model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
             [ div [ class "columns is-centered mb-0 is-hidden-embed" ]
-                [ div [ class "column is-tree-quarter pb-1" ]
+                [ div [ class "column is-narrow pb-1" ]
                     [ case model.project_data of
                         Success p ->
-                            viewSearchBar p model
+                            h2 [ class "subtitle is-strong mb-0" ] [ text p.name ]
 
                         _ ->
                             text ""
                     ]
-                , div [ class "column is-one-quarter is-flex is-align-self-flex-start is-align-items-center is-justify-content-flex-end pt-0 pb-1" ]
-                    ((case model.project_data of
+                , div [ class "column is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-flex-end pt-0 pb-1", style "row-gap" "0.25rem" ]
+                    (case model.project_data of
                         Success p ->
-                            List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes
+                            viewSearchBar p model
+                                :: List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes
+                                ++ (if model.isProjectAdmin then
+                                        [ div [ class "button is-small", onClick (OpenTensionPane Nothing) ]
+                                            [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
+                                        , div [ class "button-light ml-4", onClick OpenProjectSettings ]
+                                            [ A.icon "icon-menu" ]
+                                        ]
+
+                                    else
+                                        []
+                                   )
 
                         _ ->
                             []
-                     )
-                        ++ (if model.isProjectAdmin then
-                                [ div [ class "button is-small", onClick (OpenTensionPane Nothing) ]
-                                    [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
-                                , div [ class "button-light ml-4", onClick OpenProjectSettings ]
-                                    [ A.icon "icon-menu" ]
-                                ]
-
-                            else
-                                []
-                           )
                     )
                 ]
 
@@ -813,35 +901,56 @@ view_ global model =
 
 viewSearchBar : ProjectData -> Model -> Html Msg
 viewSearchBar project model =
-    div [ id "searchBarProject", class "searchBar" ]
-        [ h2 [ class "subtitle is-strong" ] [ text project.name ]
+    let
+        targets =
+            List.map .nameid project.nodes
+    in
+    div [ id "searchBarProject", class "field searchBar mb-0 mr-2", style "width" "280px" ]
+        [ div [ class "control is-expanded" ]
+            [ input
+                [ id "searchBarProjectInput"
+                , class "is-rounded input is-small"
+                , style "padding-right" "6rem"
+                , type_ "search"
+                , autocomplete False
+                , autofocus False
+                , placeholder (T.searchTensions model.session.lexicon)
+                , value model.pattern
+                , onInput ChangePattern
+                , onKeydown SearchKeyDown
+                ]
+                []
+            , span [ class "icon-input-flex-right", onMousedownPD (SearchKeyDown 0) ]
+                [ span
+                    [ class "button-light px-1"
+                    , classList [ ( "has-text-link", model.filterLabels /= [] ) ]
+                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen targets (Just False)))
+                    , title T.labels
+                    ]
+                    [ A.icon "icon-tag" ]
+                , span
+                    [ class "button-light px-1"
+                    , classList [ ( "has-text-link", model.filterAssignees /= [] ) ]
+                    , onClick (UserSearchPanelMsg (UserSearchPanel.OnOpen targets))
+                    , title T.assignees
+                    ]
+                    [ A.icon "icon-user" ]
+                , if model.pattern /= "" then
+                    span [ class "delete is-hidden-mobile", onClick (ChangePattern "") ] []
 
-        --div [ class "columns mb-0" ] [
-        --  h2 [] [text title]
-        --, div [ class "column is-5" ]
-        --  [ div [ class "field has-addons" ]
-        --      [ div [ class "control is-expanded" ]
-        --          [ input
-        --              [ class "is-rounded input is-small pr-6"
-        --              , type_ "search"
-        --              , autocomplete False
-        --              , autofocus False
-        --              , placeholder T.searchTensions
-        --              , value model.pattern
-        --              , onInput ChangePattern
-        --              , onKeydown SearchKeyDown
-        --              ]
-        --              []
-        --          , span [ class "icon-input-flex-right" ]
-        --              [ if model.pattern_init /= "" then
-        --                  span [ class "delete is-hidden-mobile", onClick (SubmitTextSearch "") ] []
-        --                else
-        --                  text ""
-        --              , span [ class "vbar has-border-color" ] []
-        --              , span [ class "button-light px-1", onClick (SearchKeyDown 13) ]
-        --                  [ A.icon "icon-search" ]
-        --              ]
-        --          ]
-        --      ]
-        --  ]
+                  else
+                    text ""
+                , span [ class "vbar" ] []
+                , span [ class "button-light px-1" ]
+                    [ A.icon "icon-search" ]
+                ]
+            , LabelSearchPanel.view
+                { selectedLabels = model.filterLabels, targets = targets, isRight = True }
+                model.labelsPanel
+                |> Html.map LabelSearchPanelMsg
+            , UserSearchPanel.view
+                { selectedAssignees = model.filterAssignees, targets = targets, isRight = True }
+                model.authorsPanel
+                |> Html.map UserSearchPanelMsg
+            ]
         ]

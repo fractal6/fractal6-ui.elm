@@ -48,7 +48,7 @@ import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (CardKind(..), IdPayload, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, UserCtx)
+import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, User, UserCtx)
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
@@ -870,11 +870,43 @@ subscriptions (State model) =
 
 
 type alias Op =
-    {}
+    { pattern : String
+    , filterLabels : List Label
+    , filterAssignees : List User
+    }
 
 
-view : Op -> State -> Html Msg
-view op (State model) =
+matchCard : Op -> ProjectCard -> Bool
+matchCard op card =
+    let
+        ( title, labels, assignees ) =
+            case card.card of
+                CardTension t ->
+                    ( t.title, withDefault [] t.labels, withDefault [] t.assignees )
+
+                CardDraft d ->
+                    ( d.title, withDefault [] d.labels, withDefault [] d.assignees )
+
+        matchPattern =
+            op.pattern == "" || String.contains (String.toLower op.pattern) (String.toLower title)
+
+        matchLabels =
+            List.isEmpty op.filterLabels
+                || List.any (\l -> List.any (\fl -> fl.name == l.name) op.filterLabels) labels
+
+        matchAssignees =
+            List.isEmpty op.filterAssignees
+                || List.any (\u -> List.any (\fu -> fu.username == u.username) op.filterAssignees) assignees
+    in
+    matchPattern && matchLabels && matchAssignees
+
+
+view : String -> List Label -> List User -> State -> Html Msg
+view pattern filterLabels filterAssignees (State model) =
+    let
+        op =
+            { pattern = pattern, filterLabels = filterLabels, filterAssignees = filterAssignees }
+    in
     div []
         [ viewBoard op model
         , if model.cardEdit /= "" then
@@ -916,11 +948,14 @@ viewBoard op model =
                     colid =
                         col.id
 
+                    filteredCards =
+                        List.filter (matchCard op) col.cards
+
                     cards_len =
-                        List.length col.cards
+                        List.length filteredCards
 
                     c1 =
-                        List.head col.cards
+                        List.head filteredCards
 
                     isNoStatusCol =
                         col.col_type == ProjectColumnType.NoStatusColumn
@@ -946,7 +981,7 @@ viewBoard op model =
                         , onDragEnter <| OnMoveEnterT { pos = 0, cardid = unwrap "" .id c1, colid = colid }
                         ]
                         [ viewHeader model.session.lexicon model.isProjectAdmin (model.colEdit == colid) col ]
-                    , col.cards
+                    , filteredCards
                         --|> List.sortBy .createdAt
                         --|> (\l -> ternary (model.sortFilter == defaultSortFilter) l (List.reverse l))
                         |> List.indexedMap
