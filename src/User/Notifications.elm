@@ -460,7 +460,8 @@ update global message model =
                 Just r ->
                     send <|
                         NavigateRaw <|
-                            r.path ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")
+                            r.path
+                                ++ (r.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault "")
 
                 Nothing ->
                     send NavigateBack

@@ -33,13 +33,13 @@ import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Comments exposing (viewCommentInputHeader)
 import Components.HelperBar as HelperBar
-import Components.LabelSearchPanel as LabelSearchPanel
-import Components.UserSearchPanel as UserSearchPanel
 import Components.JoinOrga as JoinOrga
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
+import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (showIf, space_, ternary, textT, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD)

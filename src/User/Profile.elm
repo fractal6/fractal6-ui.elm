@@ -37,8 +37,8 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, div, h1, i, p, span, text)
 import Html.Attributes exposing (attribute, class, id)
 import Html.Events exposing (onClick)
-import Json.Decode as JD
 import Html.Lazy as Lazy
+import Json.Decode as JD
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)

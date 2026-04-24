@@ -31,9 +31,9 @@ import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
-import Html.Keyed
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onClick)
+import Html.Keyed
 import Maybe exposing (withDefault)
 import ModelSchema exposing (NotifCount, OrgaInfo, TensionHead)
 import Ports

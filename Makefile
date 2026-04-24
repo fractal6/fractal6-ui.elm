@@ -27,6 +27,9 @@ RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
 default: run
 
+format:
+	npx elm-format src/ --yes
+
 run:
 	npm run webdev
 

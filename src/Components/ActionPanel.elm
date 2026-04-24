@@ -1402,7 +1402,8 @@ viewComment model =
         line_len =
             List.length (String.lines message)
 
-        isModal = True
+        isModal =
+            True
 
         -- Calculate max rows based on ~75% of screen height
         -- Assuming ~30px per line (font + padding)
@@ -1417,7 +1418,6 @@ viewComment model =
 
             else if isModal then
                 ( model.session.screen.h * 2 // 3 // 38, 4 )
-
 
             else
                 ( model.session.screen.h * 5 // 6 // 39, 6 )

@@ -74,7 +74,10 @@ init flags url key =
         ( page, pageCmd, pageGlobalCmd ) =
             Pages.init (fromUrl url) global
     in
-    ( Model key url global page
+    ( Model key
+        url
+        global
+        page
         { onReplaceUrl = Global << ReplaceUrl
         , onCloseOutdated = Global OnCloseOutdatedVersion
         , onForceReload = Global OnForceReload

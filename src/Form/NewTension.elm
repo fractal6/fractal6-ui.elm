@@ -649,7 +649,6 @@ type Msg
     | OnSelectTemplate TensionTemplateLite
     | GotTemplateContent (GqlData TensionTemplateFull)
     | OnSelectBlankTension
-
       -- Draft persistence
     | SaveDraftDelayed Int
       -- Components

@@ -44,8 +44,8 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.Event exposing (viewEvent)
 import Bulk.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.EmojiPicker as EmojiPicker
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
 import Dom

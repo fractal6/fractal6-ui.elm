@@ -35,6 +35,7 @@ module Query.QueryProject exposing
     , updateProjectDraft
     )
 
+import Bulk exposing (AssigneeForm, LabelForm)
 import Dict
 import Extra exposing (ternary, unwrap, unwrap2)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
@@ -69,7 +70,6 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Bulk exposing (AssigneeForm, LabelForm)
 import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, userPayload)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData
@@ -427,8 +427,6 @@ draftPayload =
 --
 -- Utils
 --
-
-
 --
 -- Patch ProjectDraft labels / assignees
 --

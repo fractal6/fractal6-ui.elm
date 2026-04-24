@@ -43,7 +43,6 @@ import ModelSchema
         , Node
         , NodeId
         , NodesDict
-
         , ProjectFull
         , RoleExt
         , TensionTemplateLite
@@ -136,7 +135,6 @@ projectDecoder =
         |> JDE.andMap (JD.field "collaborators" (JD.list (JD.map Username (JD.field "username" JD.string))) |> JDE.withDefault [])
         |> JDE.andMap (JD.field "peerCanEditProject" JD.bool |> JDE.withDefault False)
         |> JDE.andMap (JD.field "guestCanEditProject" JD.bool |> JDE.withDefault False)
-
 
 
 

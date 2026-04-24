@@ -480,7 +480,6 @@ type alias Op msg =
     , onAddResponsabilities : msg
     , onAddDomains : msg
     , onAddPolicies : msg
-
     , mdOps :
         Maybe
             { onChangeViewMode : String -> InputViewMode -> msg
@@ -1041,6 +1040,7 @@ viewMandateInput txt mandate op =
                     , isPreview = False
                     , preview = \_ -> text ""
                     }
+
         md_purpose =
             mdField "mandatePurpose"
 

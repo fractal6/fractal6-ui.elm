@@ -35,6 +35,8 @@ module Query.QueryNode exposing
     , getOrgaInfo
     , getProjects
     , getRoles
+    , getTensionTemplateById
+    , getTensionTemplates
     , labelFullPayload
     , labelPayload
     , mandatePayload
@@ -66,8 +68,6 @@ module Query.QueryNode exposing
     , tensionEventPayload
     , tensionTemplateFullPayload
     , tensionTemplateLitePayload
-    , getTensionTemplates
-    , getTensionTemplateById
     , tidPayload
     , userPayload
     )
@@ -84,9 +84,9 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.ProjectOrderable as ProjectOrderable
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
-import Fractal.Enum.TensionTemplateOrderable as TensionTemplateOrderable
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionTemplateOrderable as TensionTemplateOrderable
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
@@ -104,10 +104,10 @@ import Fractal.Object.Notif
 import Fractal.Object.Project
 import Fractal.Object.ProjectAggregateResult
 import Fractal.Object.RoleExt
-import Fractal.Object.TensionTemplate
-import Fractal.Object.TensionTemplateAggregateResult
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
+import Fractal.Object.TensionTemplate
+import Fractal.Object.TensionTemplateAggregateResult
 import Fractal.Object.User
 import Fractal.Object.UserAggregateResult
 import Fractal.Query as Query
