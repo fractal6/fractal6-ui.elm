@@ -195,10 +195,10 @@ viewCircleSimple nameid =
 viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow t_blank cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small is-light is-inverted is-static is-weak" ]
+        [ span [ class "is-small is-inverted is-static is-weak" ]
             [ viewNodeRef t_blank OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
-        , span [ class "is-small is-light is-inverted is-static" ]
+        , span [ class "is-small is-inverted is-static" ]
             [ viewNodeRef t_blank OverviewBaseUri receiver ]
         ]
 
@@ -247,15 +247,15 @@ viewPin session focus origin tension =
                     ]
                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                 , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
-                , case origin of
-                    Just c ->
-                        span [ class "ml-2 tag is-rounded is-light is-small" ]
-                            [ viewNodeRef False OverviewBaseUri c ]
-
-                    Nothing ->
-                        text ""
                 ]
             ]
+        , case origin of
+            Just c ->
+                span [ class "ml-2 tag is-rounded is-small media-right" ]
+                    [ viewNodeRef False OverviewBaseUri c ]
+
+            Nothing ->
+                A.icon "icon-pin is-weak"
         ]
 
 
