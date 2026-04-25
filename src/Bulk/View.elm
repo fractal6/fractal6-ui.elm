@@ -27,7 +27,7 @@ import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), 
 import Dict exposing (Dict)
 import Extra exposing (colorAttr, showIf, ternary, upH)
 import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPos)
+import Extra.Events exposing (onClickPos, onClickSP)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
@@ -100,6 +100,7 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
                 [ a
                     [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = rootnameid, param2 = tension.id } |> toHref)
+                    , onClickSP commonOp.noMsg
                     ]
                     [ text tension.title ]
                 , case tension.labels of

@@ -49,6 +49,8 @@ type alias Op msg =
     , movingTension : Maybe Tension
     , movingHoverCol : Maybe { pos : Int, to_receiverid : String }
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
+    , draging : Bool
+    , activeTids : List String
 
     -- Board Msg
     , onColumnHover : Maybe String -> msg
@@ -59,6 +61,7 @@ type alias Op msg =
     , onMoveLeaveCol : msg
     , onMoveEnterT : { pos : Int, tid : String, to_receiverid : String } -> msg
     , onMoveDrop : String -> msg
+    , onCardClick : Maybe Tension -> msg
     , onAddCol : msg
     }
 
@@ -153,7 +156,11 @@ viewBoard op commonOp header keys_title data =
                                 , div
                                     (class "box kb-card is-shrinked2 mb-2 mx-2"
                                         :: ternary op.hasTaskMove
-                                            [ classList [ ( "is-dragging", itemDragged ) ]
+                                            [ classList
+                                                [ ( "is-dragging", op.draging && itemDragged )
+                                                , ( "is-focusing", List.member t.id op.activeTids )
+                                                ]
+                                            , onClick (op.onCardClick (Just t))
                                             , attribute "draggable" "true"
                                             , attribute "ondragstart" "event.dataTransfer.setData(\"text/plain\", \"dummy\")"
                                             , onDragStart <| op.onMove { pos = i, to_receiverid = t.receiver.nameid } t
