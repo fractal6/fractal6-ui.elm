@@ -261,7 +261,7 @@ update global message model =
                                 Cmd.none
                     in
                     ( { model | orgas = result, orgaFilter = "", orgaLookup = Nothing }
-                    , Cmd.batch [ Ports.bulma_driver "org_sort_dropdown", initCmd ]
+                    , Cmd.batch [ Ports.bulma_driver "", initCmd ]
                     , Cmd.none
                     )
 
@@ -291,7 +291,7 @@ update global message model =
 
                 _ ->
                     queryNodeExt apis rootids (orgaSortFilter2Order value) GotNodes
-            , Ports.bulma_driver "org_sort_dropdown"
+            , Ports.bulma_driver ""
             )
 
         OnOrgaFilterInput pattern ->
