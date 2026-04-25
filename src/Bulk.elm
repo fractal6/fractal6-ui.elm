@@ -38,7 +38,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Set
@@ -801,6 +801,47 @@ tidFromPath path =
             Nothing
 
 
+{-| Cap on the number of TaggedPin entries returned by mergePinnedTensions.
+The view shows (max - 1) and uses the extra slot to detect overflow for a
+discrete "more" indicator.
+-}
+maxPinnedTensions : Int
+maxPinnedTensions =
+    21
+
+
+isPinnedRecursivelyOn : GqlData LocalGraph -> Bool
+isPinnedRecursivelyOn path_data =
+    withMaybeData path_data
+        |> Maybe.andThen .root
+        |> Maybe.andThen .isPinnedTensionfetchRecursively
+        |> (==) (Just True)
+
+
+mergePinnedTensions : GqlData LocalGraph -> GqlData (List NodeWithPins) -> List TaggedPin
+mergePinnedTensions path_data pinned_sub =
+    let
+        focusPins =
+            withMaybeMapData (.focus >> .pinned >> withDefaultData Nothing) path_data
+                |> Maybe.andThen identity
+                |> withDefault []
+                |> List.map (\p -> ( Nothing, p ))
+
+        subPins =
+            withMaybeData pinned_sub
+                |> withDefault []
+                |> List.concatMap
+                    (\n ->
+                        n.pinned
+                            |> withDefault []
+                            |> List.map (\p -> ( Just (nodeWithPinsToEoR n), p ))
+                    )
+    in
+    (focusPins ++ subPins)
+        |> LE.uniqueBy (\( _, p ) -> p.id)
+        |> List.take maxPinnedTensions
+
+
 localGraphFromOrga : String -> GqlData NodesDict -> Maybe LocalGraph
 localGraphFromOrga nameid orga_d =
     case orga_d of
@@ -815,6 +856,7 @@ localGraphFromOrga nameid orga_d =
                                 , userCanJoin = n.userCanJoin
                                 , mode = n.mode
                                 , isTemplateTensionOnly = Nothing
+                                , isPinnedTensionfetchRecursively = Nothing
                                 }
                             )
 

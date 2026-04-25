@@ -1,16 +1,11 @@
+# P3
+
 # P2
 
 # P1
 
-
 - OPT: make the role circle smaller (+ user inside + pending hint ?)
-
-
 - Assign leader (instead of first-link)
-- merge assigne/first_link view for ROLE ?! (sidepanel)
-
-
-## after the release
 - append/remove _archived suffix when archiving/unarchiving ---> *** Rename nameid function !? ***
 
 

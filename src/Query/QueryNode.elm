@@ -59,6 +59,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryOrgaNode
+    , queryPinnedTensionsSub
     , queryOrgaTree
     , queryProjects
     , queryPublicOrga
@@ -72,6 +73,7 @@ module Query.QueryNode exposing
     , userPayload
     )
 
+import Bulk exposing (maxPinnedTensions)
 import Bulk.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
 import Extra exposing (ternary, unwrap, unwrap2)
@@ -622,6 +624,7 @@ type alias LocalNode =
     , mode : NodeMode.NodeMode
     , userCanJoin : Maybe Bool
     , isTemplateTensionOnly : Maybe Bool
+    , isPinnedTensionfetchRecursively : Maybe Bool
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
     , children : Maybe (List EmitterOrReceiver)
@@ -636,6 +639,7 @@ type alias LocalRootNode =
     , userCanJoin : Maybe Bool
     , mode : NodeMode.NodeMode
     , isTemplateTensionOnly : Maybe Bool
+    , isPinnedTensionfetchRecursively : Maybe Bool
     , source : Maybe BlobId
     }
 
@@ -653,7 +657,7 @@ lgDecoder data =
                 case n.parent of
                     Just p ->
                         if p.isRoot then
-                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly p.isPinnedTensionfetchRecursively |> Just
                             , path = [ shrinkNode p, shrinkNode n ]
                             , focus = ln2fn n
                             }
@@ -667,7 +671,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly n.isPinnedTensionfetchRecursively |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -693,6 +697,7 @@ lgPayload isInit =
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.userCanJoin
         |> with Fractal.Object.Node.isTemplateTensionOnly
+        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
         |> (\x ->
@@ -717,6 +722,7 @@ lg2Payload =
         |> with Fractal.Object.Node.userCanJoin
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.isTemplateTensionOnly
+        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
         |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
@@ -792,6 +798,96 @@ pinPayload =
 
 
 --
+-- Query Pinned Tensions in sub-circles (recursive)
+--
+-- @TODO: this is the only direct-Dgraph recursive sub-fetch in the codebase
+-- (besides queryNodesSub, which legitimately needs the full tree for graphpack).
+-- Every other recursive *Sub fetch — fetchChildren, fetchMembersSub, fetchLabelsSub,
+-- fetchRolesSub, fetchTensionTemplatesSub, fetchProjectsSub — goes through a Go
+-- backend `/sub` endpoint where bounds, ordering, and authz are enforced uniformly.
+-- The bounds below (subNodesCap, maxPinnedTensions per node, deterministic order) are
+-- a tactical safeguard. When this area is touched again, migrate to a REST endpoint
+-- (e.g. `/tensions/pinned/sub`) for consistency with the rest of the *Sub family.
+--
+
+
+{-| Hard cap on the number of descendant circles inspected per recursive pinned
+fetch. Combined with maxPinnedTensions per node, the worst-case response is
+bounded at subNodesCap * maxPinnedTensions tension entries.
+-}
+subNodesCap : Int
+subNodesCap =
+    50
+
+
+queryPinnedTensionsSub url nameid msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (subPinnedFilter nameid)
+            nodeWithPinsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse (subPinnedDecoder nameid) >> msg)
+
+
+subPinnedFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+subPinnedFilter nameid a =
+    let
+        nameidRegxp =
+            "/^" ++ nameid ++ "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | nameid = { eq = Absent, in_ = Absent, regexp = Present nameidRegxp } |> Present
+                        , not =
+                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ] })
+                                |> Present
+                    }
+                )
+                |> Present
+        , first = Present subNodesCap
+        , order =
+            Input.buildNodeOrder
+                (\b -> { b | desc = Present NodeOrderable.CreatedAt })
+                |> Present
+    }
+
+
+{-| Cap each descendant's pinned list at maxPinnedTensions so the response
+stays bounded; the merged result is then capped again client-side.
+-}
+nodeWithPinsPayload : SelectionSet NodeWithPins Fractal.Object.Node
+nodeWithPinsPayload =
+    SelectionSet.succeed NodeWithPins
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
+        |> with (Fractal.Object.Node.pinned (\a -> { a | first = Present maxPinnedTensions }) pinPayload)
+
+
+subPinnedDecoder : String -> Maybe (List (Maybe NodeWithPins)) -> Maybe (List NodeWithPins)
+subPinnedDecoder focusNameid data =
+    data
+        |> Maybe.map
+            (List.filterMap identity
+                >> List.filter (\n -> n.nameid /= focusNameid)
+                >> List.filterMap
+                    (\n ->
+                        case n.pinned of
+                            Just (_ :: _) ->
+                                Just n
+
+                            _ ->
+                                Nothing
+                    )
+            )
+
+
+
+--
 -- Query Orga rights
 --
 
@@ -812,6 +908,7 @@ nodeRightsPayload =
         |> with Fractal.Object.Node.userCanJoin
         |> with Fractal.Object.Node.guestCanCreateTension
         |> with Fractal.Object.Node.isTemplateTensionOnly
+        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
 
 
 

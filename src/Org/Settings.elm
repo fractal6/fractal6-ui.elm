@@ -68,7 +68,7 @@ import Ports
 import Query.PatchNode exposing (addOneLabel, addOneRole, addOneTensionTemplate, removeOneLabel, removeOneRole, removeOneTensionTemplate, updateOneLabel, updateOneRole, updateOneTensionTemplate)
 import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsPinnedTensionfetchRecursively, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -576,9 +576,11 @@ type Msg
     | SwitchUserCanJoin Int Bool
     | SwitchGuestCanCreateTension Int Bool
     | SwitchIsTemplateTensionOnly Int Bool
+    | SwitchIsPinnedTensionfetchRecursively Int Bool
     | GotUserCanJoin (RestData Bool)
     | GotGuestCanCreateTension (RestData Bool)
     | GotIsTemplateTensionOnly (RestData Bool)
+    | GotIsPinnedTensionfetchRecursively (RestData Bool)
     | OnLexiconInput String
     | OnMandateInput String
     | SubmitLexicon
@@ -1492,6 +1494,42 @@ update global message model =
                     ( { data | switch_index = -1, orga_rights = withMapData (\x -> { x | isTemplateTensionOnly = Just v }) model.orga_rights }
                     , Cmd.none
                     , Cmd.none
+                    )
+
+                _ ->
+                    ( data, Cmd.none, Cmd.none )
+
+        SwitchIsPinnedTensionfetchRecursively i _ ->
+            let
+                val =
+                    withMaybeData model.orga_rights |> unwrap2 False .isPinnedTensionfetchRecursively
+            in
+            ( { model | switch_result = RemoteData.Loading, switch_index = i }, setIsPinnedTensionfetchRecursively apis (nid2rootid model.node_focus.nameid) (not val) GotIsPinnedTensionfetchRecursively, Cmd.none )
+
+        GotIsPinnedTensionfetchRecursively result ->
+            let
+                data =
+                    { model | switch_result = result }
+            in
+            case result of
+                RemoteData.Success v ->
+                    let
+                        newPath =
+                            withMapData
+                                (\p ->
+                                    { p
+                                        | root = Maybe.map (\r -> { r | isPinnedTensionfetchRecursively = Just v }) p.root
+                                    }
+                                )
+                                model.path_data
+                    in
+                    ( { data
+                        | switch_index = -1
+                        , orga_rights = withMapData (\x -> { x | isPinnedTensionfetchRecursively = Just v }) model.orga_rights
+                        , path_data = newPath
+                      }
+                    , Cmd.none
+                    , send (UpdateSessionPath (withMaybeData newPath))
                     )
 
                 _ ->
@@ -2715,6 +2753,7 @@ viewOrgaSettings lexicon orga_rights switch_result switch_index =
             [ SwitchRecord 0 SwitchUserCanJoin T.orgaUserInvitation T.orgaUserInvitationHelp .userCanJoin
             , SwitchRecord 1 SwitchGuestCanCreateTension (T.guestCanCreateTension lexicon) T.guestCanCreateTensionHelp .guestCanCreateTension
             , SwitchRecord 2 SwitchIsTemplateTensionOnly T.isTemplateTensionOnly T.isTemplateTensionOnlyHelp .isTemplateTensionOnly
+            , SwitchRecord 3 SwitchIsPinnedTensionfetchRecursively T.isPinnedTensionfetchRecursively T.isPinnedTensionfetchRecursivelyHelp .isPinnedTensionfetchRecursively
             ]
     in
     case orga_rights of

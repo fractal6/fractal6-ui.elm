@@ -31,6 +31,7 @@ type NodeHasFilter
     | GuestCanCreateTension
     | Lexicon
     | IsTemplateTensionOnly
+    | IsPinnedTensionfetchRecursively
     | Watchers
     | Children
     | Projects
@@ -50,7 +51,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -127,6 +128,9 @@ decoder =
 
                     "isTemplateTensionOnly" ->
                         Decode.succeed IsTemplateTensionOnly
+
+                    "isPinnedTensionfetchRecursively" ->
+                        Decode.succeed IsPinnedTensionfetchRecursively
 
                     "watchers" ->
                         Decode.succeed Watchers
@@ -251,6 +255,9 @@ toString enum____ =
 
         IsTemplateTensionOnly ->
             "isTemplateTensionOnly"
+
+        IsPinnedTensionfetchRecursively ->
+            "isPinnedTensionfetchRecursively"
 
         Watchers ->
             "watchers"
@@ -380,6 +387,9 @@ fromString enumString____ =
 
         "isTemplateTensionOnly" ->
             Just IsTemplateTensionOnly
+
+        "isPinnedTensionfetchRecursively" ->
+            Just IsPinnedTensionfetchRecursively
 
         "watchers" ->
             Just Watchers

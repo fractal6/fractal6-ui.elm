@@ -226,6 +226,11 @@ isTemplateTensionOnly =
     Object.selectionForField "(Maybe Bool)" "isTemplateTensionOnly" [] (Decode.bool |> Decode.nullable)
 
 
+isPinnedTensionfetchRecursively : SelectionSet (Maybe Bool) Fractal.Object.Node
+isPinnedTensionfetchRecursively =
+    Object.selectionForField "(Maybe Bool)" "isPinnedTensionfetchRecursively" [] (Decode.bool |> Decode.nullable)
+
+
 type alias WatchersOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter
     , order : OptionalArgument Fractal.InputObject.UserOrder

@@ -22,7 +22,7 @@
 module Bulk.View exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), getParentFragmentFromRole)
+import Bulk exposing (UserState(..), getParentFragmentFromRole, maxPinnedTensions)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
 import Dict exposing (Dict)
 import Extra exposing (colorAttr, showIf, ternary, upH)
@@ -46,7 +46,7 @@ import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
 import Session exposing (CommonMsg, SessionCommon)
 import String.Extra as SE
 import String.Format as Format
@@ -203,20 +203,30 @@ viewTensionArrow t_blank cls emitter receiver =
         ]
 
 
-viewPinnedTensions : Int -> SessionCommon -> NodeFocus -> List PinTension -> Html msg
+viewPinnedTensions : Int -> SessionCommon -> NodeFocus -> List TaggedPin -> Html msg
 viewPinnedTensions size session focus pins =
-    pins
-        |> List.map
-            (\pin ->
-                div [ class "cell" ] [ viewPin session focus pin ]
-            )
-        |> div [ class "grid" ]
-        |> List.singleton
-        |> div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "-cols", True ) ] ]
+    let
+        hasMore =
+            List.length pins >= maxPinnedTensions
+
+        visible =
+            List.take (maxPinnedTensions - 1) pins
+
+        cells =
+            List.map (\( origin, pin ) -> div [ class "cell" ] [ viewPin session focus origin pin ]) visible
+                ++ (if hasMore then
+                        [ div [ class "cell is-italic has-text-grey is-size-7", title T.morePinnedNotShown ] [ text "…" ] ]
+
+                    else
+                        []
+                   )
+    in
+    div [ class "fixed-grid", classList [ ( "has-" ++ String.fromInt size ++ "-cols", True ) ] ]
+        [ div [ class "grid" ] cells ]
 
 
-viewPin : SessionCommon -> NodeFocus -> PinTension -> Html msg
-viewPin session focus tension =
+viewPin : SessionCommon -> NodeFocus -> Maybe EmitterOrReceiver -> PinTension -> Html msg
+viewPin session focus origin tension =
     div [ class "box media mediaBox p-4 is-h", style "width" "100%" ]
         [ div [ class "media-left mr-3" ]
             [ div
@@ -237,6 +247,13 @@ viewPin session focus tension =
                     ]
                     [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
                 , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
+                , case origin of
+                    Just c ->
+                        span [ class "ml-2 tag is-rounded is-light is-small" ]
+                            [ viewNodeRef False OverviewBaseUri c ]
+
+                    Nothing ->
+                        text ""
                 ]
             ]
         ]

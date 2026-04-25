@@ -65,7 +65,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNode exposing (fetchNodeData, queryJournal, queryOrgaTree)
+import Query.QueryNode exposing (fetchNodeData, queryJournal, queryLocalGraph, queryOrgaTree, queryPinnedTensionsSub)
 import Query.QueryTension exposing (queryAllTension)
 import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, SessionCommon, isMobile)
 import Set exposing (Set)
@@ -209,6 +209,7 @@ type alias Model =
     , leaders : List User
     , children_expanded : Set String
     , children_data : Dict.Dict String (GqlData NodeData)
+    , pinned_sub : GqlData (List NodeWithPins)
 
     -- common
     , session : SessionCommon
@@ -308,6 +309,7 @@ init global flags =
             , leaders = []
             , children_expanded = Set.empty
             , children_data = Dict.empty
+            , pinned_sub = NotAsked
 
             -- Common
             , session = session.common
@@ -414,6 +416,8 @@ type Msg
     | GotOrga (GqlData NodesDict)
     | GotTensions (GqlData (List Tension))
     | GotData (GqlData NodeData)
+    | GotPinnedSub (GqlData (List NodeWithPins))
+    | GotPath (GqlData LocalGraph)
       -- Children Explorer
     | ToggleChildExpand String
     | GotChildData String (GqlData NodeData)
@@ -556,6 +560,48 @@ update global message model =
 
                 _ ->
                     ( { model | node_data = result }, Cmd.none, Cmd.none )
+
+        GotPinnedSub result ->
+            ( { model | pinned_sub = result }, Cmd.none, Cmd.none )
+
+        GotPath result ->
+            -- localGraphFromOrga can't recover focus.pinned or root.isPinnedTensionfetchRecursively;
+            -- queryLocalGraph is the only source for those, so we patch them into the local path_data here.
+            case
+                Maybe.map2 Tuple.pair (withMaybeData result) (withMaybeData model.path_data)
+                    |> Maybe.andThen
+                        (\( fresh, current ) ->
+                            if current.focus.nameid /= fresh.focus.nameid then
+                                Nothing
+
+                            else
+                                Maybe.map (\r -> ( fresh, current, r )) fresh.root
+                        )
+            of
+                Just ( fresh, current, freshRoot ) ->
+                    let
+                        currentFocus =
+                            current.focus
+
+                        newPath =
+                            { current
+                                | root = Just freshRoot
+                                , focus = { currentFocus | pinned = fresh.focus.pinned }
+                            }
+
+                        recursive =
+                            freshRoot.isPinnedTensionfetchRecursively == Just True
+                    in
+                    ( { model
+                        | path_data = Success newPath
+                        , pinned_sub = ternary recursive Loading NotAsked
+                      }
+                    , ternary recursive (queryPinnedTensionsSub apis fresh.focus.nameid GotPinnedSub) Cmd.none
+                    , send (UpdateSessionPath (Just newPath))
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
 
         ToggleChildExpand nameid ->
             if Set.member nameid model.children_expanded then
@@ -873,14 +919,11 @@ update global message model =
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.common.path_data
 
-                        focus =
-                            path.focus
-
-                        pinned =
-                            global.session.common.path_data |> Maybe.map (.focus >> .pinned) |> withDefault NotAsked
-
+                        -- localGraphFromOrga can't recover focus.pinned or root.isPinnedTensionfetchRecursively;
+                        -- on focus change we swap to the clean local path and let GotPath refill them.
+                        -- On same-focus re-fires (graphpack), keep model.path_data to preserve server data.
                         path_data =
-                            Success { path | focus = { focus | pinned = pinned } }
+                            ternary isPathNew (Success path) model.path_data
 
                         patternQuery =
                             if String.trim model.activity_pattern_init /= "" then
@@ -888,8 +931,24 @@ update global message model =
 
                             else
                                 Nothing
+
+                        -- Page revisit: cached path is in session but pinned_sub starts NotAsked.
+                        -- Trust the cached flag and fetch the sub directly without a queryLocalGraph round-trip.
+                        needsPinSubFetch =
+                            not isPathNew
+                                && model.pinned_sub
+                                == NotAsked
+                                && isPinnedRecursivelyOn model.path_data
                     in
-                    ( { model | path_data = path_data, depth = Just maxdepth, leaders = getLeaders path_data model.tree_data, activity_searching = False, children_expanded = Set.empty, children_data = Dict.empty }
+                    ( { model
+                        | path_data = path_data
+                        , depth = Just maxdepth
+                        , leaders = getLeaders path_data model.tree_data
+                        , activity_searching = False
+                        , children_expanded = Set.empty
+                        , children_data = Dict.empty
+                        , pinned_sub = ternary needsPinSubFetch Loading model.pinned_sub
+                      }
                     , Cmd.batch
                         [ Ports.drawButtonsGraphPack
                         , if model.recent_activity_tab == TensionTab && (isPathNew || model.init_tensions) then
@@ -905,12 +964,16 @@ update global message model =
 
                           else
                             Cmd.none
-                        ]
-                    , if isPathNew then
-                        send (UpdateSessionPath (Just path))
+                        , if isPathNew then
+                            queryLocalGraph apis path.focus.nameid True GotPath
 
-                      else
-                        Cmd.none
+                          else if needsPinSubFetch then
+                            queryPinnedTensionsSub apis path.focus.nameid GotPinnedSub
+
+                          else
+                            Cmd.none
+                        ]
+                    , ternary isPathNew (send (UpdateSessionPath (Just path))) Cmd.none
                     )
 
                 Nothing ->
@@ -1195,16 +1258,17 @@ view_ global model =
                         ]
 
                 "activities" ->
+                    let
+                        merged =
+                            mergePinnedTensions model.path_data model.pinned_sub
+                    in
                     div []
-                        [ model.path_data
-                            |> withMaybeMapData (.focus >> .pinned >> withDefaultData Nothing)
-                            |> withDefault Nothing
-                            |> Maybe.map
-                                (\x ->
-                                    div [ class "mb-4 pb-1" ]
-                                        [ viewPinnedTensions 2 model.session model.node_focus x ]
-                                )
-                            |> withDefault (text "")
+                        [ if List.isEmpty merged then
+                            text ""
+
+                          else
+                            div [ class "mb-4 pb-1" ]
+                                [ viewPinnedTensions 2 model.session model.node_focus merged ]
                         , viewActivies model
                         ]
 

@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (getPath, hotTensionPush, hotTensionPush2)
+import Bulk exposing (getPath, hotTensionPush, hotTensionPush2, isPinnedRecursivelyOn, mergePinnedTensions)
 import Bulk.Board exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
@@ -65,7 +65,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNode exposing (queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph, queryPinnedTensionsSub)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, ViewMode(..))
@@ -201,6 +201,7 @@ type alias Model =
     , authors : List User
     , labels : List Label
     , tensions_count : GqlData TensionsCount
+    , pinned_sub : GqlData (List NodeWithPins)
 
     -- Board
     , boardHeight : Maybe Float
@@ -664,6 +665,7 @@ init global flags =
             , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing)
             , labels = Dict.get "l" session.common.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
             , tensions_count = fromMaybeData session.data.tensions_count Loading
+            , pinned_sub = NotAsked
 
             -- Board
             , boardHeight = Nothing
@@ -714,8 +716,20 @@ init global flags =
                 Nothing ->
                     True
 
+        willQueryLocalGraph =
+            fs.focusChange || model.path_data == Loading
+
+        pinSubInit =
+            -- Skip when queryLocalGraph is firing — GotPath will issue the query
+            -- and we'd otherwise double-fetch.
+            if not willQueryLocalGraph && isPinnedRecursivelyOn model.path_data then
+                [ queryPinnedTensionsSub session.apis newFocus.nameid GotPinnedSub ]
+
+            else
+                []
+
         cmds =
-            [ if fs.focusChange || model.path_data == Loading then
+            [ if willQueryLocalGraph then
                 [ queryLocalGraph session.apis newFocus.nameid True (GotPath True), send ResetData ]
 
               else if getTargetsHere model == [] then
@@ -743,6 +757,7 @@ init global flags =
 
               else
                 []
+            , pinSubInit
             , [ sendSleep PassedSlowLoadTreshold 500 ]
             , [ Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad) ]
             , [ Cmd.map TreeMenuMsg (send TreeMenu.OnLoad) ]
@@ -799,6 +814,7 @@ type Msg
     | GotTensionsExt (GqlData (List Tension)) -- GraphQL
     | GotTensionsAll (GqlData (List Tension)) -- GraphQL
     | GotTensionsCount (GqlData TensionsCount)
+    | GotPinnedSub (GqlData (List NodeWithPins))
       -- Page Action
     | DoLoadInit
     | DoLoad Bool -- query tensions
@@ -910,9 +926,19 @@ update global message model =
                             let
                                 newPath =
                                     { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
+                                recursivePinsOn =
+                                    root.isPinnedTensionfetchRecursively == Just True
                             in
-                            ( { model | path_data = Success newPath }
-                            , send DoLoadInit
+                            ( { model | path_data = Success newPath, pinned_sub = ternary recursivePinsOn Loading NotAsked }
+                            , Cmd.batch
+                                [ send DoLoadInit
+                                , if recursivePinsOn then
+                                    queryPinnedTensionsSub apis newPath.focus.nameid GotPinnedSub
+
+                                  else
+                                    Cmd.none
+                                ]
                             , send (UpdateSessionPath (Just newPath))
                             )
 
@@ -931,6 +957,9 @@ update global message model =
 
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
+
+        GotPinnedSub result ->
+            ( { model | pinned_sub = result }, Cmd.none, Cmd.none )
 
         GotChildren result ->
             case result of
@@ -1704,16 +1733,16 @@ view_ global model =
     div [ id "tensions", class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
             [ if model.viewMode == ListView then
-                -- Pinned tension
-                withMaybeData model.path_data
-                    |> Maybe.map (.focus >> .pinned >> withDefaultData Nothing)
-                    |> withDefault Nothing
-                    |> Maybe.map
-                        (\x ->
-                            div [ class "mb-4" ]
-                                [ viewPinnedTensions 3 model.session model.node_focus x ]
-                        )
-                    |> withDefault (text "")
+                let
+                    merged =
+                        mergePinnedTensions model.path_data model.pinned_sub
+                in
+                if List.isEmpty merged then
+                    text ""
+
+                else
+                    div [ class "mb-4" ]
+                        [ viewPinnedTensions 3 model.session model.node_focus merged ]
 
               else
                 text ""

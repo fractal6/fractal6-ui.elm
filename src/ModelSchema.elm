@@ -171,6 +171,7 @@ type alias RNode =
     , userCanJoin : Maybe Bool
     , mode : NodeMode.NodeMode
     , isTemplateTensionOnly : Maybe Bool
+    , isPinnedTensionfetchRecursively : Maybe Bool
     }
 
 
@@ -239,11 +240,33 @@ type alias NodeWithPin a =
     }
 
 
+type alias NodeWithPins =
+    { name : String
+    , nameid : String
+    , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
+    , pinned : Maybe (List PinTension)
+    }
+
+
+nodeWithPinsToEoR : NodeWithPins -> EmitterOrReceiver
+nodeWithPinsToEoR n =
+    EmitterOrReceiver n.name n.nameid n.role_type n.color
+
+
+{-| A pinned tension carrying the optional sub-circle it originates from.
+Nothing = pin on the focus node; Just c = pin from descendant circle c.
+-}
+type alias TaggedPin =
+    ( Maybe EmitterOrReceiver, PinTension )
+
+
 type alias NodeRights =
     { visibility : NodeVisibility.NodeVisibility
     , userCanJoin : Maybe Bool
     , guestCanCreateTension : Maybe Bool
     , isTemplateTensionOnly : Maybe Bool
+    , isPinnedTensionfetchRecursively : Maybe Bool
     }
 
 

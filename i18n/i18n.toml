@@ -2008,6 +2008,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="When enabled and templates exist, users must pick a template to create a tension."
   fr="Lorsqu'activé et que des modèles existent, les utilisateurs doivent choisir un modèle pour créer une tension."
 
+[isPinnedTensionfetchRecursively]
+  en="Show pinned tensions from sub-circles"
+  fr="Afficher les tensions épinglées des sous-cercles"
+
+[isPinnedTensionfetchRecursivelyHelp]
+  en="When enabled, the pinned tensions panel of any circle also shows tensions pinned in its descendant circles."
+  fr="Lorsqu'activé, le panneau des tensions épinglées d'un cercle affiche également les tensions épinglées dans ses sous-cercles."
+
+[morePinnedNotShown]
+  en="More pinned tensions exist but are not shown."
+  fr="D'autres tensions épinglées existent mais ne sont pas affichées."
+
 [templateName]
   en="Template name"
   fr="Nom du modèle"
