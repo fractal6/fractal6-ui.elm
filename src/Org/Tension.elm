@@ -48,6 +48,7 @@ import Dict
 import Dom
 import Extra exposing (decap, showIf, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
+import Extra.Events exposing (onClickSP)
 import Extra.Url exposing (queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
@@ -2088,6 +2089,11 @@ viewTensionProjectCard canEdit model tp =
         canMove =
             canEdit && not (List.isEmpty otherCols)
 
+        rootid =
+            withMaybeData model.tension_head
+                |> Maybe.map (\th -> nid2rootid th.receiver.nameid)
+                |> withDefault ""
+
         colorAttr c =
             case c.color of
                 Just hex ->
@@ -2096,15 +2102,24 @@ viewTensionProjectCard canEdit model tp =
                 Nothing ->
                     []
 
+        isDropdownOpen =
+            model.statusEditOpen == Just tp.card.id
+
         statusPill =
             span
                 ([ class "tag is-rounded tension-project-status" ]
                     ++ colorAttr tp.column
                     ++ (if canMove then
-                            [ onClick (OnStatusEditOpen tp.card.id) ]
+                            [ onClickSP <|
+                                if isDropdownOpen then
+                                    OnStatusEditClose
+
+                                else
+                                    OnStatusEditOpen tp.card.id
+                            ]
 
                         else
-                            []
+                            [ onClickSP NoMsg ]
                        )
                 )
                 [ text tp.column.name
@@ -2116,14 +2131,14 @@ viewTensionProjectCard canEdit model tp =
                 ]
 
         dropdown =
-            if model.statusEditOpen == Just tp.card.id then
-                div [ id (statusDropdownId tp.card.id), class "tension-project-status-dropdown" ]
+            if isDropdownOpen then
+                div [ class "tension-project-status-dropdown" ]
                     [ nav [ class "panel dropList" ]
                         (List.map
                             (\c ->
                                 Html.p
-                                    [ class "panel-block is-clickable"
-                                    , onClick (OnMoveCardToColumn tp.card.id c.id)
+                                    [ class "panel-block tension-project-column-item"
+                                    , onClickSP (OnMoveCardToColumn tp.card.id c.id)
                                     ]
                                     [ span (class "tag is-rounded mr-2" :: colorAttr c) [ text c.name ] ]
                             )
@@ -2134,9 +2149,10 @@ viewTensionProjectCard canEdit model tp =
             else
                 text ""
     in
-    div [ class "tension-project-card" ]
-        [ div [ class "tension-project-name" ] [ text tp.project.name ]
-        , div [ class "mt-1" ] [ statusPill, dropdown ]
+    div [ class "tension-project-card", onClickSP NoMsg ]
+        [ div [ class "tension-project-name" ]
+            [ a [ href (toLink ProjectBaseUri rootid [ tp.project.id ]) ] [ text tp.project.name ] ]
+        , div [ id (statusDropdownId tp.card.id), class "mt-1" ] [ statusPill, dropdown ]
         ]
 
 

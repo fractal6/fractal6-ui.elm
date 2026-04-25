@@ -1586,17 +1586,43 @@ projectPayload =
 --
 
 
-getOpenProjectsForPanel url nameid pattern_m msg =
+type alias NodeOpenProjects =
+    { projects : Maybe (List ProjectWithColumns) }
+
+
+openProjectsDecoder : Maybe (List (Maybe NodeOpenProjects)) -> Maybe (List ProjectWithColumns)
+openProjectsDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d
+                    |> List.filterMap identity
+                    |> List.concatMap (\x -> withDefault [] x.projects)
+                    |> LE.uniqueBy .id
+            )
+
+
+getOpenProjectsForPanel url nameids pattern_m msg =
+    -- Recursively walk circles below the given nameids and aggregate their open projects
     makeGQLQuery url
-        (Query.queryProject
+        (Query.queryNode
+            (nidsDownFilter nameids)
+            (nodeOpenProjectsPayload pattern_m)
+        )
+        (RemoteData.fromResult >> decodeResponse openProjectsDecoder >> msg)
+
+
+nodeOpenProjectsPayload : Maybe String -> SelectionSet NodeOpenProjects Fractal.Object.Node
+nodeOpenProjectsPayload pattern_m =
+    SelectionSet.map NodeOpenProjects
+        (Fractal.Object.Node.projects
             (\args ->
                 { args
                     | filter =
                         Input.buildProjectFilter
                             (\f ->
                                 { f
-                                    | parentnameid = Present { eq = Present nameid, in_ = Absent }
-                                    , status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
+                                    | status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
                                     , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern_m
                                 }
                             )
@@ -1608,7 +1634,6 @@ getOpenProjectsForPanel url nameid pattern_m msg =
             )
             projectWithColumnsPayload
         )
-        (RemoteData.fromResult >> decodeResponse (Maybe.map (List.filterMap identity)) >> msg)
 
 
 projectWithColumnsPayload : SelectionSet ProjectWithColumns Fractal.Object.Project

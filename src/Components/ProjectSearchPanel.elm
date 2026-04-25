@@ -226,7 +226,7 @@ update_ apis message model =
                     ( newModel, cmd ) =
                         if hasChanged then
                             ( { model | projects_data = LoadingSlowly }
-                            , [ getOpenProjectsForPanel apis (List.head targets |> withDefault "") Nothing OnGotProjects ]
+                            , [ getOpenProjectsForPanel apis targets Nothing OnGotProjects ]
                             )
 
                         else
