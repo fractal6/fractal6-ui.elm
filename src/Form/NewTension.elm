@@ -1493,7 +1493,7 @@ update_ apis message model =
                             send (Comments.OnChangeComment "message" tpl.comment) |> Cmd.map CommentsMsg
                     in
                     ( { newModel | nodeDoc = NodeDoc.setForm newForm newModel.nodeDoc }
-                    , out0 [ send (OnChangeTensionType tpl.type_), commentCmd ]
+                    , out0 [ send (OnChangeTensionType tpl.type_), commentCmd, Ports.bulma_driver "tensionModal" ]
                     )
 
                 Failure err ->
@@ -1503,7 +1503,9 @@ update_ apis message model =
                     ( { model | templateLoading = False }, noOut )
 
         OnSelectBlankTension ->
-            ( { model | showTemplatePicker = False, selectedTemplate = Nothing }, noOut )
+            ( { model | showTemplatePicker = False, selectedTemplate = Nothing }
+            , out0 [ Ports.bulma_driver "tensionModal" ]
+            )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
