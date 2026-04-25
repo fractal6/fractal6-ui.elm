@@ -159,7 +159,7 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
 
 viewTensionLight : TensionLight -> Html msg
 viewTensionLight t =
-    span []
+    span [ class "is-flex is-align-items-center", style "width" "100%" ]
         [ span [ class "mr-2" ] [ tensionIcon t.type_ ]
         , a
             [ class "is-human discrete-link mr-2"
@@ -173,6 +173,7 @@ viewTensionLight t =
 
             Nothing ->
                 text ""
+        , span [ class "is-pushed-right" ] [ viewCircleSimple t.receiver.name ]
         ]
 
 

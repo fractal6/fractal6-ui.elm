@@ -376,6 +376,7 @@ tensionLightDecoder =
         |> JDE.andMap (JD.field "type_" TensionType.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "labels" (JD.list <| labelDecoder))
+        |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
 
 
 

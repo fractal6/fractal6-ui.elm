@@ -27,7 +27,7 @@ import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserStat
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewTensionLight, viewUsers)
+import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewUsers)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel

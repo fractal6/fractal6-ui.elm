@@ -827,8 +827,7 @@ view global model =
                 [ view_ global model
                 , case model.project_data of
                     Success data ->
-                        Lazy.lazy4 Board.view model.pattern model.filterLabels model.filterAssignees model.board
-                            |> Html.map BoardMsg
+                        Lazy.lazy4 Board.view model.pattern model.filterLabels model.filterAssignees model.board |> Html.map BoardMsg
 
                     Failure err ->
                         viewGqlErrors err
@@ -867,8 +866,8 @@ view_ global model =
                 , div [ class "column is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-flex-end pt-0 pb-1", style "row-gap" "0.25rem" ]
                     (case model.project_data of
                         Success p ->
-                            viewSearchBar p model
-                                :: List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes
+                            List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes
+                                ++ [ viewSearchBar p model ]
                                 ++ (if model.isProjectAdmin then
                                         [ div [ class "button is-small", onClick (OpenTensionPane Nothing) ]
                                             [ A.icon1 "icon-plus" (T.addTensionToProject model.session.lexicon) ]
@@ -914,7 +913,7 @@ viewSearchBar project model =
                 , type_ "search"
                 , autocomplete False
                 , autofocus False
-                , placeholder (T.searchTensions model.session.lexicon)
+                , placeholder T.typeToFilter
                 , value model.pattern
                 , onInput ChangePattern
                 , onKeydown SearchKeyDown

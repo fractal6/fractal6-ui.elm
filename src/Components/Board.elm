@@ -1142,7 +1142,7 @@ viewHeader lexicon isAdmin isEdited col =
                                 , div [ class "dropdown-item button-light", onClick (OnDeleteColumn col.id) ]
                                     [ A.icon1 "icon-trash" T.deleteColumn ]
                                 , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveColItems col.id) ]
-                                    [ A.icon1 "icon-trash" T.removeItemsProject ]
+                                    [ A.icon1 "icon-trash" T.removeItemsColumn ]
                                 ]
                         }
 

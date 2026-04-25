@@ -903,6 +903,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No results found"
   fr="Aucun résulat trouvé"
 
+[typeToFilter]
+  en="Type to filter"
+  fr="Tapez pour filter"
+
 [searchTensions]
   en="Search {{_tension_}}s"
   fr="Rechercher des {{_tension_}}s"
@@ -2313,9 +2317,9 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Remove from project"
   fr="Retirer du projet"
 
-[removeItemsProject]
-  en="Remove items from project"
-  fr="Retirer les éléments du projet"
+[removeItemsColumn]
+  en="Remove items this column"
+  fr="Retirer les éléments de cette colonne"
 
 [openNewTab]
   en="Open in a new tab"

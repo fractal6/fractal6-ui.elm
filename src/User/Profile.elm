@@ -30,7 +30,7 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Components.SearchBar exposing (viewSearchField)
-import Extra exposing (ternary, unwrap)
+import Extra exposing (showIf, ternary, unwrap)
 import Form.Help as Help
 import Fractal.Enum.NodeOrderable as NodeOrderable
 import Global exposing (Msg(..), send, sendNow, sendSleep)
@@ -474,15 +474,12 @@ viewProfileRight user_s user model =
                             , id_name = "orgaSearchInput"
                             , column_class = ""
                             , field_class = ""
-                            , placeholder_txt = T.searchOrganisations
+                            , placeholder_txt = T.typeToFilter
                             }
                     in
                     div []
-                        [ if List.length orgas >= 5 then
+                        [ showIf (List.length orgas >= 5) <|
                             viewSearchField opSearch model.orgaFilter model.orgaFilter
-
-                          else
-                            text ""
                         , viewUserOrgas model.commonOp user model.orgaLookup orgas
                         ]
 

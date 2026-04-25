@@ -323,6 +323,7 @@ type alias TensionLight =
     , type_ : TensionType.TensionType
     , status : TensionStatus.TensionStatus
     , labels : Maybe (List Label)
+    , receiver : EmitterOrReceiver
     }
 
 
