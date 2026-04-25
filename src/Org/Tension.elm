@@ -24,6 +24,7 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
+import Browser.Events as Events
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
@@ -39,10 +40,12 @@ import Components.LabelSearchPanel as LabelSearchPanel
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(..))
 import Components.OrgaMenu as OrgaMenu
+import Components.ProjectSearchPanel as ProjectSearchPanel
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
+import Dom
 import Extra exposing (decap, showIf, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryParser)
@@ -57,7 +60,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route(..), toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, p, span, strong, text, ul)
+import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
@@ -71,10 +74,11 @@ import Ports
 import Query.PatchTension exposing (patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubscription)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
+import Query.QueryProject exposing (moveProjectCard)
+import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead, getTensionProjects)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
-import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
+import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), ProjectSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
@@ -231,6 +235,10 @@ type alias Model =
     , isTensionAdmin : Bool
     , isAssigneeOpen : Bool
     , isLabelOpen : Bool
+    , isProjectOpen : Bool
+    , tension_projects : GqlData (List TensionProject)
+    , statusEditOpen : Maybe String
+    , status_result : GqlData IdPayload
 
     -- Common
     , refresh_trial : Int
@@ -246,6 +254,7 @@ type alias Model =
     , tensionForm : NTF.State
     , assigneesPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
+    , projectsPanel : ProjectSearchPanel.State
     , actionPanel : ActionPanel.State
     , moveTension : MoveTension.State
     , contractsPage : ContractsPage.State
@@ -378,8 +387,13 @@ init global flags =
             , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
+            , isProjectOpen = False
+            , tension_projects = Loading
+            , statusEditOpen = Nothing
+            , status_result = NotAsked
             , assigneesPanel = UserSearchPanel.init tid AssignUser session.common.user
             , labelsPanel = LabelSearchPanel.init tid AssignLabel session.common.user
+            , projectsPanel = ProjectSearchPanel.init tid AssignProject session.common.user
 
             -- Common
             , session = session.common
@@ -447,6 +461,11 @@ refresh_cmds refresh global model =
     in
     [ if refresh then
         send LoadTensionHead
+
+      else
+        Cmd.none
+    , if refresh then
+        getTensionProjects apis model.tensionid GotTensionProjects
 
       else
         Cmd.none
@@ -558,6 +577,13 @@ type Msg
     | DoAssigneeEdit
       -- Labels
     | DoLabelEdit
+      -- Projects
+    | GotTensionProjects (GqlData (List TensionProject))
+    | DoProjectEdit
+    | OnStatusEditOpen String
+    | OnStatusEditClose
+    | OnMoveCardToColumn String String
+    | OnMoveCardAck (GqlData IdPayload)
       -- move tension
     | DoMove TensionHead
       -- Node Action
@@ -575,6 +601,7 @@ type Msg
     | NewTensionMsg NTF.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
     | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | ProjectSearchPanelMsg ProjectSearchPanel.Msg
     | MoveTensionMsg MoveTension.Msg
     | ContractsPageMsg ContractsPage.Msg
     | SelectTypeMsg SelectType.Msg
@@ -1259,6 +1286,94 @@ update global message model =
             , Cmd.batch (gcmds ++ [ upth ])
             )
 
+        -- Projects
+        GotTensionProjects result ->
+            ( { model | tension_projects = result }, Cmd.none, Cmd.none )
+
+        DoProjectEdit ->
+            let
+                receiver_m =
+                    withMaybeData model.tension_head |> Maybe.map .receiver
+            in
+            case receiver_m of
+                Just receiver ->
+                    ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen [ receiver.nameid ])), Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
+
+        ProjectSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    ProjectSearchPanel.update apis msg model.projectsPanel
+
+                tension_projects =
+                    case out.result of
+                        Just (ProjectSearchPanel.ProjectAdded tp) ->
+                            withMapData (\xs -> tp :: xs) model.tension_projects
+
+                        Just (ProjectSearchPanel.ProjectRemoved cardid) ->
+                            withMapData (List.filter (\tp -> tp.card.id /= cardid)) model.tension_projects
+
+                        Nothing ->
+                            model.tension_projects
+
+                isProjectOpen =
+                    ProjectSearchPanel.isOpen_ panel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | projectsPanel = panel, tension_projects = tension_projects, isProjectOpen = isProjectOpen }
+            , out.cmds |> List.map (\m -> Cmd.map ProjectSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch gcmds
+            )
+
+        OnStatusEditOpen cardid ->
+            ( { model | statusEditOpen = Just cardid, status_result = NotAsked }, Cmd.none, Cmd.none )
+
+        OnStatusEditClose ->
+            ( { model | statusEditOpen = Nothing }, Cmd.none, Cmd.none )
+
+        OnMoveCardToColumn cardid colid ->
+            let
+                tension_projects =
+                    withMapData
+                        (List.map
+                            (\tp ->
+                                if tp.card.id == cardid then
+                                    let
+                                        newCol =
+                                            tp.project.columns
+                                                |> List.filter (\c -> c.id == colid)
+                                                |> List.head
+                                                |> withDefault tp.column
+                                    in
+                                    { tp | column = newCol }
+
+                                else
+                                    tp
+                            )
+                        )
+                        model.tension_projects
+            in
+            ( { model | tension_projects = tension_projects, statusEditOpen = Nothing, status_result = LoadingSlowly }
+            , moveProjectCard apis cardid 0 colid OnMoveCardAck
+            , Cmd.none
+            )
+
+        OnMoveCardAck result ->
+            let
+                refetch =
+                    case result of
+                        Failure _ ->
+                            getTensionProjects apis model.tensionid GotTensionProjects
+
+                        _ ->
+                            Cmd.none
+            in
+            ( { model | status_result = result }, refetch, Cmd.none )
+
         -- Node Action
         OpenActionPanel domid nameid pos ->
             ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid nameid (TreeMenu.getOrgaData_ model.treeMenu) pos), Cmd.none )
@@ -1540,6 +1655,16 @@ subscriptions _ model =
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (ProjectSearchPanel.subscriptions model.projectsPanel |> List.map (\s -> Sub.map ProjectSearchPanelMsg s))
+        ++ (case model.statusEditOpen of
+                Just cardid ->
+                    [ Events.onMouseUp (Dom.outsideClickClose (statusDropdownId cardid) OnStatusEditClose)
+                    , Events.onKeyUp (Dom.key "Escape" OnStatusEditClose)
+                    ]
+
+                Nothing ->
+                    []
+           )
         ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
@@ -1929,6 +2054,97 @@ viewDocument u t b model =
 --
 
 
+viewTensionProjectCards : Bool -> Model -> Html Msg
+viewTensionProjectCards canEdit model =
+    let
+        tps =
+            withDefaultData [] model.tension_projects
+
+        moveError =
+            case model.status_result of
+                Failure errs ->
+                    viewGqlErrors errs
+
+                _ ->
+                    text ""
+    in
+    if List.isEmpty tps then
+        div []
+            [ div [ class "help-label is-italic" ] [ text T.noProjectsYet ]
+            , moveError
+            ]
+
+    else
+        div []
+            (List.map (viewTensionProjectCard canEdit model) tps ++ [ moveError ])
+
+
+viewTensionProjectCard : Bool -> Model -> TensionProject -> Html Msg
+viewTensionProjectCard canEdit model tp =
+    let
+        otherCols =
+            tp.project.columns |> List.filter (\c -> c.id /= tp.column.id)
+
+        canMove =
+            canEdit && not (List.isEmpty otherCols)
+
+        colorAttr c =
+            case c.color of
+                Just hex ->
+                    [ style "background-color" hex ]
+
+                Nothing ->
+                    []
+
+        statusPill =
+            span
+                ([ class "tag is-rounded tension-project-status" ]
+                    ++ colorAttr tp.column
+                    ++ (if canMove then
+                            [ onClick (OnStatusEditOpen tp.card.id) ]
+
+                        else
+                            []
+                       )
+                )
+                [ text tp.column.name
+                , if canMove then
+                    A.icon "icon-chevron-down ml-1"
+
+                  else
+                    text ""
+                ]
+
+        dropdown =
+            if model.statusEditOpen == Just tp.card.id then
+                div [ id (statusDropdownId tp.card.id), class "tension-project-status-dropdown" ]
+                    [ nav [ class "panel dropList" ]
+                        (List.map
+                            (\c ->
+                                Html.p
+                                    [ class "panel-block is-clickable"
+                                    , onClick (OnMoveCardToColumn tp.card.id c.id)
+                                    ]
+                                    [ span (class "tag is-rounded mr-2" :: colorAttr c) [ text c.name ] ]
+                            )
+                            otherCols
+                        )
+                    ]
+
+            else
+                text ""
+    in
+    div [ class "tension-project-card" ]
+        [ div [ class "tension-project-name" ] [ text tp.project.name ]
+        , div [ class "mt-1" ] [ statusPill, dropdown ]
+        ]
+
+
+statusDropdownId : String -> String
+statusDropdownId cardid =
+    "tension-project-status-dropdown-" ++ cardid
+
+
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
 viewSidePane u t model =
     let
@@ -1978,6 +2194,9 @@ viewSidePane u t model =
             isAdmin
 
         hasLabelRight =
+            isAdmin || isAuthor
+
+        hasProjectRight =
             isAdmin || isAuthor
 
         hasBlobRight =
@@ -2073,6 +2292,41 @@ viewSidePane u t model =
                                 div [ class "help-label is-italic" ] [ text T.noneYet ]
                             ]
                        ]
+            ]
+
+        -- Projects
+        , div
+            [ class "media"
+            , classList [ ( "is-w2", hasProjectRight ) ]
+            , ternary hasProjectRight (onClick DoProjectEdit) (onClick NoMsg)
+            ]
+            [ div [ class "media-content" ] <|
+                (case u of
+                    LoggedIn _ ->
+                        [ h2 [ class "subtitle" ]
+                            [ text T.projects
+                            , if model.isProjectOpen then
+                                A.icon "icon-x is-pulled-right"
+
+                              else if hasProjectRight then
+                                A.icon "icon-settings is-pulled-right"
+
+                              else
+                                text ""
+                            ]
+                        , ProjectSearchPanel.view
+                            { selectedProjects = withDefaultData [] model.tension_projects
+                            , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
+                            , isRight = False
+                            }
+                            model.projectsPanel
+                            |> Html.map ProjectSearchPanelMsg
+                        ]
+
+                    LoggedOut ->
+                        [ h2 [ class "subtitle" ] [ text T.projects ] ]
+                )
+                    ++ [ viewTensionProjectCards hasProjectRight model ]
             ]
 
         -- Document

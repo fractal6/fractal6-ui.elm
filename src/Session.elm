@@ -22,7 +22,7 @@
 module Session exposing (..)
 
 import Array exposing (Array)
-import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
+import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, ProjectPanelForm, UserState(..))
 import Bulk.Codecs exposing (NodeFocus)
 import Codecs exposing (DraftStore, DraftUpdate(..), RecentActivityTab(..), WindowPos, draftStoreDecoder, initDraftStore, userCtxDecoder, windowDecoder)
 import Dict exposing (Dict)
@@ -543,3 +543,33 @@ type LabelSearchPanelOnClickAction
     = AssignLabel
     | AssignProjectDraftLabel
     | SelectLabel
+
+
+
+{-
+   ProjectSearchPanel
+-}
+
+
+type alias ProjectSearchPanelModel =
+    { isOpen : Bool
+    , form : ProjectPanelForm
+    , click_result : GqlData IdPayload
+    , action : ProjectSearchPanelOnClickAction
+
+    -- Lookup
+    -- Unused in v1 (we filter `projects_data` in Elm); kept for parity with
+    -- LabelSearchPanel, as the hook for a future JS fuzzy-search port.
+    , lookup : List ProjectWithColumns
+    , pattern : String
+    , projects_data : GqlData (List ProjectWithColumns)
+
+    -- Common
+    -- Unused in v1; kept for parity with LabelSearchPanel's auth-refresh retry.
+    , refresh_trial : Int
+    }
+
+
+type ProjectSearchPanelOnClickAction
+    = AssignProject
+    | SelectProject

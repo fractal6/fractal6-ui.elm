@@ -813,6 +813,35 @@ type alias ProjectDraft =
     }
 
 
+type alias ProjectColumnLite =
+    { id : String
+    , name : String
+    , color : Maybe String
+    , pos : Int
+    , col_type : ProjectColumnType.ProjectColumnType
+    }
+
+
+type alias ProjectWithColumns =
+    { id : String
+    , name : String
+    , columns : List ProjectColumnLite
+    }
+
+
+type alias ProjectCardLite =
+    { id : String
+    , pos : Int
+    }
+
+
+type alias TensionProject =
+    { card : ProjectCardLite
+    , column : ProjectColumnLite
+    , project : ProjectWithColumns
+    }
+
+
 emptyCard : ProjectCard
 emptyCard =
     { id = ""

@@ -27,6 +27,7 @@ module Query.QueryTension exposing
     , getTensionComments
     , getTensionHead
     , getTensionPanel
+    , getTensionProjects
     , nodeFragmentLightPayload
     , nodeFragmentPayload
     , queryAllTension
@@ -57,17 +58,21 @@ import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
 import Fractal.Object.Node
 import Fractal.Object.NodeFragment
+import Fractal.Object.ProjectCard
+import Fractal.Object.ProjectColumn
 import Fractal.Object.Reaction
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
+import Fractal.Union
+import Fractal.Union.CardKind
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
-import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, userPayload)
+import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, ProjectCardLite, ProjectColumnLite, ProjectWithColumns, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, TensionProject, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, projectColumnLitePayload, projectWithColumnsPayload, userPayload)
 import RemoteData
 import String.Extra as SE
 
@@ -118,6 +123,61 @@ getTensionBlobs url tensionid msg =
             tensionBlobsPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+getTensionProjects url tensionid msg =
+    makeGQLQuery url
+        (Query.getTension { id = encodeId tensionid }
+            (Fractal.Object.Tension.project_statuses identity (tensionProjectStatusPayload tensionid)
+                |> SelectionSet.map (withDefault [] >> List.filterMap identity)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse (Maybe.withDefault [] >> Just) >> msg)
+
+
+tensionProjectStatusPayload : String -> SelectionSet (Maybe TensionProject) Fractal.Object.ProjectColumn
+tensionProjectStatusPayload tid =
+    SelectionSet.succeed
+        (\colId colName colColor colPos colType project cards ->
+            let
+                column =
+                    { id = colId, name = colName, color = colColor, pos = colPos, col_type = colType }
+
+                matchedCard =
+                    cards
+                        |> List.filter (\c -> c.tensionId == Just tid)
+                        |> List.head
+            in
+            Maybe.map
+                (\c -> { card = { id = c.id, pos = c.pos }, column = column, project = project })
+                matchedCard
+        )
+        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectColumn.name
+        |> with Fractal.Object.ProjectColumn.color
+        |> with Fractal.Object.ProjectColumn.pos
+        |> with Fractal.Object.ProjectColumn.col_type
+        |> with (Fractal.Object.ProjectColumn.project identity projectWithColumnsPayload)
+        |> with
+            (Fractal.Object.ProjectColumn.cards identity projectCardWithTensionIdPayload
+                |> SelectionSet.map (withDefault [])
+            )
+
+
+projectCardWithTensionIdPayload :
+    SelectionSet { id : String, pos : Int, tensionId : Maybe String } Fractal.Object.ProjectCard
+projectCardWithTensionIdPayload =
+    SelectionSet.succeed (\a b c -> { id = a, pos = b, tensionId = c })
+        |> with (Fractal.Object.ProjectCard.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectCard.pos
+        |> with
+            (Fractal.Object.ProjectCard.card identity
+                (Fractal.Union.CardKind.fragments
+                    { onTension = Fractal.Object.Tension.id |> SelectionSet.map (decodedId >> Just)
+                    , onProjectDraft = SelectionSet.empty |> SelectionSet.map (\_ -> Nothing)
+                    }
+                )
+            )
 
 
 tensionHeadPayload : String -> UserCtx -> SelectionSet TensionHead Fractal.Object.Tension

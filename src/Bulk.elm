@@ -37,11 +37,13 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Json.Decode exposing (string)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Set
+import String.Extra as SE
 import Text as T
 
 
@@ -213,6 +215,11 @@ encodeLabel label =
     label.name ++ "§" ++ withDefault "" label.color
 
 
+decodeLabel : String -> Label
+decodeLabel label_raw =
+    Label "" (SE.leftOfBack "§" label_raw) (SE.rightOfBack "§" label_raw |> Just) []
+
+
 initAssigneeForm : String -> UserState -> AssigneeForm
 initAssigneeForm tid user =
     { uctx =
@@ -271,6 +278,33 @@ type alias ProjectForm =
     , collaborators_remove : List String
     , peerCanEditProject : Maybe Bool
     , guestCanEditProject : Maybe Bool
+    }
+
+
+type alias ProjectPanelForm =
+    { uctx : UserCtx
+    , tid : String
+    , targets : List String -- circles to fetch projects from
+    , project : ProjectWithColumns -- selected/unselected item
+    , isNew : Bool
+    , post : Post
+    }
+
+
+initProjectPanelForm : String -> UserState -> ProjectPanelForm
+initProjectPanelForm tid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                initUserctx
+    , tid = tid
+    , targets = []
+    , project = { id = "", name = "", columns = [] }
+    , isNew = False
+    , post = Dict.empty
     }
 
 

@@ -32,9 +32,12 @@ module Query.QueryNode exposing
     , getCircleRights
     , getLabels
     , getNodeId
+    , getOpenProjectsForPanel
     , getOrgaInfo
     , getProjects
     , getRoles
+    , projectColumnLitePayload
+    , projectWithColumnsPayload
     , getTensionTemplateById
     , getTensionTemplates
     , labelFullPayload
@@ -83,6 +86,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeOrderable as NodeOrderable
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.ProjectColumnOrderable as ProjectColumnOrderable
 import Fractal.Enum.ProjectOrderable as ProjectOrderable
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
@@ -105,6 +109,7 @@ import Fractal.Object.NodeFragment
 import Fractal.Object.Notif
 import Fractal.Object.Project
 import Fractal.Object.ProjectAggregateResult
+import Fractal.Object.ProjectColumn
 import Fractal.Object.RoleExt
 import Fractal.Object.Tension
 import Fractal.Object.TensionAggregateResult
@@ -1573,6 +1578,66 @@ projectPayload =
     SelectionSet.succeed Project
         |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Project.name
+
+
+
+--
+-- Query Open Projects (with columns) for the side-panel picker
+--
+
+
+getOpenProjectsForPanel url nameid pattern_m msg =
+    makeGQLQuery url
+        (Query.queryProject
+            (\args ->
+                { args
+                    | filter =
+                        Input.buildProjectFilter
+                            (\f ->
+                                { f
+                                    | parentnameid = Present { eq = Present nameid, in_ = Absent }
+                                    , status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
+                                    , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern_m
+                                }
+                            )
+                            |> Present
+                    , order =
+                        Input.buildProjectOrder (\b -> { b | asc = Present ProjectOrderable.Name })
+                            |> Present
+                }
+            )
+            projectWithColumnsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse (Maybe.map (List.filterMap identity)) >> msg)
+
+
+projectWithColumnsPayload : SelectionSet ProjectWithColumns Fractal.Object.Project
+projectWithColumnsPayload =
+    SelectionSet.succeed ProjectWithColumns
+        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Project.name
+        |> with
+            (Fractal.Object.Project.columns
+                (\args ->
+                    { args
+                        | order =
+                            Input.buildProjectColumnOrder (\b -> { b | asc = Present ProjectColumnOrderable.Pos })
+                                |> Present
+                    }
+                )
+                projectColumnLitePayload
+                |> SelectionSet.map (withDefault [])
+            )
+
+
+projectColumnLitePayload : SelectionSet ProjectColumnLite Fractal.Object.ProjectColumn
+projectColumnLitePayload =
+    SelectionSet.succeed ProjectColumnLite
+        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.ProjectColumn.name
+        |> with Fractal.Object.ProjectColumn.color
+        |> with Fractal.Object.ProjectColumn.pos
+        |> with Fractal.Object.ProjectColumn.col_type
 
 
 

@@ -24,6 +24,9 @@ type TensionEvent
     | Mentioned
     | Pinned
     | Unpinned
+    | ProjectAdded
+    | ProjectRemoved
+    | ProjectColumnMoved
     | BlobPushed
     | BlobArchived
     | BlobUnarchived
@@ -38,7 +41,7 @@ type TensionEvent
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, CommentDeleted, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Mentioned, Pinned, Unpinned, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
+    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, CommentDeleted, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Mentioned, Pinned, Unpinned, ProjectAdded, ProjectRemoved, ProjectColumnMoved, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, Authority, Visibility, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -94,6 +97,15 @@ decoder =
 
                     "Unpinned" ->
                         Decode.succeed Unpinned
+
+                    "ProjectAdded" ->
+                        Decode.succeed ProjectAdded
+
+                    "ProjectRemoved" ->
+                        Decode.succeed ProjectRemoved
+
+                    "ProjectColumnMoved" ->
+                        Decode.succeed ProjectColumnMoved
 
                     "BlobPushed" ->
                         Decode.succeed BlobPushed
@@ -182,6 +194,15 @@ toString enum____ =
 
         Unpinned ->
             "Unpinned"
+
+        ProjectAdded ->
+            "ProjectAdded"
+
+        ProjectRemoved ->
+            "ProjectRemoved"
+
+        ProjectColumnMoved ->
+            "ProjectColumnMoved"
 
         BlobPushed ->
             "BlobPushed"
@@ -275,6 +296,15 @@ fromString enumString____ =
 
         "Unpinned" ->
             Just Unpinned
+
+        "ProjectAdded" ->
+            Just ProjectAdded
+
+        "ProjectRemoved" ->
+            Just ProjectRemoved
+
+        "ProjectColumnMoved" ->
+            Just ProjectColumnMoved
 
         "BlobPushed" ->
             Just BlobPushed

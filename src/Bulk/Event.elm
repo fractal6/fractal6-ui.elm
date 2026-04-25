@@ -22,7 +22,7 @@
 module Bulk.Event exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..))
+import Bulk exposing (UserState(..), decodeLabel)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
 import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewLabel, viewNodeRefShort, viewUsernameLink)
 import Dict exposing (Dict)
@@ -626,7 +626,7 @@ viewEventLabel focusid_m session event isNew =
                 ( T.removedTheLabel, withDefault "unknown" event.old )
 
         label =
-            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just) []
+            decodeLabel value
 
         link =
             Maybe.map

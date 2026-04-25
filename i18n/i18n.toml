@@ -939,6 +939,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Edit labels"
   fr="Editer les étiquettes"
 
+[noProjectsYet]
+  en="No project yet"
+  fr="Aucun projet pour le moment"
+
+[moveToColumn]
+  en="Move to column"
+  fr="Déplacer vers une colonne"
+
+[editProjects]
+  en="Edit projects"
+  fr="Éditer les projets"
+
 [openTension]
   en="Open"
   fr="Ouvert"

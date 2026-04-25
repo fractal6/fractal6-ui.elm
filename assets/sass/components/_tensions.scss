@@ -53,6 +53,32 @@
     }
 }
 
+.tension-project-card {
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.4rem;
+
+    .tension-project-name {
+        font-weight: 600;
+    }
+    .tension-project-status {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        .icon-chevron-down { font-size: 0.75rem; }
+    }
+    .tension-project-status-dropdown {
+        position: relative;
+        nav.panel.dropList {
+            position: absolute;
+            z-index: 30;
+            min-width: 12rem;
+        }
+    }
+}
+
 .usersList {
     //line-height: 2.5;
     span  {
