@@ -233,19 +233,23 @@ decodeProjectRef raw =
             { id = "", name = raw }
 
 
-{-| Decodes "id§name§color" descriptors emitted by graph/card_resolver.go.
+{-| Decodes "id§name§color§projectId" descriptors emitted by graph/card_resolver.go.
+The projectId tail is optional for backward compatibility with older events.
 -}
-decodeColumnRef : String -> { id : String, name : String, color : String }
+decodeColumnRef : String -> { id : String, name : String, color : String, projectId : String }
 decodeColumnRef raw =
     case String.split "§" raw of
+        id :: name :: color :: projectId :: _ ->
+            { id = id, name = name, color = color, projectId = projectId }
+
         id :: name :: color :: _ ->
-            { id = id, name = name, color = color }
+            { id = id, name = name, color = color, projectId = "" }
 
         id :: name :: _ ->
-            { id = id, name = name, color = "" }
+            { id = id, name = name, color = "", projectId = "" }
 
         _ ->
-            { id = "", name = raw, color = "" }
+            { id = "", name = raw, color = "", projectId = "" }
 
 
 initAssigneeForm : String -> UserState -> AssigneeForm

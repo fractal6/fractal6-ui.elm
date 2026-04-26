@@ -26,7 +26,7 @@ import Bulk exposing (UserState(..), decodeColumnRef, decodeLabel, decodeProject
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
 import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
 import Components.LabelSearchPanel exposing (viewLabel)
-import Components.ProjectSearchPanel exposing (viewProjectColumnTag)
+import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProjectTag)
 import Dict exposing (Dict)
 import Extra exposing (decap, space_, ternary, textD)
 import Extra.Date exposing (formatDate)
@@ -509,7 +509,7 @@ viewEvent session focusid_m action event =
                     viewEventProject focusid_m session event False
 
                 TensionEvent.ProjectColumnMoved ->
-                    viewEventProjectColumnMoved session event
+                    viewEventProjectColumnMoved focusid_m session event
 
                 _ ->
                     []
@@ -885,21 +885,24 @@ viewEventProject focusid_m session event isAdded =
         project =
             decodeProjectRef raw
 
+        projectTag =
+            viewProjectTag [] [ text project.name ]
+
         nameNode =
             case focusid_m of
                 Just focusid ->
                     if project.id == "" then
-                        span [ class "is-strong" ] [ text project.name ]
+                        projectTag
 
                     else
                         a
-                            [ class "is-strong discrete-link"
+                            [ class "discrete-link"
                             , href (Route.Project_Dynamic_Dynamic { param1 = nid2rootid focusid, param2 = shortId project.id } |> toHref)
                             ]
-                            [ text project.name ]
+                            [ projectTag ]
 
                 Nothing ->
-                    span [ class "is-strong" ] [ text project.name ]
+                    projectTag
     in
     [ div [ class "media-left" ] [ A.icon "icon-layout" ]
     , div [ class "media-content" ]
@@ -914,8 +917,8 @@ viewEventProject focusid_m session event isAdded =
     ]
 
 
-viewEventProjectColumnMoved : SessionCommon -> Event -> List (Html msg)
-viewEventProjectColumnMoved session event =
+viewEventProjectColumnMoved : Maybe String -> SessionCommon -> Event -> List (Html msg)
+viewEventProjectColumnMoved focusid_m session event =
     let
         old =
             event.old |> withDefault "" |> decodeColumnRef
@@ -923,8 +926,24 @@ viewEventProjectColumnMoved session event =
         new =
             event.new |> withDefault "" |> decodeColumnRef
 
-        viewCol col =
+        colTag col =
             viewProjectColumnTag (ternary (col.color == "") Nothing (Just col.color)) col.name [] []
+
+        viewCol col =
+            case ( focusid_m, col.projectId ) of
+                ( Just focusid, projectId ) ->
+                    if projectId == "" then
+                        colTag col
+
+                    else
+                        a
+                            [ class "discrete-link"
+                            , href (Route.Project_Dynamic_Dynamic { param1 = nid2rootid focusid, param2 = shortId projectId } |> toHref)
+                            ]
+                            [ colTag col ]
+
+                _ ->
+                    colTag col
     in
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]

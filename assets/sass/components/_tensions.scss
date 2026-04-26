@@ -77,12 +77,22 @@
     }
 }
 
+.tension-project-tag {
+    border: $border-size-small solid var(--border-color-light);
+    border-radius: 10px !important;
+}
+a:hover > .tension-project-tag,
+a > .tension-project-tag:hover {
+    background-color: var(--background-evidence);
+    border-color: var(--border-color);
+}
+
 .tension-project-status {
     cursor: pointer;
     .icon-chevron-down { font-size: 0.75rem; }
     border: $border-size-small solid var(--border-color-light);
     border-radius: 10px !important;
-    &:hover .tag {
+    &:hover {
         background-color: var(--background-evidence);
         border-color: var(--border-color) !important;
     }

@@ -536,11 +536,7 @@ viewNew op (State model) =
             span [ class "ml-2" ]
                 (List.map
                     (\tp ->
-                        span
-                            [ class "tag has-border mr-2"
-                            , attribute "style" "border-radius: 12px;"
-                            ]
-                            [ text tp.project.name ]
+                        viewProjectTag [ class "mr-2" ] [ text tp.project.name ]
                     )
                     op.selectedProjects
                 )
@@ -787,3 +783,8 @@ viewProjectColumnTag color name attrs extras =
          ]
             ++ extras
         )
+
+
+viewProjectTag : List (Html.Attribute msg) -> List (Html msg) -> Html msg
+viewProjectTag attrs children =
+    span (class "tag tension-project-tag" :: attrs) children
