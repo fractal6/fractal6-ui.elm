@@ -128,6 +128,8 @@ type alias NodeId =
     { nameid : String, source : Maybe BlobId }
 
 
+{-| `path` is ordered from root to focus, both included.
+-}
 type alias LocalGraph =
     { root : Maybe RNode
     , path : List PNode

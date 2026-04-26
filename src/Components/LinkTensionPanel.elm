@@ -23,7 +23,7 @@ port module Components.LinkTensionPanel exposing (ColTarget, Msg(..), State, has
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), uctxFromUser)
+import Bulk exposing (UserState(..), getPath, uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..))
 import Bulk.Error exposing (viewGqlErrors)
@@ -535,14 +535,17 @@ view tree_data path_data (State model) =
         , class "side-menu is-medium"
         , classList [ ( "off", not model.isOpen ) ]
         ]
-        [ viewPanel tree_data model
+        [ viewPanel tree_data path_data model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
-viewPanel : GqlData NodesDict -> Model -> Html Msg
-viewPanel tree_data model =
+viewPanel : GqlData NodesDict -> GqlData LocalGraph -> Model -> Html Msg
+viewPanel tree_data path_data model =
     let
+        pathNameids =
+            getPath path_data |> List.map .nameid
+
         typeFilter_hthml =
             B.dropdown
                 { dropdown_id = "type-filter-side"
@@ -570,7 +573,7 @@ viewPanel tree_data model =
             span [ class "ml-2" ]
                 [ span
                     [ class "button is-small"
-                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.target.nameid ] (Just True)))
+                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen pathNameids False))
                     ]
                     [ ternary (model.form.labels /= []) (span [ class "badge is-link-back" ] []) (text "")
                     , text T.label

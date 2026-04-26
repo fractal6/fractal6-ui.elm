@@ -1151,11 +1151,8 @@ update global message model =
             ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
 
         ChangeLabel ->
-            let
-                targets =
-                    getPath model.path_data |> List.map .nameid
-            in
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets (Just True))), Cmd.none )
+            -- Filter the tension list by labels in the entire org (recursive from root).
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ model.node_focus.rootnameid ] True)), Cmd.none )
 
         SearchKeyDown key ->
             case key of

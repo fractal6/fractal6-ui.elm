@@ -41,14 +41,13 @@ import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, rest2Gql, withDefaultData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabels, queryLabelsDown)
 import Query.QueryProject exposing (setProjectDraftLabel)
-import Requests exposing (fetchLabelsTop)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -194,7 +193,7 @@ setPattern pattern data =
 
 
 type Msg
-    = OnOpen (List String) (Maybe Bool)
+    = OnOpen (List String) Bool
     | OnClose
     | OnClose_
     | SetTensionid String
@@ -252,35 +251,26 @@ update apis message (State model) =
 update_ : Apis -> Msg -> Model -> ( Model, Out )
 update_ apis message model =
     case message of
-        OnOpen targets isDepth ->
-            -- case isDepth of
-            -- Just True: fetch labels recursively in children.
-            -- Just False: fetch labels in parents until root.
-            -- Nothing: stick to given targets
+        OnOpen targets isRecursive ->
+            -- isRecursive=True: fetch labels recursively in children of targets.
+            -- isRecursive=False: only fetch labels declared on the given targets.
             if not model.isOpen then
                 let
-                    nameids =
-                        targets
-
                     hasChanged =
-                        nameids /= model.form.targets
+                        targets /= model.form.targets
 
                     ( newModel, cmd ) =
                         if hasChanged then
-                            case isDepth of
-                                Just True ->
-                                    ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis nameids OnGotLabels ] )
+                            if isRecursive then
+                                ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis targets OnGotLabels ] )
 
-                                Just False ->
-                                    ( { model | labels_data = LoadingSlowly }, [ fetchLabelsTop apis (List.head nameids |> withDefault "") True (rest2Gql >> OnGotLabels) ] )
-
-                                Nothing ->
-                                    ( { model | labels_data = LoadingSlowly }, [ queryLabels apis nameids OnGotLabels ] )
+                            else
+                                ( { model | labels_data = LoadingSlowly }, [ queryLabels apis targets OnGotLabels ] )
 
                         else
                             ( model, [] )
                 in
-                ( open nameids newModel
+                ( open targets newModel
                 , out0 <|
                     [ Ports.inheritWith "labelSearchPanel"
                     , Ports.focusOn "userInput"
@@ -490,7 +480,7 @@ viewNew op (State model) =
                 ]
             , div
                 [ class "button is-small mr-2"
-                , onClick (OnOpen op.targets Nothing)
+                , onClick (OnOpen op.targets False)
                 ]
                 [ A.icon1 "icon-1x icon-tag" "", text T.labels ]
             ]
@@ -585,7 +575,7 @@ viewLabelSelectors isInternal labels op model =
                   else
                     onClick (Navigate editLink)
                 ]
-                [ A.icon1 "icon-edit-2" T.editLabels ]
+                [ A.icon1 "icon-edit-2" T.addOrEditLabels ]
     in
     div []
         [ ternary isInternal viewEdit (text "")

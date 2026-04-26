@@ -923,7 +923,7 @@ viewSearchBar project model =
                 [ span
                     [ class "button-light px-1"
                     , classList [ ( "has-text-link", model.filterLabels /= [] ) ]
-                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen targets (Just False)))
+                    , onClick (LabelSearchPanelMsg (LabelSearchPanel.OnOpen [ model.node_focus.rootnameid ] True))
                     , title T.labels
                     ]
                     [ A.icon "icon-tag" ]

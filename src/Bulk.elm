@@ -693,7 +693,6 @@ getPath lg =
         Success path ->
             path.path
 
-        -- ++ (path.focus.children |> List.filter (\x -> isCircle x.nameid) |> List.map shrinkNode)
         _ ->
             []
 

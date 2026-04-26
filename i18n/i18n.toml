@@ -935,9 +935,17 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Search recent activities"
   fr="Rechercher des activités récentes"
 
-[editLabels]
-  en="Edit labels"
-  fr="Editer les étiquettes"
+[addOrEditLabels]
+  en="Add or Edit Labels"
+  fr="Ajouter ou éditer les étiquettes"
+
+[addOrEditProjects]
+  en="Add or Edit Projects"
+  fr="Ajouter ou éditer les projets"
+
+[inviteNewMembers]
+  en="Invite new members"
+  fr="Inviter de nouveaux membres"
 
 [noProjectsYet]
   en="No project yet"

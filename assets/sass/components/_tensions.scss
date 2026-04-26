@@ -219,6 +219,18 @@
             color: var(--text-weak);
             margin-bottom: 1rem !important;
         }
+
+        // Right-align search panels when the side column is too narrow to fit them,
+        // so they overflow leftward into the main content area instead of off-screen.
+        // Skip on mobile: Bulma sets overflow-x: auto on .media-content there, which
+        // would trap an absolute panel inside a scrolling box.
+        @include between($tablet, $widescreen) {
+            position: relative;
+            nav.panel.dropList {
+                left: auto;
+                right: 0;
+            }
+        }
     }
 
 

@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewCircleSimple)
 import Dict
@@ -172,6 +173,8 @@ type Msg
     | OnAddCardAck ProjectWithColumns ProjectColumnLite (GqlData (List ProjectCard))
     | OnRemoveCardAck String (GqlData (List String))
     | ResetClickResult
+      --
+    | Navigate String
       -- Common
     | NoMsg
     | LogErr String
@@ -349,6 +352,9 @@ update_ apis message model =
         ResetClickResult ->
             ( setClickResult NotAsked model, noOut )
 
+        Navigate link ->
+            ( model, out1 [ DoNavigate link ] )
+
         NoMsg ->
             ( model, noOut )
 
@@ -453,44 +459,59 @@ view_ op model =
 
 viewProjectSelectors : List ProjectWithColumns -> Op -> Model -> Html Msg
 viewProjectSelectors projects op model =
-    div [ class "selectors" ] <|
-        if projects == [] then
-            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+    let
+        editLink =
+            toLink ProjectsBaseUri (op.targets |> List.head |> withDefault "") []
 
-        else
-            projects
-                |> List.map
-                    (\p ->
-                        let
-                            existing =
-                                op.selectedProjects |> LE.find (\tp -> tp.project.id == p.id)
+        viewEdit =
+            p
+                [ class "panel-block is-md is-w discrete-link"
+                , attribute "style" "border-top: 1px solid;"
+                , onClick (Navigate editLink)
+                ]
+                [ A.icon1 "icon-edit-2" T.addOrEditProjects ]
+    in
+    div []
+        [ div [ class "selectors" ] <|
+            if projects == [] then
+                [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
-                            isActive =
-                                existing /= Nothing
+            else
+                projects
+                    |> List.map
+                        (\p ->
+                            let
+                                existing =
+                                    op.selectedProjects |> LE.find (\tp -> tp.project.id == p.id)
 
-                            iconCls =
-                                ternary isActive "icon-check-square" "icon-square"
+                                isActive =
+                                    existing /= Nothing
 
-                            isLoading =
-                                model.click_result == LoadingSlowly && p.id == model.form.project.id
+                                iconCls =
+                                    ternary isActive "icon-check-square" "icon-square"
 
-                            handler =
-                                case existing of
-                                    Just tp ->
-                                        onClick (OnSubmit <| OnProjectRemove tp.card.id p)
+                                isLoading =
+                                    model.click_result == LoadingSlowly && p.id == model.form.project.id
 
-                                    Nothing ->
-                                        onClick (OnSubmit <| OnProjectAdd p)
-                        in
-                        Html.p
-                            [ class "panel-block"
-                            , classList [ ( "is-active", isActive ) ]
-                            , handler
-                            ]
-                            [ span [ class "panel-icon" ] [ A.icon iconCls ]
-                            , span [] [ text p.name ]
-                            , loadingSpin isLoading
-                            , span [ class "is-pushed-right is-flex is-flex-wrap-wrap is-justify-content-flex-end" ]
-                                (List.map (\n -> viewCircleSimple n.nameid) p.nodes)
-                            ]
-                    )
+                                handler =
+                                    case existing of
+                                        Just tp ->
+                                            onClick (OnSubmit <| OnProjectRemove tp.card.id p)
+
+                                        Nothing ->
+                                            onClick (OnSubmit <| OnProjectAdd p)
+                            in
+                            Html.p
+                                [ class "panel-block"
+                                , classList [ ( "is-active", isActive ) ]
+                                , handler
+                                ]
+                                [ span [ class "panel-icon" ] [ A.icon iconCls ]
+                                , span [] [ text p.name ]
+                                , loadingSpin isLoading
+                                , span [ class "is-pushed-right is-flex is-flex-wrap-wrap is-justify-content-flex-end" ]
+                                    (List.map (\n -> viewCircleSimple n.nameid) p.nodes)
+                                ]
+                        )
+        , viewEdit
+        ]

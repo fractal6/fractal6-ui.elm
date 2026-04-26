@@ -1229,26 +1229,8 @@ update global message model =
 
         -- Labels
         DoLabelEdit ->
-            let
-                targets =
-                    getPath model.path_data |> List.map .nameid
-
-                receiver_m =
-                    withMaybeData model.tension_head |> Maybe.map .receiver
-            in
-            case receiver_m of
-                Just receiver ->
-                    case LE.elemIndex receiver.nameid targets of
-                        Just i ->
-                            -- receiver is in the current focus/path
-                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)), Cmd.none )
-
-                        Nothing ->
-                            -- receiver does not match the current focus/path
-                            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ receiver.nameid ] (Just False))), Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets Nothing)), Cmd.none )
+            -- Search labels declared on the path (root → focus). No recursion.
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid) False)), Cmd.none )
 
         LabelSearchPanelMsg msg ->
             let
@@ -1292,16 +1274,8 @@ update global message model =
             ( { model | tension_projects = result }, Cmd.none, Cmd.none )
 
         DoProjectEdit ->
-            let
-                receiver_m =
-                    withMaybeData model.tension_head |> Maybe.map .receiver
-            in
-            case receiver_m of
-                Just receiver ->
-                    ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen [ receiver.nameid ])), Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
+            -- Search projects declared on the path (root → focus). No recursion.
+            ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid))), Cmd.none )
 
         ProjectSearchPanelMsg msg ->
             let

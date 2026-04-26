@@ -1615,10 +1615,10 @@ openProjectsDecoder data =
 
 
 getOpenProjectsForPanel url nameids pattern_m msg =
-    -- Recursively walk circles below the given nameids and aggregate their open projects
+    -- Fetch open projects on the given group of nodes (no recursion)
     makeGQLQuery url
         (Query.queryNode
-            (nidsDownFilter nameids)
+            (nidsFilter nameids)
             (nodeOpenProjectsPayload pattern_m)
         )
         (RemoteData.fromResult >> decodeResponse openProjectsDecoder >> msg)

@@ -25,6 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
+import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewUserFull, viewUsers)
 import Codecs exposing (userDecoder)
@@ -205,6 +206,8 @@ type Msg
     | OnGotAssignees (GqlData (List User))
     | SetAssignee AssigneeForm
     | ResetClickResult
+      --
+    | Navigate String
       -- Common
     | NoMsg
     | LogErr String
@@ -394,6 +397,9 @@ update_ apis message model =
         ResetClickResult ->
             ( setClickResult NotAsked model, noOut )
 
+        Navigate link ->
+            ( model, out1 [ DoNavigate link ] )
+
         -- Common
         NoMsg ->
             ( model, noOut )
@@ -547,31 +553,46 @@ view_ op model =
 
 viewAssigneeSelectors : List User -> Op -> Model -> Html Msg
 viewAssigneeSelectors users op model =
-    div [ class "selectors" ] <|
-        if users == [] then
-            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+    let
+        editLink =
+            toLink MembersBaseUri (op.targets |> List.head |> withDefault "") []
 
-        else
-            users
-                |> List.map
-                    (\u ->
-                        let
-                            isActive =
-                                List.member u op.selectedAssignees
+        viewEdit =
+            p
+                [ class "panel-block is-md is-w discrete-link"
+                , attribute "style" "border-top: 1px solid;"
+                , onClick (Navigate editLink)
+                ]
+                [ A.icon1 "icon-user-plus" T.inviteNewMembers ]
+    in
+    div []
+        [ div [ class "selectors" ] <|
+            if users == [] then
+                [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
-                            iconCls =
-                                ternary isActive "icon-check-square" "icon-square"
+            else
+                users
+                    |> List.map
+                        (\u ->
+                            let
+                                isActive =
+                                    List.member u op.selectedAssignees
 
-                            isLoading =
-                                model.click_result == LoadingSlowly && u.username == model.form.assignee.username
-                        in
-                        p
-                            [ class "panel-block p-1"
-                            , classList [ ( "is-active", isActive ) ]
-                            , onClick (OnSubmit <| OnAssigneeClick u (not isActive))
-                            ]
-                            [ span [ class "panel-icon" ] [ A.icon iconCls ]
-                            , viewUserFull 1 False False u
-                            , loadingSpin isLoading
-                            ]
-                    )
+                                iconCls =
+                                    ternary isActive "icon-check-square" "icon-square"
+
+                                isLoading =
+                                    model.click_result == LoadingSlowly && u.username == model.form.assignee.username
+                            in
+                            p
+                                [ class "panel-block p-1"
+                                , classList [ ( "is-active", isActive ) ]
+                                , onClick (OnSubmit <| OnAssigneeClick u (not isActive))
+                                ]
+                                [ span [ class "panel-icon" ] [ A.icon iconCls ]
+                                , viewUserFull 1 False False u
+                                , loadingSpin isLoading
+                                ]
+                        )
+        , viewEdit
+        ]

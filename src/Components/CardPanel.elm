@@ -618,26 +618,8 @@ update_ apis message model =
             ( model, out0 [ Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)) ] )
 
         DoLabelEdit ->
-            let
-                targets =
-                    getPath model.path_data |> List.map .nameid
-
-                receiver_m =
-                    withMaybeData model.tension_result |> Maybe.map .receiver
-            in
-            case receiver_m of
-                Just receiver ->
-                    case LE.elemIndex receiver.nameid targets of
-                        Just i ->
-                            -- receiver is in the current focus/path
-                            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (List.take (i + 1) targets) Nothing)) ] )
-
-                        Nothing ->
-                            -- receiver does not match the current focus/path
-                            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen [ receiver.nameid ] (Just False))) ] )
-
-                Nothing ->
-                    ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets Nothing)) ] )
+            -- Search labels declared on the path (root → focus). No recursion.
+            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid) False)) ] )
 
         UserSearchPanelMsg msg ->
             let
