@@ -724,6 +724,19 @@ getPath lg =
             []
 
 
+{-| Nameids in scope for focused-node search panels: path (root → focus)
+plus direct children of focus.
+-}
+getPathWithChildren : GqlData LocalGraph -> List String
+getPathWithChildren lg =
+    case lg of
+        Success g ->
+            List.map .nameid g.path ++ List.map .nameid g.focus.children
+
+        _ ->
+            []
+
+
 getParent : LocalGraph -> Maybe String
 getParent lg =
     case List.reverse lg.path of

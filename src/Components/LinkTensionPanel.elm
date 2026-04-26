@@ -23,7 +23,7 @@ port module Components.LinkTensionPanel exposing (ColTarget, Msg(..), State, has
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), getPath, uctxFromUser)
+import Bulk exposing (UserState(..), getPathWithChildren, uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..))
 import Bulk.Error exposing (viewGqlErrors)
@@ -544,7 +544,7 @@ viewPanel : GqlData NodesDict -> GqlData LocalGraph -> Model -> Html Msg
 viewPanel tree_data path_data model =
     let
         pathNameids =
-            getPath path_data |> List.map .nameid
+            getPathWithChildren path_data
 
         typeFilter_hthml =
             B.dropdown

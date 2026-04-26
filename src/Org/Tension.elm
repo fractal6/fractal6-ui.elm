@@ -1184,11 +1184,8 @@ update global message model =
 
         -- Assignees
         DoAssigneeEdit ->
-            let
-                targets =
-                    getPath model.path_data |> List.map .nameid
-            in
-            ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
+            -- Assignee selection is org-wide (queryMembers filters by rootnameid).
+            ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen [ model.node_focus.rootnameid ])), Cmd.none )
 
         UserSearchPanelMsg msg ->
             let
@@ -1229,8 +1226,8 @@ update global message model =
 
         -- Labels
         DoLabelEdit ->
-            -- Search labels declared on the path (root → focus). No recursion.
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid) False)), Cmd.none )
+            -- Search labels declared on the path (root → focus) and direct children of focus.
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPathWithChildren model.path_data) False)), Cmd.none )
 
         LabelSearchPanelMsg msg ->
             let
@@ -1274,8 +1271,8 @@ update global message model =
             ( { model | tension_projects = result }, Cmd.none, Cmd.none )
 
         DoProjectEdit ->
-            -- Search projects declared on the path (root → focus). No recursion.
-            ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid))), Cmd.none )
+            -- Search projects declared on the path (root → focus) and direct children of focus.
+            ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen (getPathWithChildren model.path_data))), Cmd.none )
 
         ProjectSearchPanelMsg msg ->
             let

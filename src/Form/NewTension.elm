@@ -24,7 +24,7 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
 import Browser.Events as Events
-import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
+import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, getPathWithChildren, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
 import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
@@ -2069,7 +2069,11 @@ viewTension tree_data model =
             , br [] [] -- allows selectors panel to display without overlap
             , let
                 pathTargets =
-                    getPath model.path_data |> List.map .nameid
+                    getPathWithChildren model.path_data
+
+                rootTargets =
+                    -- Assignees are org-wide (queryMembers filters by rootnameid).
+                    pathTargets |> List.head |> Maybe.map List.singleton |> withDefault []
 
                 labelsOp =
                     { selectedLabels = form.labels
@@ -2079,7 +2083,7 @@ viewTension tree_data model =
 
                 assigneesOp =
                     { selectedAssignees = form.assignees
-                    , targets = pathTargets
+                    , targets = rootTargets
                     , isRight = False
                     }
 

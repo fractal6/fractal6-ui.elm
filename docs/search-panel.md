@@ -11,33 +11,51 @@ Components:
 - `src/Components/ProjectSearchPanel.elm`
 - `src/Components/UserSearchPanel.elm`
 
-## Two scope rules
+## Scope rules
 
-There are two — and only two — scope rules in use:
+Three scope rules are in use, depending on the panel and call site:
 
-### 1. Path, non-recursive (focused-node search)
+### 1. Path + focus children, non-recursive (label / project — focused-node search)
 
-Used when the panel is attached to a focused node: tension side panel, card
-panel, link-tension panel.
+Used when the label or project panel is attached to a focused node: tension
+side panel, card panel, link-tension panel, new-tension modal.
 
 ```
-targets    = path nameids (root → focus, inclusive)
+targets    = path nameids (root → focus, inclusive) ++ direct children of focus
 recursive  = false  -- only labels/projects declared on these exact nodes
 ```
 
-The panel queries each `nameid` in `targets` directly (`nidsFilter`). Children
-of those nodes are **not** included. Rationale: a label or project attachable
-to a tension/card should be one declared on the focus or one of its ancestors
-(which the focus inherits from).
+The panel queries each `nameid` in `targets` directly (`nidsFilter`, indexed
+`in_` lookup). Deeper descendants are **not** included. Rationale: a label or
+project attachable to a tension/card should be one declared on the focus, one
+of its ancestors (which the focus inherits from), or a direct subcircle.
 
-Helper: `Bulk.getPath model.path_data |> List.map .nameid`.
+Helper: `Bulk.getPathWithChildren model.path_data`.
 
-### 2. Root, recursive (org-wide list filter)
+### 2. Root, members-only (assignee selection)
 
-Used when the panel filters a list at org level (tensions list, project page).
+Used by the user/assignee panel anywhere it appears. Members of an
+organisation are special role nodes attached directly under the root circle,
+so assignee lookup is always **org-wide**.
 
 ```
-targets    = [ root nameid ]            -- e.g. model.node_focus.rootnameid
+targets    = [ root nameid ]    -- e.g. model.node_focus.rootnameid
+```
+
+`UserSearchPanel.OnOpen` calls `queryMembers`, which extracts the rootid from
+the last nameid (`nid2rootid`) and filters `rootnameid == rootid` plus an
+`activeMembershipRoleTypes` match. Path / focus / children are irrelevant —
+the panel proposes every active member of the organisation. We pass
+`[ rootnameid ]` rather than the path to make the scope explicit at call
+sites.
+
+### 3. Root, recursive (org-wide label list filter)
+
+Used when the label panel filters a list at org level (tensions list, project
+page).
+
+```
+targets    = [ root nameid ]
 recursive  = true                       -- all descendants
 ```
 
@@ -49,18 +67,23 @@ scope for filtering a global list.
 
 | File | Caller | Targets | Recursive |
 |------|--------|---------|-----------|
-| `Org/Tension.elm` | `DoLabelEdit` | path | false |
-| `Org/Tension.elm` | `DoProjectEdit` | path | (project panel is non-recursive only) |
-| `Components/CardPanel.elm` | `DoLabelEdit` | path | false |
-| `Components/LinkTensionPanel.elm` | label filter | path | false |
-| `Form/NewTension.elm` | label / project pickers | path | false |
+| `Org/Tension.elm` | `DoLabelEdit` | path + focus children | false |
+| `Org/Tension.elm` | `DoAssigneeEdit` | `[rootnameid]` | n/a (rule 2) |
+| `Org/Tension.elm` | `DoProjectEdit` | path + focus children | (project panel is non-recursive only) |
+| `Components/CardPanel.elm` | `DoLabelEdit` | path + focus children | false |
+| `Components/CardPanel.elm` | `DoAssigneeEdit` | `[rootnameid]` | n/a (rule 2) |
+| `Components/LinkTensionPanel.elm` | label filter | path + focus children | false |
+| `Form/NewTension.elm` | label / project pickers | path + focus children | false |
+| `Form/NewTension.elm` | assignee picker | `[rootnameid]` | n/a (rule 2) |
 | `Org/Tensions.elm` | `ChangeLabel` | `[root]` | true |
 | `Org/Project.elm` | label filter | `[root]` | true |
 
 ## New tension modal (`Form/NewTension.elm`)
 
 The new tension modal hosts three pickers in this order: **assignees**,
-**labels**, **projects**. All three follow rule 1 (path, non-recursive).
+**labels**, **projects**. Labels and projects follow rule 1 (path + focus
+children, non-recursive); assignees follow rule 2 (org-wide,
+`[rootnameid]`).
 
 ### Project linkage during tension creation
 
@@ -98,6 +121,7 @@ captured at selection time and reused at submit time.
 - `Query.QueryNode.queryLabels` — non-recursive label fetch (GQL `nidsFilter`).
 - `Query.QueryNode.queryLabelsDown` — recursive-down label fetch (GQL `nidsDownFilter`).
 - `Query.QueryNode.getOpenProjectsForPanel` — non-recursive open-project fetch (GQL `nidsFilter`).
+- `Query.QueryNode.queryMembers` — org-wide member fetch. Takes a list of nameids but only the last one is used: `nid2rootid` extracts the rootid, and the GQL filter is `rootnameid == rootid` + active membership role types.
 
 `nidsFilter` matches `nameid in [...]`; `nidsDownFilter` builds a regexp that
 matches each nameid and its descendants.

@@ -23,7 +23,7 @@ port module Components.CardPanel exposing (CardPanelResult(..), Msg(..), State, 
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
-import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, getPath, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
+import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, getPathWithChildren, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
@@ -611,15 +611,12 @@ update_ apis message model =
             )
 
         DoAssigneeEdit ->
-            let
-                targets =
-                    getPath model.path_data |> List.map .nameid
-            in
-            ( model, out0 [ Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)) ] )
+            -- Assignee selection is org-wide (queryMembers filters by rootnameid).
+            ( model, out0 [ Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen [ model.node_focus.rootnameid ])) ] )
 
         DoLabelEdit ->
-            -- Search labels declared on the path (root → focus). No recursion.
-            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPath model.path_data |> List.map .nameid) False)) ] )
+            -- Search labels declared on the path (root → focus) and direct children of focus.
+            ( model, out0 [ Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen (getPathWithChildren model.path_data) False)) ] )
 
         UserSearchPanelMsg msg ->
             let
