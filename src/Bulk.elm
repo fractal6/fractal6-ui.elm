@@ -31,6 +31,7 @@ import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -300,7 +301,7 @@ type alias ProjectForm =
     , nameid : String -- use for roonameid identification
     , status : Maybe ProjectStatus.ProjectStatus
     , post : Post
-    , columns : Maybe (List { name : String, description : String, color : Maybe String })
+    , columns : Maybe (List { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType })
     , collaborators_add : List String
     , collaborators_remove : List String
     , peerCanEditProject : Maybe Bool

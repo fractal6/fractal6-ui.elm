@@ -525,7 +525,7 @@ addProjectInputEncoder form =
                                                         , description = Present c.description
                                                         , color = fromMaybe c.color
                                                         , pos = Present i
-                                                        , col_type = Present ProjectColumnType.NormalColumn
+                                                        , col_type = Present c.col_type
                                                     }
                                                 )
                                         )

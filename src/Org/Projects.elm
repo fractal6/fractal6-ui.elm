@@ -48,6 +48,7 @@ import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
@@ -312,19 +313,27 @@ resetForm model =
     }
 
 
-simpleKanban : List { name : String, description : String, color : Maybe String }
+simpleKanban : List { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType }
 simpleKanban =
-    [ { name = "Todo"
+    [ { name = "Triage"
+      , description = ""
+      , color = Nothing
+      , col_type = ProjectColumnType.NoStatusColumn
+      }
+    , { name = "Todo"
       , description = "This item hasn't been started"
       , color = Just "#01FF70"
+      , col_type = ProjectColumnType.NormalColumn
       }
     , { name = "In Progress"
       , description = "This is actively being worked on"
       , color = Just "#FF851B"
+      , col_type = ProjectColumnType.NormalColumn
       }
     , { name = "Done"
       , description = "This has been completed"
       , color = Just "#B10DC9"
+      , col_type = ProjectColumnType.NormalColumn
       }
     ]
 
