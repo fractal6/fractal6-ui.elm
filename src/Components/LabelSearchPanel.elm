@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewLabel, viewLabels)
+import Bulk.View exposing (viewCircleSimple, viewLabel, viewLabels)
 import Codecs exposing (labelDecoder)
 import Dict
 import Dom
@@ -630,6 +630,8 @@ viewLabelSelectors isInternal labels op model =
                                 [ span [ class "panel-icon" ] [ A.icon iconCls ]
                                 , viewLabel "" Nothing l_
                                 , loadingSpin isLoading
+                                , span [ class "is-pushed-right is-flex is-flex-wrap-wrap is-justify-content-flex-end" ]
+                                    (List.map (\n -> viewCircleSimple n.nameid) l_.nodes)
                                 ]
                         )
         , ternary isInternal (text "") viewEdit

@@ -26,6 +26,7 @@ import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
 import Bulk.Error exposing (viewGqlErrors)
+import Bulk.View exposing (viewCircleSimple)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -489,5 +490,7 @@ viewProjectSelectors projects op model =
                             [ span [ class "panel-icon" ] [ A.icon iconCls ]
                             , span [] [ text p.name ]
                             , loadingSpin isLoading
+                            , span [ class "is-pushed-right is-flex is-flex-wrap-wrap is-justify-content-flex-end" ]
+                                (List.map (\n -> viewCircleSimple n.nameid) p.nodes)
                             ]
                     )

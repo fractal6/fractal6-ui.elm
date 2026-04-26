@@ -188,8 +188,8 @@ viewCircleTarget baseUri commonOp cls er =
 
 
 viewCircleSimple : String -> Html msg
-viewCircleSimple nameid =
-    span [ class "tag is-rounded is-wrapped" ] [ String.split "#" nameid |> LE.last |> withDefault "" |> text ]
+viewCircleSimple name_or_nameid =
+    span [ class "tag is-rounded is-wrapped" ] [ String.split "#" name_or_nameid |> LE.last |> withDefault "" |> text ]
 
 
 viewTensionArrow : Bool -> String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg

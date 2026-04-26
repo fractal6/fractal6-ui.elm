@@ -826,6 +826,7 @@ type alias ProjectWithColumns =
     { id : String
     , name : String
     , columns : List ProjectColumnLite
+    , nodes : List NameidPayload
     }
 
 

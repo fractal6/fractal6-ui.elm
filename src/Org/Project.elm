@@ -854,16 +854,16 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-10-fullhd pb-0" ]
-            [ div [ class "columns is-centered mb-0 is-hidden-embed" ]
-                [ div [ class "column is-narrow pb-1" ]
+            [ div [ class "columns is-centered p-0 is-hidden-embed" ]
+                [ div [ class "column is-narrow" ]
                     [ case model.project_data of
                         Success p ->
-                            h2 [ class "subtitle is-strong mb-0" ] [ text p.name ]
+                            h2 [ class "subtitle is-strong is-size-4" ] [ text p.name ]
 
                         _ ->
                             text ""
                     ]
-                , div [ class "column is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-flex-end pt-0 pb-1", style "row-gap" "0.25rem" ]
+                , div [ class "column is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-flex-end", style "row-gap" "0.25rem" ]
                     (case model.project_data of
                         Success p ->
                             List.map (\node -> viewCircleTarget ProjectsBaseUri (CommonMsg NoMsg LogErr) "is-small mr-2" node) p.nodes

@@ -1507,7 +1507,7 @@ nodeLabelsPayload =
                             |> Present
                 }
             )
-            labelPayload
+            labelWithNodesPayload
         )
 
 
@@ -1518,6 +1518,18 @@ labelPayload =
         |> with Fractal.Object.Label.name
         |> with Fractal.Object.Label.color
         |> hardcoded []
+
+
+labelWithNodesPayload : SelectionSet Label Fractal.Object.Label
+labelWithNodesPayload =
+    SelectionSet.succeed Label
+        |> with (Fractal.Object.Label.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Label.name
+        |> with Fractal.Object.Label.color
+        |> with
+            (Fractal.Object.Label.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
+                |> SelectionSet.map (withDefault [])
+            )
 
 
 
@@ -1651,6 +1663,10 @@ projectWithColumnsPayload =
                     }
                 )
                 projectColumnLitePayload
+                |> SelectionSet.map (withDefault [])
+            )
+        |> with
+            (Fractal.Object.Project.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
                 |> SelectionSet.map (withDefault [])
             )
 

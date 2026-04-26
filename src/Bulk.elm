@@ -302,7 +302,7 @@ initProjectPanelForm tid user =
                 initUserctx
     , tid = tid
     , targets = []
-    , project = { id = "", name = "", columns = [] }
+    , project = { id = "", name = "", columns = [], nodes = [] }
     , isNew = False
     , post = Dict.empty
     }
