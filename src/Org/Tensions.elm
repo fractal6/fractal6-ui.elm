@@ -27,7 +27,7 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Bulk exposing (getPath, hotTensionPush, hotTensionPush2, isPinnedRecursivelyOn, mergePinnedTensions)
-import Bulk.Board exposing (viewBoard)
+import Bulk.Board as BB exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewLabel, viewPinnedTensions, viewUserFull)
@@ -43,6 +43,7 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
+import Dom
 import Extra exposing (showIf, space_, ternary, unwrap, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
@@ -212,6 +213,7 @@ type alias Model =
     , movingHoverT : Maybe { pos : Int, tid : String, to_receiverid : String }
     , dragCount : Int
     , draging : Bool
+    , activeTids : List String
 
     -- Common
     , session : SessionCommon
@@ -676,6 +678,7 @@ init global flags =
             , movingHoverT = Nothing
             , dragCount = 0
             , draging = False
+            , activeTids = []
 
             -- Common
             , session = session.common
@@ -847,6 +850,7 @@ type Msg
     | OnMoveLeaveCol_
     | OnMoveEnterT { pos : Int, tid : String, to_receiverid : String }
     | OnMoveDrop String
+    | OnCardClick (Maybe Tension)
       -- Common
     | NoMsg
     | LogErr String
@@ -1311,7 +1315,7 @@ update global message model =
             ( { model | hover_column = v }, Cmd.none, Cmd.none )
 
         OnMove c t ->
-            ( { model | draging = True, dragCount = 0, movingHoverCol = Just c, movingTension = Just t }, Cmd.none, Cmd.none )
+            ( { model | draging = True, dragCount = 0, movingHoverCol = Just c, movingTension = Just t, activeTids = [] }, Cmd.none, Cmd.none )
 
         OnEndMove ->
             let
@@ -1371,6 +1375,18 @@ update global message model =
             , Cmd.none
             , Cmd.none
             )
+
+        OnCardClick t_m ->
+            case t_m of
+                Just t ->
+                    if List.member t.id model.activeTids then
+                        ( { model | activeTids = [] }, Cmd.none, Cmd.none )
+
+                    else
+                        ( { model | activeTids = [ t.id ] }, Cmd.none, Cmd.none )
+
+                Nothing ->
+                    ( { model | activeTids = [] }, Cmd.none, Cmd.none )
 
         -- Authors
         UserSearchPanelMsg msg ->
@@ -1640,14 +1656,33 @@ update global message model =
 
                     else
                         cmds_
+
+                movedTid =
+                    Maybe.map Tuple.second out.result
+                        |> withDefault Nothing
+                        |> Maybe.map Tuple.first
+
+                ( movingTension, activeTids ) =
+                    case movedTid of
+                        Just tid ->
+                            ( Nothing, [ tid ] )
+
+                        Nothing ->
+                            ( model.movingTension, model.activeTids )
             in
-            ( { model | moveFifo = newfifo, tensions_all = tensions_all, moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | moveFifo = newfifo, tensions_all = tensions_all, moveTension = data, movingTension = movingTension, activeTids = activeTids }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Events.onResize (\w h -> OnResize w h)
     ]
+        ++ (if List.isEmpty model.activeTids then
+                []
+
+            else
+                [ Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing)) ]
+           )
         ++ (HelperBar.subscriptions |> List.map (\s -> Sub.map HelperBarMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -2072,6 +2107,33 @@ viewIntExtTensions model =
         ]
 
 
+boardOp : Model -> String -> Bool -> BB.Op Msg
+boardOp model boardId hasTaskMove =
+    { baseUri = TensionsBaseUri
+    , hasTaskMove = hasTaskMove
+    , hasNewCol = False
+    , session = model.session
+    , node_focus = model.node_focus
+    , boardId = boardId
+    , boardHeight = model.boardHeight
+    , movingTension = model.movingTension
+    , movingHoverCol = model.movingHoverCol
+    , movingHoverT = model.movingHoverT
+    , draging = model.draging
+    , activeTids = model.activeTids
+    , onColumnHover = OnColumnHover
+    , onMove = OnMove
+    , onCancelHov = OnCancelHov
+    , onEndMove = OnEndMove
+    , onMoveEnterCol = OnMoveEnterCol
+    , onMoveLeaveCol = OnMoveLeaveCol
+    , onMoveEnterT = OnMoveEnterT
+    , onMoveDrop = OnMoveDrop
+    , onCardClick = OnCardClick
+    , onAddCol = NoMsg
+    }
+
+
 viewCircleTensions : Model -> Html Msg
 viewCircleTensions model =
     case model.tensions_all of
@@ -2133,30 +2195,7 @@ viewCircleTensions model =
                         ]
 
                 op =
-                    { baseUri = TensionsBaseUri
-                    , hasTaskMove = True
-                    , hasNewCol = False
-                    , session = model.session
-                    , node_focus = model.node_focus
-                    , boardId = "tensionsCircle"
-                    , boardHeight = model.boardHeight
-                    , movingTension = model.movingTension
-                    , movingHoverCol = model.movingHoverCol
-                    , movingHoverT = model.movingHoverT
-
-                    -- Board Msg
-                    , onColumnHover = OnColumnHover
-                    , onMove = OnMove
-                    , onCancelHov = OnCancelHov
-                    , onEndMove = OnEndMove
-                    , onMoveEnterCol = OnMoveEnterCol
-                    , onMoveLeaveCol = OnMoveLeaveCol
-                    , onMoveEnterT = OnMoveEnterT
-                    , onMoveDrop = OnMoveDrop
-
-                    -- Board Project Msg
-                    , onAddCol = NoMsg
-                    }
+                    boardOp model "tensionsCircle" True
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
@@ -2205,28 +2244,7 @@ viewLabelTensions model =
                         ]
 
                 op =
-                    { baseUri = TensionsBaseUri
-                    , hasTaskMove = False
-                    , hasNewCol = False
-                    , session = model.session
-                    , node_focus = model.node_focus
-                    , boardId = "tensionsLabel"
-                    , boardHeight = model.boardHeight
-                    , movingTension = model.movingTension
-                    , movingHoverCol = model.movingHoverCol
-                    , movingHoverT = model.movingHoverT
-
-                    -- Board Msg
-                    , onColumnHover = OnColumnHover
-                    , onMove = OnMove
-                    , onCancelHov = OnCancelHov
-                    , onEndMove = OnEndMove
-                    , onMoveEnterCol = OnMoveEnterCol
-                    , onMoveLeaveCol = OnMoveLeaveCol
-                    , onMoveEnterT = OnMoveEnterT
-                    , onMoveDrop = OnMoveDrop
-                    , onAddCol = NoMsg
-                    }
+                    boardOp model "tensionsLabel" False
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
@@ -2275,28 +2293,7 @@ viewAssigneeTensions model =
                         ]
 
                 op =
-                    { baseUri = TensionsBaseUri
-                    , hasTaskMove = False
-                    , hasNewCol = False
-                    , session = model.session
-                    , node_focus = model.node_focus
-                    , boardId = "tensionsAssignee"
-                    , boardHeight = model.boardHeight
-                    , movingTension = model.movingTension
-                    , movingHoverCol = model.movingHoverCol
-                    , movingHoverT = model.movingHoverT
-
-                    -- Board Msg
-                    , onColumnHover = OnColumnHover
-                    , onMove = OnMove
-                    , onCancelHov = OnCancelHov
-                    , onEndMove = OnEndMove
-                    , onMoveEnterCol = OnMoveEnterCol
-                    , onMoveLeaveCol = OnMoveLeaveCol
-                    , onMoveEnterT = OnMoveEnterT
-                    , onMoveDrop = OnMoveDrop
-                    , onAddCol = NoMsg
-                    }
+                    boardOp model "tensionsAssignee" False
             in
             if List.length keys == 0 then
                 div [ class "ml-6 p-6" ]
