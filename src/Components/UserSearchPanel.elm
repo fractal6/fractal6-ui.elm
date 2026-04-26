@@ -208,6 +208,7 @@ type Msg
     | ResetClickResult
       --
     | Navigate String
+    | OnModalAsk String String
       -- Common
     | NoMsg
     | LogErr String
@@ -400,6 +401,9 @@ update_ apis message model =
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
+        OnModalAsk link onCloseTxt ->
+            ( model, out1 [ DoModalAsk link onCloseTxt ] )
+
         -- Common
         NoMsg ->
             ( model, noOut )
@@ -446,7 +450,7 @@ view op (State model) =
                         )
                         op.selectedAssignees
             in
-            view_ { op | selectedAssignees = selectedAssignees } model
+            view_ False { op | selectedAssignees = selectedAssignees } model
 
           else
             text ""
@@ -467,7 +471,7 @@ viewNew op (State model) =
                                 )
                                 op.selectedAssignees
                     in
-                    view_ { op | selectedAssignees = selectedAssignees } model
+                    view_ True { op | selectedAssignees = selectedAssignees } model
 
                   else
                     text ""
@@ -486,8 +490,8 @@ viewNew op (State model) =
         ]
 
 
-view_ : Op -> Model -> Html Msg
-view_ op model =
+view_ : Bool -> Op -> Model -> Html Msg
+view_ isEmbedded op model =
     nav [ id "usersSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.assignees_data of
             Success assignees_d ->
@@ -508,34 +512,35 @@ view_ op model =
                         else
                             LE.uniqueBy .username model.lookup
                 in
-                div []
-                    [ div [ class "panel-block" ]
-                        [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
-                            [ input
-                                [ id "userInput"
-                                , class "input autofocus is-small"
-                                , type_ "text"
-                                , placeholder T.searchUsers
-                                , value model.pattern
-                                , onInput OnChangePattern
+                div [] <|
+                    ternary isEmbedded List.reverse identity <|
+                        [ div [ class "panel-block" ]
+                            [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
+                                [ input
+                                    [ id "userInput"
+                                    , class "input autofocus is-small"
+                                    , type_ "text"
+                                    , placeholder T.searchUsers
+                                    , value model.pattern
+                                    , onInput OnChangePattern
+                                    ]
+                                    []
+                                , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
+                                , if model.pattern /= "" then
+                                    span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
+
+                                  else
+                                    text ""
                                 ]
-                                []
-                            , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
-                            , if model.pattern /= "" then
-                                span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
-
-                              else
-                                text ""
                             ]
-                        ]
-                    , case model.click_result of
-                        Failure err ->
-                            viewGqlErrors err
+                        , case model.click_result of
+                            Failure err ->
+                                viewGqlErrors err
 
-                        _ ->
-                            text ""
-                    , viewAssigneeSelectors users op model
-                    ]
+                            _ ->
+                                text ""
+                        , viewAssigneeSelectors isEmbedded users op model
+                        ]
 
             Loading ->
                 div [ class "spinner" ] []
@@ -551,8 +556,8 @@ view_ op model =
         ]
 
 
-viewAssigneeSelectors : List User -> Op -> Model -> Html Msg
-viewAssigneeSelectors users op model =
+viewAssigneeSelectors : Bool -> List User -> Op -> Model -> Html Msg
+viewAssigneeSelectors isEmbedded users op model =
     let
         editLink =
             toLink MembersBaseUri (op.targets |> List.head |> withDefault "") []
@@ -560,13 +565,22 @@ viewAssigneeSelectors users op model =
         viewEdit =
             p
                 [ class "panel-block is-md is-w discrete-link"
-                , attribute "style" "border-top: 1px solid;"
-                , onClick (Navigate editLink)
+                , if isEmbedded then
+                    attribute "style" "border-bottom: 1px solid;"
+
+                  else
+                    attribute "style" "border-top: 1px solid;"
+                , if isEmbedded then
+                    onClick (OnModalAsk editLink "")
+
+                  else
+                    onClick (Navigate editLink)
                 ]
                 [ A.icon1 "icon-user-plus" T.inviteNewMembers ]
     in
     div []
-        [ div [ class "selectors" ] <|
+        [ ternary isEmbedded viewEdit (text "")
+        , div [ class "selectors" ] <|
             if users == [] then
                 [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
@@ -594,5 +608,5 @@ viewAssigneeSelectors users op model =
                                 , loadingSpin isLoading
                                 ]
                         )
-        , viewEdit
+        , ternary isEmbedded (text "") viewEdit
         ]

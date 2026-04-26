@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewCircleSimple, viewProjectColumnTag)
+import Bulk.View exposing (viewCircleSimple)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -175,6 +175,7 @@ type Msg
     | ResetClickResult
       --
     | Navigate String
+    | OnModalAsk String String
       -- Common
     | NoMsg
     | LogErr String
@@ -378,6 +379,9 @@ update_ apis message model =
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
+        OnModalAsk link onCloseTxt ->
+            ( model, out1 [ DoModalAsk link onCloseTxt ] )
+
         NoMsg ->
             ( model, noOut )
 
@@ -413,7 +417,7 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div [ id id_target_name ]
         [ if model.isOpen then
-            view_ op model
+            view_ False op model
 
           else
             text ""
@@ -426,7 +430,7 @@ viewNew op (State model) =
         [ span [ class "panel-selector-wrapper" ]
             [ div [ id id_target_name, class "is-reversed" ]
                 [ if model.isOpen then
-                    view_ op model
+                    view_ True op model
 
                   else
                     text ""
@@ -441,10 +445,11 @@ viewNew op (State model) =
             span [ class "ml-2" ]
                 (List.map
                     (\tp ->
-                        span [ class "mr-2 is-inline-flex is-align-items-center" ]
-                            [ text tp.project.name
-                            , span [ class "ml-1" ] [ viewProjectColumnTag tp.column.color tp.column.name [] ]
+                        span
+                            [ class "tag has-border mr-2"
+                            , attribute "style" "border-radius: 5px;"
                             ]
+                            [ text tp.project.name ]
                     )
                     op.selectedProjects
                 )
@@ -454,8 +459,8 @@ viewNew op (State model) =
         ]
 
 
-view_ : Op -> Model -> Html Msg
-view_ op model =
+view_ : Bool -> Op -> Model -> Html Msg
+view_ isEmbedded op model =
     nav [ id "projectSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.projects_data of
             Success projects_d ->
@@ -471,34 +476,35 @@ view_ op model =
                             projects_d
                                 |> List.filter (\p -> String.contains pattern_ (String.toLower p.name))
                 in
-                div []
-                    [ div [ class "panel-block" ]
-                        [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
-                            [ input
-                                [ id "userInput"
-                                , class "input autofocus is-small"
-                                , type_ "text"
-                                , placeholder T.searchProjects
-                                , value model.pattern
-                                , onInput OnChangePattern
+                div [] <|
+                    ternary isEmbedded List.reverse identity <|
+                        [ div [ class "panel-block" ]
+                            [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
+                                [ input
+                                    [ id "userInput"
+                                    , class "input autofocus is-small"
+                                    , type_ "text"
+                                    , placeholder T.searchProjects
+                                    , value model.pattern
+                                    , onInput OnChangePattern
+                                    ]
+                                    []
+                                , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
+                                , if model.pattern /= "" then
+                                    span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
+
+                                  else
+                                    text ""
                                 ]
-                                []
-                            , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
-                            , if model.pattern /= "" then
-                                span [ class "icon is-right is-clickable", onMousedownPD (OnChangePattern "") ] [ A.icon "icon-x" ]
-
-                              else
-                                text ""
                             ]
-                        ]
-                    , case model.click_result of
-                        Failure err ->
-                            viewGqlErrors err
+                        , case model.click_result of
+                            Failure err ->
+                                viewGqlErrors err
 
-                        _ ->
-                            text ""
-                    , viewProjectSelectors visible op model
-                    ]
+                            _ ->
+                                text ""
+                        , viewProjectSelectors isEmbedded visible op model
+                        ]
 
             Loading ->
                 div [ class "spinner" ] []
@@ -514,8 +520,8 @@ view_ op model =
         ]
 
 
-viewProjectSelectors : List ProjectWithColumns -> Op -> Model -> Html Msg
-viewProjectSelectors projects op model =
+viewProjectSelectors : Bool -> List ProjectWithColumns -> Op -> Model -> Html Msg
+viewProjectSelectors isEmbedded projects op model =
     let
         editLink =
             toLink ProjectsBaseUri (op.targets |> List.head |> withDefault "") []
@@ -523,13 +529,22 @@ viewProjectSelectors projects op model =
         viewEdit =
             p
                 [ class "panel-block is-md is-w discrete-link"
-                , attribute "style" "border-top: 1px solid;"
-                , onClick (Navigate editLink)
+                , if isEmbedded then
+                    attribute "style" "border-bottom: 1px solid;"
+
+                  else
+                    attribute "style" "border-top: 1px solid;"
+                , if isEmbedded then
+                    onClick (OnModalAsk editLink "")
+
+                  else
+                    onClick (Navigate editLink)
                 ]
                 [ A.icon1 "icon-edit-2" T.addOrEditProjects ]
     in
     div []
-        [ div [ class "selectors" ] <|
+        [ ternary isEmbedded viewEdit (text "")
+        , div [ class "selectors" ] <|
             if projects == [] then
                 [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
@@ -570,5 +585,5 @@ viewProjectSelectors projects op model =
                                     (List.map (\n -> viewCircleSimple n.nameid) p.nodes)
                                 ]
                         )
-        , viewEdit
+        , ternary isEmbedded (text "") viewEdit
         ]

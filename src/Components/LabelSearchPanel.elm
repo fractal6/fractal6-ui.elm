@@ -493,7 +493,7 @@ viewNew op (State model) =
 
 
 view_ : Bool -> Op -> Model -> Html Msg
-view_ isInternal op model =
+view_ isEmbedded op model =
     nav [ id "labelSearchPanel", class "panel dropList", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.labels_data of
             Success labels_d ->
@@ -511,7 +511,7 @@ view_ isInternal op model =
                             LE.uniqueBy .name model.lookup
                 in
                 div [] <|
-                    ternary isInternal List.reverse identity <|
+                    ternary isEmbedded List.reverse identity <|
                         [ div [ class "panel-block" ]
                             [ p [ class "control has-icons-left", classList [ ( "has-icons-right", model.pattern /= "" ) ] ]
                                 [ input
@@ -537,7 +537,7 @@ view_ isInternal op model =
 
                             _ ->
                                 text ""
-                        , viewLabelSelectors isInternal labels op model
+                        , viewLabelSelectors isEmbedded labels op model
                         ]
 
             Loading ->
@@ -555,7 +555,7 @@ view_ isInternal op model =
 
 
 viewLabelSelectors : Bool -> List Label -> Op -> Model -> Html Msg
-viewLabelSelectors isInternal labels op model =
+viewLabelSelectors isEmbedded labels op model =
     let
         viewEdit =
             let
@@ -564,12 +564,12 @@ viewLabelSelectors isInternal labels op model =
             in
             p
                 [ class "panel-block is-md is-w discrete-link"
-                , if isInternal then
+                , if isEmbedded then
                     attribute "style" "border-bottom: 1px solid;"
 
                   else
                     attribute "style" "border-top: 1px solid;"
-                , if isInternal then
+                , if isEmbedded then
                     onClick (OnModalAsk editLink "")
 
                   else
@@ -578,7 +578,7 @@ viewLabelSelectors isInternal labels op model =
                 [ A.icon1 "icon-edit-2" T.addOrEditLabels ]
     in
     div []
-        [ ternary isInternal viewEdit (text "")
+        [ ternary isEmbedded viewEdit (text "")
         , div [ class "selectors" ] <|
             if labels == [] then
                 [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
@@ -613,7 +613,7 @@ viewLabelSelectors isInternal labels op model =
                             p
                                 [ class "panel-block"
                                 , classList [ ( "is-active", isActive ) ]
-                                , ternary isInternal
+                                , ternary isEmbedded
                                     (onClick (OnLabelClickInt l (not isActive)))
                                     (onClick (OnSubmit <| OnLabelClick l (not isActive)))
                                 ]
@@ -624,5 +624,5 @@ viewLabelSelectors isInternal labels op model =
                                     (List.map (\n -> viewCircleSimple n.nameid) l_.nodes)
                                 ]
                         )
-        , ternary isInternal (text "") viewEdit
+        , ternary isEmbedded (text "") viewEdit
         ]
