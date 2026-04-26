@@ -30,10 +30,10 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Components.SearchBar exposing (viewSearchField)
-import Extra exposing (showIf, ternary, unwrap)
+import Extra exposing (send, sendNow, sendSleep, showIf, ternary, unwrap)
 import Form.Help as Help
 import Fractal.Enum.NodeOrderable as NodeOrderable
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, div, h1, i, p, span, text)
 import Html.Attributes exposing (attribute, class, id)
 import Html.Events exposing (onClick)

@@ -42,7 +42,7 @@ import Components.ProjectSettingsPanel as ProjectSettingsPanel
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Extra exposing (insertAt, ternary, unwrap)
+import Extra exposing (insertAt, send, sendNow, sendSleep, ternary, unwrap)
 import Extra.Events exposing (onKeydown, onMousedownPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -53,7 +53,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep, viewNotif)
+import Global exposing (Msg(..), viewNotif)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, title, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)

@@ -27,16 +27,14 @@ import Browser.Events as Events
 import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewCircleSimple, viewLabel, viewLabels)
 import Codecs exposing (labelDecoder)
 import Dict
 import Dom
-import Extra exposing (ternary)
+import Extra exposing (colorAttr, send, sendNow, sendSleep, ternary)
 import Extra.Events exposing (onMousedownPD)
 import Fractal.Enum.TensionEvent as TensionEvent
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, div, i, input, label, nav, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
+import Html exposing (Html, a, div, i, input, label, nav, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
@@ -621,8 +619,59 @@ viewLabelSelectors isEmbedded labels op model =
                                 , viewLabel "" Nothing l_
                                 , loadingSpin isLoading
                                 , span [ class "is-pushed-right is-flex is-flex-wrap-wrap is-justify-content-flex-end" ]
-                                    (List.map (\n -> viewCircleSimple n.nameid) l_.nodes)
+                                    (List.map (\n -> viewNodeTag n.nameid) l_.nodes)
                                 ]
                         )
         , ternary isEmbedded (text "") viewEdit
         ]
+
+
+viewNodeTag : String -> Html msg
+viewNodeTag name_or_nameid =
+    span [ class "tag is-rounded is-wrapped" ] [ String.split "#" name_or_nameid |> LE.last |> withDefault "" |> text ]
+
+
+
+--
+-- Label rendering (used by Bulk.View.mediaTension/viewTensionLight and panel selectors)
+--
+
+
+{-| 1st parameter String is the current nameid; used to make labels clickable.
+-}
+viewLabels : Maybe String -> List Label -> Html msg
+viewLabels nid_m labels =
+    if List.length labels == 0 then
+        text ""
+
+    else
+        let
+            to_link_m name =
+                Maybe.map (\nid -> toLink TensionsBaseUri nid [] ++ ("?l=" ++ name)) nid_m
+        in
+        span [ class "labelsList" ]
+            (List.map (\l -> viewLabel "" (to_link_m l.name) l) labels)
+
+
+viewLabel : String -> Maybe String -> Label -> Html msg
+viewLabel cls link_m l =
+    let
+        color =
+            l.color
+                |> Maybe.map (\c -> [ colorAttr c ])
+                |> withDefault []
+
+        a_or_span =
+            case link_m of
+                Just _ ->
+                    a
+
+                Nothing ->
+                    span
+
+        link =
+            withDefault "#" link_m
+    in
+    a_or_span
+        ([ class ("tag is-rounded " ++ cls), href link ] ++ color)
+        [ text l.name ]

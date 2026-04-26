@@ -31,12 +31,11 @@ import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (space_, ternary, textH, unwrap, unwrap2)
+import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, i, p, span, strong, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, target)
 import Html.Events exposing (onClick)

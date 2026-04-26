@@ -25,9 +25,12 @@ import Dict exposing (Dict)
 import Html exposing (Html, span, text)
 import Html.Attributes exposing (attribute)
 import List.Extra as LE
+import Process
 import Regex exposing (Regex)
 import String
 import String.Extra as SE
+import Task
+import Time
 
 
 
@@ -317,3 +320,22 @@ showMaybe a f =
 
         Nothing ->
             text ""
+
+
+
+-- Cmd helpers
+
+
+send : msg -> Cmd msg
+send =
+    Task.succeed >> Task.perform identity
+
+
+sendNow : (Time.Posix -> msg) -> Cmd msg
+sendNow m =
+    Task.perform m Time.now
+
+
+sendSleep : msg -> Float -> Cmd msg
+sendSleep msg time =
+    Task.perform (\_ -> msg) (Process.sleep time)

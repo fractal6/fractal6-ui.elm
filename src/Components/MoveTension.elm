@@ -34,11 +34,10 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.TreeMenu exposing (viewSelectorTree)
 import Dict
 import Dom
-import Extra exposing (space_, ternary)
+import Extra exposing (send, sendNow, sendSleep, space_, ternary)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, target, value)
 import Html.Events exposing (onClick, onInput)

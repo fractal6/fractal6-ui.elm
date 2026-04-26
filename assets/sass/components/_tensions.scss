@@ -75,24 +75,28 @@
             background: transparent;
         }
     }
-    .tension-project-status {
-        cursor: pointer;
-        .icon-chevron-down { font-size: 0.75rem; }
-        &:hover .tag {
-            background-color: var(--background-evidence);
-        }
+}
+
+.tension-project-status {
+    cursor: pointer;
+    .icon-chevron-down { font-size: 0.75rem; }
+    border: $border-size-small solid var(--border-color-light);
+    border-radius: 10px !important;
+    &:hover .tag {
+        background-color: var(--background-evidence);
+        border-color: var(--border-color) !important;
     }
-    .tension-project-status-dropdown {
-        position: relative;
-        nav.panel.dropList {
-            position: absolute;
-            z-index: 30;
-            min-width: 12rem;
-            .tension-project-column-item {
-                cursor: pointer;
-                &:hover {
-                    background-color: var(--background-hover);
-                }
+}
+.tension-project-status-dropdown {
+    position: relative;
+    nav.panel.dropList {
+        position: absolute;
+        z-index: 30;
+        min-width: 12rem;
+        .tension-project-column-item {
+            cursor: pointer;
+            &:hover {
+                background-color: var(--background-hover);
             }
         }
     }

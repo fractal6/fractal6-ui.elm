@@ -49,14 +49,13 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (showIf, ternary)
+import Extra exposing (send, sendNow, sendSleep, showIf, ternary)
 import Extra.Events exposing (onClickSafe)
 import Form exposing (isPostSendable)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, title, value)
 import Html.Events exposing (onClick, onInput)

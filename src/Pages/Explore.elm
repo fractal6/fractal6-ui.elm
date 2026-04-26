@@ -30,10 +30,10 @@ import Bulk.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (send, sendSleep, ternary, textH, upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)

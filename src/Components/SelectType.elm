@@ -28,11 +28,10 @@ import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (send, sendNow, sendSleep, ternary)
 import Extra.Views exposing (showMsg)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, i, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, type_, value)
 import Html.Events exposing (onClick)

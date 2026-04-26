@@ -30,10 +30,9 @@ import Bulk.View exposing (action2icon, counter)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
+import Extra exposing (send, sendSleep, showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onClickSafe)
 import Fractal.Enum.RoleType as RoleType
-import Global exposing (send, sendSleep)
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)

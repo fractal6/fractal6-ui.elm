@@ -29,7 +29,7 @@ import Bulk.View exposing (viewUserFull)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Global exposing (send, sendNow, sendSleep)
+import Extra exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, hr, input, p, span, text, textarea)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, id, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput)

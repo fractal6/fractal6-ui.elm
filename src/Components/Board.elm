@@ -27,18 +27,18 @@ import Browser.Events as Events
 import Bulk exposing (UserState(..), uctxFromUser)
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
-import Bulk.View exposing (action2icon, action2str, statusColor, tensionIcon, viewLabels)
+import Bulk.View exposing (action2icon, action2str, statusColor, tensionIcon)
+import Components.LabelSearchPanel exposing (viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
 import Dom
-import Extra exposing (insertAt, ternary, unwrap)
+import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onKeydown)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendSleep)
 import Html exposing (Html, a, br, div, hr, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)

@@ -31,14 +31,14 @@ import Bulk.Event exposing (contractEventToText, contractToJonction, contractToL
 import Bulk.View exposing (counter, mediaTension, viewOrga)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary, upT)
+import Extra exposing (send, sendNow, sendSleep, ternary, upT)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, target, title)
 import Html.Events exposing (onClick)

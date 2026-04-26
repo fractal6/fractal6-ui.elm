@@ -41,7 +41,7 @@ import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
-import Extra exposing (decap, showIf, space_, ternary, textH, textT, unwrap, upH)
+import Extra exposing (decap, send, sendNow, sendSleep, showIf, space_, ternary, textH, textT, unwrap, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -52,7 +52,7 @@ import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)

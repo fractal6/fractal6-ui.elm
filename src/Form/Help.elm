@@ -29,7 +29,7 @@ import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (space_, ternary, textH, textT, upH)
+import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, textT, upH)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
@@ -37,7 +37,6 @@ import Fractal.Enum.Lang as Lang
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h2, header, i, input, label, li, nav, p, section, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput)

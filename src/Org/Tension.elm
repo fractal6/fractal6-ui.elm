@@ -24,11 +24,10 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
-import Browser.Events as Events
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewProjectColumnTag, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
+import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -36,17 +35,16 @@ import Components.Comments as Comments exposing (OutType(..))
 import Components.ContractsPage as ContractsPage
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeEdit(..), NodeView(..))
 import Components.OrgaMenu as OrgaMenu
 import Components.ProjectSearchPanel as ProjectSearchPanel
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
-import Components.UserSearchPanel as UserSearchPanel
+import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Dom
-import Extra exposing (decap, showIf, ternary, textD, unwrap)
+import Extra exposing (decap, send, sendNow, sendSleep, showIf, ternary, textD, unwrap)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickSP)
 import Extra.Url exposing (queryParser)
@@ -60,7 +58,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route(..), toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, spellcheck, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -75,8 +73,7 @@ import Ports
 import Query.PatchTension exposing (patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubscription)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryProject exposing (moveProjectCard)
-import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead, getTensionProjects)
+import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Scroll
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), ProjectSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
@@ -236,10 +233,6 @@ type alias Model =
     , isTensionAdmin : Bool
     , isAssigneeOpen : Bool
     , isLabelOpen : Bool
-    , isProjectOpen : Bool
-    , tension_projects : GqlData (List TensionProject)
-    , statusEditOpen : Maybe String
-    , status_result : GqlData IdPayload
 
     -- Common
     , refresh_trial : Int
@@ -388,10 +381,6 @@ init global flags =
             , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
-            , isProjectOpen = False
-            , tension_projects = Loading
-            , statusEditOpen = Nothing
-            , status_result = NotAsked
             , assigneesPanel = UserSearchPanel.init tid AssignUser session.common.user
             , labelsPanel = LabelSearchPanel.init tid AssignLabel session.common.user
             , projectsPanel = ProjectSearchPanel.init tid AssignProject session.common.user
@@ -466,7 +455,7 @@ refresh_cmds refresh global model =
       else
         Cmd.none
     , if refresh then
-        getTensionProjects apis model.tensionid GotTensionProjects
+        Cmd.map ProjectSearchPanelMsg (send ProjectSearchPanel.OnLoadCards)
 
       else
         Cmd.none
@@ -579,12 +568,7 @@ type Msg
       -- Labels
     | DoLabelEdit
       -- Projects
-    | GotTensionProjects (GqlData (List TensionProject))
     | DoProjectEdit
-    | OnStatusEditOpen String
-    | OnStatusEditClose
-    | OnMoveCardToColumn String String
-    | OnMoveCardAck (GqlData IdPayload)
       -- move tension
     | DoMove TensionHead
       -- Node Action
@@ -1267,9 +1251,6 @@ update global message model =
             )
 
         -- Projects
-        GotTensionProjects result ->
-            ( { model | tension_projects = result }, Cmd.none, Cmd.none )
-
         DoProjectEdit ->
             -- Search projects declared on the path (root → focus) and direct children of focus.
             ( model, Cmd.map ProjectSearchPanelMsg (send (ProjectSearchPanel.OnOpen (getPathWithChildren model.path_data))), Cmd.none )
@@ -1279,72 +1260,13 @@ update global message model =
                 ( panel, out ) =
                     ProjectSearchPanel.update apis msg model.projectsPanel
 
-                tension_projects =
-                    case out.result of
-                        Just (ProjectSearchPanel.ProjectAdded tp) ->
-                            withMapData (\xs -> tp :: xs) model.tension_projects
-
-                        Just (ProjectSearchPanel.ProjectRemoved cardid) ->
-                            withMapData (List.filter (\tp -> tp.card.id /= cardid)) model.tension_projects
-
-                        Nothing ->
-                            model.tension_projects
-
-                isProjectOpen =
-                    ProjectSearchPanel.isOpen_ panel
-
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | projectsPanel = panel, tension_projects = tension_projects, isProjectOpen = isProjectOpen }
-            , out.cmds |> List.map (\m -> Cmd.map ProjectSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            ( { model | projectsPanel = panel }
+            , out.cmds |> List.map (Cmd.map ProjectSearchPanelMsg) |> List.append cmds |> Cmd.batch
             , Cmd.batch gcmds
             )
-
-        OnStatusEditOpen cardid ->
-            ( { model | statusEditOpen = Just cardid, status_result = NotAsked }, Cmd.none, Cmd.none )
-
-        OnStatusEditClose ->
-            ( { model | statusEditOpen = Nothing }, Cmd.none, Cmd.none )
-
-        OnMoveCardToColumn cardid colid ->
-            let
-                tension_projects =
-                    withMapData
-                        (List.map
-                            (\tp ->
-                                if tp.card.id == cardid then
-                                    let
-                                        newCol =
-                                            tp.project.columns
-                                                |> List.filter (\c -> c.id == colid)
-                                                |> List.head
-                                                |> withDefault tp.column
-                                    in
-                                    { tp | column = newCol }
-
-                                else
-                                    tp
-                            )
-                        )
-                        model.tension_projects
-            in
-            ( { model | tension_projects = tension_projects, statusEditOpen = Nothing, status_result = LoadingSlowly }
-            , moveProjectCard apis cardid 0 colid OnMoveCardAck
-            , Cmd.none
-            )
-
-        OnMoveCardAck result ->
-            let
-                refetch =
-                    case result of
-                        Failure _ ->
-                            getTensionProjects apis model.tensionid GotTensionProjects
-
-                        _ ->
-                            Cmd.none
-            in
-            ( { model | status_result = result }, refetch, Cmd.none )
 
         -- Node Action
         OpenActionPanel domid nameid pos ->
@@ -1628,15 +1550,6 @@ subscriptions _ model =
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (ProjectSearchPanel.subscriptions model.projectsPanel |> List.map (\s -> Sub.map ProjectSearchPanelMsg s))
-        ++ (case model.statusEditOpen of
-                Just cardid ->
-                    [ Events.onMouseUp (Dom.outsideClickClose (statusDropdownId cardid) OnStatusEditClose)
-                    , Events.onKeyUp (Dom.key "Escape" OnStatusEditClose)
-                    ]
-
-                Nothing ->
-                    []
-           )
         ++ (MoveTension.subscriptions model.moveTension |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
@@ -2026,105 +1939,6 @@ viewDocument u t b model =
 --
 
 
-viewTensionProjectCards : Bool -> Model -> Html Msg
-viewTensionProjectCards canEdit model =
-    let
-        tps =
-            withDefaultData [] model.tension_projects
-
-        moveError =
-            case model.status_result of
-                Failure errs ->
-                    viewGqlErrors errs
-
-                _ ->
-                    text ""
-    in
-    if List.isEmpty tps then
-        div []
-            [ div [ class "help-label is-italic" ] [ text T.noProjectsYet ]
-            , moveError
-            ]
-
-    else
-        div []
-            (List.map (viewTensionProjectCard canEdit model) tps ++ [ moveError ])
-
-
-viewTensionProjectCard : Bool -> Model -> TensionProject -> Html Msg
-viewTensionProjectCard canEdit model tp =
-    let
-        otherCols =
-            tp.project.columns |> List.filter (\c -> c.id /= tp.column.id)
-
-        canMove =
-            canEdit && not (List.isEmpty otherCols)
-
-        rootid =
-            withMaybeData model.tension_head
-                |> Maybe.map (\th -> nid2rootid th.receiver.nameid)
-                |> withDefault ""
-
-        isDropdownOpen =
-            model.statusEditOpen == Just tp.card.id
-
-        statusPill =
-            span
-                (class "tension-project-status"
-                    :: (if canMove then
-                            [ onClickSP <|
-                                if isDropdownOpen then
-                                    OnStatusEditClose
-
-                                else
-                                    OnStatusEditOpen tp.card.id
-                            ]
-
-                        else
-                            [ onClickSP NoMsg ]
-                       )
-                )
-                [ viewProjectColumnTag tp.column.color
-                    tp.column.name
-                    (if canMove then
-                        [ A.icon "icon-chevron-down ml-2" ]
-
-                     else
-                        []
-                    )
-                ]
-
-        dropdown =
-            if isDropdownOpen then
-                div [ class "tension-project-status-dropdown" ]
-                    [ nav [ class "panel dropList" ]
-                        (List.map
-                            (\c ->
-                                Html.p
-                                    [ class "panel-block tension-project-column-item"
-                                    , onClickSP (OnMoveCardToColumn tp.card.id c.id)
-                                    ]
-                                    [ viewProjectColumnTag c.color c.name [] ]
-                            )
-                            otherCols
-                        )
-                    ]
-
-            else
-                text ""
-    in
-    div [ class "tension-project-card", onClickSP NoMsg ]
-        [ div [ class "tension-project-name" ]
-            [ a [ href (toLink ProjectBaseUri rootid [ tp.project.id ]) ] [ text tp.project.name ] ]
-        , div [ id (statusDropdownId tp.card.id), class "mt-1" ] [ statusPill, dropdown ]
-        ]
-
-
-statusDropdownId : String -> String
-statusDropdownId cardid =
-    "tension-project-status-dropdown-" ++ cardid
-
-
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
 viewSidePane u t model =
     let
@@ -2285,7 +2099,7 @@ viewSidePane u t model =
                     LoggedIn _ ->
                         [ h2 [ class "subtitle" ]
                             [ text T.projects
-                            , if model.isProjectOpen then
+                            , if ProjectSearchPanel.isOpen_ model.projectsPanel then
                                 A.icon "icon-x is-pulled-right"
 
                               else if hasProjectRight then
@@ -2295,7 +2109,7 @@ viewSidePane u t model =
                                 text ""
                             ]
                         , ProjectSearchPanel.view
-                            { selectedProjects = withDefaultData [] model.tension_projects
+                            { selectedProjects = ProjectSearchPanel.getSelectedProjects model.projectsPanel
                             , targets = model.path_data |> withMaybeMapData (.focus >> .nameid >> List.singleton) |> withDefault []
                             , isRight = False
                             }
@@ -2306,7 +2120,9 @@ viewSidePane u t model =
                     LoggedOut ->
                         [ h2 [ class "subtitle" ] [ text T.projects ] ]
                 )
-                    ++ [ viewTensionProjectCards hasProjectRight model ]
+                    ++ [ ProjectSearchPanel.viewCards hasProjectRight model.projectsPanel
+                            |> Html.map ProjectSearchPanelMsg
+                       ]
             ]
 
         -- Document

@@ -33,7 +33,7 @@ import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
 import Dom
-import Extra exposing (mor, showIf, space_, ternary)
+import Extra exposing (mor, send, sendNow, sendSleep, showIf, space_, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
@@ -43,7 +43,6 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput)

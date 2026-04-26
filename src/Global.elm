@@ -25,9 +25,6 @@ module Global exposing
     , Msg(..)
     , init
     , navigate
-    , send
-    , sendNow
-    , sendSleep
     , subscriptions
     , tickNow
     , update
@@ -44,7 +41,7 @@ import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
 import Dict
-import Extra exposing (showIf, showMaybe, ternary, unwrap2)
+import Extra exposing (send, sendSleep, showIf, showMaybe, ternary, unwrap2)
 import Footbar
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -59,7 +56,6 @@ import Loading exposing (GqlData, RequestResult(..), RestData, errorHttpToString
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
-import Process
 import Query.PatchUser exposing (toggleOrgaWatch)
 import Query.QueryNode exposing (getOrgaInfo)
 import Query.QueryNotifications exposing (queryNotifCount)
@@ -1170,21 +1166,6 @@ viewNotif notifs closeMsg =
 tickNow : Cmd Msg
 tickNow =
     Task.perform SetTime Time.now
-
-
-send : msg -> Cmd msg
-send =
-    Task.succeed >> Task.perform identity
-
-
-sendNow : (Time.Posix -> msg) -> Cmd msg
-sendNow m =
-    Task.perform m Time.now
-
-
-sendSleep : msg -> Float -> Cmd msg
-sendSleep msg time =
-    Task.perform (\_ -> msg) (Process.sleep time)
 
 
 navigate : Route -> Cmd Msg

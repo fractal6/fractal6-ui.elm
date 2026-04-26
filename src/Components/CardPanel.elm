@@ -27,21 +27,20 @@ import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserStat
 import Bulk.Bulma as B
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewLabels, viewTensionDateAndUser, viewUsers)
+import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.UserSearchPanel as UserSearchPanel
+import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict exposing (Dict)
-import Extra exposing (showIf, ternary, textH, unwrap, unwrap2, upH)
+import Extra exposing (send, sendNow, sendSleep, showIf, ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)

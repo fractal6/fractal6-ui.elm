@@ -31,7 +31,7 @@ import Bulk.Error exposing (viewHttpErrors)
 import Bulk.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (ternary, textH, upH)
+import Extra exposing (send, sendSleep, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onDragOverPD, onKeydown)
 import Extra.Update as Update
 import Extra.Url exposing (queryBuilder, queryParser)
@@ -45,7 +45,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput, preventDefaultOn)

@@ -24,6 +24,7 @@ module Bulk.View exposing (..)
 import Assets as A
 import Bulk exposing (UserState(..), getParentFragmentFromRole, maxPinnedTensions)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Components.LabelSearchPanel exposing (viewLabels)
 import Dict exposing (Dict)
 import Extra exposing (colorAttr, showIf, ternary, upH)
 import Extra.Date exposing (formatDate)
@@ -262,77 +263,8 @@ viewPin session focus origin tension =
 
 
 --
--- Labels
+-- Tension Utils
 --
-
-
-{-| 1st parameter String is the current nameid
-used to make labels clickable.
--}
-viewLabels : Maybe String -> List Label -> Html msg
-viewLabels nid_m labels =
-    if List.length labels == 0 then
-        text ""
-
-    else
-        let
-            to_link_m name =
-                Maybe.map
-                    (\nid ->
-                        toLink TensionsBaseUri nid [] ++ ("?l=" ++ name)
-                    )
-                    nid_m
-        in
-        span [ class "labelsList" ]
-            (List.map
-                (\label ->
-                    viewLabel "" (to_link_m label.name) label
-                )
-                labels
-            )
-
-
-{-| Project column tag: a colored circle (column color) followed by the column
-name in plain text, wrapped in a bordered rounded tag — mirrors the column
-header look in Components.Board. Extra trailing children (e.g. a chevron) are
-appended inside the tag so they share its border and centering.
--}
-viewProjectColumnTag : Maybe String -> String -> List (Html msg) -> Html msg
-viewProjectColumnTag color name extras =
-    span [ class "tag is-rounded has-border is-inline-flex is-align-items-center is-justify-content-center" ]
-        ([ span [ class "mr-2 is-flex is-align-items-center", style "color" (withDefault "lightgrey" color) ] [ A.icon "icon-circle1" ]
-         , text name
-         ]
-            ++ extras
-        )
-
-
-viewLabel : String -> Maybe String -> Label -> Html msg
-viewLabel cls link_m label =
-    let
-        color =
-            label.color
-                |> Maybe.map (\c -> [ colorAttr c ])
-                |> withDefault []
-
-        a_or_span =
-            case link_m of
-                Just _ ->
-                    a
-
-                Nothing ->
-                    span
-
-        link =
-            withDefault "#" link_m
-    in
-    a_or_span
-        ([ class ("tag is-rounded " ++ cls)
-         , href link
-         ]
-            ++ color
-        )
-        [ text label.name ]
 
 
 tensionStatus2str : TensionStatus.TensionStatus -> String
@@ -506,37 +438,12 @@ viewUsernameLink username =
     a [ href (toLink UsersBaseUri username []) ] [ text username ]
 
 
-viewUsers : Bool -> List User -> Html msg
-viewUsers isLinked users =
-    span [ class "usersList" ] (List.map (\u -> viewUser isLinked u.username) users)
-
-
 viewUser0 : String -> Html msg
 viewUser0 username =
     span [ class "mr-2", title username ]
         [ a [ href (toLink UsersBaseUri username []) ]
             [ getAvatar0 username ]
         ]
-
-
-viewUser : Bool -> String -> Html msg
-viewUser isLinked_ username =
-    let
-        isLinked =
-            if String.contains "@" username then
-                False
-
-            else
-                isLinked_
-    in
-    if isLinked then
-        span [ class "mr-2", title username ]
-            [ a [ href (toLink UsersBaseUri username []) ]
-                [ getAvatar1 username ]
-            ]
-
-    else
-        span [ class "mr-2", title username ] [ getAvatar1 username ]
 
 
 viewUser2 : String -> Html msg

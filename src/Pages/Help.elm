@@ -21,8 +21,9 @@
 
 module Pages.Help exposing (Flags, Model, Msg, page)
 
+import Extra exposing (send, sendSleep)
 import Form.Help as Help
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..))
 import Html
 import Page exposing (Document, Page)
 import Session exposing (GlobalCmd(..))

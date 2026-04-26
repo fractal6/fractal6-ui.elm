@@ -27,21 +27,21 @@ import Browser.Navigation as Nav
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewLabel, viewRoleExt, viewTensionTypePicker, viewUsers)
+import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Comments exposing (viewCommentInputHeader)
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabel)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
-import Components.UserSearchPanel as UserSearchPanel
+import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Extra exposing (showIf, space_, ternary, textT, unwrap, unwrap2, upH)
+import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, textT, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
@@ -52,7 +52,7 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, href, id, name, placeholder, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -2642,7 +2642,7 @@ viewTemplates model =
                                                         [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
                                                         , td [] [ text (withDefault "" d.description) ]
                                                         , td [] [ tensionIcon2 d.type_ ]
-                                                        , td [] [ Bulk.View.viewLabels Nothing (withDefault [] d.labels) ]
+                                                        , td [] [ LabelSearchPanel.viewLabels Nothing (withDefault [] d.labels) ]
                                                         , td [] [ viewUsers False (withDefault [] d.assignees) ]
                                                         , td []
                                                             [ if d.is_recursive then

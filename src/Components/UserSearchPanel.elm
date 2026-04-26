@@ -27,16 +27,16 @@ import Browser.Events as Events
 import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUserFull, viewUsers)
+import Bulk.View exposing (getAvatar1, viewUserFull)
 import Codecs exposing (userDecoder)
 import Dict
 import Dom
-import Extra exposing (ternary)
+import Extra exposing (send, sendNow, sendSleep, ternary)
 import Extra.Events exposing (onMousedownPD)
 import Fractal.Enum.TensionEvent as TensionEvent
-import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, div, i, input, nav, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
+import Global exposing (Msg(..))
+import Html exposing (Html, a, div, i, input, nav, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
@@ -610,3 +610,34 @@ viewAssigneeSelectors isEmbedded users op model =
                         )
         , ternary isEmbedded (text "") viewEdit
         ]
+
+
+
+--
+-- User rendering
+--
+
+
+viewUsers : Bool -> List User -> Html msg
+viewUsers isLinked users =
+    span [ class "usersList" ] (List.map (\u -> viewUser isLinked u.username) users)
+
+
+viewUser : Bool -> String -> Html msg
+viewUser isLinked_ username =
+    let
+        isLinked =
+            if String.contains "@" username then
+                False
+
+            else
+                isLinked_
+    in
+    if isLinked then
+        span [ class "mr-2", title username ]
+            [ a [ href (toLink UsersBaseUri username []) ]
+                [ getAvatar1 username ]
+            ]
+
+    else
+        span [ class "mr-2", title username ] [ getAvatar1 username ]

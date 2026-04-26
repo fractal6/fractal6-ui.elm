@@ -7,9 +7,9 @@ the **scope** of that fetch depends on the call site.
 
 Components:
 
-- `src/Components/LabelSearchPanel.elm`
-- `src/Components/ProjectSearchPanel.elm`
-- `src/Components/UserSearchPanel.elm`
+- `src/Components/LabelSearchPanel.elm` — also owns `viewLabels` / `viewLabel`
+- `src/Components/ProjectSearchPanel.elm` — also owns `viewCards`, `viewProjectColumnTag`, the tension card list and column-move dropdown
+- `src/Components/UserSearchPanel.elm` — also owns `viewUsers` / `viewUser`
 
 ## Scope rules
 

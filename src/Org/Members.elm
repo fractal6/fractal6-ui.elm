@@ -40,7 +40,7 @@ import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict
 import Dom
-import Extra exposing (colorAttr, showIf, space_, ternary, unwrap, unwrap2, upH)
+import Extra exposing (colorAttr, send, sendNow, sendSleep, showIf, space_, ternary, unwrap, unwrap2, upH)
 import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
@@ -50,7 +50,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, href, id, style, title, type_)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)

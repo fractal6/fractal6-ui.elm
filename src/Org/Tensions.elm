@@ -30,12 +30,12 @@ import Bulk exposing (getPath, hotTensionPush, hotTensionPush2, isPinnedRecursiv
 import Bulk.Board as BB exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewLabel, viewPinnedTensions, viewUserFull)
+import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabel)
 import Components.MoveTension as MoveTension
 import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchField)
@@ -44,7 +44,7 @@ import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Dom
-import Extra exposing (showIf, space_, ternary, unwrap, upH)
+import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, unwrap, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
@@ -55,7 +55,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route exposing (Route(..), toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, href, id, placeholder, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)

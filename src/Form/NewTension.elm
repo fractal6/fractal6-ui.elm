@@ -40,7 +40,7 @@ import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Dom
-import Extra exposing (showIf, space_, ternary, textH, unwrap, unwrap2)
+import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
@@ -52,7 +52,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)

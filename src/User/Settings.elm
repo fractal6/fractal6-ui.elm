@@ -31,14 +31,14 @@ import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
 import Bulk.View exposing (lang2str, viewProfileC)
 import Components.AuthModal as AuthModal
 import Dict
-import Extra exposing (mor, space_, ternary, textH, unwrap)
+import Extra exposing (mor, send, sendNow, sendSleep, space_, ternary, textH, unwrap)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Fractal.Enum.Lang as Lang
 import Generated.Route as Route exposing (toHref)
-import Global exposing (Msg(..), send, sendNow, sendSleep)
+import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, selected, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)

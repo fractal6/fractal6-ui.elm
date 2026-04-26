@@ -564,6 +564,11 @@ type alias ProjectSearchPanelModel =
     , pattern : String
     , projects_data : GqlData (List ProjectWithColumns)
 
+    -- Tension projects (only loaded when action == AssignProject)
+    , tension_projects : GqlData (List TensionProject)
+    , statusEditOpen : Maybe String
+    , status_result : GqlData IdPayload
+
     -- Common
     -- Unused in v1; kept for parity with LabelSearchPanel's auth-refresh retry.
     , refresh_trial : Int

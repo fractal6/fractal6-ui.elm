@@ -31,7 +31,7 @@ import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewU
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (space_, ternary, upH)
+import Extra exposing (send, sendNow, sendSleep, space_, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractStatus as ContractStatus
@@ -40,7 +40,6 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
-import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, title, type_, value)
 import Html.Events exposing (onClick)

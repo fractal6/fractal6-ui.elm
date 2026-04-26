@@ -22,8 +22,9 @@
 module Pages.Logout exposing (Flags, Model, Msg, page)
 
 import Bulk exposing (UserState(..))
+import Extra exposing (send, sendSleep)
 import Generated.Route as Route exposing (Route)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..))
 import Html
 import Http
 import Page exposing (Document, Page)

@@ -25,25 +25,25 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
+import Bulk.Codecs exposing (FractalBaseRoute(..), nid2rootid, toLink)
 import Bulk.Error exposing (viewGqlErrors)
 import Bulk.View exposing (viewCircleSimple)
 import Dict
 import Dom
-import Extra exposing (ternary)
-import Extra.Events exposing (onMousedownPD)
+import Extra exposing (send, sendNow, sendSleep, ternary)
+import Extra.Events exposing (onClickSP, onMousedownPD)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, div, i, input, nav, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, id, placeholder, type_, value)
+import Html exposing (Html, a, div, i, input, nav, p, span, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData)
+import Loading exposing (GqlData, RequestResult(..), loadingSpin, withDefaultData, withMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (getOpenProjectsForPanel)
-import Query.QueryProject exposing (addProjectCard, removeProjectCards)
+import Query.QueryProject exposing (addProjectCard, moveProjectCard, removeProjectCards)
+import Query.QueryTension exposing (getTensionProjects)
 import Session exposing (Apis, GlobalCmd(..), ProjectSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -88,6 +88,9 @@ initModel tid action user =
     , lookup = []
     , pattern = ""
     , projects_data = NotAsked
+    , tension_projects = NotAsked
+    , statusEditOpen = Nothing
+    , status_result = NotAsked
 
     -- Common
     , refresh_trial = 0
@@ -116,6 +119,11 @@ getModel (State model) =
 isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
+
+
+getSelectedProjects : State -> List TensionProject
+getSelectedProjects (State model) =
+    withDefaultData [] model.tension_projects
 
 
 
@@ -173,6 +181,13 @@ type Msg
     | OnAddCardAck ProjectWithColumns ProjectColumnLite (GqlData (List ProjectCard))
     | OnRemoveCardAck String (GqlData (List String))
     | ResetClickResult
+      -- Tension cards
+    | OnLoadCards
+    | GotCards (GqlData (List TensionProject))
+    | OnStatusEditOpen String
+    | OnStatusEditClose
+    | OnMoveCardToColumn String String
+    | OnMoveCardAck (GqlData IdPayload)
       --
     | Navigate String
     | OnModalAsk String String
@@ -281,7 +296,6 @@ update_ apis message model =
                     Just col ->
                         case model.action of
                             SelectProject ->
-                                -- No tension yet: emit selection upward, no mutation.
                                 let
                                     tp =
                                         { card = { id = "", pos = 0 }
@@ -324,7 +338,6 @@ update_ apis message model =
                 in
                 case model.action of
                     SelectProject ->
-                        -- No tension yet: emit removal upward keyed by project.id, no mutation.
                         ( setClickResult NotAsked newModel
                         , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectRemoved project.id))
                         )
@@ -343,10 +356,11 @@ update_ apis message model =
                             , column = col
                             , project = project
                             }
+
+                        newModel =
+                            { model | tension_projects = withMapData (\xs -> tp :: xs) model.tension_projects }
                     in
-                    ( setClickResult NotAsked model
-                    , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectAdded tp))
-                    )
+                    ( setClickResult NotAsked newModel, out0 [ sendSleep ResetClickResult 333 ] )
 
                 Success _ ->
                     ( setClickResult NotAsked model, noOut )
@@ -360,15 +374,78 @@ update_ apis message model =
         OnRemoveCardAck cardid result ->
             case result of
                 Success _ ->
-                    ( setClickResult NotAsked model
-                    , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectRemoved cardid))
-                    )
+                    let
+                        newModel =
+                            { model | tension_projects = withMapData (List.filter (\tp -> tp.card.id /= cardid)) model.tension_projects }
+                    in
+                    ( setClickResult NotAsked newModel, out0 [ sendSleep ResetClickResult 333 ] )
 
                 Failure err ->
                     ( { model | click_result = Failure err }, noOut )
 
                 _ ->
                     ( model, noOut )
+
+        OnLoadCards ->
+            case model.action of
+                AssignProject ->
+                    ( { model | tension_projects = LoadingSlowly }
+                    , out0 [ getTensionProjects apis model.form.tid GotCards ]
+                    )
+
+                SelectProject ->
+                    ( model, noOut )
+
+        GotCards result ->
+            ( { model | tension_projects = result }, noOut )
+
+        OnStatusEditOpen cardid ->
+            if model.statusEditOpen == Just cardid then
+                ( model, noOut )
+
+            else
+                ( { model | statusEditOpen = Just cardid, status_result = NotAsked }, noOut )
+
+        OnStatusEditClose ->
+            ( { model | statusEditOpen = Nothing }, noOut )
+
+        OnMoveCardToColumn cardid colid ->
+            let
+                tension_projects =
+                    withMapData
+                        (List.map
+                            (\tp ->
+                                if tp.card.id == cardid then
+                                    let
+                                        newCol =
+                                            tp.project.columns
+                                                |> List.filter (\c -> c.id == colid)
+                                                |> List.head
+                                                |> withDefault tp.column
+                                    in
+                                    { tp | column = newCol }
+
+                                else
+                                    tp
+                            )
+                        )
+                        model.tension_projects
+            in
+            ( { model | tension_projects = tension_projects, statusEditOpen = Nothing, status_result = LoadingSlowly }
+            , out0 [ moveProjectCard apis cardid 0 colid OnMoveCardAck ]
+            )
+
+        OnMoveCardAck result ->
+            let
+                refetch =
+                    case result of
+                        Failure _ ->
+                            [ getTensionProjects apis model.form.tid GotCards ]
+
+                        _ ->
+                            []
+            in
+            ( { model | status_result = result }, out0 refetch )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
@@ -391,13 +468,27 @@ update_ apis message model =
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    if model.isOpen then
-        [ Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
-        , Events.onKeyUp (Dom.key "Escape" OnClose)
-        ]
+    let
+        openSubs =
+            if model.isOpen then
+                [ Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
+                , Events.onKeyUp (Dom.key "Escape" OnClose)
+                ]
 
-    else
-        []
+            else
+                []
+
+        statusSubs =
+            case model.statusEditOpen of
+                Just cardid ->
+                    [ Events.onMouseUp (Dom.outsideClickClose (statusDropdownId cardid) OnStatusEditClose)
+                    , Events.onKeyUp (Dom.key "Escape" OnStatusEditClose)
+                    ]
+
+                Nothing ->
+                    []
+    in
+    openSubs ++ statusSubs
 
 
 
@@ -447,7 +538,7 @@ viewNew op (State model) =
                     (\tp ->
                         span
                             [ class "tag has-border mr-2"
-                            , attribute "style" "border-radius: 5px;"
+                            , attribute "style" "border-radius: 12px;"
                             ]
                             [ text tp.project.name ]
                     )
@@ -587,3 +678,112 @@ viewProjectSelectors isEmbedded projects op model =
                         )
         , ternary isEmbedded (text "") viewEdit
         ]
+
+
+
+--
+-- Tension projects card list
+--
+
+
+viewCards : Bool -> State -> Html Msg
+viewCards canEdit (State model) =
+    let
+        tps =
+            withDefaultData [] model.tension_projects
+
+        moveError =
+            case model.status_result of
+                Failure errs ->
+                    viewGqlErrors errs
+
+                _ ->
+                    text ""
+    in
+    if List.isEmpty tps then
+        div []
+            [ div [ class "help-label is-italic" ] [ text T.noProjectsYet ]
+            , moveError
+            ]
+
+    else
+        div []
+            (List.map (viewCard canEdit model) tps ++ [ moveError ])
+
+
+viewCard : Bool -> Model -> TensionProject -> Html Msg
+viewCard canEdit model tp =
+    let
+        otherCols =
+            tp.project.columns |> List.filter (\c -> c.id /= tp.column.id)
+
+        canMove =
+            canEdit && not (List.isEmpty otherCols)
+
+        rootid =
+            tp.project.nodes |> List.head |> Maybe.map (.nameid >> nid2rootid) |> withDefault ""
+
+        isDropdownOpen =
+            model.statusEditOpen == Just tp.card.id
+
+        statusPill =
+            viewProjectColumnTag tp.column.color
+                tp.column.name
+                (if canMove then
+                    [ onClickSP <|
+                        if isDropdownOpen then
+                            OnStatusEditClose
+
+                        else
+                            OnStatusEditOpen tp.card.id
+                    ]
+
+                 else
+                    []
+                )
+                (if canMove then
+                    [ A.icon "icon-chevron-down ml-2" ]
+
+                 else
+                    []
+                )
+
+        dropdown =
+            if isDropdownOpen then
+                div [ class "tension-project-status-dropdown" ]
+                    [ nav [ class "panel dropList" ]
+                        (List.map
+                            (\c ->
+                                Html.p
+                                    [ class "panel-block tension-project-column-item"
+                                    , onClickSP (OnMoveCardToColumn tp.card.id c.id)
+                                    ]
+                                    [ viewProjectColumnTag c.color c.name [] [] ]
+                            )
+                            otherCols
+                        )
+                    ]
+
+            else
+                text ""
+    in
+    div [ class "tension-project-card", onClickSP NoMsg ]
+        [ div [ class "tension-project-name" ]
+            [ a [ href (toLink ProjectBaseUri rootid [ tp.project.id ]) ] [ text tp.project.name ] ]
+        , div [ id (statusDropdownId tp.card.id), class "mt-1" ] [ statusPill, dropdown ]
+        ]
+
+
+statusDropdownId : String -> String
+statusDropdownId cardid =
+    "tension-project-status-dropdown-" ++ cardid
+
+
+viewProjectColumnTag : Maybe String -> String -> List (Html.Attribute msg) -> List (Html msg) -> Html msg
+viewProjectColumnTag color name attrs extras =
+    span (class "tag tension-project-status is-inline-flex is-align-items-center is-justify-content-center" :: attrs)
+        ([ span [ class "mr-2 is-flex is-align-items-center", style "color" (withDefault "lightgrey" color) ] [ A.icon "icon-circle1" ]
+         , text name
+         ]
+            ++ extras
+        )
