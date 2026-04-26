@@ -291,6 +291,21 @@ viewLabels nid_m labels =
             )
 
 
+{-| Project column tag: a colored circle (column color) followed by the column
+name in plain text, wrapped in a bordered rounded tag — mirrors the column
+header look in Components.Board. Extra trailing children (e.g. a chevron) are
+appended inside the tag so they share its border and centering.
+-}
+viewProjectColumnTag : Maybe String -> String -> List (Html msg) -> Html msg
+viewProjectColumnTag color name extras =
+    span [ class "tag is-rounded has-border is-inline-flex is-align-items-center is-justify-content-center" ]
+        ([ span [ class "mr-2 is-flex is-align-items-center", style "color" (withDefault "lightgrey" color) ] [ A.icon "icon-circle1" ]
+         , text name
+         ]
+            ++ extras
+        )
+
+
 viewLabel : String -> Maybe String -> Label -> Html msg
 viewLabel cls link_m label =
     let

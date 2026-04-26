@@ -54,7 +54,8 @@
 }
 
 .tension-project-card {
-    background-color: var(--border-color-light);
+    //background-color: var(--border-color-light);
+    border: $border-size solid var(--border-color-light);
     border-radius: 12px;
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.4rem;
@@ -76,13 +77,9 @@
     }
     .tension-project-status {
         cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
         .icon-chevron-down { font-size: 0.75rem; }
-        &:hover {
-            filter: brightness(1.15);
-            box-shadow: 0 0 0 1px var(--text-strong);
+        &:hover .tag {
+            background-color: var(--background-hover);
         }
     }
     .tension-project-status-dropdown {

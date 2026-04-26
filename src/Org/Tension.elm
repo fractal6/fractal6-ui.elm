@@ -28,7 +28,7 @@ import Browser.Events as Events
 import Bulk exposing (..)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
+import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewLabel, viewLabels, viewNodeDescr, viewNodeRefShort, viewProjectColumnTag, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink, viewUsers)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -2068,22 +2068,13 @@ viewTensionProjectCard canEdit model tp =
                 |> Maybe.map (\th -> nid2rootid th.receiver.nameid)
                 |> withDefault ""
 
-        colorAttr c =
-            case c.color of
-                Just hex ->
-                    [ style "background-color" hex ]
-
-                Nothing ->
-                    []
-
         isDropdownOpen =
             model.statusEditOpen == Just tp.card.id
 
         statusPill =
             span
-                ([ class "tag is-rounded tension-project-status" ]
-                    ++ colorAttr tp.column
-                    ++ (if canMove then
+                (class "tension-project-status"
+                    :: (if canMove then
                             [ onClickSP <|
                                 if isDropdownOpen then
                                     OnStatusEditClose
@@ -2096,12 +2087,14 @@ viewTensionProjectCard canEdit model tp =
                             [ onClickSP NoMsg ]
                        )
                 )
-                [ text tp.column.name
-                , if canMove then
-                    A.icon "icon-chevron-down ml-1"
+                [ viewProjectColumnTag tp.column.color
+                    tp.column.name
+                    (if canMove then
+                        [ A.icon "icon-chevron-down ml-2" ]
 
-                  else
-                    text ""
+                     else
+                        []
+                    )
                 ]
 
         dropdown =
@@ -2114,7 +2107,7 @@ viewTensionProjectCard canEdit model tp =
                                     [ class "panel-block tension-project-column-item"
                                     , onClickSP (OnMoveCardToColumn tp.card.id c.id)
                                     ]
-                                    [ span (class "tag is-rounded mr-2" :: colorAttr c) [ text c.name ] ]
+                                    [ viewProjectColumnTag c.color c.name [] ]
                             )
                             otherCols
                         )

@@ -27,7 +27,7 @@ import Browser.Events as Events
 import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
 import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
 import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewCircleSimple)
+import Bulk.View exposing (viewCircleSimple, viewProjectColumnTag)
 import Dict
 import Dom
 import Extra exposing (ternary)
@@ -440,7 +440,12 @@ viewNew op (State model) =
         , if List.length op.selectedProjects > 0 then
             span [ class "ml-2" ]
                 (List.map
-                    (\tp -> span [ class "tag is-rounded mr-1" ] [ text tp.project.name ])
+                    (\tp ->
+                        span [ class "mr-2 is-inline-flex is-align-items-center" ]
+                            [ text tp.project.name
+                            , span [ class "ml-1" ] [ viewProjectColumnTag tp.column.color tp.column.name [] ]
+                            ]
+                    )
                     op.selectedProjects
                 )
 

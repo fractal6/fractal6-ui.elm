@@ -24,7 +24,7 @@ module Bulk.Event exposing (..)
 import Assets as A
 import Bulk exposing (UserState(..), decodeColumnRef, decodeLabel, decodeProjectRef)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
-import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewLabel, viewNodeRefShort, viewUsernameLink)
+import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewLabel, viewNodeRefShort, viewProjectColumnTag, viewUsernameLink)
 import Dict exposing (Dict)
 import Extra exposing (decap, space_, ternary, textD)
 import Extra.Date exposing (formatDate)
@@ -922,11 +922,7 @@ viewEventProjectColumnMoved session event =
             event.new |> withDefault "" |> decodeColumnRef
 
         viewCol col =
-            span
-                [ class "tag is-rounded has-border is-wrapped"
-                , style "background-color" (ternary (col.color == "") "transparent" col.color)
-                ]
-                [ text col.name ]
+            viewProjectColumnTag (ternary (col.color == "") Nothing (Just col.color)) col.name []
     in
     [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]

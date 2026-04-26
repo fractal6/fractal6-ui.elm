@@ -31,23 +31,10 @@ Returns `text ""` for unhandled event types.
 
 ### Supported Events
 
-| Event | View Function | Description |
-|-------|--------------|-------------|
-| Reopened/Closed | `viewEventStatus` | Status change with colored icon |
-| TitleUpdated | `viewEventTitle` | Shows old → new title |
-| TypeUpdated | `viewEventType` | Shows old → new type icons |
-| Visibility | `viewEventVisibility` | Shows old → new visibility |
-| Authority | `viewEventAuthority` | Governance/authority change |
-| AssigneeAdded/Removed | `viewEventAssignee` | User assignment changes |
-| LabelAdded/Removed | `viewEventLabel` | Label changes with colored badge |
-| BlobPushed | `viewEventPushed` | Document published |
-| BlobArchived/Unarchived | `viewEventArchived` | Archive status change |
-| MemberLinked/Unlinked | `viewEventMemberLinked/Unlinked` | Role membership changes |
-| UserJoined/Left | `viewEventUserJoined/Left` | Organisation join/leave |
-| Moved | `viewEventMoved` | Node moved between circles |
-| Mentioned | `viewEventMentioned` | Cross-tension mention |
-| CommentDeleted | `viewEventCommentDeleted` | Comment deletion notice |
-| Pinned/Unpinned | `viewEventPinned` | Tension pin/unpin |
+The list of event types and their authoritative semantics live in the backend
+EMAP at `fractal6.go/graph/tension_op.go` (`TensionEventHook`). The frontend
+mirrors each one in a `viewEvent*` function, dispatched from `viewEvent` by
+pattern-matching on `Fractal.Enum.TensionEvent`.
 
 ## Usage
 
