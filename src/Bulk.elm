@@ -220,6 +220,33 @@ decodeLabel label_raw =
     Label "" (SE.leftOfBack "§" label_raw) (SE.rightOfBack "§" label_raw |> Just) []
 
 
+{-| Decodes "id§name§" descriptors emitted by graph/card_resolver.go.
+-}
+decodeProjectRef : String -> { id : String, name : String }
+decodeProjectRef raw =
+    case String.split "§" raw of
+        id :: name :: _ ->
+            { id = id, name = name }
+
+        _ ->
+            { id = "", name = raw }
+
+
+{-| Decodes "id§name§color" descriptors emitted by graph/card_resolver.go.
+-}
+decodeColumnRef : String -> { id : String, name : String, color : String }
+decodeColumnRef raw =
+    case String.split "§" raw of
+        id :: name :: color :: _ ->
+            { id = id, name = name, color = color }
+
+        id :: name :: _ ->
+            { id = id, name = name, color = "" }
+
+        _ ->
+            { id = "", name = raw, color = "" }
+
+
 initAssigneeForm : String -> UserState -> AssigneeForm
 initAssigneeForm tid user =
     { uctx =

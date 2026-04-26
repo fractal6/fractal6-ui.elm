@@ -1059,6 +1059,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="unpinned"
   fr="a désépinglé"
 
+[addedToProject]
+  en="added to project"
+  fr="a ajouté au projet"
+
+[removedFromProject]
+  en="removed from project"
+  fr="a retiré du projet"
+
+[movedColumn]
+  en="changed project status from"
+  fr="a changé le statut du projet de"
+
 [mentioned2]
   en="mentioned this {{_tension_}}"
   fr="a mentionné cette {{_tension_}}"

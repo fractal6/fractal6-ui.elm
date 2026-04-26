@@ -22,11 +22,11 @@
 module Bulk.Event exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), decodeLabel)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, tensionAction2NodeType, toLink)
+import Bulk exposing (UserState(..), decodeColumnRef, decodeLabel, decodeProjectRef)
+import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
 import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewLabel, viewNodeRefShort, viewUsernameLink)
 import Dict exposing (Dict)
-import Extra exposing (decap, space_, textD)
+import Extra exposing (decap, space_, ternary, textD)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
@@ -216,6 +216,15 @@ eventTypeToText lexicon e =
         TensionEvent.Unpinned ->
             T.unpinned_event lexicon
 
+        TensionEvent.ProjectAdded ->
+            T.addedToProject
+
+        TensionEvent.ProjectRemoved ->
+            T.removedFromProject
+
+        TensionEvent.ProjectColumnMoved ->
+            T.movedColumn
+
         _ ->
             e |> TensionEvent.toString |> SE.humanize
 
@@ -400,6 +409,15 @@ eventToIcon ev =
         TensionEvent.Unpinned ->
             "icon-pin"
 
+        TensionEvent.ProjectAdded ->
+            "icon-layout"
+
+        TensionEvent.ProjectRemoved ->
+            "icon-layout"
+
+        TensionEvent.ProjectColumnMoved ->
+            "arrow-right2 pl-0 pr-0 mr-0"
+
         _ ->
             ""
 
@@ -481,6 +499,15 @@ viewEvent session focusid_m action event =
 
                 TensionEvent.Unpinned ->
                     viewEventPinned session event False
+
+                TensionEvent.ProjectAdded ->
+                    viewEventProject focusid_m session event True
+
+                TensionEvent.ProjectRemoved ->
+                    viewEventProject focusid_m session event False
+
+                TensionEvent.ProjectColumnMoved ->
+                    viewEventProjectColumnMoved session event
 
                 _ ->
                     []
@@ -836,6 +863,80 @@ viewEventPinned session event isPinned =
                 , strong [ class "has-text-evidence" ] [ text actionText ]
                 , text T.thisF
                 , textD (T.tension session.lexicon)
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
+
+
+
+viewEventProject : Maybe String -> SessionCommon -> Event -> Bool -> List (Html msg)
+viewEventProject focusid_m session event isAdded =
+    let
+        ( actionText, raw ) =
+            if isAdded then
+                ( T.addedToProject, withDefault "" event.new )
+
+            else
+                ( T.removedFromProject, withDefault "" event.old )
+
+        project =
+            decodeProjectRef raw
+
+        nameNode =
+            case focusid_m of
+                Just focusid ->
+                    if project.id == "" then
+                        span [ class "is-strong" ] [ text project.name ]
+
+                    else
+                        a
+                            [ class "is-strong discrete-link"
+                            , href (Route.Project_Dynamic_Dynamic { param1 = nid2rootid focusid, param2 = shortId project.id } |> toHref)
+                            ]
+                            [ text project.name ]
+
+                Nothing ->
+                    span [ class "is-strong" ] [ text project.name ]
+    in
+    [ div [ class "media-left" ] [ A.icon "icon-layout" ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text actionText ]
+                , nameNode
+                , text (formatDate session.lang session.now event.createdAt)
+                ]
+        ]
+    ]
+
+
+viewEventProjectColumnMoved : SessionCommon -> Event -> List (Html msg)
+viewEventProjectColumnMoved session event =
+    let
+        old =
+            event.old |> withDefault "" |> decodeColumnRef
+
+        new =
+            event.new |> withDefault "" |> decodeColumnRef
+
+        viewCol col =
+            span
+                [ class "tag is-rounded has-border is-wrapped"
+                , style "background-color" (ternary (col.color == "") "transparent" col.color)
+                ]
+                [ text col.name ]
+    in
+    [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [ class "has-text-evidence" ] [ text T.movedColumn ]
+                , viewCol old
+                , text T.to
+                , viewCol new
                 , text (formatDate session.lang session.now event.createdAt)
                 ]
         ]
