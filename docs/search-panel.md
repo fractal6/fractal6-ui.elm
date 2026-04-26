@@ -53,8 +53,29 @@ scope for filtering a global list.
 | `Org/Tension.elm` | `DoProjectEdit` | path | (project panel is non-recursive only) |
 | `Components/CardPanel.elm` | `DoLabelEdit` | path | false |
 | `Components/LinkTensionPanel.elm` | label filter | path | false |
+| `Form/NewTension.elm` | label / project pickers | path | false |
 | `Org/Tensions.elm` | `ChangeLabel` | `[root]` | true |
 | `Org/Project.elm` | label filter | `[root]` | true |
+
+## New tension modal (`Form/NewTension.elm`)
+
+The new tension modal hosts three pickers in this order: **assignees**,
+**labels**, **projects**. All three follow rule 1 (path, non-recursive).
+
+### Project linkage during tension creation
+
+The tension does not exist yet when the project panel opens, so the panel runs
+in `SelectProject` mode (see `Components/ProjectSearchPanel.elm` —
+`OnProjectAdd` branches on `model.action`). Selections are tracked in
+`model.selectedProjects : List TensionProject` without firing any mutation.
+
+Once the tension is created (`OnTensionAck`'s `OkAuth` branch), one
+`addProjectCard` cmd is fired per selected project, **in parallel** with the
+modal's close cmd. The user perceives instant tension creation; project cards
+are created in the background. Failures are logged via `Ports.logErr` and do
+not block the UX. The default column for each project is its
+`NoStatusColumn` (or the lowest-`pos` column if absent) — the column choice is
+captured at selection time and reused at submit time.
 
 ## API
 
@@ -66,6 +87,11 @@ scope for filtering a global list.
 `ProjectSearchPanel.OnOpen : List String -> Msg`
 
 - One mode only: query the listed nodes, no recursion (`getOpenProjectsForPanel` → `nidsFilter`). Add a `Bool` argument here too if a recursive-from-root project filter is ever needed.
+
+`ProjectSearchPanelOnClickAction` (in `src/Session.elm`):
+
+- `AssignProject` — fire `addProjectCard` immediately on selection (e.g. tension side panel where the tension already exists).
+- `SelectProject` — track the selection only and emit it via `Out`; no mutation. Used by the new tension modal where the tension does not exist yet.
 
 ## Underlying queries
 

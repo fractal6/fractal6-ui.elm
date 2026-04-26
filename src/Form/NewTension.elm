@@ -34,6 +34,7 @@ import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..), viewAboutInput2, viewMandateInput)
+import Components.ProjectSearchPanel as ProjectSearchPanel exposing (ProjectActionResult(..))
 import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
@@ -66,10 +67,11 @@ import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, queryLocalGraph, queryRolesFull)
+import Query.QueryProject exposing (addProjectCard)
 import RemoteData
 import Requests exposing (fetchTensionTemplatesTop)
 import Schemas.TreeMenu exposing (ExpandedLines)
-import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
+import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), ProjectSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 
@@ -133,6 +135,8 @@ type alias Model =
     -- Components
     , labelsPanel : LabelSearchPanel.State
     , assigneesPanel : UserSearchPanel.State
+    , projectsPanel : ProjectSearchPanel.State
+    , selectedProjects : List TensionProject
     , inviteInput : UserInput.State
     , comments : Comments.State
     }
@@ -237,6 +241,8 @@ initModel session =
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel session.user
     , assigneesPanel = UserSearchPanel.init "" SelectUser session.user
+    , projectsPanel = ProjectSearchPanel.init "" SelectProject session.user
+    , selectedProjects = []
     , inviteInput = UserInput.init [] True False session
     , comments = Comments.init "" "" session
     }
@@ -496,6 +502,16 @@ removeAssignee assignee data =
     { data | nodeDoc = NodeDoc.removeAssignee assignee data.nodeDoc }
 
 
+addSelectedProject : TensionProject -> Model -> Model
+addSelectedProject tp data =
+    { data | selectedProjects = data.selectedProjects ++ [ tp ] }
+
+
+removeSelectedProject : String -> Model -> Model
+removeSelectedProject projectId data =
+    { data | selectedProjects = List.filter (\tp -> tp.project.id /= projectId) data.selectedProjects }
+
+
 post : String -> String -> Model -> Model
 post field value data =
     let
@@ -654,6 +670,8 @@ type Msg
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
+    | ProjectSearchPanelMsg ProjectSearchPanel.Msg
+    | OnAddProjectCardAck (GqlData (List ProjectCard))
     | InviteInputMsg UserInput.Msg
     | CommentsMsg Comments.Msg
 
@@ -1262,9 +1280,26 @@ update_ apis message model =
                                         |> NodeDoc.setUsers (List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) model.withUsers)
                             }
 
+                        -- Fire-and-forget: link selected projects in parallel with the
+                        -- close cmd so the UI is not blocked by the project cards creation.
+                        projectCmds =
+                            model.selectedProjects
+                                |> List.map
+                                    (\tp ->
+                                        addProjectCard apis
+                                            { uctx = model.nodeDoc.form.uctx
+                                            , tids = [ Just tension.id ]
+                                            , colid = tp.column.id
+                                            , pos = 0
+                                            , post = Dict.empty
+                                            , title = ""
+                                            }
+                                            OnAddProjectCardAck
+                                    )
+
                         ( cmds, gcmds_ ) =
                             if model.doInvite && not (List.isEmpty data.nodeDoc.form.users) then
-                                ( [ send (OnSubmit True OnInvite) ]
+                                ( send (OnSubmit True OnInvite) :: projectCmds
                                 , []
                                 )
 
@@ -1273,7 +1308,7 @@ update_ apis message model =
                                     link =
                                         Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = tension.id } |> toHref
                                 in
-                                ( [ send (OnClose { reset = True, link = "" }) ]
+                                ( send (OnClose { reset = True, link = "" }) :: projectCmds
                                 , [ DoPushSystemNotif
                                         { cls = "is-success"
                                         , content =
@@ -1374,6 +1409,38 @@ update_ apis message model =
             in
             ( { newModel | assigneesPanel = panel }
             , out2 (out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds) out.gcmds
+            )
+
+        OnAddProjectCardAck result ->
+            -- Fire-and-forget post-creation card linkage. Log failures only.
+            case result of
+                Failure err ->
+                    ( model, out0 [ Ports.logErr (String.join " | " err) ] )
+
+                _ ->
+                    ( model, noOut )
+
+        ProjectSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    ProjectSearchPanel.update apis msg model.projectsPanel
+
+                newModel =
+                    case out.result of
+                        Just (ProjectAdded tp) ->
+                            addSelectedProject tp model
+
+                        Just (ProjectRemoved projectId) ->
+                            removeSelectedProject projectId model
+
+                        Nothing ->
+                            model
+
+                ( cmds, _ ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { newModel | projectsPanel = panel }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map ProjectSearchPanelMsg m) |> List.append cmds) out.gcmds
             )
 
         InviteInputMsg msg ->
@@ -1599,6 +1666,7 @@ subscriptions (State model) =
         ++ (if model.isActive then
                 (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
                     ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+                    ++ (ProjectSearchPanel.subscriptions model.projectsPanel |> List.map (\s -> Sub.map ProjectSearchPanelMsg s))
                     ++ (UserInput.subscriptions model.inviteInput |> List.map (\s -> Sub.map InviteInputMsg s))
                     ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
 
@@ -2000,15 +2068,24 @@ viewTension tree_data model =
             , Comments.viewNewTensionCommentInput model.session commentOpts model.comments |> Html.map CommentsMsg
             , br [] [] -- allows selectors panel to display without overlap
             , let
+                pathTargets =
+                    getPath model.path_data |> List.map .nameid
+
                 labelsOp =
                     { selectedLabels = form.labels
-                    , targets = getPath model.path_data |> List.map .nameid
+                    , targets = pathTargets
                     , isRight = False
                     }
 
                 assigneesOp =
                     { selectedAssignees = form.assignees
-                    , targets = getPath model.path_data |> List.map .nameid
+                    , targets = pathTargets
+                    , isRight = False
+                    }
+
+                projectsOp =
+                    { selectedProjects = model.selectedProjects
+                    , targets = pathTargets
                     , isRight = False
                     }
 
@@ -2017,20 +2094,34 @@ viewTension tree_data model =
 
                 hasAssignees =
                     not (List.isEmpty form.assignees)
+
+                hasProjects =
+                    not (List.isEmpty model.selectedProjects)
               in
               div [ class "field" ]
                 [ div [ class "control" ]
-                    [ -- Inline container for buttons without selections
+                    [ -- Inline container for buttons without selections: assignees, labels, projects
                       div [ class "is-flex is-align-items-center mb-2" ]
-                        [ showIf (not hasLabels) <|
-                            (LabelSearchPanel.viewNew labelsOp model.labelsPanel
-                                |> Html.map LabelSearchPanelMsg
-                            )
-                        , showIf (not hasAssignees) <|
+                        [ showIf (not hasAssignees) <|
                             (UserSearchPanel.viewNew assigneesOp model.assigneesPanel
                                 |> Html.map UserSearchPanelMsg
                             )
+                        , showIf (not hasLabels) <|
+                            (LabelSearchPanel.viewNew labelsOp model.labelsPanel
+                                |> Html.map LabelSearchPanelMsg
+                            )
+                        , showIf (not hasProjects) <|
+                            (ProjectSearchPanel.viewNew projectsOp model.projectsPanel
+                                |> Html.map ProjectSearchPanelMsg
+                            )
                         ]
+
+                    -- Assignees on own line if has selections
+                    , showIf hasAssignees <|
+                        div [ class "mb-2" ]
+                            [ UserSearchPanel.viewNew assigneesOp model.assigneesPanel
+                                |> Html.map UserSearchPanelMsg
+                            ]
 
                     -- Labels on own line if has selections
                     , showIf hasLabels <|
@@ -2039,11 +2130,11 @@ viewTension tree_data model =
                                 |> Html.map LabelSearchPanelMsg
                             ]
 
-                    -- Assignees on own line if has selections
-                    , showIf hasAssignees <|
+                    -- Projects on own line if has selections
+                    , showIf hasProjects <|
                         div [ class "mb-2" ]
-                            [ UserSearchPanel.viewNew assigneesOp model.assigneesPanel
-                                |> Html.map UserSearchPanelMsg
+                            [ ProjectSearchPanel.viewNew projectsOp model.projectsPanel
+                                |> Html.map ProjectSearchPanelMsg
                             ]
                     ]
                 ]

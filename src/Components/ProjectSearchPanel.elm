@@ -278,19 +278,34 @@ update_ apis message model =
                 in
                 case defaultCol of
                     Just col ->
-                        let
-                            form =
-                                { uctx = newModel.form.uctx
-                                , tids = [ Just newModel.form.tid ]
-                                , colid = col.id
-                                , pos = 0
-                                , post = Dict.empty
-                                , title = ""
-                                }
-                        in
-                        ( newModel
-                        , out0 [ addProjectCard apis form (OnAddCardAck project col) ]
-                        )
+                        case model.action of
+                            SelectProject ->
+                                -- No tension yet: emit selection upward, no mutation.
+                                let
+                                    tp =
+                                        { card = { id = "", pos = 0 }
+                                        , column = col
+                                        , project = project
+                                        }
+                                in
+                                ( setClickResult NotAsked newModel
+                                , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectAdded tp))
+                                )
+
+                            AssignProject ->
+                                let
+                                    form =
+                                        { uctx = newModel.form.uctx
+                                        , tids = [ Just newModel.form.tid ]
+                                        , colid = col.id
+                                        , pos = 0
+                                        , post = Dict.empty
+                                        , title = ""
+                                        }
+                                in
+                                ( newModel
+                                , out0 [ addProjectCard apis form (OnAddCardAck project col) ]
+                                )
 
                     Nothing ->
                         ( setClickResult NotAsked newModel
@@ -306,9 +321,17 @@ update_ apis message model =
                     newModel =
                         click project False model |> setClickResult LoadingSlowly
                 in
-                ( newModel
-                , out0 [ removeProjectCards apis [ cardid ] (OnRemoveCardAck cardid) ]
-                )
+                case model.action of
+                    SelectProject ->
+                        -- No tension yet: emit removal upward keyed by project.id, no mutation.
+                        ( setClickResult NotAsked newModel
+                        , Out [ sendSleep ResetClickResult 333 ] [] (Just (ProjectRemoved project.id))
+                        )
+
+                    AssignProject ->
+                        ( newModel
+                        , out0 [ removeProjectCards apis [ cardid ] (OnRemoveCardAck cardid) ]
+                        )
 
         OnAddCardAck project col result ->
             case result of
@@ -391,6 +414,35 @@ view op (State model) =
     div [ id id_target_name ]
         [ if model.isOpen then
             view_ op model
+
+          else
+            text ""
+        ]
+
+
+viewNew : Op -> State -> Html Msg
+viewNew op (State model) =
+    span []
+        [ span [ class "panel-selector-wrapper" ]
+            [ div [ id id_target_name, class "is-reversed" ]
+                [ if model.isOpen then
+                    view_ op model
+
+                  else
+                    text ""
+                ]
+            , div
+                [ class "button is-small mr-2"
+                , onClick (OnOpen op.targets)
+                ]
+                [ A.icon1 "icon-1x icon-layout" "", text T.projects ]
+            ]
+        , if List.length op.selectedProjects > 0 then
+            span [ class "ml-2" ]
+                (List.map
+                    (\tp -> span [ class "tag is-rounded mr-1" ] [ text tp.project.name ])
+                    op.selectedProjects
+                )
 
           else
             text ""
