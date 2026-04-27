@@ -61,7 +61,7 @@ import Html.Attributes exposing (attribute, autocomplete, autofocus, class, clas
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isDataEmpty, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -1996,14 +1996,17 @@ viewSearchBar model =
         ]
 
 
-viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> SortFilter -> Html Msg
-viewTensionsListHeader focus counts statusFilter sortFilter =
+viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> SortFilter -> Bool -> Html Msg
+viewTensionsListHeader focus counts statusFilter sortFilter isEmpty =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
 
         unchecked =
             A.icon1 "icon-check has-text-success is-invisible" ""
+
+        showGoRoot =
+            focus.nameid /= focus.rootnameid && not isEmpty
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
@@ -2012,7 +2015,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
         [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewTensionsCount counts statusFilter
-                , showIf (focus.nameid /= focus.rootnameid) <|
+                , showIf showGoRoot <|
                     viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5 " OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
@@ -2034,7 +2037,7 @@ viewTensionsListHeader focus counts statusFilter sortFilter =
                     ]
                 ]
             ]
-        , showIf (focus.nameid /= focus.rootnameid) <|
+        , showIf showGoRoot <|
             viewGoRoot "is-hidden-tablet px-5" OnGoRoot
         ]
 
@@ -2080,13 +2083,16 @@ viewListTensions model =
     let
         cls_width =
             ternary (model.session.viewMode == DesktopView) "is-10" "is-12"
+
+        isEmpty =
+            isDataEmpty model.tensions_int
     in
     div [ class "columns" ]
         [ showIf (model.session.viewMode == DesktopView) <|
             div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
-                Lazy.lazy4 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter
+                Lazy.lazy5 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter isEmpty
             , viewTensions ListTension model
             ]
         ]
@@ -2346,6 +2352,11 @@ viewTensions tensionDir model =
                     div [ class "m-4" ] [ text T.noResultsFor, text ": ", text model.pattern_init ]
 
                 else
+                    let
+                        goRoot =
+                            showIf (tensionDir == ListTension && model.node_focus.nameid /= model.node_focus.rootnameid)
+                                (viewGoRoot "" OnGoRoot)
+                    in
                     case model.node_focus.type_ of
                         NodeType.Role ->
                             let
@@ -2360,7 +2371,7 @@ viewTensions tensionDir model =
                                     div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter, goRoot ]
 
                         NodeType.Circle ->
                             let
@@ -2375,7 +2386,7 @@ viewTensions tensionDir model =
                                     div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
 
                                 ListTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
+                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter, goRoot ]
 
             Failure err ->
                 div []

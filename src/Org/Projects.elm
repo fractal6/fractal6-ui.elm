@@ -59,7 +59,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isDataEmpty, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, NewTensionInput(..), Node, ProjectFull, ProjectsCount)
 import Page exposing (Document, Page)
@@ -1588,7 +1588,7 @@ viewProjects model =
     in
     div [ class "columns" ]
         [ div [ class "column is-12" ]
-            [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter
+            [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter (isDataEmpty model.projects)
             , viewProjectsList canEditProject model.commonOp model.session model.node_focus model.pattern_init model.statusFilter model.projects
             , showIf (model.statusFilter == OpenStatus) <|
                 viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.projects_sub
@@ -1596,14 +1596,17 @@ viewProjects model =
         ]
 
 
-viewProjectsListHeader : NodeFocus -> GqlData ProjectsCount -> StatusFilter -> Html Msg
-viewProjectsListHeader focus counts statusFilter =
+viewProjectsListHeader : NodeFocus -> GqlData ProjectsCount -> StatusFilter -> Bool -> Html Msg
+viewProjectsListHeader focus counts statusFilter isEmpty =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
 
         unchecked =
             A.icon1 "icon-check has-text-success is-invisible" ""
+
+        showGoRoot =
+            focus.nameid /= focus.rootnameid && not isEmpty
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
@@ -1612,12 +1615,12 @@ viewProjectsListHeader focus counts statusFilter =
         [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
                 [ viewProjectsCount counts statusFilter
-                , showIf (focus.nameid /= focus.rootnameid) <|
+                , showIf showGoRoot <|
                     viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5" OnGoRoot
                 ]
             , div [ class "level-right px-3" ]
                 []
-            , showIf (focus.nameid /= focus.rootnameid) <|
+            , showIf showGoRoot <|
                 viewGoRoot "is-hidden-tablet px-5" OnGoRoot
             ]
         ]
@@ -1683,6 +1686,8 @@ viewProjectsList canEditProject commonOp session focus pattern statusFilter data
                                 |> Format.namedValue "type" (nodeType2str focus.type_ |> decap)
                                 |> Format.namedValue "status" (projectStatus2str (statusDecoder statusFilter) |> decap)
                             )
+                        , showIf (focus.nameid /= focus.rootnameid) <|
+                            viewGoRoot "" OnGoRoot
                         ]
 
             Failure err ->

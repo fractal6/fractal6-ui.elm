@@ -59,7 +59,7 @@ import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Encode as JE
 import List.Extra as LE
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, withDefaultData, withMapData, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isDataEmpty, withDefaultData, withMapData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -2022,9 +2022,14 @@ viewLabelAddBox model =
 viewLabels : Model -> Html Msg
 viewLabels model =
     let
+        isEmpty =
+            isDataEmpty model.labels
+
+        notRoot =
+            model.node_focus.nameid /= model.node_focus.rootnameid
+
         goToParent =
-            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
-                (viewGoRoot "" OnGoRoot)
+            showIf (notRoot && not isEmpty) (viewGoRoot "" OnGoRoot)
     in
     div [ id "labelsTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
@@ -2040,7 +2045,11 @@ viewLabels model =
         , case model.labels of
             Success labels ->
                 if List.length labels == 0 then
-                    div [ class "" ] [ text T.noLabels, text "." ]
+                    div [ class "" ]
+                        [ text T.noLabels
+                        , text "."
+                        , showIf notRoot (viewGoRoot "" OnGoRoot)
+                        ]
 
                 else
                     div [ class "table-container" ]
@@ -2285,9 +2294,14 @@ viewRoleAddBox model =
 viewRoles : Model -> Html Msg
 viewRoles model =
     let
+        isEmpty =
+            isDataEmpty model.roles
+
+        notRoot =
+            model.node_focus.nameid /= model.node_focus.rootnameid
+
         goToParent =
-            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
-                (viewGoRoot "" OnGoRoot)
+            showIf (notRoot && not isEmpty) (viewGoRoot "" OnGoRoot)
     in
     div [ id "rolesTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]
@@ -2303,7 +2317,11 @@ viewRoles model =
         , case model.roles of
             Success roles ->
                 if List.length roles == 0 then
-                    div [ class "" ] [ text T.noRoles, text "." ]
+                    div [ class "" ]
+                        [ text T.noRoles
+                        , text "."
+                        , showIf notRoot (viewGoRoot "" OnGoRoot)
+                        ]
 
                 else
                     div [ class "table-container" ]
@@ -2588,9 +2606,14 @@ viewTemplateAddBox model =
 viewTemplates : Model -> Html Msg
 viewTemplates model =
     let
+        isEmpty =
+            isDataEmpty model.templates
+
+        notRoot =
+            model.node_focus.nameid /= model.node_focus.rootnameid
+
         goToParent =
-            showIf (model.node_focus.nameid /= model.node_focus.rootnameid)
-                (viewGoRoot "" OnGoRoot)
+            showIf (notRoot && not isEmpty) (viewGoRoot "" OnGoRoot)
     in
     div [ id "templatesTable" ]
         [ h2 [ class "subtitle is-size-3" ] [ text T.tensionTemplates, goToParent ]
@@ -2606,7 +2629,11 @@ viewTemplates model =
         , case model.templates of
             Success templates ->
                 if List.isEmpty templates then
-                    div [] [ text T.noTensionTemplates, text "." ]
+                    div []
+                        [ text T.noTensionTemplates
+                        , text "."
+                        , showIf notRoot (viewGoRoot "" OnGoRoot)
+                        ]
 
                 else
                     div [ class "table-container" ]

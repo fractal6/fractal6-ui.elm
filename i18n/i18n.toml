@@ -1488,8 +1488,8 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Aucun résultats pour"
 
 [nodeNotFound]
-  en="Circle is archived, private or has moved."
-  fr="le cercle est archivé, privé ou a été déplacé"
+  en="Circle is private, archived or has moved."
+  fr="le cercle est privé, archivé ou a été déplacé"
 
 [pageNotFound]
   en="Sorry, page not found"
@@ -2458,23 +2458,23 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [move_action_success]
   en="{{_Tension_}} moved"
-  fr="La {{_tension_}} a été déplacée"
+  fr="{{_tension_}} déplacée"
 
 [move_circle_action_success]
   en="Circle moved"
-  fr="Le cercle a été déplacé"
+  fr="Cercle déplacé"
 
 [move_role_action_success]
   en="Role moved"
-  fr="Le rôle a été déplacé"
+  fr="Rôle déplacé"
 
 [visibility_action_success]
   en="Visibility changed"
-  fr="La visibilité a été modifié"
+  fr="Visibilité modifié"
 
 [authority_action_success]
   en="Authority changed"
-  fr="L’authorité a été modifié"
+  fr="Authorité modifié"
 
 [link_action_success]
   en="User has been invited"

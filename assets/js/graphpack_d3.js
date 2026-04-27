@@ -849,7 +849,7 @@ export const GraphPack = {
     zoomToNode(focus, delay) {
         //Based on the generous help by Stephan Smola
         //http://bl.ocks.org/smoli/d7e4f9199c15d71258b5
-        if (this.isZooming) return false
+        if (this.isZooming || !this.focusedNode) return false
 
         if (focus && typeof (focus) === 'string') {
             var maybeFocus = this.nodesDict[unescape(focus)];

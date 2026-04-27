@@ -1241,7 +1241,7 @@ viewDraftEditable lexicon form =
         rowsCount =
             String.split "\n" form.title |> List.length |> max 1
     in
-    div [ class "is-relative mb-2 mx-2" ]
+    div [ class "is-relative mt-2 mb-2 mx-2" ]
         [ textarea
             [ id "draft-card-editable"
             , class "box is-shrinked2 p-2 m-0"

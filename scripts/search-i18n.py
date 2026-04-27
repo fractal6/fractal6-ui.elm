@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Extract top-level keys in i18n/i18n.toml whose values contain '{{_tension_}}'."""
 
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 import tomllib
 
 NEEDLE = "{{_tension_}}"
-TOML_PATH = Path(__file__).parent / "i18n" / "i18n.toml"
+TOML_PATH = Path(__file__).parent.parent / "i18n" / "i18n.toml"
 
 
 def contains_needle(value) -> bool:

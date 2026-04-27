@@ -312,6 +312,19 @@ isLoading data =
             False
 
 
+{-| Loading/Failure are treated as empty so transient UI (e.g. a goRoot button)
+stays hidden until data resolves, avoiding flicker.
+-}
+isDataEmpty : GqlData (List a) -> Bool
+isDataEmpty data =
+    case data of
+        Success xs ->
+            List.isEmpty xs
+
+        _ ->
+            True
+
+
 withDefaultData : a -> RequestResult e a -> a
 withDefaultData default result =
     case result of
