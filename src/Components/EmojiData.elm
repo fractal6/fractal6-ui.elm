@@ -161,6 +161,11 @@ allEmojis =
     , { unicode = "🙈", name = "see-no-evil", keywords = "monkey blind" }
     , { unicode = "🙉", name = "hear-no-evil", keywords = "monkey deaf" }
     , { unicode = "🙊", name = "speak-no-evil", keywords = "monkey quiet" }
+    , { unicode = "🫡", name = "saluting", keywords = "ack done respect ok" }
+    , { unicode = "🥹", name = "holding-back-tears", keywords = "emotional touched proud" }
+    , { unicode = "🫠", name = "melting", keywords = "hot embarrassed dissolve" }
+    , { unicode = "🫥", name = "dotted-line", keywords = "invisible hidden disappear" }
+    , { unicode = "🫨", name = "shaking-face", keywords = "shock vibrate earthquake" }
 
     -- Gestures & People
     , { unicode = "👋", name = "wave", keywords = "hello hi bye hand" }
@@ -201,6 +206,11 @@ allEmojis =
     , { unicode = "👁️", name = "eye", keywords = "look see" }
     , { unicode = "👅", name = "tongue", keywords = "taste lick" }
     , { unicode = "👄", name = "lips", keywords = "mouth kiss" }
+    , { unicode = "🫶", name = "heart-hands", keywords = "love thanks gratitude" }
+    , { unicode = "🫰", name = "pinch-hand", keywords = "money fingers heart" }
+    , { unicode = "🫵", name = "pointing-at-viewer", keywords = "you direction" }
+    , { unicode = "👷", name = "construction-worker", keywords = "build helmet wip" }
+    , { unicode = "🕵️", name = "detective", keywords = "spy investigate sleuth" }
 
     -- Hearts & Symbols
     , { unicode = "❤️", name = "red-heart", keywords = "love like" }
@@ -260,6 +270,9 @@ allEmojis =
     , { unicode = "🐛", name = "bug", keywords = "insect" }
     , { unicode = "🦋", name = "butterfly", keywords = "insect" }
     , { unicode = "🐌", name = "snail", keywords = "slow" }
+    , { unicode = "🐢", name = "turtle", keywords = "slow animal" }
+    , { unicode = "🦥", name = "sloth", keywords = "slow lazy animal" }
+    , { unicode = "🦄", name = "unicorn", keywords = "magic fantasy rare" }
     , { unicode = "🐙", name = "octopus", keywords = "animal sea" }
     , { unicode = "🐬", name = "dolphin", keywords = "animal sea" }
     , { unicode = "🐳", name = "whale", keywords = "animal sea" }
@@ -465,6 +478,60 @@ allEmojis =
     , { unicode = "🏳️", name = "white-flag", keywords = "surrender" }
     , { unicode = "🏴", name = "black-flag", keywords = "" }
     , { unicode = "🚩", name = "red-flag", keywords = "warning triangular" }
+    , { unicode = "🚧", name = "construction", keywords = "wip work-in-progress barrier" }
+    , { unicode = "🆕", name = "new", keywords = "fresh badge" }
+    , { unicode = "🆗", name = "ok-button", keywords = "okay accept" }
+    , { unicode = "🆙", name = "up-button", keywords = "level up new" }
+    , { unicode = "🔝", name = "top", keywords = "up arrow best" }
+    , { unicode = "🔙", name = "back", keywords = "return arrow" }
+    , { unicode = "🔚", name = "end", keywords = "finish arrow" }
+    , { unicode = "🔜", name = "soon", keywords = "later arrow" }
+    , { unicode = "🔛", name = "on", keywords = "active arrow" }
+    , { unicode = "➕", name = "plus", keywords = "add math" }
+    , { unicode = "➖", name = "minus", keywords = "subtract math" }
+    , { unicode = "✖️", name = "multiply", keywords = "times math x" }
+    , { unicode = "➗", name = "divide", keywords = "math" }
+    , { unicode = "🟥", name = "red-square", keywords = "shape" }
+    , { unicode = "🟧", name = "orange-square", keywords = "shape" }
+    , { unicode = "🟨", name = "yellow-square", keywords = "shape" }
+    , { unicode = "🟩", name = "green-square", keywords = "shape" }
+    , { unicode = "🟦", name = "blue-square", keywords = "shape" }
+    , { unicode = "🟪", name = "purple-square", keywords = "shape" }
+    , { unicode = "⬛", name = "black-square", keywords = "shape" }
+    , { unicode = "⬜", name = "white-square", keywords = "shape" }
+    , { unicode = "♀️", name = "female-sign", keywords = "woman gender" }
+    , { unicode = "♂️", name = "male-sign", keywords = "man gender" }
+    , { unicode = "0️⃣", name = "zero", keywords = "number keycap" }
+    , { unicode = "1️⃣", name = "one", keywords = "number keycap" }
+    , { unicode = "2️⃣", name = "two", keywords = "number keycap" }
+    , { unicode = "3️⃣", name = "three", keywords = "number keycap" }
+    , { unicode = "4️⃣", name = "four", keywords = "number keycap" }
+    , { unicode = "5️⃣", name = "five", keywords = "number keycap" }
+    , { unicode = "6️⃣", name = "six", keywords = "number keycap" }
+    , { unicode = "7️⃣", name = "seven", keywords = "number keycap" }
+    , { unicode = "8️⃣", name = "eight", keywords = "number keycap" }
+    , { unicode = "9️⃣", name = "nine", keywords = "number keycap" }
+    , { unicode = "🔟", name = "ten", keywords = "number keycap" }
+
+    -- Arrows
+    , { unicode = "⬆️", name = "arrow-up", keywords = "direction north" }
+    , { unicode = "⬇️", name = "arrow-down", keywords = "direction south" }
+    , { unicode = "⬅️", name = "arrow-left", keywords = "direction west back" }
+    , { unicode = "➡️", name = "arrow-right", keywords = "direction east forward" }
+    , { unicode = "↗️", name = "arrow-upper-right", keywords = "direction northeast" }
+    , { unicode = "↘️", name = "arrow-lower-right", keywords = "direction southeast" }
+    , { unicode = "↙️", name = "arrow-lower-left", keywords = "direction southwest" }
+    , { unicode = "↖️", name = "arrow-upper-left", keywords = "direction northwest" }
+    , { unicode = "↕️", name = "arrow-up-down", keywords = "direction vertical" }
+    , { unicode = "↔️", name = "arrow-left-right", keywords = "direction horizontal" }
+    , { unicode = "↩️", name = "leftwards-arrow", keywords = "return back hook" }
+    , { unicode = "↪️", name = "rightwards-arrow", keywords = "forward hook" }
+    , { unicode = "⤴️", name = "arrow-heading-up", keywords = "direction" }
+    , { unicode = "⤵️", name = "arrow-heading-down", keywords = "direction" }
+    , { unicode = "🔃", name = "clockwise-arrows", keywords = "rotate refresh" }
+    , { unicode = "🔄", name = "counterclockwise-arrows", keywords = "rotate refresh sync" }
+    , { unicode = "🔼", name = "up-button", keywords = "arrow triangle" }
+    , { unicode = "🔽", name = "down-button", keywords = "arrow triangle" }
 
     -- Misc popular
     , { unicode = "🎃", name = "jack-o-lantern", keywords = "halloween pumpkin" }
@@ -500,6 +567,19 @@ allEmojis =
     , { unicode = "📮", name = "postbox", keywords = "mail" }
     , { unicode = "🗑️", name = "wastebasket", keywords = "trash delete garbage" }
     , { unicode = "📦", name = "package", keywords = "box delivery" }
+    , { unicode = "📥", name = "inbox", keywords = "receive in tray" }
+    , { unicode = "📤", name = "outbox", keywords = "send out tray" }
+    , { unicode = "📜", name = "scroll", keywords = "document paper old" }
+    , { unicode = "📄", name = "page", keywords = "document file" }
+    , { unicode = "📃", name = "curled-page", keywords = "document file" }
+    , { unicode = "📒", name = "notebook", keywords = "ledger journal" }
+    , { unicode = "📕", name = "red-book", keywords = "closed read" }
+    , { unicode = "📗", name = "green-book", keywords = "closed read" }
+    , { unicode = "📘", name = "blue-book", keywords = "closed read" }
+    , { unicode = "📙", name = "orange-book", keywords = "closed read" }
+    , { unicode = "💴", name = "yen", keywords = "money cash japan" }
+    , { unicode = "💶", name = "euro", keywords = "money cash europe" }
+    , { unicode = "💷", name = "pound", keywords = "money cash uk" }
     , { unicode = "🔐", name = "locked-key", keywords = "security" }
     , { unicode = "🛡️", name = "shield", keywords = "protect security" }
     , { unicode = "⏰", name = "alarm-clock", keywords = "time wake" }
