@@ -38,15 +38,13 @@
     }
 }
 
-.spinner2 { // @todo fix
-    // The height here is just for demo purposes
-    //height: 25vh;
+.spinner2 {
     opacity: 1;
     position: relative;
     transition: opacity linear 0.1s;
     &::before {
         animation: 1.3s linear infinite spinner;
-        border: solid 4px var(--text-weak);
+        border: solid 4px var(--background-evidence);
         border-bottom-color: var(--primary);
         border-radius: 50%;
         content: "";

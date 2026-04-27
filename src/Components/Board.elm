@@ -35,14 +35,14 @@ import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(.
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
+import Extra.Events exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, i, span, text, textarea)
 import Html.Attributes exposing (attribute, autofocus, class, classList, href, id, readonly, rows, style, target, title, value)
-import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
+import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
@@ -81,7 +81,6 @@ type alias Model =
     , dragCount : Int
     , draging : Bool
     , board_result : GqlData String -- track board remote result silently
-    , cardHover : String
     , cardEdit : String
     , activeCards : List String
     , colEdit : String
@@ -133,7 +132,6 @@ initModel projectid focus session =
 
     --
     , board_result = NotAsked
-    , cardHover = ""
     , cardEdit = ""
     , activeCards = []
     , colEdit = ""
@@ -196,8 +194,6 @@ type Msg
     | GotCardMoved (GqlData IdPayload)
     | GotColMoved (GqlData IdPayload)
     | OnCardClick (Maybe ProjectCard)
-    | OnCardHover String
-    | OnCardHoverLeave
     | OnToggleCardEdit String
     | OnToggleColEdit String
     | OnRemoveCard String
@@ -626,12 +622,6 @@ update_ apis message model =
                 _ ->
                     ( model, noOut )
 
-        OnCardHover cardid ->
-            ( { model | cardHover = cardid }, noOut )
-
-        OnCardHoverLeave ->
-            ( { model | cardHover = "" }, noOut )
-
         OnToggleCardEdit cardid ->
             let
                 cmds =
@@ -870,7 +860,7 @@ subscriptions (State model) =
                 []
            )
         ++ (if model.cardEdit /= "" then
-                [ Events.onMouseUp (JD.succeed (OnCardClick Nothing))
+                [ Events.onMouseUp (Dom.outsideClickClose "cardEditDropdown" (OnCardClick Nothing))
                 , Events.onKeyUp (Dom.key "Escape" (OnCardClick Nothing))
                 ]
 
@@ -1025,8 +1015,6 @@ viewBoard op model =
                                                 , ( "is-focusing", Maybe.map .id model.movingCard == Just card.id || List.member card.id model.activeCards )
                                                 ]
                                             , onClick (OnCardClick (Just card))
-                                            , onMouseEnter (OnCardHover card.id)
-                                            , onMouseLeave OnCardHoverLeave
                                             , attribute "draggable" "true"
                                             , onDragStart <| OnMove { pos = i, colid = colid, length = cards_len } card
                                             , onDragEnd <| OnMoveEnd
@@ -1037,10 +1025,10 @@ viewBoard op model =
                                     (case card.card of
                                         CardTension t ->
                                             -- Does lazy will work with function in argment?
-                                            [ Lazy.lazy5 viewMediaTension card.id (card.id == model.cardHover && model.isProjectAdmin) (card.id == model.cardEdit) model.node_focus t ]
+                                            [ Lazy.lazy5 viewMediaTension card.id model.isProjectAdmin (card.id == model.cardEdit) model.node_focus t ]
 
                                         CardDraft d ->
-                                            [ Lazy.lazy4 viewMediaDraft card.id (card.id == model.cardHover && model.isProjectAdmin) (card.id == model.cardEdit) d ]
+                                            [ Lazy.lazy4 viewMediaDraft card.id model.isProjectAdmin (card.id == model.cardEdit) d ]
                                     )
                                 ]
                             )
@@ -1198,12 +1186,17 @@ viewNewCol =
 
 
 viewMediaDraft : String -> Bool -> Bool -> ProjectDraft -> Html Msg
-viewMediaDraft cardid isHovered isEdited d =
+viewMediaDraft cardid isProjectAdmin isEdited d =
     let
         ellipsis =
-            if isHovered || isEdited then
-                span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
-                    [ A.icon "button-light icon-more-horizontal icon-bg" ]
+            if isProjectAdmin then
+                span
+                    [ id (cardid ++ "-ellipsis")
+                    , class "card-ellipsis px-3 button-light has-text-text is-inline-flex is-align-items-center"
+                    , classList [ ( "is-edited", isEdited ) ]
+                    , onClickSP <| OnToggleCardEdit (ternary isEdited "" cardid)
+                    ]
+                    [ A.icon "icon-more-horizontal icon-bg" ]
 
             else
                 text ""
@@ -1212,8 +1205,8 @@ viewMediaDraft cardid isHovered isEdited d =
         [ div [ class "media-content" ]
             [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [ class "is-inline-flex" ] [ A.icon1 "icon-circle-draft" "Draft", ellipsis ] ]
-            , div []
-                [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
+            , div [ class "link-like py-2 pr-2", onClickSP (OpenCardPane cardid) ]
+                [ span [ class "is-human mr-2" ]
                     [ text d.title ]
                 , case d.labels of
                     Just labels ->
@@ -1310,7 +1303,7 @@ draftKeydownDecoder =
 
 
 viewMediaTension : String -> Bool -> Bool -> NodeFocus -> Tension -> Html Msg
-viewMediaTension cardid isHovered isEdited focus t =
+viewMediaTension cardid isProjectAdmin isEdited focus t =
     let
         n_comments =
             withDefault 0 t.n_comments
@@ -1341,8 +1334,13 @@ viewMediaTension cardid isHovered isEdited focus t =
                             text ""
 
         ellipsis =
-            if isHovered || isEdited then
-                span [ id (cardid ++ "-ellipsis"), class "px-2 has-text-text", onClick <| OnToggleCardEdit (ternary isEdited "" cardid) ]
+            if isProjectAdmin then
+                span
+                    [ id (cardid ++ "-ellipsis")
+                    , class "card-ellipsis px-3 py-1 has-text-text"
+                    , classList [ ( "is-edited", isEdited ) ]
+                    , onClickSP <| OnToggleCardEdit (ternary isEdited "" cardid)
+                    ]
                     [ A.icon "button-light icon-more-horizontal icon-bg" ]
 
             else
@@ -1353,12 +1351,12 @@ viewMediaTension cardid isHovered isEdited focus t =
         [ div [ class "media-content" ]
             [ div [ class "is-weak mb-2 is-flex is-justify-content-space-between" ]
                 [ div [] [ span [ class "mr-2" ] [ tensionIcon t.type_ ], text t.receiver.name, ellipsis ], status_html ]
-            , div []
-                [ span [ class "link-like is-human mr-2", onClick (OpenCardPane cardid) ]
+            , div [ class "link-like py-2 pr-2", onClickSP (OpenCardPane cardid) ]
+                [ span [ class "is-human mr-2" ]
                     [ text t.title ]
                 , case t.labels of
                     Just labels ->
-                        viewLabels (Just focus.nameid) labels
+                        span [ onClickSP NoMsg ] [ viewLabels (Just focus.nameid) labels ]
 
                     Nothing ->
                         text ""
@@ -1383,14 +1381,15 @@ viewCardDropdown model =
     case model.cardEditDropdown of
         Just card ->
             div
-                [ class "dropdown-menu is-block"
+                [ id "cardEditDropdown"
+                , class "dropdown-menu is-block"
                 , attribute "role" "menu"
                 , style "top" (String.fromFloat (model.cardEditDropdownY + 18) ++ "px")
                 , style "left" (String.fromFloat model.cardEditDropdownX ++ "px")
                 ]
                 [ case card.card of
                     CardTension t ->
-                        div [ class "dropdown-content p-0" ]
+                        div [ class "dropdown-content p-0", onClick (OnCardClick Nothing) ]
                             [ a
                                 [ class "dropdown-item button-light discrete-link"
                                 , href (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid t.receiver.nameid, param2 = t.id } |> toHref)
@@ -1402,7 +1401,7 @@ viewCardDropdown model =
                             ]
 
                     CardDraft d ->
-                        div [ class "dropdown-content p-0" ]
+                        div [ class "dropdown-content p-0", onClick (OnCardClick Nothing) ]
                             [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                             , hr [ class "dropdown-divider" ] []
                             , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]

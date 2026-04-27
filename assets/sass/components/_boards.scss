@@ -61,6 +61,10 @@
         & *:hover {
             cursor: grab;
         }
+
+        .card-ellipsis { visibility: hidden; }
+        &:hover .card-ellipsis,
+        .card-ellipsis.is-edited { visibility: visible; }
     }
 
     &.board1 {
