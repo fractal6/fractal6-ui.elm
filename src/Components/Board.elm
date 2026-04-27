@@ -35,7 +35,7 @@ import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(.
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onKeydown)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onKeydown, onMousedownPD)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
@@ -48,7 +48,7 @@ import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, User, UserCtx)
+import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, User, UserCtx, Username)
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
@@ -221,6 +221,7 @@ type Msg
       --
     | OnAddCol
     | OnAddDraft String
+    | OnAddTension String
     | OnDraftEdit String
     | OnDraftKeydown Int
     | OnDraftCancel
@@ -521,6 +522,31 @@ update_ apis message model =
                 ]
             )
 
+        OnAddTension colid ->
+            let
+                title =
+                    Maybe.map .title model.isAddingDraft |> withDefault ""
+
+                pos =
+                    LE.find (\b -> b.id == colid) model.project.columns |> unwrap [] .cards |> List.length
+
+                draft =
+                    { id = ""
+                    , title = title
+                    , message = Nothing
+                    , createdAt = ""
+                    , createdBy = Username ""
+                    , labels = Nothing
+                    , assignees = Nothing
+                    , cardid = ""
+                    , colid = colid
+                    , pos = pos
+                    }
+            in
+            ( { model | isAddingDraft = Nothing }
+            , out1 [ DoCreateTension model.node_focus.nameid Nothing (Just draft) ]
+            )
+
         OnDraftEdit val ->
             let
                 form =
@@ -530,6 +556,8 @@ update_ apis message model =
                     String.replace "<br>" "" val
                         |> String.replace "<div>" ""
                         |> String.replace "</div>" ""
+                        |> String.replace "&nbsp;" " "
+                        |> String.replace "\u{00A0}" " "
             in
             ( { model | isAddingDraft = Maybe.map (\f -> { f | title = title }) form }, noOut )
 
@@ -771,13 +799,17 @@ update_ apis message model =
                     , post = Dict.empty
                     , tids = [ Just t.id ]
                     }
+
+                cmds =
+                    if draft.cardid == "" then
+                        [ send (OnAddCards form) ]
+
+                    else
+                        [ removeProjectCards apis [ draft.cardid ] OnRemoveCardAck
+                        , sendSleep (OnAddCards form) 333
+                        ]
             in
-            ( model
-            , out0
-                [ removeProjectCards apis [ draft.cardid ] OnRemoveCardAck
-                , sendSleep (OnAddCards form) 333
-                ]
-            )
+            ( model, out0 cmds )
 
         OnAddCards form ->
             ( model, out0 [ addProjectCard apis form OnAddCardAck ] )
@@ -1030,7 +1062,7 @@ viewBoard op model =
                                 case model.isAddingDraft of
                                     Just form ->
                                         if form.colid == colid then
-                                            x ++ [ viewDraftEditable form ]
+                                            x ++ [ viewDraftEditable model.session.lexicon form ]
 
                                         else
                                             x
@@ -1215,22 +1247,34 @@ viewMediaDraft cardid isHovered isEdited d =
         ]
 
 
-viewDraftEditable : DraftForm -> Html Msg
-viewDraftEditable form =
-    div
-        [ id "draft-card-editable"
-        , class "box is-shrinked2 mb-2 mx-2 p-2"
-        , contenteditable True
-        , autofocus True
-        , onKeydown OnDraftKeydown
-        , onBlur OnDraftCancel
+viewDraftEditable : Dict String String -> DraftForm -> Html Msg
+viewDraftEditable lexicon form =
+    div [ class "is-relative mb-2 mx-2" ]
+        [ div
+            [ id "draft-card-editable"
+            , class "box is-shrinked2 p-2 m-0"
+            , contenteditable True
+            , autofocus True
+            , onKeydown OnDraftKeydown
+            , onBlur OnDraftCancel
 
-        -- OnInput does not work on contenteditable: https://github.com/elm/html/issues/24
-        --, onInput op.onDraftEdit
-        , Html.Events.on "input" (JD.map OnDraftEdit innerHtmlDecoder)
-        , Html.Attributes.property "innerHTML" (JE.string form.title)
+            -- OnInput does not work on contenteditable: https://github.com/elm/html/issues/24
+            --, onInput op.onDraftEdit
+            , Html.Events.on "input" (JD.map OnDraftEdit innerHtmlDecoder)
+            , Html.Attributes.property "innerHTML" (JE.string form.title)
+            ]
+            []
+        , span
+            [ class "button-light is-weak px-1"
+            , style "position" "absolute"
+            , style "top" "50%"
+            , style "right" "4px"
+            , style "transform" "translateY(-50%)"
+            , title (T.addTensionColumn lexicon)
+            , onMousedownPD (OnAddTension form.colid)
+            ]
+            [ A.icon "icon-exchange" ]
         ]
-        []
 
 
 innerHtmlDecoder =

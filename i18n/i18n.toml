@@ -306,14 +306,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Update label"
   fr="Modifier l’étiquette"
 
-[createRole]
-  en="Create role template"
-  fr="Créer le modèle de rôle"
-
-[updateRole]
-  en="Update role"
-  fr="Modifier le rôle"
-
 [updateProfile]
   en="Update profile"
   fr="Modifier le profil"
@@ -1206,16 +1198,16 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Déplacer cette {{_tension_}} vers un autre cercle"
 
 [pinTension]
-  en="Pin {{_tension_}}"
-  fr="Epingler la {{_tension_}}"
+  en="Pin"
+  fr="Epingler"
 
 [pinTensionHelp]
   en="Pin this {{_tension_}} to show it at the top of the list"
   fr="Épingler cette {{_tension_}} pour l'afficher en haut de la liste"
 
 [unpinTension]
-  en="Unpin {{_tension_}}"
-  fr="Désépingler la {{_tension_}}"
+  en="Unpin"
+  fr="Désépingler"
 
 [unpinTensionHelp]
   en="Unpin this {{_tension_}} from the top of the list"
@@ -1787,18 +1779,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="No {{status}} projects linked to this {{type}} yet."
   fr="Aucun projet {{status}} associé à ce {{type}} pour le moment."
 
-[newTension]
-  en="New {{_tension_}}"
-  fr="Nouvelle {{_tension_}}"
-
-[newCircle]
-  en="New circle"
-  fr="Nouveau cercle"
-
-[newRole]
-  en="New role"
-  fr="Nouveau rôle"
-
 
 [createNewTension]
   en="Create {{_tension_}}"
@@ -1987,10 +1967,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [tensionTemplates]
   en="Tension templates"
   fr="Modèles de Tensions"
-
-[newTensionTemplate]
-  en="New template"
-  fr="Nouveau modèle"
 
 [noTensionTemplates]
   en="No tension templates"
@@ -2362,7 +2338,7 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Retirer du projet"
 
 [removeItemsColumn]
-  en="Remove items this column"
+  en="Remove items from this column"
   fr="Retirer les éléments de cette colonne"
 
 [openNewTab]

@@ -1952,7 +1952,7 @@ viewSearchBar model =
                     , style "margin-left" "auto"
                     , onClick (NewTensionMsg (NTF.OnOpen (FromNameid model.node_focus.nameid) Nothing))
                     ]
-                    [ text (T.newTension model.session.lexicon) ]
+                    [ A.icon0 "icon-plus", text (T.tension model.session.lexicon) ]
                 ]
             ]
         , div [ class "tabs no-overflow is-md" ]

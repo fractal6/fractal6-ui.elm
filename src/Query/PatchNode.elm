@@ -65,6 +65,23 @@ import RemoteData exposing (RemoteData)
 --
 -- We do not directtly operate on Node, but user referecne instead. (see @hasLink schema directive).
 --
+
+
+{-| Decoder for remove mutations that select `numUids`.
+
+After detaching the only Node link, @auth(query) and/or @hook\_ strip the
+returned record. `numUids` is not auth-filtered, so we use it to confirm the
+mutation ran.
+
+-}
+removeNumUidsDecoder : Maybe (Maybe Int) -> Maybe String
+removeNumUidsDecoder data =
+    data
+        |> Maybe.andThen identity
+        |> Maybe.map String.fromInt
+
+
+
 --
 -- Node Label Operation
 --
@@ -204,12 +221,9 @@ removeOneLabel url form msg =
     makeGQLMutation url
         (Mutation.updateLabel
             (removeLabelInputEncoder form)
-            (SelectionSet.map LabelsFullPayload <|
-                Fractal.Object.UpdateLabelPayload.label identity <|
-                    labelFullPayload
-            )
+            Fractal.Object.UpdateLabelPayload.numUids
         )
-        (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
 
 removeLabelInputEncoder : ArtefactNodeForm -> Mutation.UpdateLabelRequiredArguments
@@ -387,12 +401,9 @@ removeOneRole url form msg =
     makeGQLMutation url
         (Mutation.updateRoleExt
             (removeRoleInputEncoder form)
-            (SelectionSet.map RolesFullPayload <|
-                Fractal.Object.UpdateRoleExtPayload.roleExt identity <|
-                    roleFullPayload
-            )
+            Fractal.Object.UpdateRoleExtPayload.numUids
         )
-        (RemoteData.fromResult >> decodeResponse roleFullDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
 
 removeRoleInputEncoder : ArtefactNodeForm -> Mutation.UpdateRoleExtRequiredArguments
@@ -669,12 +680,9 @@ removeOneProject url form msg =
     makeGQLMutation url
         (Mutation.updateProject
             (removeProjectInputEncoder form)
-            (SelectionSet.map ProjectsFullPayload <|
-                Fractal.Object.UpdateProjectPayload.project identity <|
-                    projectFullPayload
-            )
+            Fractal.Object.UpdateProjectPayload.numUids
         )
-        (RemoteData.fromResult >> decodeResponse projectFullDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
 
 removeProjectInputEncoder : ProjectForm -> Mutation.UpdateProjectRequiredArguments
@@ -859,12 +867,9 @@ removeOneTensionTemplate url form msg =
     makeGQLMutation url
         (Mutation.updateTensionTemplate
             (removeTensionTemplateInputEncoder form)
-            (SelectionSet.map TensionTemplatesFullPayload <|
-                Fractal.Object.UpdateTensionTemplatePayload.tensionTemplate identity <|
-                    tensionTemplateFullPayload
-            )
+            Fractal.Object.UpdateTensionTemplatePayload.numUids
         )
-        (RemoteData.fromResult >> decodeResponse tensionTemplateMutDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
 
 removeTensionTemplateInputEncoder : TensionTemplateForm -> Mutation.UpdateTensionTemplateRequiredArguments

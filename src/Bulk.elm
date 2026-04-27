@@ -221,7 +221,7 @@ decodeLabel label_raw =
     Label "" (SE.leftOfBack "§" label_raw) (SE.rightOfBack "§" label_raw |> Just) []
 
 
-{-| Decodes "id§name§" descriptors emitted by graph/card_resolver.go.
+{-| Decodes "id§name§" descriptors emitted by graph/card\_resolver.go.
 -}
 decodeProjectRef : String -> { id : String, name : String }
 decodeProjectRef raw =
@@ -233,7 +233,7 @@ decodeProjectRef raw =
             { id = "", name = raw }
 
 
-{-| Decodes "id§name§color§projectId" descriptors emitted by graph/card_resolver.go.
+{-| Decodes "id§name§color§projectId" descriptors emitted by graph/card\_resolver.go.
 The projectId tail is optional for backward compatibility with older events.
 -}
 decodeColumnRef : String -> { id : String, name : String, color : String, projectId : String }
@@ -637,8 +637,7 @@ type InputViewMode
 
 
 type alias FormText =
-    { title : String
-    , added : String
+    { added : String
     , name_help : String
     , about_help : String
     , message_help : String
@@ -657,7 +656,6 @@ initFormText lexicon node_type =
     case node_type of
         Nothing ->
             FormText
-                (T.newTension lexicon)
                 (T.tensionAdded lexicon)
                 (T.tensionTitleHelp lexicon)
                 ""
@@ -672,7 +670,6 @@ initFormText lexicon node_type =
 
         Just NodeType.Role ->
             FormText
-                T.newRole
                 T.roleAdded
                 T.roleNameHelp
                 T.roleAboutHelp
@@ -687,7 +684,6 @@ initFormText lexicon node_type =
 
         Just NodeType.Circle ->
             FormText
-                T.newCircle
                 T.circleAdded
                 T.circleNameHelp
                 T.circleAboutHelp

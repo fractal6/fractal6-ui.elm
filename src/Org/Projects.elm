@@ -200,7 +200,7 @@ type alias Model =
     , project_add : Bool
     , project_edit : Maybe ProjectFull
     , project_result : GqlData ProjectFull
-    , project_result_del : GqlData ProjectFull
+    , project_result_del : GqlData String
 
     -- Move
     , project_move : Maybe ProjectFull
@@ -361,7 +361,7 @@ type Msg
     | SubmitEditProject Time.Posix
     | SubmitDeleteProject String String Time.Posix
     | GotProject (GqlData ProjectFull)
-    | GotProjectDel (GqlData ProjectFull)
+    | GotProjectDel (GqlData String)
       -- Move
     | MoveProject ProjectFull
     | OnMoveTargetClick String

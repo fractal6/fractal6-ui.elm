@@ -192,7 +192,7 @@ type alias Model =
     , label_add : Bool
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
-    , label_result_del : GqlData LabelFull
+    , label_result_del : GqlData String
     , label_anim_enter : Maybe String
 
     -- Roles
@@ -204,7 +204,7 @@ type alias Model =
     , role_add : Bool
     , role_edit : Maybe RoleExtFull
     , role_result : GqlData RoleExtFull
-    , role_result_del : GqlData RoleExtFull
+    , role_result_del : GqlData String
     , role_anim_enter : Maybe String
 
     -- Templates
@@ -217,7 +217,7 @@ type alias Model =
     , template_add : Bool
     , template_edit : Maybe TensionTemplateFull
     , template_result : GqlData TensionTemplateFull
-    , template_result_del : GqlData TensionTemplateFull
+    , template_result_del : GqlData String
     , template_anim_enter : Maybe String
 
     -- Orga
@@ -529,7 +529,7 @@ type Msg
     | SubmitEditLabel Time.Posix
     | SubmitDeleteLabel String Time.Posix
     | GotLabel (GqlData LabelFull)
-    | GotLabelDel (GqlData LabelFull)
+    | GotLabelDel (GqlData String)
       -- Roles
     | GotRoles (GqlData (List RoleExtFull))
     | GotRolesTop (RestData (List RoleExt))
@@ -541,7 +541,7 @@ type Msg
     | SubmitEditRole Time.Posix
     | SubmitDeleteRole String Time.Posix
     | GotRole (GqlData RoleExtFull)
-    | GotRoleDel (GqlData RoleExtFull)
+    | GotRoleDel (GqlData String)
     | ToggleMandate String
     | AddDomains
     | AddPolicies
@@ -566,7 +566,7 @@ type Msg
     | SubmitEditTemplate Time.Posix
     | SubmitDeleteTemplate String Time.Posix
     | GotTemplate (GqlData TensionTemplateFull)
-    | GotTemplateDel (GqlData TensionTemplateFull)
+    | GotTemplateDel (GqlData String)
     | GotTemplatesTop (RestData (List TensionTemplateLite))
     | GotTemplatesSub (RestData (List TensionTemplateLite))
     | LabelSearchPanelMsg LabelSearchPanel.Msg
@@ -2030,7 +2030,7 @@ viewLabels model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4 is-info" "icon-info" (T.labelsInfoHeader model.lexicon) (T.labelsInfoDoc model.lexicon) ]
-            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.label_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddLabel) ] [ A.icon0 "icon-plus", text T.label ] ]
             ]
         , if model.label_add then
             viewLabelAddBox model
@@ -2193,14 +2193,6 @@ viewRoleAddBox model =
         isSendable =
             name /= ""
 
-        txt =
-            if isAdd then
-                { submit = T.createRole }
-
-            else
-                -- assume edit role
-                { submit = T.updateRole }
-
         doSubmit =
             if isAdd then
                 ternary isSendable [ onClick (Submit SubmitAddRole) ] []
@@ -2277,7 +2269,7 @@ viewRoleAddBox model =
                      ]
                         ++ doSubmit
                     )
-                    [ text txt.submit ]
+                    [ text T.save ]
                 , button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 ]
             ]
@@ -2301,7 +2293,7 @@ viewRoles model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.templateRoles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4 is-info" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
-            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.role_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.role_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddRole) ] [ A.icon0 "icon-plus", text T.role ] ]
             ]
         , if model.role_add then
             viewRoleAddBox model
@@ -2579,7 +2571,7 @@ viewTemplateAddBox model =
                     , disabled (not isSendable || isLoading)
                     , onClick submitMsg
                     ]
-                    [ text (ternary isAdd T.newTensionTemplate T.save) ]
+                    [ text T.save ]
                 ]
             , div [ class "control" ]
                 [ button [ class "button", onClick CancelTemplate ] [ text T.cancel ] ]
@@ -2604,7 +2596,7 @@ viewTemplates model =
         [ h2 [ class "subtitle is-size-3" ] [ text T.tensionTemplates, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "templates-help" "mb-4 is-info" "icon-info" T.tensionTemplatesInfoHeader T.tensionTemplatesInfoDoc ]
-            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.template_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddTemplate) ] [ textT T.newTensionTemplate ] ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.template_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddTemplate) ] [ A.icon0 "icon-plus", text (T.tension model.lexicon) ] ]
             ]
         , if model.template_add then
             viewTemplateAddBox model
@@ -2668,6 +2660,16 @@ viewTemplates model =
                                                             ]
                                                         ]
                                                 ]
+                                                    ++ (case model.template_result_del of
+                                                            Failure err ->
+                                                                [ ternary (model.template_form.id == d.id)
+                                                                    (td [] [ viewGqlErrors err ])
+                                                                    (text "")
+                                                                ]
+
+                                                            _ ->
+                                                                []
+                                                       )
                                             )
                                    )
                             )
