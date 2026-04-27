@@ -1050,7 +1050,9 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                     ]
                                 , div [ id ("edit-ellipsis-" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ] <|
-                                        [ div [ class "dropdown-item", attribute "data-clipboard" reflink, onClick (OnCopyLink c.id) ] [ A.icon1 "icon-link" "Copy link" ] ]
+                                        [ div [ class "dropdown-item", attribute "data-clipboard" c.message, onClick (OnCopyLink c.id) ] [ A.icon1 "icon-copy" "Copy text" ]
+                                        , div [ class "dropdown-item", attribute "data-clipboard" reflink, onClick (OnCopyLink c.id) ] [ A.icon1 "icon-link" "Copy link" ]
+                                        ]
                                             ++ (if isAuthor then
                                                     [ hr [ class "dropdown-divider" ] []
                                                     , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
