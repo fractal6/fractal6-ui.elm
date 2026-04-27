@@ -1573,11 +1573,15 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
 
+                treeReady =
+                    Maybe.map Tuple.first out.result == Just True
+
                 extra_cmd =
-                    if
-                        (out.result == Just ( True, True ) && getTargetsHere model == [])
-                            || (out.result == Just ( True, False ) && dataNeedLoad model)
-                    then
+                    -- Populate children from the tree once it's available, but only
+                    -- if children are still missing and a tension fetch is still needed.
+                    -- Skipping when children are already known prevents a duplicate
+                    -- DoLoad if queryOrgaTree resolves before queryLocalGraph.
+                    if treeReady && getTargetsHere model == [] && dataNeedLoad model then
                         send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
 
                     else
