@@ -577,6 +577,19 @@ canExitSafe data =
     not (hasData data) || isSuccess data.result
 
 
+{-| A ProjectDraft has body when its title or message is non-empty.
+An empty pre-filled draft (just colid/pos preset) returns False.
+-}
+hasDraftBody : Maybe ProjectDraft -> Bool
+hasDraftBody d =
+    case d of
+        Just dr ->
+            String.trim dr.title /= "" || String.trim (withDefault "" dr.message) /= ""
+
+        Nothing ->
+            False
+
+
 hasData : Model -> Bool
 hasData data =
     not (isPostEmpty [ "title", "message", "invitation" ] data.nodeDoc.form.post)
@@ -875,9 +888,11 @@ update_ apis message model =
                                             NewCircleTab ->
                                                 send (OnSwitchTab NewCircleTab)
 
-                                    -- Use pre-loaded templates from session when available, fallback to fetch
+                                    -- An empty pre-filled ProjectDraft (just colid/pos preset, no body)
+                                    -- shouldn't suppress the template picker. A draft with body or an
+                                    -- in-progress (auto-saved) tension draft does.
                                     hasDraft =
-                                        newModel.draft /= Nothing || newModel.currentDraft /= Nothing
+                                        hasDraftBody newModel.draft || newModel.currentDraft /= Nothing
 
                                     -- Pre-loaded templates are only valid when the target matches the page focus
                                     targetMatchesFocus =
@@ -987,7 +1002,7 @@ update_ apis message model =
         OnSwitchTab tab ->
             let
                 hasDraft =
-                    model.draft /= Nothing || model.currentDraft /= Nothing
+                    hasDraftBody model.draft || model.currentDraft /= Nothing
 
                 targetMatchesFocus =
                     let
@@ -1752,7 +1767,7 @@ viewStep tree_data (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    if model.draft /= Nothing || model.currentDraft /= Nothing then
+                    if hasDraftBody model.draft || model.currentDraft /= Nothing then
                         viewTension tree_data model
 
                     else if model.showTemplatePicker then

@@ -32,6 +32,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -756,6 +757,7 @@ type alias ProjectData =
     { id : String
     , name : String
     , description : Maybe String
+    , status : ProjectStatus.ProjectStatus
     , nodes : List EmitterOrReceiver
     , columns : List ProjectColumn
     , collaborators : List Username

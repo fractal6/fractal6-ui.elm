@@ -50,6 +50,7 @@ import Form.Help as Help
 import Form.NewTension as NTF
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
@@ -858,7 +859,15 @@ view_ global model =
                 [ div [ class "column is-narrow" ]
                     [ case model.project_data of
                         Success p ->
-                            h2 [ class "subtitle is-strong is-size-4" ] [ text p.name ]
+                            h2 [ class "subtitle is-strong is-size-4 is-flex is-align-items-center" ]
+                                [ text p.name
+                                , case p.status of
+                                    ProjectStatus.Closed ->
+                                        span [ class "tag is-danger is-light is-rounded ml-2 is-size-7" ] [ text T.closedProject ]
+
+                                    ProjectStatus.Open ->
+                                        text ""
+                                ]
 
                         _ ->
                             text ""

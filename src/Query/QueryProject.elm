@@ -97,6 +97,7 @@ projectDataPayload =
         |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Project.name
         |> with Fractal.Object.Project.description
+        |> with Fractal.Object.Project.status
         |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
         |> with
             (Fractal.Object.Project.columns identity columnPayload

@@ -35,16 +35,16 @@ import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(.
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onKeydown, onMousedownPD)
+import Extra.Events exposing (onClickPD, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
 import Fractal.Enum.ProjectColumnType as ProjectColumnType
+import Fractal.Enum.ProjectStatus as ProjectStatus
 import Fractal.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, i, span, text)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, href, id, style, target, title)
+import Html exposing (Html, a, br, div, hr, i, span, text, textarea)
+import Html.Attributes exposing (attribute, autofocus, class, classList, href, id, readonly, rows, style, target, title, value)
 import Html.Events exposing (onBlur, onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Json.Decode as JD
-import Json.Encode as JE
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
@@ -108,6 +108,7 @@ type alias DraftForm =
     , post : Post
     , tids : List (Maybe String)
     , blur_safe : Bool
+    , pending : Bool
     }
 
 
@@ -115,7 +116,7 @@ initModel : String -> NodeFocus -> SessionCommon -> Model
 initModel projectid focus session =
     { node_focus = focus
     , projectid = projectid
-    , project = ProjectData "" "" Nothing [] [] [] False False
+    , project = ProjectData "" "" Nothing ProjectStatus.Open [] [] [] False False
     , hasTaskMove = True
     , hasNewCol = True
     , isAddingDraft = Nothing
@@ -514,7 +515,7 @@ update_ apis message model =
                 uctx =
                     uctxFromUser model.session.user
             in
-            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True } }
+            ( { model | isAddingDraft = Just { uctx = uctx, tids = [ Nothing ], post = Dict.empty, title = title, colid = colid, pos = pos, blur_safe = True, pending = False } }
             , out0
                 [ Ports.focusOn "draft-card-editable"
                 , scrollToSubBottom colid NoMsg
@@ -524,16 +525,18 @@ update_ apis message model =
 
         OnAddTension colid ->
             let
-                title =
-                    Maybe.map .title model.isAddingDraft |> withDefault ""
+                ( draftTitle, draftMessage ) =
+                    Maybe.map .title model.isAddingDraft
+                        |> withDefault ""
+                        |> splitDraftBody
 
                 pos =
                     LE.find (\b -> b.id == colid) model.project.columns |> unwrap [] .cards |> List.length
 
                 draft =
                     { id = ""
-                    , title = title
-                    , message = Nothing
+                    , title = draftTitle
+                    , message = ternary (draftMessage == "") Nothing (Just draftMessage)
                     , createdAt = ""
                     , createdBy = Username ""
                     , labels = Nothing
@@ -543,23 +546,14 @@ update_ apis message model =
                     , pos = pos
                     }
             in
-            ( { model | isAddingDraft = Nothing }
-            , out1 [ DoCreateTension model.node_focus.nameid Nothing (Just draft) ]
+            ( { model | isAddingDraft = Maybe.map (\f -> { f | pending = True, blur_safe = True }) model.isAddingDraft }
+            , out2
+                [ sendSleep (OnUpdateModel (\m -> { m | isAddingDraft = Nothing })) 800 ]
+                [ DoCreateTension model.node_focus.nameid Nothing (Just draft) ]
             )
 
         OnDraftEdit val ->
-            let
-                form =
-                    model.isAddingDraft
-
-                title =
-                    String.replace "<br>" "" val
-                        |> String.replace "<div>" ""
-                        |> String.replace "</div>" ""
-                        |> String.replace "&nbsp;" " "
-                        |> String.replace "\u{00A0}" " "
-            in
-            ( { model | isAddingDraft = Maybe.map (\f -> { f | title = title }) form }, noOut )
+            ( { model | isAddingDraft = Maybe.map (\f -> { f | title = val }) model.isAddingDraft }, noOut )
 
         OnDraftKeydown key ->
             case key of
@@ -567,8 +561,23 @@ update_ apis message model =
                     --ENTER
                     case model.isAddingDraft of
                         Just form ->
-                            ternary (form.title /= "" && not (isLoading model.board_result))
-                                ( { model | board_result = Loading }, out0 [ addProjectCard apis form OnAddCardAck ] )
+                            let
+                                ( draftTitle, draftMessage ) =
+                                    splitDraftBody form.title
+
+                                submitForm =
+                                    { form
+                                        | title = draftTitle
+                                        , post =
+                                            if draftMessage == "" then
+                                                form.post
+
+                                            else
+                                                Dict.insert "message" draftMessage form.post
+                                    }
+                            in
+                            ternary (draftTitle /= "" && not (isLoading model.board_result))
+                                ( { model | board_result = Loading }, out0 [ addProjectCard apis submitForm OnAddCardAck ] )
                                 ( model, noOut )
 
                         Nothing ->
@@ -608,7 +617,7 @@ update_ apis message model =
                         isAD =
                             Maybe.map
                                 (\draft ->
-                                    { draft | blur_safe = True }
+                                    { draft | blur_safe = True, title = "", post = Dict.empty }
                                 )
                                 model.isAddingDraft
 
@@ -1249,36 +1258,74 @@ viewMediaDraft cardid isHovered isEdited d =
 
 viewDraftEditable : Dict String String -> DraftForm -> Html Msg
 viewDraftEditable lexicon form =
+    let
+        rowsCount =
+            String.split "\n" form.title |> List.length |> max 1
+    in
     div [ class "is-relative mb-2 mx-2" ]
-        [ div
+        [ textarea
             [ id "draft-card-editable"
             , class "box is-shrinked2 p-2 m-0"
-            , contenteditable True
             , autofocus True
-            , onKeydown OnDraftKeydown
+            , readonly form.pending
+            , value form.title
+            , rows rowsCount
+            , onInput OnDraftEdit
             , onBlur OnDraftCancel
-
-            -- OnInput does not work on contenteditable: https://github.com/elm/html/issues/24
-            --, onInput op.onDraftEdit
-            , Html.Events.on "input" (JD.map OnDraftEdit innerHtmlDecoder)
-            , Html.Attributes.property "innerHTML" (JE.string form.title)
+            , Html.Events.preventDefaultOn "keydown" draftKeydownDecoder
+            , style "width" "100%"
+            , style "resize" "none"
+            , style "font" "inherit"
             ]
             []
-        , span
-            [ class "button-light is-weak px-1"
-            , style "position" "absolute"
-            , style "top" "50%"
-            , style "right" "4px"
-            , style "transform" "translateY(-50%)"
-            , title (T.addTensionColumn lexicon)
-            , onMousedownPD (OnAddTension form.colid)
-            ]
-            [ A.icon "icon-exchange" ]
+        , if form.pending then
+            span
+                [ class "spinner2 is-small"
+                , style "position" "absolute"
+                , style "top" "50%"
+                , style "right" "20px"
+                ]
+                []
+
+          else
+            span
+                [ class "button-light is-weak px-1"
+                , style "position" "absolute"
+                , style "top" "50%"
+                , style "right" "4px"
+                , style "transform" "translateY(-50%)"
+                , title (T.addTensionColumn lexicon)
+                , onMousedownPD (OnAddTension form.colid)
+                ]
+                [ A.icon "icon-exchange" ]
         ]
 
 
-innerHtmlDecoder =
-    JD.at [ "target", "innerHTML" ] JD.string
+{-| Submit on Enter, cancel on Esc. Shift+Enter and other keys fall through to the textarea's native behavior.
+-}
+draftKeydownDecoder : JD.Decoder ( Msg, Bool )
+draftKeydownDecoder =
+    JD.field "keyCode" JD.int
+        |> JD.andThen
+            (\key ->
+                case key of
+                    13 ->
+                        JD.field "shiftKey" JD.bool
+                            |> JD.andThen
+                                (\shift ->
+                                    if shift then
+                                        JD.fail "shift+enter -> default newline"
+
+                                    else
+                                        JD.succeed ( OnDraftKeydown 13, True )
+                                )
+
+                    27 ->
+                        JD.succeed ( OnDraftKeydown 27, False )
+
+                    _ ->
+                        JD.fail "default"
+            )
 
 
 viewMediaTension : String -> Bool -> Bool -> NodeFocus -> Tension -> Html Msg
@@ -1389,6 +1436,18 @@ viewCardDropdown model =
 --
 -- Utils
 --
+
+
+{-| Split a draft body at the first newline: first line is the title, rest joined back is the message (trimmed).
+-}
+splitDraftBody : String -> ( String, String )
+splitDraftBody body =
+    case String.split "\n" body of
+        first :: rest ->
+            ( first, String.join "\n" rest |> String.trim )
+
+        _ ->
+            ( body, "" )
 
 
 getCard : String -> ProjectData -> Maybe ProjectCard

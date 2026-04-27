@@ -555,12 +555,24 @@ view_ isEmbedded op model =
                     pattern_ =
                         String.toLower model.pattern
 
+                    -- Include closed projects already linked to the tension so
+                    -- the user can untick them. The query only returns open
+                    -- projects, so any selected project missing from projects_d
+                    -- is treated as closed.
+                    closedSelected =
+                        op.selectedProjects
+                            |> List.map .project
+                            |> List.filter (\sp -> not (List.any (\p -> p.id == sp.id) projects_d))
+
+                    allProjects =
+                        projects_d ++ closedSelected
+
                     visible =
                         if pattern_ == "" then
-                            projects_d
+                            allProjects
 
                         else
-                            projects_d
+                            allProjects
                                 |> List.filter (\p -> String.contains pattern_ (String.toLower p.name))
                 in
                 div [] <|
