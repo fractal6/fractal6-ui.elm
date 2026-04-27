@@ -137,7 +137,7 @@ window.addEventListener('load', _ => {
 
                         var position;
                         // It seems that in modern browser, we have ~100 px per wheel notch
-                        if (scrollY <= 200) {
+                        if (scrollY <= 142) {
                             position = "top";
                         } else if (scrollY + windowHeight >= documentHeight - 5) {
                             position = "bottom";

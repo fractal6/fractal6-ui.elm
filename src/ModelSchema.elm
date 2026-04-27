@@ -847,6 +847,17 @@ type alias TensionProject =
     }
 
 
+{-| Carries the context needed to convert a ProjectDraft into a Tension:
+the source draft (for title/message/labels/assignees and the cardid to
+remove afterwards), and optionally the project + column the new tension
+should be linked to.
+-}
+type alias DraftConversion =
+    { draft : ProjectDraft
+    , project : Maybe TensionProject
+    }
+
+
 emptyCard : ProjectCard
 emptyCard =
     { id = ""

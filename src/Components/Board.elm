@@ -48,7 +48,7 @@ import Json.Decode as JD
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), isLoading, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectData, ProjectDraft, Tension, User, UserCtx, Username)
+import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectColumnLite, ProjectData, ProjectDraft, Tension, TensionProject, User, UserCtx, Username)
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
 import Scroll exposing (scrollToSubBottom)
@@ -157,19 +157,6 @@ init projectid focus session =
     initModel projectid focus session |> State
 
 
-type alias AddCardForm =
-    { uctx : UserCtx
-    , title : String -- for draft only
-    , colid : String
-    , pos : Int
-    , post : Post
-
-    -- Nothing to add draft
-    -- Just tid, to add tension
-    , tids : List (Maybe String)
-    }
-
-
 
 --
 -- Getters
@@ -226,7 +213,6 @@ type Msg
     | OnDraftEdit String
     | OnDraftKeydown Int
     | OnDraftCancel
-    | OnAddCards AddCardForm
     | OnAddCardAck (GqlData (List ProjectCard))
     | OpenTensionPane (Maybe ColTarget)
     | OpenCardPane String
@@ -545,11 +531,14 @@ update_ apis message model =
                     , colid = colid
                     , pos = pos
                     }
+
+                conversion =
+                    { draft = draft, project = toTensionProject colid pos model.project }
             in
             ( { model | isAddingDraft = Maybe.map (\f -> { f | pending = True, blur_safe = True }) model.isAddingDraft }
             , out2
                 [ sendSleep (OnUpdateModel (\m -> { m | isAddingDraft = Nothing })) 800 ]
-                [ DoCreateTension model.node_focus.nameid Nothing (Just draft) ]
+                [ DoCreateTension model.node_focus.nameid Nothing (Just conversion) ]
             )
 
         OnDraftEdit val ->
@@ -792,36 +781,26 @@ update_ apis message model =
                     let
                         d =
                             { draft | cardid = c.id, colid = c.colid, pos = c.pos }
+
+                        conversion =
+                            { draft = d, project = toTensionProject c.colid c.pos model.project }
                     in
-                    ( model, out1 [ DoCreateTension model.node_focus.nameid Nothing (Just d) ] )
+                    ( model, out1 [ DoCreateTension model.node_focus.nameid Nothing (Just conversion) ] )
 
                 Nothing ->
                     ( { model | board_result = Failure [ "Draft not found" ] }, noOut )
 
-        OnConvertDraftAck draft t ->
-            let
-                form =
-                    { uctx = uctxFromUser model.session.user
-                    , title = ""
-                    , colid = draft.colid
-                    , pos = draft.pos
-                    , post = Dict.empty
-                    , tids = [ Just t.id ]
-                    }
+        OnConvertDraftAck draft _ ->
+            -- The new tension card is created by Form.NewTension via the
+            -- selectedProjects mechanism. Here we only need to drop the
+            -- former draft card if there was one.
+            if draft.cardid == "" then
+                ( model, noOut )
 
-                cmds =
-                    if draft.cardid == "" then
-                        [ send (OnAddCards form) ]
-
-                    else
-                        [ removeProjectCards apis [ draft.cardid ] OnRemoveCardAck
-                        , sendSleep (OnAddCards form) 333
-                        ]
-            in
-            ( model, out0 cmds )
-
-        OnAddCards form ->
-            ( model, out0 [ addProjectCard apis form OnAddCardAck ] )
+            else
+                ( { model | board_result = Loading }
+                , out0 [ removeProjectCards apis [ draft.cardid ] OnRemoveCardAck ]
+                )
 
         -- Components
         ProjectColumnModalMsg msg ->
@@ -1453,6 +1432,33 @@ splitDraftBody body =
 getCard : String -> ProjectData -> Maybe ProjectCard
 getCard cardid data =
     LE.find (\a -> a.id == cardid) (data.columns |> List.map .cards |> List.concat)
+
+
+{-| Build a TensionProject view of the board's project, anchored at a
+specific column and card position. Used to pre-assign the source project
+when converting a draft / creating a tension from a board column.
+-}
+toTensionProject : String -> Int -> ProjectData -> Maybe TensionProject
+toTensionProject colid pos pj =
+    let
+        toLite : ProjectColumn -> ProjectColumnLite
+        toLite c =
+            { id = c.id, name = c.name, color = c.color, pos = c.pos, col_type = c.col_type }
+    in
+    pj.columns
+        |> LE.find (\c -> c.id == colid)
+        |> Maybe.map
+            (\c ->
+                { card = { id = "", pos = pos }
+                , column = toLite c
+                , project =
+                    { id = pj.id
+                    , name = pj.name
+                    , columns = List.map toLite pj.columns
+                    , nodes = List.map (\n -> { nameid = n.nameid }) pj.nodes
+                    }
+                }
+            )
 
 
 getCol : String -> ProjectData -> Maybe ProjectColumn

@@ -95,7 +95,7 @@ type alias Model =
     , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , path_data : GqlData LocalGraph
     , action_result : GqlData IdPayload
-    , draft : Maybe ProjectDraft
+    , conversion : Maybe DraftConversion
     , currentDraft : Maybe TensionDraft
     , isTargetOpen : String
     , isTypeOpen : String
@@ -208,7 +208,7 @@ initModel session =
     , doInvite = False
     , withUsers = []
     , simplifiedView = False
-    , draft = Nothing
+    , conversion = Nothing
     , currentDraft = Nothing
     , isTargetOpen = ""
     , isTypeOpen = ""
@@ -577,14 +577,14 @@ canExitSafe data =
     not (hasData data) || isSuccess data.result
 
 
-{-| A ProjectDraft has body when its title or message is non-empty.
-An empty pre-filled draft (just colid/pos preset) returns False.
+{-| A draft conversion has body when the draft's title or message is
+non-empty. An empty pre-filled draft (just colid/pos preset) returns False.
 -}
-hasDraftBody : Maybe ProjectDraft -> Bool
-hasDraftBody d =
-    case d of
-        Just dr ->
-            String.trim dr.title /= "" || String.trim (withDefault "" dr.message) /= ""
+hasDraftBody : Maybe DraftConversion -> Bool
+hasDraftBody c =
+    case c of
+        Just dc ->
+            String.trim dc.draft.title /= "" || String.trim (withDefault "" dc.draft.message) /= ""
 
         Nothing ->
             False
@@ -630,7 +630,7 @@ type Msg
     | UnfreezeOutsideClick
       -- Modal control
     | SetIsActive2 Bool
-    | OnOpen NewTensionInput (Maybe ProjectDraft)
+    | OnOpen NewTensionInput (Maybe DraftConversion)
     | OnOpenCircle NewTensionInput
     | OnOpenRole NewTensionInput
     | OnOpenRoleUser NewTensionInput String
@@ -689,10 +689,15 @@ type Msg
     | CommentsMsg Comments.Msg
 
 
+type OutResult
+    = TensionAck Tension (Maybe ProjectDraft)
+    | ProjectCardsAck (List ProjectCard)
+
+
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Tension, Maybe ProjectDraft )
+    , result : Maybe OutResult
     }
 
 
@@ -808,11 +813,14 @@ update_ apis message model =
             case model.session.user of
                 LoggedIn uctx ->
                     let
-                        -- Load draft from session or from ProjectDraft
+                        -- Load draft from session or from DraftConversion
                         newModel =
                             case d of
-                                Just draft ->
+                                Just dc ->
                                     let
+                                        draft =
+                                            dc.draft
+
                                         nodeDocWithDraft =
                                             model.nodeDoc
                                                 |> NodeDoc.updatePost "title" draft.title
@@ -828,10 +836,22 @@ update_ apis message model =
                                                     , assignees = withDefault [] draft.assignees
                                                 }
                                                 nodeDocWithDraft
+
+                                        -- Pre-assign the source project so the new tension lands
+                                        -- on the same column the draft was in. The user can still
+                                        -- unselect it from the project picker if desired.
+                                        preselected =
+                                            case dc.project of
+                                                Just tp ->
+                                                    [ tp ]
+
+                                                Nothing ->
+                                                    []
                                     in
                                     { model
-                                        | draft = d
+                                        | conversion = d
                                         , nodeDoc = nodeDocWithRefs
+                                        , selectedProjects = preselected
                                     }
 
                                 Nothing ->
@@ -892,7 +912,7 @@ update_ apis message model =
                                     -- shouldn't suppress the template picker. A draft with body or an
                                     -- in-progress (auto-saved) tension draft does.
                                     hasDraft =
-                                        hasDraftBody newModel.draft || newModel.currentDraft /= Nothing
+                                        hasDraftBody newModel.conversion || newModel.currentDraft /= Nothing
 
                                     -- Pre-loaded templates are only valid when the target matches the page focus
                                     targetMatchesFocus =
@@ -1002,7 +1022,7 @@ update_ apis message model =
         OnSwitchTab tab ->
             let
                 hasDraft =
-                    hasDraftBody model.draft || model.currentDraft /= Nothing
+                    hasDraftBody model.conversion || model.currentDraft /= Nothing
 
                 targetMatchesFocus =
                     let
@@ -1297,6 +1317,7 @@ update_ apis message model =
 
                         -- Fire-and-forget: link selected projects in parallel with the
                         -- close cmd so the UI is not blocked by the project cards creation.
+                        -- For draft conversions, tp.card.pos preserves the source draft's slot.
                         projectCmds =
                             model.selectedProjects
                                 |> List.map
@@ -1305,7 +1326,7 @@ update_ apis message model =
                                             { uctx = model.nodeDoc.form.uctx
                                             , tids = [ Just tension.id ]
                                             , colid = tp.column.id
-                                            , pos = 0
+                                            , pos = tp.card.pos
                                             , post = Dict.empty
                                             , title = ""
                                             }
@@ -1352,7 +1373,7 @@ update_ apis message model =
                                    )
 
                         output =
-                            Just ( tension, model.draft )
+                            Just (TensionAck tension (Maybe.map .draft model.conversion))
                     in
                     case model.activeTab of
                         NewTensionTab ->
@@ -1427,8 +1448,12 @@ update_ apis message model =
             )
 
         OnAddProjectCardAck result ->
-            -- Fire-and-forget post-creation card linkage. Log failures only.
+            -- Surface successful cards to the host page so it can mirror them
+            -- into a Board view (e.g. Org/Project). Failures are logged.
             case result of
+                Success cards ->
+                    ( model, Out [] [] (Just (ProjectCardsAck cards)) )
+
                 Failure err ->
                     ( model, out0 [ Ports.logErr (String.join " | " err) ] )
 
@@ -1767,7 +1792,7 @@ viewStep tree_data (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    if hasDraftBody model.draft || model.currentDraft /= Nothing then
+                    if hasDraftBody model.conversion || model.currentDraft /= Nothing then
                         viewTension tree_data model
 
                     else if model.showTemplatePicker then

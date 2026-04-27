@@ -502,15 +502,14 @@ update global message model =
 
                 convert_draft_cmd =
                     case out.result of
-                        Just ( t, d ) ->
-                            case d of
-                                Just draft ->
-                                    Cmd.map BoardMsg (send (Board.OnConvertDraftAck draft t))
+                        Just (NTF.TensionAck t (Just draft)) ->
+                            Cmd.map BoardMsg (send (Board.OnConvertDraftAck draft t))
 
-                                Nothing ->
-                                    send NoMsg
+                        Just (NTF.ProjectCardsAck cards) ->
+                            -- Mirror tension-form-created project cards into the board.
+                            Cmd.map BoardMsg (send (Board.OnAddCardAck (Success cards)))
 
-                        Nothing ->
+                        _ ->
                             send NoMsg
 
                 ( cmds_, gcmds ) =

@@ -227,7 +227,7 @@ type
     | DoToggleWatchOrga String
     | DoPushSystemNotif SystemNotification
       -- Components Msg
-    | DoCreateTension String (Maybe NodeType.NodeType) (Maybe ProjectDraft)
+    | DoCreateTension String (Maybe NodeType.NodeType) (Maybe DraftConversion)
     | DoJoinOrga String
     | DoOpenActionPanel String String (Maybe ( Int, Int ))
     | DoOpenLinkTensionPanel (Maybe { id : String, cards_len : Int })
