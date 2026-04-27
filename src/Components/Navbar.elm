@@ -24,11 +24,12 @@ module Components.Navbar exposing (NavbarHandlers, view)
 import Assets as A
 import Assets.Logo as Logo
 import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isTensionUrl, toLink)
+import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isProjectBaseUri, isTensionBaseUri, isTensionUrl, toLink, urlToFractalRoute)
 import Bulk.Error exposing (viewGqlErrorsLight)
 import Bulk.View exposing (lang2str, statusColor, tensionIcon)
 import Extra exposing (showIf, ternary)
 import Fractal.Enum.Lang as Lang
+import Fractal.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
@@ -170,6 +171,7 @@ view apis session notif orga_info tension_head handlers =
                             else
                                 []
                            )
+                , viewOrgaNav session
                 , viewTensionTitle session tension_head handlers
                 , div [ class "navbar-end" ] <|
                     [ notificationButton "is-hidden-touch" session.user notif session.url
@@ -179,6 +181,63 @@ view apis session notif orga_info tension_head handlers =
                 ]
             ]
         ]
+
+
+viewOrgaNav : SessionCommon -> Html msg
+viewOrgaNav session =
+    let
+        baseUri =
+            urlToFractalRoute session.url |> withDefault OverviewBaseUri
+
+        shouldShow =
+            isOrgUrl session.url
+                && (session.scrollPosition /= Ports.ScrollTop)
+                && (session.path_data /= Nothing)
+    in
+    case ( shouldShow, session.path_data ) of
+        ( True, Just path ) ->
+            let
+                focusid =
+                    path.focus.nameid
+
+                isFocusRole =
+                    path.focus.type_ == NodeType.Role
+
+                isFocusCircle =
+                    path.focus.type_ == NodeType.Circle
+
+                isLoggedIn =
+                    session.user /= LoggedOut
+
+                tab uri icon isActive titleText =
+                    a
+                        [ class "navbar-item"
+                        , classList [ ( "is-active", isActive ) ]
+                        , href (toLink uri focusid [])
+                        , title titleText
+                        ]
+                        [ A.icon icon ]
+            in
+            div [ class "navbar-orga-nav is-hidden-mobile" ] <|
+                [ tab OverviewBaseUri "icon-sun" (baseUri == OverviewBaseUri) T.overview
+                , tab TensionsBaseUri "icon-exchange" (baseUri == TensionsBaseUri || isTensionBaseUri baseUri) (T.tensions session.lexicon)
+                , tab ProjectsBaseUri "icon-layout" (baseUri == ProjectsBaseUri || isProjectBaseUri baseUri) T.projects
+                ]
+                    ++ (if not isFocusRole then
+                            [ tab MembersBaseUri "icon-user" (baseUri == MembersBaseUri) T.members ]
+
+                        else
+                            []
+                       )
+                    ++ (if isLoggedIn && isFocusCircle then
+                            [ tab SettingsBaseUri "icon-settings" (baseUri == SettingsBaseUri) T.settings ]
+
+                        else
+                            []
+                       )
+
+        _ ->
+            text ""
 
 
 viewTensionTitle : SessionCommon -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
@@ -219,7 +278,7 @@ viewTensionTitle session tension_head handlers =
                 ]
 
         _ ->
-            text ""
+            div [ class "navbar-tension-title is-hidden-mobile" ] []
 
 
 notificationButton : String -> UserState -> NotifCount -> Url -> Html msg
