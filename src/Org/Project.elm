@@ -176,6 +176,30 @@ mapGlobalOutcmds gcmds =
 
 
 
+{-| Recompute project admin rights once both `path_data` and `project_data`
+are loaded. Emits a `Board.OnSetIsAdmin` only when the value actually changes.
+Why: `path_data` and `project_data` are fetched in parallel, and
+`getProjectRights` returns False whenever `path_data` is not yet `Success`.
+-}
+syncProjectAdmin : UserState -> GqlData LocalGraph -> GqlData ProjectData -> Bool -> ( Bool, Cmd Msg )
+syncProjectAdmin user path_data project_data currentIsAdmin =
+    case ( user, path_data, project_data ) of
+        ( LoggedIn uctx, Success _, Success data ) ->
+            let
+                newIsAdmin =
+                    getProjectRights uctx data path_data
+            in
+            if newIsAdmin == currentIsAdmin then
+                ( currentIsAdmin, Cmd.none )
+
+            else
+                ( newIsAdmin, Cmd.map BoardMsg (send (Board.OnSetIsAdmin newIsAdmin)) )
+
+        _ ->
+            ( currentIsAdmin, Cmd.none )
+
+
+
 --
 -- Model
 --
@@ -384,9 +408,15 @@ update global message model =
                             let
                                 newPath =
                                     { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
+                                ( newIsAdmin, adminCmd ) =
+                                    syncProjectAdmin global.session.common.user (Success newPath) model.project_data model.isProjectAdmin
                             in
-                            ( { model | path_data = Success newPath }
-                            , Cmd.map CardPanelMsg (send (CardPanel.OnSetPath (Success newPath)))
+                            ( { model | path_data = Success newPath, isProjectAdmin = newIsAdmin }
+                            , Cmd.batch
+                                [ Cmd.map CardPanelMsg (send (CardPanel.OnSetPath (Success newPath)))
+                                , adminCmd
+                                ]
                             , send (UpdateSessionPath (Just newPath))
                             )
 
@@ -410,19 +440,17 @@ update global message model =
             case result of
                 Success data ->
                     let
-                        isAdmin =
-                            case global.session.common.user of
-                                LoggedIn uctx ->
-                                    getProjectRights uctx data model.path_data
+                        -- save space
+                        newProjectData =
+                            Success { data | columns = [] }
 
-                                LoggedOut ->
-                                    False
+                        ( newIsAdmin, adminCmd ) =
+                            syncProjectAdmin global.session.common.user model.path_data newProjectData model.isProjectAdmin
                     in
-                    -- save space
-                    ( { model | project_data = Success { data | columns = [] }, isProjectAdmin = isAdmin }
+                    ( { model | project_data = newProjectData, isProjectAdmin = newIsAdmin }
                     , Cmd.batch
                         [ Cmd.map BoardMsg (send (Board.OnLoad data))
-                        , Cmd.map BoardMsg (send (Board.OnSetIsAdmin isAdmin))
+                        , adminCmd
                         ]
                     , Cmd.none
                     )
