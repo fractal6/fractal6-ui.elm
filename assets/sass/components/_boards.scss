@@ -11,6 +11,22 @@
 
 .kb-board {
 
+    // Common: allow long column titles to wrap inside a flex header (level-left)
+    // and clamp at ~3 lines with ellipsis to keep the column header compact.
+    .level-left {
+        min-width: 0;
+        flex-shrink: 1;
+    }
+    .kb-col-title {
+        min-width: 0;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     & > .column {
         min-width: 250px;
         max-width: 400px;

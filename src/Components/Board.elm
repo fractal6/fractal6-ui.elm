@@ -1125,7 +1125,9 @@ viewHeader lexicon isAdmin isEdited col =
     span []
         [ div [ class "level" ]
             [ div [ class "level-left ml-3" ]
-                [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ], text col.name ]
+                [ span [ class "mr-3", style "color" (withDefault "lightgrey" col.color) ] [ A.icon "icon-circle1 icon-lg" ]
+                , span [ class "kb-col-title" ] [ text col.name ]
+                ]
             , span [ class "level-right" ]
                 [ if isAdmin then
                     span

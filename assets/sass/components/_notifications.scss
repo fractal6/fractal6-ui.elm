@@ -65,8 +65,15 @@
 }
 
 .f6-help-message {
+    width: 100%;
+
     & > .message, &.notification {
         font-size: 0.9rem;
+    }
+
+    .acc-title .is-flex {
+        & > :first-child { flex-shrink: 0; }
+        & > :last-child  { flex: 1; min-width: 0; }
     }
 }
 

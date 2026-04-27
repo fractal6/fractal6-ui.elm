@@ -60,9 +60,9 @@ showMsg id_ cls icon header message =
                     , attribute "title" T.clickMe
                     , for did
                     ]
-                    [ span [ class "is-flex is-align-items-center" ]
+                    [ span [ class "is-flex is-align-items-flex-start" ]
                         [ span [ class "mr-3 has-text-strong" ] [ A.icon icon ]
-                        , text (upH header)
+                        , span [] [ text (upH header) ]
                         ]
                     ]
                 , label [ class "acc-close", for "acc-close" ] []
