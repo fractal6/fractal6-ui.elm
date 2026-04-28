@@ -722,8 +722,27 @@ countOpenTensions =
 
 treeMatchesFocus : Maybe { a | rootnameid : String } -> Maybe NodesDict -> Bool
 treeMatchesFocus maybeFocus maybeTree =
-    Maybe.map2 (\f -> Dict.member f.rootnameid) maybeFocus maybeTree
-        |> Maybe.withDefault False
+    -- Only block when focus and tree are both known AND disagree on the org.
+    -- A missing focus (e.g. right after navigating from a non-org page) must
+    -- not stall orgaInfo updates that race ahead of UpdateSessionFocus.
+    case ( maybeFocus, maybeTree ) of
+        ( Just f, Just t ) ->
+            Dict.member f.rootnameid t
+
+        _ ->
+            True
+
+
+freshSessionOnOrgaSwitch : { a | orgChange : Bool, isInit : Bool } -> { b | lexicon : Dict.Dict String String } -> { b | lexicon : Dict.Dict String String }
+freshSessionOnOrgaSwitch fs common =
+    -- On a real org switch (we knew the previous org and it differs), drop the
+    -- lexicon so the page snapshots empty and views fall back to defaults until
+    -- GotOrgaInfo lands the new org's lexicon.
+    if fs.orgChange && not fs.isInit then
+        { common | lexicon = Dict.empty }
+
+    else
+        common
 
 
 getPath : GqlData LocalGraph -> List PNode

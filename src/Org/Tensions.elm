@@ -26,7 +26,7 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (getPath, hotTensionPush, hotTensionPush2, isPinnedRecursivelyOn, mergePinnedTensions)
+import Bulk exposing (freshSessionOnOrgaSwitch, getPath, hotTensionPush, hotTensionPush2, isPinnedRecursivelyOn, mergePinnedTensions)
 import Bulk.Board as BB exposing (viewBoard)
 import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
@@ -645,6 +645,12 @@ init global flags =
         fs =
             focusState TensionsBaseUri session.referer global.url session.common.node_focus newFocus
 
+        -- Session snapshot shared by the page model and every component init.
+        -- Lexicon is dropped on a real org switch so views fall back to defaults
+        -- until GotOrgaInfo lands the new org's lexicon.
+        sessionCommon =
+            freshSessionOnOrgaSwitch fs session.common
+
         -- Model init
         model =
             { node_focus = newFocus
@@ -681,19 +687,19 @@ init global flags =
             , activeTids = []
 
             -- Common
-            , session = session.common
+            , session = sessionCommon
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus session.common
-            , help = Help.init session.common
-            , tensionForm = NTF.init session.common
-            , moveTension = MoveTension.init session.common
-            , joinOrga = JoinOrga.init newFocus.nameid session.common
-            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault Nothing) session.common
-            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
-            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
-            , actionPanel = ActionPanel.init session.common
+            , helperBar = HelperBar.init TensionsBaseUri global.url.query newFocus sessionCommon
+            , help = Help.init sessionCommon
+            , tensionForm = NTF.init sessionCommon
+            , moveTension = MoveTension.init sessionCommon
+            , joinOrga = JoinOrga.init newFocus.nameid sessionCommon
+            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault Nothing) sessionCommon
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data sessionCommon
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data sessionCommon
+            , actionPanel = ActionPanel.init sessionCommon
             }
                 |> (\m ->
                         case TreeMenu.getList_ m.node_focus.nameid m.treeMenu of

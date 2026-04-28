@@ -245,6 +245,12 @@ init global flags =
         fs =
             focusState MembersBaseUri session.referer global.url session.common.node_focus newFocus
 
+        -- Session snapshot shared by the page model and every component init.
+        -- Lexicon is dropped on a real org switch so views fall back to defaults
+        -- until GotOrgaInfo lands the new org's lexicon.
+        sessionCommon =
+            freshSessionOnOrgaSwitch fs session.common
+
         model =
             { node_focus = newFocus
             , path_data =
@@ -261,18 +267,18 @@ init global flags =
             , row_hover = resetEllipsis
 
             -- Common
-            , session = session.common
-            , tensionForm = NTF.init session.common
+            , session = sessionCommon
+            , tensionForm = NTF.init sessionCommon
             , refresh_trial = 0
             , empty = {}
-            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus session.common
-            , help = Help.init session.common
-            , joinOrga = JoinOrga.init newFocus.nameid session.common
-            , authModal = AuthModal.init Nothing session.common
-            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
-            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
-            , actionPanel = ActionPanel.init session.common
-            , confirmOwner = ConfirmOwner.init newFocus session.common
+            , helperBar = HelperBar.init MembersBaseUri global.url.query newFocus sessionCommon
+            , help = Help.init sessionCommon
+            , joinOrga = JoinOrga.init newFocus.nameid sessionCommon
+            , authModal = AuthModal.init Nothing sessionCommon
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data sessionCommon
+            , treeMenu = TreeMenu.init MembersBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data sessionCommon
+            , actionPanel = ActionPanel.init sessionCommon
+            , confirmOwner = ConfirmOwner.init newFocus sessionCommon
             }
 
         cmds =

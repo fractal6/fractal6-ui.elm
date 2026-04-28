@@ -313,6 +313,12 @@ init global flags =
         fs =
             focusState TensionBaseUri session.referer global.url session.common.node_focus newFocus_
 
+        -- Session snapshot shared by the page model and every component init.
+        -- Lexicon is dropped on a real org switch so views fall back to defaults
+        -- until GotOrgaInfo lands the new org's lexicon.
+        sessionCommon =
+            freshSessionOnOrgaSwitch fs session.common
+
         newFocus =
             if fs.orgChange then
                 -- This allow TreeMenu to reload in case of orgChange
@@ -358,7 +364,7 @@ init global flags =
             , unwatch_result = NotAsked
 
             -- Form
-            , tension_form = initTensionForm session.common.lexicon tid Nothing session.common.user
+            , tension_form = initTensionForm sessionCommon.lexicon tid Nothing sessionCommon.user
 
             -- Title Result
             , isTitleEdit = False
@@ -366,11 +372,11 @@ init global flags =
 
             -- Blob Edit
             , nodeDoc =
-                NodeDoc.init session.common.lexicon tid Nothing nodeView session.common.user
+                NodeDoc.init sessionCommon.lexicon tid Nothing nodeView sessionCommon.user
                     |> (\x ->
                             case session.data.tension_head of
                                 Just th ->
-                                    NodeDoc.initBlob session.common.lexicon (nodeFromTension th) x
+                                    NodeDoc.initBlob sessionCommon.lexicon (nodeFromTension th) x
 
                                 Nothing ->
                                     x
@@ -381,35 +387,35 @@ init global flags =
             , isTensionAdmin = withDefault False session.isAdmin
             , isAssigneeOpen = False
             , isLabelOpen = False
-            , assigneesPanel = UserSearchPanel.init tid AssignUser session.common.user
-            , labelsPanel = LabelSearchPanel.init tid AssignLabel session.common.user
-            , projectsPanel = ProjectSearchPanel.init tid AssignProject session.common.user
+            , assigneesPanel = UserSearchPanel.init tid AssignUser sessionCommon.user
+            , labelsPanel = LabelSearchPanel.init tid AssignLabel sessionCommon.user
+            , projectsPanel = ProjectSearchPanel.init tid AssignProject sessionCommon.user
 
             -- Common
-            , session = session.common
-            , helperBar = HelperBar.init baseUri global.url.query newFocus session.common
-            , help = Help.init session.common
-            , tensionForm = NTF.init session.common
+            , session = sessionCommon
+            , helperBar = HelperBar.init baseUri global.url.query newFocus sessionCommon
+            , help = Help.init sessionCommon
+            , tensionForm = NTF.init sessionCommon
             , refresh_trial = 0
-            , moveTension = MoveTension.init session.common
-            , contractsPage = ContractsPage.init focusid session.common
-            , selectType = SelectType.init tid session.common
-            , actionPanel = ActionPanel.init session.common
+            , moveTension = MoveTension.init sessionCommon
+            , contractsPage = ContractsPage.init focusid sessionCommon
+            , selectType = SelectType.init tid sessionCommon
+            , actionPanel = ActionPanel.init sessionCommon
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
-            , joinOrga = JoinOrga.init newFocus.nameid session.common
+            , joinOrga = JoinOrga.init newFocus.nameid sessionCommon
 
             -- Open a signin dialog if contracts are requested
-            , authModal = AuthModal.init (Dict.get "puid" session.common.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) session.common
-            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
-            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , authModal = AuthModal.init (Dict.get "puid" sessionCommon.query |> Maybe.map List.head |> withDefault (ternary (baseUri == ContractsBaseUri) (Just "") Nothing)) sessionCommon
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data sessionCommon
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus session.data.tree_menu session.data.tree_data sessionCommon
             , draftSaveTimer = 0
             , comments =
                 let
                     maybeDraft =
                         Dict.get tid session.data.drafts.comments
                 in
-                Comments.initWithDraft focusid tid session.common maybeDraft
+                Comments.initWithDraft focusid tid sessionCommon maybeDraft
             }
 
         refresh =

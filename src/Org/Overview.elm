@@ -263,6 +263,12 @@ init global flags =
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
 
+        -- Session snapshot shared by the page model and every component init.
+        -- Lexicon is dropped on a real org switch so views fall back to defaults
+        -- until GotOrgaInfo lands the new org's lexicon.
+        sessionCommon =
+            freshSessionOnOrgaSwitch fs session.common
+
         activity_pattern_m =
             if fs.orgChange || fs.menuChange then
                 Just ""
@@ -312,20 +318,20 @@ init global flags =
             , pinned_sub = NotAsked
 
             -- Common
-            , session = session.common
+            , session = sessionCommon
             , refresh_trial = 0
             , empty = {}
             , commonOp = CommonMsg NoMsg LogErr
 
             -- Components
-            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus session.common
-            , help = Help.init session.common
-            , tensionForm = NTF.init session.common
-            , actionPanel = ActionPanel.init session.common
-            , joinOrga = JoinOrga.init newFocus.nameid session.common
-            , authModal = AuthModal.init Nothing session.common
-            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
-            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
+            , helperBar = HelperBar.init OverviewBaseUri global.url.query newFocus sessionCommon
+            , help = Help.init sessionCommon
+            , tensionForm = NTF.init sessionCommon
+            , actionPanel = ActionPanel.init sessionCommon
+            , joinOrga = JoinOrga.init newFocus.nameid sessionCommon
+            , authModal = AuthModal.init Nothing sessionCommon
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data sessionCommon
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data sessionCommon
             }
 
         cmds_ =

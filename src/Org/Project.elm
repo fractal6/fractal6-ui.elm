@@ -278,36 +278,42 @@ init global flags =
         fs =
             focusState ProjectBaseUri session.referer global.url session.common.node_focus newFocus
 
+        -- Session snapshot shared by the page model and every component init.
+        -- Lexicon is dropped on a real org switch so views fall back to defaults
+        -- until GotOrgaInfo lands the new org's lexicon.
+        sessionCommon =
+            freshSessionOnOrgaSwitch fs session.common
+
         model =
             { node_focus = newFocus
             , path_data = path_data
             , projectid = projectid
             , isProjectAdmin = False
             , project_data = ternary fs.orgChange Loading (fromMaybeData session.data.project_data Loading)
-            , linkTensionPanel = LinkTensionPanel.init projectid session.common
-            , cardPanel = CardPanel.init path_data newFocus session.common
-            , projectSettingsPanel = ProjectSettingsPanel.init projectid newFocus.nameid session.common
-            , board = Board.init projectid newFocus session.common
+            , linkTensionPanel = LinkTensionPanel.init projectid sessionCommon
+            , cardPanel = CardPanel.init path_data newFocus sessionCommon
+            , projectSettingsPanel = ProjectSettingsPanel.init projectid newFocus.nameid sessionCommon
+            , board = Board.init projectid newFocus sessionCommon
 
             -- Common
-            , session = session.common
+            , session = sessionCommon
             , refresh_trial = 0
             , empty = {}
-            , tensionForm = NTF.init session.common
-            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus session.common
-            , help = Help.init session.common
-            , joinOrga = JoinOrga.init newFocus.nameid session.common
-            , authModal = AuthModal.init Nothing session.common
-            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data session.common
-            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data session.common
-            , actionPanel = ActionPanel.init session.common
+            , tensionForm = NTF.init sessionCommon
+            , helperBar = HelperBar.init ProjectsBaseUri global.url.query newFocus sessionCommon
+            , help = Help.init sessionCommon
+            , joinOrga = JoinOrga.init newFocus.nameid sessionCommon
+            , authModal = AuthModal.init Nothing sessionCommon
+            , orgaMenu = OrgaMenu.init newFocus session.data.orga_menu session.data.orgs_data sessionCommon
+            , treeMenu = TreeMenu.init ProjectsBaseUri global.url.query newFocus session.data.tree_menu session.data.tree_data sessionCommon
+            , actionPanel = ActionPanel.init sessionCommon
 
             -- Filtering
             , pattern = ""
             , filterLabels = []
             , filterAssignees = []
-            , labelsPanel = LabelSearchPanel.load session.data.labelsPanel session.common.user
-            , authorsPanel = UserSearchPanel.load session.data.authorsPanel session.common.user
+            , labelsPanel = LabelSearchPanel.load session.data.labelsPanel sessionCommon.user
+            , authorsPanel = UserSearchPanel.load session.data.authorsPanel sessionCommon.user
             }
 
         cmds =
