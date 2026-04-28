@@ -925,11 +925,17 @@ update global message model =
                         isPathNew =
                             Just path.focus.nameid /= Maybe.map (.focus >> .nameid) global.session.common.path_data
 
-                        -- localGraphFromOrga can't recover focus.pinned or root.isPinnedTensionfetchRecursively;
-                        -- on focus change we swap to the clean local path and let GotPath refill them.
-                        -- On same-focus re-fires (graphpack), keep model.path_data to preserve server data.
+                        -- root and focus.pinned only come from queryLocalGraph; localGraphFromOrga can't recover them.
+                        hasServerPath =
+                            withMaybeMapData (\p -> p.focus.nameid == path.focus.nameid && p.root /= Nothing) model.path_data
+                                |> withDefault False
+
                         path_data =
-                            ternary isPathNew (Success path) model.path_data
+                            if hasServerPath then
+                                model.path_data
+
+                            else
+                                Success path
 
                         patternQuery =
                             if String.trim model.activity_pattern_init /= "" then
@@ -938,10 +944,8 @@ update global message model =
                             else
                                 Nothing
 
-                        -- Page revisit: cached path is in session but pinned_sub starts NotAsked.
-                        -- Trust the cached flag and fetch the sub directly without a queryLocalGraph round-trip.
                         needsPinSubFetch =
-                            not isPathNew
+                            hasServerPath
                                 && model.pinned_sub
                                 == NotAsked
                                 && isPinnedRecursivelyOn model.path_data
@@ -970,7 +974,7 @@ update global message model =
 
                           else
                             Cmd.none
-                        , if isPathNew then
+                        , if not hasServerPath then
                             queryLocalGraph apis path.focus.nameid True GotPath
 
                           else if needsPinSubFetch then

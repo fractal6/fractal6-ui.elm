@@ -203,6 +203,7 @@ type alias Model =
     , labels : List Label
     , tensions_count : GqlData TensionsCount
     , pinned_sub : GqlData (List NodeWithPins)
+    , tensionsInitFired : Bool
 
     -- Board
     , boardHeight : Maybe Float
@@ -674,6 +675,7 @@ init global flags =
             , labels = Dict.get "l" session.common.query |> withDefault [] |> List.map (\x -> Label "" x Nothing [])
             , tensions_count = fromMaybeData session.data.tensions_count Loading
             , pinned_sub = NotAsked
+            , tensionsInitFired = False
 
             -- Board
             , boardHeight = Nothing
@@ -1057,16 +1059,22 @@ update global message model =
             ( { model | tensions_count = result }, Cmd.none, send (UpdateSessionTensionsCount (withMaybeData result)) )
 
         DoLoadInit ->
-            ( model
-            , case model.depthFilter of
-                AllSubChildren ->
-                    --fetchChildren apis model.node_focus.nameid GotChildren
-                    Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
+            -- Dedup with TreeMenuMsg's extra_cmd dispatch.
+            if model.tensionsInitFired then
+                ( model, Cmd.none, Cmd.none )
 
-                SelectedNode ->
-                    send (DoLoad False)
-            , Cmd.none
-            )
+            else
+                case model.depthFilter of
+                    AllSubChildren ->
+                        case model.children of
+                            RemoteData.Success _ ->
+                                ( { model | tensionsInitFired = True }, send (DoLoad False), Cmd.none )
+
+                            _ ->
+                                ( model, Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData), Cmd.none )
+
+                    SelectedNode ->
+                        ( { model | tensionsInitFired = True }, send (DoLoad False), Cmd.none )
 
         DoLoad reset ->
             -- if reset, reset the offset
@@ -1178,7 +1186,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         ResetData ->
-            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading, path_data = Loading }
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading, path_data = Loading, tensionsInitFired = False }
             , Cmd.none
             , Cmd.batch
                 [ send (UpdateSessionTensionsInt Nothing)
@@ -1189,7 +1197,7 @@ update global message model =
 
         ResetDataSoft ->
             -- Do not reset path_data
-            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading }
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading, tensionsInitFired = False }
             , Cmd.none
             , Cmd.batch
                 [ send (UpdateSessionTensionsInt Nothing)
@@ -1582,18 +1590,18 @@ update global message model =
                 treeReady =
                     Maybe.map Tuple.first out.result == Just True
 
+                shouldDispatch =
+                    -- Avoid duplicate DoLoad when queryOrgaTree resolves before queryLocalGraph.
+                    treeReady && getTargetsHere model == [] && dataNeedLoad model && not model.tensionsInitFired
+
                 extra_cmd =
-                    -- Populate children from the tree once it's available, but only
-                    -- if children are still missing and a tension fetch is still needed.
-                    -- Skipping when children are already known prevents a duplicate
-                    -- DoLoad if queryOrgaTree resolves before queryLocalGraph.
-                    if treeReady && getTargetsHere model == [] && dataNeedLoad model then
+                    if shouldDispatch then
                         send (GotChildren2 (TreeMenu.getList_ model.node_focus.nameid data))
 
                     else
                         Cmd.none
             in
-            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | treeMenu = data, tensionsInitFired = model.tensionsInitFired || shouldDispatch }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append (extra_cmd :: cmds) |> Cmd.batch, Cmd.batch gcmds )
 
         ActionPanelMsg msg ->
             let
