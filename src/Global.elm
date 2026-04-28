@@ -57,7 +57,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchUser exposing (toggleOrgaWatch)
-import Query.QueryNode exposing (getOrgaInfo)
+import Query.QueryNode exposing (getOrgaInfo, getServerVersion)
 import Query.QueryNotifications exposing (queryNotifCount)
 import Query.QueryTension exposing (queryPinnedTensions)
 import RemoteData
@@ -102,6 +102,7 @@ init flags url key =
          , Ports.bulma_driver ""
          , tickNow
          , send UpdateUserToken
+         , getServerVersion session.apis GotServerVersion
          , sendSleep RefreshNotifCount 1000
          ]
             ++ cmds
@@ -148,6 +149,8 @@ type Msg
     | UpdateSessionNotif NotifCount
     | UpdateSessionScrollPosition String
     | GotOrgaInfo (GqlData OrgaInfo)
+    | CheckServerVersion
+    | GotServerVersion (GqlData (Maybe String))
     | GotTensionTemplates (RestData (List TensionTemplateLite))
     | ResetSessionTemplates
     | RefreshNotifCount
@@ -776,6 +779,28 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        CheckServerVersion ->
+            ( model, getServerVersion apis GotServerVersion )
+
+        GotServerVersion result ->
+            case result of
+                Success v ->
+                    if v == model.session.data.serverVersion then
+                        ( model, Cmd.none )
+
+                    else
+                        let
+                            session =
+                                model.session
+
+                            sessionData =
+                                session.data
+                        in
+                        ( { model | session = { session | data = { sessionData | serverVersion = v } } }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
         GotTensionTemplates result ->
             let
                 session =
@@ -928,17 +953,10 @@ update msg model =
                 session =
                     model.session
 
-                orgaInfo =
-                    Maybe.map
-                        (\oi ->
-                            { oi | client_version = session.apis.client_version }
-                        )
-                        session.data.orgaInfo
-
                 sessionData =
                     session.data
             in
-            ( { model | session = { session | data = { sessionData | orgaInfo = orgaInfo } } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | serverVersion = Just session.apis.client_version } } }, Cmd.none )
 
         OnForceReload ->
             ( model, Ports.forceReload )
@@ -1107,6 +1125,7 @@ subscriptions _ =
         , Ports.reloadNotifFromJs (always RefreshNotifCount)
         , Ports.navigateFromJs NavigateRaw
         , Ports.scrollPositionFromJs UpdateSessionScrollPosition
+        , Time.every (15 * 60 * 1000) (\_ -> CheckServerVersion)
         ]
 
 
@@ -1131,7 +1150,7 @@ layout { page, url, session, navbarHandlers, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.orgaInfo session.data.tension_head navbarHandlers
+            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.serverVersion session.data.tension_head navbarHandlers
             , showIf (session.data.system_notification /= [])
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body

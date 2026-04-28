@@ -27,7 +27,7 @@ import Bulk exposing (UserState(..))
 import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isProjectBaseUri, isTensionBaseUri, isTensionUrl, toLink, urlToFractalRoute)
 import Bulk.Error exposing (viewGqlErrorsLight)
 import Bulk.View exposing (lang2str, statusColor, tensionIcon)
-import Extra exposing (showIf, ternary)
+import Extra exposing (showIf, ternary, unwrap)
 import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
@@ -36,7 +36,7 @@ import Html.Attributes as Attr exposing (attribute, class, classList, href, id, 
 import Html.Events exposing (onClick)
 import Html.Keyed
 import Maybe exposing (withDefault)
-import ModelSchema exposing (NotifCount, OrgaInfo, TensionHead)
+import ModelSchema exposing (NotifCount, TensionHead)
 import Ports
 import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
@@ -54,16 +54,14 @@ type alias NavbarHandlers msg =
     }
 
 
-view : Apis -> SessionCommon -> NotifCount -> Maybe OrgaInfo -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
-view apis session notif orga_info tension_head handlers =
+view : Apis -> SessionCommon -> NotifCount -> Maybe String -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+view apis session notif serverVersion tension_head handlers =
     let
         orgUrl =
             isOrgUrl session.url
 
-        -- @debug: make it work even when orgaInfo is Nothing !
         hasVersionOutdated =
-            (Maybe.map .client_version orga_info /= Just apis.client_version)
-                && (orga_info /= Nothing)
+            unwrap False (\v -> v /= apis.client_version) serverVersion
 
         isLoggedOut =
             session.user == LoggedOut

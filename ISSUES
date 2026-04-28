@@ -1,5 +1,8 @@
 # P3
 
+- SW (`public/service-worker.js`): tighten path skips from `startsWith('/api'|'/auth'|'/q'|'/notifications')` to exact match or trailing-slash prefix — protects against future SPA routes silently bypassing the SW.
+- Version banner (long-term): switch to backend `X-Server-Version` response header read by the GraphQL/HTTP client → free version detection on every existing request, no extra round-trips. Requires a small `fractal6.go` middleware + a way to expose response headers from `dillonkearns/elm-graphql`.
+
 # P2
 
 # P1

@@ -190,6 +190,7 @@ type alias SessionData =
     , labelsPanel : Maybe LabelSearchPanelModel
     , newOrgaData : Maybe OrgaForm
     , orgaInfo : Maybe OrgaInfo
+    , serverVersion : Maybe String
     , tension_templates : RestData (List TensionTemplateLite)
     , system_notification : List SystemNotification
     }
@@ -310,6 +311,7 @@ resetSession session flags =
         , labelsPanel = Nothing
         , newOrgaData = Nothing
         , orgaInfo = Nothing
+        , serverVersion = Nothing
         , tension_templates = RemoteData.NotAsked
         , system_notification = []
         }
@@ -474,6 +476,7 @@ fromLocalSession url flags =
             , labelsPanel = Nothing
             , newOrgaData = Nothing
             , orgaInfo = Nothing
+            , serverVersion = Nothing
             , tension_templates = RemoteData.NotAsked
             , system_notification = []
             }
