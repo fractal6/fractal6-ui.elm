@@ -60,6 +60,7 @@ type alias Model =
     , focus : NodeFocus
     , next_focus : Maybe String
     , tree_result : GqlData NodesDict
+    , fetching : Bool -- True while a queryOrgaTree is in flight; gates OnLoad/OnRequireData to dedup
     , tree : Tree Node
     , hover : Maybe String
     , expanded_lines : ExpandedLines
@@ -124,6 +125,7 @@ initModel baseUri uriQuery focus persistent tree session =
 
                     LoggedOut ->
                         NotAsked
+    , fetching = False
     , tree = Tree { node = initNode, children = [] }
     , hover = m.hover
     , expanded_lines = expanded_lines
@@ -340,8 +342,8 @@ update_ apis message model =
                 -- Happens for exemple when a tension page is visited without the nameid name (which is optional) in the url
                 ( model, noOut )
 
-            else if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeMapData (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
-                ( setDataResult LoadingSlowly model
+            else if model.isActive2 && not model.fetching && (not (isSuccess model.tree_result) || (withMaybeMapData (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
+                ( setDataResult LoadingSlowly { model | fetching = True }
                   -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane when navigating from non orgs pages.
                 , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, ternary model.isHover Cmd.none Ports.openTreeMenu ]
                 )
@@ -364,22 +366,25 @@ update_ apis message model =
                 ( model, noOut )
 
         OnRequireData ->
-            if not (isSuccess model.tree_result) then
-                ( setDataResult LoadingSlowly model
-                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck ]
-                )
+            if isSuccess model.tree_result then
+                ( model, Out [] [] (Just ( True, False )) )
+
+            else if model.fetching then
+                ( model, noOut )
 
             else
-                ( model, Out [] [] (Just ( True, False )) )
+                ( setDataResult LoadingSlowly { model | fetching = True }
+                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck ]
+                )
 
         OnDataAck result ->
             let
                 data =
-                    setDataResult result model
+                    setDataResult result { model | fetching = False }
             in
             case parseErr result data.refresh_trial of
                 Authenticate ->
-                    ( setDataResult NotAsked model
+                    ( setDataResult NotAsked { model | fetching = False }
                     , out0 [ Ports.raiseAuthModal (uctxFromUser model.session.user) ]
                     )
 
