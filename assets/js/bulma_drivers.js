@@ -920,15 +920,15 @@ function handlePickerKey(e, el, tooltip, opts) {
         return
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" || e.key === "Tab") {
         e.preventDefault();
+        e.stopPropagation();
         tooltip.dataset.arrowMode = "true";
         opts.arrowPort.send("down");
         return
     }
 
     if (e.key == " " ||
-        e.key == "Tab" ||
         e.key == "Enter" ||
         e.key == "Return" ||
         e.key == "Escape" ||
