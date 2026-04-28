@@ -24,7 +24,9 @@ port module Components.EmojiPicker exposing (Msg(..), State, init, subscriptions
 import Components.EmojiData exposing (Emoji, searchEmojis)
 import Extra.Events exposing (onMousedownPD)
 import Html exposing (Html, div, p, span, text)
-import Html.Attributes exposing (attribute, class, title)
+import Html.Attributes exposing (attribute, class, classList, title)
+import List.Extra as LE
+import Ports
 import Session exposing (GlobalCmd(..))
 
 
@@ -36,16 +38,33 @@ type alias Model =
     { isOpen : Bool
     , pattern : String
     , results : List Emoji
+    , activePos : Int
+    , isArrowMode : Bool
     }
+
+
+{-| Emojis per row in the grid; mirrors the CSS layout (305px / 32px).
+Used to translate ArrowUp/Down into a row jump. Update if `_emoji.scss`
+changes the picker width or item size.
+-}
+rowSize : Int
+rowSize =
+    9
 
 
 init : State
 init =
-    State
-        { isOpen = False
-        , pattern = ""
-        , results = searchEmojis Nothing ""
-        }
+    State (resetAll { isOpen = False, pattern = "", results = [], activePos = 0, isArrowMode = False })
+
+
+resetNav : Model -> Model
+resetNav m =
+    { m | activePos = 0, isArrowMode = False }
+
+
+resetAll : Model -> Model
+resetAll m =
+    resetNav { m | pattern = "", results = searchEmojis Nothing "" }
 
 
 type Msg
@@ -53,6 +72,8 @@ type Msg
     | OnClose
     | OnChangePattern String
     | OnClickEmoji String
+    | OnArrowMove String
+    | OnSelectActive
 
 
 type alias Out =
@@ -71,24 +92,60 @@ update : Msg -> State -> ( State, Out )
 update msg (State model) =
     case msg of
         OnOpen ->
-            ( State { model | isOpen = True, pattern = "", results = searchEmojis Nothing "" }
-            , out0
-            )
+            ( State (resetAll { model | isOpen = True }), out0 )
 
         OnClose ->
-            ( State { model | isOpen = False, pattern = "", results = searchEmojis Nothing "" }
-            , out0
-            )
+            ( State (resetAll { model | isOpen = False }), out0 )
 
         OnChangePattern pattern ->
-            ( State { model | pattern = pattern, results = searchEmojis Nothing pattern }
+            ( State (resetNav { model | pattern = pattern, results = searchEmojis Nothing pattern })
             , out0
             )
 
         OnClickEmoji emoji ->
-            ( State { model | isOpen = False, pattern = "", results = searchEmojis Nothing "" }
+            ( State (resetAll { model | isOpen = False })
             , { out0 | result = Just emoji }
             )
+
+        OnArrowMove dir ->
+            if model.isOpen && not (List.isEmpty model.results) then
+                if not model.isArrowMode then
+                    ( State { model | activePos = 0, isArrowMode = True }, out0 )
+
+                else
+                    let
+                        delta =
+                            case dir of
+                                "up" ->
+                                    -rowSize
+
+                                "down" ->
+                                    rowSize
+
+                                "left" ->
+                                    -1
+
+                                "right" ->
+                                    1
+
+                                _ ->
+                                    0
+
+                        newPos =
+                            clamp 0 (List.length model.results - 1) (model.activePos + delta)
+                    in
+                    ( State { model | activePos = newPos }, out0 )
+
+            else
+                ( State model, out0 )
+
+        OnSelectActive ->
+            case LE.getAt model.activePos model.results of
+                Just e ->
+                    update (OnClickEmoji e.unicode) (State model)
+
+                Nothing ->
+                    ( State model, out0 )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -97,6 +154,8 @@ subscriptions (State model) =
         ++ (if model.isOpen then
                 [ closeEmojiPickerFromJs (\_ -> OnClose)
                 , changeEmojiPatternFromJs OnChangePattern
+                , Ports.arrowFromJs OnArrowMove
+                , Ports.selectActiveItemFromJs (\_ -> OnSelectActive)
                 ]
 
             else
@@ -129,10 +188,11 @@ viewEmojiSeeker (State model) =
 
                 else
                     model.results
-                        |> List.map
-                            (\e ->
+                        |> List.indexedMap
+                            (\i e ->
                                 span
                                     [ class "emojiItem"
+                                    , classList [ ( "is-active", model.isArrowMode && model.activePos == i ) ]
                                     , title e.name
                                     , onMousedownPD (OnClickEmoji e.unicode)
                                     ]

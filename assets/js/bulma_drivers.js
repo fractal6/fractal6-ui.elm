@@ -524,106 +524,26 @@ function markupRichText(e, el, app) {
     const emojiTooltip = document.getElementById(el.id + "emojiInput");
 
     if (!isHidden(userTooltip) && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-        // Handle backspace/removing character
-
-        var start = el.selectionStart;
-
-        // Handle toggle down tooltip
-        if (e.key == " " ||
-            e.key == "Escape" ||
-            // Check if @ keyword has been deleted
-            e.key == "Backspace" && el.value[start - 1] == "@"
-        ) {
-            if (e.key == "Escape") {
-                e.stopPropagation();
-            }
-            hideSearchInput(userTooltip, app);
-            return
-        }
-
-
-        // Handle update pattern/input
-        if (e.key === "Enter") {
-            // Send selected item
-            e.preventDefault();
-            app.ports.selectActiveItemFromJs.send(null);
-        } else if (e.key === "Tab") {
-            // Handle tab button
-            e.preventDefault();
-            e.stopPropagation();
-            app.ports.arrowFromJs.send("tab");
-        } else if (e.key === 'ArrowUp') {
-            // Catch UP/DOWN arrows
-            e.preventDefault();
-            app.ports.arrowFromJs.send("up");
-        } else if (e.key === 'ArrowDown') {
-            // Catch UP/DOWN arrows
-            e.preventDefault();
-            app.ports.arrowFromJs.send("down");
-        } else {
-            // Update pattern
-            var pattern = "";
-            var extra = "";
-            var m = null;
-            if (e.key === "Backspace") {
-                m = el.value.slice(Math.max(0, start - 50), start - 1).match(/@[\w-\.]*$/);
-            } else if (e.key.match(/[\w-\.]/)) {
-                m = el.value.slice(Math.max(0, start - 50), start).match(/@[\w-\.]*$/);
-                extra = e.key;
-            }
-
-            if (m) {
-                pattern = m[m.length - 1] + extra;
-                pattern = pattern.slice(1);
-                app.ports.changePatternFromJs.send(pattern);
-            }
-        }
+        handlePickerKey(e, el, userTooltip, {
+            prefix: "@",
+            patternRegex: /@[\w-\.]*$/,
+            patternChars: /[\w-\.]/,
+            patternPort: app.ports.changePatternFromJs,
+            arrowPort: app.ports.arrowFromJs,
+            selectPort: app.ports.selectActiveItemFromJs,
+            hide: () => hideSearchInput(userTooltip, app),
+        });
     }
-
-    /*
-     * Emoji search input
-     * tooltip helper.
-     */
-
     else if (!isHidden(emojiTooltip) && !e.shiftKey && !e.altKey) {
-        var start = el.selectionStart;
-
-        // Handle toggle down tooltip
-        if (e.key == " " ||
-            e.key == "Tab" ||
-            e.key == "Enter" ||
-            e.key == "Return" ||
-            e.key == "Escape" ||
-            e.key == "ArrowUp" ||
-            e.key == "ArrowDown" ||
-            e.key == "ArrowLeft" ||
-            e.key == "ArrowRight" ||
-            // Check if : keyword has been deleted
-            (e.key == "Backspace" && el.value[start - 1] == ":")
-        ) {
-            if (e.key == "Escape") {
-                e.stopPropagation();
-            }
-            hideEmojiInput(emojiTooltip, app);
-            return
-        }
-
-        // Update emoji pattern
-        var pattern = "";
-        var extra = "";
-        var m = null;
-        if (e.key === "Backspace") {
-            m = el.value.slice(Math.max(0, start - 50), start - 1).match(/:[\w-]*$/);
-        } else if (e.key.match(/[\w-]/)) {
-            m = el.value.slice(Math.max(0, start - 50), start).match(/:[\w-]*$/);
-            extra = e.key;
-        }
-
-        if (m) {
-            pattern = m[m.length - 1] + extra;
-            pattern = pattern.slice(1);
-            app.ports.changeEmojiPatternFromJs.send(pattern);
-        }
+        handlePickerKey(e, el, emojiTooltip, {
+            prefix: ":",
+            patternRegex: /:[\w-]*$/,
+            patternChars: /[\w-]/,
+            patternPort: app.ports.changeEmojiPatternFromJs,
+            arrowPort: app.ports.arrowFromJs,
+            selectPort: app.ports.selectActiveItemFromJs,
+            hide: () => hideEmojiInput(emojiTooltip, app),
+        });
     }
 
     // Handle toggle up tooltip
@@ -938,6 +858,8 @@ export function showSearchInput(content, input, app) {
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
     input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+    input.dataset.arrowMode = "false";
+    installClickOutside(input, () => hideSearchInput(input, app));
 
     app.ports.openMembersFromJs.send(null);
 }
@@ -946,6 +868,8 @@ export function hideSearchInput(input, app) {
     if (!input) return
     input.setAttribute("aria-hidden", "true");
     input.setAttribute("style", "display: none;");
+    input.dataset.arrowMode = "false";
+    removeClickOutside(input);
 
     app.ports.closeMembersFromJs.send(null);
 }
@@ -955,6 +879,8 @@ export function showEmojiInput(content, input, app) {
     const { x, y } = getCaretCoordinates(content, content.selectionStart);
     input.setAttribute("aria-hidden", "false");
     input.setAttribute("style", `display: inline-block; left: ${x}px; top: ${y + 30}px`);
+    input.dataset.arrowMode = "false";
+    installClickOutside(input, () => hideEmojiInput(input, app));
 
     app.ports.openEmojiPickerFromJs.send(null);
 }
@@ -963,8 +889,88 @@ export function hideEmojiInput(input, app) {
     if (!input) return
     input.setAttribute("aria-hidden", "true");
     input.setAttribute("style", "display: none;");
+    input.dataset.arrowMode = "false";
+    removeClickOutside(input);
 
     app.ports.closeEmojiPickerFromJs.send(null);
+}
+
+// Shared keydown handler for the @-mention and :emoji pickers.
+// `opts` differs per picker: { prefix, patternRegex, patternChars, patternPort, arrowPort, selectPort, hide }
+function handlePickerKey(e, el, tooltip, opts) {
+    var start = el.selectionStart;
+    var inArrowMode = tooltip.dataset.arrowMode === "true";
+
+    if (inArrowMode) {
+        if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
+            e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            e.preventDefault();
+            e.stopPropagation();
+            opts.arrowPort.send(e.key.replace("Arrow", "").toLowerCase());
+            return
+        }
+        if (e.key === "Enter" || e.key === "Return" || e.key === "Tab") {
+            e.preventDefault();
+            e.stopPropagation();
+            opts.selectPort.send(null);
+            return
+        }
+        if (e.key === "Escape") e.stopPropagation();
+        opts.hide();
+        return
+    }
+
+    if (e.key === "ArrowDown") {
+        e.preventDefault();
+        tooltip.dataset.arrowMode = "true";
+        opts.arrowPort.send("down");
+        return
+    }
+
+    if (e.key == " " ||
+        e.key == "Tab" ||
+        e.key == "Enter" ||
+        e.key == "Return" ||
+        e.key == "Escape" ||
+        e.key == "ArrowUp" ||
+        e.key == "ArrowLeft" ||
+        e.key == "ArrowRight" ||
+        // Trigger char was just backspaced — exit
+        (e.key == "Backspace" && el.value[start - 1] == opts.prefix)
+    ) {
+        if (e.key == "Escape") e.stopPropagation();
+        opts.hide();
+        return
+    }
+
+    var m = null;
+    var extra = "";
+    if (e.key === "Backspace") {
+        m = el.value.slice(Math.max(0, start - 50), start - 1).match(opts.patternRegex);
+    } else if (e.key.match(opts.patternChars)) {
+        m = el.value.slice(Math.max(0, start - 50), start).match(opts.patternRegex);
+        extra = e.key;
+    }
+    if (m) {
+        opts.patternPort.send((m[m.length - 1] + extra).slice(1));
+    }
+}
+
+// Close `el` when a mousedown happens outside of it.
+function installClickOutside(el, onClose) {
+    if (el._clickOutside) return
+    const handler = (ev) => {
+        if (!el.contains(ev.target)) onClose();
+    };
+    el._clickOutside = handler;
+    document.addEventListener("mousedown", handler, true);
+}
+
+function removeClickOutside(el) {
+    if (el && el._clickOutside) {
+        document.removeEventListener("mousedown", el._clickOutside, true);
+        el._clickOutside = null;
+    }
 }
 
 // Where el is the DOM element you'd like to test for visibility.

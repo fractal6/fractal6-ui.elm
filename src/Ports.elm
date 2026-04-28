@@ -69,6 +69,9 @@ port triggerMenuTreeFromJs : (() -> msg) -> Sub msg
 port arrowFromJs : (String -> msg) -> Sub msg
 
 
+port selectActiveItemFromJs : (() -> msg) -> Sub msg
+
+
 
 -- User
 

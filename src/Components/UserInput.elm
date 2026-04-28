@@ -62,6 +62,7 @@ type alias Model =
     , isOpen : Bool -- state of the selectors panel
     , targets : List String
     , activePos : Int
+    , isArrowMode : Bool
 
     -- Common
     , session : SessionCommon
@@ -83,6 +84,7 @@ initModel targets isInvite multiSelect session =
     , isOpen = False
     , targets = targets
     , activePos = 0
+    , isArrowMode = False
 
     -- Common
     , session = session
@@ -253,10 +255,10 @@ update_ apis message model =
                     && not model.isInvite
                 -- prevent multiple call to queryMembers user invitation input box
             then
-                ( { model | isOpen = True, users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
+                ( { model | isOpen = True, activePos = 0, isArrowMode = False, users_result = LoadingSlowly }, out0 [ queryMembers apis model.targets OnUsersAck ] )
 
             else if not model.isInvite && model.pattern == "" then
-                ( { model | isOpen = True, lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
+                ( { model | isOpen = True, activePos = 0, isArrowMode = False, lookup = withDefaultData [] model.users_result |> List.take 12 }, noOut )
 
             else
                 ( model, noOut )
@@ -265,6 +267,7 @@ update_ apis message model =
             ( close
                 { model
                     | activePos = 0
+                    , isArrowMode = False
                     , form = [] -- reset selection when close from javascript (comments)
                 }
             , noOut
@@ -324,35 +327,30 @@ update_ apis message model =
                     ( data, noOut )
 
         OnArrowMove dir ->
-            if model.isOpen then
-                let
-                    newPos =
-                        (case dir of
-                            "up" ->
-                                model.activePos - 1
+            if model.isOpen && not (List.isEmpty model.lookup) then
+                if not model.isArrowMode then
+                    -- First arrow press: enter nav mode and highlight first item
+                    ( { model | activePos = 0, isArrowMode = True }, noOut )
 
-                            "down" ->
-                                model.activePos + 1
+                else
+                    let
+                        n =
+                            List.length model.lookup
 
-                            "tab" ->
-                                model.activePos + 1
+                        newPos =
+                            (case dir of
+                                "up" ->
+                                    model.activePos - 1
 
-                            _ ->
-                                model.activePos
-                        )
-                            |> (\x ->
-                                    -- Compute boundary
-                                    if x >= List.length model.lookup then
-                                        0
+                                "down" ->
+                                    model.activePos + 1
 
-                                    else if x < 0 then
-                                        0
-
-                                    else
-                                        x
-                               )
-                in
-                ( { model | activePos = newPos }, noOut )
+                                _ ->
+                                    model.activePos
+                            )
+                                |> clamp 0 (n - 1)
+                    in
+                    ( { model | activePos = newPos }, noOut )
 
             else
                 ( model, noOut )
@@ -376,7 +374,7 @@ update_ apis message model =
             ( { model | targets = targets }, noOut )
 
         ChangePattern pattern ->
-            ( setPattern pattern model, out0 [ Ports.searchUser pattern ] )
+            ( setPattern pattern { model | activePos = 0, isArrowMode = False }, out0 [ Ports.searchUser pattern ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -419,7 +417,7 @@ subscriptions (State model) =
                 , openMembersFromJs (always OnOpenMembers)
                 , closeMembersFromJs (always OnCloseMembers)
                 , changePatternFromJs ChangePattern
-                , selectActiveItemFromJs (always OnSelectActive)
+                , Ports.selectActiveItemFromJs (always OnSelectActive)
                 ]
 
             else
@@ -434,9 +432,6 @@ port closeMembersFromJs : (() -> msg) -> Sub msg
 
 
 port changePatternFromJs : (String -> msg) -> Sub msg
-
-
-port selectActiveItemFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -474,7 +469,7 @@ viewUserSeeker (State model) =
                         (\i u ->
                             p
                                 [ class "panel-block pt-1 pb-1"
-                                , classList [ ( "is-active", model.activePos == i ) ]
+                                , classList [ ( "is-active", model.isArrowMode && model.activePos == i ) ]
                                 , onMousedownPD (OnClickUser u)
                                 ]
                                 [ viewUserFull 1 False False u ]
