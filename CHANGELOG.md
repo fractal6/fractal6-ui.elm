@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.4] - 2026-04-28
+
+## New features
+
+### Projects & Boards
+- Project drafts now support **labels and assignees**, just like tensions.
+- New **filter bar on board view**: filter cards by text, labels, and assignees.
+- New **Project section in the tension side panel**, with project tags and improved card UX.
+- The focused card now stays focused when the side panel opens, closes, or you move it across columns.
+- Cards in the tensions board view are now clickable, with a clear focus state when moved.
+- Clicking the card ellipsis dropdown is now reliable.
+- New projects automatically get a **Triage column** (NoStatusColumn).
+- The tension history now displays **ProjectAdded / ProjectRemoved / ProjectColumnMoved** events.
+
+### Tensions
+- New **Project section** in the tension side panel.
+- Pinned tensions can now be **showcased recursively** down the tree.
+- Target circles are now shown in label and project search panels.
+- Converting an empty draft into a tension now opens the template picker.
+
+### UI / UX
+- **Org tab icons now appear in the navbar** when scrolling.
+- New **"Copy text"** entry in the comment dropdown menu.
+- The **emoji picker** gains arrows, modern faces, status symbols, keycap numbers, and more.
+- **Keyboard navigation and click-outside** support for the emoji picker and @-mention picker.
+
+## Fixes
+
+### Projects & Tensions
+- Fixed several issues around **tension templates**: sync, draft skipping for unmodified templates, simplified labels/assignees view, restored rich-text handlers after template selection, recursive default disabled, template picker shown when converting empty drafts.
+- Fixed **search panel scopes**: label/project scope now includes focus children, assignee scope clarified, column selector view fixed.
+- Fixed stale tension counter when switching organizations from notifications.
+
+### UI polish
+- Search placeholder fixes for quick search and circle name in the project tension side panel.
+- Restored navbar dropdown close-on-click behavior on the Profile page.
+- "Go to root" link now appears next to the empty-state instead of the counter.
+- Better wrapping for long help messages, titles next to icons, and board column titles.
+
+
 ## [0.9.3] - 2026-04-06
 
 ### 🐛 Bug Fixes
