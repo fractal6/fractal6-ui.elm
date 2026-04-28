@@ -35,7 +35,7 @@ module Global exposing
 import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Bulk exposing (OrgaForm, UserState(..), getNode, uctxFromUser)
+import Bulk exposing (OrgaForm, UserState(..), countOpenTensions, getNode, treeMatchesFocus, uctxFromUser)
 import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
 import Bulk.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
@@ -362,14 +362,15 @@ update msg model =
                         )
                         model.session.common.path_data
 
-                -- Eventually update orga_info
                 orgaInfo =
-                    Maybe.map2
-                        (\oi nodes ->
-                            { oi | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
-                        )
+                    if treeMatchesFocus session.common.node_focus data then
+                        Maybe.map2
+                            (\oi nodes -> { oi | n_tensions = countOpenTensions nodes })
+                            session.data.orgaInfo
+                            data
+
+                    else
                         session.data.orgaInfo
-                        data
 
                 sessionData =
                     session.data
@@ -740,12 +741,14 @@ update msg model =
                             model.session
 
                         oi =
-                            Maybe.map
-                                (\nodes ->
-                                    { data | n_tensions = Dict.foldl (\_ n count -> n.n_open_tensions + count) 0 nodes }
-                                )
-                                session.data.tree_data
-                                |> withDefault data
+                            if treeMatchesFocus session.common.node_focus session.data.tree_data then
+                                Maybe.map
+                                    (\nodes -> { data | n_tensions = countOpenTensions nodes })
+                                    session.data.tree_data
+                                    |> withDefault data
+
+                            else
+                                data
 
                         sessionData =
                             session.data

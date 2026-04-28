@@ -715,6 +715,17 @@ isFreshOrga data =
         == 1
 
 
+countOpenTensions : NodesDict -> Int
+countOpenTensions =
+    Dict.foldl (\_ n acc -> n.n_open_tensions + acc) 0
+
+
+treeMatchesFocus : Maybe { a | rootnameid : String } -> Maybe NodesDict -> Bool
+treeMatchesFocus maybeFocus maybeTree =
+    Maybe.map2 (\f -> Dict.member f.rootnameid) maybeFocus maybeTree
+        |> Maybe.withDefault False
+
+
 getPath : GqlData LocalGraph -> List PNode
 getPath lg =
     case lg of
