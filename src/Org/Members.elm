@@ -413,8 +413,11 @@ update global message model =
             , Cmd.batch
                 [ queryMembersLocal apis model.node_focus.rootnameid pattern_m GotMembers
 
-                -- @deprecated : we use gql queryUserRoles now (allow to search users too..to be tested)
-                , fetchMembersSub apis model.node_focus.nameid False GotMembersSub
+                -- include_self=True: queryMembersLocal above is pinned to rootnameid (it feeds
+                -- guests/pendings only), so /q/members/sub must include the focus's own role
+                -- children — otherwise root's Owner and any role parented directly at a sub-circle
+                -- focus would be missing from the displayed list.
+                , fetchMembersSub apis model.node_focus.nameid True GotMembersSub
                 , queryOpenInvitation apis model.node_focus.nameid GotOpenContracts
                 ]
             , Cmd.none
