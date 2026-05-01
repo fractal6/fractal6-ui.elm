@@ -39,6 +39,8 @@ module Query.QueryNode exposing
     , getRoles
     , projectColumnLitePayload
     , projectWithColumnsPayload
+    , getProjectTemplateById
+    , getProjectTemplates
     , getTensionTemplateById
     , getTensionTemplates
     , labelFullPayload
@@ -70,6 +72,8 @@ module Query.QueryNode exposing
     , queryRolesFull
     , roleFullPayload
     , searchUserFilter
+    , projectTemplateFullPayload
+    , projectTemplateLitePayload
     , tensionEventPayload
     , tensionTemplateFullPayload
     , tensionTemplateLitePayload
@@ -77,6 +81,7 @@ module Query.QueryNode exposing
     , userPayload
     )
 
+import Codecs exposing (decodeColumnsJson)
 import Fractale.Graph exposing (maxPinnedTensions)
 import Fractale.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
@@ -91,6 +96,7 @@ import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.ProjectColumnOrderable as ProjectColumnOrderable
 import Schema.Enum.ProjectOrderable as ProjectOrderable
 import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.ProjectTemplateOrderable as ProjectTemplateOrderable
 import Schema.Enum.RoleExtOrderable as RoleExtOrderable
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionStatus as TensionStatus
@@ -112,6 +118,7 @@ import Schema.Object.Notif
 import Schema.Object.Project
 import Schema.Object.ProjectAggregateResult
 import Schema.Object.ProjectColumn
+import Schema.Object.ProjectTemplate
 import Schema.Object.RoleExt
 import Schema.Object.Tension
 import Schema.Object.TensionAggregateResult
@@ -1349,6 +1356,75 @@ tensionTemplateLitePayload =
         Schema.Object.TensionTemplate.description
         Schema.Object.TensionTemplate.is_recursive
         (SelectionSet.map (withDefault []) <| Schema.Object.TensionTemplate.nodes identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid))
+
+
+type alias NodeProjectTemplatesFull =
+    { project_templates : Maybe (List ProjectTemplateFull) }
+
+
+projectTemplatesFullDecoder : Maybe NodeProjectTemplatesFull -> Maybe (List ProjectTemplateFull)
+projectTemplatesFullDecoder data =
+    data
+        |> Maybe.map (\d -> withDefault [] d.project_templates)
+
+
+getProjectTemplates url nid msg =
+    -- Fetch on the given node
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeProjectTemplatesFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse projectTemplatesFullDecoder >> msg)
+
+
+getProjectTemplateById url tid msg =
+    makeGQLQuery url
+        (Query.getProjectTemplate
+            { id = encodeId tid }
+            projectTemplateFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+nodeProjectTemplatesFullPayload : SelectionSet NodeProjectTemplatesFull Schema.Object.Node
+nodeProjectTemplatesFullPayload =
+    SelectionSet.map NodeProjectTemplatesFull
+        (Schema.Object.Node.project_templates
+            (\args ->
+                { args
+                    | order =
+                        Input.buildProjectTemplateOrder (\b -> { b | asc = Present ProjectTemplateOrderable.Name })
+                            |> Present
+                }
+            )
+            projectTemplateFullPayload
+        )
+
+
+projectTemplateFullPayload : SelectionSet ProjectTemplateFull Schema.Object.ProjectTemplate
+projectTemplateFullPayload =
+    SelectionSet.succeed ProjectTemplateFull
+        |> with (Schema.Object.ProjectTemplate.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.ProjectTemplate.name
+        |> with Schema.Object.ProjectTemplate.description
+        |> with Schema.Object.ProjectTemplate.is_recursive
+        |> with (Schema.Object.ProjectTemplate.columns_json |> SelectionSet.map decodeColumnsJson)
+        |> with
+            (SelectionSet.map (unwrap Nothing .count) <|
+                Schema.Object.ProjectTemplate.nodesAggregate identity <|
+                    SelectionSet.map Count Schema.Object.NodeAggregateResult.count
+            )
+
+
+projectTemplateLitePayload : SelectionSet ProjectTemplateLite Schema.Object.ProjectTemplate
+projectTemplateLitePayload =
+    SelectionSet.map5 ProjectTemplateLite
+        (Schema.Object.ProjectTemplate.id |> SelectionSet.map decodedId)
+        Schema.Object.ProjectTemplate.name
+        Schema.Object.ProjectTemplate.description
+        Schema.Object.ProjectTemplate.is_recursive
+        (SelectionSet.map (withDefault []) <| Schema.Object.ProjectTemplate.nodes identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid))
 
 
 

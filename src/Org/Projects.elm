@@ -55,13 +55,13 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isDataEmpty, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, NewTensionInput(..), Node, ProjectFull, ProjectsCount)
+import ModelSchema exposing (ColumnDraft, LocalGraph, NewTensionInput(..), Node, ProjectFull, ProjectTemplateFull, ProjectTemplateLite, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
-import Query.QueryNode exposing (getProjects, queryLocalGraph)
+import Query.QueryNode exposing (getProjectTemplateById, getProjects, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
+import Requests exposing (fetchProjectCount, fetchProjectTemplatesTop, fetchProjectsSub, fetchProjectsTop)
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
@@ -76,7 +76,7 @@ import Utils.Bool exposing (ternary)
 import Utils.Bulma as B
 import Utils.Cmd exposing (send, sendNow, sendSleep)
 import Utils.Date exposing (formatDate)
-import Utils.DomEvents exposing (onClickSP)
+import Utils.DomEvents exposing (onClickPD, onClickSP)
 import Utils.Html exposing (showIf, textH, textT)
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (decap, space_, upH)
@@ -213,6 +213,12 @@ type alias Model =
     , colorPicker : ColorPicker
     , colorPickerIdx : Maybe Int
 
+    -- Project templates (picker for new project)
+    , ptemplates : RestData (List ProjectTemplateLite)
+    , ptemplateLoading : Bool
+    , showTemplatePicker : Bool
+    , selectedTemplateName : String
+
     -- Move
     , project_move : Maybe ProjectFull
     , move_target : Maybe Node
@@ -324,10 +330,6 @@ resetForm model =
     }
 
 
-type alias ColumnDraft =
-    { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType }
-
-
 columnNameInputId : Int -> String
 columnNameInputId idx =
     "column-name-" ++ String.fromInt idx
@@ -380,6 +382,12 @@ type Msg
     | EditProject ProjectFull
     | ChangeStatus ProjectStatus.ProjectStatus ProjectFull
     | CancelProject
+      -- Project template picker
+    | GotProjectTemplatesLite (RestData (List ProjectTemplateLite))
+    | ToggleTemplatePicker
+    | OnSelectProjectTemplate ProjectTemplateLite
+    | GotProjectTemplateContent (GqlData ProjectTemplateFull)
+    | OnSelectSimpleKanbanTemplate
     | SubmitAddProject Time.Posix
     | SubmitEditProject Time.Posix
     | SubmitDeleteProject String String Time.Posix
@@ -481,6 +489,10 @@ init global flags =
             , project_result_del = NotAsked
             , colorPicker = ColorPicker.init
             , colorPickerIdx = Nothing
+            , ptemplates = RemoteData.NotAsked
+            , ptemplateLoading = False
+            , showTemplatePicker = False
+            , selectedTemplateName = T.simpleKanban
 
             -- Move
             , project_move = Nothing
@@ -746,9 +758,6 @@ update global message model =
 
         OpenColumnColor idx ->
             let
-                wasOpen =
-                    model.colorPicker.isOpen
-
                 col_color =
                     model.project_form.columns
                         |> Maybe.andThen (LE.getAt idx)
@@ -760,7 +769,7 @@ update global message model =
                         |> ColorPicker.open
             in
             ( { model | colorPicker = newPicker, colorPickerIdx = Just idx }
-            , if wasOpen then
+            , if model.colorPicker.isOpen then
                 Cmd.none
 
               else
@@ -772,6 +781,7 @@ update global message model =
             ( { model
                 | colorPicker = ColorPicker.close model.colorPicker
                 , colorPickerIdx = Nothing
+                , showTemplatePicker = False
               }
             , Cmd.none
             , Cmd.none
@@ -918,10 +928,80 @@ update global message model =
                     | project_add = ternary model.project_add False True
                     , project_edit = Nothing
                     , project_form = newForm
+                    , selectedTemplateName = T.simpleKanban
+                    , showTemplatePicker = False
                   }
-                , Cmd.batch [ Ports.bulma_driver "edit-project" ]
+                , Cmd.batch
+                    [ Ports.bulma_driver "edit-project"
+                    , case model.ptemplates of
+                        RemoteData.NotAsked ->
+                            fetchProjectTemplatesTop apis model.node_focus.nameid True GotProjectTemplatesLite
+
+                        _ ->
+                            Cmd.none
+                    ]
                 , Cmd.none
                 )
+
+        GotProjectTemplatesLite result ->
+            ( { model | ptemplates = result }, Cmd.none, Cmd.none )
+
+        ToggleTemplatePicker ->
+            let
+                newOpen =
+                    not model.showTemplatePicker
+            in
+            ( { model | showTemplatePicker = newOpen }
+            , if newOpen then
+                Ports.outsideClickClose "cancelColorFromJs" "ptemplate-picker"
+
+              else
+                Cmd.none
+            , Cmd.none
+            )
+
+        OnSelectProjectTemplate tpl ->
+            ( { model | ptemplateLoading = True, showTemplatePicker = False, selectedTemplateName = tpl.name }
+            , getProjectTemplateById apis tpl.id GotProjectTemplateContent
+            , Cmd.none
+            )
+
+        GotProjectTemplateContent result ->
+            case result of
+                Success tpl ->
+                    let
+                        form =
+                            model.project_form
+                    in
+                    ( { model
+                        | ptemplateLoading = False
+                        , project_form = { form | columns = Just tpl.columns }
+                        , hasUnsavedData = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                Failure _ ->
+                    ( { model | ptemplateLoading = False }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        OnSelectSimpleKanbanTemplate ->
+            let
+                form =
+                    model.project_form
+            in
+            ( { model
+                | project_form = { form | columns = Just simpleKanban }
+                , showTemplatePicker = False
+                , selectedTemplateName = T.simpleKanban
+                , hasUnsavedData = True
+              }
+            , Cmd.none
+            , Cmd.none
+            )
 
         EditProject project ->
             let
@@ -1733,12 +1813,7 @@ viewColumnsEditor model =
                     ]
                 ]
             , div [ class "level-right" ]
-                [ span
-                    [ class "tag is-weak"
-                    , attribute "title" T.moreTemplatesSoon
-                    ]
-                    [ text "Simple Kanban" ]
-                ]
+                [ viewTemplatePicker model ]
             ]
         , div [] (List.indexedMap (viewColumnRow model.colorPicker model.colorPickerIdx nCols) cols)
         , button
@@ -1747,6 +1822,70 @@ viewColumnsEditor model =
             , onClick AddColumn
             ]
             [ A.icon1 "icon-plus" T.addColumn ]
+        ]
+
+
+viewTemplatePicker : Model -> Html Msg
+viewTemplatePicker model =
+    let
+        templates =
+            case model.ptemplates of
+                RemoteData.Success t ->
+                    t
+
+                _ ->
+                    []
+    in
+    div
+        [ id "ptemplate-picker"
+        , class "dropdown is-right"
+        , classList [ ( "is-active", model.showTemplatePicker ) ]
+        , style "position" "relative"
+        ]
+        [ div [ class "dropdown-trigger" ]
+            [ button
+                [ class "tag is-weak button-light"
+                , classList [ ( "is-loading", model.ptemplateLoading ) ]
+                , attribute "aria-haspopup" "true"
+                , onClickPD ToggleTemplatePicker
+                ]
+                [ text model.selectedTemplateName
+                , span [ class "ml-1" ] [ A.icon "icon-chevron-down" ]
+                ]
+            ]
+        , div [ class "dropdown-menu", attribute "role" "menu" ]
+            [ div [ class "dropdown-content" ] <|
+                button
+                    [ class "dropdown-item button-light has-text-left"
+                    , classList [ ( "is-active", model.selectedTemplateName == T.simpleKanban ) ]
+                    , onClickPD OnSelectSimpleKanbanTemplate
+                    ]
+                    [ text T.simpleKanban ]
+                    :: (if List.isEmpty templates then
+                            []
+
+                        else
+                            hr [ class "dropdown-divider" ] []
+                                :: List.map (viewTemplatePickerItem model.selectedTemplateName) templates
+                       )
+            ]
+        ]
+
+
+viewTemplatePickerItem : String -> ProjectTemplateLite -> Html Msg
+viewTemplatePickerItem selectedName t =
+    button
+        [ class "dropdown-item button-light has-text-left"
+        , classList [ ( "is-active", selectedName == t.name ) ]
+        , onClickPD (OnSelectProjectTemplate t)
+        ]
+        [ text t.name
+        , case t.description of
+            Just d ->
+                span [ class "is-size-7 has-text-grey ml-2" ] [ text d ]
+
+            Nothing ->
+                text ""
         ]
 
 
@@ -1794,7 +1933,7 @@ viewColumnRow colorPicker activeIdx nCols idx col =
                 [ button
                     [ class "buttonColor"
                     , attribute "style" swatchStyle
-                    , onClickSP (OpenColumnColor idx)
+                    , onClickSP (ternary isPickerActive CloseColumnColor (OpenColumnColor idx))
                     , attribute "title" T.changeColor
                     ]
                     []

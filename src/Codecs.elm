@@ -26,6 +26,7 @@ import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.UserType as UserType
 import Json.Decode as JD
@@ -36,6 +37,7 @@ import Loading exposing (ModalData)
 import ModelSchema
     exposing
         ( BlobId
+        , ColumnDraft
         , EmitterOrReceiver
         , IdPayload
         , Label
@@ -44,6 +46,7 @@ import ModelSchema
         , NodeId
         , NodesDict
         , ProjectFull
+        , ProjectTemplateLite
         , RoleExt
         , TensionTemplateLite
         , User
@@ -115,6 +118,62 @@ tensionTemplateLiteDecoder =
         (JD.maybe <| JD.field "description" JD.string)
         (JD.field "is_recursive" JD.bool)
         (JD.field "nodes" (JD.list (JD.map NameidPayload (JD.field "nameid" JD.string))) |> JDE.withDefault [])
+
+
+projectTemplateLiteDecoder : JD.Decoder ProjectTemplateLite
+projectTemplateLiteDecoder =
+    JD.map5 ProjectTemplateLite
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.maybe <| JD.field "description" JD.string)
+        (JD.field "is_recursive" JD.bool)
+        (JD.field "nodes" (JD.list (JD.map NameidPayload (JD.field "nameid" JD.string))) |> JDE.withDefault [])
+
+
+encodeColumnsJson : List ColumnDraft -> String
+encodeColumnsJson cols =
+    cols
+        |> List.indexedMap
+            (\i c ->
+                JE.object
+                    [ ( "name", JE.string c.name )
+                    , ( "description", JE.string c.description )
+                    , ( "color", JEE.maybe JE.string c.color )
+                    , ( "col_type", JE.string (ProjectColumnType.toString c.col_type) )
+                    , ( "pos", JE.int i )
+                    ]
+            )
+        |> JE.list identity
+        |> JE.encode 0
+
+
+decodeColumnsJson : String -> List ColumnDraft
+decodeColumnsJson s =
+    JD.decodeString columnsListDecoder s |> Result.withDefault []
+
+
+columnsListDecoder : JD.Decoder (List ColumnDraft)
+columnsListDecoder =
+    JD.list columnDraftDecoder
+
+
+columnDraftDecoder : JD.Decoder ColumnDraft
+columnDraftDecoder =
+    JD.map4 ColumnDraft
+        (JD.field "name" JD.string)
+        (JD.field "description" JD.string |> JDE.withDefault "")
+        (JD.maybe <| JD.field "color" JD.string)
+        (JD.field "col_type" JD.string
+            |> JD.andThen
+                (\s ->
+                    case ProjectColumnType.fromString s of
+                        Just v ->
+                            JD.succeed v
+
+                        Nothing ->
+                            JD.succeed ProjectColumnType.NormalColumn
+                )
+        )
 
 
 

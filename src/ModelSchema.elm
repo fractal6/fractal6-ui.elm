@@ -463,6 +463,29 @@ type alias TensionTemplateFull =
     }
 
 
+type alias ProjectTemplateLite =
+    { id : String
+    , name : String
+    , description : Maybe String
+    , is_recursive : Bool
+    , nodes : List NameidPayload
+    }
+
+
+type alias ProjectTemplateFull =
+    { id : String
+    , name : String
+    , description : Maybe String
+    , is_recursive : Bool
+    , columns : List ColumnDraft
+    , n_nodes : Maybe Int
+    }
+
+
+type alias ColumnDraft =
+    { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType }
+
+
 type alias TensionHead =
     { id : String
     , createdAt : String

@@ -2124,6 +2124,38 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Sub-circle templates"
   fr="Modèles des sous-cercles"
 
+[projectTemplate]
+  en="Project template"
+  fr="Modèle de Projet"
+
+[projectTemplates]
+  en="Project templates"
+  fr="Modèles de Projets"
+
+[noProjectTemplates]
+  en="No project templates"
+  fr="Aucun modèle de projet"
+
+[projectTemplatesInfoHeader]
+  en="Project templates allow to pre-fill project columns with predefined values."
+  fr="Les modèles de projet permettent de pré-remplir les colonnes du projet avec des valeurs prédéfinies."
+
+[projectTemplatesInfoDoc]
+  en="Templates defined in a circle with the recursive flag enabled are also available in sub-circles."
+  fr="Les modèles définis dans un cercle avec l'option récursive sont également disponibles dans les sous-cercles."
+
+[columns]
+  en="Columns"
+  fr="Colonnes"
+
+[selectAProjectTemplate]
+  en="Select a project template"
+  fr="Sélectionner un modèle de projet"
+
+[simpleKanban]
+  en="Simple Kanban"
+  fr="Kanban simple"
+
 [adhocRole]
   en="Ad-hoc Role"
   fr="Rôle ad-hoc"

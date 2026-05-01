@@ -56,6 +56,7 @@ import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnType
 import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
@@ -72,10 +73,10 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchNode exposing (addOneLabel, addOneRole, addOneTensionTemplate, removeOneLabel, removeOneRole, removeOneTensionTemplate, updateOneLabel, updateOneRole, updateOneTensionTemplate)
-import Query.QueryNode exposing (getCircleRights, getLabels, getRoles, getTensionTemplates, queryLocalGraph)
+import Query.PatchNode exposing (addOneLabel, addOneProjectTemplate, addOneRole, addOneTensionTemplate, removeOneLabel, removeOneProjectTemplate, removeOneRole, removeOneTensionTemplate, updateOneLabel, updateOneProjectTemplate, updateOneRole, updateOneTensionTemplate)
+import Query.QueryNode exposing (getCircleRights, getLabels, getProjectTemplates, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
-import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsPinnedTensionfetchRecursively, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
+import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchProjectTemplatesSub, fetchProjectTemplatesTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsPinnedTensionfetchRecursively, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
@@ -227,6 +228,19 @@ type alias Model =
     , template_result_del : GqlData String
     , template_anim_enter : Maybe String
 
+    -- Project Templates
+    , ptemplate_form : ProjectTemplateForm
+    , ptemplates : GqlData (List ProjectTemplateFull)
+    , ptemplates_top : RestData (List ProjectTemplateLite)
+    , ptemplates_sub : RestData (List ProjectTemplateLite)
+    , ptemplate_add : Bool
+    , ptemplate_edit : Maybe ProjectTemplateFull
+    , ptemplate_result : GqlData ProjectTemplateFull
+    , ptemplate_result_del : GqlData String
+    , ptemplate_anim_enter : Maybe String
+    , ptemplate_color_picker : ColorPicker
+    , ptemplate_color_picker_idx : Maybe Int
+
     -- Orga
     , orga_rights : GqlData NodeRights
     , switch_result : RestData Bool
@@ -259,13 +273,14 @@ type MenuSettings
     = LabelsMenu
     | RolesMenu
     | TemplatesMenu
+    | ProjectTemplatesMenu
     | GlobalMenu
     | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, RolesMenu, TemplatesMenu, EditMenu, GlobalMenu ]
+    [ LabelsMenu, RolesMenu, TemplatesMenu, ProjectTemplatesMenu, EditMenu, GlobalMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -279,6 +294,9 @@ menuEncoder menu =
 
         TemplatesMenu ->
             "templates"
+
+        ProjectTemplatesMenu ->
+            "project_templates"
 
         GlobalMenu ->
             "global"
@@ -300,6 +318,9 @@ menuDecoder menu =
         "templates" ->
             TemplatesMenu
 
+        "project_templates" ->
+            ProjectTemplatesMenu
+
         "global" ->
             GlobalMenu
 
@@ -318,6 +339,9 @@ menuToString menu =
 
         TemplatesMenu ->
             T.tensionTemplates
+
+        ProjectTemplatesMenu ->
+            T.projectTemplates
 
         GlobalMenu ->
             T.organisation
@@ -338,6 +362,9 @@ menuToIcon menu =
         TemplatesMenu ->
             "icon-exchange"
 
+        ProjectTemplatesMenu ->
+            "icon-layers"
+
         GlobalMenu ->
             "icon-shield"
 
@@ -357,6 +384,9 @@ resetForm model =
         , template_form = initTensionTemplateForm (LoggedIn model.template_form.uctx) model.node_focus.nameid
         , template_result = NotAsked
         , template_result_del = NotAsked
+        , ptemplate_form = initProjectTemplateForm (LoggedIn model.ptemplate_form.uctx) model.node_focus.nameid
+        , ptemplate_result = NotAsked
+        , ptemplate_result_del = NotAsked
     }
 
 
@@ -442,6 +472,19 @@ init global flags =
             , template_result_del = NotAsked
             , template_anim_enter = Nothing
 
+            -- Project Templates
+            , ptemplate_form = initProjectTemplateForm session.common.user newFocus.nameid
+            , ptemplates = NotAsked
+            , ptemplates_top = RemoteData.NotAsked
+            , ptemplates_sub = RemoteData.NotAsked
+            , ptemplate_add = action == "new" && menu == ProjectTemplatesMenu
+            , ptemplate_edit = Nothing
+            , ptemplate_result = NotAsked
+            , ptemplate_result_del = NotAsked
+            , ptemplate_anim_enter = Nothing
+            , ptemplate_color_picker = ColorPicker.init
+            , ptemplate_color_picker_idx = Nothing
+
             -- Orga
             , orga_rights = Loading
             , switch_result = RemoteData.NotAsked
@@ -490,6 +533,12 @@ init global flags =
                             [ getTensionTemplates apis newFocus.nameid GotTemplates
                             , fetchTensionTemplatesTop apis newFocus.nameid False GotTemplatesTop
                             , fetchTensionTemplatesSub apis newFocus.nameid False GotTemplatesSub
+                            ]
+
+                        ProjectTemplatesMenu ->
+                            [ getProjectTemplates apis newFocus.nameid GotProjectTemplates
+                            , fetchProjectTemplatesTop apis newFocus.nameid False GotProjectTemplatesTop
+                            , fetchProjectTemplatesSub apis newFocus.nameid False GotProjectTemplatesSub
                             ]
 
                         GlobalMenu ->
@@ -578,6 +627,28 @@ type Msg
     | GotTemplatesSub (RestData (List TensionTemplateLite))
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
+      -- Project Templates
+    | GotProjectTemplates (GqlData (List ProjectTemplateFull))
+    | AddProjectTemplate
+    | EditProjectTemplate ProjectTemplateFull
+    | CancelProjectTemplate
+    | ChangePTemplatePost String String
+    | ChangePTemplateDescription String
+    | ChangePTemplateRecursive Bool
+    | AddPTemplateColumn
+    | RemovePTemplateColumn Int
+    | ChangePTemplateColumnField Int String String
+    | MovePTemplateColumn Int Int
+    | OpenPTemplateColumnColor Int
+    | ClosePTemplateColumnColor
+    | SelectPTemplateColumnColor String
+    | SubmitAddProjectTemplate Time.Posix
+    | SubmitEditProjectTemplate Time.Posix
+    | SubmitDeleteProjectTemplate String Time.Posix
+    | GotProjectTemplate (GqlData ProjectTemplateFull)
+    | GotProjectTemplateDel (GqlData String)
+    | GotProjectTemplatesTop (RestData (List ProjectTemplateLite))
+    | GotProjectTemplatesSub (RestData (List ProjectTemplateLite))
       -- Orga
     | GotRootRights (GqlData NodeRights)
     | SwitchUserCanJoin Int Bool
@@ -1363,6 +1434,295 @@ update global message model =
         GotTemplatesSub result ->
             ( { model | templates_sub = result }, Cmd.none, Cmd.none )
 
+        -- Project Templates
+        GotProjectTemplates result ->
+            ( { model | ptemplates = result }, Cmd.none, Cmd.none )
+
+        AddProjectTemplate ->
+            if model.ptemplate_add then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                let
+                    f =
+                        model.ptemplate_form
+
+                    initialCols =
+                        if List.isEmpty f.columns then
+                            [ { name = T.colTodoName, description = T.colTodoDesc, color = Just "#01FF70", col_type = Schema.Enum.ProjectColumnType.NormalColumn }
+                            , { name = T.colInProgressName, description = T.colInProgressDesc, color = Just "#FF851B", col_type = Schema.Enum.ProjectColumnType.NormalColumn }
+                            , { name = T.colDoneName, description = T.colDoneDesc, color = Just "#B10DC9", col_type = Schema.Enum.ProjectColumnType.NormalColumn }
+                            ]
+
+                        else
+                            f.columns
+                in
+                ( { model
+                    | ptemplate_add = True
+                    , ptemplate_edit = Nothing
+                    , ptemplate_anim_enter = Nothing
+                    , ptemplate_form = { f | columns = initialCols }
+                  }
+                , Cmd.none
+                , Cmd.none
+                )
+
+        EditProjectTemplate tpl ->
+            let
+                f =
+                    model.ptemplate_form
+
+                newForm =
+                    { f
+                        | id = tpl.id
+                        , post =
+                            Dict.fromList
+                                [ ( "name", tpl.name )
+                                , ( "old_name", tpl.name )
+                                ]
+                        , description = tpl.description
+                        , is_recursive = tpl.is_recursive
+                        , columns = tpl.columns
+                    }
+            in
+            ( { model
+                | ptemplate_add = False
+                , ptemplate_edit = Just tpl
+                , ptemplate_form = newForm
+              }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        CancelProjectTemplate ->
+            ( { model
+                | ptemplate_add = False
+                , ptemplate_edit = Nothing
+                , ptemplate_result = NotAsked
+                , ptemplate_result_del = NotAsked
+                , ptemplate_anim_enter = Nothing
+              }
+                |> resetForm
+            , Cmd.none
+            , Cmd.none
+            )
+
+        ChangePTemplatePost field value ->
+            let
+                f =
+                    model.ptemplate_form
+            in
+            ( { model | ptemplate_form = { f | post = Dict.insert field value f.post } }, Cmd.none, Cmd.none )
+
+        ChangePTemplateDescription value ->
+            let
+                f =
+                    model.ptemplate_form
+            in
+            ( { model | ptemplate_form = { f | description = ternary (value == "") Nothing (Just value) } }, Cmd.none, Cmd.none )
+
+        ChangePTemplateRecursive val ->
+            let
+                f =
+                    model.ptemplate_form
+            in
+            ( { model | ptemplate_form = { f | is_recursive = val } }, Cmd.none, Cmd.none )
+
+        AddPTemplateColumn ->
+            let
+                f =
+                    model.ptemplate_form
+
+                newCol =
+                    { name = "", description = "", color = Just ColorPicker.initColor, col_type = Schema.Enum.ProjectColumnType.NormalColumn }
+
+                newIdx =
+                    List.length f.columns
+            in
+            ( { model | ptemplate_form = { f | columns = f.columns ++ [ newCol ] } }
+            , Ports.focusOn (ptemplateColumnNameInputId newIdx)
+            , Cmd.none
+            )
+
+        RemovePTemplateColumn idx ->
+            let
+                f =
+                    model.ptemplate_form
+            in
+            ( { model | ptemplate_form = { f | columns = LE.removeAt idx f.columns } }, Cmd.none, Cmd.none )
+
+        ChangePTemplateColumnField idx field value ->
+            let
+                f =
+                    model.ptemplate_form
+
+                cols =
+                    f.columns
+                        |> List.indexedMap
+                            (\i c ->
+                                if i == idx then
+                                    case field of
+                                        "name" ->
+                                            { c | name = value }
+
+                                        "description" ->
+                                            { c | description = value }
+
+                                        _ ->
+                                            c
+
+                                else
+                                    c
+                            )
+            in
+            ( { model | ptemplate_form = { f | columns = cols } }, Cmd.none, Cmd.none )
+
+        MovePTemplateColumn idx dir ->
+            let
+                f =
+                    model.ptemplate_form
+
+                target =
+                    idx + dir
+
+                cols =
+                    if target < 0 || target >= List.length f.columns then
+                        f.columns
+
+                    else
+                        case ( LE.getAt idx f.columns, LE.getAt target f.columns ) of
+                            ( Just a, Just b ) ->
+                                f.columns
+                                    |> LE.setAt idx b
+                                    |> LE.setAt target a
+
+                            _ ->
+                                f.columns
+            in
+            ( { model | ptemplate_form = { f | columns = cols } }, Cmd.none, Cmd.none )
+
+        OpenPTemplateColumnColor idx ->
+            ( { model | ptemplate_color_picker_idx = Just idx }
+            , if model.ptemplate_color_picker_idx == Nothing then
+                Ports.outsideClickClose "cancelColorFromJs" "colorPicker"
+
+              else
+                Cmd.none
+            , Cmd.none
+            )
+
+        ClosePTemplateColumnColor ->
+            ( { model | ptemplate_color_picker_idx = Nothing }, Cmd.none, Cmd.none )
+
+        SelectPTemplateColumnColor color ->
+            let
+                f =
+                    model.ptemplate_form
+
+                idx =
+                    model.ptemplate_color_picker_idx |> withDefault -1
+
+                cols =
+                    f.columns
+                        |> List.indexedMap
+                            (\i c ->
+                                if i == idx then
+                                    { c | color = Just color }
+
+                                else
+                                    c
+                            )
+            in
+            ( { model | ptemplate_form = { f | columns = cols }, ptemplate_color_picker_idx = Nothing }, Cmd.none, Cmd.none )
+
+        SubmitAddProjectTemplate _ ->
+            ( { model | ptemplate_result = LoadingSlowly }, addOneProjectTemplate apis model.ptemplate_form GotProjectTemplate, Cmd.none )
+
+        SubmitEditProjectTemplate _ ->
+            ( { model | ptemplate_result = LoadingSlowly }, updateOneProjectTemplate apis model.ptemplate_form GotProjectTemplate, Cmd.none )
+
+        SubmitDeleteProjectTemplate id_ _ ->
+            let
+                f =
+                    model.ptemplate_form
+
+                newForm =
+                    { f | id = id_ }
+            in
+            ( { model | ptemplate_result_del = LoadingSlowly, ptemplate_form = newForm }, removeOneProjectTemplate apis newForm GotProjectTemplateDel, Cmd.none )
+
+        GotProjectTemplate result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | ptemplate_result = NotAsked }, Ports.raiseAuthModal model.ptemplate_form.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    if model.ptemplate_add then
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddProjectTemplate) 500, send UpdateUserToken )
+
+                    else
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditProjectTemplate) 500, send UpdateUserToken )
+
+                OkAuth tpl ->
+                    let
+                        d =
+                            withDefaultData [] model.ptemplates
+
+                        new =
+                            if model.ptemplate_add then
+                                [ tpl ] ++ d
+
+                            else
+                                LE.setIf (\x -> x.id == tpl.id) tpl d
+                    in
+                    ( { model
+                        | ptemplate_result = result
+                        , ptemplates = Success new
+                        , ptemplate_add = False
+                        , ptemplate_edit = Nothing
+                        , ptemplate_anim_enter = Just tpl.id
+                      }
+                        |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                DuplicateErr ->
+                    ( { model | ptemplate_result = Failure [ T.duplicateNameError ] }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | ptemplate_result = result }, Cmd.none, Cmd.none )
+
+        GotProjectTemplateDel result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | ptemplate_result_del = NotAsked }, Ports.raiseAuthModal model.ptemplate_form.uctx, Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteProjectTemplate model.ptemplate_form.id) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    let
+                        d =
+                            withDefaultData [] model.ptemplates
+
+                        new =
+                            List.filter (\x -> x.id /= model.ptemplate_form.id) d
+                    in
+                    ( { model | ptemplate_result_del = NotAsked, ptemplates = Success new, ptemplate_add = False, ptemplate_edit = Nothing } |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | ptemplate_result_del = result }, Cmd.none, Cmd.none )
+
+        GotProjectTemplatesTop result ->
+            ( { model | ptemplates_top = result }, Cmd.none, Cmd.none )
+
+        GotProjectTemplatesSub result ->
+            ( { model | ptemplates_sub = result }, Cmd.none, Cmd.none )
+
         LabelSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -1624,7 +1984,13 @@ update global message model =
             )
 
         CloseColor ->
-            ( { model | colorPicker = ColorPicker.close model.colorPicker }, Cmd.none, Cmd.none )
+            ( { model
+                | colorPicker = ColorPicker.close model.colorPicker
+                , ptemplate_color_picker_idx = Nothing
+              }
+            , Cmd.none
+            , Cmd.none
+            )
 
         SelectColor color ->
             let
@@ -1903,8 +2269,15 @@ viewSettingsContent model =
         TemplatesMenu ->
             div []
                 [ viewTemplates model
-                , viewTensionTemplatesExt model.url T.inheritedTemplates model.templates_top
-                , viewTensionTemplatesExt model.url T.subTemplates model.templates_sub
+                , viewTemplatesExt model.url T.inheritedTemplates model.templates_top
+                , viewTemplatesExt model.url T.subTemplates model.templates_sub
+                ]
+
+        ProjectTemplatesMenu ->
+            div []
+                [ viewProjectTemplates model
+                , viewTemplatesExt model.url T.inheritedTemplates model.ptemplates_top
+                , viewTemplatesExt model.url T.subTemplates model.ptemplates_sub
                 ]
 
         GlobalMenu ->
@@ -2723,8 +3096,8 @@ viewTemplates model =
         ]
 
 
-viewTensionTemplatesExt : Url -> String -> RestData (List TensionTemplateLite) -> Html Msg
-viewTensionTemplatesExt url txt_yes list_ext_d =
+viewTemplatesExt : Url -> String -> RestData (List { a | name : String, nodes : List NameidPayload }) -> Html Msg
+viewTemplatesExt url txt_yes list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.isEmpty data then
@@ -2768,6 +3141,320 @@ viewTensionTemplatesExt url txt_yes list_ext_d =
 
         _ ->
             text ""
+
+
+ptemplateColumnNameInputId : Int -> String
+ptemplateColumnNameInputId idx =
+    "ptemplate-column-name-" ++ String.fromInt idx
+
+
+viewProjectTemplateAddBox : Model -> Html Msg
+viewProjectTemplateAddBox model =
+    let
+        isAdd =
+            model.ptemplate_add
+
+        form =
+            model.ptemplate_form
+
+        result =
+            model.ptemplate_result
+
+        tplName =
+            Dict.get "name" form.post |> withDefault ""
+
+        description =
+            form.description |> withDefault ""
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            tplName /= "" && not (List.isEmpty form.columns)
+
+        submitMsg =
+            ternary isAdd (Submit SubmitAddProjectTemplate) (Submit SubmitEditProjectTemplate)
+    in
+    div [ class "box" ]
+        [ div [ class "field" ]
+            [ label [ class "label" ] [ text T.templateName, text "*" ]
+            , div [ class "control" ]
+                [ input [ class "input", type_ "text", placeholder T.templateName, value tplName, onInput (ChangePTemplatePost "name"), autofocus True ] []
+                ]
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ text T.templateDescription ]
+            , div [ class "control" ]
+                [ input [ class "input", type_ "text", placeholder T.templateDescriptionHelp, value description, onInput ChangePTemplateDescription ] []
+                ]
+            ]
+        , div [ class "field" ]
+            [ label [ class "label" ] [ text T.columnLayout ]
+            , p [ class "is-size-7 has-text-grey mb-2" ] [ text T.customizeColumns ]
+            , div [] (List.indexedMap (viewPTemplateColumnRow model) form.columns)
+            , button
+                [ class "button is-fullwidth is-weak mt-2"
+                , style "border" "1px dashed var(--bulma-border)"
+                , onClick AddPTemplateColumn
+                ]
+                [ A.icon1 "icon-plus" T.addColumn ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "control" ]
+                [ label [ class "checkbox" ]
+                    [ input [ type_ "checkbox", checked form.is_recursive, onClick (ChangePTemplateRecursive (not form.is_recursive)) ] []
+                    , text (" " ++ T.isRecursive)
+                    ]
+                , p [ class "help" ] [ text T.isRecursiveHelp ]
+                ]
+            ]
+        , div [ class "field is-grouped" ]
+            [ div [ class "control" ]
+                [ button
+                    [ class "button is-success"
+                    , classList [ ( "is-loading", isLoading ) ]
+                    , disabled (not isSendable || isLoading)
+                    , onClick submitMsg
+                    ]
+                    [ text T.save ]
+                ]
+            , div [ class "control" ]
+                [ button [ class "button", onClick CancelProjectTemplate ] [ text T.cancel ] ]
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
+
+
+viewPTemplateColumnRow : Model -> Int -> ColumnDraft -> Html Msg
+viewPTemplateColumnRow model idx col =
+    let
+        nCols =
+            List.length model.ptemplate_form.columns
+
+        accent =
+            withDefault "var(--bulma-border)" col.color
+
+        swatchStyle =
+            case col.color of
+                Just c ->
+                    "background-color:" ++ c ++ "; border:none;"
+
+                Nothing ->
+                    "background-color:transparent; border:1px dashed var(--bulma-border);"
+
+        isFirst =
+            idx == 0
+
+        isLast =
+            idx == nCols - 1
+
+        isPickerActive =
+            model.ptemplate_color_picker_idx == Just idx
+
+        swatch =
+            span
+                [ class "mr-2 is-flex-shrink-0"
+                , style "position" "relative"
+                ]
+                [ button
+                    [ class "buttonColor"
+                    , attribute "style" swatchStyle
+                    , onClickPD (ternary isPickerActive ClosePTemplateColumnColor (OpenPTemplateColumnColor idx))
+                    , attribute "title" T.changeColor
+                    ]
+                    []
+                , showIf isPickerActive <|
+                    div [ id "colorPicker" ]
+                        [ div [ class "colorBoxes" ]
+                            [ span [ class "is-size-7" ]
+                                [ text T.selectColor, text ":" ]
+                            , div []
+                                (model.ptemplate_color_picker.colors
+                                    |> List.map
+                                        (\c ->
+                                            button
+                                                [ class "buttonColor"
+                                                , onClick (SelectPTemplateColumnColor c)
+                                                , attribute "style" ("background-color:" ++ c ++ ";")
+                                                ]
+                                                []
+                                        )
+                                )
+                            ]
+                        ]
+                ]
+    in
+    div
+        [ class "p-3 mb-2 has-background-body"
+        , style "border" "1px solid var(--bulma-border)"
+        , style "border-left" ("4px solid " ++ accent)
+        , style "border-radius" "var(--bulma-radius)"
+        ]
+        [ div [ class "is-flex is-align-items-center" ]
+            [ swatch
+            , input
+                [ id (ptemplateColumnNameInputId idx)
+                , class "input is-small"
+                , type_ "text"
+                , value col.name
+                , placeholder T.name
+                , onInput (ChangePTemplateColumnField idx "name")
+                , style "border" "none"
+                , style "background" "transparent"
+                , style "box-shadow" "none"
+                , style "font-weight" "600"
+                , style "flex" "1"
+                ]
+                []
+            , div [ class "buttons has-addons mb-0 ml-2 is-flex-shrink-0" ]
+                [ button
+                    [ class "button is-small"
+                    , disabled isFirst
+                    , onClick (MovePTemplateColumn idx -1)
+                    , attribute "title" T.moveUp
+                    ]
+                    [ A.icon "icon-chevron-up" ]
+                , button
+                    [ class "button is-small"
+                    , disabled isLast
+                    , onClick (MovePTemplateColumn idx 1)
+                    , attribute "title" T.moveDown
+                    ]
+                    [ A.icon "icon-chevron-down" ]
+                , button
+                    [ class "button is-small"
+                    , onClick (RemovePTemplateColumn idx)
+                    , attribute "title" T.removeColumn
+                    ]
+                    [ A.icon "icon-x" ]
+                ]
+            ]
+        , input
+            [ class "input is-small mt-1"
+            , type_ "text"
+            , value col.description
+            , placeholder T.descriptionOptional
+            , onInput (ChangePTemplateColumnField idx "description")
+            , style "border" "none"
+            , style "background" "transparent"
+            , style "box-shadow" "none"
+            ]
+            []
+        ]
+
+
+viewProjectTemplates : Model -> Html Msg
+viewProjectTemplates model =
+    let
+        isEmpty =
+            isDataEmpty model.ptemplates
+
+        notRoot =
+            model.node_focus.nameid /= model.node_focus.rootnameid
+
+        goToParent =
+            showIf (notRoot && not isEmpty) (viewGoRoot "" OnGoRoot)
+    in
+    div [ id "projectTemplatesTable" ]
+        [ h2 [ class "subtitle is-size-3" ] [ text T.projectTemplates, goToParent ]
+        , div [ class "level" ]
+            [ div [ class "mr-4" ] [ showMsg "ptemplates-help" "mb-4 is-info" "icon-info" T.projectTemplatesInfoHeader T.projectTemplatesInfoDoc ]
+            , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.ptemplate_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddProjectTemplate) ] [ A.icon0 "icon-plus", text T.projectTemplate ] ]
+            ]
+        , if model.ptemplate_add then
+            viewProjectTemplateAddBox model
+
+          else
+            text ""
+        , case model.ptemplates of
+            Success templates ->
+                if List.isEmpty templates then
+                    div []
+                        [ text T.noProjectTemplates
+                        , text "."
+                        , showIf notRoot (viewGoRoot "" OnGoRoot)
+                        ]
+
+                else
+                    div [ class "table-container" ]
+                        [ table [ class "table is-fullwidth" ]
+                            ([ thead [ class "is-size-6" ]
+                                [ tr []
+                                    [ th [] [ text T.name ]
+                                    , th [] [ text T.templateDescription ]
+                                    , th [] [ text T.columns ]
+                                    , th [] [ text T.isRecursive ]
+                                    , th [] []
+                                    ]
+                                ]
+                             ]
+                                ++ (templates
+                                        |> List.concatMap
+                                            (\d ->
+                                                [ tr [ classList [ ( "settings-row-enter", model.ptemplate_anim_enter == Just d.id ) ] ] <|
+                                                    if model.ptemplate_edit == Just d then
+                                                        [ td [ colspan 5 ] [ viewProjectTemplateAddBox model ] ]
+
+                                                    else
+                                                        [ td [ onClick (SafeEdit <| EditProjectTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
+                                                        , td [] [ text (withDefault "" d.description) ]
+                                                        , td [] [ text (String.fromInt (List.length d.columns)) ]
+                                                        , td []
+                                                            [ if d.is_recursive then
+                                                                A.icon "icon-check"
+
+                                                              else
+                                                                text ""
+                                                            ]
+                                                        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
+                                                            [ span [ class "button-light", onClick (SafeEdit <| EditProjectTemplate d) ] [ text T.edit ]
+                                                            , text " · "
+                                                            , span
+                                                                [ class "button-light"
+                                                                , onClick <|
+                                                                    DoModalConfirmOpen (Submit <| SubmitDeleteProjectTemplate d.id)
+                                                                        { message = Just ( T.templateDeleteInfoHeader, "" )
+                                                                        , txts = [ ( T.confirmDeleteTemplate, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                        , confirmClass = "is-danger"
+                                                                        , confirmLabel = T.delete
+                                                                        }
+                                                                ]
+                                                                [ text T.remove ]
+                                                            ]
+                                                        ]
+                                                ]
+                                                    ++ (case model.ptemplate_result_del of
+                                                            Failure err ->
+                                                                [ ternary (model.ptemplate_form.id == d.id)
+                                                                    (td [] [ viewGqlErrors err ])
+                                                                    (text "")
+                                                                ]
+
+                                                            _ ->
+                                                                []
+                                                       )
+                                            )
+                                   )
+                            )
+                        ]
+
+            Loading ->
+                div [ class "spinner" ] []
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            Failure err ->
+                viewGqlErrors err
+
+            NotAsked ->
+                text ""
+        ]
 
 
 type alias SwitchRecord =

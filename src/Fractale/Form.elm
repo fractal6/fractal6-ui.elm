@@ -32,6 +32,7 @@ module Fractale.Form exposing
     , OrgaForm
     , ProjectForm
     , ProjectPanelForm
+    , ProjectTemplateForm
     , TensionForm
     , TensionTemplateForm
     , UserForm
@@ -53,6 +54,7 @@ module Fractale.Form exposing
     , initLabelForm
     , initProjectForm
     , initProjectPanelForm
+    , initProjectTemplateForm
     , initTensionForm
     , initTensionTemplateForm
     , initUserForm
@@ -72,7 +74,6 @@ import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeType as NodeType
-import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionAction as TensionAction
@@ -280,7 +281,7 @@ type alias ProjectForm =
     , nameid : String -- use for roonameid identification
     , status : Maybe ProjectStatus.ProjectStatus
     , post : Post
-    , columns : Maybe (List { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType })
+    , columns : Maybe (List ColumnDraft)
     , collaborators_add : List String
     , collaborators_remove : List String
     , peerCanEditProject : Maybe Bool
@@ -387,6 +388,35 @@ initTensionTemplateForm user nameid =
     , assignees = []
     , orig_labels = []
     , orig_assignees = []
+    }
+
+
+
+--
+-- Project Template Form
+--
+
+
+type alias ProjectTemplateForm =
+    { uctx : UserCtx
+    , id : String
+    , nameid : String -- circle nameid for rootnameid derivation
+    , post : Post -- "name", "old_name"
+    , description : Maybe String
+    , is_recursive : Bool
+    , columns : List ColumnDraft
+    }
+
+
+initProjectTemplateForm : UserState -> String -> ProjectTemplateForm
+initProjectTemplateForm user nameid =
+    { uctx = uctxFromUser user
+    , id = ""
+    , nameid = nameid
+    , post = Dict.empty
+    , description = Nothing
+    , is_recursive = False
+    , columns = []
     }
 
 

@@ -22,19 +22,23 @@
 module Query.PatchNode exposing
     ( addOneLabel
     , addOneProject
+    , addOneProjectTemplate
     , addOneRole
     , addOneTensionTemplate
     , removeOneLabel
     , removeOneProject
+    , removeOneProjectTemplate
     , removeOneRole
     , removeOneTensionTemplate
     , updateOneLabel
     , updateOneProject
+    , updateOneProjectTemplate
     , updateOneRole
     , updateOneTensionTemplate
     )
 
-import Fractale.Form exposing (ArtefactNodeForm, ProjectForm, TensionTemplateForm)
+import Codecs exposing (encodeColumnsJson)
+import Fractale.Form exposing (ArtefactNodeForm, ProjectForm, ProjectTemplateForm, TensionTemplateForm)
 import Fractale.Codecs exposing (nid2rootid)
 import Dict
 import Schema.Enum.ProjectColumnType as ProjectColumnType
@@ -44,10 +48,12 @@ import Schema.Mutation as Mutation
 import Schema.Object
 import Schema.Object.AddLabelPayload
 import Schema.Object.AddProjectPayload
+import Schema.Object.AddProjectTemplatePayload
 import Schema.Object.AddRoleExtPayload
 import Schema.Object.AddTensionTemplatePayload
 import Schema.Object.UpdateLabelPayload
 import Schema.Object.UpdateProjectPayload
+import Schema.Object.UpdateProjectTemplatePayload
 import Schema.Object.UpdateRoleExtPayload
 import Schema.Object.UpdateTensionTemplatePayload
 import Schema.Scalar
@@ -57,7 +63,7 @@ import Graphql.SelectionSet as SelectionSet
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate)
-import Query.QueryNode exposing (labelFullPayload, projectFullPayload, roleFullPayload, tensionTemplateFullPayload)
+import Query.QueryNode exposing (labelFullPayload, projectFullPayload, projectTemplateFullPayload, roleFullPayload, tensionTemplateFullPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -896,3 +902,155 @@ removeTensionTemplateInputEncoder form =
                 }
     in
     { input = Input.buildUpdateTensionTemplateInput inputReq inputOpt }
+
+
+
+--
+-- Node ProjectTemplate Operation
+--
+{-
+   Add one Project Template
+-}
+
+
+type alias ProjectTemplatesFullPayload =
+    { projectTemplate : Maybe (List (Maybe ProjectTemplateFull)) }
+
+
+projectTemplateMutDecoder : Maybe ProjectTemplatesFullPayload -> Maybe ProjectTemplateFull
+projectTemplateMutDecoder data =
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.projectTemplate
+                    |> Maybe.map List.head
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
+
+
+addOneProjectTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.addProjectTemplate
+            (addProjectTemplateInputEncoder form)
+            (SelectionSet.map ProjectTemplatesFullPayload <|
+                Schema.Object.AddProjectTemplatePayload.projectTemplate identity projectTemplateFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse projectTemplateMutDecoder >> msg)
+
+
+addProjectTemplateInputEncoder : ProjectTemplateForm -> Mutation.AddProjectTemplateRequiredArguments
+addProjectTemplateInputEncoder form =
+    let
+        inputReq =
+            { rootnameid = nid2rootid form.nameid
+            , name = Dict.get "name" form.post |> withDefault ""
+            , is_recursive = form.is_recursive
+            , columns_json = encodeColumnsJson form.columns
+            }
+
+        inputOpt =
+            \x ->
+                { x
+                    | nodes =
+                        Present
+                            [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                    , description = fromMaybe form.description
+                }
+    in
+    { input = [ Input.buildAddProjectTemplateInput inputReq inputOpt ] }
+
+
+
+{-
+   Update Project Template
+-}
+
+
+updateOneProjectTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectTemplate
+            (updateProjectTemplateInputEncoder form)
+            (SelectionSet.map ProjectTemplatesFullPayload <|
+                Schema.Object.UpdateProjectTemplatePayload.projectTemplate identity <|
+                    projectTemplateFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse projectTemplateMutDecoder >> msg)
+
+
+updateProjectTemplateInputEncoder : ProjectTemplateForm -> Mutation.UpdateProjectTemplateRequiredArguments
+updateProjectTemplateInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildProjectTemplateFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        post =
+            if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                form.post |> Dict.remove "name"
+
+            else
+                form.post
+
+        inputOpt =
+            \_ ->
+                { set =
+                    Input.buildProjectTemplatePatch
+                        (\i ->
+                            { i
+                                | name = fromMaybe (Dict.get "name" post)
+                                , description = fromMaybe form.description
+                                , is_recursive = Present form.is_recursive
+                                , columns_json = Present (encodeColumnsJson form.columns)
+                                , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateProjectTemplateInput inputReq inputOpt }
+
+
+
+{-
+   Remove Project Template
+-}
+
+
+removeOneProjectTemplate url form msg =
+    makeGQLMutation url
+        (Mutation.updateProjectTemplate
+            (removeProjectTemplateInputEncoder form)
+            Schema.Object.UpdateProjectTemplatePayload.numUids
+        )
+        (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
+
+
+removeProjectTemplateInputEncoder : ProjectTemplateForm -> Mutation.UpdateProjectTemplateRequiredArguments
+removeProjectTemplateInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildProjectTemplateFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        inputOpt =
+            \_ ->
+                { set = Absent
+                , remove =
+                    Input.buildProjectTemplatePatch
+                        (\i ->
+                            { i
+                                | nodes =
+                                    Present
+                                        [ Input.buildNodeRef (\j -> { j | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                }
+    in
+    { input = Input.buildUpdateProjectTemplateInput inputReq inputOpt }
