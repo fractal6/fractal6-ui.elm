@@ -674,34 +674,37 @@ i.va {
         }
     }
 
-    .media {
-        &.is-active {
-            border: solid 2px var(--link) !important;
-        }
-
-        & + .media {
-            border-top: 1px solid var(--border-color-light) !important;
-        }
+    .media.is-active {
+        border: solid 2px var(--link) !important;
     }
 
     &.is-hoverable:hover {
         background-color: var(--background-hover-discrete) !important;
     }
 
-    &.is-shrinked {
+    // "Unified list" mode: a single .box containing several .media.mediaBox rows.
+    // Convention: never combine .box and .media on the same element — always nest.
+    &.is-shrinked, &.is-shrinked2 {
         padding: 0;
-        .media {
-            margin: 0;
-            padding: 0.7rem 0.9rem;
+        .media + .media {
+            border-top: 1px solid var(--border-color-light) !important;
+        }
+        .mediaBox:first-child {
+            border-top-left-radius: var(--bulma-box-radius);
+            border-top-right-radius: var(--bulma-box-radius);
+        }
+        .mediaBox:last-child {
+            border-bottom-left-radius: var(--bulma-box-radius);
+            border-bottom-right-radius: var(--bulma-box-radius);
         }
     }
-
-    &.is-shrinked2 {
-        padding: 0;
-        .media {
-            margin: 0;
-            padding: 0.4rem 0.7rem;
-        }
+    &.is-shrinked .media {
+        margin: 0;
+        padding: 0.7rem 0.9rem;
+    }
+    &.is-shrinked2 .media {
+        margin: 0;
+        padding: 0.4rem 0.7rem;
     }
 
     &.has-background-light {
@@ -710,15 +713,6 @@ i.va {
     }
     &.has-background-danger {
         color: white;
-    }
-
-    .mediaBox:first-child {
-        border-top-left-radius: var(--bulma-box-radius);
-        border-top-right-radius: var(--bulma-box-radius);
-    }
-    .mediaBox:last-child {
-        border-bottom-left-radius: var(--bulma-box-radius);
-        border-bottom-right-radius: var(--bulma-box-radius);
     }
 
 }

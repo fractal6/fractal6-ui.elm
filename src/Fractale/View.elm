@@ -233,35 +233,37 @@ viewPinnedTensions size session focus pins =
 
 viewPin : SessionCommon -> NodeFocus -> Maybe EmitterOrReceiver -> PinTension -> Html msg
 viewPin session focus origin tension =
-    div [ class "box media mediaBox p-4 is-h", style "width" "100%" ]
-        [ div [ class "media-left mr-3" ]
-            [ div
-                [ title (tensionType2str tension.type_)
-                , style "width" "10px"
-                ]
-                [ tensionIcon tension.type_ ]
-            ]
-        , div [ class "media-content" ]
-            [ a
-                [ class "has-text-weight-semibold is-human discrete-link "
-                , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
-                ]
-                [ text tension.title ]
-            , div [ class "is-smaller2 mt-2" ]
-                [ span
-                    [ title (tensionStatus2str tension.status)
+    div [ class "box p-4 is-h", style "width" "100%" ]
+        [ div [ class "media mediaBox" ]
+            [ div [ class "media-left mr-3" ]
+                [ div
+                    [ title (tensionType2str tension.type_)
+                    , style "width" "10px"
                     ]
-                    [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
-                , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
+                    [ tensionIcon tension.type_ ]
                 ]
-            ]
-        , case origin of
-            Just c ->
-                span [ class "ml-2 tag is-rounded is-small media-right" ]
-                    [ viewNodeRef False OverviewBaseUri c ]
+            , div [ class "media-content" ]
+                [ a
+                    [ class "has-text-weight-semibold is-human discrete-link "
+                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                    ]
+                    [ text tension.title ]
+                , div [ class "is-smaller2 mt-2" ]
+                    [ span
+                        [ title (tensionStatus2str tension.status)
+                        ]
+                        [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                    , span [] [ viewTensionDateAndUser session "is-weak" tension.createdAt tension.createdBy ]
+                    ]
+                ]
+            , case origin of
+                Just c ->
+                    span [ class "ml-2 tag is-rounded is-small media-right" ]
+                        [ viewNodeRef False OverviewBaseUri c ]
 
-            Nothing ->
-                A.icon "icon-pin is-weak"
+                Nothing ->
+                    A.icon "icon-pin is-weak"
+            ]
         ]
 
 
@@ -791,61 +793,63 @@ viewNodeRefShort baseUri nid =
 
 mediaOrga : CommonMsg msg -> Maybe (UserCommon a) -> NodeExt -> Html msg
 mediaOrga commonOp user_m root =
-    div [ class "media mediaBox box pb-3" ]
-        [ div [ class "media-left" ] [ viewOrga True root.nameid ]
-        , div [ class "media-content" ]
-            ([ div [ class "columns" ]
-                [ div [ class "column is-8" ]
-                    [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
-                    , case root.about of
-                        Just ab ->
-                            renderMarkdown "is-human pt-1" ab
+    div [ class "box pb-3" ]
+        [ div [ class "media mediaBox" ]
+            [ div [ class "media-left" ] [ viewOrga True root.nameid ]
+            , div [ class "media-content" ]
+                ([ div [ class "columns" ]
+                    [ div [ class "column is-8" ]
+                        [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
+                        , case root.about of
+                            Just ab ->
+                                renderMarkdown "is-human pt-1" ab
 
-                        Nothing ->
-                            text ""
-                    ]
-                , span [ class "column is-4" ]
-                    [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
-                        [ div [ class "control" ]
-                            [ div [ class "tags has-addons" ]
-                                [ span [ class "tag" ] [ A.icon1 "icon-users" (String.fromInt root.n_members) ]
-                                , span [ class "tag" ] [ A.icon1 "icon-eye" (String.fromInt root.n_watchers) ]
+                            Nothing ->
+                                text ""
+                        ]
+                    , span [ class "column is-4" ]
+                        [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
+                            [ div [ class "control" ]
+                                [ div [ class "tags has-addons" ]
+                                    [ span [ class "tag" ] [ A.icon1 "icon-users" (String.fromInt root.n_members) ]
+                                    , span [ class "tag" ] [ A.icon1 "icon-eye" (String.fromInt root.n_watchers) ]
+                                    ]
                                 ]
                             ]
                         ]
                     ]
-                ]
-             , div [ id "icons", class "level is-mobile" ]
-                [ div [ class "level-left" ]
-                    [ showIf (root.visibility == NodeVisibility.Private) <|
-                        span [ class "level-item" ] [ A.icon "icon-lock" ]
+                 , div [ id "icons", class "level is-mobile" ]
+                    [ div [ class "level-left" ]
+                        [ showIf (root.visibility == NodeVisibility.Private) <|
+                            span [ class "level-item" ] [ A.icon "icon-lock" ]
+                        ]
                     ]
-                ]
-             ]
-                ++ (case user_m of
-                        Just user ->
-                            let
-                                roles =
-                                    getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
-                            in
-                            [ showIf (List.length roles > 0) (hr [ class "mb-3" ] [])
-                            , div [ class "buttons" ] <|
-                                (roles
-                                    |> List.map
-                                        (\r ->
-                                            if r.role_type == RoleType.Guest then
-                                                viewRole "" True False Nothing (Just <| toLink MembersBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
+                 ]
+                    ++ (case user_m of
+                            Just user ->
+                                let
+                                    roles =
+                                        getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
+                                in
+                                [ showIf (List.length roles > 0) (hr [ class "mb-3" ] [])
+                                , div [ class "buttons" ] <|
+                                    (roles
+                                        |> List.map
+                                            (\r ->
+                                                if r.role_type == RoleType.Guest then
+                                                    viewRole "" True False Nothing (Just <| toLink MembersBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
 
-                                            else
-                                                viewRole "" True False Nothing (Just <| toLink OverviewBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
-                                        )
-                                )
-                            ]
+                                                else
+                                                    viewRole "" True False Nothing (Just <| toLink OverviewBaseUri r.nameid []) (\_ _ _ -> commonOp.noMsg) r
+                                            )
+                                    )
+                                ]
 
-                        Nothing ->
-                            []
-                   )
-            )
+                            Nothing ->
+                                []
+                       )
+                )
+            ]
         ]
 
 
