@@ -409,6 +409,62 @@ aggregateTensionTemplate fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateTensionTemplate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetProjectTemplateRequiredArguments =
+    { id : Schema.ScalarCodecs.Id }
+
+
+getProjectTemplate :
+    GetProjectTemplateRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.ProjectTemplate
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getProjectTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "getProjectTemplate" [ Argument.required "id" requiredArgs____.id (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryProjectTemplateOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.ProjectTemplateFilter
+    , order : OptionalArgument Schema.InputObject.ProjectTemplateOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryProjectTemplate :
+    (QueryProjectTemplateOptionalArguments -> QueryProjectTemplateOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.ProjectTemplate
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryProjectTemplate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeProjectTemplateFilter, Argument.optional "order" filledInOptionals____.order Schema.InputObject.encodeProjectTemplateOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryProjectTemplate" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateProjectTemplateOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.ProjectTemplateFilter }
+
+
+aggregateProjectTemplate :
+    (AggregateProjectTemplateOptionalArguments -> AggregateProjectTemplateOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.ProjectTemplateAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateProjectTemplate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeProjectTemplateFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateProjectTemplate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetProjectRequiredArguments =
     { id : Schema.ScalarCodecs.Id }
 

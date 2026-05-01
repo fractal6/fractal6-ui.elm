@@ -39,6 +39,7 @@ type NodeHasFilter
     | Labels
     | Roles
     | Tension_templates
+    | Project_templates
     | Role_ext
     | Role_type
     | Color
@@ -51,7 +52,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Project_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -152,6 +153,9 @@ decoder =
 
                     "tension_templates" ->
                         Decode.succeed Tension_templates
+
+                    "project_templates" ->
+                        Decode.succeed Project_templates
 
                     "role_ext" ->
                         Decode.succeed Role_ext
@@ -279,6 +283,9 @@ toString enum____ =
 
         Tension_templates ->
             "tension_templates"
+
+        Project_templates ->
+            "project_templates"
 
         Role_ext ->
             "role_ext"
@@ -411,6 +418,9 @@ fromString enumString____ =
 
         "tension_templates" ->
             Just Tension_templates
+
+        "project_templates" ->
+            Just Project_templates
 
         "role_ext" ->
             Just Role_ext

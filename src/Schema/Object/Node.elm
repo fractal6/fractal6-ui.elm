@@ -399,6 +399,30 @@ tension_templates fillInOptionals____ object____ =
     Object.selectionForCompositeField "tension_templates" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias ProjectTemplatesOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.ProjectTemplateFilter
+    , order : OptionalArgument Schema.InputObject.ProjectTemplateOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+project_templates :
+    (ProjectTemplatesOptionalArguments -> ProjectTemplatesOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.ProjectTemplate
+    -> SelectionSet (Maybe (List decodesTo)) Schema.Object.Node
+project_templates fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeProjectTemplateFilter, Argument.optional "order" filledInOptionals____.order Schema.InputObject.encodeProjectTemplateOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "project_templates" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias RoleExtOptionalArguments =
     { filter : OptionalArgument Schema.InputObject.RoleExtFilter }
 
@@ -698,6 +722,26 @@ tension_templatesAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "tension_templatesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias ProjectTemplatesAggregateOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.ProjectTemplateFilter }
+
+
+project_templatesAggregate :
+    (ProjectTemplatesAggregateOptionalArguments -> ProjectTemplatesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.ProjectTemplateAggregateResult
+    -> SelectionSet (Maybe decodesTo) Schema.Object.Node
+project_templatesAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeProjectTemplateFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "project_templatesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias ContractsAggregateOptionalArguments =

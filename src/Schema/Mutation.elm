@@ -284,6 +284,42 @@ deleteTensionTemplate requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteTensionTemplate" [ Argument.required "filter" requiredArgs____.filter Schema.InputObject.encodeTensionTemplateFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddProjectTemplateRequiredArguments =
+    { input : List Schema.InputObject.AddProjectTemplateInput }
+
+
+addProjectTemplate :
+    AddProjectTemplateRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.AddProjectTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addProjectTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "addProjectTemplate" [ Argument.required "input" requiredArgs____.input (Schema.InputObject.encodeAddProjectTemplateInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateProjectTemplateRequiredArguments =
+    { input : Schema.InputObject.UpdateProjectTemplateInput }
+
+
+updateProjectTemplate :
+    UpdateProjectTemplateRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.UpdateProjectTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateProjectTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateProjectTemplate" [ Argument.required "input" requiredArgs____.input Schema.InputObject.encodeUpdateProjectTemplateInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteProjectTemplateRequiredArguments =
+    { filter : Schema.InputObject.ProjectTemplateFilter }
+
+
+deleteProjectTemplate :
+    DeleteProjectTemplateRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.DeleteProjectTemplatePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteProjectTemplate requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteProjectTemplate" [ Argument.required "filter" requiredArgs____.filter Schema.InputObject.encodeProjectTemplateFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddProjectRequiredArguments =
     { input : List Schema.InputObject.AddProjectInput }
 

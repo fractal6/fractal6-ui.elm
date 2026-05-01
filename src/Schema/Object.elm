@@ -93,6 +93,10 @@ type AddProjectPayload
     = AddProjectPayload
 
 
+type AddProjectTemplatePayload
+    = AddProjectTemplatePayload
+
+
 type AddReactionPayload
     = AddReactionPayload
 
@@ -239,6 +243,10 @@ type DeleteProjectFieldValuePayload
 
 type DeleteProjectPayload
     = DeleteProjectPayload
+
+
+type DeleteProjectTemplatePayload
+    = DeleteProjectTemplatePayload
 
 
 type DeleteReactionPayload
@@ -417,6 +425,14 @@ type ProjectFieldValueAggregateResult
     = ProjectFieldValueAggregateResult
 
 
+type ProjectTemplate
+    = ProjectTemplate
+
+
+type ProjectTemplateAggregateResult
+    = ProjectTemplateAggregateResult
+
+
 type Reaction
     = Reaction
 
@@ -531,6 +547,10 @@ type UpdateProjectFieldValuePayload
 
 type UpdateProjectPayload
     = UpdateProjectPayload
+
+
+type UpdateProjectTemplatePayload
+    = UpdateProjectTemplatePayload
 
 
 type UpdateReactionPayload
