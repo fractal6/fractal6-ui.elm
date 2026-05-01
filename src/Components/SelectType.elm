@@ -30,8 +30,8 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict
 import Extra exposing (send, sendNow, sendSleep, ternary)
 import Extra.Views exposing (showMsg)
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionType as TensionType
 import Html exposing (Html, button, div, i, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, type_, value)
 import Html.Events exposing (onClick)

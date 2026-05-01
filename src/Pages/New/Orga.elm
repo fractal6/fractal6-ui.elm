@@ -39,11 +39,11 @@ import File exposing (File)
 import File.Select as Select
 import Form exposing (isLoginSendable, isPostSendable)
 import Form.Help as Help
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)

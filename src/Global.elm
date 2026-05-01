@@ -43,7 +43,7 @@ import Components.Navbar as Navbar
 import Dict
 import Extra exposing (send, sendSleep, showIf, showMaybe, ternary, unwrap2)
 import Footbar
-import Fractal.Enum.Lang as Lang
+import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
 import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, classList, id)

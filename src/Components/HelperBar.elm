@@ -26,9 +26,9 @@ import Bulk exposing (UserState(..), getParent)
 import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Bulk.View exposing (counter, viewRole, visibility2icon)
 import Extra exposing (showIf, ternary, unwrap, unwrap2)
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)

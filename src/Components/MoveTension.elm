@@ -36,8 +36,8 @@ import Dict
 import Dom
 import Extra exposing (send, sendNow, sendSleep, space_, ternary)
 import Form exposing (isPostEmpty)
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, button, div, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, target, value)
 import Html.Events exposing (onClick, onInput)

@@ -35,9 +35,9 @@ import Dict exposing (Dict)
 import Extra exposing (send, sendNow, sendSleep, ternary, textH, unwrap, unwrap2, upH)
 import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty)
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)

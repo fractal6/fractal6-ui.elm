@@ -30,14 +30,14 @@ module Query.PatchUser exposing
 import Bulk exposing (UserProfileForm)
 import Dict
 import Extra exposing (ternary)
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.Node
-import Fractal.Object.UpdateUserEventPayload
-import Fractal.Object.UpdateUserPayload
-import Fractal.Object.User
-import Fractal.Object.UserEvent
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.Node
+import Schema.Object.UpdateUserEventPayload
+import Schema.Object.UpdateUserPayload
+import Schema.Object.User
+import Schema.Object.UserEvent
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
@@ -75,7 +75,7 @@ patchUser url form msg =
         (Mutation.updateUser
             (userProfileInputEncoder form)
             (SelectionSet.map UserPatchPayload <|
-                Fractal.Object.UpdateUserPayload.user identity
+                Schema.Object.UpdateUserPayload.user identity
                     userFullPayload
             )
         )
@@ -153,7 +153,7 @@ toggleOrgaWatch url username nameid doSet msg =
         (Mutation.updateUser
             (toggleWatchingInput username nameid doSet)
             (SelectionSet.map UserIsWatching <|
-                Fractal.Object.UpdateUserPayload.user identity (isWatchingPayload nameid)
+                Schema.Object.UpdateUserPayload.user identity (isWatchingPayload nameid)
             )
         )
         (RemoteData.fromResult >> decodeResponse isWatchingDecoder >> msg)
@@ -190,13 +190,13 @@ toggleWatchingInput username nameid doSet =
     { input = Input.buildUpdateUserInput inputReq inputOpt }
 
 
-isWatchingPayload : String -> SelectionSet IsWatching Fractal.Object.User
+isWatchingPayload : String -> SelectionSet IsWatching Schema.Object.User
 isWatchingPayload nameid =
     SelectionSet.map2 IsWatching
-        (Fractal.Object.User.watching (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | nameid = Present { eq = Present nameid, in_ = Absent, regexp = Absent } }) })
-            (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
+        (Schema.Object.User.watching (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | nameid = Present { eq = Present nameid, in_ = Absent, regexp = Absent } }) })
+            (SelectionSet.map NameidPayload Schema.Object.Node.nameid)
         )
-        Fractal.Object.User.username
+        Schema.Object.User.username
 
 
 
@@ -231,7 +231,7 @@ toggleTensionSubscription url username tensionid doSet msg =
         (Mutation.updateUser
             (toggleSubscriptionInput username tensionid doSet)
             (SelectionSet.map UserIsSubscribe <|
-                Fractal.Object.UpdateUserPayload.user identity (isSubscribePayload tensionid)
+                Schema.Object.UpdateUserPayload.user identity (isSubscribePayload tensionid)
             )
         )
         (RemoteData.fromResult >> decodeResponse isSubscribeDecoder >> msg)
@@ -295,10 +295,10 @@ markAsRead url eid isRead msg =
         (Mutation.updateUserEvent
             (markAsReadInput eid isRead)
             (SelectionSet.map PatchUserPayload <|
-                Fractal.Object.UpdateUserEventPayload.userEvent identity
+                Schema.Object.UpdateUserEventPayload.userEvent identity
                     -- markAsReadPayload
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.UserEvent.id)
+                        (SelectionSet.map decodedId Schema.Object.UserEvent.id)
                     )
             )
         )
@@ -341,10 +341,10 @@ markAllAsRead url username msg =
         (Mutation.updateUser
             (markAllAsReadInput username)
             (SelectionSet.map PatchUserPayload <|
-                Fractal.Object.UpdateUserPayload.user identity
+                Schema.Object.UpdateUserPayload.user identity
                     -- markAsReadPayload
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.User.id)
+                        (SelectionSet.map decodedId Schema.Object.User.id)
                     )
             )
         )

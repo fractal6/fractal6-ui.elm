@@ -35,8 +35,8 @@ import Extra exposing (send, sendNow, sendSleep, ternary, upT)
 import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, div, h2, i, li, nav, p, span, text, ul)

@@ -32,7 +32,7 @@ import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (send, sendSleep, showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onClickSafe)
-import Fractal.Enum.RoleType as RoleType
+import Schema.Enum.RoleType as RoleType
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)

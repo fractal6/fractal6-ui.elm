@@ -47,10 +47,10 @@ import Extra exposing (send, sendNow, sendSleep, showIf, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)

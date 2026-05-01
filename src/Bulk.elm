@@ -26,18 +26,18 @@ import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdCode
 import Dict
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.ContractType as ContractType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Json.Decode exposing (string)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeData, withMaybeMapData)

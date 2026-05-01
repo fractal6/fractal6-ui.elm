@@ -30,16 +30,16 @@ module Query.AddTension exposing
 import Bulk exposing (Ev, TensionForm, UserForm, encodeLabel)
 import Dict
 import Extra exposing (listToMaybe)
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddTensionPayload
-import Fractal.Scalar
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddTensionPayload
+import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet
@@ -81,7 +81,7 @@ addOneTension url form msg =
         (Mutation.addTension
             (addTensionInputEncoder form)
             (SelectionSet.map TensionsPayload <|
-                Fractal.Object.AddTensionPayload.tension identity tensionPayload
+                Schema.Object.AddTensionPayload.tension identity tensionPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
@@ -98,7 +98,7 @@ addTensionInputEncoder f =
             Dict.get "title" f.post |> withDefault "" |> String.trim
 
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         message =
             Dict.get "message" f.post |> withDefault "" |> String.trim
@@ -175,7 +175,7 @@ buildAssignees form =
         |> fromMaybe
 
 
-buildComment : Fractal.Scalar.DateTime -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
+buildComment : Schema.Scalar.DateTime -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
 buildComment createdAt username message_m =
     message_m
         |> Maybe.map
@@ -193,7 +193,7 @@ buildComment createdAt username message_m =
         |> fromMaybe
 
 
-buildBlob : Fractal.Scalar.DateTime -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
+buildBlob : Schema.Scalar.DateTime -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
 buildBlob createdAt username blob_type_m users node post =
     blob_type_m
         |> Maybe.map
@@ -216,7 +216,7 @@ buildBlob createdAt username blob_type_m users node post =
         |> fromMaybe
 
 
-buildEvents : Fractal.Scalar.DateTime -> String -> List Ev -> OptionalArgument (List Input.EventRef)
+buildEvents : Schema.Scalar.DateTime -> String -> List Ev -> OptionalArgument (List Input.EventRef)
 buildEvents createdAt username events =
     events
         |> List.map

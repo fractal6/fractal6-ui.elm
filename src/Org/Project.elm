@@ -48,11 +48,11 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), viewNotif)
 import Html exposing (Html, a, button, div, h2, hr, i, input, span, tbody, td, text, th, thead, tr)

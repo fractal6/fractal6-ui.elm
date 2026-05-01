@@ -27,8 +27,8 @@ import Bulk.Codecs exposing (NodeFocus)
 import Codecs exposing (DraftStore, DraftUpdate(..), RecentActivityTab(..), WindowPos, draftStoreDecoder, initDraftStore, userCtxDecoder, windowDecoder)
 import Dict exposing (Dict)
 import Extra.Url exposing (queryParser)
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeType as NodeType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html)
 import Json.Decode as JD

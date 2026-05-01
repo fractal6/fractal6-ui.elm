@@ -26,12 +26,12 @@ import Bytes exposing (Bytes)
 import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, tensionTemplateLiteDecoder, userCtxDecoder, userDecoder)
 import Dict exposing (Dict)
 import File exposing (File)
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Http exposing (expectWhatever)
 import Image exposing (Image)
 import Json.Decode as JD

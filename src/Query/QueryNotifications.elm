@@ -24,16 +24,16 @@ module Query.QueryNotifications exposing
     , queryNotifications
     )
 
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.UserEventOrderable as UserEventOrderable
-import Fractal.InputObject as Input
-import Fractal.Object
-import Fractal.Object.EventCount
-import Fractal.Object.User
-import Fractal.Object.UserEvent
-import Fractal.Query as Query
-import Fractal.Union
-import Fractal.Union.EventKind
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.UserEventOrderable as UserEventOrderable
+import Schema.InputObject as Input
+import Schema.Object
+import Schema.Object.EventCount
+import Schema.Object.User
+import Schema.Object.UserEvent
+import Schema.Query as Query
+import Schema.Union
+import Schema.Union.EventKind
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
@@ -64,12 +64,12 @@ queryNotifCount url f msg =
     makeGQLQuery url
         (Query.getUser (usernameFilter f.uctx.username)
             (SelectionSet.map2 (\_ x -> { event_count = x })
-                Fractal.Object.User.username
-                (Fractal.Object.User.event_count identity
+                Schema.Object.User.username
+                (Schema.Object.User.event_count identity
                     (SelectionSet.map3 NotifCount
-                        (Fractal.Object.EventCount.unread_events |> SelectionSet.map (\a -> withDefault 0 a))
-                        (Fractal.Object.EventCount.pending_contracts |> SelectionSet.map (\a -> withDefault 0 a))
-                        (Fractal.Object.EventCount.assigned_tensions |> SelectionSet.map (\a -> withDefault 0 a))
+                        (Schema.Object.EventCount.unread_events |> SelectionSet.map (\a -> withDefault 0 a))
+                        (Schema.Object.EventCount.pending_contracts |> SelectionSet.map (\a -> withDefault 0 a))
+                        (Schema.Object.EventCount.assigned_tensions |> SelectionSet.map (\a -> withDefault 0 a))
                     )
                 )
             )
@@ -161,25 +161,25 @@ type alias UserNotifications =
     { events : Maybe (List UserEvent_) }
 
 
-userNotificationsPayload : NotificationsForm -> SelectionSet UserNotifications Fractal.Object.User
+userNotificationsPayload : NotificationsForm -> SelectionSet UserNotifications Schema.Object.User
 userNotificationsPayload f =
     SelectionSet.succeed (\a _ -> UserNotifications a)
-        |> with (Fractal.Object.User.events (notificationsFilter f) notificationsPayload)
+        |> with (Schema.Object.User.events (notificationsFilter f) notificationsPayload)
         -- @debug; needs of @isPrivate
-        |> with Fractal.Object.User.username
+        |> with Schema.Object.User.username
 
 
-notificationsPayload : SelectionSet UserEvent_ Fractal.Object.UserEvent
+notificationsPayload : SelectionSet UserEvent_ Schema.Object.UserEvent
 notificationsPayload =
     SelectionSet.succeed UserEvent_
-        |> with (Fractal.Object.UserEvent.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.UserEvent.isRead
-        |> with (Fractal.Object.UserEvent.event contractFilter eventKindType)
+        |> with (Schema.Object.UserEvent.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.UserEvent.isRead
+        |> with (Schema.Object.UserEvent.event contractFilter eventKindType)
 
 
-eventKindType : SelectionSet EventKind Fractal.Union.EventKind
+eventKindType : SelectionSet EventKind Schema.Union.EventKind
 eventKindType =
-    Fractal.Union.EventKind.fragments
+    Schema.Union.EventKind.fragments
         { onEvent = SelectionSet.map TensionEvent tensionEventPayload
         , onContract = SelectionSet.map ContractEvent contractEventPayload
         , onNotif = SelectionSet.map NotifEvent notifEventPayload

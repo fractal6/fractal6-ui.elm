@@ -22,7 +22,7 @@
 module Extra.Date exposing (diffTime, formatDate)
 
 import Date
-import Fractal.Enum.Lang as Lang
+import Schema.Enum.Lang as Lang
 import Iso8601 exposing (toTime)
 import Text as T
 import Time exposing (Posix, posixToMillis, utc)

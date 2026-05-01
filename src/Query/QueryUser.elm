@@ -33,14 +33,14 @@ module Query.QueryUser exposing
     , usernamesFilter
     )
 
-import Fractal.Enum.RoleType as RoleType
-import Fractal.InputObject as Input
-import Fractal.Object
-import Fractal.Object.Node
-import Fractal.Object.Tension
-import Fractal.Object.User
-import Fractal.Object.UserRights
-import Fractal.Query as Query
+import Schema.Enum.RoleType as RoleType
+import Schema.InputObject as Input
+import Schema.Object
+import Schema.Object.Node
+import Schema.Object.Tension
+import Schema.Object.User
+import Schema.Object.UserRights
+import Schema.Query as Query
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -80,32 +80,32 @@ queryUserFull url username msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-userProfilePayload : SelectionSet UserProfile Fractal.Object.User
+userProfilePayload : SelectionSet UserProfile Schema.Object.User
 userProfilePayload =
     SelectionSet.succeed UserProfile
-        |> with Fractal.Object.User.username
-        |> with Fractal.Object.User.name
-        |> with Fractal.Object.User.lang
+        |> with Schema.Object.User.username
+        |> with Schema.Object.User.name
+        |> with Schema.Object.User.lang
         |> with
-            (Fractal.Object.User.rights identity <|
+            (Schema.Object.User.rights identity <|
                 SelectionSet.map3 UserRights
-                    Fractal.Object.UserRights.canLogin
-                    Fractal.Object.UserRights.canCreateRoot
-                    Fractal.Object.UserRights.type_
+                    Schema.Object.UserRights.canLogin
+                    Schema.Object.UserRights.canCreateRoot
+                    Schema.Object.UserRights.type_
             )
         |> with
-            (Fractal.Object.User.roles identity
+            (Schema.Object.User.roles identity
                 (SelectionSet.map4 UserRole
-                    Fractal.Object.Node.name
-                    Fractal.Object.Node.nameid
-                    (Fractal.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
-                    Fractal.Object.Node.color
+                    Schema.Object.Node.name
+                    Schema.Object.Node.nameid
+                    (Schema.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
+                    Schema.Object.Node.color
                 )
                 |> SelectionSet.map (withDefault [])
             )
-        |> with Fractal.Object.User.notifyByEmail
-        |> with Fractal.Object.User.bio
-        |> with Fractal.Object.User.location
+        |> with Schema.Object.User.notifyByEmail
+        |> with Schema.Object.User.bio
+        |> with Schema.Object.User.location
 
 
 
@@ -114,33 +114,33 @@ userProfilePayload =
 -- 2. cant managed to use **extensible record** with selectionset.
 
 
-userFullPayload : SelectionSet UserFull Fractal.Object.User
+userFullPayload : SelectionSet UserFull Schema.Object.User
 userFullPayload =
     SelectionSet.succeed UserFull
-        |> with Fractal.Object.User.username
-        |> with Fractal.Object.User.name
+        |> with Schema.Object.User.username
+        |> with Schema.Object.User.name
         |> with
-            (Fractal.Object.User.rights identity <|
+            (Schema.Object.User.rights identity <|
                 SelectionSet.map3 UserRights
-                    Fractal.Object.UserRights.canLogin
-                    Fractal.Object.UserRights.canCreateRoot
-                    Fractal.Object.UserRights.type_
+                    Schema.Object.UserRights.canLogin
+                    Schema.Object.UserRights.canCreateRoot
+                    Schema.Object.UserRights.type_
             )
         |> with
-            (Fractal.Object.User.roles identity
+            (Schema.Object.User.roles identity
                 (SelectionSet.map4 UserRole
-                    Fractal.Object.Node.name
-                    Fractal.Object.Node.nameid
-                    (Fractal.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
-                    Fractal.Object.Node.color
+                    Schema.Object.Node.name
+                    Schema.Object.Node.nameid
+                    (Schema.Object.Node.role_type |> SelectionSet.map (withDefault RoleType.Peer))
+                    Schema.Object.Node.color
                 )
                 |> SelectionSet.map (withDefault [])
             )
-        |> with Fractal.Object.User.notifyByEmail
-        |> with Fractal.Object.User.lang
-        |> with Fractal.Object.User.bio
-        |> with Fractal.Object.User.location
-        |> with Fractal.Object.User.email
+        |> with Schema.Object.User.notifyByEmail
+        |> with Schema.Object.User.lang
+        |> with Schema.Object.User.bio
+        |> with Schema.Object.User.location
+        |> with Schema.Object.User.email
 
 
 
@@ -203,11 +203,11 @@ userFilter userfrag a =
     }
 
 
-userPayload : SelectionSet User Fractal.Object.User
+userPayload : SelectionSet User Schema.Object.User
 userPayload =
     SelectionSet.succeed User
-        |> with Fractal.Object.User.username
-        |> with Fractal.Object.User.name
+        |> with Schema.Object.User.username
+        |> with Schema.Object.User.name
 
 
 
@@ -256,24 +256,24 @@ usernamesFilter usernames a =
     }
 
 
-userRolesPayload : String -> SelectionSet Member Fractal.Object.User
+userRolesPayload : String -> SelectionSet Member Schema.Object.User
 userRolesPayload nameid =
     SelectionSet.succeed Member
-        |> with Fractal.Object.User.username
-        |> with Fractal.Object.User.name
+        |> with Schema.Object.User.username
+        |> with Schema.Object.User.name
         -- Retired is alreaady ignored in queryMembersLocal
-        |> with (Fractal.Object.User.roles (nodeOrgaFilter nameid [ RoleType.Pending, RoleType.Guest, RoleType.Member ]) userRoleExtendedPayload |> withDefaultSelectionMap [])
+        |> with (Schema.Object.User.roles (nodeOrgaFilter nameid [ RoleType.Pending, RoleType.Guest, RoleType.Member ]) userRoleExtendedPayload |> withDefaultSelectionMap [])
 
 
-userRoleExtendedPayload : SelectionSet UserRoleExtended Fractal.Object.Node
+userRoleExtendedPayload : SelectionSet UserRoleExtended Schema.Object.Node
 userRoleExtendedPayload =
     SelectionSet.succeed UserRoleExtended
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.role_type |> withDefaultSelectionMap RoleType.Pending)
-        |> with Fractal.Object.Node.color
-        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with (Schema.Object.Node.role_type |> withDefaultSelectionMap RoleType.Pending)
+        |> with Schema.Object.Node.color
+        |> with (Schema.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Node.parent identity nodeIdPayload)
 
 
 
@@ -308,10 +308,10 @@ type alias IsSubscribe =
     }
 
 
-isSubscribePayload : String -> SelectionSet IsSubscribe Fractal.Object.User
+isSubscribePayload : String -> SelectionSet IsSubscribe Schema.Object.User
 isSubscribePayload tid =
     SelectionSet.map2 IsSubscribe
-        (Fractal.Object.User.subscriptions (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | id = Present [ encodeId tid ] }) })
-            (SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId))
+        (Schema.Object.User.subscriptions (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | id = Present [ encodeId tid ] }) })
+            (SelectionSet.map IdPayload (Schema.Object.Tension.id |> SelectionSet.map decodedId))
         )
-        Fractal.Object.User.username
+        Schema.Object.User.username

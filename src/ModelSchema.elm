@@ -24,23 +24,23 @@ module ModelSchema exposing (..)
 
 import Dict exposing (Dict)
 import Extra exposing (mor)
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
-import Fractal.Enum.UserType as UserType
-import Fractal.Scalar
-import Fractal.ScalarCodecs
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.ContractType as ContractType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
+import Schema.Enum.UserType as UserType
+import Schema.Scalar
+import Schema.ScalarCodecs
 import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet
@@ -1255,19 +1255,19 @@ mutationDecoder =
 --
 
 
-decodedTime : Fractal.ScalarCodecs.DateTime -> String
-decodedTime (Fractal.Scalar.DateTime time) =
+decodedTime : Schema.ScalarCodecs.DateTime -> String
+decodedTime (Schema.Scalar.DateTime time) =
     time
 
 
-decodedId : Fractal.ScalarCodecs.Id -> String
-decodedId (Fractal.Scalar.Id id) =
+decodedId : Schema.ScalarCodecs.Id -> String
+decodedId (Schema.Scalar.Id id) =
     id
 
 
-encodeId : String -> Fractal.ScalarCodecs.Id
+encodeId : String -> Schema.ScalarCodecs.Id
 encodeId id =
-    Fractal.Scalar.Id id
+    Schema.Scalar.Id id
 
 
 oneId id_ =

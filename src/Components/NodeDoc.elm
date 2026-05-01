@@ -31,14 +31,14 @@ import Components.UserSearchPanel exposing (viewUser, viewUsers)
 import Dict exposing (Dict)
 import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
 import Extra.Date exposing (formatDate)
-import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, input, label, p, span, strong, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)

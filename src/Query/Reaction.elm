@@ -24,13 +24,13 @@ module Query.Reaction exposing
     , deleteReaction
     )
 
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddReactionPayload
-import Fractal.Object.Comment
-import Fractal.Object.DeleteReactionPayload
-import Fractal.Object.Reaction
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddReactionPayload
+import Schema.Object.Comment
+import Schema.Object.DeleteReactionPayload
+import Schema.Object.Reaction
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
@@ -67,7 +67,7 @@ addReaction url username cid type_ msg =
             identity
             (addReactionInputEncoder username cid type_)
             (SelectionSet.map ReactionPayload <|
-                Fractal.Object.AddReactionPayload.reaction identity
+                Schema.Object.AddReactionPayload.reaction identity
                     reactionPayload
             )
         )
@@ -92,13 +92,13 @@ addReactionInputEncoder username cid type_ =
     { input = [ Input.buildAddReactionInput inputReq ] }
 
 
-reactionPayload : SelectionSet ReactionResponse Fractal.Object.Reaction
+reactionPayload : SelectionSet ReactionResponse Schema.Object.Reaction
 reactionPayload =
     SelectionSet.map2 ReactionResponse
-        (Fractal.Object.Reaction.comment identity (SelectionSet.map IdPayload (Fractal.Object.Comment.id |> SelectionSet.map decodedId))
+        (Schema.Object.Reaction.comment identity (SelectionSet.map IdPayload (Schema.Object.Comment.id |> SelectionSet.map decodedId))
             |> SelectionSet.map .id
         )
-        Fractal.Object.Reaction.type_
+        Schema.Object.Reaction.type_
 
 
 
@@ -112,7 +112,7 @@ deleteReaction url username cid type_ msg =
         (Mutation.deleteReaction
             (deleteReactionInputEncoder username cid type_)
             (SelectionSet.map ReactionPayload <|
-                Fractal.Object.DeleteReactionPayload.reaction identity
+                Schema.Object.DeleteReactionPayload.reaction identity
                     reactionPayload
             )
         )

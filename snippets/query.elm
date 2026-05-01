@@ -52,9 +52,9 @@ addProjectColumn url form msg =
                     )
             }
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectPayload.project identity
+                (Schema.Object.UpdateProjectPayload.project identity
                     (SelectionSet.map (withDefault [] >> List.head)
-                        (Fractal.Object.Project.columns
+                        (Schema.Object.Project.columns
                             (\b ->
                                 { b
                                     | filter =

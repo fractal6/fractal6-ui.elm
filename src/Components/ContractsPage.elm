@@ -34,11 +34,11 @@ import Dict
 import Extra exposing (send, sendNow, sendSleep, space_, ternary, upH)
 import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, form, hr, i, input, label, p, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, selected, title, type_, value)

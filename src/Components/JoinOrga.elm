@@ -34,7 +34,7 @@ import Dict
 import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, unwrap, unwrap2)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, i, p, span, strong, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, target)

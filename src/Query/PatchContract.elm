@@ -24,14 +24,14 @@ module Query.PatchContract exposing (pushContractComment, sendVote)
 import Bulk exposing (CommentPatchForm)
 import Bulk.Codecs exposing (memberIdCodec)
 import Dict
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddVotePayload
-import Fractal.Object.Contract
-import Fractal.Object.UpdateContractPayload
-import Fractal.Object.Vote
-import Fractal.Scalar
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddVotePayload
+import Schema.Object.Contract
+import Schema.Object.UpdateContractPayload
+import Schema.Object.Vote
+import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
@@ -78,7 +78,7 @@ sendVote url form msg =
             (\q -> { q | upsert = Present True })
             (voteInputDecoder form)
             (SelectionSet.map VotePayload <|
-                Fractal.Object.AddVotePayload.vote identity votePayload
+                Schema.Object.AddVotePayload.vote identity votePayload
             )
         )
         (RemoteData.fromResult >> decodeResponse voteDecoder >> msg)
@@ -87,7 +87,7 @@ sendVote url form msg =
 voteInputDecoder form =
     let
         createdAt =
-            Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" form.post |> withDefault "" |> Schema.Scalar.DateTime
 
         nid =
             memberIdCodec form.rootnameid form.uctx.username
@@ -110,14 +110,14 @@ voteInputDecoder form =
     { input = [ Input.buildAddVoteInput inputReq identity ] }
 
 
-votePayload : SelectionSet VoteResult Fractal.Object.Vote
+votePayload : SelectionSet VoteResult Schema.Object.Vote
 votePayload =
     SelectionSet.map2 VoteResult
-        (Fractal.Object.Vote.id |> SelectionSet.map decodedId)
-        (Fractal.Object.Vote.contract identity <|
+        (Schema.Object.Vote.id |> SelectionSet.map decodedId)
+        (Schema.Object.Vote.contract identity <|
             SelectionSet.map2 ContractResult
-                (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-                Fractal.Object.Contract.status
+                (Schema.Object.Contract.id |> SelectionSet.map decodedId)
+                Schema.Object.Contract.status
         )
 
 
@@ -161,9 +161,9 @@ pushContractComment url form msg =
         (Mutation.updateContract
             (commentInputDecoder form)
             (SelectionSet.map ContractCommentPayload <|
-                Fractal.Object.UpdateContractPayload.contract identity
+                Schema.Object.UpdateContractPayload.contract identity
                     (SelectionSet.map Comments
-                        (Fractal.Object.Contract.comments pushCommentFilter
+                        (Schema.Object.Contract.comments pushCommentFilter
                             commentPayload
                         )
                     )
@@ -176,7 +176,7 @@ commentInputDecoder : CommentPatchForm -> Mutation.UpdateContractRequiredArgumen
 commentInputDecoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         message =
             Dict.get "message" f.post

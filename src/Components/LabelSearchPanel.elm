@@ -32,7 +32,7 @@ import Dict
 import Dom
 import Extra exposing (colorAttr, send, sendNow, sendSleep, ternary)
 import Extra.Events exposing (onMousedownPD)
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, div, i, input, label, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)

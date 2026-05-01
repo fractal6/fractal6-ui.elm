@@ -32,7 +32,7 @@ import Dict
 import Dom
 import Extra exposing (send, sendNow, sendSleep, ternary)
 import Extra.Events exposing (onClickSP, onMousedownPD)
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Html exposing (Html, a, div, i, input, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)

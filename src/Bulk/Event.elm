@@ -30,13 +30,13 @@ import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProject
 import Dict exposing (Dict)
 import Extra exposing (decap, space_, ternary, textD)
 import Extra.Date exposing (formatDate)
-import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.ContractType as ContractType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, p, small, span, strong, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, style)

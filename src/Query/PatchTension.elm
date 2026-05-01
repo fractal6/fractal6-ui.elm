@@ -35,18 +35,18 @@ module Query.PatchTension exposing
 import Bulk exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
 import Dict
 import Extra exposing (ternary)
-import Fractal.Enum.BlobOrderable as BlobOrderable
-import Fractal.Enum.CommentOrderable as CommentOrderable
-import Fractal.Enum.ContractOrderable as ContractOrderable
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.Blob
-import Fractal.Object.Tension
-import Fractal.Object.UpdateCommentPayload
-import Fractal.Object.UpdateTensionPayload
-import Fractal.Scalar
+import Schema.Enum.BlobOrderable as BlobOrderable
+import Schema.Enum.CommentOrderable as CommentOrderable
+import Schema.Enum.ContractOrderable as ContractOrderable
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.Blob
+import Schema.Object.Tension
+import Schema.Object.UpdateCommentPayload
+import Schema.Object.UpdateTensionPayload
+import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (with)
@@ -88,14 +88,14 @@ pushTensionPatch url form msg =
         (Mutation.updateTension
             (patchTensionInputEncoder form)
             (SelectionSet.map PatchTensionPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity
+                Schema.Object.UpdateTensionPayload.tension identity
                     (SelectionSet.succeed PatchTensionPayloadID
                         |> with
-                            (Fractal.Object.Tension.comments pushCommentFilter
+                            (Schema.Object.Tension.comments pushCommentFilter
                                 commentPayload
                             )
                         |> with
-                            (Fractal.Object.Tension.blobs pushBlobFilter
+                            (Schema.Object.Tension.blobs pushBlobFilter
                                 blobPayload
                             )
                     )
@@ -116,7 +116,7 @@ pushCommentFilter a =
     }
 
 
-pushBlobFilter : Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
+pushBlobFilter : Schema.Object.Tension.BlobsOptionalArguments -> Schema.Object.Tension.BlobsOptionalArguments
 pushBlobFilter a =
     { a
         | first = Present 1
@@ -133,10 +133,10 @@ patchTensionInputEncoder : TensionForm -> Mutation.UpdateTensionRequiredArgument
 patchTensionInputEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         updatedAt =
-            Dict.get "updatedAt" f.post |> Maybe.map Fractal.Scalar.DateTime
+            Dict.get "updatedAt" f.post |> Maybe.map Schema.Scalar.DateTime
 
         message =
             -- new comment
@@ -189,7 +189,7 @@ patchLiteral url form msg =
         (Mutation.updateTension
             (patchTensionInputEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+                Schema.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -226,7 +226,7 @@ patchComment url form msg =
         (Mutation.updateComment
             (patchCommentInputEncoder form)
             (SelectionSet.map PatchCommentPayload <|
-                Fractal.Object.UpdateCommentPayload.comment identity commentPayload
+                Schema.Object.UpdateCommentPayload.comment identity commentPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse commentPatchDecoder >> msg)
@@ -237,7 +237,7 @@ patchCommentInputEncoder f =
     let
         -- new comment
         updatedAt =
-            Dict.get "updatedAt" f.post |> Maybe.map Fractal.Scalar.DateTime
+            Dict.get "updatedAt" f.post |> Maybe.map Schema.Scalar.DateTime
 
         message =
             Dict.get "message" f.post |> Maybe.map String.trim
@@ -276,7 +276,7 @@ patchCommentInputEncoder f =
 deleteComment url tid cid commentCreatedAt uctx time msg =
     let
         createdAt =
-            Fractal.Scalar.DateTime (Iso8601.fromTime time)
+            Schema.Scalar.DateTime (Iso8601.fromTime time)
 
         events =
             buildEvents createdAt uctx.username [ Ev TensionEvent.CommentDeleted cid commentCreatedAt ]
@@ -302,7 +302,7 @@ deleteComment url tid cid commentCreatedAt uctx time msg =
         (Mutation.updateTension
             { input = Input.buildUpdateTensionInput inputReq inputOpt }
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+                Schema.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -339,7 +339,7 @@ setAssignee url form msg =
         (Mutation.updateTension
             (setAssigneeEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+                Schema.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -349,7 +349,7 @@ setAssigneeEncoder : AssigneeForm -> Mutation.UpdateTensionRequiredArguments
 setAssigneeEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         events =
             buildEvents createdAt f.uctx.username f.events
@@ -399,7 +399,7 @@ setLabel url form msg =
         (Mutation.updateTension
             (setLabelEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+                Schema.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -409,7 +409,7 @@ setLabelEncoder : LabelForm -> Mutation.UpdateTensionRequiredArguments
 setLabelEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         events =
             buildEvents createdAt f.uctx.username f.events
@@ -479,10 +479,10 @@ moveTension url form msg =
         (Mutation.updateTension
             (setMoveEncoder form)
             (SelectionSet.map TensionIdPayload2 <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
+                Schema.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map2 TensionId
-                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                        (Fractal.Object.Tension.contracts
+                        (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+                        (Schema.Object.Tension.contracts
                             (\args ->
                                 { args
                                     | first = Present 1
@@ -504,7 +504,7 @@ moveTension url form msg =
 setMoveEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         message =
             -- new comment
@@ -571,18 +571,18 @@ publishBlob url bid form msg =
         (Mutation.updateTension
             (publishBlobInputEncoder bid form)
             (SelectionSet.map TensionBlobFlagPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
+                Schema.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map2 TensionBlobFlag
-                        Fractal.Object.Tension.title
-                        (Fractal.Object.Tension.blobs (bidFilter bid) <|
-                            SelectionSet.map BlobFlag (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
+                        Schema.Object.Tension.title
+                        (Schema.Object.Tension.blobs (bidFilter bid) <|
+                            SelectionSet.map BlobFlag (Schema.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
                         )
             )
         )
         (RemoteData.fromResult >> decodeResponse publishBlobDecoder >> msg)
 
 
-bidFilter : String -> Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
+bidFilter : String -> Schema.Object.Tension.BlobsOptionalArguments -> Schema.Object.Tension.BlobsOptionalArguments
 bidFilter bid a =
     { a
         | filter =
@@ -599,7 +599,7 @@ publishBlobInputEncoder bid f =
     --@Debug: receiver and receiverid
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         inputReq =
             { filter =
@@ -619,7 +619,7 @@ publishBlobInputEncoder bid f =
                                     [ Input.buildBlobRef
                                         (\b ->
                                             --@debug: check if directive alter_RO works and if deep update works with dgraph
-                                            --{ b | id = Present (encodeId bid), pushedFlag = createdAt |> Fractal.Scalar.DateTime |> Present }
+                                            --{ b | id = Present (encodeId bid), pushedFlag = createdAt |> Schema.Scalar.DateTime |> Present }
                                             { b | id = Present (encodeId bid) }
                                         )
                                     ]
@@ -653,7 +653,7 @@ actionRequest url form msg =
         (Mutation.updateTension
             (actionInputEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
+                Schema.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -663,7 +663,7 @@ actionInputEncoder : ActionForm -> Mutation.UpdateTensionRequiredArguments
 actionInputEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         message =
             -- new comment

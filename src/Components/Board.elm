@@ -36,9 +36,9 @@ import Dict exposing (Dict)
 import Dom
 import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
 import Extra.Events exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.TensionStatus as TensionStatus
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, i, span, text, textarea)
 import Html.Attributes exposing (attribute, autofocus, class, classList, href, id, readonly, rows, style, target, title, value)

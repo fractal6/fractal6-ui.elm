@@ -50,13 +50,13 @@ import Extra.Events exposing (onClickSP)
 import Extra.Url exposing (queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, ul)

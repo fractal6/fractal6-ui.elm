@@ -23,11 +23,11 @@ module Bulk.Codecs exposing (..)
 
 import Array
 import Extra exposing (cleanDup, ternary)
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import List.Extra as LE
 import Maybe exposing (withDefault)

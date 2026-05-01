@@ -34,7 +34,7 @@ import Extra exposing (send, sendNow, sendSleep, space_, ternary, unwrap)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty)
-import Fractal.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, form, i, input, label, p, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, target, value)

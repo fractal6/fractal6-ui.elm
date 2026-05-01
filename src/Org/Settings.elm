@@ -47,10 +47,10 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)

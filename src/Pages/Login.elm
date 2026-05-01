@@ -31,7 +31,7 @@ import Dict exposing (Dict)
 import Extra exposing (send, sendSleep, ternary, textH, upH)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable)
-import Fractal.Enum.Lang as Lang
+import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)

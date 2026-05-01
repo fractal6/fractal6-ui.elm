@@ -30,22 +30,22 @@ module Query.QueryContract exposing
     )
 
 import Bulk.Codecs exposing (nid2rootid)
-import Fractal.Enum.BlobHasFilter as BlobHasFilter
-import Fractal.Enum.BlobOrderable as BlobOrderable
-import Fractal.Enum.ContractOrderable as ContractOrderable
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.InputObject as Input
-import Fractal.Object
-import Fractal.Object.Blob
-import Fractal.Object.Contract
-import Fractal.Object.EventFragment
-import Fractal.Object.Node
-import Fractal.Object.Tension
-import Fractal.Object.User
-import Fractal.Object.Vote
-import Fractal.Query as Query
+import Schema.Enum.BlobHasFilter as BlobHasFilter
+import Schema.Enum.BlobOrderable as BlobOrderable
+import Schema.Enum.ContractOrderable as ContractOrderable
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.InputObject as Input
+import Schema.Object
+import Schema.Object.Blob
+import Schema.Object.Contract
+import Schema.Object.EventFragment
+import Schema.Object.Node
+import Schema.Object.Tension
+import Schema.Object.User
+import Schema.Object.Vote
+import Schema.Query as Query
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -110,7 +110,7 @@ getContractComments url form msg =
 getContractId url contractid msg =
     makeGQLQuery url
         (Query.getContract (\x -> { x | id = Absent, contractid = Present contractid })
-            (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id))
+            (SelectionSet.map IdPayload (SelectionSet.map decodedId Schema.Object.Contract.id))
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -124,7 +124,7 @@ getContractId url contractid msg =
 --        (RemoteData.fromResult >> decodeResponse contractsDecoder >> msg)
 
 
-{-| tensionContractsOpenPayload : SelectionSet TensionContracts Fractal.Object.Tension
+{-| tensionContractsOpenPayload : SelectionSet TensionContracts Schema.Object.Tension
 -}
 tensionContractsOpenPayload form =
     let
@@ -135,9 +135,9 @@ tensionContractsOpenPayload form =
             form.page_len * form.page
     in
     SelectionSet.succeed TensionContracts
-        --|> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        --|> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
         |> with
-            (Fractal.Object.Tension.contracts
+            (Schema.Object.Tension.contracts
                 (\args ->
                     { args
                         | first = Present first
@@ -154,41 +154,41 @@ tensionContractsOpenPayload form =
                 )
                 contractPayload
             )
-        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
-contractPayload : SelectionSet Contract Fractal.Object.Contract
+contractPayload : SelectionSet Contract Schema.Object.Contract
 contractPayload =
     SelectionSet.succeed Contract
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
-        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.tension identity tidPayload)
-        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
-        |> with Fractal.Object.Contract.status
-        |> with Fractal.Object.Contract.contract_type
-        |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.participants identity votePayload)
+        |> with (Schema.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
+        |> with (Schema.Object.Contract.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.Contract.tension identity tidPayload)
+        |> with (Schema.Object.Contract.event identity eventFragmentPayload)
+        |> with Schema.Object.Contract.status
+        |> with Schema.Object.Contract.contract_type
+        |> with (Schema.Object.Contract.candidates identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.Contract.participants identity votePayload)
         |> hardcoded Nothing
 
 
-contractFullPayload : SelectionSet ContractFull Fractal.Object.Contract
+contractFullPayload : SelectionSet ContractFull Schema.Object.Contract
 contractFullPayload =
     SelectionSet.succeed ContractFull
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
-        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.tension identity tensionForContractPayload)
-        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
-        |> with Fractal.Object.Contract.status
-        |> with Fractal.Object.Contract.contract_type
-        |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.participants identity votePayload)
-        |> with Fractal.Object.Contract.isValidator
+        |> with (Schema.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Contract.closedAt |> SelectionSet.map (Maybe.map decodedTime))
+        |> with (Schema.Object.Contract.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.Contract.tension identity tensionForContractPayload)
+        |> with (Schema.Object.Contract.event identity eventFragmentPayload)
+        |> with Schema.Object.Contract.status
+        |> with Schema.Object.Contract.contract_type
+        |> with (Schema.Object.Contract.candidates identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.Contract.participants identity votePayload)
+        |> with Schema.Object.Contract.isValidator
         |> with
-            (Fractal.Object.Contract.comments
+            (Schema.Object.Contract.comments
                 (\args -> { args | first = Present nCommentPerContract })
                 commentPayload
             )
@@ -198,47 +198,47 @@ type alias BlobNode =
     { node : Maybe NodeFragment }
 
 
-tensionForContractPayload : SelectionSet TensionForContract Fractal.Object.Tension
+tensionForContractPayload : SelectionSet TensionForContract Schema.Object.Tension
 tensionForContractPayload =
     SelectionSet.succeed TensionForContract
-        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
         |> with
-            (Fractal.Object.Tension.blobs identity
-                (SelectionSet.map BlobNode (Fractal.Object.Blob.node identity nodeFragmentPayload))
+            (Schema.Object.Tension.blobs identity
+                (SelectionSet.map BlobNode (Schema.Object.Blob.node identity nodeFragmentPayload))
             )
 
 
-eventFragmentPayload : SelectionSet EventFragment Fractal.Object.EventFragment
+eventFragmentPayload : SelectionSet EventFragment Schema.Object.EventFragment
 eventFragmentPayload =
     SelectionSet.succeed EventFragment
-        |> with Fractal.Object.EventFragment.event_type
-        |> with Fractal.Object.EventFragment.old
-        |> with Fractal.Object.EventFragment.new
+        |> with Schema.Object.EventFragment.event_type
+        |> with Schema.Object.EventFragment.old
+        |> with Schema.Object.EventFragment.new
 
 
-votePayload : SelectionSet Vote Fractal.Object.Vote
+votePayload : SelectionSet Vote Schema.Object.Vote
 votePayload =
     SelectionSet.succeed Vote
-        |> with Fractal.Object.Vote.voteid
-        |> with (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
-        |> with Fractal.Object.Vote.data
+        |> with Schema.Object.Vote.voteid
+        |> with (Schema.Object.Vote.node identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid))
+        |> with Schema.Object.Vote.data
 
 
-contractCommentsPayload : SelectionSet ContractComments Fractal.Object.Contract
+contractCommentsPayload : SelectionSet ContractComments Schema.Object.Contract
 contractCommentsPayload =
     SelectionSet.succeed ContractComments
-        |> with (Fractal.Object.Contract.tension identity tidPayload)
+        |> with (Schema.Object.Contract.tension identity tidPayload)
         |> with
-            (Fractal.Object.Contract.comments
+            (Schema.Object.Contract.comments
                 (\args -> { args | first = Present nCommentPerContract })
                 commentPayload
             )
 
 
-cidPayload : SelectionSet IdPayload Fractal.Object.Contract
+cidPayload : SelectionSet IdPayload Schema.Object.Contract
 cidPayload =
     SelectionSet.map IdPayload
-        (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        (Schema.Object.Contract.id |> SelectionSet.map decodedId)
 
 
 
@@ -343,33 +343,33 @@ nodeContractsPayload =
     -- @warning : adding potential/oftent null value in the Nodefragment (such as color, role_ext etc) might lead
     -- to empty response due to the cascade_directive parameter.
     SelectionSet.succeed (\a b -> NodeContracts b)
-        |> with Fractal.Object.Node.cascade_directive
+        |> with Schema.Object.Node.cascade_directive
         |> with
-            (Fractal.Object.Node.contracts identity
+            (Schema.Object.Node.contracts identity
                 (SelectionSet.map (\x -> { contract = x })
-                    (Fractal.Object.Vote.contract openContractFilter contractLightPayload)
+                    (Schema.Object.Vote.contract openContractFilter contractLightPayload)
                 )
             )
 
 
 contractLightPayload =
     SelectionSet.succeed ContractLight
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.tension identity tensionNodeBlobPayload)
-        |> with (Fractal.Object.Contract.event invitationFilter eventFragmentPayload)
-        |> with Fractal.Object.Contract.status
-        |> with Fractal.Object.Contract.contract_type
-        |> with (SelectionSet.map (withDefault []) <| Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Schema.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Contract.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.Contract.tension identity tensionNodeBlobPayload)
+        |> with (Schema.Object.Contract.event invitationFilter eventFragmentPayload)
+        |> with Schema.Object.Contract.status
+        |> with Schema.Object.Contract.contract_type
+        |> with (SelectionSet.map (withDefault []) <| Schema.Object.Contract.candidates identity <| SelectionSet.map Username Schema.Object.User.username)
 
 
 tensionNodeBlobPayload =
     SelectionSet.succeed TensionNodeBlob
-        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Tension.receiverid
+        |> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Tension.receiverid
         |> with
             (SelectionSet.map (withDefault [] >> List.head >> withDefault Nothing) <|
-                Fractal.Object.Tension.blobs lastBlobFilter <|
-                    Fractal.Object.Blob.node identity nodeFragmentLightPayload
+                Schema.Object.Tension.blobs lastBlobFilter <|
+                    Schema.Object.Blob.node identity nodeFragmentLightPayload
             )

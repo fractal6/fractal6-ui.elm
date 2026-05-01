@@ -24,12 +24,12 @@ module Query.AddContract exposing (addOneContract, deleteOneContract)
 import Bulk exposing (ContractForm)
 import Dict
 import Extra exposing (listToMaybe, mor)
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddContractPayload
-import Fractal.Object.DeleteContractPayload
-import Fractal.Scalar
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddContractPayload
+import Schema.Object.DeleteContractPayload
+import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet
@@ -77,7 +77,7 @@ addOneContract url form msg =
             identity
             (addContractInputEncoder form)
             (SelectionSet.map ContractsPayloadId <|
-                Fractal.Object.AddContractPayload.contract identity cidPayload
+                Schema.Object.AddContractPayload.contract identity cidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse contractIdDecoder >> msg)
@@ -91,7 +91,7 @@ addContractInputEncoder : ContractForm -> Mutation.AddContractRequiredArguments
 addContractInputEncoder f =
     let
         cat =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" f.post |> withDefault "" |> Schema.Scalar.DateTime
 
         cby =
             Input.buildUserRef
@@ -171,7 +171,7 @@ deleteOneContract url form msg =
         (Mutation.deleteContract
             (deleteContractInputEncoder form)
             (SelectionSet.map ContractsPayloadId <|
-                Fractal.Object.DeleteContractPayload.contract identity cidPayload
+                Schema.Object.DeleteContractPayload.contract identity cidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse contractIdDecoder >> msg)

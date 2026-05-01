@@ -37,20 +37,20 @@ module Query.PatchNode exposing
 import Bulk exposing (ArtefactNodeForm, ProjectForm, TensionTemplateForm)
 import Bulk.Codecs exposing (nid2rootid)
 import Dict
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddLabelPayload
-import Fractal.Object.AddProjectPayload
-import Fractal.Object.AddRoleExtPayload
-import Fractal.Object.AddTensionTemplatePayload
-import Fractal.Object.UpdateLabelPayload
-import Fractal.Object.UpdateProjectPayload
-import Fractal.Object.UpdateRoleExtPayload
-import Fractal.Object.UpdateTensionTemplatePayload
-import Fractal.Scalar
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddLabelPayload
+import Schema.Object.AddProjectPayload
+import Schema.Object.AddRoleExtPayload
+import Schema.Object.AddTensionTemplatePayload
+import Schema.Object.UpdateLabelPayload
+import Schema.Object.UpdateProjectPayload
+import Schema.Object.UpdateRoleExtPayload
+import Schema.Object.UpdateTensionTemplatePayload
+import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet
@@ -111,7 +111,7 @@ addOneLabel url form msg =
         (Mutation.addLabel
             (addLabelInputEncoder form)
             (SelectionSet.map LabelsFullPayload <|
-                Fractal.Object.AddLabelPayload.label identity labelFullPayload
+                Schema.Object.AddLabelPayload.label identity labelFullPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
@@ -149,7 +149,7 @@ updateOneLabel url form msg =
         (Mutation.updateLabel
             (updateLabelInputEncoder form)
             (SelectionSet.map LabelsFullPayload <|
-                Fractal.Object.UpdateLabelPayload.label identity <|
+                Schema.Object.UpdateLabelPayload.label identity <|
                     labelFullPayload
             )
         )
@@ -221,7 +221,7 @@ removeOneLabel url form msg =
     makeGQLMutation url
         (Mutation.updateLabel
             (removeLabelInputEncoder form)
-            Fractal.Object.UpdateLabelPayload.numUids
+            Schema.Object.UpdateLabelPayload.numUids
         )
         (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
@@ -282,7 +282,7 @@ addOneRole url form msg =
         (Mutation.addRoleExt
             (addRoleInputEncoder form)
             (SelectionSet.map RolesFullPayload <|
-                Fractal.Object.AddRoleExtPayload.roleExt identity roleFullPayload
+                Schema.Object.AddRoleExtPayload.roleExt identity roleFullPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse roleFullDecoder >> msg)
@@ -322,7 +322,7 @@ updateOneRole url form msg =
         (Mutation.updateRoleExt
             (updateRoleInputEncoder form)
             (SelectionSet.map RolesFullPayload <|
-                Fractal.Object.UpdateRoleExtPayload.roleExt identity <|
+                Schema.Object.UpdateRoleExtPayload.roleExt identity <|
                     roleFullPayload
             )
         )
@@ -401,7 +401,7 @@ removeOneRole url form msg =
     makeGQLMutation url
         (Mutation.updateRoleExt
             (removeRoleInputEncoder form)
-            Fractal.Object.UpdateRoleExtPayload.numUids
+            Schema.Object.UpdateRoleExtPayload.numUids
         )
         (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
@@ -492,7 +492,7 @@ addOneProject url form msg =
         (Mutation.addProject
             (addProjectInputEncoder form)
             (SelectionSet.map ProjectsFullPayload <|
-                Fractal.Object.AddProjectPayload.project identity projectFullPayload
+                Schema.Object.AddProjectPayload.project identity projectFullPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse projectFullDecoder >> msg)
@@ -502,7 +502,7 @@ addProjectInputEncoder : ProjectForm -> Mutation.AddProjectRequiredArguments
 addProjectInputEncoder form =
     let
         createdAt =
-            Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime
+            Dict.get "createdAt" form.post |> withDefault "" |> Schema.Scalar.DateTime
 
         inputReq =
             { createdBy =
@@ -563,7 +563,7 @@ updateOneProject url form msg =
         (Mutation.updateProject
             (updateProjectInputEncoder form)
             (SelectionSet.map ProjectsFullPayload <|
-                Fractal.Object.UpdateProjectPayload.project identity <|
+                Schema.Object.UpdateProjectPayload.project identity <|
                     projectFullPayload
             )
         )
@@ -680,7 +680,7 @@ removeOneProject url form msg =
     makeGQLMutation url
         (Mutation.updateProject
             (removeProjectInputEncoder form)
-            Fractal.Object.UpdateProjectPayload.numUids
+            Schema.Object.UpdateProjectPayload.numUids
         )
         (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 
@@ -741,7 +741,7 @@ addOneTensionTemplate url form msg =
         (Mutation.addTensionTemplate
             (addTensionTemplateInputEncoder form)
             (SelectionSet.map TensionTemplatesFullPayload <|
-                Fractal.Object.AddTensionTemplatePayload.tensionTemplate identity tensionTemplateFullPayload
+                Schema.Object.AddTensionTemplatePayload.tensionTemplate identity tensionTemplateFullPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionTemplateMutDecoder >> msg)
@@ -784,7 +784,7 @@ updateOneTensionTemplate url form msg =
         (Mutation.updateTensionTemplate
             (updateTensionTemplateInputEncoder form)
             (SelectionSet.map TensionTemplatesFullPayload <|
-                Fractal.Object.UpdateTensionTemplatePayload.tensionTemplate identity <|
+                Schema.Object.UpdateTensionTemplatePayload.tensionTemplate identity <|
                     tensionTemplateFullPayload
             )
         )
@@ -867,7 +867,7 @@ removeOneTensionTemplate url form msg =
     makeGQLMutation url
         (Mutation.updateTensionTemplate
             (removeTensionTemplateInputEncoder form)
-            Fractal.Object.UpdateTensionTemplatePayload.numUids
+            Schema.Object.UpdateTensionTemplatePayload.numUids
         )
         (RemoteData.fromResult >> decodeResponse removeNumUidsDecoder >> msg)
 

@@ -22,12 +22,12 @@
 module Codecs exposing (..)
 
 import Dict
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.UserType as UserType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.UserType as UserType
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE

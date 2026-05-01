@@ -34,9 +34,9 @@ import Bulk exposing (getChildren)
 import Bulk.Codecs exposing (getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, nearestCircleid, nid2rootid)
 import Dict
 import Extra exposing (ternary, textH, upH)
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), RestData, errorsDecoder, toErrorData, withMaybeData)
 import Maybe exposing (withDefault)

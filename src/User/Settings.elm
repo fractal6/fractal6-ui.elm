@@ -36,7 +36,7 @@ import Extra.Events exposing (onClickPD)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
-import Fractal.Enum.Lang as Lang
+import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, hr, i, input, label, li, nav, option, select, span, text, textarea, ul)

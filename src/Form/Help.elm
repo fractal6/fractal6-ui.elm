@@ -33,9 +33,9 @@ import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, textT, 
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
-import Fractal.Enum.Lang as Lang
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.Lang as Lang
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, h2, header, i, input, label, li, nav, p, section, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, target, type_, value)

@@ -38,33 +38,33 @@ module Query.QueryProject exposing
 import Bulk exposing (AssigneeForm, LabelForm)
 import Dict
 import Extra exposing (ternary, unwrap, unwrap2)
-import Fractal.Enum.ProjectColumnType as ProjectColumnType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddProjectCardPayload
-import Fractal.Object.AddProjectColumnPayload
-import Fractal.Object.Comment
-import Fractal.Object.CommentAggregateResult
-import Fractal.Object.DeleteProjectCardPayload
-import Fractal.Object.DeleteProjectColumnPayload
-import Fractal.Object.Project
-import Fractal.Object.ProjectCard
-import Fractal.Object.ProjectCardAggregateResult
-import Fractal.Object.ProjectColumn
-import Fractal.Object.ProjectDraft
-import Fractal.Object.ProjectField
-import Fractal.Object.Tension
-import Fractal.Object.UpdateProjectCardPayload
-import Fractal.Object.UpdateProjectColumnPayload
-import Fractal.Object.UpdateProjectDraftPayload
-import Fractal.Object.UpdateProjectPayload
-import Fractal.Object.User
-import Fractal.Query as Query
-import Fractal.Scalar
-import Fractal.Union
-import Fractal.Union.CardKind
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.RoleType as RoleType
+import Schema.InputObject as Input
+import Schema.Mutation as Mutation
+import Schema.Object
+import Schema.Object.AddProjectCardPayload
+import Schema.Object.AddProjectColumnPayload
+import Schema.Object.Comment
+import Schema.Object.CommentAggregateResult
+import Schema.Object.DeleteProjectCardPayload
+import Schema.Object.DeleteProjectColumnPayload
+import Schema.Object.Project
+import Schema.Object.ProjectCard
+import Schema.Object.ProjectCardAggregateResult
+import Schema.Object.ProjectColumn
+import Schema.Object.ProjectDraft
+import Schema.Object.ProjectField
+import Schema.Object.Tension
+import Schema.Object.UpdateProjectCardPayload
+import Schema.Object.UpdateProjectColumnPayload
+import Schema.Object.UpdateProjectDraftPayload
+import Schema.Object.UpdateProjectPayload
+import Schema.Object.User
+import Schema.Query as Query
+import Schema.Scalar
+import Schema.Union
+import Schema.Union.CardKind
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -91,25 +91,25 @@ getProject url projectid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-projectDataPayload : SelectionSet ProjectData Fractal.Object.Project
+projectDataPayload : SelectionSet ProjectData Schema.Object.Project
 projectDataPayload =
     SelectionSet.succeed ProjectData
-        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Project.name
-        |> with Fractal.Object.Project.description
-        |> with Fractal.Object.Project.status
-        |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
+        |> with (Schema.Object.Project.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Project.name
+        |> with Schema.Object.Project.description
+        |> with Schema.Object.Project.status
+        |> with (Schema.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
         |> with
-            (Fractal.Object.Project.columns identity columnPayload
+            (Schema.Object.Project.columns identity columnPayload
                 |> withDefaultSelectionMap []
                 |> SelectionSet.map
                     (List.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards |> List.sortBy .pos })
                         >> List.sortBy .pos
                     )
             )
-        |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
-        |> with Fractal.Object.Project.peerCanEditProject
-        |> with Fractal.Object.Project.guestCanEditProject
+        |> with (Schema.Object.Project.collaborators identity (SelectionSet.map Username Schema.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with Schema.Object.Project.peerCanEditProject
+        |> with Schema.Object.Project.guestCanEditProject
 
 
 getProjectColumn url colid msg =
@@ -126,7 +126,7 @@ getNoStatusCol url projectid msg =
         (Query.getProject
             { id = encodeId projectid }
             (SelectionSet.map identity
-                (Fractal.Object.Project.columns
+                (Schema.Object.Project.columns
                     (\args ->
                         { args
                             | first = Present 1
@@ -137,8 +137,8 @@ getNoStatusCol url projectid msg =
                         }
                     )
                     (SelectionSet.map2 (\a b -> { id = a, cards_len = unwrap2 0 .count b })
-                        (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
-                        (Fractal.Object.ProjectColumn.cardsAggregate identity (SelectionSet.map Count Fractal.Object.ProjectCardAggregateResult.count))
+                        (Schema.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+                        (Schema.Object.ProjectColumn.cardsAggregate identity (SelectionSet.map Count Schema.Object.ProjectCardAggregateResult.count))
                     )
                     |> withDefaultSelectionMap []
                     |> SelectionSet.map List.head
@@ -174,9 +174,9 @@ moveProjectCard url id_ pos colid msg =
                     )
             }
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectCardPayload.projectCard identity
+                (Schema.Object.UpdateProjectCardPayload.projectCard identity
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectCard.id)
+                        (SelectionSet.map decodedId Schema.Object.ProjectCard.id)
                     )
                 )
             )
@@ -216,9 +216,9 @@ updateProjectColumn url form msg =
                     )
             }
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectColumnPayload.projectColumn identity
+                (Schema.Object.UpdateProjectColumnPayload.projectColumn identity
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectColumn.id)
+                        (SelectionSet.map decodedId Schema.Object.ProjectColumn.id)
                     )
                 )
             )
@@ -246,9 +246,9 @@ updateProjectDraft url form msg =
                     )
             }
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                (Schema.Object.UpdateProjectDraftPayload.projectDraft identity
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                        (SelectionSet.map decodedId Schema.Object.ProjectDraft.id)
                     )
                 )
             )
@@ -282,7 +282,7 @@ addProjectColumn url form msg =
             }
             --RequestResult (List String) (Maybe.Maybe (List (Maybe.Maybe ProjectColumn)))
             (SelectionSet.map (unwrap2 Nothing List.head)
-                (Fractal.Object.AddProjectColumnPayload.projectColumn identity columnPayload)
+                (Schema.Object.AddProjectColumnPayload.projectColumn identity columnPayload)
             )
         )
         (RemoteData.fromResult >> decodeResponse (withDefault Nothing >> Maybe.map (\x -> { x | cards = List.map (\y -> { y | colid = x.id }) x.cards })) >> msg)
@@ -315,7 +315,7 @@ addProjectCard url form msg =
                                                                     { b
                                                                         | title = Present form.title
                                                                         , message = fromMaybe (Dict.get "message" form.post)
-                                                                        , createdAt = Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime |> Present
+                                                                        , createdAt = Dict.get "createdAt" form.post |> withDefault "" |> Schema.Scalar.DateTime |> Present
                                                                         , createdBy = Input.buildUserRef (\u -> { u | username = Present form.uctx.username }) |> Present
                                                                         , project_status = Input.buildProjectColumnRef (\c -> { c | id = Present (encodeId form.colid) }) |> Present
                                                                     }
@@ -328,7 +328,7 @@ addProjectCard url form msg =
                         )
             }
             (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
-                Fractal.Object.AddProjectCardPayload.projectCard identity
+                Schema.Object.AddProjectCardPayload.projectCard identity
                     projectCardPayload
             )
         )
@@ -342,8 +342,8 @@ removeProjectCards url uids msg =
                 Input.buildProjectCardFilter (\i -> { i | id = Present <| List.map encodeId uids })
             }
             (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
-                Fractal.Object.DeleteProjectCardPayload.projectCard identity
-                    (SelectionSet.map decodedId Fractal.Object.ProjectCard.id)
+                Schema.Object.DeleteProjectCardPayload.projectCard identity
+                    (SelectionSet.map decodedId Schema.Object.ProjectCard.id)
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
@@ -356,8 +356,8 @@ deleteProjectColumns url uids msg =
                 Input.buildProjectColumnFilter (\i -> { i | id = Present <| List.map encodeId uids })
             }
             (SelectionSet.map (unwrap [] (List.filterMap identity)) <|
-                Fractal.Object.DeleteProjectColumnPayload.projectColumn identity
-                    (SelectionSet.map decodedId Fractal.Object.ProjectColumn.id)
+                Schema.Object.DeleteProjectColumnPayload.projectColumn identity
+                    (SelectionSet.map decodedId Schema.Object.ProjectColumn.id)
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
@@ -369,39 +369,39 @@ deleteProjectColumns url uids msg =
 ---
 
 
-columnPayload : SelectionSet ProjectColumn Fractal.Object.ProjectColumn
+columnPayload : SelectionSet ProjectColumn Schema.Object.ProjectColumn
 columnPayload =
     SelectionSet.succeed ProjectColumn
-        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.ProjectColumn.name
-        |> with Fractal.Object.ProjectColumn.color
-        |> with Fractal.Object.ProjectColumn.pos
-        |> with Fractal.Object.ProjectColumn.col_type
-        |> with (Fractal.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
+        |> with (Schema.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.ProjectColumn.name
+        |> with Schema.Object.ProjectColumn.color
+        |> with Schema.Object.ProjectColumn.pos
+        |> with Schema.Object.ProjectColumn.col_type
+        |> with (Schema.Object.ProjectColumn.cards identity projectCardPayload |> withDefaultSelectionMap [])
 
 
-columnPayloadEdit : SelectionSet ProjectColumnEdit Fractal.Object.ProjectColumn
+columnPayloadEdit : SelectionSet ProjectColumnEdit Schema.Object.ProjectColumn
 columnPayloadEdit =
     SelectionSet.succeed ProjectColumnEdit
-        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.ProjectColumn.name
-        |> with Fractal.Object.ProjectColumn.description
-        |> with Fractal.Object.ProjectColumn.color
-        |> with Fractal.Object.ProjectColumn.pos
+        |> with (Schema.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.ProjectColumn.name
+        |> with Schema.Object.ProjectColumn.description
+        |> with Schema.Object.ProjectColumn.color
+        |> with Schema.Object.ProjectColumn.pos
 
 
-projectCardPayload : SelectionSet ProjectCard Fractal.Object.ProjectCard
+projectCardPayload : SelectionSet ProjectCard Schema.Object.ProjectCard
 projectCardPayload =
     SelectionSet.succeed ProjectCard
-        |> with (Fractal.Object.ProjectCard.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.ProjectCard.id |> SelectionSet.map decodedId)
         |> hardcoded ""
-        |> with Fractal.Object.ProjectCard.pos
-        |> with (Fractal.Object.ProjectCard.card identity cardPayload)
+        |> with Schema.Object.ProjectCard.pos
+        |> with (Schema.Object.ProjectCard.card identity cardPayload)
 
 
-cardPayload : SelectionSet CardKind Fractal.Union.CardKind
+cardPayload : SelectionSet CardKind Schema.Union.CardKind
 cardPayload =
-    Fractal.Union.CardKind.fragments
+    Schema.Union.CardKind.fragments
         -- @DEBUG: agregate subquery doesn seems to work !!!
         --{ onTension = SelectionSet.map CardTension tensionPayload
         { onTension = SelectionSet.map CardTension tensionPayload2
@@ -409,16 +409,16 @@ cardPayload =
         }
 
 
-draftPayload : SelectionSet ProjectDraft Fractal.Object.ProjectDraft
+draftPayload : SelectionSet ProjectDraft Schema.Object.ProjectDraft
 draftPayload =
     SelectionSet.succeed ProjectDraft
-        |> with (Fractal.Object.ProjectDraft.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.ProjectDraft.title
-        |> with Fractal.Object.ProjectDraft.message
-        |> with (Fractal.Object.ProjectDraft.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.ProjectDraft.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.ProjectDraft.labels identity labelPayload)
-        |> with (Fractal.Object.ProjectDraft.assignees identity userPayload)
+        |> with (Schema.Object.ProjectDraft.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.ProjectDraft.title
+        |> with Schema.Object.ProjectDraft.message
+        |> with (Schema.Object.ProjectDraft.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.ProjectDraft.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with (Schema.Object.ProjectDraft.labels identity labelPayload)
+        |> with (Schema.Object.ProjectDraft.assignees identity userPayload)
         |> hardcoded ""
         |> hardcoded ""
         |> hardcoded 0
@@ -438,9 +438,9 @@ setProjectDraftLabel url form msg =
         (Mutation.updateProjectDraft
             (setProjectDraftLabelEncoder form)
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                (Schema.Object.UpdateProjectDraftPayload.projectDraft identity
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                        (SelectionSet.map decodedId Schema.Object.ProjectDraft.id)
                     )
                 )
             )
@@ -481,9 +481,9 @@ setProjectDraftAssignee url form msg =
         (Mutation.updateProjectDraft
             (setProjectDraftAssigneeEncoder form)
             (SelectionSet.map (\a -> withDefault [] a |> List.head |> withDefault Nothing)
-                (Fractal.Object.UpdateProjectDraftPayload.projectDraft identity
+                (Schema.Object.UpdateProjectDraftPayload.projectDraft identity
                     (SelectionSet.map IdPayload
-                        (SelectionSet.map decodedId Fractal.Object.ProjectDraft.id)
+                        (SelectionSet.map decodedId Schema.Object.ProjectDraft.id)
                     )
                 )
             )
@@ -519,24 +519,24 @@ setProjectDraftAssigneeEncoder f =
     { input = Input.buildUpdateProjectDraftInput inputReq inputOpt }
 
 
-tensionPayload2 : SelectionSet Tension Fractal.Object.Tension
+tensionPayload2 : SelectionSet Tension Schema.Object.Tension
 tensionPayload2 =
     SelectionSet.succeed Tension
-        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Tension.title
-        |> with Fractal.Object.Tension.type_
-        |> with (Fractal.Object.Tension.labels identity labelPayload)
-        --|> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
-        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
-        |> with Fractal.Object.Tension.action
-        |> with Fractal.Object.Tension.status
+        |> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Tension.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Tension.title
+        |> with Schema.Object.Tension.type_
+        |> with (Schema.Object.Tension.labels identity labelPayload)
+        --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with Schema.Object.Tension.action
+        |> with Schema.Object.Tension.status
         -- Aggreate doesn not seem to work with enum...
         --|> with
         --    (SelectionSet.map (unwrap Nothing .count) <|
-        --        Fractal.Object.Tension.commentsAggregate identity <|
-        --            SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
+        --        Schema.Object.Tension.commentsAggregate identity <|
+        --            SelectionSet.map Count Schema.Object.CommentAggregateResult.count
         --    )
         |> hardcoded Nothing
         |> hardcoded Nothing

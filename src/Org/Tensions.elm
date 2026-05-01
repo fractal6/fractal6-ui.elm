@@ -50,10 +50,10 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)

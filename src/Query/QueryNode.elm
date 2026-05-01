@@ -81,44 +81,44 @@ import Bulk exposing (maxPinnedTensions)
 import Bulk.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
 import Extra exposing (ternary, unwrap, unwrap2)
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.LabelOrderable as LabelOrderable
-import Fractal.Enum.NodeMode as NodeMode
-import Fractal.Enum.NodeOrderable as NodeOrderable
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.NodeVisibility as NodeVisibility
-import Fractal.Enum.ProjectColumnOrderable as ProjectColumnOrderable
-import Fractal.Enum.ProjectOrderable as ProjectOrderable
-import Fractal.Enum.ProjectStatus as ProjectStatus
-import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionTemplateOrderable as TensionTemplateOrderable
-import Fractal.InputObject as Input
-import Fractal.Object
-import Fractal.Object.Blob
-import Fractal.Object.BuildInfo
-import Fractal.Object.Contract
-import Fractal.Object.ContractAggregateResult
-import Fractal.Object.Event
-import Fractal.Object.EventFragment
-import Fractal.Object.Label
-import Fractal.Object.Mandate
-import Fractal.Object.Node
-import Fractal.Object.NodeAggregateResult
-import Fractal.Object.NodeFragment
-import Fractal.Object.Notif
-import Fractal.Object.Project
-import Fractal.Object.ProjectAggregateResult
-import Fractal.Object.ProjectColumn
-import Fractal.Object.RoleExt
-import Fractal.Object.Tension
-import Fractal.Object.TensionAggregateResult
-import Fractal.Object.TensionTemplate
-import Fractal.Object.TensionTemplateAggregateResult
-import Fractal.Object.User
-import Fractal.Object.UserAggregateResult
-import Fractal.Query as Query
+import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.LabelOrderable as LabelOrderable
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeOrderable as NodeOrderable
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnOrderable as ProjectColumnOrderable
+import Schema.Enum.ProjectOrderable as ProjectOrderable
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.RoleExtOrderable as RoleExtOrderable
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionTemplateOrderable as TensionTemplateOrderable
+import Schema.InputObject as Input
+import Schema.Object
+import Schema.Object.Blob
+import Schema.Object.BuildInfo
+import Schema.Object.Contract
+import Schema.Object.ContractAggregateResult
+import Schema.Object.Event
+import Schema.Object.EventFragment
+import Schema.Object.Label
+import Schema.Object.Mandate
+import Schema.Object.Node
+import Schema.Object.NodeAggregateResult
+import Schema.Object.NodeFragment
+import Schema.Object.Notif
+import Schema.Object.Project
+import Schema.Object.ProjectAggregateResult
+import Schema.Object.ProjectColumn
+import Schema.Object.RoleExt
+import Schema.Object.Tension
+import Schema.Object.TensionAggregateResult
+import Schema.Object.TensionTemplate
+import Schema.Object.TensionTemplateAggregateResult
+import Schema.Object.User
+import Schema.Object.UserAggregateResult
+import Schema.Query as Query
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -198,22 +198,22 @@ publicOrgaFilter a =
     }
 
 
-nodeOrgaExtPayload : SelectionSet NodeExt Fractal.Object.Node
+nodeOrgaExtPayload : SelectionSet NodeExt Schema.Object.Node
 nodeOrgaExtPayload =
     SelectionSet.succeed NodeExt
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
-        |> with Fractal.Object.Node.type_
-        |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Node.visibility
-        |> with Fractal.Object.Node.about
+        |> with (Schema.Object.Node.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with (Schema.Object.Node.parent identity nodeIdPayload)
+        |> with Schema.Object.Node.type_
+        |> with Schema.Object.Node.role_type
+        |> with (Schema.Object.Node.first_link identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Node.visibility
+        |> with Schema.Object.Node.about
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.childrenAggregate
+                Schema.Object.Node.childrenAggregate
                     (\a ->
                         { a
                             | filter =
@@ -229,12 +229,12 @@ nodeOrgaExtPayload =
                         }
                     )
                 <|
-                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+                    SelectionSet.map Count Schema.Object.NodeAggregateResult.count
             )
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.watchersAggregate identity <|
-                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+                Schema.Object.Node.watchersAggregate identity <|
+                    SelectionSet.map Count Schema.Object.UserAggregateResult.count
             )
 
 
@@ -258,8 +258,8 @@ queryOrgaNode url nameids msg =
         (Query.queryNode
             (nodeExtFilter nameids NodeOrderable.UpdatedAt)
             (SelectionSet.map2 OrgaNode
-                Fractal.Object.Node.name
-                Fractal.Object.Node.nameid
+                Schema.Object.Node.name
+                Schema.Object.Node.nameid
             )
         )
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
@@ -390,33 +390,33 @@ matchAnyRoleType alls =
         ]
 
 
-nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
+nodeOrgaPayload : SelectionSet Node Schema.Object.Node
 nodeOrgaPayload =
     SelectionSet.succeed Node
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
-        |> with Fractal.Object.Node.type_
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-        |> with (Fractal.Object.Node.first_link identity userPayload)
-        |> with Fractal.Object.Node.visibility
-        |> with Fractal.Object.Node.mode
-        |> with (Fractal.Object.Node.source identity blobIdPayload)
-        |> with Fractal.Object.Node.userCanJoin
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with (Schema.Object.Node.parent identity nodeIdPayload)
+        |> with Schema.Object.Node.type_
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
+        |> with (Schema.Object.Node.first_link identity userPayload)
+        |> with Schema.Object.Node.visibility
+        |> with Schema.Object.Node.mode
+        |> with (Schema.Object.Node.source identity blobIdPayload)
+        |> with Schema.Object.Node.userCanJoin
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
-                    SelectionSet.map Count Fractal.Object.TensionAggregateResult.count
+                Schema.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
+                    SelectionSet.map Count Schema.Object.TensionAggregateResult.count
             )
         |> with
             (SelectionSet.map (\x -> withDefault Nothing x |> unwrap2 0 .count) <|
-                Fractal.Object.Node.source identity
+                Schema.Object.Node.source identity
                     (SelectionSet.map identity
-                        (Fractal.Object.Blob.tension identity
+                        (Schema.Object.Blob.tension identity
                             (SelectionSet.map identity <|
-                                Fractal.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
-                                    SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
+                                Schema.Object.Tension.contractsAggregate (\a -> { a | filter = Present <| Input.buildContractFilter (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }) }) <|
+                                    SelectionSet.map Count Schema.Object.ContractAggregateResult.count
                             )
                         )
                     )
@@ -425,70 +425,70 @@ nodeOrgaPayload =
 
 {-| With blob id
 -}
-nodeOrgaPayload2 : SelectionSet Node Fractal.Object.Node
+nodeOrgaPayload2 : SelectionSet Node Schema.Object.Node
 nodeOrgaPayload2 =
     SelectionSet.succeed Node
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.parent identity nodeIdPayload2)
-        |> with Fractal.Object.Node.type_
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-        |> with (Fractal.Object.Node.first_link identity userPayload)
-        |> with Fractal.Object.Node.visibility
-        |> with Fractal.Object.Node.mode
-        |> with (Fractal.Object.Node.source identity blobIdPayload)
-        |> with Fractal.Object.Node.userCanJoin
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with (Schema.Object.Node.parent identity nodeIdPayload2)
+        |> with Schema.Object.Node.type_
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
+        |> with (Schema.Object.Node.first_link identity userPayload)
+        |> with Schema.Object.Node.visibility
+        |> with Schema.Object.Node.mode
+        |> with (Schema.Object.Node.source identity blobIdPayload)
+        |> with Schema.Object.Node.userCanJoin
         |> hardcoded 0
         |> hardcoded 0
 
 
-nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
+nodeIdPayload : SelectionSet NodeId Schema.Object.Node
 nodeIdPayload =
     SelectionSet.succeed NodeId
-        |> with Fractal.Object.Node.nameid
+        |> with Schema.Object.Node.nameid
         |> hardcoded Nothing
 
 
-nodeIdPayload2 : SelectionSet NodeId Fractal.Object.Node
+nodeIdPayload2 : SelectionSet NodeId Schema.Object.Node
 nodeIdPayload2 =
     SelectionSet.succeed NodeId
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.source identity blobIdPayload)
+        |> with Schema.Object.Node.nameid
+        |> with (Schema.Object.Node.source identity blobIdPayload)
 
 
-blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
+blobIdPayload : SelectionSet BlobId Schema.Object.Blob
 blobIdPayload =
     SelectionSet.succeed BlobId
-        |> with (Fractal.Object.Blob.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Blob.tension identity tidPayload)
+        |> with (Schema.Object.Blob.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Blob.tension identity tidPayload)
 
 
-userPayload : SelectionSet User Fractal.Object.User
+userPayload : SelectionSet User Schema.Object.User
 userPayload =
     SelectionSet.map2 User
-        Fractal.Object.User.username
-        Fractal.Object.User.name
+        Schema.Object.User.username
+        Schema.Object.User.name
 
 
-pNodePayload : SelectionSet PNode Fractal.Object.Node
+pNodePayload : SelectionSet PNode Schema.Object.Node
 pNodePayload =
     SelectionSet.succeed PNode
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
         |> hardcoded Nothing
 
 
-tidPayload : SelectionSet IdPayload Fractal.Object.Tension
+tidPayload : SelectionSet IdPayload Schema.Object.Tension
 tidPayload =
     SelectionSet.map IdPayload
-        (SelectionSet.map decodedId Fractal.Object.Tension.id)
+        (SelectionSet.map decodedId Schema.Object.Tension.id)
 
 
-cidPayload : SelectionSet IdPayload Fractal.Object.Contract
+cidPayload : SelectionSet IdPayload Schema.Object.Contract
 cidPayload =
     SelectionSet.map IdPayload
-        (SelectionSet.map decodedId Fractal.Object.Contract.id)
+        (SelectionSet.map decodedId Schema.Object.Contract.id)
 
 
 
@@ -522,29 +522,29 @@ fetchNodeData url nameid msg =
         (RemoteData.fromResult >> decodeResponse nodeDataSourceDecoder >> msg)
 
 
-nodeDataPayload : SelectionSet NodeDataSource Fractal.Object.Node
+nodeDataPayload : SelectionSet NodeDataSource Schema.Object.Node
 nodeDataPayload =
     SelectionSet.succeed NodeDataSource
         |> with
-            (Fractal.Object.Node.source identity
+            (Schema.Object.Node.source identity
                 (SelectionSet.map (\x -> { node = x })
-                    (Fractal.Object.Blob.node identity
+                    (Schema.Object.Blob.node identity
                         (SelectionSet.map2 (\xx yy -> { about = xx, mandate = yy })
-                            Fractal.Object.NodeFragment.about
-                            (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+                            Schema.Object.NodeFragment.about
+                            (Schema.Object.NodeFragment.mandate identity mandatePayload)
                         )
                     )
                 )
             )
 
 
-mandatePayload : SelectionSet Mandate Fractal.Object.Mandate
+mandatePayload : SelectionSet Mandate Schema.Object.Mandate
 mandatePayload =
     SelectionSet.succeed Mandate
-        |> with Fractal.Object.Mandate.purpose
-        |> with Fractal.Object.Mandate.responsabilities
-        |> with Fractal.Object.Mandate.domains
-        |> with Fractal.Object.Mandate.policies
+        |> with Schema.Object.Mandate.purpose
+        |> with Schema.Object.Mandate.responsabilities
+        |> with Schema.Object.Mandate.domains
+        |> with Schema.Object.Mandate.policies
 
 
 
@@ -693,24 +693,24 @@ queryLocalGraph url nid isInit msg =
         (RemoteData.fromResult >> decodeResponse lgDecoder >> msg)
 
 
-lgPayload : Bool -> SelectionSet LocalNode Fractal.Object.Node
+lgPayload : Bool -> SelectionSet LocalNode Schema.Object.Node
 lgPayload isInit =
     SelectionSet.succeed LocalNode
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.type_
-        |> with Fractal.Object.Node.visibility
-        |> with Fractal.Object.Node.mode
-        |> with Fractal.Object.Node.userCanJoin
-        |> with Fractal.Object.Node.isTemplateTensionOnly
-        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
-        |> with (Fractal.Object.Node.source identity blobIdPayload)
-        |> with (Fractal.Object.Node.parent identity lg2Payload)
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.type_
+        |> with Schema.Object.Node.visibility
+        |> with Schema.Object.Node.mode
+        |> with Schema.Object.Node.userCanJoin
+        |> with Schema.Object.Node.isTemplateTensionOnly
+        |> with Schema.Object.Node.isPinnedTensionfetchRecursively
+        |> with (Schema.Object.Node.source identity blobIdPayload)
+        |> with (Schema.Object.Node.parent identity lg2Payload)
         |> (\x ->
                 if isInit then
                     x
-                        |> with (Fractal.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
-                        |> with (Fractal.Object.Node.pinned identity pinPayload |> SelectionSet.map (\y -> ternary (y == Just []) Nothing y))
+                        |> with (Schema.Object.Node.children lgChildrenFilter emiterOrReceiverPayload)
+                        |> with (Schema.Object.Node.pinned identity pinPayload |> SelectionSet.map (\y -> ternary (y == Just []) Nothing y))
 
                 else
                     x
@@ -719,17 +719,17 @@ lgPayload isInit =
            )
 
 
-lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
+lg2Payload : SelectionSet LocalRootNode Schema.Object.Node
 lg2Payload =
     SelectionSet.succeed LocalRootNode
-        |> with Fractal.Object.Node.isRoot
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.userCanJoin
-        |> with Fractal.Object.Node.mode
-        |> with Fractal.Object.Node.isTemplateTensionOnly
-        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
-        |> with (Fractal.Object.Node.source identity blobIdPayload)
+        |> with Schema.Object.Node.isRoot
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.userCanJoin
+        |> with Schema.Object.Node.mode
+        |> with Schema.Object.Node.isTemplateTensionOnly
+        |> with Schema.Object.Node.isPinnedTensionfetchRecursively
+        |> with (Schema.Object.Node.source identity blobIdPayload)
 
 
 mbChildrenFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -760,24 +760,24 @@ lgChildrenFilter a =
     }
 
 
-emiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
+emiterOrReceiverPayload : SelectionSet EmitterOrReceiver Schema.Object.Node
 emiterOrReceiverPayload =
     SelectionSet.succeed EmitterOrReceiver
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
 
 
-emiterOrReceiverWithPinPayload : String -> SelectionSet (NodeWithPin EmitterOrReceiver) Fractal.Object.Node
+emiterOrReceiverWithPinPayload : String -> SelectionSet (NodeWithPin EmitterOrReceiver) Schema.Object.Node
 emiterOrReceiverWithPinPayload tid =
     SelectionSet.succeed (\a b c d e -> { name = a, nameid = b, role_type = c, color = d, pinned = e })
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
         |> with
-            (Fractal.Object.Node.pinned
+            (Schema.Object.Node.pinned
                 (\a ->
                     { a
                         | first = Present 1
@@ -791,15 +791,15 @@ emiterOrReceiverWithPinPayload tid =
             )
 
 
-pinPayload : SelectionSet PinTension Fractal.Object.Tension
+pinPayload : SelectionSet PinTension Schema.Object.Tension
 pinPayload =
     SelectionSet.succeed PinTension
-        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Tension.title
-        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Tension.type_
-        |> with Fractal.Object.Tension.status
+        |> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Tension.title
+        |> with (Schema.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Tension.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Tension.type_
+        |> with Schema.Object.Tension.status
 
 
 
@@ -864,14 +864,14 @@ subPinnedFilter nameid a =
 {-| Cap each descendant's pinned list at maxPinnedTensions so the response
 stays bounded; the merged result is then capped again client-side.
 -}
-nodeWithPinsPayload : SelectionSet NodeWithPins Fractal.Object.Node
+nodeWithPinsPayload : SelectionSet NodeWithPins Schema.Object.Node
 nodeWithPinsPayload =
     SelectionSet.succeed NodeWithPins
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-        |> with (Fractal.Object.Node.pinned (\a -> { a | first = Present maxPinnedTensions }) pinPayload)
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
+        |> with (Schema.Object.Node.pinned (\a -> { a | first = Present maxPinnedTensions }) pinPayload)
 
 
 subPinnedDecoder : String -> Maybe (List (Maybe NodeWithPins)) -> Maybe (List NodeWithPins)
@@ -907,14 +907,14 @@ getCircleRights url nameid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-nodeRightsPayload : SelectionSet NodeRights Fractal.Object.Node
+nodeRightsPayload : SelectionSet NodeRights Schema.Object.Node
 nodeRightsPayload =
     SelectionSet.succeed NodeRights
-        |> with Fractal.Object.Node.visibility
-        |> with Fractal.Object.Node.userCanJoin
-        |> with Fractal.Object.Node.guestCanCreateTension
-        |> with Fractal.Object.Node.isTemplateTensionOnly
-        |> with Fractal.Object.Node.isPinnedTensionfetchRecursively
+        |> with Schema.Object.Node.visibility
+        |> with Schema.Object.Node.userCanJoin
+        |> with Schema.Object.Node.guestCanCreateTension
+        |> with Schema.Object.Node.isTemplateTensionOnly
+        |> with Schema.Object.Node.isPinnedTensionfetchRecursively
 
 
 
@@ -974,10 +974,10 @@ membersFilter rootid a =
     }
 
 
-membersPayload : SelectionSet NodeMembers Fractal.Object.Node
+membersPayload : SelectionSet NodeMembers Schema.Object.Node
 membersPayload =
     SelectionSet.succeed NodeMembers
-        |> with (Fractal.Object.Node.first_link identity userPayload)
+        |> with (Schema.Object.Node.first_link identity userPayload)
 
 
 
@@ -1076,32 +1076,32 @@ queryMembersLocal url nid pattern msg =
         (RemoteData.fromResult >> decodeResponse membersLocalDecoder >> msg)
 
 
-membersLocalPayload : Maybe String -> SelectionSet LocalMemberNode Fractal.Object.Node
+membersLocalPayload : Maybe String -> SelectionSet LocalMemberNode Schema.Object.Node
 membersLocalPayload pattern =
     SelectionSet.succeed LocalMemberNode
-        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
-        |> with Fractal.Object.Node.color
-        |> with (Fractal.Object.Node.first_link identity userPayload)
+        |> with (Schema.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with Schema.Object.Node.name
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.role_type
+        |> with Schema.Object.Node.color
+        |> with (Schema.Object.Node.first_link identity userPayload)
         |> hardcoded Nothing
         |> with
-            (Fractal.Object.Node.children mbChildrenFilter
+            (Schema.Object.Node.children mbChildrenFilter
                 (SelectionSet.succeed MemberNode
-                    |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.role_type
-                    |> with Fractal.Object.Node.color
-                    |> with (Fractal.Object.Node.first_link (searchUserFilter pattern) userPayload)
+                    |> with (Schema.Object.Node.createdAt |> SelectionSet.map decodedTime)
+                    |> with Schema.Object.Node.name
+                    |> with Schema.Object.Node.nameid
+                    |> with Schema.Object.Node.role_type
+                    |> with Schema.Object.Node.color
+                    |> with (Schema.Object.Node.first_link (searchUserFilter pattern) userPayload)
                     |> hardcoded Nothing
                 )
             )
 
 
 
---searchUserFilter : Maybe String -> Fractal.Object.Node.FirstLinkOptionalArguments -> Fractal.Object.Node.FirstLinkOptionalArguments
+--searchUserFilter : Maybe String -> Schema.Object.Node.FirstLinkOptionalArguments -> Schema.Object.Node.FirstLinkOptionalArguments
 
 
 searchUserFilter pattern a =
@@ -1183,10 +1183,10 @@ queryRolesFull url nids msg =
         (RemoteData.fromResult >> decodeResponse rolesFullDecoder2 >> msg)
 
 
-nodeRolesFullPayload : SelectionSet NodeRolesFull Fractal.Object.Node
+nodeRolesFullPayload : SelectionSet NodeRolesFull Schema.Object.Node
 nodeRolesFullPayload =
     SelectionSet.map NodeRolesFull
-        (Fractal.Object.Node.roles
+        (Schema.Object.Node.roles
             (\args ->
                 { args
                     | order =
@@ -1198,22 +1198,22 @@ nodeRolesFullPayload =
         )
 
 
-roleFullPayload : SelectionSet RoleExtFull Fractal.Object.RoleExt
+roleFullPayload : SelectionSet RoleExtFull Schema.Object.RoleExt
 roleFullPayload =
     SelectionSet.map8 RoleExtFull
-        (Fractal.Object.RoleExt.id |> SelectionSet.map decodedId)
-        Fractal.Object.RoleExt.name
-        Fractal.Object.RoleExt.color
-        Fractal.Object.RoleExt.role_type
-        Fractal.Object.RoleExt.about
-        (Fractal.Object.RoleExt.mandate identity mandatePayload)
+        (Schema.Object.RoleExt.id |> SelectionSet.map decodedId)
+        Schema.Object.RoleExt.name
+        Schema.Object.RoleExt.color
+        Schema.Object.RoleExt.role_type
+        Schema.Object.RoleExt.about
+        (Schema.Object.RoleExt.mandate identity mandatePayload)
         (SelectionSet.map (unwrap Nothing .count) <|
-            Fractal.Object.RoleExt.nodesAggregate identity <|
-                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            Schema.Object.RoleExt.nodesAggregate identity <|
+                SelectionSet.map Count Schema.Object.NodeAggregateResult.count
         )
         (SelectionSet.map (unwrap Nothing .count) <|
-            Fractal.Object.RoleExt.rolesAggregate identity <|
-                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            Schema.Object.RoleExt.rolesAggregate identity <|
+                SelectionSet.map Count Schema.Object.NodeAggregateResult.count
         )
 
 
@@ -1243,10 +1243,10 @@ getLabels url nid msg =
         (RemoteData.fromResult >> decodeResponse labelsFullDecoder >> msg)
 
 
-nodeLabelsFullPayload : SelectionSet NodeLabelsFull Fractal.Object.Node
+nodeLabelsFullPayload : SelectionSet NodeLabelsFull Schema.Object.Node
 nodeLabelsFullPayload =
     SelectionSet.map NodeLabelsFull
-        (Fractal.Object.Node.labels
+        (Schema.Object.Node.labels
             (\args ->
                 { args
                     | order =
@@ -1258,16 +1258,16 @@ nodeLabelsFullPayload =
         )
 
 
-labelFullPayload : SelectionSet LabelFull Fractal.Object.Label
+labelFullPayload : SelectionSet LabelFull Schema.Object.Label
 labelFullPayload =
     SelectionSet.map5 LabelFull
-        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
-        Fractal.Object.Label.name
-        Fractal.Object.Label.color
-        Fractal.Object.Label.description
+        (Schema.Object.Label.id |> SelectionSet.map decodedId)
+        Schema.Object.Label.name
+        Schema.Object.Label.color
+        Schema.Object.Label.description
         (SelectionSet.map (unwrap Nothing .count) <|
-            Fractal.Object.Label.nodesAggregate identity <|
-                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+            Schema.Object.Label.nodesAggregate identity <|
+                SelectionSet.map Count Schema.Object.NodeAggregateResult.count
         )
 
 
@@ -1306,10 +1306,10 @@ getTensionTemplateById url tid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-nodeTensionTemplatesFullPayload : SelectionSet NodeTensionTemplatesFull Fractal.Object.Node
+nodeTensionTemplatesFullPayload : SelectionSet NodeTensionTemplatesFull Schema.Object.Node
 nodeTensionTemplatesFullPayload =
     SelectionSet.map NodeTensionTemplatesFull
-        (Fractal.Object.Node.tension_templates
+        (Schema.Object.Node.tension_templates
             (\args ->
                 { args
                     | order =
@@ -1321,33 +1321,33 @@ nodeTensionTemplatesFullPayload =
         )
 
 
-tensionTemplateFullPayload : SelectionSet TensionTemplateFull Fractal.Object.TensionTemplate
+tensionTemplateFullPayload : SelectionSet TensionTemplateFull Schema.Object.TensionTemplate
 tensionTemplateFullPayload =
     SelectionSet.succeed TensionTemplateFull
-        |> with (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.TensionTemplate.name
-        |> with Fractal.Object.TensionTemplate.description
-        |> with Fractal.Object.TensionTemplate.title
-        |> with Fractal.Object.TensionTemplate.comment
-        |> with Fractal.Object.TensionTemplate.type_
-        |> with Fractal.Object.TensionTemplate.is_recursive
-        |> with (Fractal.Object.TensionTemplate.labels identity labelPayload)
-        |> with (Fractal.Object.TensionTemplate.assignees identity userPayload)
+        |> with (Schema.Object.TensionTemplate.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.TensionTemplate.name
+        |> with Schema.Object.TensionTemplate.description
+        |> with Schema.Object.TensionTemplate.title
+        |> with Schema.Object.TensionTemplate.comment
+        |> with Schema.Object.TensionTemplate.type_
+        |> with Schema.Object.TensionTemplate.is_recursive
+        |> with (Schema.Object.TensionTemplate.labels identity labelPayload)
+        |> with (Schema.Object.TensionTemplate.assignees identity userPayload)
         |> with
             (SelectionSet.map (unwrap Nothing .count) <|
-                Fractal.Object.TensionTemplate.nodesAggregate identity <|
-                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+                Schema.Object.TensionTemplate.nodesAggregate identity <|
+                    SelectionSet.map Count Schema.Object.NodeAggregateResult.count
             )
 
 
-tensionTemplateLitePayload : SelectionSet TensionTemplateLite Fractal.Object.TensionTemplate
+tensionTemplateLitePayload : SelectionSet TensionTemplateLite Schema.Object.TensionTemplate
 tensionTemplateLitePayload =
     SelectionSet.map5 TensionTemplateLite
-        (Fractal.Object.TensionTemplate.id |> SelectionSet.map decodedId)
-        Fractal.Object.TensionTemplate.name
-        Fractal.Object.TensionTemplate.description
-        Fractal.Object.TensionTemplate.is_recursive
-        (SelectionSet.map (withDefault []) <| Fractal.Object.TensionTemplate.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
+        (Schema.Object.TensionTemplate.id |> SelectionSet.map decodedId)
+        Schema.Object.TensionTemplate.name
+        Schema.Object.TensionTemplate.description
+        Schema.Object.TensionTemplate.is_recursive
+        (SelectionSet.map (withDefault []) <| Schema.Object.TensionTemplate.nodes identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid))
 
 
 
@@ -1388,7 +1388,7 @@ getProjects url nid pattern status msg =
                                 |> Present
                     }
                 )
-                (SelectionSet.map (withDefault 0) Fractal.Object.ProjectAggregateResult.count)
+                (SelectionSet.map (withDefault 0) Schema.Object.ProjectAggregateResult.count)
             )
             (Query.aggregateProject
                 (\args ->
@@ -1405,16 +1405,16 @@ getProjects url nid pattern status msg =
                                 |> Present
                     }
                 )
-                (SelectionSet.map (withDefault 0) Fractal.Object.ProjectAggregateResult.count)
+                (SelectionSet.map (withDefault 0) Schema.Object.ProjectAggregateResult.count)
             )
         )
         (RemoteData.fromResult >> decodeResponse projectsFullDecoder >> msg)
 
 
-nodeProjectsFullPayload : Maybe String -> ProjectStatus.ProjectStatus -> SelectionSet (List ProjectFull) Fractal.Object.Node
+nodeProjectsFullPayload : Maybe String -> ProjectStatus.ProjectStatus -> SelectionSet (List ProjectFull) Schema.Object.Node
 nodeProjectsFullPayload pattern status =
     SelectionSet.map (withDefault [])
-        (Fractal.Object.Node.projects
+        (Schema.Object.Node.projects
             (\args ->
                 { args
                     | filter =
@@ -1435,18 +1435,18 @@ nodeProjectsFullPayload pattern status =
         )
 
 
-projectFullPayload : SelectionSet ProjectFull Fractal.Object.Project
+projectFullPayload : SelectionSet ProjectFull Schema.Object.Project
 projectFullPayload =
     SelectionSet.succeed ProjectFull
-        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Project.updatedAt |> SelectionSet.map decodedTime)
-        |> with Fractal.Object.Project.name
-        |> with Fractal.Object.Project.description
-        |> with (Fractal.Object.Project.parentnameid |> SelectionSet.map Just)
-        |> with (Fractal.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
-        |> with (Fractal.Object.Project.collaborators identity (SelectionSet.map Username Fractal.Object.User.username) |> SelectionSet.map (withDefault []))
-        |> with Fractal.Object.Project.peerCanEditProject
-        |> with Fractal.Object.Project.guestCanEditProject
+        |> with (Schema.Object.Project.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Project.updatedAt |> SelectionSet.map decodedTime)
+        |> with Schema.Object.Project.name
+        |> with Schema.Object.Project.description
+        |> with (Schema.Object.Project.parentnameid |> SelectionSet.map Just)
+        |> with (Schema.Object.Project.nodes identity emiterOrReceiverPayload |> SelectionSet.map (withDefault []))
+        |> with (Schema.Object.Project.collaborators identity (SelectionSet.map Username Schema.Object.User.username) |> SelectionSet.map (withDefault []))
+        |> with Schema.Object.Project.peerCanEditProject
+        |> with Schema.Object.Project.guestCanEditProject
 
 
 
@@ -1497,10 +1497,10 @@ queryLabelsDown url nids msg =
         (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
 
 
-nodeLabelsPayload : SelectionSet NodeLabels Fractal.Object.Node
+nodeLabelsPayload : SelectionSet NodeLabels Schema.Object.Node
 nodeLabelsPayload =
     SelectionSet.map NodeLabels
-        (Fractal.Object.Node.labels
+        (Schema.Object.Node.labels
             (\args ->
                 { args
                     | order =
@@ -1512,23 +1512,23 @@ nodeLabelsPayload =
         )
 
 
-labelPayload : SelectionSet Label Fractal.Object.Label
+labelPayload : SelectionSet Label Schema.Object.Label
 labelPayload =
     SelectionSet.succeed Label
-        |> with (Fractal.Object.Label.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Label.name
-        |> with Fractal.Object.Label.color
+        |> with (Schema.Object.Label.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Label.name
+        |> with Schema.Object.Label.color
         |> hardcoded []
 
 
-labelWithNodesPayload : SelectionSet Label Fractal.Object.Label
+labelWithNodesPayload : SelectionSet Label Schema.Object.Label
 labelWithNodesPayload =
     SelectionSet.succeed Label
-        |> with (Fractal.Object.Label.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Label.name
-        |> with Fractal.Object.Label.color
+        |> with (Schema.Object.Label.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Label.name
+        |> with Schema.Object.Label.color
         |> with
-            (Fractal.Object.Label.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
+            (Schema.Object.Label.nodes identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid)
                 |> SelectionSet.map (withDefault [])
             )
 
@@ -1571,10 +1571,10 @@ queryProjects url nids msg =
         (RemoteData.fromResult >> decodeResponse projectsDecoder >> msg)
 
 
-nodeProjectsPayload : SelectionSet NodeProjects Fractal.Object.Node
+nodeProjectsPayload : SelectionSet NodeProjects Schema.Object.Node
 nodeProjectsPayload =
     SelectionSet.map NodeProjects
-        (Fractal.Object.Node.projects
+        (Schema.Object.Node.projects
             (\args ->
                 { args
                     | order =
@@ -1586,11 +1586,11 @@ nodeProjectsPayload =
         )
 
 
-projectPayload : SelectionSet Project Fractal.Object.Project
+projectPayload : SelectionSet Project Schema.Object.Project
 projectPayload =
     SelectionSet.succeed Project
-        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Project.name
+        |> with (Schema.Object.Project.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Project.name
 
 
 
@@ -1625,10 +1625,10 @@ getOpenProjectsForPanel url nameids pattern_m msg =
         (RemoteData.fromResult >> decodeResponse openProjectsDecoder >> msg)
 
 
-nodeOpenProjectsPayload : Maybe String -> SelectionSet NodeOpenProjects Fractal.Object.Node
+nodeOpenProjectsPayload : Maybe String -> SelectionSet NodeOpenProjects Schema.Object.Node
 nodeOpenProjectsPayload pattern_m =
     SelectionSet.map NodeOpenProjects
-        (Fractal.Object.Node.projects
+        (Schema.Object.Node.projects
             (\args ->
                 { args
                     | filter =
@@ -1649,13 +1649,13 @@ nodeOpenProjectsPayload pattern_m =
         )
 
 
-projectWithColumnsPayload : SelectionSet ProjectWithColumns Fractal.Object.Project
+projectWithColumnsPayload : SelectionSet ProjectWithColumns Schema.Object.Project
 projectWithColumnsPayload =
     SelectionSet.succeed ProjectWithColumns
-        |> with (Fractal.Object.Project.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Project.name
+        |> with (Schema.Object.Project.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.Project.name
         |> with
-            (Fractal.Object.Project.columns
+            (Schema.Object.Project.columns
                 (\args ->
                     { args
                         | order =
@@ -1667,19 +1667,19 @@ projectWithColumnsPayload =
                 |> SelectionSet.map (withDefault [])
             )
         |> with
-            (Fractal.Object.Project.nodes identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid)
+            (Schema.Object.Project.nodes identity (SelectionSet.map NameidPayload Schema.Object.Node.nameid)
                 |> SelectionSet.map (withDefault [])
             )
 
 
-projectColumnLitePayload : SelectionSet ProjectColumnLite Fractal.Object.ProjectColumn
+projectColumnLitePayload : SelectionSet ProjectColumnLite Schema.Object.ProjectColumn
 projectColumnLitePayload =
     SelectionSet.succeed ProjectColumnLite
-        |> with (Fractal.Object.ProjectColumn.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.ProjectColumn.name
-        |> with Fractal.Object.ProjectColumn.color
-        |> with Fractal.Object.ProjectColumn.pos
-        |> with Fractal.Object.ProjectColumn.col_type
+        |> with (Schema.Object.ProjectColumn.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.ProjectColumn.name
+        |> with Schema.Object.ProjectColumn.color
+        |> with Schema.Object.ProjectColumn.pos
+        |> with Schema.Object.ProjectColumn.col_type
 
 
 
@@ -1706,8 +1706,8 @@ queryJournal url nameid textQuery msg =
         (Query.getNode
             (nidFilter nameid)
             (SelectionSet.map2 JournalNode
-                Fractal.Object.Node.nameid
-                (Fractal.Object.Node.events_history
+                Schema.Object.Node.nameid
+                (Schema.Object.Node.events_history
                     (\args -> { args | query = fromMaybe textQuery })
                     tensionEventPayload
                 )
@@ -1716,56 +1716,56 @@ queryJournal url nameid textQuery msg =
         (RemoteData.fromResult >> decodeResponse journalDecoder >> msg)
 
 
-tensionEventPayload : SelectionSet EventNotif Fractal.Object.Event
+tensionEventPayload : SelectionSet EventNotif Schema.Object.Event
 tensionEventPayload =
     SelectionSet.succeed EventNotif
-        |> with (Fractal.Object.Event.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Event.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Event.event_type
+        |> with (Schema.Object.Event.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Event.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Event.event_type
         |> with
-            (Fractal.Object.Event.tension identity
+            (Schema.Object.Event.tension identity
                 (SelectionSet.map4 (\a b c d -> { id = a, emitterid = b, receiver = c, title = d })
-                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    Fractal.Object.Tension.emitterid
-                    (Fractal.Object.Tension.receiver identity pNodePayload)
-                    Fractal.Object.Tension.title
+                    (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+                    Schema.Object.Tension.emitterid
+                    (Schema.Object.Tension.receiver identity pNodePayload)
+                    Schema.Object.Tension.title
                 )
             )
-        |> with Fractal.Object.Event.new
+        |> with Schema.Object.Event.new
 
 
-contractEventPayload : SelectionSet ContractNotif Fractal.Object.Contract
+contractEventPayload : SelectionSet ContractNotif Schema.Object.Contract
 contractEventPayload =
     SelectionSet.succeed ContractNotif
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Contract.contract_type
-        |> with (Fractal.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Fractal.Object.EventFragment.event_type)
+        |> with (Schema.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Schema.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Contract.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Contract.contract_type
+        |> with (Schema.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Schema.Object.EventFragment.event_type)
         |> with
-            (Fractal.Object.Contract.tension identity
+            (Schema.Object.Contract.tension identity
                 (SelectionSet.map2 (\a b -> { id = a, receiver = b })
-                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    (Fractal.Object.Tension.receiver identity pNodePayload)
+                    (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+                    (Schema.Object.Tension.receiver identity pNodePayload)
                 )
             )
 
 
-notifEventPayload : SelectionSet NotifNotif Fractal.Object.Notif
+notifEventPayload : SelectionSet NotifNotif Schema.Object.Notif
 notifEventPayload =
     SelectionSet.succeed NotifNotif
-        |> with (Fractal.Object.Notif.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Notif.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Notif.message
+        |> with (Schema.Object.Notif.createdAt |> SelectionSet.map decodedTime)
+        |> with (Schema.Object.Notif.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
+        |> with Schema.Object.Notif.message
         |> with
-            (Fractal.Object.Notif.tension_ identity
+            (Schema.Object.Notif.tension_ identity
                 (SelectionSet.map2 (\a b -> { id = a, receiver = b })
-                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    (Fractal.Object.Tension.receiver identity pNodePayload)
+                    (Schema.Object.Tension.id |> SelectionSet.map decodedId)
+                    (Schema.Object.Tension.receiver identity pNodePayload)
                 )
             )
-        |> with (Fractal.Object.Notif.contract identity (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id)))
-        |> with Fractal.Object.Notif.link
+        |> with (Schema.Object.Notif.contract identity (SelectionSet.map IdPayload (SelectionSet.map decodedId Schema.Object.Contract.id)))
+        |> with Schema.Object.Notif.link
 
 
 
@@ -1782,7 +1782,7 @@ getOrgaInfo url username nameid msg =
             )
             (Query.getNode (nidFilter nameid) (orgaInfoPayload username))
             (Query.aggregateProject (\a -> { a | filter = Present <| Input.buildProjectFilter (\x -> { x | rootnameid = Present { eq = Present nameid, in_ = Absent }, status = Present { eq = Present ProjectStatus.Open, in_ = Absent } }) })
-                (SelectionSet.map Count Fractal.Object.ProjectAggregateResult.count)
+                (SelectionSet.map Count Schema.Object.ProjectAggregateResult.count)
             )
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
@@ -1795,33 +1795,33 @@ getServerVersion url msg =
     makeGQLQuery url
         (Query.queryBuildInfo identity
             (SelectionSet.map2 ServerBuild
-                Fractal.Object.BuildInfo.client_version
-                (SelectionSet.map parseReloadMode Fractal.Object.BuildInfo.reload_mode)
+                Schema.Object.BuildInfo.client_version
+                (SelectionSet.map parseReloadMode Schema.Object.BuildInfo.reload_mode)
             )
             |> SelectionSet.map (withDefault [] >> List.filterMap identity >> List.head >> Just)
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-orgaInfoPayload : String -> SelectionSet OrgaInfo Fractal.Object.Node
+orgaInfoPayload : String -> SelectionSet OrgaInfo Schema.Object.Node
 orgaInfoPayload username =
     SelectionSet.succeed OrgaInfo
         |> hardcoded 0
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| activeMembershipRoleTypes, eq = Absent } }) }) <|
-                    SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+                Schema.Object.Node.childrenAggregate (\a -> { a | filter = Present <| Input.buildNodeFilter (\x -> { x | role_type = Present { in_ = Present <| List.map Just <| activeMembershipRoleTypes, eq = Absent } }) }) <|
+                    SelectionSet.map Count Schema.Object.NodeAggregateResult.count
             )
         |> hardcoded 0
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
-                Fractal.Object.Node.watchersAggregate identity <|
-                    SelectionSet.map Count Fractal.Object.UserAggregateResult.count
+                Schema.Object.Node.watchersAggregate identity <|
+                    SelectionSet.map Count Schema.Object.UserAggregateResult.count
             )
         |> with
             (SelectionSet.map (Maybe.map (\y -> List.length y > 0))
-                (Fractal.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
-                    (SelectionSet.map NameidPayload Fractal.Object.User.username)
+                (Schema.Object.Node.watchers (\a -> { a | filter = Present <| Input.buildUserFilter (\x -> { x | username = Present { eq = Present username, in_ = Absent, regexp = Absent } }) })
+                    (SelectionSet.map NameidPayload Schema.Object.User.username)
                 )
             )
-        |> with Fractal.Object.Node.lexicon
+        |> with Schema.Object.Node.lexicon

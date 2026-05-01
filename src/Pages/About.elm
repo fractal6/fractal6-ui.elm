@@ -32,7 +32,7 @@ import Extra exposing (send, sendSleep, ternary, textH, upH)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
 import Form.Help as Help
-import Fractal.Enum.Lang as Lang
+import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, dd, div, dl, dt, figcaption, figure, h1, h2, hr, i, iframe, img, input, label, li, nav, p, span, strong, text, textarea, ul)
