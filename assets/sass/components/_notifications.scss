@@ -73,7 +73,7 @@
 
     .acc-title .is-flex {
         & > :first-child { flex-shrink: 0; }
-        & > :last-child  { flex: 1; min-width: 0; }
+        & > :last-child  { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     }
 }
 

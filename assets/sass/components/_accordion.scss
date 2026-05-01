@@ -138,8 +138,12 @@ input:checked + .acc .acc-content {
 }
 
 .arrows-right {
-    .acc-title { padding-right: 20px; }
-    section .acc-title:before { right: 18px; }
+    .acc-title { padding-right: 36px; }
+    section .acc-title:before {
+        right: 18px;
+        // Anchor to first-line center (matches the leading icon's level) so arrow stays in place when title wraps.
+        top: calc(1.5em - 4px);
+    }
 }
 
 // ===================
