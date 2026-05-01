@@ -26,14 +26,9 @@ import Auth exposing (ErrState(..), getProjectRights, hasLazyAdminRole, parseErr
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Fractale.Form exposing (ProjectForm, initProjectForm)
-import Fractale.User exposing (UserState(..), freshSessionOnOrgaSwitch)
-import Utils.Bulma as B
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
-import Fractale.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
+import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar
 import Components.JoinOrga as JoinOrga
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -42,24 +37,18 @@ import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf, textH, textT)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (decap, space_, upH)
-import Utils.Date exposing (formatDate)
-import Utils.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.ProjectStatus as ProjectStatus
-import Schema.Enum.TensionAction as TensionAction
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Form exposing (ProjectForm, initProjectForm)
+import Fractale.User exposing (UserState(..), freshSessionOnOrgaSwitch)
+import Fractale.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, datalist, div, figcaption, figure, h1, h2, hr, i, img, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (alt, attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, src, style, target, type_, value)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -73,12 +62,25 @@ import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProje
 import Query.QueryNode exposing (getProjects, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchProjectCount, fetchProjectsSub, fetchProjectsTop)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.TensionAction as TensionAction
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents exposing (onClickSP)
+import Utils.Html exposing (showIf, textH, textT)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (decap, space_, upH)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 
@@ -207,6 +209,10 @@ type alias Model =
     , project_result : GqlData ProjectFull
     , project_result_del : GqlData String
 
+    -- Column color picker (shared, scoped to one column at a time)
+    , colorPicker : ColorPicker
+    , colorPickerIdx : Maybe Int
+
     -- Move
     , project_move : Maybe ProjectFull
     , move_target : Maybe Node
@@ -318,25 +324,29 @@ resetForm model =
     }
 
 
-simpleKanban : List { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType }
+type alias ColumnDraft =
+    { name : String, description : String, color : Maybe String, col_type : ProjectColumnType.ProjectColumnType }
+
+
+columnNameInputId : Int -> String
+columnNameInputId idx =
+    "column-name-" ++ String.fromInt idx
+
+
+simpleKanban : List ColumnDraft
 simpleKanban =
-    [ { name = "Triage"
-      , description = ""
-      , color = Nothing
-      , col_type = ProjectColumnType.NoStatusColumn
-      }
-    , { name = "Todo"
-      , description = "This item hasn't been started"
+    [ { name = T.colTodoName
+      , description = T.colTodoDesc
       , color = Just "#01FF70"
       , col_type = ProjectColumnType.NormalColumn
       }
-    , { name = "In Progress"
-      , description = "This is actively being worked on"
+    , { name = T.colInProgressName
+      , description = T.colInProgressDesc
       , color = Just "#FF851B"
       , col_type = ProjectColumnType.NormalColumn
       }
-    , { name = "Done"
-      , description = "This has been completed"
+    , { name = T.colDoneName
+      , description = T.colDoneDesc
       , color = Just "#B10DC9"
       , col_type = ProjectColumnType.NormalColumn
       }
@@ -353,6 +363,14 @@ type Msg
     | ChangeProjectPost String String
     | TogglePeerCanEdit
     | ToggleGuestCanEdit
+      -- Columns editor (new project)
+    | AddColumn
+    | RemoveColumn Int
+    | ChangeColumnField Int String String
+    | MoveColumn Int Int
+    | OpenColumnColor Int
+    | CloseColumnColor
+    | SelectColumnColor String
     | SafeEdit Msg
     | SafeSend Msg
     | GotProjects (GqlData { projects : List ProjectFull, counts : ProjectsCount })
@@ -461,6 +479,8 @@ init global flags =
             , project_edit = Nothing
             , project_result = NotAsked
             , project_result_del = NotAsked
+            , colorPicker = ColorPicker.init
+            , colorPickerIdx = Nothing
 
             -- Move
             , project_move = Nothing
@@ -634,6 +654,162 @@ update global message model =
                         { form | guestCanEditProject = Just False }
             in
             ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        AddColumn ->
+            let
+                form =
+                    model.project_form
+
+                cols =
+                    form.columns |> withDefault []
+
+                newCol : ColumnDraft
+                newCol =
+                    { name = ""
+                    , description = ""
+                    , color = Just ColorPicker.initColor
+                    , col_type = ProjectColumnType.NormalColumn
+                    }
+
+                newForm =
+                    { form | columns = Just (cols ++ [ newCol ]) }
+
+                newIdx =
+                    List.length cols
+            in
+            ( { model | project_form = newForm, hasUnsavedData = True }
+            , Ports.focusOn (columnNameInputId newIdx)
+            , Cmd.none
+            )
+
+        RemoveColumn idx ->
+            let
+                form =
+                    model.project_form
+
+                cols =
+                    form.columns |> withDefault []
+
+                newForm =
+                    { form | columns = Just (LE.removeAt idx cols) }
+            in
+            ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        ChangeColumnField idx field value ->
+            let
+                form =
+                    model.project_form
+
+                cols =
+                    form.columns |> withDefault []
+
+                newCols =
+                    LE.updateAt idx
+                        (\c ->
+                            case field of
+                                "name" ->
+                                    { c | name = value }
+
+                                "description" ->
+                                    { c | description = value }
+
+                                _ ->
+                                    c
+                        )
+                        cols
+
+                newForm =
+                    { form | columns = Just newCols }
+            in
+            ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        MoveColumn idx delta ->
+            let
+                form =
+                    model.project_form
+
+                cols =
+                    form.columns |> withDefault []
+
+                target =
+                    idx + delta
+            in
+            if target < 0 || target >= List.length cols then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                let
+                    newForm =
+                        { form | columns = Just (LE.swapAt idx target cols) }
+                in
+                ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        OpenColumnColor idx ->
+            let
+                wasOpen =
+                    model.colorPicker.isOpen
+
+                col_color =
+                    model.project_form.columns
+                        |> Maybe.andThen (LE.getAt idx)
+                        |> Maybe.andThen .color
+
+                newPicker =
+                    model.colorPicker
+                        |> ColorPicker.setColor col_color
+                        |> ColorPicker.open
+            in
+            ( { model | colorPicker = newPicker, colorPickerIdx = Just idx }
+            , if wasOpen then
+                Cmd.none
+
+              else
+                Ports.outsideClickClose "cancelColorFromJs" "colorPicker"
+            , Cmd.none
+            )
+
+        CloseColumnColor ->
+            ( { model
+                | colorPicker = ColorPicker.close model.colorPicker
+                , colorPickerIdx = Nothing
+              }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        SelectColumnColor color ->
+            let
+                form =
+                    model.project_form
+
+                cols =
+                    form.columns |> withDefault []
+
+                newCols =
+                    case model.colorPickerIdx of
+                        Just idx ->
+                            LE.updateAt idx (\c -> { c | color = Just color }) cols
+
+                        Nothing ->
+                            cols
+
+                newForm =
+                    { form | columns = Just newCols }
+
+                newPicker =
+                    model.colorPicker
+                        |> ColorPicker.setColor (Just color)
+                        |> ColorPicker.close
+            in
+            ( { model
+                | project_form = newForm
+                , colorPicker = newPicker
+                , colorPickerIdx = Nothing
+                , hasUnsavedData = True
+              }
+            , Ports.click "body"
+            , Cmd.none
+            )
 
         SafeEdit msg ->
             if model.hasUnsavedData then
@@ -1265,6 +1441,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.cancelColorFromJs (always CloseColumnColor)
     ]
         ++ (if model.project_move /= Nothing then
                 [ Ports.mcPD Ports.closeModalFromJs LogErr (\_ -> CancelMoveProject) ]
@@ -1527,19 +1704,178 @@ viewNewOrEditProject session isNew model =
             ]
         , if isNew then
             div [ class "column is-half" ]
-                [ figure [ class "image is-fullwidth has-border-light is-rounded" ]
-                    [ case session.theme of
-                        DarkTheme ->
-                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-dark.png" ] []
-
-                        LightTheme ->
-                            img [ src "https://api.fractale.co/assets/screenshots/f6-project-base-template-light.png" ] []
-                    ]
-                , figcaption [] [ text (T.projectCaptionSimple session.lexicon) ]
+                [ viewColumnsEditor model
+                , p [ class "is-size-7 has-text-grey mt-3" ]
+                    [ text (T.projectCaptionSimple session.lexicon) ]
                 ]
 
           else
             text ""
+        ]
+
+
+viewColumnsEditor : Model -> Html Msg
+viewColumnsEditor model =
+    let
+        cols =
+            model.project_form.columns |> withDefault []
+
+        nCols =
+            List.length cols
+    in
+    div []
+        [ div [ class "level mb-3 is-mobile" ]
+            [ div [ class "level-left" ]
+                [ div []
+                    [ div [ class "label mb-0" ] [ text T.columnLayout ]
+                    , p [ class "is-size-7 has-text-grey" ]
+                        [ text T.customizeColumns ]
+                    ]
+                ]
+            , div [ class "level-right" ]
+                [ span
+                    [ class "tag is-weak"
+                    , attribute "title" T.moreTemplatesSoon
+                    ]
+                    [ text "Simple Kanban" ]
+                ]
+            ]
+        , div [] (List.indexedMap (viewColumnRow model.colorPicker model.colorPickerIdx nCols) cols)
+        , button
+            [ class "button is-fullwidth is-weak mt-2"
+            , style "border" "1px dashed var(--bulma-border)"
+            , onClick AddColumn
+            ]
+            [ A.icon1 "icon-plus" T.addColumn ]
+        ]
+
+
+viewColumnRow : ColorPicker -> Maybe Int -> Int -> Int -> ColumnDraft -> Html Msg
+viewColumnRow colorPicker activeIdx nCols idx col =
+    let
+        accent =
+            withDefault "var(--bulma-border)" col.color
+
+        swatchStyle =
+            case col.color of
+                Just c ->
+                    "background-color:" ++ c ++ "; border:none;"
+
+                Nothing ->
+                    "background-color:transparent; border:1px dashed var(--bulma-border);"
+
+        isFirst =
+            idx == 0
+
+        isLast =
+            idx == nCols - 1
+
+        isPickerActive =
+            activeIdx == Just idx
+
+        inputCls =
+            "input is-small editable-soft-input"
+
+        bareInputStyle =
+            [ style "border" "none"
+            , style "background" "transparent"
+            , style "box-shadow" "none"
+            ]
+
+        -- The wrapper, swatch button and popup keep the same shape regardless of
+        -- isPickerActive so opening the picker never shifts the row layout. The
+        -- popup is only rendered for the active row to avoid duplicate
+        -- `id="colorPicker"` collisions with Ports.outsideClickClose.
+        swatch =
+            span
+                [ class "mr-2 is-flex-shrink-0"
+                , style "position" "relative"
+                ]
+                [ button
+                    [ class "buttonColor"
+                    , attribute "style" swatchStyle
+                    , onClickSP (OpenColumnColor idx)
+                    , attribute "title" T.changeColor
+                    ]
+                    []
+                , showIf isPickerActive <|
+                    div [ id "colorPicker" ]
+                        [ div [ class "colorBoxes" ]
+                            [ span [ class "is-size-7" ]
+                                [ text T.selectColor, text ":" ]
+                            , div []
+                                (colorPicker.colors
+                                    |> List.map
+                                        (\c ->
+                                            button
+                                                [ class "buttonColor"
+                                                , onClick (SelectColumnColor c)
+                                                , attribute "style" ("background-color:" ++ c ++ ";")
+                                                ]
+                                                []
+                                        )
+                                )
+                            ]
+                        ]
+                ]
+    in
+    div
+        [ class "p-3 mb-2 has-background-body"
+        , style "border" "1px solid var(--bulma-border)"
+        , style "border-left" ("4px solid " ++ accent)
+        , style "border-radius" "var(--bulma-radius)"
+        ]
+        [ div [ class "is-flex is-align-items-center" ]
+            [ swatch
+            , input
+                ([ id (columnNameInputId idx)
+                 , class inputCls
+                 , type_ "text"
+                 , value col.name
+                 , placeholder T.name
+                 , onInput (ChangeColumnField idx "name")
+                 , style "font-weight" "600"
+                 , style "flex" "1"
+                 ]
+                    ++ bareInputStyle
+                )
+                []
+            , div [ class "buttons has-addons mb-0 ml-2 is-flex-shrink-0" ]
+                [ button
+                    [ class "button is-small"
+                    , disabled isFirst
+                    , onClick (MoveColumn idx -1)
+                    , attribute "title" T.moveUp
+                    ]
+                    [ A.icon "icon-chevron-up" ]
+                , button
+                    [ class "button is-small"
+                    , disabled isLast
+                    , onClick (MoveColumn idx 1)
+                    , attribute "title" T.moveDown
+                    ]
+                    [ A.icon "icon-chevron-down" ]
+                , button
+                    [ class "button is-small has-text-danger"
+                    , disabled (nCols <= 1)
+                    , onClick (RemoveColumn idx)
+                    , attribute "title" T.removeColumn
+                    ]
+                    [ A.icon "icon-x" ]
+                ]
+            ]
+        , input
+            ([ class inputCls
+             , type_ "text"
+             , value col.description
+             , placeholder T.descriptionOptional
+             , onInput (ChangeColumnField idx "description")
+             , style "color" "var(--bulma-text-weak)"
+             , style "font-size" "0.85rem"
+             ]
+                ++ bareInputStyle
+            )
+            []
         ]
 
 

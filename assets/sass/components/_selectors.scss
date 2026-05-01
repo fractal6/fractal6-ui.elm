@@ -138,7 +138,26 @@
     border-radius: 8px !important;
     border-width: 0 !important;
     margin: 0px 8px 5px 0px;
+    box-sizing: border-box; // keep size constant whether the inline border is present or not
     &:hover {cursor: pointer; }
+}
+
+// Subtle background hint to signal an inline-editable input (e.g. column editor).
+// Bulma's `.input` already paints its own background, so the rules below combine
+// `!important` with `:focus-within`/`:hover` selectors strong enough to win.
+.editable-soft-input,
+input.editable-soft-input {
+    background-color: transparent !important;
+    transition: background-color 0.12s ease;
+    border-radius: 4px;
+    &:hover {
+        background-color: var(--background-hover) !important;
+    }
+    &:focus,
+    &:focus-within {
+        background-color: var(--background-hover) !important;
+        outline: none;
+    }
 }
 
 .actionPanelStyle {

@@ -25,6 +25,7 @@ import Html exposing (Html, button, div, span, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, id)
 import Html.Events exposing (onClick)
 import Text as T
+import Utils.DomEvents exposing (onClickSP)
 
 
 type alias ColorPicker =
@@ -102,7 +103,13 @@ view op =
         [ button
             [ class "buttonColor"
             , attribute "style" ("background-color:" ++ op.data.color ++ ";")
-            , onClick op.onOpen
+            , onClickSP
+                (if op.data.isOpen then
+                    op.onClose
+
+                 else
+                    op.onOpen
+                )
             ]
             []
         , div

@@ -1916,6 +1916,74 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Edit column"
   fr="Editer la colone"
 
+[columnLayout]
+  en="Column layout"
+  fr="Colonnes"
+
+[customizeColumns]
+  en="Customize the columns of the project board."
+  fr="Personnalisez les colonnes du tableau du projet."
+
+[moreTemplatesSoon]
+  en="More templates coming soon"
+  fr="D’autres modèles arrivent bientôt"
+
+[descriptionOptional]
+  en="Description (optional)"
+  fr="Description (optionnel)"
+
+[changeColor]
+  en="Click to change color"
+  fr="Cliquez pour changer la couleur"
+
+[moveUp]
+  en="Move up"
+  fr="Monter"
+
+[moveDown]
+  en="Move down"
+  fr="Descendre"
+
+[removeColumn]
+  en="Remove column"
+  fr="Supprimer la colonne"
+
+[entryColumn]
+  en="entry"
+  fr="entrée"
+
+[colTriageName]
+  en="Triage"
+  fr="Tri"
+
+[colTriageDesc]
+  en=""
+  fr=""
+
+[colTodoName]
+  en="Todo"
+  fr="À faire"
+
+[colTodoDesc]
+  en="This item hasn't been started"
+  fr="Cet élément n’a pas encore été commencé"
+
+[colInProgressName]
+  en="In Progress"
+  fr="En cours"
+
+[colInProgressDesc]
+  en="This is actively being worked on"
+  fr="Cet élément est en cours de traitement"
+
+[colDoneName]
+  en="Done"
+  fr="Terminé"
+
+[colDoneDesc]
+  en="This has been completed"
+  fr="Cet élément est terminé"
+
 [selectRoleTemplate]
   en="Select a role template"
   fr="Sélectionner un modèle de rôle"
