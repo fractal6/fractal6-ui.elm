@@ -19,10 +19,10 @@
 -}
 
 
-module Bulk.Error exposing (..)
+module Fractale.Error exposing (..)
 
-import Extra exposing (upH)
-import Extra.Events exposing (onClickPD)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onClickPD)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, p, text)
 import Html.Attributes exposing (class, href, target)

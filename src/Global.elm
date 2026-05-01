@@ -35,13 +35,18 @@ module Global exposing
 import Auth exposing (ErrState(..), parseErr, parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Bulk exposing (OrgaForm, UserState(..), countOpenTensions, getNode, treeMatchesFocus, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
-import Bulk.Error exposing (viewGqlErrorsLight)
+import Fractale.Form exposing (OrgaForm)
+import Fractale.Graph exposing (countOpenTensions, getNode, treeMatchesFocus)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, toLink, urlToFractalRoute)
+import Fractale.Error exposing (viewGqlErrorsLight)
 import Codecs exposing (CommentDraft, DraftStore, DraftUpdate(..), RecentActivityTab, TensionDraft, WindowPos, maxCommentDrafts)
 import Components.Navbar as Navbar
 import Dict
-import Extra exposing (send, sendSleep, showIf, showMaybe, ternary, unwrap2)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (unwrap2)
 import Footbar
 import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)

@@ -17,4 +17,4 @@ Pre-filled tension forms defined at the circle level. When templates exist, user
 ## Key types
 
 - `TensionTemplateLite` / `TensionTemplateFull` / `NodeRights.isTemplateTensionOnly` — `src/ModelSchema.elm`
-- `TensionTemplateForm` — `src/Bulk.elm`
+- `TensionTemplateForm` — `src/Fractale/Form.elm`

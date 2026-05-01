@@ -23,16 +23,21 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
-import Bulk.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
+import Fractale.Form exposing (CommentPatchForm, InputViewMode(..), initCommentPatchForm)
+import Fractale.Graph exposing (nodeFromTension)
+import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (FractalBaseRoute(..), contractIdCodec, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (cev2c, cev2p, contractEventToText, contractEventToValue, contractTypeToText)
+import Fractale.View exposing (byAt, viewRole, viewTensionArrow, viewUserFull, viewUsernameLink)
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (send, sendNow, sendSleep, space_, ternary, upH)
-import Extra.Date exposing (formatDate)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.String exposing (space_, upH)
+import Utils.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.NodeType as NodeType

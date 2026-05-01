@@ -24,16 +24,18 @@ module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
-import Bulk.View exposing (counter, mediaTension, viewOrga)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid, nid2rootid)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (contractEventToText, contractToJonction, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
+import Fractale.View exposing (counter, mediaTension, viewOrga)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (send, sendNow, sendSleep, ternary, upT)
-import Extra.Events exposing (onClickPD)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.String exposing (upT)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionEvent as TensionEvent

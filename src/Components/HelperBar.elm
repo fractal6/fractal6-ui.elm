@@ -22,13 +22,10 @@
 module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
-import Bulk exposing (UserState(..), getParent)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
-import Bulk.View exposing (counter, viewRole, visibility2icon)
-import Extra exposing (showIf, ternary, unwrap, unwrap2)
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.RoleType as RoleType
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
+import Fractale.Graph exposing (getParent)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (counter, viewRole, visibility2icon)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, href, id, title)
@@ -38,9 +35,15 @@ import Loading exposing (RequestResult(..))
 import Maybe exposing (withDefault)
 import ModelSchema exposing (LocalGraph, OrgaInfo, UserCtx, UserRole, getSourceTid)
 import Ports
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, ViewMode(..))
 import String.Format as Format
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap, unwrap2)
 
 
 
@@ -342,18 +345,6 @@ viewNavTabs op model =
                             counter i
                     ]
                 ]
-
-             --[ a [ href (toLink TensionsBaseUri focusid) ]
-             --    [ div [ class "dropdown is-hoverable" ]
-             --        [ div [ class "dropdown-trigger", attribute "aria-haspopup" "true", attribute "aria-controls" "tension-menu" ] [ A.icon1 "icon-exchange" "Tensions" ]
-             --        , div [ class "dropdown-menu", id "tension-menu", attribute "role" "menu" ]
-             --            [
-             --              div [ class "dropdown-content" ] [ p [ class "dropdown-item" ] [ text T.list ] ]
-             --              , div [ class "dropdown-content" ] [ p [ class "dropdown-item" ] [ text T.byCircle ] ]
-             --            ]
-             --        ]
-             --    ]
-             --]
              ]
                 ++ (Maybe.map
                         (\path ->

@@ -21,7 +21,7 @@
 
 module Requests exposing (..)
 
-import Bulk.Codecs exposing (nid2rootid)
+import Fractale.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, quickDocDecoder, roleDecoder, tensionTemplateLiteDecoder, userCtxDecoder, userDecoder)
 import Dict exposing (Dict)

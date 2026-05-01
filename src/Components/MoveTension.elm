@@ -24,17 +24,20 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk exposing (Ev, UserState(..))
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon)
+import Fractale.Form exposing (Ev)
+import Fractale.User exposing (UserState(..))
+import Utils.Bulma as B
+import Fractale.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (action2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, space_, ternary)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.String exposing (space_)
 import Form exposing (isPostEmpty)
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent

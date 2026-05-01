@@ -19,14 +19,70 @@
 -}
 
 
-module Extra.Views exposing (..)
+module Utils.Html exposing
+    ( showIf
+    , showMaybe
+    , showMsg
+    , textA
+    , textD
+    , textH
+    , textT
+    , toText
+    )
 
 import Assets as A
-import Extra exposing (upH)
 import Html exposing (Html, div, input, label, section, span, text)
 import Html.Attributes exposing (attribute, class, for, id, name, style, type_)
 import Markdown exposing (renderMarkdown)
 import Text as T
+import Utils.String exposing (decap, upA, upH, upT)
+
+
+showIf : Bool -> Html msg -> Html msg
+showIf a v =
+    if a then
+        v
+
+    else
+        text ""
+
+
+showMaybe : Maybe a -> (a -> Html msg) -> Html msg
+showMaybe a f =
+    case a of
+        Just x ->
+            f x
+
+        Nothing ->
+            text ""
+
+
+toText : List String -> Html msg
+toText l =
+    l
+        |> List.intersperse " "
+        |> List.map (\x -> text x)
+        |> span []
+
+
+textH : String -> Html msg
+textH s =
+    s |> upH |> text
+
+
+textT : String -> Html msg
+textT s =
+    s |> upT |> text
+
+
+textA : String -> Html msg
+textA s =
+    s |> upA |> text
+
+
+textD : String -> Html msg
+textD s =
+    s |> decap |> text
 
 
 showMsg : String -> String -> String -> String -> String -> Html msg

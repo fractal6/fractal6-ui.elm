@@ -24,10 +24,13 @@ module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -41,10 +44,14 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, textT, unwrap, unwrap2, upH)
-import Extra.Events exposing (onClickPD)
-import Extra.Url exposing (queryBuilder, queryParser)
-import Extra.Views exposing (showMsg)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf, textT)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_, upH)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Url exposing (queryBuilder, queryParser)
+import Utils.Html exposing (showMsg)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType

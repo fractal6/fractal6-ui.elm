@@ -24,11 +24,11 @@ module Components.OrgaMenu exposing (Msg(..), State, init, subscriptions, update
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Dom as Dom
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Codecs exposing (NodeFocus, getRootids)
-import Bulk.View exposing (viewOrga0)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (NodeFocus, getRootids)
+import Fractale.View exposing (viewOrga0)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Extra exposing (send, sendSleep)
+import Utils.Cmd exposing (send, sendSleep)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, i, span, text)
 import Html.Attributes exposing (class, classList, href, id, style, title)

@@ -19,17 +19,20 @@
 -}
 
 
-module Bulk.Event exposing (..)
+module Fractale.Event exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), decodeColumnRef, decodeLabel, decodeProjectRef)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
-import Bulk.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
+import Fractale.Form exposing (decodeColumnRef, decodeLabel, decodeProjectRef)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
 import Components.LabelSearchPanel exposing (viewLabel)
 import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProjectTag)
 import Dict exposing (Dict)
-import Extra exposing (decap, space_, ternary, textD)
-import Extra.Date exposing (formatDate)
+import Utils.Bool exposing (ternary)
+import Utils.Date exposing (formatDate)
+import Utils.Html exposing (textD)
+import Utils.String exposing (decap, space_)
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType

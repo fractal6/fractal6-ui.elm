@@ -24,15 +24,17 @@ module Components.UserSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (getAvatar1, viewUserFull)
+import Fractale.Form exposing (AssigneeForm, Ev, initAssigneeForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (getAvatar1, viewUserFull)
 import Codecs exposing (userDecoder)
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, ternary)
-import Extra.Events exposing (onMousedownPD)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onMousedownPD)
 import Schema.Enum.TensionEvent as TensionEvent
 import Global exposing (Msg(..))
 import Html exposing (Html, a, div, i, input, nav, p, span, text)

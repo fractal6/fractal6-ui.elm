@@ -19,10 +19,9 @@
 -}
 
 
-module Bulk.Bulma exposing (dropdown, dropdownLight)
+module Utils.Bulma exposing (dropdown, dropdownLight)
 
 import Assets as A
-import Bulk exposing (UserState(..))
 import Html exposing (Html, div, i, span, text)
 import Html.Attributes exposing (attribute, autofocus, class, classList, id, style)
 import Html.Events exposing (onClick, onInput)

@@ -23,13 +23,16 @@ module Pages.About exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Assets as A
 import Browser.Navigation as Nav
-import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Bulk.Error exposing (viewHttpErrors)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict exposing (Dict)
-import Extra exposing (send, sendSleep, ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onKeydown)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
 import Form.Help as Help
 import Schema.Enum.Lang as Lang

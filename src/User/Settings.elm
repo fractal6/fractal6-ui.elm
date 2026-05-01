@@ -25,15 +25,22 @@ import Assets as A
 import Assets.Logo as Logo
 import Auth exposing (ErrState(..))
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..))
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (lang2str, viewProfileC)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (FractalBaseRoute(..))
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (lang2str, viewProfileC)
 import Components.AuthModal as AuthModal
 import Dict
-import Extra exposing (mor, send, sendNow, sendSleep, space_, ternary, textH, unwrap)
-import Extra.Events exposing (onClickPD)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (mor, unwrap)
+import Utils.String exposing (space_)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Form exposing (getd, isPostSendable, isPostSendableOr)
 import Form.Help as Help
 import Schema.Enum.Lang as Lang

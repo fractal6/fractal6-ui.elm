@@ -24,10 +24,13 @@ module Org.Project exposing (Flags, Model, Msg, init, page, subscriptions, updat
 import Assets as A
 import Auth exposing (ErrState(..), getProjectRights)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewGqlErrorsLight)
-import Bulk.View exposing (viewCircleTarget, viewRole, viewUserFull)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, id3Changed, nameidFromFlags, nearestCircleid, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewGqlErrorsLight)
+import Fractale.View exposing (viewCircleTarget, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Board as Board
@@ -42,9 +45,12 @@ import Components.ProjectSettingsPanel as ProjectSettingsPanel
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Extra exposing (insertAt, send, sendNow, sendSleep, ternary, unwrap)
-import Extra.Events exposing (onKeydown, onMousedownPD)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.List exposing (insertAt)
+import Utils.Maybe exposing (unwrap)
+import Utils.DomEvents exposing (onKeydown, onMousedownPD)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF

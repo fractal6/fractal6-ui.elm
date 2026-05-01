@@ -23,19 +23,26 @@ port module Components.CardPanel exposing (CardPanelResult(..), Msg(..), State, 
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
-import Bulk exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, UserState(..), eventFromForm, getPathWithChildren, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
+import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
+import Fractale.Graph exposing (getPathWithChildren)
+import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Utils.Bulma as B
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Fractale.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict exposing (Dict)
-import Extra exposing (send, sendNow, sendSleep, showIf, ternary, textH, unwrap, unwrap2, upH)
-import Extra.Events exposing (onClickPD, onClickSP, onKeydown)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf, textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.TensionEvent as TensionEvent

@@ -23,13 +23,14 @@ port module Components.ProjectSettingsPanel exposing (Msg(..), State, init, subs
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (ProjectForm, initProjectForm, uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewUserFull)
+import Fractale.Form exposing (ProjectForm, initProjectForm)
+import Fractale.User exposing (uctxFromUser)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (viewUserFull)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (send, sendNow, sendSleep)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
 import Html exposing (Html, button, div, hr, input, p, span, text, textarea)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, id, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput)

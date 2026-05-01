@@ -30,7 +30,7 @@ The panel queries each `nameid` in `targets` directly (`nidsFilter`, indexed
 project attachable to a tension/card should be one declared on the focus, one
 of its ancestors (which the focus inherits from), or a direct subcircle.
 
-Helper: `Bulk.getPathWithChildren model.path_data`.
+Helper: `Fractale.Graph.getPathWithChildren model.path_data`.
 
 ### 2. Root, members-only (assignee selection)
 

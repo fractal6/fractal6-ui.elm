@@ -24,14 +24,16 @@ module Components.ProjectSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk exposing (ProjectPanelForm, UserState(..), initProjectPanelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nid2rootid, toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (viewCircleSimple)
+import Fractale.Form exposing (ProjectPanelForm, initProjectPanelForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (viewCircleSimple)
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, ternary)
-import Extra.Events exposing (onClickSP, onMousedownPD)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickSP, onMousedownPD)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Html exposing (Html, a, div, i, input, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, style, type_, value)

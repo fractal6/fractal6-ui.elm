@@ -27,11 +27,14 @@ import Assets.Logo as Logo
 import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
-import Bulk.View exposing (mediaTension, viewPinnedTensions)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
+import Fractale.View exposing (mediaTension, viewPinnedTensions)
 import Codecs exposing (RecentActivityTab(..), WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -42,9 +45,12 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarLevel)
 import Components.TreeMenu as TreeMenu
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, showIf, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onKeydown)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
+import Utils.DomEvents exposing (onClickPD, onKeydown)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType

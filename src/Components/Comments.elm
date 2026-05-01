@@ -39,18 +39,23 @@ module Components.Comments exposing
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, UserState(..), eventFromForm, initCommentPatchForm, initTensionForm, pushCommentReaction, removeCommentReaction, uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.Event exposing (viewEvent)
-import Bulk.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
+import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
+import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (viewEvent)
+import Fractale.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.EmojiPicker as EmojiPicker
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, showIf, ternary)
-import Extra.Events exposing (onClickSafe)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf)
+import Utils.DomEvents exposing (onClickSafe)
+import Utils.Emoji exposing (emojis, getEmoji, getEmojiName)
 import Form exposing (isPostSendable)
 import Schema.Enum.Lang as Lang
 import Schema.Enum.TensionAction as TensionAction
@@ -1034,7 +1039,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                         [ A.icon "icon-smile icon-bg" ]
                                     ]
                                 , div [ id ("emoticon-" ++ c.id), class "dropdown-menu emojis", attribute "role" "menu" ]
-                                    [ Extra.emojis
+                                    [ emojis
                                         |> List.map (\( i, x, _ ) -> span [ onClick (OnAddReaction c.id i) ] [ text x ])
                                         |> div [ class "dropdown-content" ]
                                     ]
@@ -1117,16 +1122,16 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                                       else
                                                         onClick (OnAddReaction c.id r.type_)
                                                     ]
-                                                    [ text (Extra.getEmoji r.type_), span [ class "px-1" ] [], text (String.fromInt count) ]
+                                                    [ text (getEmoji r.type_), span [ class "px-1" ] [], text (String.fromInt count) ]
                                                 , div [ id elmId, class "dropdown-menu", attribute "role" "menu" ]
                                                     [ div [ class "dropdown-content p-3" ]
-                                                        [ span [ class "is-larger4 pr-2" ] [ text (Extra.getEmoji r.type_) ]
+                                                        [ span [ class "is-larger4 pr-2" ] [ text (getEmoji r.type_) ]
                                                         , case LE.unconsLast r.users of
                                                             Just ( u, [] ) ->
-                                                                text (u ++ " " ++ T.reactedWith ++ " " ++ Extra.getEmojiName r.type_ ++ " emoji")
+                                                                text (u ++ " " ++ T.reactedWith ++ " " ++ getEmojiName r.type_ ++ " emoji")
 
                                                             Just ( u, us ) ->
-                                                                text (String.join ", " us ++ " " ++ T.and ++ " " ++ u ++ " " ++ T.reactedWith ++ " " ++ Extra.getEmojiName r.type_ ++ " emoji")
+                                                                text (String.join ", " us ++ " " ++ T.and ++ " " ++ u ++ " " ++ T.reactedWith ++ " " ++ getEmojiName r.type_ ++ " emoji")
 
                                                             Nothing ->
                                                                 text ""

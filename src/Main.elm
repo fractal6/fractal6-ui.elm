@@ -24,8 +24,8 @@ module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
 import Components.Navbar as Navbar
-import Extra exposing (send)
-import Extra.Url exposing (getUrlQueryParam, queryParser)
+import Utils.Cmd exposing (send)
+import Utils.Url exposing (getUrlQueryParam, queryParser)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))

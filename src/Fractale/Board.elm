@@ -19,15 +19,14 @@
 -}
 
 
-module Bulk.Board exposing (..)
+module Fractale.Board exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute, NodeFocus)
-import Bulk.View exposing (mediaTension)
+import Fractale.Codecs exposing (FractalBaseRoute, NodeFocus)
+import Fractale.View exposing (mediaTension)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
-import Extra.Events exposing (onDragEnd, onDragEnter, onDragLeave, onDragStart)
+import Utils.Bool exposing (ternary)
+import Utils.DomEvents exposing (onDragEnd, onDragEnter, onDragLeave, onDragStart)
 import Html exposing (Html, div, i, span, text)
 import Html.Attributes exposing (attribute, class, classList, id, style)
 import Html.Events exposing (onClick)

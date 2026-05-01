@@ -24,14 +24,17 @@ module Components.LabelSearchPanel exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Bulk exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Bulk.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (Ev, LabelForm, encodeLabel, initLabelForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewGqlErrors)
 import Codecs exposing (labelDecoder)
 import Dict
-import Dom
-import Extra exposing (colorAttr, send, sendNow, sendSleep, ternary)
-import Extra.Events exposing (onMousedownPD)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Color exposing (colorAttr)
+import Utils.DomEvents exposing (onMousedownPD)
 import Schema.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, div, i, input, label, nav, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder, type_, value)
@@ -633,7 +636,7 @@ viewNodeTag name_or_nameid =
 
 
 --
--- Label rendering (used by Bulk.View.mediaTension/viewTensionLight and panel selectors)
+-- Label rendering (used by Fractale.View.mediaTension/viewTensionLight and panel selectors)
 --
 
 

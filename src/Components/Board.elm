@@ -24,18 +24,21 @@ module Components.Board exposing (Msg(..), State, board_result, init, nodeID, su
 import Assets as A
 import Browser.Dom as Dom
 import Browser.Events as Events
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
-import Bulk.View exposing (action2icon, action2str, statusColor, tensionIcon)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Utils.Bulma as B
+import Fractale.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
+import Fractale.View exposing (action2icon, action2str, statusColor, tensionIcon)
 import Components.LabelSearchPanel exposing (viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
-import Dom
-import Extra exposing (insertAt, send, sendSleep, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.List exposing (insertAt)
+import Utils.Maybe exposing (unwrap)
+import Utils.DomEvents exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.Enum.TensionStatus as TensionStatus

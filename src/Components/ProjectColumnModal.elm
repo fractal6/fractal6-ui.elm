@@ -23,13 +23,17 @@ module Components.ProjectColumnModal exposing (ModalType(..), Msg(..), State, in
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), uctxFromUser)
-import Bulk.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Error exposing (viewGqlErrors)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
-import Extra exposing (send, sendNow, sendSleep, ternary, textH, unwrap, unwrap2, upH)
-import Extra.Events exposing (onClickPD)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)

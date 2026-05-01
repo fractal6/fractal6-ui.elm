@@ -21,8 +21,8 @@
 
 module Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks, renderMarkdown, setMdCheckbox)
 
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Extra exposing (regexContains, regexFromString, regexfirstMatchLength)
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Utils.String exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, details, div, i, input, label, li, ol, span, summary, table, text, u, ul)
 import Html.Attributes as Attr exposing (attribute, checked, class, disabled, href, rel, target, title, type_)

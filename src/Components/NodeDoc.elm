@@ -22,15 +22,19 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Bulk exposing (Ev, InputViewMode(..), TensionForm, UserForm, UserState(..), initFormText, initTensionForm)
-import Bulk.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
+import Fractale.Form exposing (Ev, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
 import Components.Comments exposing (viewCommentInputHeader)
 import Components.UserSearchPanel exposing (viewUser, viewUsers)
 import Dict exposing (Dict)
-import Extra exposing (showIf, showMaybe, space_, ternary, unwrap)
-import Extra.Date exposing (formatDate)
+import Utils.Bool exposing (ternary)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_)
+import Utils.Date exposing (formatDate)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType

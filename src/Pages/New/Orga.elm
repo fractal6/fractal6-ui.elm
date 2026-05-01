@@ -24,17 +24,21 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
-import Bulk exposing (OrgaForm, UserState(..), uctxFromUser)
-import Bulk.Bulma exposing (dropdownLight)
-import Bulk.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
-import Bulk.Error exposing (viewHttpErrors)
-import Bulk.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
+import Fractale.Form exposing (OrgaForm)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Utils.Bulma exposing (dropdownLight)
+import Fractale.Codecs exposing (FractalBaseRoute(..), nameidEncoder, toLink)
+import Fractale.Error exposing (viewHttpErrors)
+import Fractale.View exposing (helperButton, viewUrlForm, visibility2descr, visibility2extra, visibility2icon)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (send, sendSleep, ternary, textH, upH)
-import Extra.Events exposing (onClickPD, onDragOverPD, onKeydown)
-import Extra.Update as Update
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onClickPD, onDragOverPD, onKeydown)
+import Utils.Update as Update
+import Utils.Url exposing (queryBuilder, queryParser)
 import File exposing (File)
 import File.Select as Select
 import Form exposing (isLoginSendable, isPostSendable)

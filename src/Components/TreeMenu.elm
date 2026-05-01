@@ -23,15 +23,21 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..), getNode, getParentId, hotNodeInsert, hotNodePull, hotNodePush, localGraphFromOrga, uctxFromUser)
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (action2icon, counter)
+import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga)
+import Fractale.HotUpdate exposing (hotNodeInsert, hotNodePull, hotNodePush)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (action2icon, counter)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Extra exposing (send, sendSleep, showIf, showMaybe, space_, ternary, unwrap)
-import Extra.Events exposing (onClickPD, onClickSafe)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_)
+import Utils.DomEvents exposing (onClickPD, onClickSafe)
 import Schema.Enum.RoleType as RoleType
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)

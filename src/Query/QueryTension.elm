@@ -39,9 +39,10 @@ module Query.QueryTension exposing
     , tensionPayload
     )
 
-import Bulk.Codecs exposing (nid2rootid)
+import Fractale.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (ternary, unwrap, unwrap2)
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.TensionEvent as TensionEvent

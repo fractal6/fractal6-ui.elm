@@ -32,9 +32,9 @@ module Query.PatchTension exposing
     , setLabel
     )
 
-import Bulk exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
+import Fractale.Form exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
 import Dict
-import Extra exposing (ternary)
+import Utils.Bool exposing (ternary)
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.CommentOrderable as CommentOrderable
 import Schema.Enum.ContractOrderable as ContractOrderable

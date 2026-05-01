@@ -30,10 +30,12 @@ module Auth exposing
     , parseErr2
     )
 
-import Bulk exposing (getChildren)
-import Bulk.Codecs exposing (getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, nearestCircleid, nid2rootid)
+import Fractale.Graph exposing (getChildren)
+import Fractale.Codecs exposing (getCircleRoles, getCoordoRoles, getOrgaRoles, isOwner, nearestCircleid, nid2rootid)
 import Dict
-import Extra exposing (ternary, textH, upH)
+import Utils.Bool exposing (ternary)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType

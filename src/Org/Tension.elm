@@ -24,10 +24,13 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Bulk.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Fractale.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -44,10 +47,14 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Extra exposing (decap, send, sendNow, sendSleep, showIf, ternary, textD, unwrap)
-import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickSP)
-import Extra.Url exposing (queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf, textD)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (decap)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents exposing (onClickSP)
+import Utils.Url exposing (queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.Lang as Lang

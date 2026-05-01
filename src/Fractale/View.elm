@@ -19,16 +19,20 @@
 -}
 
 
-module Bulk.View exposing (..)
+module Fractale.View exposing (..)
 
 import Assets as A
-import Bulk exposing (UserState(..), getParentFragmentFromRole, maxPinnedTensions)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
+import Fractale.User exposing (UserState(..))
 import Components.LabelSearchPanel exposing (viewLabels)
 import Dict exposing (Dict)
-import Extra exposing (colorAttr, showIf, ternary, upH)
-import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPos, onClickSP)
+import Utils.Bool exposing (ternary)
+import Utils.Color exposing (colorAttr)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents exposing (onClickPos, onClickSP)
+import Utils.Html exposing (showIf)
+import Utils.String exposing (upH)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode

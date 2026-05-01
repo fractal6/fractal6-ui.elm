@@ -23,13 +23,10 @@ module Components.Navbar exposing (NavbarHandlers, view)
 
 import Assets as A
 import Assets.Logo as Logo
-import Bulk exposing (UserState(..))
-import Bulk.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isProjectBaseUri, isTensionBaseUri, isTensionUrl, toLink, urlToFractalRoute)
-import Bulk.Error exposing (viewGqlErrorsLight)
-import Bulk.View exposing (lang2str, statusColor, tensionIcon)
-import Extra exposing (showIf, ternary, unwrap)
-import Schema.Enum.Lang as Lang
-import Schema.Enum.NodeType as NodeType
+import Fractale.Codecs exposing (FractalBaseRoute(..), isOrgUrl, isProjectBaseUri, isTensionBaseUri, isTensionUrl, toLink, urlToFractalRoute)
+import Fractale.Error exposing (viewGqlErrorsLight)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (lang2str, statusColor, tensionIcon)
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, nav, p, span, strong, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
@@ -38,9 +35,14 @@ import Html.Keyed
 import Maybe exposing (withDefault)
 import ModelSchema exposing (NotifCount, ReloadMode(..), ServerBuild, TensionHead)
 import Ports
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
 import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
 
 
 {-| Handlers for navbar actions passed from parent.
@@ -86,7 +88,6 @@ view apis session notif serverBuild tension_head handlers =
                 [ class "navbar-brand" ]
                 ([ ( "logo"
                    , a [ class "navbar-item", href "/" ]
-                        --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                         [ if isLoggedOut then
                             A.logo_inline
 

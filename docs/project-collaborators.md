@@ -9,7 +9,7 @@ Project collaborators are users who have write access to a project without needi
 ### Data Model
 
 - `ProjectData` (ModelSchema.elm) includes `description : Maybe String` and `collaborators : List Username`
-- `ProjectForm` (Bulk.elm) includes `collaborators_add` and `collaborators_remove` lists, matching Dgraph's `set`/`remove` semantics
+- `ProjectForm` (Fractale/Form.elm) includes `collaborators_add` and `collaborators_remove` lists, matching Dgraph's `set`/`remove` semantics
 - `projectDataPayload` (QueryProject.elm) fetches both fields from the API
 
 ### Mutation Encoders (PatchNode.elm)

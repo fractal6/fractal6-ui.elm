@@ -22,7 +22,7 @@
 module Loading exposing (..)
 
 import Assets as A
-import Extra exposing (upH)
+import Utils.String exposing (upH)
 import Graphql.Http as GqlHttp
 import Html exposing (Html, a, div, img, span, text)
 import Html.Attributes exposing (alt, attribute, class, height, src, width)

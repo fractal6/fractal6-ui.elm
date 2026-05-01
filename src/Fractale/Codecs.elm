@@ -19,10 +19,11 @@
 -}
 
 
-module Bulk.Codecs exposing (..)
+module Fractale.Codecs exposing (..)
 
 import Array
-import Extra exposing (cleanDup, ternary)
+import Utils.Bool exposing (ternary)
+import Utils.String exposing (cleanDup)
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility

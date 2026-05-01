@@ -27,9 +27,9 @@ module Query.PatchUser exposing
     , toggleTensionSubscription
     )
 
-import Bulk exposing (UserProfileForm)
+import Fractale.Form exposing (UserProfileForm)
 import Dict
-import Extra exposing (ternary)
+import Utils.Bool exposing (ternary)
 import Schema.InputObject as Input
 import Schema.Mutation as Mutation
 import Schema.Object

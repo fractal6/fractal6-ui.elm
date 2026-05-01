@@ -21,8 +21,8 @@
 
 module Pages.Logout exposing (Flags, Model, Msg, page)
 
-import Bulk exposing (UserState(..))
-import Extra exposing (send, sendSleep)
+import Fractale.User exposing (UserState(..))
+import Utils.Cmd exposing (send, sendSleep)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
 import Html

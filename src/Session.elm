@@ -22,11 +22,12 @@
 module Session exposing (..)
 
 import Array exposing (Array)
-import Bulk exposing (AssigneeForm, LabelForm, OrgaForm, ProjectPanelForm, UserState(..))
-import Bulk.Codecs exposing (NodeFocus)
+import Fractale.Form exposing (AssigneeForm, LabelForm, OrgaForm, ProjectPanelForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (NodeFocus)
 import Codecs exposing (DraftStore, DraftUpdate(..), RecentActivityTab(..), WindowPos, draftStoreDecoder, initDraftStore, userCtxDecoder, windowDecoder)
 import Dict exposing (Dict)
-import Extra.Url exposing (queryParser)
+import Utils.Url exposing (queryParser)
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (toHref)

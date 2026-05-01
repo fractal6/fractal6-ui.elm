@@ -23,16 +23,21 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, setCurr
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (ActionForm, Ev, UserState(..), form2cid, initActionForm, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (isMember, isPending, nid2rootid)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors)
+import Fractale.Form exposing (ActionForm, Ev, form2cid, initActionForm, makeCandidateContractForm)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (isMember, isPending, nid2rootid)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, unwrap, unwrap2)
-import Extra.Events exposing (onClickPD)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_)
+import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Schema.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (toHref)

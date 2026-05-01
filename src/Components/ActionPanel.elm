@@ -24,18 +24,24 @@ module Components.ActionPanel exposing (Msg(..), PanelState(..), State, init, is
 import Assets as A
 import Auth exposing (ErrState(..), getNodeRights, parseErr)
 import Browser.Events as Events
-import Bulk exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, getNode, initActionForm, isSelfContract, makeCandidateContractForm, uctxFromUser)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
+import Fractale.Form exposing (ActionForm, Ev, initActionForm, isSelfContract, makeCandidateContractForm)
+import Fractale.Graph exposing (blobFromTensionHead, getNode)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
-import Dom
-import Extra exposing (mor, send, sendNow, sendSleep, showIf, space_, ternary)
-import Extra.Events exposing (onClickPD)
-import Extra.Views exposing (showMsg)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (mor)
+import Utils.String exposing (space_)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType

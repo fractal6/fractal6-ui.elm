@@ -24,13 +24,16 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk.Codecs exposing (FractalBaseRoute(..), toLink)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaOrga)
+import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (mediaOrga)
 import Codecs exposing (QuickDoc)
 import Components.AuthModal as AuthModal
 import Dict exposing (Dict)
-import Extra exposing (send, sendSleep, ternary, textH, upH)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Global exposing (Msg(..))

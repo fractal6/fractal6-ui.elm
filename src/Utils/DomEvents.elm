@@ -19,13 +19,14 @@
 -}
 
 
-module Extra.Events exposing (..)
+module Utils.DomEvents exposing (..)
 
 import Html
 import Html.Attributes
 import Html.Events exposing (custom, keyCode, on, preventDefaultOn, stopPropagationOn)
 import Json.Decode as JD
 import Json.Encode as JE
+import Utils.Bool exposing (ternary)
 
 
 
@@ -110,7 +111,7 @@ onKeydown message =
         decodeKey =
             JD.andThen JD.succeed keyCode
     in
-    on "keydown" <| JD.map (\key -> message key) decodeKey
+    on "keydown" <| JD.map (\k -> message k) decodeKey
 
 
 onKeyup : (Int -> msg) -> Html.Attribute msg
@@ -119,7 +120,7 @@ onKeyup message =
         decodeKey =
             JD.andThen JD.succeed keyCode
     in
-    on "keyup" <| JD.map (\key -> message key) decodeKey
+    on "keyup" <| JD.map (\k -> message k) decodeKey
 
 
 onKeyCode : Int -> Bool -> Bool -> msg -> Html.Attribute msg
@@ -227,3 +228,71 @@ onDragOverPD msg =
 --    Drag.eventDecoder
 --        |> JD.map (\ev -> { message = tag ev, stopPropagation = True, preventDefault = True })
 --        |> Html.Events.custom "dragleave"
+
+
+
+--
+-- DOM event decoders (formerly Dom.elm)
+--
+
+
+{-| Detect keyboard input
+-}
+key : String -> msg -> JD.Decoder msg
+key k msg =
+    JD.field "key" JD.string
+        |> JD.andThen
+            (\x ->
+                ternary (x == k) (JD.succeed msg) (JD.fail "nothing")
+            )
+
+
+{-| Detect click outside a given object ID
+-}
+outsideClickClose : String -> msg -> JD.Decoder msg
+outsideClickClose targetId msg =
+    JD.field "target" (isOutside targetId)
+        |> JD.andThen
+            (\isOut ->
+                if isOut then
+                    JD.oneOf
+                        [ JD.field "button" JD.int
+                            |> JD.andThen
+                                (\button ->
+                                    if button == 0 then
+                                        JD.succeed msg
+
+                                    else
+                                        JD.fail "non left click"
+                                )
+                        ]
+
+                else
+                    JD.fail "outside click fail"
+            )
+
+
+isOutside : String -> JD.Decoder Bool
+isOutside targetId =
+    JD.oneOf
+        [ JD.field "id" JD.string
+            |> JD.andThen
+                (\id ->
+                    ternary (targetId == id)
+                        (JD.succeed False)
+                        (JD.fail "continue")
+                )
+
+        -- ignore if a modal is open (@DEBUG: do not work, never get inside)
+        , JD.field "class" (JD.list JD.string)
+            |> JD.andThen
+                (\cls ->
+                    ternary (List.member "has-modal-active" cls)
+                        (JD.succeed False)
+                        (JD.fail "continue")
+                )
+        , JD.lazy (\_ -> isOutside targetId |> JD.field "parentNode")
+
+        -- fallback if all previous decoders failed
+        , JD.succeed True
+        ]

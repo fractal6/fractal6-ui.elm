@@ -22,12 +22,15 @@
 module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
 import Assets as A exposing (almostThere)
-import Bulk.Error exposing (viewHttpErrors)
+import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict
-import Extra exposing (send, sendSleep, ternary, textH, upH)
-import Extra.Events exposing (onKeydown)
-import Extra.Url exposing (queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.Html exposing (textH)
+import Utils.String exposing (upH)
+import Utils.DomEvents exposing (onKeydown)
+import Utils.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
 import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)

@@ -19,7 +19,7 @@
 -}
 
 
-module Extra.Url exposing (getUrlQueryParam, queryBuilder, queryFullBuilder, queryParser, toAnchor)
+module Utils.Url exposing (getUrlQueryParam, queryBuilder, queryFullBuilder, queryParser, toAnchor)
 
 import Dict exposing (Dict)
 import List.Extra as LE

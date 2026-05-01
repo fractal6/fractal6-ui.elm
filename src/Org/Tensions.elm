@@ -26,11 +26,13 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (freshSessionOnOrgaSwitch, getPath, hotTensionPush, hotTensionPush2, isPinnedRecursivelyOn, mergePinnedTensions)
-import Bulk.Board as BB exposing (viewBoard)
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
+import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, mergePinnedTensions)
+import Fractale.HotUpdate exposing (hotTensionPush, hotTensionPush2)
+import Fractale.User exposing (freshSessionOnOrgaSwitch)
+import Fractale.Board as BB exposing (viewBoard)
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -43,10 +45,14 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Dom
-import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, unwrap, upH)
-import Extra.Events exposing (onClickPD, onKeydown)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_, upH)
+import Utils.DomEvents exposing (onClickPD, onKeydown)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF

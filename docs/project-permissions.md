@@ -27,7 +27,7 @@ Both types include:
 , guestCanEditProject : Bool
 ```
 
-### `ProjectForm` (Bulk.elm)
+### `ProjectForm` (Fractale/Form.elm)
 Uses `Maybe Bool` to distinguish between "not set" and explicit values:
 ```elm
 , peerCanEditProject : Maybe Bool

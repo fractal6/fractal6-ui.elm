@@ -35,9 +35,10 @@ module Query.QueryProject exposing
     , updateProjectDraft
     )
 
-import Bulk exposing (AssigneeForm, LabelForm)
+import Fractale.Form exposing (AssigneeForm, LabelForm)
 import Dict
-import Extra exposing (ternary, unwrap, unwrap2)
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.RoleType as RoleType
 import Schema.InputObject as Input

@@ -34,8 +34,8 @@ module Query.PatchNode exposing
     , updateOneTensionTemplate
     )
 
-import Bulk exposing (ArtefactNodeForm, ProjectForm, TensionTemplateForm)
-import Bulk.Codecs exposing (nid2rootid)
+import Fractale.Form exposing (ArtefactNodeForm, ProjectForm, TensionTemplateForm)
+import Fractale.Codecs exposing (nid2rootid)
 import Dict
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus

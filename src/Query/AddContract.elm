@@ -21,9 +21,10 @@
 
 module Query.AddContract exposing (addOneContract, deleteOneContract)
 
-import Bulk exposing (ContractForm)
+import Fractale.Form exposing (ContractForm)
 import Dict
-import Extra exposing (listToMaybe, mor)
+import Utils.List exposing (listToMaybe)
+import Utils.Maybe exposing (mor)
 import Schema.InputObject as Input
 import Schema.Mutation as Mutation
 import Schema.Object

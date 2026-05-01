@@ -23,11 +23,11 @@ module Components.SearchBar exposing (Op, viewSearchBarCol, viewSearchBarLevel, 
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (UserState(..))
-import Bulk.Error exposing (viewGqlErrors)
+import Fractale.User exposing (UserState(..))
+import Fractale.Error exposing (viewGqlErrors)
 import Dict
-import Extra exposing (ternary)
-import Extra.Events exposing (onKeydown, onMousedownPD)
+import Utils.Bool exposing (ternary)
+import Utils.DomEvents exposing (onKeydown, onMousedownPD)
 import Html exposing (Html, button, div, i, input, span, text)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, disabled, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)

@@ -22,7 +22,7 @@
 port module Components.EmojiPicker exposing (Msg(..), State, init, subscriptions, update, viewEmojiSeeker)
 
 import Components.EmojiData exposing (Emoji, searchEmojis)
-import Extra.Events exposing (onMousedownPD)
+import Utils.DomEvents exposing (onMousedownPD)
 import Html exposing (Html, div, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, title)
 import List.Extra as LE

@@ -19,7 +19,7 @@
 -}
 
 
-module Extra.Update exposing
+module Utils.Update exposing
     ( andThen
     , updateModel
     )

@@ -23,14 +23,18 @@ module Form.Help exposing (Model, Msg(..), State, init, subscriptions, update, v
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (Ev, UserState(..))
-import Bulk.Codecs exposing (ActionType(..), DocType(..), nid2rootid)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Form exposing (Ev)
+import Fractale.User exposing (UserState(..))
+import Fractale.Codecs exposing (ActionType(..), DocType(..), nid2rootid)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (send, sendNow, sendSleep, space_, ternary, textH, textT, upH)
-import Extra.Events exposing (onClickPD)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (textH, textT)
+import Utils.String exposing (space_, upH)
+import Utils.DomEvents exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NT
 import Schema.Enum.Lang as Lang

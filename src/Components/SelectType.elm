@@ -23,13 +23,15 @@ module Components.SelectType exposing (Msg(..), State, init, subscriptions, upda
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Bulk exposing (Ev, TensionForm, UserState(..), initTensionForm)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
+import Fractale.Form exposing (Ev, TensionForm, initTensionForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (tensionType2str, tensionTypeColor, tensionTypeIcon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
-import Extra exposing (send, sendNow, sendSleep, ternary)
-import Extra.Views exposing (showMsg)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showMsg)
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionType as TensionType
 import Html exposing (Html, button, div, i, text)

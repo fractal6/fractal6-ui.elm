@@ -6,7 +6,7 @@ Event views render the timeline/history entries in tension pages. Each `TensionE
 
 ## Location
 
-All event view functions live in `src/Bulk/Event.elm`. This module serves as the single source of truth for:
+All event view functions live in `src/Fractale/Event.elm`. This module serves as the single source of truth for:
 
 - **Event metadata** — `eventTypeToText`, `eventToIcon`, `eventToLink`
 - **Event rendering** — `viewEvent` dispatcher and all `viewEvent*` sub-functions
@@ -38,7 +38,7 @@ pattern-matching on `Fractal.Enum.TensionEvent`.
 
 ## Usage
 
-`Components/Comments.elm` imports `viewEvent` from `Bulk.Event` and uses it via `Html.Lazy.lazy4`:
+`Components/Comments.elm` imports `viewEvent` from `Fractale.Event` and uses it via `Html.Lazy.lazy4`:
 
 ```elm
 Lazy.lazy4 viewEvent session focusid action event

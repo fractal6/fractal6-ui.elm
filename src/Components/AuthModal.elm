@@ -23,11 +23,12 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscr
 
 import Assets as A
 import Auth exposing (ErrState(..))
-import Bulk exposing (UserState(..))
-import Bulk.Error exposing (viewAuthNeeded, viewHttpErrors)
+import Fractale.User exposing (UserState(..))
+import Fractale.Error exposing (viewAuthNeeded, viewHttpErrors)
 import Dict exposing (Dict)
-import Extra exposing (send, ternary)
-import Extra.Events exposing (onClickPD, onKeydown)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send)
+import Utils.DomEvents exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, input, p, span, text)

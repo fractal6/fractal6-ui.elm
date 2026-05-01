@@ -24,13 +24,19 @@ module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (mediaOrga, viewProfileC)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Components.SearchBar exposing (viewSearchField)
-import Extra exposing (send, sendNow, sendSleep, showIf, ternary, unwrap)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
 import Form.Help as Help
 import Schema.Enum.NodeOrderable as NodeOrderable
 import Global exposing (Msg(..))

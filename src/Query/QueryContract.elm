@@ -29,7 +29,7 @@ module Query.QueryContract exposing
     , queryOpenInvitation
     )
 
-import Bulk.Codecs exposing (nid2rootid)
+import Fractale.Codecs exposing (nid2rootid)
 import Schema.Enum.BlobHasFilter as BlobHasFilter
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.ContractOrderable as ContractOrderable

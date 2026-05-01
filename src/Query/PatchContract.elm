@@ -21,8 +21,8 @@
 
 module Query.PatchContract exposing (pushContractComment, sendVote)
 
-import Bulk exposing (CommentPatchForm)
-import Bulk.Codecs exposing (memberIdCodec)
+import Fractale.Form exposing (CommentPatchForm)
+import Fractale.Codecs exposing (memberIdCodec)
 import Dict
 import Schema.InputObject as Input
 import Schema.Mutation as Mutation

@@ -19,7 +19,7 @@
 -}
 
 
-module Extra.Date exposing (diffTime, formatDate)
+module Utils.Date exposing (diffTime, formatDate)
 
 import Date
 import Schema.Enum.Lang as Lang

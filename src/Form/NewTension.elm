@@ -24,11 +24,13 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
 import Browser.Events as Events
-import Bulk exposing (Ev, FormText, InputViewMode(..), TensionForm, UserState(..), getPath, getPathWithChildren, initFormText, isSelfContract, localGraphFromOrga, makeCandidateContractForm, tensionToActionForm)
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
-import Bulk.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Bulk.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
+import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, initFormText, isSelfContract, makeCandidateContractForm, tensionToActionForm)
+import Fractale.Graph exposing (getPath, getPathWithChildren, localGraphFromOrga)
+import Fractale.User exposing (UserState(..))
+import Utils.Bulma as B
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
+import Fractale.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Codecs exposing (DraftUpdate(..), TensionDraft)
 import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -39,9 +41,13 @@ import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Dom
-import Extra exposing (send, sendNow, sendSleep, showIf, space_, ternary, textH, unwrap, unwrap2)
-import Extra.Events exposing (onClickPD, onClickSafe, onEnter)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf, textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_)
+import Utils.DomEvents exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeType as NodeType

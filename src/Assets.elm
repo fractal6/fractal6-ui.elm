@@ -22,7 +22,7 @@
 module Assets exposing (..)
 
 import Assets.Logo as Logo
-import Extra exposing (space_)
+import Utils.String exposing (space_)
 import Html exposing (Html, a, div, h1, h2, hr, i, img, p, small, span, text)
 import Html.Attributes exposing (alt, attribute, class, classList, height, href, src, style, width)
 import Html.Lazy as Lazy

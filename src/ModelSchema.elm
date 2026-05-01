@@ -23,7 +23,7 @@
 module ModelSchema exposing (..)
 
 import Dict exposing (Dict)
-import Extra exposing (mor)
+import Utils.Maybe exposing (mor)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.ContractType as ContractType

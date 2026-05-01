@@ -27,9 +27,9 @@ module Query.AddTension exposing
     , buildMandate
     )
 
-import Bulk exposing (Ev, TensionForm, UserForm, encodeLabel)
+import Fractale.Form exposing (Ev, TensionForm, UserForm, encodeLabel)
 import Dict
-import Extra exposing (listToMaybe)
+import Utils.List exposing (listToMaybe)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent

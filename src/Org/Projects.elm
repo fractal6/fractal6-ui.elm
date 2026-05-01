@@ -26,11 +26,12 @@ import Auth exposing (ErrState(..), getProjectRights, hasLazyAdminRole, parseErr
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (ProjectForm, UserState(..), freshSessionOnOrgaSwitch, initProjectForm)
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
-import Bulk.Error exposing (viewGqlErrors, viewHttpErrors)
-import Bulk.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
+import Fractale.Form exposing (ProjectForm, initProjectForm)
+import Fractale.User exposing (UserState(..), freshSessionOnOrgaSwitch)
+import Utils.Bulma as B
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -41,9 +42,13 @@ import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
-import Extra exposing (decap, send, sendNow, sendSleep, showIf, space_, ternary, textH, textT, unwrap, upH)
-import Extra.Date exposing (formatDate)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Html exposing (showIf, textH, textT)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (decap, space_, upH)
+import Utils.Date exposing (formatDate)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF

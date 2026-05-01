@@ -25,11 +25,14 @@ import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole)
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Bulk exposing (..)
-import Bulk.Bulma as B
-import Bulk.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
-import Bulk.Error exposing (viewGqlErrors)
-import Bulk.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
+import Fractale.Form exposing (..)
+import Fractale.User exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Utils.Bulma as B
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, contractIdCodec, focusFromNameid, focusState, isOwner, nameidFromFlags, nearestCircleid, nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.View exposing (role2icon, viewGoRoot, viewRole, viewUserFull)
 import Components.ActionPanel as ActionPanel exposing (PanelState(..))
 import Components.AuthModal as AuthModal
 import Components.ConfirmOwner as ConfirmOwner
@@ -39,10 +42,15 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarCol)
 import Components.TreeMenu as TreeMenu
 import Dict
-import Dom
-import Extra exposing (colorAttr, send, sendNow, sendSleep, showIf, space_, ternary, unwrap, unwrap2, upH)
-import Extra.Date exposing (formatDate)
-import Extra.Url exposing (queryBuilder, queryParser)
+import Utils.DomEvents as Dom
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Color exposing (colorAttr)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_, upH)
+import Utils.Date exposing (formatDate)
+import Utils.Url exposing (queryBuilder, queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType

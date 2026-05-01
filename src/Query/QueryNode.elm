@@ -77,10 +77,11 @@ module Query.QueryNode exposing
     , userPayload
     )
 
-import Bulk exposing (maxPinnedTensions)
-import Bulk.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
+import Fractale.Graph exposing (maxPinnedTensions)
+import Fractale.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes, nid2rootid)
 import Dict exposing (Dict)
-import Extra exposing (ternary, unwrap, unwrap2)
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.LabelOrderable as LabelOrderable
 import Schema.Enum.NodeMode as NodeMode
