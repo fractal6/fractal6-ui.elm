@@ -36,7 +36,7 @@ import Html.Attributes as Attr exposing (attribute, class, classList, href, id, 
 import Html.Events exposing (onClick)
 import Html.Keyed
 import Maybe exposing (withDefault)
-import ModelSchema exposing (NotifCount, TensionHead)
+import ModelSchema exposing (NotifCount, ReloadMode(..), ServerBuild, TensionHead)
 import Ports
 import Session exposing (Apis, SessionCommon, Theme(..))
 import Text as T
@@ -54,14 +54,18 @@ type alias NavbarHandlers msg =
     }
 
 
-view : Apis -> SessionCommon -> NotifCount -> Maybe String -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
-view apis session notif serverVersion tension_head handlers =
+view : Apis -> SessionCommon -> NotifCount -> Maybe ServerBuild -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
+view apis session notif serverBuild tension_head handlers =
     let
         orgUrl =
             isOrgUrl session.url
 
+        -- Hotfix-mode mismatches reload silently from Global; only Banner-mode
+        -- mismatches surface here.
         hasVersionOutdated =
-            unwrap False (\v -> v /= apis.client_version) serverVersion
+            unwrap False
+                (\b -> b.reloadMode == Banner && b.version /= apis.client_version)
+                serverBuild
 
         isLoggedOut =
             session.user == LoggedOut

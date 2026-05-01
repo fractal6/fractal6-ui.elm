@@ -1793,7 +1793,11 @@ getOrgaInfo url username nameid msg =
 
 getServerVersion url msg =
     makeGQLQuery url
-        (Query.queryBuildInfo identity Fractal.Object.BuildInfo.client_version
+        (Query.queryBuildInfo identity
+            (SelectionSet.map2 ServerBuild
+                Fractal.Object.BuildInfo.client_version
+                (SelectionSet.map parseReloadMode Fractal.Object.BuildInfo.reload_mode)
+            )
             |> SelectionSet.map (withDefault [] >> List.filterMap identity >> List.head >> Just)
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)

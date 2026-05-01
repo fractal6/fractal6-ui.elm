@@ -294,6 +294,27 @@ type alias OrgaInfo =
     }
 
 
+type ReloadMode
+    = Banner
+    | Hotfix
+
+
+type alias ServerBuild =
+    { version : String
+    , reloadMode : ReloadMode
+    }
+
+
+parseReloadMode : Maybe String -> ReloadMode
+parseReloadMode raw =
+    case raw |> Maybe.map String.trim |> Maybe.map String.toLower of
+        Just "hotfix" ->
+            Hotfix
+
+        _ ->
+            Banner
+
+
 type alias NotifCount =
     { unread_events : Int
     , pending_contracts : Int
@@ -888,7 +909,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx Nothing "" Lang.En initUserRights [] "" ""
+    UserCtx Nothing "" Lang.En initUserRights [] ""
 
 
 initNodeData : NodeData
@@ -1044,7 +1065,6 @@ type alias UserCtx =
     , lang : Lang.Lang
     , rights : UserRights
     , roles : List UserRole
-    , client_version : String
     , expiresAt : String
     }
 

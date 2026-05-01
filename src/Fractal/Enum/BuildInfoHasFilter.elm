@@ -9,11 +9,12 @@ import Json.Decode as Decode exposing (Decoder)
 
 type BuildInfoHasFilter
     = Client_version
+    | Reload_mode
 
 
 list : List BuildInfoHasFilter
 list =
-    [ Client_version ]
+    [ Client_version, Reload_mode ]
 
 
 decoder : Decoder BuildInfoHasFilter
@@ -24,6 +25,9 @@ decoder =
                 case string of
                     "client_version" ->
                         Decode.succeed Client_version
+
+                    "reload_mode" ->
+                        Decode.succeed Reload_mode
 
                     _ ->
                         Decode.fail ("Invalid BuildInfoHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +41,9 @@ toString enum____ =
     case enum____ of
         Client_version ->
             "client_version"
+
+        Reload_mode ->
+            "reload_mode"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +62,9 @@ fromString enumString____ =
     case enumString____ of
         "client_version" ->
             Just Client_version
+
+        "reload_mode" ->
+            Just Reload_mode
 
         _ ->
             Nothing

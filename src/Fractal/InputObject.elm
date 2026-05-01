@@ -369,19 +369,31 @@ encodeAddBlobInput (AddBlobInput input____) =
 
 buildAddBuildInfoInput :
     AddBuildInfoInputRequiredFields
+    -> (AddBuildInfoInputOptionalFields -> AddBuildInfoInputOptionalFields)
     -> AddBuildInfoInput
-buildAddBuildInfoInput required____ =
-    { client_version = required____.client_version }
+buildAddBuildInfoInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { reload_mode = Absent }
+    in
+    { client_version = required____.client_version, reload_mode = optionals____.reload_mode }
 
 
 type alias AddBuildInfoInputRequiredFields =
     { client_version : String }
 
 
+type alias AddBuildInfoInputOptionalFields =
+    { reload_mode : OptionalArgument String }
+
+
 {-| Type for the AddBuildInfoInput input object.
 -}
 type alias AddBuildInfoInput =
-    { client_version : String }
+    { client_version : String
+    , reload_mode : OptionalArgument String
+    }
 
 
 {-| Encode a AddBuildInfoInput into a value that can be used as an argument.
@@ -389,7 +401,7 @@ type alias AddBuildInfoInput =
 encodeAddBuildInfoInput : AddBuildInfoInput -> Value
 encodeAddBuildInfoInput input____ =
     Encode.maybeObject
-        [ ( "client_version", Encode.string input____.client_version |> Just ) ]
+        [ ( "client_version", Encode.string input____.client_version |> Just ), ( "reload_mode", Encode.string |> Encode.optional input____.reload_mode ) ]
 
 
 buildAddCommentInput :
@@ -2297,19 +2309,23 @@ buildBuildInfoPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { client_version = Absent }
+                { client_version = Absent, reload_mode = Absent }
     in
-    { client_version = optionals____.client_version }
+    { client_version = optionals____.client_version, reload_mode = optionals____.reload_mode }
 
 
 type alias BuildInfoPatchOptionalFields =
-    { client_version : OptionalArgument String }
+    { client_version : OptionalArgument String
+    , reload_mode : OptionalArgument String
+    }
 
 
 {-| Type for the BuildInfoPatch input object.
 -}
 type alias BuildInfoPatch =
-    { client_version : OptionalArgument String }
+    { client_version : OptionalArgument String
+    , reload_mode : OptionalArgument String
+    }
 
 
 {-| Encode a BuildInfoPatch into a value that can be used as an argument.
@@ -2317,7 +2333,7 @@ type alias BuildInfoPatch =
 encodeBuildInfoPatch : BuildInfoPatch -> Value
 encodeBuildInfoPatch input____ =
     Encode.maybeObject
-        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ) ]
+        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ), ( "reload_mode", Encode.string |> Encode.optional input____.reload_mode ) ]
 
 
 buildBuildInfoRef :
@@ -2327,19 +2343,23 @@ buildBuildInfoRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { client_version = Absent }
+                { client_version = Absent, reload_mode = Absent }
     in
-    { client_version = optionals____.client_version }
+    { client_version = optionals____.client_version, reload_mode = optionals____.reload_mode }
 
 
 type alias BuildInfoRefOptionalFields =
-    { client_version : OptionalArgument String }
+    { client_version : OptionalArgument String
+    , reload_mode : OptionalArgument String
+    }
 
 
 {-| Type for the BuildInfoRef input object.
 -}
 type alias BuildInfoRef =
-    { client_version : OptionalArgument String }
+    { client_version : OptionalArgument String
+    , reload_mode : OptionalArgument String
+    }
 
 
 {-| Encode a BuildInfoRef into a value that can be used as an argument.
@@ -2347,7 +2367,7 @@ type alias BuildInfoRef =
 encodeBuildInfoRef : BuildInfoRef -> Value
 encodeBuildInfoRef input____ =
     Encode.maybeObject
-        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ) ]
+        [ ( "client_version", Encode.string |> Encode.optional input____.client_version ), ( "reload_mode", Encode.string |> Encode.optional input____.reload_mode ) ]
 
 
 buildCardKindFilter :

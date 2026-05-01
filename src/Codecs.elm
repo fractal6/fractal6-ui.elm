@@ -145,7 +145,7 @@ projectDecoder =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map7 UserCtx
+    JD.map6 UserCtx
         (JD.maybe <| JD.field "name" JD.string)
         (JD.field "username" JD.string)
         (JD.field "lang" <| Lang.decoder)
@@ -166,7 +166,6 @@ userCtxDecoder =
             )
             |> JDE.withDefault []
         )
-        (JD.field "client_version" JD.string)
         (JD.field "expiresAt" JD.string)
 
 
@@ -196,7 +195,6 @@ userCtxEncoder userCtx =
                     userCtx.roles
             --(userCtx.roles |> withDefault [])
           )
-        , ( "client_version", JE.string userCtx.client_version )
         , ( "expiresAt", JE.string userCtx.expiresAt )
         ]
 

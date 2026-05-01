@@ -22,3 +22,8 @@ import Json.Decode as Decode
 client_version : SelectionSet String Fractal.Object.BuildInfo
 client_version =
     Object.selectionForField "String" "client_version" [] Decode.string
+
+
+reload_mode : SelectionSet (Maybe String) Fractal.Object.BuildInfo
+reload_mode =
+    Object.selectionForField "(Maybe String)" "reload_mode" [] (Decode.string |> Decode.nullable)

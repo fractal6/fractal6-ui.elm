@@ -14,6 +14,15 @@ RELEASE_DIR := releases/$(BRANCH_NAME)/$(RELEASE_VERSION)
 BUILD_DIRS := $(addprefix public-build/, $(LANGS))
 RELEASE_BUILD_DIRS := $(addprefix releases/, $(LANGS))
 
+# Reload mode advertised to clients on version mismatch:
+#   banner (default) - show the navbar notification, user clicks to reload.
+#   hotfix           - silent reload triggered by the client on detection.
+# Override with HOTFIX=1 (shorthand) or RELOAD_MODE=hotfix.
+RELOAD_MODE ?= banner
+ifdef HOTFIX
+RELOAD_MODE := hotfix
+endif
+
 # To publish {op|prod}
 # - generate release: git cliff --unreleased --tag XXX --topo-order
 # - git tag XXX
@@ -85,6 +94,7 @@ publish_staging: prod
 # Build and publish in public-build repo.
 publish: $(BUILD_DIRS)
 	@echo $(COMMIT_NAME) > ../public-build/client_version && \
+		echo $(RELOAD_MODE) > ../public-build/reload_mode && \
 		cd ../public-build/ && \
 		git add * && \
 		git commit -m "$(BRANCH_NAME) - $(COMMIT_NAME)" && \
@@ -95,6 +105,7 @@ publish: $(BUILD_DIRS)
 # Build in public-build but don't push.
 publish_test: $(BUILD_DIRS)
 	@git rev-parse --short HEAD > ../public-build/client_version
+	@echo $(RELOAD_MODE) > ../public-build/reload_mode
 	echo "-- $@ in ../public-build/ done"
 
 $(BUILD_DIRS): public-build/%:
@@ -119,7 +130,7 @@ $(BUILD_DIRS): public-build/%:
 #
 
 publish_prod: pre_build_prod build_release_prod
-	@git push origin prod
+	@git push origin prod --force-with-lease
 	@echo "-- Please upload your release to github: $(RELEASE_DIR)/$(RELEASE_NAME)"
 
 pre_build_prod:
@@ -136,6 +147,7 @@ pre_build_prod:
 
 build_release_prod: $(RELEASE_BUILD_DIRS)
 	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		echo $(RELOAD_MODE) > $(RELEASE_DIR)/$(RELEASE_NAME)/reload_mode && \
 		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
 		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
 
@@ -144,7 +156,7 @@ build_release_prod: $(RELEASE_BUILD_DIRS)
 #
 
 publish_op: pre_build_op build_release_op upload_release_op
-	@git push f6 op
+	@git push f6 op --force-with-lease
 	@echo "-- op release published"
 
 pre_build_op:
@@ -165,6 +177,7 @@ pre_build_op:
 
 build_release_op: $(RELEASE_BUILD_DIRS)
 	@echo $(COMMIT_NAME) > $(RELEASE_DIR)/$(RELEASE_NAME)/client_version && \
+		echo $(RELOAD_MODE) > $(RELEASE_DIR)/$(RELEASE_NAME)/reload_mode && \
 		(cd $(RELEASE_DIR) && zip -q -r - $(RELEASE_NAME)) > $(RELEASE_NAME).zip && \
 		mv $(RELEASE_NAME).zip $(RELEASE_DIR)
 

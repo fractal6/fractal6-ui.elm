@@ -32,3 +32,13 @@ client_versionMin =
 client_versionMax : SelectionSet (Maybe String) Fractal.Object.BuildInfoAggregateResult
 client_versionMax =
     Object.selectionForField "(Maybe String)" "client_versionMax" [] (Decode.string |> Decode.nullable)
+
+
+reload_modeMin : SelectionSet (Maybe String) Fractal.Object.BuildInfoAggregateResult
+reload_modeMin =
+    Object.selectionForField "(Maybe String)" "reload_modeMin" [] (Decode.string |> Decode.nullable)
+
+
+reload_modeMax : SelectionSet (Maybe String) Fractal.Object.BuildInfoAggregateResult
+reload_modeMax =
+    Object.selectionForField "(Maybe String)" "reload_modeMax" [] (Decode.string |> Decode.nullable)

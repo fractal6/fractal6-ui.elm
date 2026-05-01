@@ -150,7 +150,7 @@ type Msg
     | UpdateSessionScrollPosition String
     | GotOrgaInfo (GqlData OrgaInfo)
     | CheckServerVersion
-    | GotServerVersion (GqlData (Maybe String))
+    | GotServerVersion (GqlData (Maybe ServerBuild))
     | GotTensionTemplates (RestData (List TensionTemplateLite))
     | ResetSessionTemplates
     | RefreshNotifCount
@@ -784,8 +784,8 @@ update msg model =
 
         GotServerVersion result ->
             case result of
-                Success v ->
-                    if v == model.session.data.serverVersion then
+                Success build ->
+                    if build == model.session.data.serverBuild then
                         ( model, Cmd.none )
 
                     else
@@ -795,8 +795,20 @@ update msg model =
 
                             sessionData =
                                 session.data
+
+                            reloadCmd =
+                                case build of
+                                    Just b ->
+                                        if b.reloadMode == Hotfix && b.version /= apis.client_version then
+                                            Ports.forceReload
+
+                                        else
+                                            Cmd.none
+
+                                    Nothing ->
+                                        Cmd.none
                         in
-                        ( { model | session = { session | data = { sessionData | serverVersion = v } } }, Cmd.none )
+                        ( { model | session = { session | data = { sessionData | serverBuild = build } } }, reloadCmd )
 
                 _ ->
                     ( model, Cmd.none )
@@ -955,8 +967,11 @@ update msg model =
 
                 sessionData =
                     session.data
+
+                dismissed =
+                    Just { version = session.apis.client_version, reloadMode = Banner }
             in
-            ( { model | session = { session | data = { sessionData | serverVersion = Just session.apis.client_version } } }, Cmd.none )
+            ( { model | session = { session | data = { sessionData | serverBuild = dismissed } } }, Cmd.none )
 
         OnForceReload ->
             ( model, Ports.forceReload )
@@ -1150,7 +1165,7 @@ layout { page, url, session, navbarHandlers, onClearNotif } =
     { title = page.title
     , body =
         [ div [ id "app", classList [ ( "embed", session.common.viewMode == EmbedView ) ] ]
-            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.serverVersion session.data.tension_head navbarHandlers
+            [ showIf (session.common.viewMode /= EmbedView) <| Navbar.view session.apis session.common session.data.notif session.data.serverBuild session.data.tension_head navbarHandlers
             , showIf (session.data.system_notification /= [])
                 (viewNotif session.data.system_notification onClearNotif)
             , div [ id "body" ] page.body
