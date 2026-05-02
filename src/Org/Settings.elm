@@ -24,13 +24,6 @@ module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
-import Fractale.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
@@ -44,21 +37,15 @@ import Components.OrgaMenu as OrgaMenu
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf, textT)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (space_, upH)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Url exposing (queryBuilder, queryParser)
-import Utils.Html exposing (showMsg)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.ProjectColumnType
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (helperButton, tensionIcon2, tensionIcon3, viewGoRoot, viewRoleExt, viewTensionTypePicker)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, h3, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
@@ -77,10 +64,22 @@ import Query.PatchNode exposing (addOneLabel, addOneProjectTemplate, addOneRole,
 import Query.QueryNode exposing (getCircleRights, getLabels, getProjectTemplates, getRoles, getTensionTemplates, queryLocalGraph)
 import RemoteData
 import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchProjectTemplatesSub, fetchProjectTemplatesTop, fetchRolesSub, fetchRolesTop, fetchTensionTemplatesSub, fetchTensionTemplatesTop, setGuestCanCreateTension, setIsPinnedTensionfetchRecursively, setIsTemplateTensionOnly, setLexicon, setUserCanJoin)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.ProjectColumnType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionType as TensionType
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (showIf, showMsg, textT)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_, upH)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 page : Page Flags Model Msg
@@ -1540,7 +1539,7 @@ update global message model =
                     List.length f.columns
             in
             ( { model | ptemplate_form = { f | columns = f.columns ++ [ newCol ] } }
-            , Ports.focusOn (ptemplateColumnNameInputId newIdx)
+            , Ports.focusOn (ColorPicker.columnNameInputId "ptemplate-column-name" newIdx)
             , Cmd.none
             )
 
@@ -2268,7 +2267,7 @@ viewSettingsContent model =
 
         TemplatesMenu ->
             div []
-                [ viewTemplates model
+                [ viewTensionTemplates model
                 , viewTemplatesExt model.url T.inheritedTemplates model.templates_top
                 , viewTemplatesExt model.url T.subTemplates model.templates_sub
                 ]
@@ -2832,8 +2831,8 @@ viewRolesExt commonOp url txt_yes list_ext_d =
 -}
 
 
-viewTemplateAddBox : Model -> Html Msg
-viewTemplateAddBox model =
+viewTensionTemplateAddBox : Model -> Html Msg
+viewTensionTemplateAddBox model =
     let
         isAdd =
             model.template_add
@@ -2983,8 +2982,8 @@ viewTemplateAddBox model =
         ]
 
 
-viewTemplates : Model -> Html Msg
-viewTemplates model =
+viewTensionTemplates : Model -> Html Msg
+viewTensionTemplates model =
     let
         isEmpty =
             isDataEmpty model.templates
@@ -3002,7 +3001,7 @@ viewTemplates model =
             , div [ class "level-right is-align-self-flex-start", classList [ ( "is-hidden", model.template_add ) ] ] [ button [ class "button is-success", onClick (SafeEdit AddTemplate) ] [ A.icon0 "icon-plus", text (T.tension model.lexicon) ] ]
             ]
         , if model.template_add then
-            viewTemplateAddBox model
+            viewTensionTemplateAddBox model
 
           else
             text ""
@@ -3035,7 +3034,7 @@ viewTemplates model =
                                             (\d ->
                                                 [ tr [ classList [ ( "settings-row-enter", model.template_anim_enter == Just d.id ) ] ] <|
                                                     if model.template_edit == Just d then
-                                                        [ td [ colspan 7 ] [ viewTemplateAddBox model ] ]
+                                                        [ td [ colspan 7 ] [ viewTensionTemplateAddBox model ] ]
 
                                                     else
                                                         [ td [ onClick (SafeEdit <| EditTemplate d) ] [ span [ class "button-light" ] [ text d.name ] ]
@@ -3143,9 +3142,23 @@ viewTemplatesExt url txt_yes list_ext_d =
             text ""
 
 
-ptemplateColumnNameInputId : Int -> String
-ptemplateColumnNameInputId idx =
-    "ptemplate-column-name-" ++ String.fromInt idx
+viewPTemplateColumnRow : Model -> Int -> ColumnDraft -> Html Msg
+viewPTemplateColumnRow model idx col =
+    ColorPicker.viewColumnRow
+        { col = col
+        , idx = idx
+        , nCols = List.length model.ptemplate_form.columns
+        , isPickerActive = model.ptemplate_color_picker_idx == Just idx
+        , colors = model.ptemplate_color_picker.colors
+        , inputIdPrefix = "ptemplate-column-name"
+        , onOpenColor = OpenPTemplateColumnColor idx
+        , onCloseColor = ClosePTemplateColumnColor
+        , onSelectColor = SelectPTemplateColumnColor
+        , onChangeName = ChangePTemplateColumnField idx "name"
+        , onChangeDesc = ChangePTemplateColumnField idx "description"
+        , onMove = MovePTemplateColumn idx
+        , onRemove = RemovePTemplateColumn idx
+        }
 
 
 viewProjectTemplateAddBox : Model -> Html Msg
@@ -3227,124 +3240,6 @@ viewProjectTemplateAddBox model =
 
             _ ->
                 text ""
-        ]
-
-
-viewPTemplateColumnRow : Model -> Int -> ColumnDraft -> Html Msg
-viewPTemplateColumnRow model idx col =
-    let
-        nCols =
-            List.length model.ptemplate_form.columns
-
-        accent =
-            withDefault "var(--bulma-border)" col.color
-
-        swatchStyle =
-            case col.color of
-                Just c ->
-                    "background-color:" ++ c ++ "; border:none;"
-
-                Nothing ->
-                    "background-color:transparent; border:1px dashed var(--bulma-border);"
-
-        isFirst =
-            idx == 0
-
-        isLast =
-            idx == nCols - 1
-
-        isPickerActive =
-            model.ptemplate_color_picker_idx == Just idx
-
-        swatch =
-            span
-                [ class "mr-2 is-flex-shrink-0"
-                , style "position" "relative"
-                ]
-                [ button
-                    [ class "buttonColor"
-                    , attribute "style" swatchStyle
-                    , onClickPD (ternary isPickerActive ClosePTemplateColumnColor (OpenPTemplateColumnColor idx))
-                    , attribute "title" T.changeColor
-                    ]
-                    []
-                , showIf isPickerActive <|
-                    div [ id "colorPicker" ]
-                        [ div [ class "colorBoxes" ]
-                            [ span [ class "is-size-7" ]
-                                [ text T.selectColor, text ":" ]
-                            , div []
-                                (model.ptemplate_color_picker.colors
-                                    |> List.map
-                                        (\c ->
-                                            button
-                                                [ class "buttonColor"
-                                                , onClick (SelectPTemplateColumnColor c)
-                                                , attribute "style" ("background-color:" ++ c ++ ";")
-                                                ]
-                                                []
-                                        )
-                                )
-                            ]
-                        ]
-                ]
-    in
-    div
-        [ class "p-3 mb-2 has-background-body"
-        , style "border" "1px solid var(--bulma-border)"
-        , style "border-left" ("4px solid " ++ accent)
-        , style "border-radius" "var(--bulma-radius)"
-        ]
-        [ div [ class "is-flex is-align-items-center" ]
-            [ swatch
-            , input
-                [ id (ptemplateColumnNameInputId idx)
-                , class "input is-small"
-                , type_ "text"
-                , value col.name
-                , placeholder T.name
-                , onInput (ChangePTemplateColumnField idx "name")
-                , style "border" "none"
-                , style "background" "transparent"
-                , style "box-shadow" "none"
-                , style "font-weight" "600"
-                , style "flex" "1"
-                ]
-                []
-            , div [ class "buttons has-addons mb-0 ml-2 is-flex-shrink-0" ]
-                [ button
-                    [ class "button is-small"
-                    , disabled isFirst
-                    , onClick (MovePTemplateColumn idx -1)
-                    , attribute "title" T.moveUp
-                    ]
-                    [ A.icon "icon-chevron-up" ]
-                , button
-                    [ class "button is-small"
-                    , disabled isLast
-                    , onClick (MovePTemplateColumn idx 1)
-                    , attribute "title" T.moveDown
-                    ]
-                    [ A.icon "icon-chevron-down" ]
-                , button
-                    [ class "button is-small"
-                    , onClick (RemovePTemplateColumn idx)
-                    , attribute "title" T.removeColumn
-                    ]
-                    [ A.icon "icon-x" ]
-                ]
-            ]
-        , input
-            [ class "input is-small mt-1"
-            , type_ "text"
-            , value col.description
-            , placeholder T.descriptionOptional
-            , onInput (ChangePTemplateColumnField idx "description")
-            , style "border" "none"
-            , style "background" "transparent"
-            , style "box-shadow" "none"
-            ]
-            []
         ]
 
 

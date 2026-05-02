@@ -76,7 +76,7 @@ import Utils.Bool exposing (ternary)
 import Utils.Bulma as B
 import Utils.Cmd exposing (send, sendNow, sendSleep)
 import Utils.Date exposing (formatDate)
-import Utils.DomEvents exposing (onClickPD, onClickSP)
+import Utils.DomEvents exposing (key, onClickPD, onClickSP, outsideClickClose)
 import Utils.Html exposing (showIf, textH, textT)
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (decap, space_, upH)
@@ -330,11 +330,6 @@ resetForm model =
     }
 
 
-columnNameInputId : Int -> String
-columnNameInputId idx =
-    "column-name-" ++ String.fromInt idx
-
-
 simpleKanban : List ColumnDraft
 simpleKanban =
     [ { name = T.colTodoName
@@ -384,7 +379,8 @@ type Msg
     | CancelProject
       -- Project template picker
     | GotProjectTemplatesLite (RestData (List ProjectTemplateLite))
-    | ToggleTemplatePicker
+    | OpenTemplatePicker
+    | CloseTemplatePicker
     | OnSelectProjectTemplate ProjectTemplateLite
     | GotProjectTemplateContent (GqlData ProjectTemplateFull)
     | OnSelectSimpleKanbanTemplate
@@ -690,7 +686,7 @@ update global message model =
                     List.length cols
             in
             ( { model | project_form = newForm, hasUnsavedData = True }
-            , Ports.focusOn (columnNameInputId newIdx)
+            , Ports.focusOn (ColorPicker.columnNameInputId "column-name" newIdx)
             , Cmd.none
             )
 
@@ -769,11 +765,7 @@ update global message model =
                         |> ColorPicker.open
             in
             ( { model | colorPicker = newPicker, colorPickerIdx = Just idx }
-            , if model.colorPicker.isOpen then
-                Cmd.none
-
-              else
-                Ports.outsideClickClose "cancelColorFromJs" "colorPicker"
+            , Cmd.none
             , Cmd.none
             )
 
@@ -781,7 +773,6 @@ update global message model =
             ( { model
                 | colorPicker = ColorPicker.close model.colorPicker
                 , colorPickerIdx = Nothing
-                , showTemplatePicker = False
               }
             , Cmd.none
             , Cmd.none
@@ -946,19 +937,11 @@ update global message model =
         GotProjectTemplatesLite result ->
             ( { model | ptemplates = result }, Cmd.none, Cmd.none )
 
-        ToggleTemplatePicker ->
-            let
-                newOpen =
-                    not model.showTemplatePicker
-            in
-            ( { model | showTemplatePicker = newOpen }
-            , if newOpen then
-                Ports.outsideClickClose "cancelColorFromJs" "ptemplate-picker"
+        OpenTemplatePicker ->
+            ( { model | showTemplatePicker = True }, Cmd.none, Cmd.none )
 
-              else
-                Cmd.none
-            , Cmd.none
-            )
+        CloseTemplatePicker ->
+            ( { model | showTemplatePicker = False }, Cmd.none, Cmd.none )
 
         OnSelectProjectTemplate tpl ->
             ( { model | ptemplateLoading = True, showTemplatePicker = False, selectedTemplateName = tpl.name }
@@ -1521,8 +1504,23 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
-    , Ports.cancelColorFromJs (always CloseColumnColor)
     ]
+        ++ (if model.colorPicker.isOpen then
+                [ Events.onMouseUp (outsideClickClose "colorPicker" CloseColumnColor)
+                , Events.onKeyUp (key "Escape" CloseColumnColor)
+                ]
+
+            else
+                []
+           )
+        ++ (if model.showTemplatePicker then
+                [ Events.onMouseUp (outsideClickClose "ptemplate-picker" CloseTemplatePicker)
+                , Events.onKeyUp (key "Escape" CloseTemplatePicker)
+                ]
+
+            else
+                []
+           )
         ++ (if model.project_move /= Nothing then
                 [ Ports.mcPD Ports.closeModalFromJs LogErr (\_ -> CancelMoveProject) ]
 
@@ -1794,6 +1792,25 @@ viewNewOrEditProject session isNew model =
         ]
 
 
+viewColumnRow : List String -> Maybe Int -> Int -> Int -> ColumnDraft -> Html Msg
+viewColumnRow colors activeIdx nCols idx col =
+    ColorPicker.viewColumnRow
+        { col = col
+        , idx = idx
+        , nCols = nCols
+        , isPickerActive = activeIdx == Just idx
+        , colors = colors
+        , inputIdPrefix = "column-name"
+        , onOpenColor = OpenColumnColor idx
+        , onCloseColor = CloseColumnColor
+        , onSelectColor = SelectColumnColor
+        , onChangeName = ChangeColumnField idx "name"
+        , onChangeDesc = ChangeColumnField idx "description"
+        , onMove = MoveColumn idx
+        , onRemove = RemoveColumn idx
+        }
+
+
 viewColumnsEditor : Model -> Html Msg
 viewColumnsEditor model =
     let
@@ -1815,7 +1832,7 @@ viewColumnsEditor model =
             , div [ class "level-right" ]
                 [ viewTemplatePicker model ]
             ]
-        , div [] (List.indexedMap (viewColumnRow model.colorPicker model.colorPickerIdx nCols) cols)
+        , div [] (List.indexedMap (viewColumnRow model.colorPicker.colors model.colorPickerIdx nCols) cols)
         , button
             [ class "button is-fullwidth is-weak mt-2"
             , style "border" "1px dashed var(--bulma-border)"
@@ -1847,7 +1864,7 @@ viewTemplatePicker model =
                 [ class "tag is-weak button-light"
                 , classList [ ( "is-loading", model.ptemplateLoading ) ]
                 , attribute "aria-haspopup" "true"
-                , onClickPD ToggleTemplatePicker
+                , onClickPD (ternary model.showTemplatePicker CloseTemplatePicker OpenTemplatePicker)
                 ]
                 [ text model.selectedTemplateName
                 , span [ class "ml-1" ] [ A.icon "icon-chevron-down" ]
@@ -1886,135 +1903,6 @@ viewTemplatePickerItem selectedName t =
 
             Nothing ->
                 text ""
-        ]
-
-
-viewColumnRow : ColorPicker -> Maybe Int -> Int -> Int -> ColumnDraft -> Html Msg
-viewColumnRow colorPicker activeIdx nCols idx col =
-    let
-        accent =
-            withDefault "var(--bulma-border)" col.color
-
-        swatchStyle =
-            case col.color of
-                Just c ->
-                    "background-color:" ++ c ++ "; border:none;"
-
-                Nothing ->
-                    "background-color:transparent; border:1px dashed var(--bulma-border);"
-
-        isFirst =
-            idx == 0
-
-        isLast =
-            idx == nCols - 1
-
-        isPickerActive =
-            activeIdx == Just idx
-
-        inputCls =
-            "input is-small editable-soft-input"
-
-        bareInputStyle =
-            [ style "border" "none"
-            , style "background" "transparent"
-            , style "box-shadow" "none"
-            ]
-
-        -- The wrapper, swatch button and popup keep the same shape regardless of
-        -- isPickerActive so opening the picker never shifts the row layout. The
-        -- popup is only rendered for the active row to avoid duplicate
-        -- `id="colorPicker"` collisions with Ports.outsideClickClose.
-        swatch =
-            span
-                [ class "mr-2 is-flex-shrink-0"
-                , style "position" "relative"
-                ]
-                [ button
-                    [ class "buttonColor"
-                    , attribute "style" swatchStyle
-                    , onClickSP (ternary isPickerActive CloseColumnColor (OpenColumnColor idx))
-                    , attribute "title" T.changeColor
-                    ]
-                    []
-                , showIf isPickerActive <|
-                    div [ id "colorPicker" ]
-                        [ div [ class "colorBoxes" ]
-                            [ span [ class "is-size-7" ]
-                                [ text T.selectColor, text ":" ]
-                            , div []
-                                (colorPicker.colors
-                                    |> List.map
-                                        (\c ->
-                                            button
-                                                [ class "buttonColor"
-                                                , onClick (SelectColumnColor c)
-                                                , attribute "style" ("background-color:" ++ c ++ ";")
-                                                ]
-                                                []
-                                        )
-                                )
-                            ]
-                        ]
-                ]
-    in
-    div
-        [ class "p-3 mb-2 has-background-body"
-        , style "border" "1px solid var(--bulma-border)"
-        , style "border-left" ("4px solid " ++ accent)
-        , style "border-radius" "var(--bulma-radius)"
-        ]
-        [ div [ class "is-flex is-align-items-center" ]
-            [ swatch
-            , input
-                ([ id (columnNameInputId idx)
-                 , class inputCls
-                 , type_ "text"
-                 , value col.name
-                 , placeholder T.name
-                 , onInput (ChangeColumnField idx "name")
-                 , style "font-weight" "600"
-                 , style "flex" "1"
-                 ]
-                    ++ bareInputStyle
-                )
-                []
-            , div [ class "buttons has-addons mb-0 ml-2 is-flex-shrink-0" ]
-                [ button
-                    [ class "button is-small"
-                    , disabled isFirst
-                    , onClick (MoveColumn idx -1)
-                    , attribute "title" T.moveUp
-                    ]
-                    [ A.icon "icon-chevron-up" ]
-                , button
-                    [ class "button is-small"
-                    , disabled isLast
-                    , onClick (MoveColumn idx 1)
-                    , attribute "title" T.moveDown
-                    ]
-                    [ A.icon "icon-chevron-down" ]
-                , button
-                    [ class "button is-small has-text-danger"
-                    , disabled (nCols <= 1)
-                    , onClick (RemoveColumn idx)
-                    , attribute "title" T.removeColumn
-                    ]
-                    [ A.icon "icon-x" ]
-                ]
-            ]
-        , input
-            ([ class inputCls
-             , type_ "text"
-             , value col.description
-             , placeholder T.descriptionOptional
-             , onInput (ChangeColumnField idx "description")
-             , style "color" "var(--bulma-text-weak)"
-             , style "font-size" "0.85rem"
-             ]
-                ++ bareInputStyle
-            )
-            []
         ]
 
 

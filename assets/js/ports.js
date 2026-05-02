@@ -565,7 +565,7 @@ export const actions = {
             if (event.target.closest("#"+id) === null) {
                 // @debug; doesnt work with elm events!
                 //event.stopPropagation();
-                closeEvent();
+                if (msg) closeEvent();
             }
         }
 
