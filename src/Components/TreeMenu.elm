@@ -711,16 +711,33 @@ viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
 
         isExpanded =
             Dict.member nid expanded_lines
+
+        circleNid =
+            node.nameid |> (++) "-/§circle§/"
+
+        isCollapsed =
+            Dict.member circleNid expanded_lines
+
+        nonRoleChildrenCount =
+            children |> List.filter (\(Tree c) -> c.node.role_type == Nothing) |> List.length
+
+        hasCollapsible =
+            nonRoleChildrenCount > 0 || List.length roles > 0
     in
     ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnNodeHover Nothing) ] [])
         [ li []
-            (Lazy.lazy3 viewCircleLine hover focus node
-                :: List.map
-                    (\(Tree c) ->
-                        showIf (c.node.role_type == Nothing) <|
-                            viewSubTree (depth + 1) hover focus (Tree c) expanded_lines
-                    )
-                    children
+            (Lazy.lazy5 viewCircleLine hover focus hasCollapsible isCollapsed node
+                :: (if isCollapsed then
+                        []
+
+                    else
+                        List.map
+                            (\(Tree c) ->
+                                showIf (c.node.role_type == Nothing) <|
+                                    viewSubTree (depth + 1) hover focus (Tree c) expanded_lines
+                            )
+                            children
+                   )
             )
         , ul [ class "menu-list pl-0" ]
             [ div [ class "is-boxed" ] <|
@@ -728,19 +745,19 @@ viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
                     li [] [ viewRolesLine "roles" hover roles nid expanded_lines ]
                  ]
                     ++ (if isExpanded then
-                            List.map (\n -> li [] [ Lazy.lazy3 viewCircleLine hover focus n ]) roles
+                            List.map (\n -> li [] [ Lazy.lazy5 viewCircleLine hover focus False False n ]) roles
 
                         else
                             []
                        )
                 )
             ]
-            |> showIf (List.length roles > 0)
+            |> showIf (not isCollapsed && List.length roles > 0)
         ]
 
 
-viewCircleLine : Maybe String -> NodeFocus -> Node -> Html Msg
-viewCircleLine hover focus node =
+viewCircleLine : Maybe String -> NodeFocus -> Bool -> Bool -> Node -> Html Msg
+viewCircleLine hover focus collapsible isCollapsed node =
     a
         [ class "treeMenu"
         , id (prefixId node.nameid)
@@ -767,9 +784,21 @@ viewCircleLine hover focus node =
                     i ->
                         span [ class "is-contract-badge-bg" ] [ counter i ]
                 ]
-            , if hover == Just node.nameid then
+            , if hover == Just node.nameid || (collapsible && isCollapsed) then
                 div [ class "level-right here" ]
-                    [ span [ class "tag is-rounded has-border-small", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ] ]
+                    [ if collapsible && isCollapsed then
+                        span [ class "mr-1", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
+                            [ A.icon "icon-chevron-right" ]
+
+                      else if collapsible && hover == Just node.nameid then
+                        span [ class "mr-1", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
+                            [ A.icon "icon-chevron-down" ]
+
+                      else
+                        text ""
+                    , showIf (hover == Just node.nameid) <|
+                        span [ class "tag is-rounded has-border-small", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ]
+                    ]
 
               else
                 text ""
