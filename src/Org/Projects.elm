@@ -212,6 +212,7 @@ type alias Model =
     -- Column color picker (shared, scoped to one column at a time)
     , colorPicker : ColorPicker
     , colorPickerIdx : Maybe Int
+    , colMoved : Maybe ( Int, Int )
 
     -- Project templates (picker for new project)
     , ptemplates : RestData (List ProjectTemplateLite)
@@ -365,6 +366,7 @@ type Msg
     | RemoveColumn Int
     | ChangeColumnField Int String String
     | MoveColumn Int Int
+    | ClearColumnMoveHighlight
     | OpenColumnColor Int
     | CloseColumnColor
     | SelectColumnColor String
@@ -485,6 +487,7 @@ init global flags =
             , project_result_del = NotAsked
             , colorPicker = ColorPicker.init
             , colorPickerIdx = Nothing
+            , colMoved = Nothing
             , ptemplates = RemoteData.NotAsked
             , ptemplateLoading = False
             , showTemplatePicker = False
@@ -750,7 +753,13 @@ update global message model =
                     newForm =
                         { form | columns = Just (LE.swapAt idx target cols) }
                 in
-                ( { model | project_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+                ( { model | project_form = newForm, hasUnsavedData = True, colMoved = Just ( idx, target ) }
+                , sendSleep ClearColumnMoveHighlight 300
+                , Cmd.none
+                )
+
+        ClearColumnMoveHighlight ->
+            ( { model | colMoved = Nothing }, Cmd.none, Cmd.none )
 
         OpenColumnColor idx ->
             let
@@ -1792,13 +1801,14 @@ viewNewOrEditProject session isNew model =
         ]
 
 
-viewColumnRow : List String -> Maybe Int -> Int -> Int -> ColumnDraft -> Html Msg
-viewColumnRow colors activeIdx nCols idx col =
+viewColumnRow : List String -> Maybe Int -> Maybe ( Int, Int ) -> Int -> Int -> ColumnDraft -> Html Msg
+viewColumnRow colors activeIdx colMoved nCols idx col =
     ColorPicker.viewColumnRow
         { col = col
         , idx = idx
         , nCols = nCols
         , isPickerActive = activeIdx == Just idx
+        , colMoved = colMoved
         , colors = colors
         , inputIdPrefix = "column-name"
         , onOpenColor = OpenColumnColor idx
@@ -1832,7 +1842,7 @@ viewColumnsEditor model =
             , div [ class "level-right" ]
                 [ viewTemplatePicker model ]
             ]
-        , div [] (List.indexedMap (viewColumnRow model.colorPicker.colors model.colorPickerIdx nCols) cols)
+        , div [] (List.indexedMap (viewColumnRow model.colorPicker.colors model.colorPickerIdx model.colMoved nCols) cols)
         , button
             [ class "button is-fullwidth is-weak mt-2"
             , style "border" "1px dashed var(--bulma-border)"

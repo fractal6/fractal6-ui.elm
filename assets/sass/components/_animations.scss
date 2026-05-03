@@ -136,3 +136,19 @@ tr.settings-row-enter > td {
 #rolesTable .table .box {
     animation: settingsBoxEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
+
+// Project/template column reorder feedback — both swapped rows slide into place.
+// `slid-up` = the row came from below (visually moves upward).
+// `slid-down` = the row came from above (visually moves downward).
+// The translateY offset matches the row's full height + the .mb-2 gap (~0.5rem).
+@keyframes columnRowSlideUp {
+    from { transform: translateY(calc(100% + 0.5rem)); }
+    to   { transform: translateY(0); }
+}
+@keyframes columnRowSlideDown {
+    from { transform: translateY(calc(-100% - 0.5rem)); }
+    to   { transform: translateY(0); }
+}
+
+.column-row.slid-up   { animation: columnRowSlideUp 0.25s ease-out; }
+.column-row.slid-down { animation: columnRowSlideDown 0.25s ease-out; }

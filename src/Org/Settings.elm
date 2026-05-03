@@ -239,6 +239,7 @@ type alias Model =
     , ptemplate_anim_enter : Maybe String
     , ptemplate_color_picker : ColorPicker
     , ptemplate_color_picker_idx : Maybe Int
+    , ptemplate_col_moved : Maybe ( Int, Int )
 
     -- Orga
     , orga_rights : GqlData NodeRights
@@ -483,6 +484,7 @@ init global flags =
             , ptemplate_anim_enter = Nothing
             , ptemplate_color_picker = ColorPicker.init
             , ptemplate_color_picker_idx = Nothing
+            , ptemplate_col_moved = Nothing
 
             -- Orga
             , orga_rights = Loading
@@ -638,6 +640,7 @@ type Msg
     | RemovePTemplateColumn Int
     | ChangePTemplateColumnField Int String String
     | MovePTemplateColumn Int Int
+    | ClearPTemplateColumnMoveHighlight
     | OpenPTemplateColumnColor Int
     | ClosePTemplateColumnColor
     | SelectPTemplateColumnColor String
@@ -1583,12 +1586,13 @@ update global message model =
 
                 target =
                     idx + dir
+            in
+            if target < 0 || target >= List.length f.columns then
+                ( model, Cmd.none, Cmd.none )
 
-                cols =
-                    if target < 0 || target >= List.length f.columns then
-                        f.columns
-
-                    else
+            else
+                let
+                    cols =
                         case ( LE.getAt idx f.columns, LE.getAt target f.columns ) of
                             ( Just a, Just b ) ->
                                 f.columns
@@ -1597,8 +1601,14 @@ update global message model =
 
                             _ ->
                                 f.columns
-            in
-            ( { model | ptemplate_form = { f | columns = cols } }, Cmd.none, Cmd.none )
+                in
+                ( { model | ptemplate_form = { f | columns = cols }, ptemplate_col_moved = Just ( idx, target ) }
+                , sendSleep ClearPTemplateColumnMoveHighlight 300
+                , Cmd.none
+                )
+
+        ClearPTemplateColumnMoveHighlight ->
+            ( { model | ptemplate_col_moved = Nothing }, Cmd.none, Cmd.none )
 
         OpenPTemplateColumnColor idx ->
             ( { model | ptemplate_color_picker_idx = Just idx }
@@ -3149,6 +3159,7 @@ viewPTemplateColumnRow model idx col =
         , idx = idx
         , nCols = List.length model.ptemplate_form.columns
         , isPickerActive = model.ptemplate_color_picker_idx == Just idx
+        , colMoved = model.ptemplate_col_moved
         , colors = model.ptemplate_color_picker.colors
         , inputIdPrefix = "ptemplate-column-name"
         , onOpenColor = OpenPTemplateColumnColor idx

@@ -36,7 +36,7 @@ module Components.ColorPicker exposing
 
 import Assets as A
 import Html exposing (Html, button, div, input, span, text)
-import Html.Attributes exposing (attribute, class, disabled, id, placeholder, style, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (ColumnDraft)
@@ -188,6 +188,7 @@ type alias ColumnRowOp msg =
     , idx : Int
     , nCols : Int
     , isPickerActive : Bool
+    , colMoved : Maybe ( Int, Int )
     , colors : List String
     , inputIdPrefix : String
     , onOpenColor : msg
@@ -220,9 +221,30 @@ viewColumnRow op =
             , style "background" "transparent"
             , style "box-shadow" "none"
             ]
+
+        -- Animation direction: this row was at `from`, now at `to` (swapped pair).
+        -- dir > 0 → came from below (slid up); dir < 0 → came from above (slid down).
+        justMovedDir =
+            case op.colMoved of
+                Just ( from, to ) ->
+                    if op.idx == to then
+                        from - to
+
+                    else if op.idx == from then
+                        to - from
+
+                    else
+                        0
+
+                Nothing ->
+                    0
     in
     div
-        [ class "p-3 mb-2 has-background-body"
+        [ class "p-3 mb-2 has-background-body column-row"
+        , classList
+            [ ( "slid-up", justMovedDir > 0 )
+            , ( "slid-down", justMovedDir < 0 )
+            ]
         , style "border" "1px solid var(--bulma-border)"
         , style "border-left" ("4px solid " ++ accent)
         , style "border-radius" "var(--bulma-radius)"
