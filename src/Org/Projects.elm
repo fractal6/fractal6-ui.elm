@@ -218,7 +218,7 @@ type alias Model =
     , ptemplates : RestData (List ProjectTemplateLite)
     , ptemplateLoading : Bool
     , showTemplatePicker : Bool
-    , selectedTemplateName : String
+    , selectedTemplate : Maybe ProjectTemplateLite
 
     -- Move
     , project_move : Maybe ProjectFull
@@ -491,7 +491,7 @@ init global flags =
             , ptemplates = RemoteData.NotAsked
             , ptemplateLoading = False
             , showTemplatePicker = False
-            , selectedTemplateName = T.simpleKanban
+            , selectedTemplate = Nothing
 
             -- Move
             , project_move = Nothing
@@ -928,7 +928,7 @@ update global message model =
                     | project_add = ternary model.project_add False True
                     , project_edit = Nothing
                     , project_form = newForm
-                    , selectedTemplateName = T.simpleKanban
+                    , selectedTemplate = Nothing
                     , showTemplatePicker = False
                   }
                 , Cmd.batch
@@ -953,7 +953,7 @@ update global message model =
             ( { model | showTemplatePicker = False }, Cmd.none, Cmd.none )
 
         OnSelectProjectTemplate tpl ->
-            ( { model | ptemplateLoading = True, showTemplatePicker = False, selectedTemplateName = tpl.name }
+            ( { model | ptemplateLoading = True, showTemplatePicker = False, selectedTemplate = Just tpl }
             , getProjectTemplateById apis tpl.id GotProjectTemplateContent
             , Cmd.none
             )
@@ -988,7 +988,7 @@ update global message model =
             ( { model
                 | project_form = { form | columns = Just simpleKanban }
                 , showTemplatePicker = False
-                , selectedTemplateName = T.simpleKanban
+                , selectedTemplate = Nothing
                 , hasUnsavedData = True
               }
             , Cmd.none
@@ -1868,13 +1868,13 @@ viewTemplatePicker model =
             , isOpen = model.showTemplatePicker
             , dropdown_cls = ""
             , button_cls = "is-small tag button-light" ++ ternary model.ptemplateLoading " is-loading" ""
-            , button_html = span [ title T.selectAProjectTemplate ] [ text model.selectedTemplateName ]
+            , button_html = span [ title T.selectAProjectTemplate ] [ text (model.selectedTemplate |> Maybe.map .name |> withDefault T.simpleKanban) ]
             , menu_cls = "is-right"
             , content_cls = ""
             , content_html =
                 div []
                     (div [ class "dropdown-item button-light", onClick OnSelectSimpleKanbanTemplate ]
-                        [ ternary (model.selectedTemplateName == T.simpleKanban) A.checked A.unchecked
+                        [ ternary (model.selectedTemplate == Nothing) A.checked A.unchecked
                         , text T.simpleKanban
                         ]
                         :: (if List.isEmpty templates then
@@ -1882,7 +1882,7 @@ viewTemplatePicker model =
 
                             else
                                 hr [ class "dropdown-divider" ] []
-                                    :: List.map (viewTemplatePickerItem model.selectedTemplateName) templates
+                                    :: List.map (viewTemplatePickerItem model.selectedTemplate) templates
                            )
                         ++ [ hr [ class "dropdown-divider" ] []
                            , a
@@ -1897,13 +1897,13 @@ viewTemplatePicker model =
         ]
 
 
-viewTemplatePickerItem : String -> ProjectTemplateLite -> Html Msg
-viewTemplatePickerItem selectedName t =
+viewTemplatePickerItem : Maybe ProjectTemplateLite -> ProjectTemplateLite -> Html Msg
+viewTemplatePickerItem selected t =
     div
         [ class "dropdown-item button-light"
         , onClick (OnSelectProjectTemplate t)
         ]
-        [ ternary (selectedName == t.name) A.checked A.unchecked
+        [ ternary (Maybe.map .id selected == Just t.id) A.checked A.unchecked
         , text t.name
         , case t.description of
             Just d ->
