@@ -30,7 +30,8 @@
     "webprod": "webpack-dev-server --hot --port 8001 --mode production",
     "prod": "webpack --mode production",
     "dev": "webpack --mode development",
-    "webpack_profile": "webpack --config webpack.profile.js"
+    "webpack_profile": "webpack --config webpack.profile.js",
+    "test:js": "jest"
   },
   "dependencies": {
     "@bulvar/bulma": "^0.11.24",
@@ -40,9 +41,11 @@
     "minisearch": "^7.1.2"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.29.3",
     "@dillonkearns/elm-graphql": "^4.3.2",
     "@fullhuman/postcss-purgecss": "^7.0.2",
     "autoprefixer": "^10.4.21",
+    "babel-jest": "^30.3.0",
     "chokidar-cli": "3.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^9.2.1",
@@ -57,6 +60,8 @@
     "esbuild-loader": "^4.3.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.6.4",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "mini-css-extract-plugin": "^2.9.4",
     "postcss": "^8.5.6",
     "postcss-loader": "^8.2.0",

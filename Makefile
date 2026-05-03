@@ -69,8 +69,13 @@ review:
 	mkdir -p review
 	elm-review --ignore-dirs src/Fractal/ --compiler node_modules/.bin/elm > review/reviews.json
 
-test:
-	elm-test tests/Unit/
+test: test_elm test_js
+
+test_elm:
+	elm-test tests/Elm/
+
+test_js:
+	npm run test:js
 
 test_e2e:
 	robot --outputdir tests/robot/robotresults tests/robot/

@@ -1,27 +1,36 @@
 # Testing
 
-This project uses two layers of testing:
+This project uses three layers of testing:
 
-- **Unit tests** with [elm-test](https://github.com/rtfeldman/node-test-runner) for pure Elm logic
+- **Elm unit tests** with [elm-test](https://github.com/rtfeldman/node-test-runner) for pure Elm logic
+- **JS unit tests** with [Jest](https://jestjs.io/) + jsdom for `assets/js/` helpers
 - **E2E tests** with [Robot Framework](https://robotframework.org/) for browser-level integration
+
+`make test` runs Elm + JS; `make test_elm` / `make test_js` for targeted runs; `make test_e2e` for Robot.
 
 ## Directory structure
 
 ```
 tests/
-├── Unit/                         # Elm unit tests (elm-test)
+├── Elm/                         # Elm unit tests (elm-test)
 │   └── MarkdownTest.elm
+├── Js/                           # JS unit tests (Jest + jsdom)
+│   ├── setup.js                  # execCommand polyfill
+│   ├── replaceRange.test.js
+│   ├── markupRichText.test.js
+│   └── markdownFormatters.test.js
 ├── robot/                        # Robot Framework e2e tests
 │   ├── data/                     # test fixtures
 │   ├── robotresults/             # output dir (gitignored)
 │   ├── requirements.txt          # Python deps
-│   └── scroll_position.robot     # e2e test
+│   ├── scroll_position.robot     # e2e test
+│   └── markup_undo.robot         # real-browser undo smoke test
 └── lazy.md                       # dev notes
 ```
 
 ---
 
-## Unit Tests (elm-test)
+## Elm Unit Tests (elm-test)
 
 ### Prerequisites
 
@@ -30,18 +39,64 @@ tests/
 ### Running
 
 ```bash
-# Run all unit tests
-elm-test tests/Unit/
+# Run all elm tests
+elm-test tests/Elm/
 
 # Run a specific file
-elm-test tests/Unit/MarkdownTest.elm
+elm-test tests/Elm/MarkdownTest.elm
 ```
 
 ### Writing new tests
 
-1. Create a `.elm` file in `tests/Unit/`
+1. Create a `.elm` file in `tests/Elm/`
 2. Import `Test` and `Expect` from `elm-explorations/test`
 3. Follow the existing pattern in `MarkdownTest.elm`
+
+---
+
+## JS Unit Tests (Jest)
+
+Covers the `assets/js/` helpers — `replaceRange` and the markup keyboard handlers
+in `bulma_drivers.js` / `ports.js` — which Elm tests can't reach.
+
+### Prerequisites
+
+```bash
+npm install   # pulls jest + jest-environment-jsdom from devDependencies
+```
+
+### Running
+
+```bash
+make test_js                  # all JS tests
+npm run test:js -- replaceRange   # one file (Jest filters by name)
+```
+
+Jest transforms the `assets/js/` ESM modules through `babel-jest` +
+`@babel/preset-env` (`babel.config.cjs`, targeting current Node) so the
+test VM can `require()` them. The source files stay ESM for webpack.
+
+### Writing new tests
+
+1. Create a `*.test.js` file in `tests/Js/`
+2. Import the helper directly: `import { foo } from '../../assets/js/foo.js';`
+3. Use plain DOM APIs — `testEnvironment: 'jsdom'` is configured in `jest.config.js`
+
+### `execCommand` polyfill caveat
+
+jsdom doesn't implement `document.execCommand`. `tests/Js/setup.js` installs a
+minimal `insertText` polyfill so `replaceRange`'s happy path runs. Tests can opt
+into the fallback path with `globalThis.__failExecCommand = true` (returns false)
+or `'throw'`. Real-browser undo behavior is validated by the Robot
+`markup_undo.robot` smoke test, not Jest.
+
+### Why Babel and not native ESM?
+
+We tried Node's `--experimental-vm-modules` first. It works for individual
+files, but the second test file that transitively imports a module the first
+already pulled in trips Jest's "module is already linked" bug — which is
+exactly our shape (`ports.js` re-exports through `bulma_drivers.js`).
+Babel-jest sidesteps the issue by transforming everything to CJS for the test VM.
 
 ---
 

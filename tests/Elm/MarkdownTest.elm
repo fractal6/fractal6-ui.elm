@@ -1,4 +1,4 @@
-module Unit.MarkdownTest exposing (..)
+module Elm.MarkdownTest exposing (..)
 
 import Expect
 import Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks)

@@ -515,7 +515,7 @@ function copyToClipboard(e, el) {
 // """ Markup Rich Text (On Input)"""
 //
 
-function markupRichText(e, el, app) {
+export function markupRichText(e, el, app) {
 
     // Skip during IME composition: the Enter that commits a Japanese/Chinese/
     // Korean candidate also fires keydown, and would wrongly trigger list
