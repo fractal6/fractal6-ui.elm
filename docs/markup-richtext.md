@@ -31,15 +31,23 @@ Both are routed through the shared `handlePickerKey()` helper, which exchanges k
 
 Beyond the pickers, the same handler also implements:
 
-- List continuation on newline (`-`, `*`, `+`, `1.`, `> `, `- [ ]`).
+- List continuation on newline (`-`, `*`, `+`, `1.`, `> `, `- [ ]`, `* [ ]`, `+ [ ]`).
 - Tab / Shift+Tab indentation inside list items.
 - Auto-removal of an empty list marker on a second `Enter`.
+- Backspace on an empty list line dedents one level, then removes the marker.
+
+## Programmatic edits and undo (`replaceRange`)
+
+All textarea mutations in `markupRichText` go through the `replaceRange(el, start, end, text, caretStart, caretEnd)` helper exported from `assets/js/textutils.js`. It tries `document.execCommand('insertText', ...)` first so the browser's native Ctrl+Z stack survives the edit. `execCommand` is deprecated but remains the only cross-browser way to mutate a `<textarea>` without wiping undo, and every shipping browser still implements it (no spec'd replacement). If the call returns `false` or throws, the helper falls back to a direct `el.value = ...` assignment plus a manual `input` event — the edit still applies but is not undoable.
+
+The same helper is used by `ports.js` for `@`-mention and emoji picker insertions, so all programmatic textarea edits in the app share one undo-preserving path.
 
 ## Files
 
 | File | Role |
 |------|------|
 | `assets/js/bulma_drivers.js` | `markupRichText`, `handlePickerKey`, `show/hideSearchInput`, `show/hideEmojiInput` |
+| `assets/js/textutils.js` | `replaceRange` (undo-preserving textarea edit), `getCaretCoordinates` |
 | `src/Components/UserInput.elm` | Elm side of the `@` user picker |
 | `src/Components/EmojiPicker.elm` | Elm side of the `:` emoji picker |
 | `src/Ports.elm` | Port declarations used by both pickers |

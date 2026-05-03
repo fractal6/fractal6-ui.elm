@@ -4,7 +4,7 @@ An inline emoji picker triggered by typing `:` in comment textareas.
 
 ## Usage
 
-1. In any comment textarea (tension comments, contract comments, update comments, new tension input), type `:` preceded by a space or at the start of the line.
+1. In any comment textarea (tension comments, contract comments, update comments, new tension input), type `:` preceded by a space, tab, newline, or at the start of the input.
 2. An emoji grid popup appears near the cursor.
 3. Continue typing after `:` to filter emojis (e.g., `:smi` shows smile-related emojis).
 4. Click an emoji to insert its unicode character, replacing the `:pattern` text.
@@ -20,7 +20,7 @@ The emoji picker follows the same architecture as the `@` mention tooltip (UserI
 - **JS communicates with Elm** via ports: `openEmojiPickerFromJs`, `closeEmojiPickerFromJs`, `changeEmojiPatternFromJs`
 - **Elm manages state** in `Components.EmojiPicker` (port module)
 - **Elm renders the grid** in `viewEmojiSeeker`
-- **Selection flows back to JS** via `Ports.pushEmojiSelection` which triggers the `PUSH_EMOJI_SELECTION` action in `ports.js`
+- **Selection flows back to JS** via `Ports.pushEmojiSelection` which triggers the `PUSH_EMOJI_SELECTION` action in `ports.js`. The actual textarea write goes through `replaceRange()` from `assets/js/textutils.js`, so emoji insertions are undoable with Ctrl+Z.
 
 ## Files
 

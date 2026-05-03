@@ -24,6 +24,8 @@
  *
  */
 
+import { replaceRange, getCaretCoordinates } from './textutils'
+
 // The container where the burgers should close when a clicl "anywhere" occurs
 const closeOnClickBurger = ['userMenu']; // data-target of burger
 
@@ -515,6 +517,11 @@ function copyToClipboard(e, el) {
 
 function markupRichText(e, el, app) {
 
+    // Skip during IME composition: the Enter that commits a Japanese/Chinese/
+    // Korean candidate also fires keydown, and would wrongly trigger list
+    // continuation mid-composition. keyCode 229 is the legacy fallback.
+    if (e.isComposing || e.keyCode === 229) return;
+
     /*
      * User search input
      * tooltip helper.
@@ -548,14 +555,14 @@ function markupRichText(e, el, app) {
 
     // Handle toggle up tooltip
     if (e.key == "@" &&
-        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart - 1]))) {
+        (el.selectionStart == 0 || [" ", "\n", "\t"].includes(el.value[el.selectionStart - 1]))) {
         // Show user search input
         showSearchInput(el, userTooltip, app);
     }
 
     // Handle toggle up emoji tooltip
     if (e.key == ":" &&
-        (el.selectionStart == 0 || [" ", "\n"].includes(el.value[el.selectionStart - 1]))) {
+        (el.selectionStart == 0 || [" ", "\n", "\t"].includes(el.value[el.selectionStart - 1]))) {
         showEmojiInput(el, emojiTooltip, app);
     }
 
@@ -574,23 +581,12 @@ function markupRichText(e, el, app) {
             e.preventDefault();
             e.stopPropagation();
 
-            var beforeSel = el.value.substring(0, start);
-            var afterSel = el.value.substring(end);
-
             // Extend selection to the beginning of the first selected line
-            var lineStart = beforeSel.lastIndexOf("\n") + 1;
+            var lineStart = el.value.substring(0, start).lastIndexOf("\n") + 1;
             var selected = el.value.substring(lineStart, end);
-            beforeSel = el.value.substring(0, lineStart);
-
             var indented = selected.replace(/^/gm, "  ");
-            el.value = beforeSel + indented + afterSel;
 
-            // Restore selection over the indented block
-            el.selectionStart = lineStart;
-            el.selectionEnd = lineStart + indented.length;
-
-            // Immediately propagate change to Elm
-            el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+            replaceRange(el, lineStart, end, indented, lineStart, lineStart + indented.length);
         } else {
             // No selection: allow indentation in list/blockquote context
             var replacer;
@@ -623,15 +619,7 @@ function markupRichText(e, el, app) {
             e.preventDefault();
             e.stopPropagation();
 
-            el.value = el.value.substring(0, start - offset) +
-                replacer + el.value.substring(end - offset);
-
-            // put caret at right position again
-            el.selectionStart =
-                el.selectionEnd = start + replacer.length;
-
-            // Immediately propagate change to Elm
-            el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+            replaceRange(el, start - offset, end - offset, replacer, start + replacer.length);
         }
     } else if (e.key == "Tab" && !e.ctrlKey && e.shiftKey) {
         // Shift+Tab: dedent selected lines by removing up to 2 leading spaces
@@ -639,29 +627,15 @@ function markupRichText(e, el, app) {
         var end = el.selectionEnd;
         if (start == end) return; // no selection, let default behavior handle it
 
-        var beforeSel = el.value.substring(0, start);
-        var afterSel = el.value.substring(end);
-
         // Extend selection to the beginning of the first selected line
-        var lineStart = beforeSel.lastIndexOf("\n") + 1;
+        var lineStart = el.value.substring(0, start).lastIndexOf("\n") + 1;
         var selected = el.value.substring(lineStart, end);
-        beforeSel = el.value.substring(0, lineStart);
 
         e.preventDefault();
         e.stopPropagation();
 
         var dedented = selected.replace(/^( {1,2})/gm, "");
-        el.value = beforeSel + dedented + afterSel;
-
-        // Restore selection over the dedented block
-        el.selectionStart = lineStart;
-        el.selectionEnd = lineStart + dedented.length;
-
-        // Immediately propagate change to Elm
-        el.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        replaceRange(el, lineStart, end, dedented, lineStart, lineStart + dedented.length);
     } else if (e.key == "Backspace" && !e.ctrlKey && !e.shiftKey) {
         // Remove indentation level on empty indented list items
         var start = el.selectionStart;
@@ -670,23 +644,22 @@ function markupRichText(e, el, app) {
 
         var subvalue = el.value.slice(Math.max(0, start - 100), start);
 
-        // Match indented empty list item: "\n  - " or "\n    1. " or "\n  > " etc.
-        var indentedListMatch = subvalue.match(/\n([ \t]{2,})([-\*\+] |\d+\. |> |- \[ \] )$/);
+        // Match empty list item: "\n- ", "\n  - ", "\n    1. ", "\n> ", etc.
+        var indentedListMatch = subvalue.match(/\n([ \t]*)([-\*\+] |\d+\. |> |- \[ \] )$/);
 
         if (indentedListMatch) {
             var indent = indentedListMatch[1];
             var marker = indentedListMatch[2];
+            var afterNlPos = start - indent.length - marker.length;
 
-            // Remove 2 spaces of indentation
+            e.preventDefault();
             if (indent.length >= 2) {
-                e.preventDefault();
-                var newIndent = indent.slice(2); // remove 2 spaces
-                var removeLen = indent.length + marker.length + 1; // +1 for \n
-                el.value = el.value.substring(0, start - removeLen + 1) +
-                           newIndent + marker +
-                           el.value.substring(end);
-                el.selectionStart = el.selectionEnd = start - 2;
-                el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+                // Dedent: drop 2 spaces of indentation, keep marker
+                var newIndent = indent.slice(2);
+                replaceRange(el, afterNlPos, end, newIndent + marker, start - 2);
+            } else {
+                // No indent left: remove the marker entirely
+                replaceRange(el, afterNlPos, end, "", afterNlPos);
             }
         }
     } else if (e.key == "Enter" && !e.ctrlKey && !e.shiftKey) {
@@ -700,7 +673,7 @@ function markupRichText(e, el, app) {
         var subvalue = el.value.slice(Math.max(0, start - 500), start);
 
         // Extract the cursor line - includes ordered lists, unordered lists, checkboxes, and blockquotes
-        var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*?[0-9]+\. [^\n]*?$|(^|\n)[^\S\r\n]*?[\-\+\*] [^\n]*?$|(^|\n)[^\S\r\n]*?> [^\n]*?$/)
+        var currentLineStart = subvalue.search(/(^|\n)[^\S\r\n]*[0-9]+\. [^\n]*$|(^|\n)[^\S\r\n]*[\-\+\*] [^\n]*$|(^|\n)[^\S\r\n]*> [^\n]*$/)
         var replacer;
 
         if (currentLineStart >= 0) {
@@ -713,9 +686,9 @@ function markupRichText(e, el, app) {
 
             // Build current marker for empty line comparison
             var currentMarker;
-            if (s == "- [") {
-                currentMarker = "- [ ]";
-                replacer = "\n" + leadingWhitespace + "- [ ] ";
+            if (s.length >= 3 && s[2] == "[" && s[1] == " " && /[\-\*\+]/.test(s[0])) {
+                currentMarker = s[0] + " [ ]";
+                replacer = "\n" + leadingWhitespace + s[0] + " [ ] ";
             } else if (s.slice(0, 2) == "> ") {
                 currentMarker = ">";
                 replacer = "\n" + leadingWhitespace + "> ";
@@ -728,28 +701,11 @@ function markupRichText(e, el, app) {
                 replacer = "\n" + leadingWhitespace + s[0] + " ";
             }
 
-            // remove if empty (line contains only the list marker)
+            // remove if empty (line contains only the list marker): exit list,
+            // leaving a blank line between the last item and the cursor
             if ((trimmedLine.trim() == currentMarker) && start == end) {
-                // Extract the cursor previous line
-                var previousLine = null
-                var previousLineEnd = subvalue.lastIndexOf("\n");
-                if (previousLineEnd != -1) {
-                    var previousLineStart = subvalue.slice(0, previousLineEnd).lastIndexOf("\n");
-                    if (previousLineStart == -1) {
-                        previousLineStart = 0;
-                    }
-                    previousLine = subvalue.slice(previousLineStart + 1, previousLineEnd);
-                }
-
-                // Calculate how much to remove (the empty list item)
-                var emptyItemLen = currentLine.length;
-                if (previousLine && previousLine.trimStart().startsWith(currentMarker.charAt(0))) {
-                    start -= emptyItemLen;
-                    replacer = "\n\n";
-                } else {
-                    start -= emptyItemLen;
-                    replacer = "\n";
-                }
+                start -= currentLine.length;
+                replacer = "\n\n";
             }
         } else {
             return
@@ -757,19 +713,7 @@ function markupRichText(e, el, app) {
 
         e.preventDefault();
 
-        // set textarea value to: text before caret + tab + text after caret
-        el.value = el.value.substring(0, start) +
-            replacer + el.value.substring(end);
-
-        // put caret at right position again
-        el.selectionStart =
-            el.selectionEnd = start + replacer.length;
-
-        // Immediately propagate change to Elm
-        el.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        replaceRange(el, start, end, replacer, start + replacer.length);
     }
     // Do not allow non-breaking space
     else if (e.key == " ") {
@@ -777,79 +721,8 @@ function markupRichText(e, el, app) {
         var end = el.selectionEnd;
         if (start == end) {
             e.preventDefault();
-            el.value = el.value.substring(0, start) +
-                " " + el.value.substring(end);
-
-            // put caret at right position
-            el.selectionStart =
-                el.selectionEnd = start + 1;
-
-            // Immediately propagate change to Elm
-            el.dispatchEvent(new Event('input', {
-                bubbles: true,
-                cancelable: true,
-            }));
+            replaceRange(el, start, end, " ", start + 1);
         }
-    }
-}
-
-/**
- * returns x, y coordinates for absolute positioning of a span within a given text input
- * at a given selection point
- * @param {object} input - the input element to obtain coordinates for
- * @param {number} selectionPoint - the selection point for the input
- * https://gist.github.com/jh3y/6c066cea00216e3ac860d905733e65c7#file-getcursorxy-js
- */
-export function getCaretCoordinates(content, selectionPoint) {
-    const {
-        offsetLeft: inputX,
-        offsetTop: inputY,
-    } = content
-    // create a dummy element that will be a clone of our input
-    const div = document.createElement('div')
-    // get the computed style of the input and clone it onto the dummy element
-    const copyStyle = getComputedStyle(content)
-    for (const prop of copyStyle) {
-        if (prop == "width" || prop == "maxwidth") continue
-        div.style[prop] = copyStyle[prop]
-    }
-    div.style.removeProperty('min-inline-size');
-    div.style.removeProperty('min-width');
-    // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
-    const swap = '.'
-    const inputValue = content.tagName === 'INPUT' ? content.value.replace(/ /g, swap) : content.value
-    // set the div content to that of the textarea up until selection
-    const textContent = inputValue.substr(0, selectionPoint)
-    // set the text content of the dummy element div
-    div.textContent = textContent
-    if (content.tagName === 'TEXTAREA') div.style.height = 'auto'
-    // if a single line input then the div needs to be single line and not break out like a text area
-    if (content.tagName === 'INPUT') div.style.width = 'auto'
-    // create a marker element to obtain caret position
-    const span = document.createElement('span')
-    // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
-    span.textContent = inputValue.substr(selectionPoint) || '.'
-    span.style.maxwidth = "100px";
-    span.style.width = "100px";
-    // append the span marker to the div
-    div.appendChild(span)
-    // append the dummy element to the body
-    document.body.appendChild(div)
-    // get the marker position, this is the caret position top and left relative to the input
-    var { offsetLeft: spanX, offsetTop: spanY } = span
-    // Adjust the offset for overlaping lines
-    if (span.offsetLeft > content.offsetWidth) {
-        // This is obsolete once "min-width" property has been removed
-        spanX = span.offsetLeft % content.offsetWidth;
-    }
-
-    // lastly, remove that dummy element
-    // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-    document.body.removeChild(div)
-    // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
-    return {
-        x: inputX + spanX - content.scrollLeft,
-        y: inputY + spanY - content.scrollTop,
     }
 }
 

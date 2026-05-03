@@ -20,6 +20,7 @@
 
 import MiniSearch from 'minisearch'
 import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
+import { replaceRange } from './textutils'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
@@ -294,18 +295,7 @@ export const actions = {
             end +=  pattern.length;
         }
         var replacer = name + " ";
-		$i.value = $i.value.substring(0, start) +
-			replacer + $i.value.substring(end);
-
-		// put caret at right position again
-		$i.selectionStart =
-			$i.selectionEnd = start + replacer.length;
-
-        // Immediately propagate change to Elm
-        $i.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        replaceRange($i, start, end, replacer, start + replacer.length);
 
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
@@ -324,18 +314,7 @@ export const actions = {
             start -= matchLen;
         }
         var replacer = emoji;
-        $i.value = $i.value.substring(0, start) +
-            replacer + $i.value.substring(end);
-
-        // Put caret at right position again
-        $i.selectionStart =
-            $i.selectionEnd = start + replacer.length;
-
-        // Immediately propagate change to Elm
-        $i.dispatchEvent(new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        }));
+        replaceRange($i, start, end, replacer, start + replacer.length);
 
         // Remove the emoji input
         const emojiTooltip = document.getElementById($i.id + "emojiInput");
@@ -825,67 +804,29 @@ function toggleMarkup(obj, mark, prefix, suffix) {
     var pad = mark.length;
     var surrounding = value.substring(start-pad, start) + value.substring(end, end+pad);
     if (surrounding == mark+mark_r) { // remove
-        var replacement = selection;
-
-        /* Loose undo/redo stack
-        * // Remove the replacer
-        * obj.value = value.substring(0, start-pad) + replacement + value.substring(end+pad);
-        */
-        // Works...
-        obj.setSelectionRange(start-pad, end+pad);
-        obj.setRangeText("");
-        // @deprecated...
-        document.execCommand("insertText", false, replacement);
-
-        // Put caret at right position again
-        obj.selectionStart =
-            obj.selectionEnd = start - pad;
+        replaceRange(obj, start - pad, end + pad, selection, start - pad);
     } else { // add
         var replacement = " ".repeat(space_left) + mark + selection + mark_r + " ".repeat(space_right);
+        var fullText = prefix + replacement + suffix;
+        var origStart = obj.selectionStart;
+        var origEnd = obj.selectionEnd;
 
-        /* Loose undo/redo stack
-        * // Set textarea value to: text before caret + replacer + text after caret
-        * obj.value = value.substring(0, start) + replacement + value.substring(end);
-        */
-        // Create range (do not suport texarea range + not undo :/
-        //var range = document.createRange();
-        ////range.deleteContents();
-        ////range.selectNodeContents(obj);
-        //range.setStart(obj, start);
-        //range.setEnd(obj, end);
-        //range.insertNode(document.createTextNode(replacement));
-        //// Replace selection
-        //var selection = window.getSelection();
-        //selection.removeAllRanges();
-        //selection.addRange(range);
-        //
-        // Works...
-        // Save original start position before editing
-        var insertPos = obj.selectionStart;
-
-        obj.setRangeText("");
-        // @deprecated...
-        document.execCommand("insertText", false, prefix + replacement + suffix);
-
-        // Put caret at right position again
+        // Caret depends on mark type and whether there was a selection
+        var caret;
         if (mark == "[") {
-            if (selection.length > 0) {
-                // Link with selection: cursor inside () to type URL → [text](|)
-                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + replacement.length + 1;
-            } else {
-                // Link without selection: cursor inside [] → [|]()
-                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
-            }
+            // Link with selection: cursor inside () to type URL → [text](|)
+            // Link without selection: cursor inside [] → [|]()
+            caret = selection.length > 0
+                ? origStart + prefix.length + replacement.length + 1
+                : origStart + prefix.length + mark.length;
         } else {
-            if (selection.length > 0) {
-                // Bold/italic with selection: cursor after closing marker → **text**|
-                var totalLength = prefix.length + replacement.length + suffix.length;
-                obj.selectionStart = obj.selectionEnd = insertPos + totalLength;
-            } else {
-                // Bold/italic without selection: cursor inside delimiters → **|**
-                obj.selectionStart = obj.selectionEnd = insertPos + prefix.length + mark.length;
-            }
+            // Bold/italic with selection: cursor after closing marker → **text**|
+            // Bold/italic without selection: cursor inside delimiters → **|**
+            caret = selection.length > 0
+                ? origStart + fullText.length
+                : origStart + prefix.length + mark.length;
         }
+        replaceRange(obj, origStart, origEnd, fullText, caret);
     }
 }
 
@@ -913,11 +854,7 @@ function pushLine(obj, mark, isInline) {
         });
         replacement = markedLines.join('\n');
 
-        obj.setRangeText("", start, end);
-        // @deprecated
-        document.execCommand("insertText", false, replacement);
-        // To test setRangeText
-        //obj.setRangeText(replacement, start, end, 'select');
+        replaceRange(obj, start, end, replacement);
         return
     }
 
@@ -955,15 +892,11 @@ function pushLine(obj, mark, isInline) {
 
     if (isSurroundedByWhitespace || isFullLineSelection) {
         // Stay on the line if space and full line selected
-        // --
         var replacement = mark + selection;
-        obj.setRangeText("");
-        // @deprecated...
-        document.execCommand("insertText", false, replacement);
+        replaceRange(obj, start, end, replacement);
     } else {
         // Add new section
-        // --
-        // Adapt prefix andsuffix
+        // Adapt prefix and suffix
         var x = prevLine == 0 ? 0 : 1
         if (isInline && value.substring(prevLine+x, prevLine+x+mark.length) == mark) {
             if (value[start-1] != " ") prefix = " "
@@ -981,14 +914,8 @@ function pushLine(obj, mark, isInline) {
         }
 
         var replacement = mark + selection;
-        obj.setSelectionRange(nextLine, nextLine);
-        obj.setRangeText("");
-        // @deprecated...
-        document.execCommand("insertText", false, prefix+replacement+suffix);
-
-        // Put caret at right position again
-        obj.selectionStart =
-            obj.selectionEnd = nextLine + replacement.length + prefix.length;
+        var caret = nextLine + replacement.length + prefix.length;
+        replaceRange(obj, nextLine, nextLine, prefix + replacement + suffix, caret);
     }
 }
 
@@ -1027,8 +954,6 @@ function insertBlock(obj, prefix, middle, suffix) {
         cursorPos = start + before.length + prefix.length;
     }
 
-    obj.setRangeText("", start, end);
-    document.execCommand("insertText", false, replacement);
-    obj.selectionStart = obj.selectionEnd = cursorPos;
+    replaceRange(obj, start, end, replacement, cursorPos);
 }
 

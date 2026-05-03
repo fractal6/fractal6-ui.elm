@@ -124,26 +124,32 @@ The `markupRichText` function in `bulma_drivers.js` is attached as a `keydown` h
 
 ### Auto-continuation on Enter
 
-- Unordered lists (`- `): continues with `- ` on the next line
+- Unordered lists (`-`, `*`, `+`): continues with the same marker on the next line
 - Ordered lists (`1. `): continues with incremented number
-- Checkboxes (`- [ ] `): continues with `- [ ] `
+- Checkboxes (`- [ ] `, `* [ ] `, `+ [ ] `): continues with the same checkbox marker
 - Blockquotes (`> `): continues with `> `
-- Empty list marker: pressing Enter removes it (ends the list)
+- Empty list marker: pressing Enter removes it (single newline, exits the list)
 
 ### Tab indentation
 
 - Tab inserts 2-space indentation for list items
 - Only activates when cursor is in a list context
+- With a multi-line selection, Tab/Shift+Tab indents/dedents every selected line
 
 ### Backspace handling
 
-- Removes one indentation level from empty indented list items
+- On an empty indented list item (≥2 spaces of indent): removes one indent level
+- On an empty unindented list item: removes the marker entirely
 
 ### @ Mention tooltip
 
-- When `@` is typed (with space/newline before), shows a user search dropdown
+- When `@` is typed (with space, newline, or tab before — or at start-of-input), shows a user search dropdown
 - Arrow keys, Tab, Enter navigate/select; Escape dismisses
 - Sends patterns to Elm via `changePatternFromJs` port
+
+### Programmatic edits and undo
+
+All keyboard-driven mutations (Tab indent, list continuation, marker removal, nbsp normalisation) go through `replaceRange()` exported from `assets/js/textutils.js`. It preserves the browser's native Ctrl+Z stack via `document.execCommand('insertText', …)`, with a direct `el.value = …` fallback if that ever fails. The same helper backs `PUSH_INPUT_SELECTION` and `PUSH_EMOJI_SELECTION` in `ports.js`, so picker insertions are also undoable.
 
 ## 5. Checkbox Interaction (Markdown.elm ↔ bulma_drivers.js)
 
@@ -171,5 +177,6 @@ Rendered markdown checkboxes are interactive:
 | `src/Components/Comments.elm` | Toolbar UI, message handling |
 | `src/Ports.elm` | `richText` outgoing port |
 | `src/Markdown.elm` | Markdown rendering, checkbox utility |
-| `assets/js/ports.js` | `RICH_TEXT` handler, `toggleMarkup`, `pushLine`, `insertBlock` |
+| `assets/js/ports.js` | `RICH_TEXT` handler, `toggleMarkup`, `pushLine`, `insertBlock`, picker insertions |
 | `assets/js/bulma_drivers.js` | Keyboard shortcuts, auto-continuation, @ mentions, checkbox clicks |
+| `assets/js/textutils.js` | `replaceRange` (undo-preserving textarea edit), `getCaretCoordinates` |
