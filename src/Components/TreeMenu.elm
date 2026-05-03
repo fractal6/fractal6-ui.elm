@@ -37,7 +37,7 @@ import Utils.Cmd exposing (send, sendSleep)
 import Utils.Html exposing (showIf, showMaybe)
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD, onClickSafe)
+import Utils.DomEvents exposing (onClickPD, onClickPosSafe, onClickSafe)
 import Schema.Enum.RoleType as RoleType
 import Html exposing (Html, a, div, i, li, span, text, ul)
 import Html.Attributes exposing (attribute, class, classList, id, selected, target)
@@ -786,18 +786,23 @@ viewCircleLine hover focus collapsible isCollapsed node =
                 ]
             , if hover == Just node.nameid || (collapsible && isCollapsed) then
                 div [ class "level-right here" ]
-                    [ if collapsible && isCollapsed then
-                        span [ class "mr-1", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
+                    [ showIf (hover == Just node.nameid) <|
+                        span
+                            [ class "treeMenu-action mr-1"
+                            , id "actionPanelHelper"
+                            , onClickPosSafe (\pos -> Do [ DoOpenActionPanel "actionPanelHelper" node.nameid pos ])
+                            ]
+                            [ A.icon "icon-more-vertical" ]
+                    , if collapsible && isCollapsed then
+                        span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
                             [ A.icon "icon-chevron-right" ]
 
                       else if collapsible && hover == Just node.nameid then
-                        span [ class "mr-1", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
+                        span [ class "treeMenu-action", onClickSafe (OnToggleDropdowLine (node.nameid |> (++) "-/§circle§/")) ]
                             [ A.icon "icon-chevron-down" ]
 
                       else
                         text ""
-                    , showIf (hover == Just node.nameid) <|
-                        span [ class "tag is-rounded has-border-small", onClickSafe (Do [ DoCreateTension node.nameid Nothing Nothing ]) ] [ A.icon "icon-plus" ]
                     ]
 
               else

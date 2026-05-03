@@ -132,13 +132,24 @@
     padding: .6em .5em;
     transition: top,height .2s ease-out;
 
+    &:active {
+        background-color: var(--background-hover); // match :hover so action clicks don't flash
+    }
+
     &.pt-0 {
         padding-top: 0.25em !important;
     }
 
-    .here {
-        height: 1em; // prevent the tag. to increase the line height when hovering
-        &:hover > .tag {
+    .treeMenu-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.1em 0.25em;
+        border-radius: 3px;
+        color: var(--text-weak);
+        cursor: pointer;
+
+        &:hover {
             color: var(--link) !important;
         }
     }
@@ -153,10 +164,16 @@
 .treeMenu .here {
     position: absolute;
     right: 5%; /* 95% from left */
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: flex-start; /* anchor icons to the first line on multi-line rows */
+    padding-top: 0.6em; /* matches .treeMenu's top padding so icons line up with text */
+    z-index: 20;
     pointer-events: auto; /* Ensure button is clickable */
+}
+.treeMenu:hover .here {
+    background-color: var(--background-hover);
 }
 .treeMenu .level-left {
   /* Prevent the level-left from taking full width and pushing button */

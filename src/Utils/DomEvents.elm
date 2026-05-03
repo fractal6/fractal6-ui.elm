@@ -76,6 +76,19 @@ onClickPos message =
     on "click" (JD.map message eventPos)
 
 
+onClickPosSafe : (Maybe ( Int, Int ) -> msg) -> Html.Attribute msg
+onClickPosSafe message =
+    custom "click" <|
+        JD.map
+            (\pos ->
+                { message = message pos
+                , stopPropagation = True
+                , preventDefault = True
+                }
+            )
+            eventPos
+
+
 eventPos : JD.Decoder (Maybe ( Int, Int ))
 eventPos =
     JD.maybe <|
