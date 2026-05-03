@@ -24,13 +24,6 @@ module Form.NewTension exposing (..)
 import Assets as A
 import Auth exposing (ErrState(..), hasLazyAdminRole, parseErr)
 import Browser.Events as Events
-import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, initFormText, isSelfContract, makeCandidateContractForm, tensionToActionForm)
-import Fractale.Graph exposing (getPath, getPathWithChildren, localGraphFromOrga)
-import Fractale.User exposing (UserState(..))
-import Utils.Bulma as B
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
-import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
-import Fractale.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Codecs exposing (DraftUpdate(..), TensionDraft)
 import Components.Comments as Comments exposing (OutType(..))
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -41,22 +34,13 @@ import Components.TreeMenu exposing (viewSelectorTree)
 import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf, textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD, onClickSafe, onEnter)
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
-import Schema.Enum.BlobType as BlobType
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
+import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
+import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, initFormText, isSelfContract, makeCandidateContractForm, tensionToActionForm)
+import Fractale.Graph exposing (getPath, getPathWithChildren, localGraphFromOrga)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (tensionIcon2, tensionType2descr, tensionType2notif, tensionTypeColor, viewRoleExt, visibility2descr)
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -76,10 +60,25 @@ import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, qu
 import Query.QueryProject exposing (addProjectCard)
 import RemoteData
 import Requests exposing (fetchTensionTemplatesTop)
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), ProjectSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickPD, onClickSafe, onEnter)
+import Utils.Html exposing (showIf, textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (space_)
 
 
 
@@ -1978,7 +1977,7 @@ viewRecipients tree_data model =
                         [ text form.target.name, i [ class "ml-2 icon-chevron-down1 icon-tiny" ] [] ]
                     ]
             , menu_cls = "is-right is-left-mobile"
-            , content_cls = "has-border p-0"
+            , content_cls = "p-0 has-border-light"
             , content_html = viewSelectorTree (OnChangeTensionTarget tree_data) OnToggleDropdownRoles [ model.nodeDoc.form.target.nameid ] model.expanded_lines tree_data
             , msg = ternary isOpen (OnTargetClick "") (OnTargetClick "something")
             }

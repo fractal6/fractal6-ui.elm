@@ -1160,7 +1160,7 @@ viewUserEllipsis session focus m roles ell =
     in
     span [ class "is-pulled-right" ]
         [ span [ class "outside-table", classList [ ( "is-mobile", isMobile_ ) ] ]
-            [ B.dropdownLight
+            [ B.dropdownLightDefault
                 { dropdown_id = "row-ellipsis"
                 , isOpen = isOpen_
                 , dropdown_cls = ternary isMobile_ "is-right" ""
@@ -1168,7 +1168,7 @@ viewUserEllipsis session focus m roles ell =
                 , button_html = A.icon "icon-more-vertical is-w icon-1half"
                 , msg = OnRowEdit (ternary ell.isOpen False True)
                 , menu_cls = ""
-                , content_cls = "p-0 has-border-light"
+                , content_cls = ""
                 , content_html =
                     div []
                         ([ div [ class "dropdown-item button-light", onClick (NewTensionMsg (NTF.OnOpenRoleUser (FromNameid focus.nameid) m.username)) ]

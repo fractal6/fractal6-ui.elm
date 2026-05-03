@@ -2152,6 +2152,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Select a project template"
   fr="Sélectionner un modèle de projet"
 
+[createANewProjectTemplate]
+  en="Create a new project template"
+  fr="Créer un nouveau modèle de projet"
+
 [simpleKanban]
   en="Simple Kanban"
   fr="Kanban simple"

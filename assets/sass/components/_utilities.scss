@@ -351,6 +351,12 @@ a {
 .has-background-header {
     background-color: var(--header-background-color) !important;
 }
+.has-background-discrete {
+    background-color: var(--background-hover-discrete) !important;
+    &.button:hover {
+        background-color: var(--background-hover) !important;
+    }
+}
 .has-border {
     border: $border-size solid var(--border-color) !important;
 }

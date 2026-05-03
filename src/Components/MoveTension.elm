@@ -681,7 +681,7 @@ viewModalContent tree_data model =
             [ div [ class "level is-flex-inline" ]
                 [ span [ class "level-right" ] [ text (T.newReceiver ++ ":") ]
                 , div [ class "level-item" ]
-                    [ B.dropdownLight
+                    [ B.dropdownLightDefault
                         { dropdown_id = "target-menu"
                         , isOpen = isTargetOpen
                         , dropdown_cls = ""
@@ -697,7 +697,7 @@ viewModalContent tree_data model =
                                     [ class "button is-rounded has-border" ]
                                     [ text model.form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                         , menu_cls = ""
-                        , content_cls = "p-0 has-border-light"
+                        , content_cls = ""
                         , content_html = viewSelectorTree OnChangeTarget OnToggleDropdownRoles [ model.form.target.nameid, decoded_nid ] model.expanded_lines tree_data
                         , msg = ternary isTargetOpen (OnTargetClick "") (OnTargetClick "something")
                         }

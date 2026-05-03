@@ -551,7 +551,7 @@ viewPanel tree_data path_data model =
             getPathWithChildren path_data
 
         typeFilter_hthml =
-            B.dropdown
+            B.dropdownDefault
                 { dropdown_id = "type-filter-side"
                 , isOpen = model.isOpenTypeFilter
                 , dropdown_cls = "is-right"
@@ -559,7 +559,7 @@ viewPanel tree_data path_data model =
                 , button_html = ternary (model.typeFilter /= defaultTypeFilter) (span [] [ span [ class "badge is-link-back" ] [], text T.type_ ]) (text T.type_)
                 , msg = OnToggleTypeFilter
                 , menu_cls = ""
-                , content_cls = "p-0 has-border-light"
+                , content_cls = ""
                 , content_html =
                     div [] <|
                         [ div [ class "dropdown-item button-light", onClick <| OnChangeTypeFilter AllTypes ]
@@ -602,7 +602,7 @@ viewPanel tree_data path_data model =
         [ div [ class "header-block" ]
             [ div [ class "panel-heading" ] [ text (T.addLinkedTensions model.session.lexicon), button [ class "delete is-pulled-right", onClick OnClose ] [] ]
             , div [ class "panel-block no-border" ]
-                [ B.dropdown
+                [ B.dropdownDefault
                     { dropdown_id = "link-circle-source"
                     , isOpen = model.isOpenTargetFilter
                     , dropdown_cls = "mr-2"
@@ -610,7 +610,7 @@ viewPanel tree_data path_data model =
                     , button_html = A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
-                    , content_cls = "p-0 has-border-light"
+                    , content_cls = ""
                     , content_html = viewSelectorTree (OnChangeTarget tree_data) OnToggleDropdownRoles [ model.target.nameid ] model.expanded_lines tree_data
                     }
                 , div [ class "control has-icons-left" ]

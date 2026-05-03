@@ -48,7 +48,7 @@ import Fractale.View exposing (nodeType2str, projectStatus2str, viewCircleTarget
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, checked, class, classList, disabled, href, id, list, placeholder, required, rows, selected, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -1844,8 +1844,7 @@ viewColumnsEditor model =
             ]
         , div [] (List.indexedMap (viewColumnRow model.colorPicker.colors model.colorPickerIdx model.colMoved nCols) cols)
         , button
-            [ class "button is-fullwidth is-weak mt-2"
-            , style "border" "1px dashed var(--bulma-border)"
+            [ class "button is-discrete has-background-discrete is-dashed is-fullwidth mt-2"
             , onClick AddColumn
             ]
             [ A.icon1 "icon-plus" T.addColumn ]
@@ -1863,50 +1862,49 @@ viewTemplatePicker model =
                 _ ->
                     []
     in
-    div
-        [ id "ptemplate-picker"
-        , class "dropdown is-right"
-        , classList [ ( "is-active", model.showTemplatePicker ) ]
-        , style "position" "relative"
-        ]
-        [ div [ class "dropdown-trigger" ]
-            [ button
-                [ class "tag is-weak button-light"
-                , classList [ ( "is-loading", model.ptemplateLoading ) ]
-                , attribute "aria-haspopup" "true"
-                , onClickPD (ternary model.showTemplatePicker CloseTemplatePicker OpenTemplatePicker)
-                ]
-                [ text model.selectedTemplateName
-                , span [ class "ml-1" ] [ A.icon "icon-chevron-down" ]
-                ]
-            ]
-        , div [ class "dropdown-menu", attribute "role" "menu" ]
-            [ div [ class "dropdown-content" ] <|
-                button
-                    [ class "dropdown-item button-light has-text-left"
-                    , classList [ ( "is-active", model.selectedTemplateName == T.simpleKanban ) ]
-                    , onClickPD OnSelectSimpleKanbanTemplate
-                    ]
-                    [ text T.simpleKanban ]
-                    :: (if List.isEmpty templates then
-                            []
+    span [ id "ptemplate-picker" ]
+        [ B.dropdownDefault
+            { dropdown_id = "ptemplate-picker-menu"
+            , isOpen = model.showTemplatePicker
+            , dropdown_cls = ""
+            , button_cls = "is-small tag button-light" ++ ternary model.ptemplateLoading " is-loading" ""
+            , button_html = span [ title T.selectAProjectTemplate ] [ text model.selectedTemplateName ]
+            , menu_cls = "is-right"
+            , content_cls = ""
+            , content_html =
+                div []
+                    (div [ class "dropdown-item button-light", onClick OnSelectSimpleKanbanTemplate ]
+                        [ ternary (model.selectedTemplateName == T.simpleKanban) A.checked A.unchecked
+                        , text T.simpleKanban
+                        ]
+                        :: (if List.isEmpty templates then
+                                []
 
-                        else
-                            hr [ class "dropdown-divider" ] []
-                                :: List.map (viewTemplatePickerItem model.selectedTemplateName) templates
-                       )
-            ]
+                            else
+                                hr [ class "dropdown-divider" ] []
+                                    :: List.map (viewTemplatePickerItem model.selectedTemplateName) templates
+                           )
+                        ++ [ hr [ class "dropdown-divider" ] []
+                           , a
+                                [ class "dropdown-item button-light is-link"
+                                , href (toLink SettingsBaseUri model.node_focus.nameid [] ++ "?m=project_templates")
+                                ]
+                                [ A.icon1 "icon-plus" T.createANewProjectTemplate ]
+                           ]
+                    )
+            , msg = ternary model.showTemplatePicker CloseTemplatePicker OpenTemplatePicker
+            }
         ]
 
 
 viewTemplatePickerItem : String -> ProjectTemplateLite -> Html Msg
 viewTemplatePickerItem selectedName t =
-    button
-        [ class "dropdown-item button-light has-text-left"
-        , classList [ ( "is-active", selectedName == t.name ) ]
-        , onClickPD (OnSelectProjectTemplate t)
+    div
+        [ class "dropdown-item button-light"
+        , onClick (OnSelectProjectTemplate t)
         ]
-        [ text t.name
+        [ ternary (selectedName == t.name) A.checked A.unchecked
+        , text t.name
         , case t.description of
             Just d ->
                 span [ class "is-size-7 has-text-grey ml-2" ] [ text d ]
@@ -2260,7 +2258,7 @@ viewMoveProjectModal model =
                         [ div [ class "level is-flex-inline" ]
                             [ span [ class "level-right" ] [ text (T.newReceiver ++ ":") ]
                             , div [ class "level-item" ]
-                                [ B.dropdownLight
+                                [ B.dropdownLightDefault
                                     { dropdown_id = "move-project-target-menu"
                                     , isOpen = isTargetOpen
                                     , dropdown_cls = ""
@@ -2273,7 +2271,7 @@ viewMoveProjectModal model =
                                             Just t ->
                                                 span [ class "button is-rounded has-border" ] [ text t.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                                     , menu_cls = ""
-                                    , content_cls = "p-0 has-border-light"
+                                    , content_cls = ""
                                     , content_html = viewSelectorTree OnChangeMoveTarget OnMoveExpandToggle selected model.move_expanded_lines tree_data
                                     , msg = ternary isTargetOpen (OnMoveTargetClick "") (OnMoveTargetClick "open")
                                     }

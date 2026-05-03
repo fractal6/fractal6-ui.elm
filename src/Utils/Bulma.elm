@@ -19,7 +19,7 @@
 -}
 
 
-module Utils.Bulma exposing (dropdown, dropdownLight)
+module Utils.Bulma exposing (dropdown, dropdownDefault, dropdownLight, dropdownLightDefault)
 
 import Assets as A
 import Html exposing (Html, div, i, span, text)
@@ -106,3 +106,24 @@ dropdownLight op =
                 ]
             ]
         ]
+
+
+{-| Canonical dropdown styling: edge-to-edge content with a soft border.
+
+Equivalent to `dropdown` with `content_cls = "p-0 has-border-light"` prepended
+to whatever the caller passes. Use this for the standard look (selectors,
+filter menus). For dropdown items, prefer `<div class="dropdown-item button-light">`
+over `<button>` (UA defaults break wrapping/alignment) and use `A.checked`/
+`A.unchecked` icons for selection state instead of the `is-active` class.
+
+-}
+dropdownDefault : DropdownData msg -> Html msg
+dropdownDefault op =
+    dropdown { op | content_cls = "p-0 has-border-light " ++ op.content_cls }
+
+
+{-| `dropdownLight` with the canonical content styling. See `dropdownDefault`.
+-}
+dropdownLightDefault : DropdownData msg -> Html msg
+dropdownLightDefault op =
+    dropdownLight { op | content_cls = "p-0 has-border-light " ++ op.content_cls }
