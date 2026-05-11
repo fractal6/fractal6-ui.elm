@@ -46,7 +46,7 @@ import Dict
 import Utils.Bool exposing (ternary)
 import Utils.Cmd exposing (send, sendSleep)
 import Utils.Html exposing (showIf, showMaybe)
-import Utils.Maybe exposing (unwrap2)
+import Utils.Maybe exposing (morElse, unwrap2)
 import Footbar
 import Schema.Enum.Lang as Lang
 import Generated.Route as Route exposing (Route)
@@ -413,31 +413,40 @@ update msg model =
 
                                 newPinned =
                                     withMapData
-                                        (Maybe.map
-                                            (\pins ->
-                                                case LE.findIndex (\p -> p.id == th.id) pins of
-                                                    Just i ->
-                                                        if th.isPinned then
-                                                            LE.updateAt i
-                                                                (\p ->
-                                                                    { p
-                                                                        | title = th.title
-                                                                        , status = th.status
-                                                                        , type_ = th.type_
-                                                                    }
-                                                                )
+                                        (\maybePins ->
+                                            let
+                                                pins =
+                                                    withDefault [] maybePins
+
+                                                updated =
+                                                    case LE.findIndex (\p -> p.id == th.id) pins of
+                                                        Just i ->
+                                                            if th.isPinned then
+                                                                LE.updateAt i
+                                                                    (\p ->
+                                                                        { p
+                                                                            | title = th.title
+                                                                            , status = th.status
+                                                                            , type_ = th.type_
+                                                                        }
+                                                                    )
+                                                                    pins
+
+                                                            else
+                                                                LE.removeAt i pins
+
+                                                        Nothing ->
+                                                            if th.isPinned then
+                                                                tensionHead2Pin th :: pins
+
+                                                            else
                                                                 pins
+                                            in
+                                            if List.isEmpty updated then
+                                                Nothing
 
-                                                        else
-                                                            LE.removeAt i pins
-
-                                                    Nothing ->
-                                                        if th.isPinned then
-                                                            tensionHead2Pin th :: pins
-
-                                                        else
-                                                            pins
-                                            )
+                                            else
+                                                Just updated
                                         )
                                         focus.pinned
                             in
@@ -445,14 +454,7 @@ update msg model =
                         )
                         session.common.path_data
                         data
-                        |> (\x ->
-                                case x of
-                                    Just a ->
-                                        Just a
-
-                                    Nothing ->
-                                        session.common.path_data
-                           )
+                        |> morElse session.common.path_data
 
                 -- history is deleted to save memory in page usong the Comments components
                 tension_head =

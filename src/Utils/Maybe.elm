@@ -19,7 +19,7 @@
 -}
 
 
-module Utils.Maybe exposing (mor, unwrap, unwrap2)
+module Utils.Maybe exposing (mor, morElse, unwrap, unwrap2)
 
 
 {-| Returns the first value that is present, like the boolean `||`.
@@ -32,6 +32,14 @@ mor ma mb =
 
         Just _ ->
             ma
+
+
+{-| Pipe-friendly version of `mor`: the fallback comes first so it reads as
+`maybeX |> morElse fallback` — analogous to `Maybe.Extra.orElse`.
+-}
+morElse : Maybe a -> Maybe a -> Maybe a
+morElse fallback m =
+    mor m fallback
 
 
 {-| Like using `Maybe.map f a |> withDefault default`
