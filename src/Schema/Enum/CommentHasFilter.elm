@@ -13,11 +13,12 @@ type CommentHasFilter
     | UpdatedAt
     | Message
     | Reactions
+    | Files
 
 
 list : List CommentHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Reactions ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Reactions, Files ]
 
 
 decoder : Decoder CommentHasFilter
@@ -40,6 +41,9 @@ decoder =
 
                     "reactions" ->
                         Decode.succeed Reactions
+
+                    "files" ->
+                        Decode.succeed Files
 
                     _ ->
                         Decode.fail ("Invalid CommentHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -65,6 +69,9 @@ toString enum____ =
 
         Reactions ->
             "reactions"
+
+        Files ->
+            "files"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -95,6 +102,9 @@ fromString enumString____ =
 
         "reactions" ->
             Just Reactions
+
+        "files" ->
+            Just Files
 
         _ ->
             Nothing

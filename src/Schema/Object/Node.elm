@@ -539,6 +539,26 @@ activity fillInOptionals____ object____ =
     Object.selectionForCompositeField "activity" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias AvatarOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.FileFilter }
+
+
+avatar :
+    (AvatarOptionalArguments -> AvatarOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.File
+    -> SelectionSet (Maybe decodesTo) Schema.Object.Node
+avatar fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeFileFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "avatar" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 cascade_directive : SelectionSet (Maybe Bool) Schema.Object.Node
 cascade_directive =
     Object.selectionForField "(Maybe Bool)" "cascade_directive" [] (Decode.bool |> Decode.nullable)
