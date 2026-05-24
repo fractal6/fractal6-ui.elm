@@ -128,6 +128,31 @@ window.addEventListener('load', _ => {
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
 
+            // Paste-capture: any element with [data-paste-capture] forwards
+            // file items from the clipboard to Elm. The element id (if any)
+            // is sent so the receiver can disambiguate multiple editors.
+            document.addEventListener('paste', function (e) {
+                var t = e.target;
+                if (!t || typeof t.matches !== 'function') return;
+                if (!t.matches('[data-paste-capture]')) return;
+                var cd = e.clipboardData;
+                if (!cd) return;
+                var items = cd.items || [];
+                var files = [];
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].kind === 'file') {
+                        var f = items[i].getAsFile();
+                        if (f) files.push(f);
+                    }
+                }
+                if (files.length === 0) return;
+                e.preventDefault();
+                app.ports.pastedFilesFromJs.send({
+                    targetId: t.id || '',
+                    files: files,
+                });
+            });
+
             // Scroll position detection with throttling
             window.addEventListener('scroll', function() {
                 if (!session.scrollTicking) {
@@ -300,6 +325,14 @@ export const actions = {
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
         hideSearchInput(userTooltip, app);
+    },
+    'INSERT_AT_CARET': (app, session, data) => {
+        // data: { targetId: string, text: string }
+        var $i = document.getElementById(data.targetId);
+        if (!$i) return;
+        var start = $i.selectionStart != null ? $i.selectionStart : $i.value.length;
+        var end = $i.selectionEnd != null ? $i.selectionEnd : start;
+        replaceRange($i, start, end, data.text, start + data.text.length);
     },
     'PUSH_EMOJI_SELECTION': (app, session, emoji) => {
         var $i = document.activeElement;

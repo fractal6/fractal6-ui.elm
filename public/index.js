@@ -57,6 +57,7 @@ window.addEventListener('load', _ => {
                     auth: AUTH_API,
                     gql: GRAPHQL_API,
                     rest: REST_API,
+                    file: FILE_API,
                     assets: ASSETS_API,
                     client_version: VERSION,
                 },

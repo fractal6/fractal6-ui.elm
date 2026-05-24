@@ -57,6 +57,7 @@ import Schema.Object.CommentAggregateResult
 import Schema.Object.Contract
 import Schema.Object.ContractAggregateResult
 import Schema.Object.Event
+import Schema.Object.File
 import Schema.Object.Node
 import Schema.Object.NodeFragment
 import Schema.Object.ProjectCard
@@ -72,7 +73,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Blob, Comment, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, ProjectCardLite, ProjectColumnLite, ProjectWithColumns, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, TensionProject, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import ModelSchema exposing (Blob, Comment, CommentFile, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, ProjectCardLite, ProjectColumnLite, ProjectWithColumns, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, TensionProject, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
 import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, projectColumnLitePayload, projectWithColumnsPayload, userPayload)
 import RemoteData
 import String.Extra as SE
@@ -402,6 +403,21 @@ commentPayload =
                             |> Dict.values
                     )
             )
+        |> with
+            (Schema.Object.Comment.files identity commentFilePayload
+                |> SelectionSet.map (withDefault [])
+            )
+
+
+commentFilePayload : SelectionSet CommentFile Schema.Object.File
+commentFilePayload =
+    SelectionSet.succeed CommentFile
+        |> with (Schema.Object.File.id |> SelectionSet.map decodedId)
+        |> with Schema.Object.File.filename
+        |> with Schema.Object.File.contentType
+        |> with Schema.Object.File.size
+        |> with (Schema.Object.File.embedded |> SelectionSet.map (Maybe.withDefault False))
+        |> with (Schema.Object.File.createdBy identity (SelectionSet.map Username Schema.Object.User.username))
 
 
 blobPayload : SelectionSet Blob Schema.Object.Blob

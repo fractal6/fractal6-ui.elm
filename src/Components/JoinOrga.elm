@@ -784,6 +784,7 @@ viewJoinStep op model =
                     , isModal = True
                     , placeholderText = T.text
                     , messageHelper = ""
+                    , attachmentsEnabled = False
                     }
             in
             div [ class "modal-card-body" ]
@@ -849,6 +850,7 @@ viewJoinStep op model =
                     , isModal = True
                     , placeholderText = T.leaveCommentOpt
                     , messageHelper = T.invitationMessageHelp
+                    , attachmentsEnabled = False
                     }
             in
             div [ class "modal-card-body" ]

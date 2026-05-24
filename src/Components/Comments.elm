@@ -26,6 +26,7 @@ module Components.Comments exposing
     , getCurrentMessage
     , init
     , initWithDraft
+    , kickoffUploads
     , subscriptions
     , update
     , viewCommentInputHeader
@@ -36,9 +37,12 @@ module Components.Comments exposing
     , viewTensionCommentInput
     )
 
+import Api.File as ApiFile
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
+import File
+import File.Select
 import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
 import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
 import Fractale.User exposing (UserState(..), uctxFromUser)
@@ -62,7 +66,7 @@ import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, style, target, title, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -71,7 +75,7 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown, setMdCheckbox)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, Event, IdPayload, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx)
+import ModelSchema exposing (Comment, CommentFile, Event, IdPayload, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx, Username)
 import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (deleteComment, patchComment, pushTensionPatch)
@@ -135,9 +139,37 @@ type alias Model =
     -- Backup for checkbox operations (stores comment id and message being edited)
     , post_backup : Maybe { id : String, message : String }
 
+    -- File attachments
+    -- pendingByEditor: files queued in an editor before its carrier (cid) exists.
+    -- activeByCid:     files being uploaded to a saved comment (FIFO drain, one in flight).
+    -- pasteCounter:    monotonic per-session counter for unique `paste-<ts>-<n>.<ext>` names.
+    , pendingByEditor : Dict.Dict String (List PendingFile)
+    , activeByCid : Dict.Dict String UploadBatch
+    , pasteCounter : Int
+
     -- Common
     , session : SessionCommon
     , refresh_trial : Int -- use to refresh user token
+    }
+
+
+type alias PendingFile =
+    { filename : String
+    , file : File.File
+    , isPaste : Bool -- true if inserted as inline `![](filename)` placeholder
+    , status : PendingStatus
+    }
+
+
+type PendingStatus
+    = Queued
+    | Uploading
+    | UploadFailed ApiFile.ApiError
+
+
+type alias UploadBatch =
+    { tid : String
+    , queue : List PendingFile
     }
 
 
@@ -165,6 +197,11 @@ initModel nameid tensionid session =
 
     -- Backup for checkbox operations
     , post_backup = Nothing
+
+    -- File attachments
+    , pendingByEditor = Dict.empty
+    , activeByCid = Dict.empty
+    , pasteCounter = 0
 
     -- Common
     , session = session
@@ -205,6 +242,21 @@ initWithDraft nameid tensionid session maybeDraft =
 getCurrentMessage : State -> Maybe String
 getCurrentMessage (State model) =
     Dict.get "message" model.tension_form.post |> Maybe.map String.trim
+
+
+{-| Drain files queued under `editorId` against a freshly created carrier
+(tid + cid). Use from a page that owns the carrier mutation (e.g. NewTension's
+addOneTension success branch) so paste/attach uploads land on the right
+comment. Pages whose carrier mutation lives inside Comments.elm don't need to
+call this — Comments.elm wires the handoff internally.
+-}
+kickoffUploads : Apis -> { editorId : String, tid : String, cid : String } -> State -> ( State, Cmd Msg )
+kickoffUploads apis { editorId, tid, cid } (State model) =
+    let
+        ( pendingByEditor1, activeByCid1, cmd ) =
+            handoffPendingToCid apis editorId tid cid model.pendingByEditor model.activeByCid
+    in
+    ( State { model | pendingByEditor = pendingByEditor1, activeByCid = activeByCid1 }, cmd )
 
 
 
@@ -266,9 +318,23 @@ type Msg
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
+      -- Attachments
+    | OnPickFiles String -- targetId
+    | OnFilesSelected String File.File (List File.File)
+    | OnPastedFiles PastedFiles
+    | OnRemovePending String String -- targetId, filename
+    | OnUploadAck String String (Result ApiFile.ApiError ApiFile.UploadResult) -- cid, filename, result
+    | OnDeleteAttachment String String -- cid, fileId
+    | OnDeleteAttachmentAck String String (Result ApiFile.ApiError ())
       -- Components
     | UserInputMsg UserInput.Msg
     | EmojiPickerMsg EmojiPicker.Msg
+
+
+type alias PastedFiles =
+    { targetId : String
+    , files : List File.File
+    }
 
 
 type alias Out =
@@ -421,21 +487,35 @@ update_ apis message model =
                     let
                         resetForm =
                             initTensionForm model.session.lexicon model.tension_form.id Nothing model.session.user
-                    in
-                    ( { model
-                        | comments =
+
+                        addedComments =
                             if (Dict.get "message" model.tension_form.post |> withDefault "") /= "" then
-                                model.comments ++ withDefault [] tp.comments
+                                withDefault [] tp.comments
 
                             else
-                                model.comments
+                                []
+
+                        -- Hand off any files queued under "commentInput" / "textAreaModal"
+                        -- to the upload queue keyed by the new comment's cid.
+                        ( pendingByEditor1, activeByCid1, uploadCmd ) =
+                            handoffPendingForNewComment apis
+                                [ "commentInput", "textAreaModal" ]
+                                model.tension_form.id
+                                addedComments
+                                model.pendingByEditor
+                                model.activeByCid
+                    in
+                    ( { model
+                        | comments = model.comments ++ addedComments
                         , history =
                             model.history
                                 ++ (model.tension_form.events |> List.map (\e -> eventFromForm e model.tension_form))
                         , tension_form = resetForm
                         , tension_patch = result
+                        , pendingByEditor = pendingByEditor1
+                        , activeByCid = activeByCid1
                       }
-                    , Out [ Ports.bulma_driver "" ] [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
+                    , Out [ Ports.bulma_driver "", uploadCmd ] [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -549,9 +629,26 @@ update_ apis message model =
 
                                 _ ->
                                     initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
+
+                        -- Hand off "updateCommentInput" pending files to the
+                        -- existing comment's cid (already known).
+                        ( pendingByEditor1, activeByCid1, uploadCmd ) =
+                            handoffPendingToCid apis
+                                "updateCommentInput"
+                                model.tension_form.id
+                                comment.id
+                                model.pendingByEditor
+                                model.activeByCid
                     in
-                    ( { model | comments = comments, comment_form = resetForm, comment_result = result, post_backup = Nothing }
-                    , out0 [ Ports.bulma_driver comment.createdAt ]
+                    ( { model
+                        | comments = comments
+                        , comment_form = resetForm
+                        , comment_result = result
+                        , post_backup = Nothing
+                        , pendingByEditor = pendingByEditor1
+                        , activeByCid = activeByCid1
+                      }
+                    , out0 [ Ports.bulma_driver comment.createdAt, uploadCmd ]
                     )
 
                 _ ->
@@ -748,6 +845,160 @@ update_ apis message model =
                 Nothing ->
                     ( model, noOut )
 
+        -- Attachments
+        OnPickFiles targetId ->
+            ( model
+            , out0 [ File.Select.files [] (OnFilesSelected targetId) ]
+            )
+
+        OnFilesSelected targetId f rest ->
+            let
+                files =
+                    f :: rest
+
+                pendings =
+                    List.map
+                        (\fi ->
+                            { filename = File.name fi
+                            , file = fi
+                            , isPaste = False
+                            , status = Queued
+                            }
+                        )
+                        files
+
+                pendingByEditor1 =
+                    Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ pendings) >> Just) model.pendingByEditor
+            in
+            ( { model | pendingByEditor = pendingByEditor1 }, noOut )
+
+        OnPastedFiles { targetId, files } ->
+            let
+                ( newPendings, counter1 ) =
+                    List.foldl
+                        (\fi ( acc, k ) ->
+                            let
+                                ext =
+                                    extensionFor (File.mime fi) (File.name fi)
+
+                                fname =
+                                    "paste-" ++ String.fromInt (Time.posixToMillis model.session.now) ++ "-" ++ String.fromInt k ++ ext
+                            in
+                            ( acc
+                                ++ [ { filename = fname
+                                     , file = fi
+                                     , isPaste = True
+                                     , status = Queued
+                                     }
+                                   ]
+                            , k + 1
+                            )
+                        )
+                        ( [], model.pasteCounter )
+                        files
+
+                pendingByEditor1 =
+                    Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
+
+                insertCmds =
+                    newPendings
+                        |> List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") "))
+            in
+            ( { model | pendingByEditor = pendingByEditor1, pasteCounter = counter1 }
+            , out0 insertCmds
+            )
+
+        OnRemovePending targetId filename ->
+            let
+                pendingByEditor1 =
+                    Dict.update targetId
+                        (Maybe.map (List.filter (\p -> p.filename /= filename)))
+                        model.pendingByEditor
+            in
+            ( { model | pendingByEditor = pendingByEditor1 }, noOut )
+
+        OnUploadAck cid filename result ->
+            case Dict.get cid model.activeByCid of
+                Nothing ->
+                    ( model, noOut )
+
+                Just batch ->
+                    case result of
+                        Ok up ->
+                            let
+                                comments1 =
+                                    model.comments
+                                        |> List.map
+                                            (\c ->
+                                                if c.id == cid then
+                                                    let
+                                                        msg1 =
+                                                            -- Server rewrites paste-<...> placeholders to /file/<id>;
+                                                            -- mirror that locally so the UI does not need a refetch.
+                                                            String.replace ("](" ++ filename ++ ")") ("](/file/" ++ up.id ++ ")") c.message
+
+                                                        files1 =
+                                                            c.files
+                                                                ++ [ { id = up.id
+                                                                     , filename = up.filename
+                                                                     , contentType = up.contentType
+                                                                     , size = up.size
+                                                                     , embedded = up.embedded
+                                                                     , createdBy = Username (uctxFromUser model.session.user).username
+                                                                     }
+                                                                   ]
+                                                    in
+                                                    { c | message = msg1, files = files1 }
+
+                                                else
+                                                    c
+                                            )
+
+                                ( queue1, nextCmd, activeByCid1 ) =
+                                    drainNext apis batch.tid cid (List.drop 1 batch.queue) model.activeByCid
+                            in
+                            ( { model | comments = comments1, activeByCid = activeByCid1 }
+                            , out0 [ nextCmd ]
+                            )
+
+                        Err err ->
+                            -- Mark the head as failed and continue with the rest of the queue.
+                            let
+                                ( _, nextCmd, activeByCid1 ) =
+                                    drainNext apis batch.tid cid (List.drop 1 batch.queue) model.activeByCid
+
+                                _ =
+                                    err
+                            in
+                            ( { model | activeByCid = activeByCid1 }
+                            , out0 [ nextCmd, Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) ]
+                            )
+
+        OnDeleteAttachment cid fileId ->
+            ( model
+            , out0 [ ApiFile.delete apis fileId (OnDeleteAttachmentAck cid fileId) ]
+            )
+
+        OnDeleteAttachmentAck cid fileId result ->
+            case result of
+                Ok _ ->
+                    let
+                        comments1 =
+                            model.comments
+                                |> List.map
+                                    (\c ->
+                                        if c.id == cid then
+                                            { c | files = List.filter (\f -> f.id /= fileId) c.files }
+
+                                        else
+                                            c
+                                    )
+                    in
+                    ( { model | comments = comments1 }, noOut )
+
+                Err err ->
+                    ( model, out0 [ Ports.logErr ("file delete failed: " ++ ApiFile.errorToString err) ] )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -817,9 +1068,145 @@ checkboxDecoder =
         (JD.field "cid" JD.string)
 
 
+pastedFilesDecoder : JD.Decoder PastedFiles
+pastedFilesDecoder =
+    JD.map2 PastedFiles
+        (JD.field "targetId" JD.string)
+        (JD.field "files" (JD.list File.decoder))
+
+
+extensionFor : String -> String -> String
+extensionFor mime name =
+    let
+        fromName =
+            case List.reverse (String.split "." name) of
+                ext :: _ :: _ ->
+                    "." ++ ext
+
+                _ ->
+                    ""
+    in
+    if fromName /= "" then
+        fromName
+
+    else
+        case mime of
+            "image/png" ->
+                ".png"
+
+            "image/jpeg" ->
+                ".jpg"
+
+            "image/gif" ->
+                ".gif"
+
+            "image/webp" ->
+                ".webp"
+
+            "image/svg+xml" ->
+                ".svg"
+
+            _ ->
+                ""
+
+
+
+-- Upload-queue helpers
+
+
+{-| Move pending files from a list of editor target ids to a freshly created
+comment's cid, then kick off the first upload. Returns updated dictionaries
+plus the Cmd to execute.
+-}
+handoffPendingForNewComment : Apis -> List String -> String -> List Comment -> Dict.Dict String (List PendingFile) -> Dict.Dict String UploadBatch -> ( Dict.Dict String (List PendingFile), Dict.Dict String UploadBatch, Cmd Msg )
+handoffPendingForNewComment apis editorIds tid added pendingByEditor activeByCid =
+    case List.head added of
+        Nothing ->
+            ( pendingByEditor, activeByCid, Cmd.none )
+
+        Just c ->
+            let
+                ( collected, pendingByEditor1 ) =
+                    List.foldl
+                        (\eid ( acc, dict ) ->
+                            case Dict.get eid dict of
+                                Just xs ->
+                                    ( acc ++ xs, Dict.remove eid dict )
+
+                                Nothing ->
+                                    ( acc, dict )
+                        )
+                        ( [], pendingByEditor )
+                        editorIds
+            in
+            if List.isEmpty collected then
+                ( pendingByEditor, activeByCid, Cmd.none )
+
+            else
+                let
+                    batch =
+                        { tid = tid, queue = collected }
+
+                    ( _, cmd, activeByCid1 ) =
+                        drainNext apis tid c.id collected (Dict.insert c.id batch activeByCid)
+                in
+                ( pendingByEditor1, activeByCid1, cmd )
+
+
+{-| Same idea but for an existing comment id (edit flow): moves files from
+one editor id to that cid and starts uploading.
+-}
+handoffPendingToCid : Apis -> String -> String -> String -> Dict.Dict String (List PendingFile) -> Dict.Dict String UploadBatch -> ( Dict.Dict String (List PendingFile), Dict.Dict String UploadBatch, Cmd Msg )
+handoffPendingToCid apis editorId tid cid pendingByEditor activeByCid =
+    case Dict.get editorId pendingByEditor of
+        Nothing ->
+            ( pendingByEditor, activeByCid, Cmd.none )
+
+        Just [] ->
+            ( pendingByEditor, activeByCid, Cmd.none )
+
+        Just collected ->
+            let
+                pendingByEditor1 =
+                    Dict.remove editorId pendingByEditor
+
+                batch =
+                    { tid = tid, queue = collected }
+
+                ( _, cmd, activeByCid1 ) =
+                    drainNext apis tid cid collected (Dict.insert cid batch activeByCid)
+            in
+            ( pendingByEditor1, activeByCid1, cmd )
+
+
+{-| Take the head of a queue and start uploading it. Updates `activeByCid`
+with the queue (head set to Uploading) so the view can render a spinner.
+Returns the remaining queue, the Cmd, and the updated dict.
+-}
+drainNext : Apis -> String -> String -> List PendingFile -> Dict.Dict String UploadBatch -> ( List PendingFile, Cmd Msg, Dict.Dict String UploadBatch )
+drainNext apis tid cid queue activeByCid =
+    case queue of
+        [] ->
+            ( [], Cmd.none, Dict.remove cid activeByCid )
+
+        head :: rest ->
+            let
+                batch1 =
+                    { tid = tid
+                    , queue = { head | status = Uploading } :: rest
+                    }
+            in
+            ( rest
+            , ApiFile.upload apis (ApiFile.CommentAnchor { tid = tid, cid = cid }) head.file (OnUploadAck cid head.filename)
+            , Dict.insert cid batch1 activeByCid
+            )
+
+
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.pd Ports.checkboxFromJs checkboxDecoder LogErr OnCheckbox ]
+    [ Ports.pd Ports.checkboxFromJs checkboxDecoder LogErr OnCheckbox
+    , Ports.pd Ports.pastedFilesFromJs pastedFilesDecoder LogErr OnPastedFiles
+    ]
         ++ (if model.highlightedCommentId /= "" then
                 [ Events.onMouseUp (JD.succeed (OnHighlight ""))
                 , Events.onKeyUp (Dom.key "Escape" (OnHighlight ""))
@@ -845,7 +1232,7 @@ viewCommentsContract session (State model) =
         [ model.comments
             |> List.map
                 (\c ->
-                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker (List.member c.id model.fadingOut)
+                    viewComment session c model.comment_form model.comment_result model.comment_delete_result model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor (List.member c.id model.fadingOut)
                 )
             |> div []
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -855,7 +1242,7 @@ viewCommentsContract session (State model) =
 viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
 viewCommentsTension session action (State model) =
     div []
-        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.fadingOut
+        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
@@ -872,9 +1259,10 @@ viewComments_ :
     -> String
     -> UserInput.State
     -> EmojiPicker.State
+    -> Dict.Dict String (List PendingFile)
     -> List String
     -> Html Msg
-viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker fadingOut =
+viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor fadingOut =
     let
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
@@ -913,7 +1301,7 @@ viewComments_ session action history comments comment_form comment_result commen
                 Nothing ->
                     case LE.getAt e.i comments of
                         Just c ->
-                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker (List.member c.id fadingOut)
+                            viewComment session c comment_form comment_result comment_delete_result highlightedCommentId userInput emojiPicker pendingByEditor (List.member c.id fadingOut)
 
                         Nothing ->
                             text ""
@@ -988,8 +1376,8 @@ viewComments_ session action history comments comment_form comment_result commen
         |> div []
 
 
-viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Bool -> Html Msg
-viewComment session c form result delete_result highlightedCommentId userInput emojiPicker isFadingOut =
+viewComment : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> ( String, GqlData IdPayload ) -> String -> UserInput.State -> EmojiPicker.State -> Dict.Dict String (List PendingFile) -> Bool -> Html Msg
+viewComment session c form result delete_result highlightedCommentId userInput emojiPicker pendingByEditor isFadingOut =
     let
         isAuthor =
             c.createdBy.username == form.uctx.username
@@ -1011,7 +1399,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
             , attribute "style" "width: 66.66667%;"
             ]
             [ if form.id == c.id && Dict.get "stealth" form.post /= Just "true" then
-                viewUpdateInput session c form result userInput emojiPicker
+                viewUpdateInput session c form result userInput emojiPicker (Dict.get "updateCommentInput" pendingByEditor |> withDefault [])
 
               else
                 div [ id c.id, class "message commentMessage", classList [ ( "is-focusing", isFocused ) ] ]
@@ -1093,6 +1481,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
 
                             message ->
                                 renderMarkdown "is-human" message
+                        , viewSavedAttachments session c
                         , div [ class "emoji-reactions" ] <|
                             List.map
                                 (\r ->
@@ -1167,6 +1556,96 @@ viewDeleteCommentError cid ( targetCid, result ) =
         text ""
 
 
+{-| Render the "Attach files" button + pending-upload chips for an editor.
+Source of truth for in-flight uploads is `pendingByEditor`; once a carrier
+mutation succeeds the queue moves out and the chips here disappear (they
+reappear under the saved comment as `viewSavedAttachments`).
+-}
+viewPendingsRow : String -> List PendingFile -> Html Msg
+viewPendingsRow targetId pendings =
+    div [ class "is-flex is-flex-wrap-wrap is-align-items-center mt-1", style "gap" "0.4rem" ]
+        ([ button
+            [ class "button is-small is-weak"
+            , type_ "button"
+            , onClick (OnPickFiles targetId)
+            ]
+            [ A.icon1 "icon-paperclip" "Attach" ]
+         ]
+            ++ List.map (viewPendingChip targetId) pendings
+        )
+
+
+viewPendingChip : String -> PendingFile -> Html Msg
+viewPendingChip targetId p =
+    let
+        statusEl =
+            case p.status of
+                Queued ->
+                    A.icon "icon-clock"
+
+                Uploading ->
+                    span [ class "loader is-inline-block ml-1" ] []
+
+                UploadFailed _ ->
+                    A.icon "icon-alert-triangle has-text-danger"
+    in
+    span [ class "tag is-light" ]
+        [ statusEl
+        , span [ class "ml-1" ] [ text p.filename ]
+        , button
+            [ class "delete is-small ml-2"
+            , type_ "button"
+            , onClick (OnRemovePending targetId p.filename)
+            ]
+            []
+        ]
+
+
+{-| Render attachment chips for a saved comment. Hides the delete button when
+the viewer is not the file's uploader.
+-}
+viewSavedAttachments : SessionCommon -> Comment -> Html Msg
+viewSavedAttachments session c =
+    let
+        viewer =
+            (uctxFromUser session.user).username
+
+        chips =
+            c.files
+                |> List.filter (\f -> not f.embedded)
+                |> List.map
+                    (\f ->
+                        span [ class "tag is-light mr-2 mb-1" ]
+                            [ A.icon "icon-paperclip"
+                            , a
+                                [ href ("/file/" ++ f.id)
+                                , target "_blank"
+                                , class "ml-1"
+                                ]
+                                [ text f.filename ]
+                            , showIf (f.createdBy.username == viewer) <|
+                                button
+                                    [ class "delete is-small ml-2"
+                                    , type_ "button"
+                                    , onClick <|
+                                        DoModalConfirmOpen (OnDeleteAttachment c.id f.id)
+                                            { message = Nothing
+                                            , txts = [ ( "Delete attachment ", "" ), ( f.filename, "" ), ( "?", "" ) ]
+                                            , confirmClass = "is-danger"
+                                            , confirmLabel = T.delete
+                                            }
+                                    ]
+                                    []
+                            ]
+                    )
+    in
+    if List.isEmpty chips then
+        text ""
+
+    else
+        div [ class "comment-attachments mt-2" ] chips
+
+
 viewNewTensionCommentInput : SessionCommon -> CommentOpts -> State -> Html Msg
 viewNewTensionCommentInput session opts (State model) =
     let
@@ -1181,6 +1660,8 @@ viewNewTensionCommentInput session opts (State model) =
         , div [ class "message-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker ]
+                , showIf opts.attachmentsEnabled <|
+                    viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault [])
                 , showIf (opts.messageHelper /= "") <|
                     p [ class "help-label" ] [ text opts.messageHelper ]
                 , showIf opts.hasTips <|
@@ -1197,8 +1678,8 @@ viewNewTensionCommentInput session opts (State model) =
         ]
 
 
-viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> Html Msg
-viewUpdateInput session comment form_ result userInput emojiPicker =
+viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> List PendingFile -> Html Msg
+viewUpdateInput session comment form_ result userInput emojiPicker pendings =
     let
         message =
             Dict.get "message" form_.post |> withDefault comment.message
@@ -1227,6 +1708,7 @@ viewUpdateInput session comment form_ result userInput emojiPicker =
             [ div [ class "field" ]
                 [ div [ class "control" ]
                     [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker ]
+                , viewPendingsRow "updateCommentInput" pendings
                 ]
             , case result of
                 Failure err ->
@@ -1302,6 +1784,7 @@ viewTensionCommentInput session tension (State model) =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker ]
+                        , viewPendingsRow "commentInput" (Dict.get "commentInput" model.pendingByEditor |> withDefault [])
                         ]
                     , case model.tension_patch of
                         Failure err ->
@@ -1364,7 +1847,7 @@ viewContractCommentInput session (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" defaultCommentOpts form model.userInput model.emojiPicker ]
+                            [ viewCommentTextarea session "commentContractInput" { defaultCommentOpts | attachmentsEnabled = False } form model.userInput model.emojiPicker ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1420,6 +1903,10 @@ type alias CommentOpts =
     , hasTips : Bool
     , placeholderText : String
     , messageHelper : String
+
+    -- Show the Attach button + accept paste-to-upload. Disable for editors
+    -- whose carrier mutation can't anchor files (e.g. contract comments).
+    , attachmentsEnabled : Bool
     }
 
 
@@ -1429,6 +1916,7 @@ defaultCommentOpts =
     , placeholderText = T.leaveComment
     , messageHelper = ""
     , hasTips = False
+    , attachmentsEnabled = True
     }
 
 
@@ -1520,16 +2008,21 @@ viewCommentTextarea session targetid opts form userInput emojiPicker =
     in
     div []
         [ textarea
-            [ id targetid
-            , class "textarea"
-            , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
-            , rows (min max_len (max line_len min_len))
-            , placeholder opts.placeholderText
-            , value message
-            , onInput (onChangePost "message")
+            ([ id targetid
+             , class "textarea"
+             , classList [ ( "is-invisible-force", form.viewMode == Preview ) ]
+             , rows (min max_len (max line_len min_len))
+             , placeholder opts.placeholderText
+             , value message
+             , onInput (onChangePost "message")
+             ]
+                ++ (if opts.attachmentsEnabled then
+                        [ attribute "data-paste-capture" "true" ]
 
-            --, contenteditable True
-            ]
+                    else
+                        []
+                   )
+            )
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]

@@ -172,6 +172,13 @@ port checkboxFromJs : (JD.Value -> a) -> Sub a
 
 
 
+-- Clipboard / file paste
+
+
+port pastedFilesFromJs : (JD.Value -> a) -> Sub a
+
+
+
 -- Scroll
 
 
@@ -785,6 +792,18 @@ richText targetid command =
             JE.object
                 [ ( "target", JE.string targetid )
                 , ( "command", JE.string command )
+                ]
+        }
+
+
+insertAtCaret : String -> String -> Cmd msg
+insertAtCaret targetid text =
+    outgoing
+        { action = "INSERT_AT_CARET"
+        , data =
+            JE.object
+                [ ( "targetId", JE.string targetid )
+                , ( "text", JE.string text )
                 ]
         }
 

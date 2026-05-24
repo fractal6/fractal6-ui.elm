@@ -54,7 +54,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
-import Query.AddTension exposing (addOneTension)
+import Query.AddTension exposing (AddedTension, addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, queryLocalGraph, queryRolesFull)
 import Query.QueryProject exposing (addProjectCard)
@@ -628,7 +628,7 @@ isTemplateUnmodified data =
 
 type Msg
     = -- Data control
-      PushTension (GqlData Tension -> Msg)
+      PushTension (GqlData AddedTension -> Msg)
     | OnSubmit Bool (Time.Posix -> Msg)
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
     | OnOutsideTreeClickClose
@@ -663,7 +663,7 @@ type Msg
     | OnAddPolicies
     | OnAddResponsabilities
     | OnSubmitTension Bool Time.Posix
-    | OnTensionAck (GqlData Tension)
+    | OnTensionAck (GqlData AddedTension)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -1301,6 +1301,10 @@ update_ apis message model =
             )
 
         OnTensionAck result ->
+            let
+                resultT =
+                    withMapData .tension result
+            in
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResult NotAsked model
@@ -1310,11 +1314,27 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension OnTensionAck) 500 ] [ DoUpdateToken ] )
 
-                OkAuth tension ->
+                OkAuth added ->
                     let
+                        tension =
+                            added.tension
+
+                        -- Drain any files queued in the new-tension editor against
+                        -- the freshly created tension's initial comment.
+                        ( comments1, uploadCmd ) =
+                            case added.initial_cid of
+                                Just cid ->
+                                    Comments.kickoffUploads apis
+                                        { editorId = "textAreaModal", tid = tension.id, cid = cid }
+                                        model.comments
+
+                                Nothing ->
+                                    ( model.comments, Cmd.none )
+
                         data =
                             { model
-                                | nodeDoc =
+                                | comments = comments1
+                                , nodeDoc =
                                     model.nodeDoc
                                         |> NodeDoc.setId tension.id
                                         |> NodeDoc.setUsers (List.map (\u -> { username = u, name = Nothing, email = "", pattern = "" }) model.withUsers)
@@ -1324,19 +1344,21 @@ update_ apis message model =
                         -- close cmd so the UI is not blocked by the project cards creation.
                         -- For draft conversions, tp.card.pos preserves the source draft's slot.
                         projectCmds =
-                            model.selectedProjects
-                                |> List.map
-                                    (\tp ->
-                                        addProjectCard apis
-                                            { uctx = model.nodeDoc.form.uctx
-                                            , tids = [ Just tension.id ]
-                                            , colid = tp.column.id
-                                            , pos = tp.card.pos
-                                            , post = Dict.empty
-                                            , title = ""
-                                            }
-                                            OnAddProjectCardAck
-                                    )
+                            Cmd.map CommentsMsg uploadCmd
+                                :: (model.selectedProjects
+                                        |> List.map
+                                            (\tp ->
+                                                addProjectCard apis
+                                                    { uctx = model.nodeDoc.form.uctx
+                                                    , tids = [ Just tension.id ]
+                                                    , colid = tp.column.id
+                                                    , pos = tp.card.pos
+                                                    , post = Dict.empty
+                                                    , title = ""
+                                                    }
+                                                    OnAddProjectCardAck
+                                            )
+                                   )
 
                         ( cmds, gcmds_ ) =
                             if model.doInvite && not (List.isEmpty data.nodeDoc.form.users) then
@@ -1382,27 +1404,27 @@ update_ apis message model =
                     in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result data, Out cmds gcmds output )
+                            ( setResult resultT data, Out cmds gcmds output )
 
                         NewRoleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Role model.nodeDoc
                             in
-                            ( setResult result data, Out cmds (DoFetchNode newNameid :: gcmds) output )
+                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: gcmds) output )
 
                         NewCircleTab ->
                             let
                                 newNameid =
                                     getNewNameid NodeType.Circle model.nodeDoc
                             in
-                            ( setResult result data, Out cmds (DoFetchNode newNameid :: gcmds) output )
+                            ( setResult resultT data, Out cmds (DoFetchNode newNameid :: gcmds) output )
 
                 DuplicateErr ->
                     ( setResult (Failure [ T.duplicateNameError ]) model, noOut )
 
                 _ ->
-                    ( setResult result model, noOut )
+                    ( setResult resultT model, noOut )
 
         LabelSearchPanelMsg msg ->
             let
@@ -2077,6 +2099,7 @@ viewTension tree_data model =
             , isModal = True
             , placeholderText = T.leaveCommentOpt
             , messageHelper = model.nodeDoc.form.txt.message_help
+            , attachmentsEnabled = True
             }
 
         isLoading =
