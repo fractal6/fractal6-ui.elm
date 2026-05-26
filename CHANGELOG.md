@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.5] - 2026-05-11
+
+### Features
+
+- **Projects**: new organisation project settings menu, with support for project templates.
+- **Tree menu**: circles can now be collapsed (with a hover toggle), and the `+` button has been replaced by a 3-dot action menu for richer actions.
+
+### Improvements
+
+- **Navigation**: switching between organisations (or coming back to one from another page) now reliably refreshes the tree, path and tensions — no more stale data.
+- **Version banner**: the "new version available" notification now fires on every page, with a smoother reload flow.
+- **Projects UI**: redesigned project columns, shared column-row UI with the color picker, smoother slide animation when reordering, and a unified template picker dropdown.
+- **Service worker**: navigations now use network-first, stale caches are dropped, and API routes are skipped from caching.
+
+### Bug fixes
+
+- **Tensions**: pin/unpin state is now propagated correctly, and the tension title is left-aligned in the navbar.
+- **Markdown editor**: tab key handling fixed, and text insertion / undo-redo now work as expected.
+- **Members**: fixed a regression where focus-circle roles were not fetched.
+- **CSS**: help-message title no longer overlaps the accordion arrow.
+
+
 ## [0.9.4] - 2026-04-28
 
 ## New features
