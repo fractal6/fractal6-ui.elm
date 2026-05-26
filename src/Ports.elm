@@ -808,6 +808,14 @@ insertAtCaret targetid text =
         }
 
 
+revokeObjectUrl : String -> Cmd msg
+revokeObjectUrl url =
+    outgoing
+        { action = "REVOKE_OBJECT_URL"
+        , data = JE.string url
+        }
+
+
 
 --
 -- Encoder

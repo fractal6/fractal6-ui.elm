@@ -75,33 +75,56 @@ next upload is started.
    `document`-level `paste` listener in `assets/js/ports.js` reads
    `clipboardData.items` of `kind === 'file'` and ships them to Elm via
    `pastedFilesFromJs` together with the textarea id.
-2. `OnPastedFiles` in `Comments.elm` generates a unique filename per item
-   (`paste-<epochms>-<n><ext>`, counter persisted in `Model.pasteCounter`),
-   stores the blob in `pendingByEditor[targetId]`, and issues
-   `Ports.insertAtCaret targetId ("![](<filename>) ")` to place the
-   placeholder at the caret without breaking native undo (the underlying
-   `replaceRange` helper is the same one used by the rich-text shortcuts;
-   see `docs/markup-richtext.md`).
-3. On carrier success the queue drains. As each `OnUploadAck` arrives the
+2. **The JS handler is the source of truth for the paste filename.** It
+   rebuilds the clipboard `File` with `new File([f], 'paste-<Date.now()>-<i><ext>', …)`
+   so the rebuilt object's `.name` matches the markdown placeholder *and*
+   the multipart upload's filename. The same JS step calls
+   `URL.createObjectURL(renamed)` and ships both arrays in parallel.
+   This keeps everything aligned with the backend rewrite in
+   `web/handlers/files.go::rewriteMessageForFile`, which looks up
+   `![](<filename>)` by the multipart name — clipboard items would
+   otherwise arrive as `image.png` and lose the embed.
+3. `OnPastedFiles` in `Comments.elm` reads `File.name fi` for the filename,
+   stores `{file, objectUrl, …}` in `pendingByEditor[targetId]`, and
+   issues `Ports.insertAtCaret targetId ("![](<filename>) ")` to place
+   the placeholder at the caret without breaking native undo.
+4. On carrier success the queue drains. As each `OnUploadAck` arrives the
    comment's message is rewritten locally
    (`String.replace ("](" ++ filename ++ ")") ("](/file/" ++ id ++ ")")`)
-   and the new file is appended to `comment.files`. No refetch is required.
+   and the new file is appended to `comment.files`. The server makes the
+   same rewrite and flips `embedded=true`, so a refresh sees the same
+   inline `<img>`.
 
 The placeholder filename uniqueness is the frontend's responsibility — the
-server-side rewrite (`rewriteMessageForFile`) only catches the first
-occurrence of each name and skips inside fenced/inline code blocks.
+server-side rewrite only catches the first occurrence of each name and
+skips inside fenced/inline code blocks.
 
 ## Chips
 
 - Editor row (`viewPendingsRow`): the "Attach" button (`File.Select.files`)
-  + a tag per `pendingByEditor` entry. Status icon is queued / spinner
-  while `Uploading` / warning on `UploadFailed`. Removal before submit is
-  client-only.
+  + a tag per non-paste `pendingByEditor` entry. **Inline pastes are not
+  shown here** — they live as `![](paste-…)` in the textarea itself, and
+  deleting that markdown line before submit is the way to cancel the
+  upload (`prunePastesByMessage` drops them right before handoff and
+  revokes the blob URL).
 - Saved row (`viewSavedAttachments`): under each rendered comment, lists
   `comment.files` filtered by `embedded == False`. The delete button is
   shown only when the file's `createdBy.username` matches the viewer.
   Deletes go through `Api.File.delete` and prune the file from the local
   comment on success.
+
+## Preview of unsaved pastes
+
+When the textarea is in `Preview` mode, the message is pre-processed in
+`viewCommentTextarea`: every `![](<paste-…>)` placeholder whose filename
+matches a pending entry is substituted with the local `blob:` URL before
+being passed to `renderMarkdown`. Already uploaded `![](/file/<id>)`
+images render unchanged — `frac6Renderer` prefixes them with the file
+server URL.
+
+Blob URLs are revoked via the `REVOKE_OBJECT_URL` port from three places:
+`OnUploadAck` (success or error), `OnRemovePending`, and
+`prunePastesForEditors` (placeholder removed from message before submit).
 
 ## Not wired
 
@@ -110,9 +133,10 @@ occurrence of each name and skips inside fenced/inline code blocks.
 - Contract comments. Contracts don't have a tension anchor that the
   backend would accept; `data-paste-capture` is intentionally omitted on
   `commentContractInput` and no Attach button is rendered.
-- A loading placeholder for inline pasted images while their upload is
-  in flight — the broken-image icon shows briefly until the local message
-  rewrite swaps the URL.
+- A loading placeholder on the rendered (post-submit) comment view while
+  the carrier upload is in flight — the broken-image icon shows briefly
+  until the local message rewrite swaps the URL. The Preview tab in the
+  editor itself shows the local `blob:` URL right away.
 
 ## Files
 

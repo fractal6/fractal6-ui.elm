@@ -141,10 +141,11 @@ type alias Model =
     -- File attachments
     -- pendingByEditor: files queued in an editor before its carrier (cid) exists.
     -- activeByCid:     files being uploaded to a saved comment (FIFO drain, one in flight).
-    -- pasteCounter:    monotonic per-session counter for unique `paste-<ts>-<n>.<ext>` names.
+    -- Paste filenames (`paste-<Date.now()>-<i><ext>`) are generated in
+    -- ports.js so the File object's own .name matches the multipart upload
+    -- and the markdown placeholder.
     , pendingByEditor : Dict.Dict String (List PendingFile)
     , activeByCid : Dict.Dict String UploadBatch
-    , pasteCounter : Int
 
     -- Common
     , session : SessionCommon
@@ -157,6 +158,7 @@ type alias PendingFile =
     , file : File.File
     , isPaste : Bool -- true if inserted as inline `![](filename)` placeholder
     , status : PendingStatus
+    , objectUrl : String -- blob: URL for in-place preview; "" for non-paste picks
     }
 
 
@@ -200,7 +202,6 @@ initModel nameid tensionid session =
     -- File attachments
     , pendingByEditor = Dict.empty
     , activeByCid = Dict.empty
-    , pasteCounter = 0
 
     -- Common
     , session = session
@@ -252,10 +253,34 @@ call this — Comments.elm wires the handoff internally.
 kickoffUploads : Apis -> { editorId : String, tid : String, cid : String } -> State -> ( State, Cmd Msg )
 kickoffUploads apis { editorId, tid, cid } (State model) =
     let
+        message =
+            messageForEditor editorId model
+
+        ( pendingByEditor0, revokeCmds ) =
+            prunePastesForEditors message [ editorId ] model.pendingByEditor
+
         ( pendingByEditor1, activeByCid1, cmd ) =
-            handoffPendingToCid apis editorId tid cid model.pendingByEditor model.activeByCid
+            handoffPendingToCid apis editorId tid cid pendingByEditor0 model.activeByCid
     in
-    ( State { model | pendingByEditor = pendingByEditor1, activeByCid = activeByCid1 }, cmd )
+    ( State { model | pendingByEditor = pendingByEditor1, activeByCid = activeByCid1 }
+    , Cmd.batch (cmd :: revokeCmds)
+    )
+
+
+{-| Look up the message text from whichever form owns the given editor id.
+"updateCommentInput" -> comment_form; everything else -> tension_form.
+-}
+messageForEditor : String -> Model -> String
+messageForEditor editorId model =
+    let
+        post =
+            if editorId == "updateCommentInput" then
+                model.comment_form.post
+
+            else
+                model.tension_form.post
+    in
+    Dict.get "message" post |> Maybe.withDefault ""
 
 
 
@@ -333,6 +358,7 @@ type Msg
 type alias PastedFiles =
     { targetId : String
     , files : List File.File
+    , objectUrls : List String
     }
 
 
@@ -494,14 +520,25 @@ update_ apis message model =
                             else
                                 []
 
-                        -- Hand off any files queued under "commentInput" / "textAreaModal"
-                        -- to the upload queue keyed by the new comment's cid.
+                        -- Prune paste pendings whose markdown placeholder was
+                        -- deleted by the user before submit (revoke their blob
+                        -- URLs), then hand off the remaining files under
+                        -- "commentInput" / "textAreaModal" to the upload queue
+                        -- keyed by the new comment's cid.
+                        submittedMessage =
+                            Dict.get "message" model.tension_form.post |> withDefault ""
+
+                        ( pendingByEditor0, revokeCmds ) =
+                            prunePastesForEditors submittedMessage
+                                [ "commentInput", "textAreaModal" ]
+                                model.pendingByEditor
+
                         ( pendingByEditor1, activeByCid1, uploadCmd ) =
                             handoffPendingForNewComment apis
                                 [ "commentInput", "textAreaModal" ]
                                 model.tension_form.id
                                 addedComments
-                                model.pendingByEditor
+                                pendingByEditor0
                                 model.activeByCid
                     in
                     ( { model
@@ -514,7 +551,7 @@ update_ apis message model =
                         , pendingByEditor = pendingByEditor1
                         , activeByCid = activeByCid1
                       }
-                    , Out [ Ports.bulma_driver "", uploadCmd ] [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
+                    , Out (Ports.bulma_driver "" :: uploadCmd :: revokeCmds) [ DoUpdateDraft (ClearComment model.tension_form.id) ] (Just (TensionCommentAdded model.tension_form.status))
                     )
 
                 _ ->
@@ -629,14 +666,23 @@ update_ apis message model =
                                 _ ->
                                     initCommentPatchForm model.session.user [ ( "focusid", model.focusid ) ]
 
-                        -- Hand off "updateCommentInput" pending files to the
+                        -- Prune paste pendings whose markdown placeholder was
+                        -- deleted before submit, then hand off the rest to the
                         -- existing comment's cid (already known).
+                        submittedMessage =
+                            Dict.get "message" model.comment_form.post |> withDefault ""
+
+                        ( pendingByEditor0, revokeCmds ) =
+                            prunePastesForEditors submittedMessage
+                                [ "updateCommentInput" ]
+                                model.pendingByEditor
+
                         ( pendingByEditor1, activeByCid1, uploadCmd ) =
                             handoffPendingToCid apis
                                 "updateCommentInput"
                                 model.tension_form.id
                                 comment.id
-                                model.pendingByEditor
+                                pendingByEditor0
                                 model.activeByCid
                     in
                     ( { model
@@ -647,7 +693,7 @@ update_ apis message model =
                         , pendingByEditor = pendingByEditor1
                         , activeByCid = activeByCid1
                       }
-                    , out0 [ Ports.bulma_driver comment.createdAt, uploadCmd ]
+                    , out0 (Ports.bulma_driver comment.createdAt :: uploadCmd :: revokeCmds)
                     )
 
                 _ ->
@@ -862,6 +908,7 @@ update_ apis message model =
                             , file = fi
                             , isPaste = False
                             , status = Queued
+                            , objectUrl = ""
                             }
                         )
                         files
@@ -871,30 +918,24 @@ update_ apis message model =
             in
             ( { model | pendingByEditor = pendingByEditor1 }, noOut )
 
-        OnPastedFiles { targetId, files } ->
+        OnPastedFiles { targetId, files, objectUrls } ->
             let
-                ( newPendings, counter1 ) =
-                    List.foldl
-                        (\fi ( acc, k ) ->
-                            let
-                                ext =
-                                    extensionFor (File.mime fi) (File.name fi)
+                -- ports.js sets each File's name to `paste-<Date.now()>-<i><ext>`
+                -- and ships a parallel blob URL. We just read both off.
+                pairs =
+                    List.map2 Tuple.pair files (objectUrls ++ List.repeat (List.length files) "")
 
-                                fname =
-                                    "paste-" ++ String.fromInt (Time.posixToMillis model.session.now) ++ "-" ++ String.fromInt k ++ ext
-                            in
-                            ( acc
-                                ++ [ { filename = fname
-                                     , file = fi
-                                     , isPaste = True
-                                     , status = Queued
-                                     }
-                                   ]
-                            , k + 1
+                newPendings =
+                    pairs
+                        |> List.map
+                            (\( fi, url ) ->
+                                { filename = File.name fi
+                                , file = fi
+                                , isPaste = True
+                                , status = Queued
+                                , objectUrl = url
+                                }
                             )
-                        )
-                        ( [], model.pasteCounter )
-                        files
 
                 pendingByEditor1 =
                     Dict.update targetId (Maybe.withDefault [] >> (\xs -> xs ++ newPendings) >> Just) model.pendingByEditor
@@ -903,18 +944,24 @@ update_ apis message model =
                     newPendings
                         |> List.map (\p -> Ports.insertAtCaret targetId ("![](" ++ p.filename ++ ") "))
             in
-            ( { model | pendingByEditor = pendingByEditor1, pasteCounter = counter1 }
+            ( { model | pendingByEditor = pendingByEditor1 }
             , out0 insertCmds
             )
 
         OnRemovePending targetId filename ->
             let
+                revokeCmd =
+                    Dict.get targetId model.pendingByEditor
+                        |> Maybe.withDefault []
+                        |> List.filter (\p -> p.filename == filename && p.objectUrl /= "")
+                        |> List.map (\p -> Ports.revokeObjectUrl p.objectUrl)
+
                 pendingByEditor1 =
                     Dict.update targetId
                         (Maybe.map (List.filter (\p -> p.filename /= filename)))
                         model.pendingByEditor
             in
-            ( { model | pendingByEditor = pendingByEditor1 }, noOut )
+            ( { model | pendingByEditor = pendingByEditor1 }, out0 revokeCmd )
 
         OnUploadAck cid filename result ->
             case Dict.get cid model.activeByCid of
@@ -922,6 +969,19 @@ update_ apis message model =
                     ( model, noOut )
 
                 Just batch ->
+                    let
+                        revokeCmd =
+                            List.head batch.queue
+                                |> Maybe.map .objectUrl
+                                |> Maybe.withDefault ""
+                                |> (\u ->
+                                        if u /= "" then
+                                            [ Ports.revokeObjectUrl u ]
+
+                                        else
+                                            []
+                                   )
+                    in
                     case result of
                         Ok up ->
                             let
@@ -957,7 +1017,7 @@ update_ apis message model =
                                     drainNext apis batch.tid cid (List.drop 1 batch.queue) model.activeByCid
                             in
                             ( { model | comments = comments1, activeByCid = activeByCid1 }
-                            , out0 [ nextCmd ]
+                            , out0 (nextCmd :: revokeCmd)
                             )
 
                         Err err ->
@@ -970,7 +1030,7 @@ update_ apis message model =
                                     err
                             in
                             ( { model | activeByCid = activeByCid1 }
-                            , out0 [ nextCmd, Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) ]
+                            , out0 (nextCmd :: Ports.logErr ("file upload failed for " ++ filename ++ ": " ++ ApiFile.errorToString err) :: revokeCmd)
                             )
 
         OnDeleteAttachment cid fileId ->
@@ -1069,44 +1129,62 @@ checkboxDecoder =
 
 pastedFilesDecoder : JD.Decoder PastedFiles
 pastedFilesDecoder =
-    JD.map2 PastedFiles
+    JD.map3 PastedFiles
         (JD.field "targetId" JD.string)
         (JD.field "files" (JD.list File.decoder))
+        (JD.field "objectUrls" (JD.list JD.string))
 
 
-extensionFor : String -> String -> String
-extensionFor mime name =
+-- Drop paste pendings whose `![](filename)` is no longer in the carrier
+-- message — that's how the user cancels an inline-pasted image (delete
+-- the markdown line). Returns the kept pendings and the blob URLs to revoke.
+prunePastesByMessage : String -> List PendingFile -> ( List PendingFile, List String )
+prunePastesByMessage message pendings =
     let
-        fromName =
-            case List.reverse (String.split "." name) of
-                ext :: _ :: _ ->
-                    "." ++ ext
+        ( keep, drop ) =
+            List.partition
+                (\p ->
+                    not p.isPaste
+                        || String.contains ("](" ++ p.filename ++ ")") message
+                )
+                pendings
 
-                _ ->
-                    ""
+        urls =
+            drop
+                |> List.filterMap
+                    (\p ->
+                        if p.objectUrl /= "" then
+                            Just p.objectUrl
+
+                        else
+                            Nothing
+                    )
     in
-    if fromName /= "" then
-        fromName
+    ( keep, urls )
 
-    else
-        case mime of
-            "image/png" ->
-                ".png"
 
-            "image/jpeg" ->
-                ".jpg"
+{-| Apply prunePastesByMessage to each of the listed editors against a single
+message. Returns the updated dict and a list of revoke commands.
+-}
+prunePastesForEditors : String -> List String -> Dict.Dict String (List PendingFile) -> ( Dict.Dict String (List PendingFile), List (Cmd msg) )
+prunePastesForEditors message editorIds pendingByEditor =
+    List.foldl
+        (\eid ( dict, cmds ) ->
+            case Dict.get eid dict of
+                Just xs ->
+                    let
+                        ( keep, urls ) =
+                            prunePastesByMessage message xs
+                    in
+                    ( Dict.insert eid keep dict
+                    , cmds ++ List.map Ports.revokeObjectUrl urls
+                    )
 
-            "image/gif" ->
-                ".gif"
-
-            "image/webp" ->
-                ".webp"
-
-            "image/svg+xml" ->
-                ".svg"
-
-            _ ->
-                ""
+                Nothing ->
+                    ( dict, cmds )
+        )
+        ( pendingByEditor, [] )
+        editorIds
 
 
 
@@ -1562,6 +1640,13 @@ reappear under the saved comment as `viewSavedAttachments`).
 -}
 viewPendingsRow : String -> List PendingFile -> Html Msg
 viewPendingsRow targetId pendings =
+    -- Inline pastes are managed via the markdown placeholder in the
+    -- textarea (delete the `![](paste-…)` line to drop the file); only
+    -- non-paste picks get a chip here.
+    let
+        visible =
+            List.filter (not << .isPaste) pendings
+    in
     div [ class "is-flex is-flex-wrap-wrap is-align-items-center mt-1", style "gap" "0.4rem" ]
         ([ button
             [ class "button is-small is-weak"
@@ -1570,7 +1655,7 @@ viewPendingsRow targetId pendings =
             ]
             [ A.icon1 "icon-paperclip" "Attach" ]
          ]
-            ++ List.map (viewPendingChip targetId) pendings
+            ++ List.map (viewPendingChip targetId) visible
         )
 
 
@@ -1658,7 +1743,7 @@ viewNewTensionCommentInput session opts (State model) =
         [ div [ class "message-header" ] [ viewCommentInputHeader opHeader "textAreaModal" model.tension_form ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker ]
+                [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker (Dict.get "textAreaModal" model.pendingByEditor |> withDefault []) ]
                 , showIf opts.attachmentsEnabled <|
                     viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault [])
                 , showIf (opts.messageHelper /= "") <|
@@ -1706,7 +1791,7 @@ viewUpdateInput session comment form_ result userInput emojiPicker pendings =
         , div [ class "message-body submitFocus" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker ]
+                    [ viewCommentTextarea session "updateCommentInput" defaultCommentOpts form userInput emojiPicker pendings ]
                 , viewPendingsRow "updateCommentInput" pendings
                 ]
             , case result of
@@ -1782,7 +1867,7 @@ viewTensionCommentInput session tension (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker ]
+                            [ viewCommentTextarea session "commentInput" defaultCommentOpts form model.userInput model.emojiPicker (Dict.get "commentInput" model.pendingByEditor |> withDefault []) ]
                         , viewPendingsRow "commentInput" (Dict.get "commentInput" model.pendingByEditor |> withDefault [])
                         ]
                     , case model.tension_patch of
@@ -1846,7 +1931,7 @@ viewContractCommentInput session (State model) =
                 , div [ class "message-body submitFocus" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ viewCommentTextarea session "commentContractInput" { defaultCommentOpts | attachmentsEnabled = False } form model.userInput model.emojiPicker ]
+                            [ viewCommentTextarea session "commentContractInput" { defaultCommentOpts | attachmentsEnabled = False } form model.userInput model.emojiPicker [] ]
                         ]
                     , case model.comment_result of
                         Failure err ->
@@ -1966,11 +2051,22 @@ viewCommentInputHeader op targetid form =
         ]
 
 
-viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> EmojiPicker.State -> Html Msg
-viewCommentTextarea session targetid opts form userInput emojiPicker =
+viewCommentTextarea : SessionCommon -> String -> CommentOpts -> FormCommon a -> UserInput.State -> EmojiPicker.State -> List PendingFile -> Html Msg
+viewCommentTextarea session targetid opts form userInput emojiPicker pendings =
     let
         message =
             Dict.get "message" form.post |> withDefault ""
+
+        -- Resolve `![](paste-…)` placeholders to local blob URLs so the
+        -- preview can show pasted images that haven't been uploaded yet.
+        -- Already-saved `![](/file/<id>)` is left untouched — the renderer
+        -- prefixes those with the file server URL itself.
+        previewMessage =
+            pendings
+                |> List.filter (\p -> p.isPaste && p.objectUrl /= "")
+                |> List.foldl
+                    (\p acc -> String.replace ("](" ++ p.filename ++ ")") ("](" ++ p.objectUrl ++ ")") acc)
+                    message
 
         line_len =
             List.length <| String.lines message
@@ -2025,7 +2121,7 @@ viewCommentTextarea session targetid opts form userInput emojiPicker =
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]
-                [ renderMarkdown session.file_server_url "is-human hidden-textarea" message, hr [] [] ]
+                [ renderMarkdown session.file_server_url "is-human hidden-textarea" previewMessage, hr [] [] ]
 
           else
             text ""
