@@ -4,6 +4,24 @@ Lets users attach files to comments and paste images (screenshots) inline.
 Wired into `Components/Comments.elm`. Backend serves and stores via the
 `/file/*` REST routes (see `Apis.file` in `Session.elm`).
 
+## URL resolution
+
+Files are stored as relative `/file/<id>` paths in comment markdown and in
+the `Comment.files` edge. At render time, the file server origin is prepended:
+
+- Markdown `<img>` targets — `Markdown.frac6Renderer` overrides the default
+  `image` handler and prefixes any `src` that starts with `/file/` with the
+  `RendererConfig.fileServerUrl` it was built with.
+- Saved attachment chips — `viewSavedAttachments` builds the `<a href>`
+  directly with `session.file_server_url ++ "/file/" ++ f.id`.
+
+The constant is injected at build time (`FILE_SERVER_URL` in
+`webpack.config.js`), exposed on `Apis.file_server_url`, and also mirrored on
+`SessionCommon.file_server_url` so views can read it without threading `Apis`.
+`renderMarkdown` takes the URL as its first argument — pass `""` when the
+content cannot contain attachments (error messages, hero blurbs, etc.) and the
+image override becomes a no-op.
+
 ## Transport — `Api/File.elm`
 
 Stand-alone REST module, separate from the GraphQL client (the `/file/*`

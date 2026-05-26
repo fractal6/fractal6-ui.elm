@@ -1183,7 +1183,7 @@ viewDraftComment session isAdmin isEdit result form draft =
                             div [ class "help is-italic" ] [ text T.noMessageProvided ]
 
                         msg ->
-                            renderMarkdown "is-human" msg
+                            renderMarkdown session.file_server_url "is-human" msg
                     ]
                 ]
             ]

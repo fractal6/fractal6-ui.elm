@@ -232,7 +232,7 @@ welcome uctx =
         [ div [ class "mt-2 mb-6 is-size-bg" ]
             [ T.welcomeLetter
                 |> Format.namedValue "username" uctx.username
-                |> renderMarkdown "is-human"
+                |> renderMarkdown "" "is-human"
             ]
         , div [ class "is-aligned-center" ]
             [ a [ class "button is-success breakable", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]

@@ -59,6 +59,7 @@ type alias Apis =
     , gql : String
     , rest : String
     , file : String
+    , file_server_url : String
     , assets : String
     , client_version : String
     }
@@ -165,6 +166,7 @@ type alias SessionCommon =
     , path_data : Maybe LocalGraph
     , lexicon : Dict String String
     , scrollPosition : Ports.ScrollPosition
+    , file_server_url : String
     }
 
 
@@ -288,6 +290,7 @@ resetSession session flags =
         , node_focus = Nothing -- hard to update session in components...put in data instead ?
         , path_data = Nothing --
         , scrollPosition = Ports.ScrollTop
+        , file_server_url = flags.apis.file_server_url
         }
     , data =
         { notif = initNotifCount
@@ -450,6 +453,7 @@ fromLocalSession url flags =
             , node_focus = Nothing
             , path_data = Nothing
             , scrollPosition = Ports.ScrollTop
+            , file_server_url = flags.apis.file_server_url
             }
       , data =
             { notif = initNotifCount

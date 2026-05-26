@@ -1255,7 +1255,7 @@ view_ global model =
             , node = focus_m
             , node_data = withDefaultData initNodeData model.node_data
             , leads = model.leaders
-            , lexicon = global.session.common.lexicon
+            , session = global.session.common
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
@@ -1800,9 +1800,6 @@ getChildrenFromTree nameid tree_data =
 viewChildExpandedContent : Model -> Int -> EmitterOrReceiver -> Html Msg
 viewChildExpandedContent model depth child =
     let
-        lexicon =
-            model.session.lexicon
-
         subChildren =
             getChildrenFromTree child.nameid model.tree_data
     in
@@ -1812,11 +1809,11 @@ viewChildExpandedContent model depth child =
                 div []
                     [ case data.about of
                         Just about ->
-                            renderMarkdown "is-human" about
+                            renderMarkdown "" "is-human" about
 
                         Nothing ->
                             text ""
-                    , NodeDoc.viewMandateSection lexicon child.role_type data.mandate Nothing
+                    , NodeDoc.viewMandateSection model.session child.role_type data.mandate Nothing
                     , showIf (not (List.isEmpty subChildren)) <|
                         div [ class "resources-subchildren" ]
                             [ viewChildrenList model (depth + 1) subChildren ]

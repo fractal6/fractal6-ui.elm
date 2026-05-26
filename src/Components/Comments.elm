@@ -41,30 +41,20 @@ import Api.File as ApiFile
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import File
-import File.Select
-import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
-import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.Event exposing (viewEvent)
-import Fractale.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.EmojiPicker as EmojiPicker
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf)
-import Utils.DomEvents exposing (onClickSafe)
-import Utils.Emoji exposing (emojis, getEmoji, getEmojiName)
+import File
+import File.Select
 import Form exposing (isPostSendable)
-import Schema.Enum.Lang as Lang
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (viewEvent)
+import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
+import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (statusColorReverse, viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import Html exposing (Html, a, br, button, div, hr, li, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, style, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -80,11 +70,20 @@ import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (deleteComment, patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
+import Schema.Enum.Lang as Lang
+import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile, toReflink)
 import String.Format as Format
 import Task
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickSafe)
+import Utils.Emoji exposing (emojis, getEmoji, getEmojiName)
+import Utils.Html exposing (showIf)
 
 
 
@@ -1480,7 +1479,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                 div [ class "help is-italic" ] [ text T.noMessageProvided ]
 
                             message ->
-                                renderMarkdown "is-human" message
+                                renderMarkdown session.file_server_url "is-human" message
                         , viewSavedAttachments session c
                         , div [ class "emoji-reactions" ] <|
                             List.map
@@ -1589,7 +1588,7 @@ viewPendingChip targetId p =
                 UploadFailed _ ->
                     A.icon "icon-alert-triangle has-text-danger"
     in
-    span [ class "tag is-light" ]
+    span [ class "tag is-weak" ]
         [ statusEl
         , span [ class "ml-1" ] [ text p.filename ]
         , button
@@ -1615,10 +1614,10 @@ viewSavedAttachments session c =
                 |> List.filter (\f -> not f.embedded)
                 |> List.map
                     (\f ->
-                        span [ class "tag is-light mr-2 mb-1" ]
+                        span [ class "tag is-weak mr-2 mb-1" ]
                             [ A.icon "icon-paperclip"
                             , a
-                                [ href ("/file/" ++ f.id)
+                                [ href (session.file_server_url ++ "/file/" ++ f.id)
                                 , target "_blank"
                                 , class "ml-1"
                                 ]
@@ -1959,7 +1958,7 @@ viewCommentInputHeader op targetid form =
         , if isMdHelpOpen then
             div [ id "mdLegend", class "box" ]
                 [ button [ class "delete is-pulled-right", onClick (op.onToggleMdHelp targetid) ] []
-                , renderMarkdown "" T.markdownHelp
+                , renderMarkdown "" "" T.markdownHelp
                 ]
 
           else
@@ -2026,7 +2025,7 @@ viewCommentTextarea session targetid opts form userInput emojiPicker =
             []
         , if form.viewMode == Preview then
             div [ class "mt-2 mx-3" ]
-                [ renderMarkdown "is-human hidden-textarea" message, hr [] [] ]
+                [ renderMarkdown session.file_server_url "is-human hidden-textarea" message, hr [] [] ]
 
           else
             text ""

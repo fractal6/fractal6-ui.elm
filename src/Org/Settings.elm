@@ -69,7 +69,7 @@ import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.ProjectColumnType
 import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionType as TensionType
-import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
+import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
 import Time
 import Url exposing (Url)
@@ -184,6 +184,7 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
+    , session : SessionCommon
 
     -- Page
     , menuFocus : MenuSettings
@@ -431,6 +432,7 @@ init global flags =
                 session.common.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
+            , session = session.common
             , menuFocus = menu
             , menuList = menuList
             , colorPicker = ColorPicker.init
@@ -2650,6 +2652,7 @@ viewRoleAddBox model =
             , onAddDomains = AddDomains
             , onAddPolicies = AddPolicies
             , data = model.nodeDoc
+            , session = model.session
             , mdOps =
                 Just
                     { onChangeViewMode = ChangeMandateViewMode
@@ -2764,7 +2767,7 @@ viewRoles model =
                                                 ]
                                         ]
                                             ++ (if model.showMandate == d.id then
-                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection model.lexicon (Just d.role_type) d.mandate Nothing ] ] ]
+                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection model.session (Just d.role_type) d.mandate Nothing ] ] ]
 
                                                 else
                                                     []
@@ -2917,7 +2920,7 @@ viewTensionTemplateAddBox model =
                     div []
                         [ hr [] []
                         , div [ class "mt-2 mx-3" ]
-                            [ renderMarkdown "is-human hidden-textarea" comment ]
+                            [ renderMarkdown "" "is-human hidden-textarea" comment ]
                         ]
 
                   else

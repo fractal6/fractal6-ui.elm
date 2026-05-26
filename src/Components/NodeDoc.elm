@@ -22,7 +22,7 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Fractale.Form exposing (Ev, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
+import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
 import Fractale.User exposing (UserState(..))
 import Fractale.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
 import Fractale.Error exposing (viewGqlErrors)
@@ -455,7 +455,7 @@ type alias OrgaNodeData =
     , leads : List User
 
     --
-    , lexicon : Dict String String
+    , session : SessionCommon
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
@@ -694,7 +694,7 @@ viewBlob data op_m =
                                     ]
 
                                 else
-                                    [ viewMandateSection op.session.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
+                                    [ viewMandateSection op.session (unwrap Nothing .role_type data.node) data.node_data.mandate (Just op.onChangeEdit) ]
                                )
 
                 NodeVersions ->
@@ -762,7 +762,7 @@ viewBlob data op_m =
                             ]
                     )
                 , hr [] []
-                , viewMandateSection data.lexicon (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
+                , viewMandateSection data.session (unwrap Nothing .role_type data.node) data.node_data.mandate Nothing
                 ]
 
 
@@ -807,17 +807,17 @@ viewAboutSection node data op_m =
                 ]
         , -- Node About
           showMaybe data.node_data.about
-            (\about -> renderMarkdown "is-human has-text-strong" about)
+            (\about -> renderMarkdown "" "is-human has-text-strong" about)
         ]
 
 
-viewMandateSection : Dict String String -> Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
-viewMandateSection lexicon role_type_m mandate_m op_m =
+viewMandateSection : SessionCommon -> Maybe RoleType.RoleType -> Maybe Mandate -> Maybe (NodeEdit -> msg) -> Html msg
+viewMandateSection session role_type_m mandate_m op_m =
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
-                , text (T.mandate lexicon)
+                , text (T.mandate session.lexicon)
                 ]
             , Maybe.map
                 (\onChangeEdit ->
@@ -833,10 +833,10 @@ viewMandateSection lexicon role_type_m mandate_m op_m =
         , case mandate_m of
             Just mandate ->
                 div []
-                    [ viewMandateSubSection T.purpose (Just mandate.purpose)
-                    , viewMandateSubSection T.responsabilities mandate.responsabilities
-                    , viewMandateSubSection T.domains mandate.domains
-                    , viewMandateSubSection T.policies mandate.policies
+                    [ viewMandateSubSection session T.purpose (Just mandate.purpose)
+                    , viewMandateSubSection session T.responsabilities mandate.responsabilities
+                    , viewMandateSubSection session T.domains mandate.domains
+                    , viewMandateSubSection session T.policies mandate.policies
                     ]
 
             Nothing ->
@@ -849,7 +849,7 @@ viewMandateSection lexicon role_type_m mandate_m op_m =
                             md =
                                 "https://doc.fractale.co/circle/#" ++ rt
                         in
-                        renderMarkdown "is-human" md
+                        renderMarkdown session.file_server_url "is-human" md
 
                     Nothing ->
                         div [ class "is-italic" ] [ text "No description for this node." ]
@@ -858,13 +858,13 @@ viewMandateSection lexicon role_type_m mandate_m op_m =
         ]
 
 
-viewMandateSubSection : String -> Maybe String -> Html msg
-viewMandateSubSection name maybePara =
+viewMandateSubSection : SessionCommon -> String -> Maybe String -> Html msg
+viewMandateSubSection session name maybePara =
     case maybePara of
         Just para ->
             div [ class "subSection" ]
                 [ div [ class "label" ] [ text name ]
-                , p [ class "mt-3" ] [ renderMarkdown "is-human" para ]
+                , p [ class "mt-3" ] [ renderMarkdown session.file_server_url "is-human" para ]
                 ]
 
         Nothing ->
@@ -993,6 +993,26 @@ viewAboutInput2 txt node op =
 -- viewAboutInput3 (the view use in Org.Settings)
 
 
+viewMandateInput :
+    FormText
+    -> Maybe Mandate
+    ->
+        { a
+            | session : SessionCommon
+            , data : NodeDoc
+            , mdOps :
+                Maybe
+                    { onChangeViewMode : String -> InputViewMode -> msg
+                    , onRichText : String -> String -> msg
+                    , onToggleMdHelp : String -> msg
+                    , post : Dict String String
+                    }
+            , onChangePost : String -> String -> msg
+            , onAddResponsabilities : msg
+            , onAddDomains : msg
+            , onAddPolicies : msg
+        }
+    -> Html msg
 viewMandateInput txt mandate op =
     let
         purpose =
@@ -1036,7 +1056,7 @@ viewMandateInput txt mandate op =
                             targetid
                             { viewMode = ternary isP Preview Write, post = mdOps.post }
                     , isPreview = isP
-                    , preview = \val -> ternary isP (div [] [ hr [] [], div [ class "mt-2 mx-3" ] [ renderMarkdown "is-human hidden-textarea" val ] ]) (text "")
+                    , preview = \val -> ternary isP (div [] [ hr [] [], div [ class "mt-2 mx-3" ] [ renderMarkdown op.session.file_server_url "is-human hidden-textarea" val ] ]) (text "")
                     }
 
                 Nothing ->
