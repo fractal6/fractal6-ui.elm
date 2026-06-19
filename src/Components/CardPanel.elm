@@ -23,31 +23,20 @@ port module Components.CardPanel exposing (CardPanelResult(..), Msg(..), State, 
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
-import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
-import Fractale.Graph exposing (getPathWithChildren)
-import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Utils.Bulma as B
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Fractale.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf, textH)
-import Utils.Maybe exposing (unwrap, unwrap2)
-import Utils.String exposing (upH)
-import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
+import Fractale.Graph exposing (getPathWithChildren)
+import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -64,10 +53,21 @@ import Query.PatchTension exposing (patchComment, patchLiteral, pushTensionPatch
 import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryProject exposing (updateProjectDraft)
 import Query.QueryTension exposing (getTensionPanel)
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Scroll
 import Session exposing (Apis, CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), isMobile, toReflink)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
+import Utils.Html exposing (showIf, textH)
+import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (upH)
 
 
 
@@ -395,10 +395,10 @@ update_ apis message model =
             in
             case model.card.card of
                 CardTension _ ->
-                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis model.tension_form TitleAck ] )
+                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis newForm TitleAck ] )
 
                 CardDraft _ ->
-                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ updateProjectDraft apis model.tension_form TitleAck ] )
+                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ updateProjectDraft apis newForm TitleAck ] )
 
         TitleAck result ->
             case parseErr result 2 of

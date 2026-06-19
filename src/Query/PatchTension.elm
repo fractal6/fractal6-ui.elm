@@ -32,9 +32,19 @@ module Query.PatchTension exposing
     , setLabel
     )
 
-import Fractale.Form exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
 import Dict
-import Utils.Bool exposing (ternary)
+import Fractale.Form exposing (ActionForm, AssigneeForm, CommentPatchForm, Ev, LabelForm, TensionForm)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (with)
+import Iso8601
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
+import Query.QueryContract exposing (contractPayload)
+import Query.QueryNode exposing (tidPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload)
+import RemoteData exposing (RemoteData)
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.CommentOrderable as CommentOrderable
 import Schema.Enum.ContractOrderable as ContractOrderable
@@ -47,18 +57,8 @@ import Schema.Object.Tension
 import Schema.Object.UpdateCommentPayload
 import Schema.Object.UpdateTensionPayload
 import Schema.Scalar
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (with)
-import Iso8601
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
-import Query.QueryContract exposing (contractPayload)
-import Query.QueryNode exposing (tidPayload)
-import Query.QueryTension exposing (blobPayload, commentPayload)
-import RemoteData exposing (RemoteData)
 import Time
+import Utils.Bool exposing (ternary)
 
 
 
