@@ -22,17 +22,20 @@
 module Fractale.View exposing (..)
 
 import Assets as A
+import Components.LabelSearchPanel exposing (viewLabels)
+import Dict exposing (Dict)
 import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
 import Fractale.User exposing (UserState(..))
-import Components.LabelSearchPanel exposing (viewLabels)
-import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Color exposing (colorAttr)
-import Utils.Date exposing (formatDate)
-import Utils.DomEvents exposing (onClickPos, onClickSP)
-import Utils.Html exposing (showIf)
-import Utils.String exposing (upH)
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html, a, br, div, hr, input, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
+import Html.Events exposing (onClick, onInput)
+import Identicon
+import List.Extra as LE
+import Markdown exposing (renderMarkdown)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode
@@ -43,19 +46,16 @@ import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, div, hr, input, span, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, style, target, title, type_, value)
-import Html.Events exposing (onClick, onInput)
-import Identicon
-import List.Extra as LE
-import Markdown exposing (renderMarkdown)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
 import Session exposing (CommonMsg, SessionCommon)
 import String.Extra as SE
 import String.Format as Format
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Color exposing (colorAttr)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents exposing (onClickPos, onClickSP)
+import Utils.Html exposing (showIf)
+import Utils.String exposing (upH)
 
 
 
@@ -131,7 +131,7 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
                 , div [ class "level-right" ] []
                 ]
             ]
-        , div [ class "media-right wrapped-container-33" ]
+        , div [ class "media-right wrapped-container-33 has-text-right" ]
             [ showIf showRecip (viewCircleTarget baseUri commonOp "is-small" tension.receiver)
             , br [] []
             , span [ class "level is-mobile icons-list" ]
@@ -143,11 +143,13 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
                         in
                         a
                             [ class "level-item discrete-link"
-                            , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
                             , title ("1 " ++ action2str action ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
                             ]
-                            [ A.icon0 (action2icon tc ++ " icon-sm") ]
+                            [ A.icon (action2icon tc ++ " icon-sm")
+                            , showIf (tc.action_type == ARCHIVE) <|
+                                span [ title T.archived ] [ A.icon0 "ml-2 icon-archive icon-sm has-text-warning" ]
+                            ]
 
                     Nothing ->
                         div [ class "level-item" ] []
