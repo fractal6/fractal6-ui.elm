@@ -283,6 +283,27 @@ messageForEditor editorId model =
     Dict.get "message" post |> Maybe.withDefault ""
 
 
+{-| Expand relative `/file/<id>` markdown targets to absolute URLs so the editor
+shows paste-anywhere links; collapse back before submit so storage stays relative.
+-}
+expandFileUrls : String -> String -> String
+expandFileUrls fileServerUrl message =
+    if fileServerUrl == "" then
+        message
+
+    else
+        String.replace "](/file/" ("](" ++ fileServerUrl ++ "/file/") message
+
+
+collapseFileUrls : String -> String -> String
+collapseFileUrls fileServerUrl message =
+    if fileServerUrl == "" then
+        message
+
+    else
+        String.replace ("](" ++ fileServerUrl ++ "/file/") "](/file/" message
+
+
 
 -- State Controls
 
@@ -497,7 +518,10 @@ update_ apis message model =
 
                 tension_form =
                     { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        | post =
+                            form.post
+                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                |> Dict.insert "createdAt" (fromTime time)
                         , status = status_m
                         , events = eventStatus
                     }
@@ -575,7 +599,12 @@ update_ apis message model =
                     model.contract_form
 
                 contract_form =
-                    { form | post = form.post |> Dict.insert "createdAt" (fromTime time) }
+                    { form
+                        | post =
+                            form.post
+                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                |> Dict.insert "createdAt" (fromTime time)
+                    }
             in
             ( { model
                 | contract_form = contract_form
@@ -612,7 +641,8 @@ update_ apis message model =
                 form =
                     model.comment_form
             in
-            ( { model | comment_form = { form | id = c.id } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
+            -- Show absolute file URLs in the editor so copied markdown is paste-anywhere
+            ( { model | comment_form = { form | id = c.id, post = Dict.insert "message" (expandFileUrls model.session.file_server_url c.message) form.post } }, out0 [ Ports.focusOn "updateCommentInput", Ports.bulma_driver c.createdAt ] )
 
         OnCancelComment createdAt ->
             let
@@ -634,7 +664,12 @@ update_ apis message model =
                     model.comment_form
 
                 comment_form =
-                    { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
+                    { form
+                        | post =
+                            form.post
+                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                |> Dict.insert "updatedAt" (fromTime time)
+                    }
             in
             ( { model | comment_form = comment_form, comment_result = LoadingSlowly }
             , out0 [ patchComment apis comment_form CommentPatchAck ]
@@ -1768,14 +1803,17 @@ viewNewTensionCommentInput session opts (State model) =
 viewUpdateInput : SessionCommon -> Comment -> CommentPatchForm -> GqlData Comment -> UserInput.State -> EmojiPicker.State -> List PendingFile -> Html Msg
 viewUpdateInput session comment form_ result userInput emojiPicker pendings =
     let
+        expandedCommentMessage =
+            expandFileUrls session.file_server_url comment.message
+
         message =
-            Dict.get "message" form_.post |> withDefault comment.message
+            Dict.get "message" form_.post |> withDefault expandedCommentMessage
 
         form =
             { form_ | post = Dict.insert "message" message form_.post }
 
         isSendable =
-            message /= comment.message
+            message /= expandedCommentMessage
 
         isLoading =
             Loading.isLoading result
