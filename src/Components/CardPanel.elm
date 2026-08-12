@@ -828,14 +828,14 @@ viewTitle t model =
         isAuthor =
             t.createdBy.username == uctx.username
     in
-    div []
+    div [ class "is-flex is-justify-content-space-between is-align-items-center" ]
         [ a
             [ class "title tensionTitle discrete-link is-human"
             , target "_blank"
             , href (toLink TensionBaseUri t.receiver.nameid [ t.id ])
             ]
             [ text t.title ]
-        , div [ class "is-pulled-right" ]
+        , div [ class "is-flex is-align-items-center" ]
             [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
                 span
                     [ class "is-small button-light mr-4"
