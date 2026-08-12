@@ -20,7 +20,8 @@
 
 
 module Query.AddTension exposing
-    ( addOneTension
+    ( AddedTension
+    , addOneTension
     , buildBlob
     , buildComment
     , buildEvents
@@ -31,6 +32,7 @@ import Fractale.Form exposing (Ev, TensionForm, UserForm, encodeLabel)
 import Dict
 import Utils.List exposing (listToMaybe)
 import Schema.Enum.BlobType as BlobType
+import Schema.Enum.CommentOrderable as CommentOrderable
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
@@ -39,10 +41,12 @@ import Schema.InputObject as Input
 import Schema.Mutation as Mutation
 import Schema.Object
 import Schema.Object.AddTensionPayload
+import Schema.Object.Comment
+import Schema.Object.Tension
 import Schema.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet
+import Graphql.SelectionSet as SelectionSet exposing (with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
@@ -55,15 +59,25 @@ import RemoteData exposing (RemoteData)
 -}
 
 
+{-| Payload returned by `addOneTension`. `initial_cid` is the id of the comment
+created alongside the tension (used to anchor file uploads against the new
+tension's initial comment).
+-}
+type alias AddedTension =
+    { tension : Tension
+    , initial_cid : Maybe String
+    }
+
+
 type alias TensionsPayload =
-    { tension : Maybe (List (Maybe Tension)) }
+    { tension : Maybe (List (Maybe AddedTension)) }
 
 
 
 -- Response Decoder
 
 
-tensionDecoder : Maybe TensionsPayload -> Maybe Tension
+tensionDecoder : Maybe TensionsPayload -> Maybe AddedTension
 tensionDecoder a =
     a
         |> Maybe.andThen
@@ -75,13 +89,37 @@ tensionDecoder a =
             )
 
 
+{-| Selects the standard Tension fields plus the first comment's id. The
+backend creates exactly one comment per addTension, so `first = 1` on the
+default (asc createdAt) order returns the initial comment.
+-}
+addedTensionPayload : SelectionSet.SelectionSet AddedTension Schema.Object.Tension
+addedTensionPayload =
+    SelectionSet.succeed AddedTension
+        |> with tensionPayload
+        |> with
+            (Schema.Object.Tension.comments
+                (\args ->
+                    { args
+                        | first = Present 1
+                        , order =
+                            Input.buildCommentOrder
+                                (\b -> { b | asc = Present CommentOrderable.CreatedAt })
+                                |> Present
+                    }
+                )
+                (Schema.Object.Comment.id |> SelectionSet.map decodedId)
+                |> SelectionSet.map (Maybe.andThen List.head)
+            )
+
+
 addOneTension url form msg =
     --@DEBUG: Infered type...
     makeGQLMutation url
         (Mutation.addTension
             (addTensionInputEncoder form)
             (SelectionSet.map TensionsPayload <|
-                Schema.Object.AddTensionPayload.tension identity tensionPayload
+                Schema.Object.AddTensionPayload.tension identity addedTensionPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)

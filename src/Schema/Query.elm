@@ -944,6 +944,72 @@ aggregateComment fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateComment" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetFileOptionalArguments =
+    { id : OptionalArgument Schema.ScalarCodecs.Id
+    , storageKey : OptionalArgument String
+    }
+
+
+getFile :
+    (GetFileOptionalArguments -> GetFileOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.File
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getFile fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { id = Absent, storageKey = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "id" filledInOptionals____.id (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId), Argument.optional "storageKey" filledInOptionals____.storageKey Encode.string ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "getFile" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryFileOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.FileFilter
+    , order : OptionalArgument Schema.InputObject.FileOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryFile :
+    (QueryFileOptionalArguments -> QueryFileOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.File
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryFile fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeFileFilter, Argument.optional "order" filledInOptionals____.order Schema.InputObject.encodeFileOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryFile" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateFileOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.FileFilter }
+
+
+aggregateFile :
+    (AggregateFileOptionalArguments -> AggregateFileOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.FileAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateFile fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeFileFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateFile" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetReactionOptionalArguments =
     { id : OptionalArgument Schema.ScalarCodecs.Id
     , reactionid : OptionalArgument String

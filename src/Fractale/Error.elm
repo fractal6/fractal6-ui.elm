@@ -87,7 +87,7 @@ viewGqlErrors errMsg =
                                     Err t ->
                                         e
                 in
-                p [ class "message-body" ] [ renderMarkdown "is-light" err ]
+                p [ class "message-body" ] [ renderMarkdown "" "is-light" err ]
             )
         |> div [ class "f6-error message is-danger is-light mt-2" ]
 
@@ -117,7 +117,7 @@ viewGqlErrorsLight errMsg =
                                     Err t ->
                                         e
                 in
-                renderMarkdown "is-light" err
+                renderMarkdown "" "is-light" err
             )
         |> div [ class "f6-error" ]
 

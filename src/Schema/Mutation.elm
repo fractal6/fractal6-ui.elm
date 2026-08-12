@@ -632,6 +632,55 @@ deleteComment requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteComment" [ Argument.required "filter" requiredArgs____.filter Schema.InputObject.encodeCommentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddFileOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
+type alias AddFileRequiredArguments =
+    { input : List Schema.InputObject.AddFileInput }
+
+
+addFile :
+    (AddFileOptionalArguments -> AddFileOptionalArguments)
+    -> AddFileRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.AddFilePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addFile fillInOptionals____ requiredArgs____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "addFile" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Schema.InputObject.encodeAddFileInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateFileRequiredArguments =
+    { input : Schema.InputObject.UpdateFileInput }
+
+
+updateFile :
+    UpdateFileRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.UpdateFilePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateFile requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateFile" [ Argument.required "input" requiredArgs____.input Schema.InputObject.encodeUpdateFileInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteFileRequiredArguments =
+    { filter : Schema.InputObject.FileFilter }
+
+
+deleteFile :
+    DeleteFileRequiredArguments
+    -> SelectionSet decodesTo Schema.Object.DeleteFilePayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteFile requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteFile" [ Argument.required "filter" requiredArgs____.filter Schema.InputObject.encodeFileFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddReactionOptionalArguments =
     { upsert : OptionalArgument Bool }
 

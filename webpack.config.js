@@ -35,6 +35,8 @@ module.exports = (env, argv) => {
             auth: 'http://localhost:8484/auth',
             graphql: 'http://localhost:8484/api',
             rest: 'http://localhost:8484/q',
+            file: 'http://localhost:8484/file',
+            file_server_url: 'http://localhost:8484',
             assets: 'http://localhost:8484/assets'
             // @debug: CORS error.
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
@@ -45,6 +47,8 @@ module.exports = (env, argv) => {
             auth: 'http://localhost:8888/auth',
             graphql: 'http://localhost:8888/api',
             rest: 'http://localhost:8888/q',
+            file: 'http://localhost:8888/file',
+            file_server_url: 'http://localhost:8888',
             assets: 'http://localhost:8888/assets'
         }
     } else if (isProd) {
@@ -52,6 +56,8 @@ module.exports = (env, argv) => {
             auth: 'https://api.fractale.co/auth',
             graphql: 'https://api.fractale.co/api',
             rest: 'https://api.fractale.co/q',
+            file: 'https://api.fractale.co/file',
+            file_server_url: 'https://api.fractale.co',
             assets: 'https://api.fractale.co/assets'
         }
     }
@@ -91,6 +97,8 @@ module.exports = (env, argv) => {
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
+                'FILE_API': JSON.stringify(API_URL.file),
+                'FILE_SERVER_URL': JSON.stringify(API_URL.file_server_url),
                 'ASSETS_API': JSON.stringify(API_URL.assets),
                 'VERSION': JSON.stringify(commitHash),
                 'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),

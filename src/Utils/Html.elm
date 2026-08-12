@@ -90,7 +90,7 @@ showMsg id_ cls icon header message =
     if message == "" then
         div [ class ("f6-help-message notification p-4 m-0 mb-4 is-flex is-align-items-start " ++ cls) ]
             [ span [ class "mr-3 has-text-strong", style "margin-top" "0.15em" ] [ A.icon icon ]
-            , renderMarkdown "" header
+            , renderMarkdown "" "" header
             ]
 
     else
@@ -123,7 +123,7 @@ showMsg id_ cls icon header message =
                     ]
                 , label [ class "acc-close", for "acc-close" ] []
                 , div [ class "acc-content " ]
-                    [ renderMarkdown ("message-body " ++ mkdCls) message ]
+                    [ renderMarkdown "" ("message-body " ++ mkdCls) message ]
                 ]
             , input [ id "acc-close", name "accordion", type_ "radio" ] []
             ]

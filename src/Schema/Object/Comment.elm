@@ -48,6 +48,30 @@ reactions fillInOptionals____ object____ =
     Object.selectionForCompositeField "reactions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias FilesOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.FileFilter
+    , order : OptionalArgument Schema.InputObject.FileOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+files :
+    (FilesOptionalArguments -> FilesOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.File
+    -> SelectionSet (Maybe (List decodesTo)) Schema.Object.Comment
+files fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeFileFilter, Argument.optional "order" filledInOptionals____.order Schema.InputObject.encodeFileOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "files" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 id : SelectionSet Schema.ScalarCodecs.Id Schema.Object.Comment
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecId |> .decoder)
@@ -101,3 +125,23 @@ reactionsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "reactionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias FilesAggregateOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.FileFilter }
+
+
+filesAggregate :
+    (FilesAggregateOptionalArguments -> FilesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.FileAggregateResult
+    -> SelectionSet (Maybe decodesTo) Schema.Object.Comment
+filesAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeFileFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "filesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

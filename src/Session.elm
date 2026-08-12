@@ -22,14 +22,11 @@
 module Session exposing (..)
 
 import Array exposing (Array)
-import Fractale.Form exposing (AssigneeForm, LabelForm, OrgaForm, ProjectPanelForm)
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (NodeFocus)
 import Codecs exposing (DraftStore, DraftUpdate(..), RecentActivityTab(..), WindowPos, draftStoreDecoder, initDraftStore, userCtxDecoder, windowDecoder)
 import Dict exposing (Dict)
-import Utils.Url exposing (queryParser)
-import Schema.Enum.Lang as Lang
-import Schema.Enum.NodeType as NodeType
+import Fractale.Codecs exposing (NodeFocus)
+import Fractale.Form exposing (AssigneeForm, LabelForm, OrgaForm, ProjectPanelForm)
+import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html)
 import Json.Decode as JD
@@ -38,9 +35,12 @@ import Maybe exposing (andThen, withDefault)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
 import Schemas.TreeMenu as TreeMenuSchema
 import Time
 import Url exposing (Url)
+import Utils.Url exposing (queryParser)
 
 
 
@@ -58,6 +58,8 @@ type alias Apis =
     { auth : String
     , gql : String
     , rest : String
+    , file : String
+    , file_server_url : String
     , assets : String
     , client_version : String
     }
@@ -164,6 +166,7 @@ type alias SessionCommon =
     , path_data : Maybe LocalGraph
     , lexicon : Dict String String
     , scrollPosition : Ports.ScrollPosition
+    , file_server_url : String
     }
 
 
@@ -287,6 +290,7 @@ resetSession session flags =
         , node_focus = Nothing -- hard to update session in components...put in data instead ?
         , path_data = Nothing --
         , scrollPosition = Ports.ScrollTop
+        , file_server_url = flags.apis.file_server_url
         }
     , data =
         { notif = initNotifCount
@@ -449,6 +453,7 @@ fromLocalSession url flags =
             , node_focus = Nothing
             , path_data = Nothing
             , scrollPosition = Ports.ScrollTop
+            , file_server_url = flags.apis.file_server_url
             }
       , data =
             { notif = initNotifCount

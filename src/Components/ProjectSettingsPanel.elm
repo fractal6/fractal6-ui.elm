@@ -647,7 +647,7 @@ viewDescriptionSection model project =
                         [ p [ class "help is-size-7 mb-1" ] [ text T.description ]
                         , case project.description of
                             Just desc ->
-                                renderMarkdown "is-human" desc
+                                renderMarkdown "" "is-human" desc
 
                             Nothing ->
                                 span [] [ text "—" ]

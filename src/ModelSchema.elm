@@ -564,6 +564,17 @@ type alias Comment =
 
     -- Reaction Results are agglomerated in the query decoder
     , reactions : List Reaction
+    , files : List CommentFile
+    }
+
+
+type alias CommentFile =
+    { id : String
+    , filename : String
+    , contentType : String
+    , size : Int
+    , embedded : Bool
+    , createdBy : Username
     }
 
 

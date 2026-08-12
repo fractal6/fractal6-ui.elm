@@ -1,8 +1,11 @@
 module Elm.MarkdownTest exposing (..)
 
 import Expect
-import Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks)
+import Html.Attributes as Attr
+import Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdown, processOutsideCodeBlocks, renderMarkdown)
 import Test exposing (..)
+import Test.Html.Query as Query
+import Test.Html.Selector as Selector
 
 
 {-| Helper: check that parseMarkdown succeeds (no parse error)
@@ -453,4 +456,57 @@ parseMarkdownTests =
                 , "</details>"
                 ]
             )
+        ]
+
+
+
+-- ────────────────────────────────────────────────────
+-- 5. Image src rewriting (file_server_url prefix)
+-- ────────────────────────────────────────────────────
+
+
+fileServer : String
+fileServer =
+    "http://files.example"
+
+
+imageRewriteTests : Test
+imageRewriteTests =
+    describe "renderMarkdown image src rewriting"
+        [ test "prefixes /file/<id> with fileServerUrl" <|
+            \_ ->
+                renderMarkdown fileServer "" "![alt](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.src "http://files.example/file/abc123") ]
+        , test "leaves absolute https URLs untouched" <|
+            \_ ->
+                renderMarkdown fileServer "" "![alt](https://other.example/x.png)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.src "https://other.example/x.png") ]
+        , test "leaves non-/file/ relative paths untouched" <|
+            \_ ->
+                renderMarkdown fileServer "" "![alt](/other/path.png)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.src "/other/path.png") ]
+        , test "empty fileServerUrl leaves /file/<id> as a relative path" <|
+            \_ ->
+                renderMarkdown "" "" "![alt](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.src "/file/abc123") ]
+        , test "preserves alt text on the rewritten image" <|
+            \_ ->
+                renderMarkdown fileServer "" "![my screenshot](/file/abc123)"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.alt "my screenshot") ]
+        , test "preserves title on the rewritten image" <|
+            \_ ->
+                renderMarkdown fileServer "" "![alt](/file/abc123 \"tooltip\")"
+                    |> Query.fromHtml
+                    |> Query.find [ Selector.tag "img" ]
+                    |> Query.has [ Selector.attribute (Attr.title "tooltip") ]
         ]

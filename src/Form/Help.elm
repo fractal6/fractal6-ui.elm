@@ -45,12 +45,12 @@ import Html exposing (Html, a, br, button, div, h2, header, i, input, label, li,
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccessRest, loadingDiv, withMaybeData)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isSuccessRest, loadingDiv, withMapData, withMaybeData)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
-import Query.AddTension exposing (addOneTension)
+import Query.AddTension exposing (AddedTension, addOneTension)
 import RemoteData
 import Requests exposing (getQuickDoc)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
@@ -265,11 +265,11 @@ type Msg
     | OnChangePostFeedback String String
     | OnChangeLabel FeedbackType
     | OnSubmit Bool (Time.Posix -> Msg)
-    | PushTension NT.Model (GqlData Tension -> Msg)
+    | PushTension NT.Model (GqlData AddedTension -> Msg)
     | OnSubmitAsk Time.Posix
     | OnSubmitFeedback Time.Posix
-    | OnAskAck (GqlData Tension)
-    | OnAskFeedback (GqlData Tension)
+    | OnAskAck (GqlData AddedTension)
+    | OnAskFeedback (GqlData AddedTension)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -461,10 +461,10 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( setResultAsk result { model | formAsk = NT.resetPost model.formAsk }, noOut )
+                    ( setResultAsk (withMapData .tension result) { model | formAsk = NT.resetPost model.formAsk }, noOut )
 
                 _ ->
-                    ( setResultAsk result model, noOut )
+                    ( setResultAsk (withMapData .tension result) model, noOut )
 
         OnAskFeedback result ->
             let
@@ -481,10 +481,10 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( setResultFeedback result { model | formAsk = NT.resetPost model.formFeedback }, noOut )
+                    ( setResultFeedback (withMapData .tension result) { model | formAsk = NT.resetPost model.formFeedback }, noOut )
 
                 _ ->
-                    ( setResultFeedback result model, noOut )
+                    ( setResultFeedback (withMapData .tension result) model, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -610,7 +610,7 @@ viewQuickHelp fromModal op (State model) =
                                             , section [ class "acc" ]
                                                 [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown (ternary fromModal "" "box") ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown "" (ternary fromModal "" "box") ]
                                                 ]
                                             ]
                                         )

@@ -699,7 +699,7 @@ viewOrgaImport model =
 
                          else
                             [ text T.duplicateNameError
-                            , p [ class "mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            , p [ class "mt-2" ] [ renderMarkdown "" "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                             ]
                         )
                     ]
@@ -873,7 +873,7 @@ viewOrgaValidate model =
 
                          else
                             [ text T.duplicateNameError
-                            , p [ class "mt-2" ] [ renderMarkdown "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
+                            , p [ class "mt-2" ] [ renderMarkdown "" "f6-error" (T.duplicateOrgHint |> Format.value nid |> Format.value username) ]
                             ]
                         )
                     ]

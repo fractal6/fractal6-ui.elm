@@ -24,8 +24,8 @@ module Markdown exposing (escapeAmpersandsInHtmlBlocks, frac6Parser, parseMarkdo
 import Fractale.Codecs exposing (FractalBaseRoute(..), toLink)
 import Utils.String exposing (regexContains, regexFromString, regexfirstMatchLength)
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, details, div, i, input, label, li, ol, span, summary, table, text, u, ul)
-import Html.Attributes as Attr exposing (attribute, checked, class, disabled, href, rel, target, title, type_)
+import Html exposing (Html, a, details, div, i, img, input, label, li, ol, span, summary, table, text, u, ul)
+import Html.Attributes as Attr exposing (alt, attribute, checked, class, disabled, href, rel, src, target, title, type_)
 import Html.Lazy as Lazy
 import List.Extra as LE
 import Markdown.Block as Block
@@ -74,6 +74,16 @@ htmlBlockTagRegex =
     regexFromString "<(/?(?:details|summary|div|span|u|i))\\b"
 
 
+{-| Renderer configuration. `fileServerUrl` is prepended to relative
+`/file/<id>` image targets; empty string means no rewrite.
+-}
+type alias RendererConfig =
+    { style : String
+    , recursive : Bool
+    , fileServerUrl : String
+    }
+
+
 {-| Testable version of the markdown pipeline: preprocess + parse + render.
 Returns Ok on success, Err with the error string on failure.
 -}
@@ -84,16 +94,16 @@ parseMarkdown content =
         |> Markdown.parse
         |> Result.mapError deadEndsToString
         |> Result.andThen
-            (\ast -> Markdown.Renderer.render (frac6Renderer "" True) ast)
+            (\ast -> Markdown.Renderer.render (frac6Renderer { style = "", recursive = True, fileServerUrl = "" }) ast)
 
 
-renderMarkdown : String -> String -> Html msg
-renderMarkdown style content =
-    Lazy.lazy2 renderMarkdown_ style content
+renderMarkdown : String -> String -> String -> Html msg
+renderMarkdown fileServerUrl style content =
+    Lazy.lazy3 renderMarkdown_ fileServerUrl style content
 
 
-renderMarkdown_ : String -> String -> Html msg
-renderMarkdown_ style content =
+renderMarkdown_ : String -> String -> String -> Html msg
+renderMarkdown_ fileServerUrl style content =
     case
         content
             |> frac6Parser
@@ -101,11 +111,11 @@ renderMarkdown_ style content =
             |> Result.mapError deadEndsToString
             |> Result.andThen
                 (\ast ->
-                    if style |> String.split " " |> List.member "f6-error" then
-                        Markdown.Renderer.render (frac6Renderer style False) ast
-
-                    else
-                        Markdown.Renderer.render (frac6Renderer style True) ast
+                    let
+                        recursive =
+                            not (style |> String.split " " |> List.member "f6-error")
+                    in
+                    Markdown.Renderer.render (frac6Renderer { style = style, recursive = recursive, fileServerUrl = fileServerUrl }) ast
                 )
     of
         Ok rendered ->
@@ -115,15 +125,15 @@ renderMarkdown_ style content =
             text errors
 
 
-renderMdDefault : String -> String -> Html msg
-renderMdDefault style content =
+renderMdDefault : String -> String -> String -> Html msg
+renderMdDefault fileServerUrl style content =
     case
         content
             |> Markdown.parse
             |> Result.mapError deadEndsToString
             |> Result.andThen
                 (\ast ->
-                    Markdown.Renderer.render (frac6Renderer style False) ast
+                    Markdown.Renderer.render (frac6Renderer { style = style, recursive = False, fileServerUrl = fileServerUrl }) ast
                 )
     of
         Ok rendered ->
@@ -139,12 +149,33 @@ deadEndsToString deadEnds =
         |> String.join "\n"
 
 
-frac6Renderer : String -> Bool -> Markdown.Renderer.Renderer (Html msg)
-frac6Renderer style recursive =
+frac6Renderer : RendererConfig -> Markdown.Renderer.Renderer (Html msg)
+frac6Renderer config =
     -- see https://github.com/dillonkearns/elm-markdown/blob/master/README.md
     -- for default markdown renderer details
     { defaultHtmlRenderer
-        | link =
+        | image =
+            -- Prefix relative `/file/<id>` paths with the file server URL
+            -- so attachments render against the file server, not the app domain.
+            \imageInfo ->
+                let
+                    resolvedSrc =
+                        if config.fileServerUrl /= "" && startsWith "/file/" imageInfo.src then
+                            config.fileServerUrl ++ imageInfo.src
+
+                        else
+                            imageInfo.src
+
+                    baseAttrs =
+                        [ src resolvedSrc, alt imageInfo.alt ]
+                in
+                case imageInfo.title of
+                    Just t ->
+                        img (title t :: baseAttrs) []
+
+                    Nothing ->
+                        img baseAttrs []
+        , link =
             -- Differential external and internal link
             \link content ->
                 let
@@ -226,9 +257,9 @@ frac6Renderer style recursive =
         , table = \x -> div [ class "table-container" ] [ table [] x ]
         , text =
             \t ->
-                if recursive then
+                if config.recursive then
                     mardownRoutine
-                        style
+                        config
                         ( urlRegex, autoLink )
                         [ ( userRegex, userLink )
                         , ( tensionRegex, tensionLink )
@@ -279,8 +310,8 @@ frac6Renderer style recursive =
     }
 
 
-mardownRoutine : String -> ( Regex.Regex, Regex.Match -> String -> String ) -> List ( Regex.Regex, Regex.Match -> String -> String ) -> String -> Html msg
-mardownRoutine style rep next_replacers content =
+mardownRoutine : RendererConfig -> ( Regex.Regex, Regex.Match -> String -> String ) -> List ( Regex.Regex, Regex.Match -> String -> String ) -> String -> Html msg
+mardownRoutine config rep next_replacers content =
     let
         reg =
             Tuple.first rep
@@ -298,7 +329,7 @@ mardownRoutine style rep next_replacers content =
                 [ case LE.uncons next_replacers of
                     Just ( next_replacer, rest_replacers ) ->
                         -- Keep going the regex matching on that part
-                        mardownRoutine style next_replacer rest_replacers next_content
+                        mardownRoutine config next_replacer rest_replacers next_content
 
                     Nothing ->
                         -- No more regex replacer
@@ -316,10 +347,10 @@ mardownRoutine style rep next_replacers content =
                                 -- Word boundary based regex at the start of string was removed in favor of a sub-reg match
                                 -- bacause of space inconsistence... (splited but present on match.)
                                 if String.left 1 reg_replacement == " " then
-                                    [ text " ", renderMdDefault style (String.dropLeft 1 reg_replacement) ]
+                                    [ text " ", renderMdDefault config.fileServerUrl config.style (String.dropLeft 1 reg_replacement) ]
 
                                 else
-                                    [ renderMdDefault style reg_replacement ]
+                                    [ renderMdDefault config.fileServerUrl config.style reg_replacement ]
 
                             Nothing ->
                                 []

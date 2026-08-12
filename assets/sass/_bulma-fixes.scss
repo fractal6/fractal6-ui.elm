@@ -56,6 +56,35 @@
     }
 }
 
+// Bulma's two pseudo-element cross drifts off-center at small sizes; draw a
+// pixel-symmetric plus in a single pseudo-element and rotate it 45deg instead.
+.delete, .modal-close, .tag.is-delete {
+    --bulma-delete-dimensions: 1.375rem;
+    --cross-thickness: 2px;
+    --cross-color: var(--bulma-delete-color);
+    --cross-size: 46%;
+
+    &::after { display: none; }
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: var(--cross-size);
+        height: var(--cross-size);
+        transform: rotate(45deg);
+        background:
+            linear-gradient(var(--cross-color) 0 0) center / 100% var(--cross-thickness) no-repeat,
+            linear-gradient(var(--cross-color) 0 0) center / var(--cross-thickness) 100% no-repeat;
+    }
+
+    &.is-small { --cross-thickness: 1.5px; }
+}
+
+// The tag variant box is em-sized (never on the pixel grid).
+.tag.is-delete { --cross-thickness: 1.5px; --cross-color: currentColor; --cross-size: 0.6em; }
+
 .level-left, .level-right {
     gap: 0;
 }

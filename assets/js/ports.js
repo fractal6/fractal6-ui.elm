@@ -128,6 +128,61 @@ window.addEventListener('load', _ => {
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
 
+            // Paste-capture: any element with [data-paste-capture] forwards
+            // file items from the clipboard to Elm. The element id (if any)
+            // is sent so the receiver can disambiguate multiple editors.
+            document.addEventListener('paste', function (e) {
+                var t = e.target;
+                if (!t || typeof t.matches !== 'function') return;
+                if (!t.matches('[data-paste-capture]')) return;
+                var cd = e.clipboardData;
+                if (!cd) return;
+                var items = cd.items || [];
+                var files = [];
+                var objectUrls = [];
+                // Stamp is shared within a single paste event; the per-file
+                // index keeps names unique. Date.now() is live (unlike a stale
+                // model.session.now relayed through Elm), so two paste events
+                // ≥1ms apart never collide.
+                var stamp = Date.now();
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].kind === 'file') {
+                        var f = items[i].getAsFile();
+                        if (f) {
+                            // Pick an extension from the original name first,
+                            // then fall back to the MIME subtype. The backend
+                            // sniffs the actual MIME server-side; we just need
+                            // a stable suffix.
+                            var ext = '';
+                            var origName = f.name || '';
+                            var dot = origName.lastIndexOf('.');
+                            if (dot > -1) {
+                                ext = origName.substring(dot);
+                            } else if (f.type && f.type.indexOf('/') > -1) {
+                                ext = '.' + f.type.split('/')[1].toLowerCase();
+                            }
+                            var fname = 'paste-' + stamp + '-' + i + ext;
+                            // Rebuild the File so the multipart upload sends
+                            // OUR filename — the backend's rewrite logic looks
+                            // up `![](<filename>)` placeholders by it.
+                            var renamed = new File([f], fname, {
+                                type: f.type,
+                                lastModified: f.lastModified || stamp,
+                            });
+                            files.push(renamed);
+                            objectUrls.push(URL.createObjectURL(renamed));
+                        }
+                    }
+                }
+                if (files.length === 0) return;
+                e.preventDefault();
+                app.ports.pastedFilesFromJs.send({
+                    targetId: t.id || '',
+                    files: files,
+                    objectUrls: objectUrls,
+                });
+            });
+
             // Scroll position detection with throttling
             window.addEventListener('scroll', function() {
                 if (!session.scrollTicking) {
@@ -300,6 +355,20 @@ export const actions = {
         // Remove the search input
         const userTooltip = document.getElementById($i.id + "searchInput");
         hideSearchInput(userTooltip, app);
+    },
+    'INSERT_AT_CARET': (app, session, data) => {
+        // data: { targetId: string, text: string }
+        var $i = document.getElementById(data.targetId);
+        if (!$i) return;
+        var start = $i.selectionStart != null ? $i.selectionStart : $i.value.length;
+        var end = $i.selectionEnd != null ? $i.selectionEnd : start;
+        replaceRange($i, start, end, data.text, start + data.text.length);
+    },
+    'REVOKE_OBJECT_URL': (app, session, data) => {
+        // data: string (blob: URL previously returned by URL.createObjectURL)
+        if (typeof data === 'string' && data.indexOf('blob:') === 0) {
+            try { URL.revokeObjectURL(data); } catch (_) { /* noop */ }
+        }
     },
     'PUSH_EMOJI_SELECTION': (app, session, emoji) => {
         var $i = document.activeElement;

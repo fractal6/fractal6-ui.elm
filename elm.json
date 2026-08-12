@@ -3,7 +3,7 @@
     "source-directories": [
         "src"
     ],
-    "elm-version": "0.19.1",
+    "elm-version": "0.19.2",
     "dependencies": {
         "direct": {
             "avh4/elm-fifo": "1.0.4",

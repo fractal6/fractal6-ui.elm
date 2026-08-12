@@ -45,6 +45,10 @@ type AddEventPayload
     = AddEventPayload
 
 
+type AddFilePayload
+    = AddFilePayload
+
+
 type AddLabelPayload
     = AddLabelPayload
 
@@ -193,6 +197,10 @@ type DeleteEventPayload
     = DeleteEventPayload
 
 
+type DeleteFilePayload
+    = DeleteFilePayload
+
+
 type DeleteLabelPayload
     = DeleteLabelPayload
 
@@ -303,6 +311,14 @@ type EventFragment
 
 type EventFragmentAggregateResult
     = EventFragmentAggregateResult
+
+
+type File
+    = File
+
+
+type FileAggregateResult
+    = FileAggregateResult
 
 
 type Label
@@ -495,6 +511,10 @@ type UpdateEventFragmentPayload
 
 type UpdateEventPayload
     = UpdateEventPayload
+
+
+type UpdateFilePayload
+    = UpdateFilePayload
 
 
 type UpdateLabelPayload

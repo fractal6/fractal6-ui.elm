@@ -802,7 +802,7 @@ mediaOrga commonOp user_m root =
                         [ a [ class "is-strong", href (toLink OverviewBaseUri root.nameid []) ] [ text root.name ]
                         , case root.about of
                             Just ab ->
-                                renderMarkdown "is-human pt-1" ab
+                                renderMarkdown "" "is-human pt-1" ab
 
                             Nothing ->
                                 text ""
@@ -1149,7 +1149,7 @@ helperButton cls content =
         , div [ class "dropdown-menu", attribute "style" "menu" ]
             [ div [ class "dropdown-content" ]
                 [ div [ class "dropdown-item" ]
-                    [ renderMarkdown "" content ]
+                    [ renderMarkdown "" "" content ]
                 ]
             ]
         ]

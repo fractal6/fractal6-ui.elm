@@ -514,14 +514,14 @@ viewSignupModal op model =
                                 [ div [ class "px-3 mt-2 mb-6" ]
                                     [ T.welcomeLetter
                                         |> Format.namedValue "username" uctx.username
-                                        |> renderMarkdown "is-human"
+                                        |> renderMarkdown "" "is-human"
                                     ]
                                 , div [ class "is-aligned-center" ]
                                     [ button [ class "button is-success ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
                                 ]
 
                             _ ->
-                                [ renderMarkdown "field" T.signinOnInvite
+                                [ renderMarkdown "" "field" T.signinOnInvite
                                 , div [ class "field" ]
                                     [ div [ class "field" ]
                                         [ div [ class "label" ] [ text T.username ]

@@ -47,12 +47,13 @@ type NodeHasFilter
     | Contracts
     | Events_history
     | Activity
+    | Avatar
     | Cascade_directive
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Project_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Project_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Avatar, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -177,6 +178,9 @@ decoder =
 
                     "activity" ->
                         Decode.succeed Activity
+
+                    "avatar" ->
+                        Decode.succeed Avatar
 
                     "cascade_directive" ->
                         Decode.succeed Cascade_directive
@@ -307,6 +311,9 @@ toString enum____ =
 
         Activity ->
             "activity"
+
+        Avatar ->
+            "avatar"
 
         Cascade_directive ->
             "cascade_directive"
@@ -442,6 +449,9 @@ fromString enumString____ =
 
         "activity" ->
             Just Activity
+
+        "avatar" ->
+            Just Avatar
 
         "cascade_directive" ->
             Just Cascade_directive
