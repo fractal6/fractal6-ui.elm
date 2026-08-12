@@ -268,7 +268,7 @@ kickoffUploads apis { editorId, tid, cid } (State model) =
 
 
 {-| Look up the message text from whichever form owns the given editor id.
-"updateCommentInput" -> comment_form; everything else -> tension_form.
+"updateCommentInput" -> comment\_form; everything else -> tension\_form.
 -}
 messageForEditor : String -> Model -> String
 messageForEditor editorId model =
@@ -1135,9 +1135,12 @@ pastedFilesDecoder =
         (JD.field "objectUrls" (JD.list JD.string))
 
 
+
 -- Drop paste pendings whose `![](filename)` is no longer in the carrier
 -- message — that's how the user cancels an inline-pasted image (delete
 -- the markdown line). Returns the kept pendings and the blob URLs to revoke.
+
+
 prunePastesByMessage : String -> List PendingFile -> ( List PendingFile, List String )
 prunePastesByMessage message pendings =
     let
@@ -1649,11 +1652,11 @@ viewPendingsRow targetId pendings =
     in
     div [ class "is-flex is-flex-wrap-wrap is-align-items-center mt-1", style "gap" "0.4rem" ]
         ([ button
-            [ class "button is-small is-weak"
+            [ class "button is-small is-tiny py-1"
             , type_ "button"
             , onClick (OnPickFiles targetId)
             ]
-            [ A.icon1 "icon-paperclip" "Attach" ]
+            [ A.icon1 "icon-paperclip icon-xs" "Attach" ]
          ]
             ++ List.map (viewPendingChip targetId) visible
         )
@@ -1673,7 +1676,7 @@ viewPendingChip targetId p =
                 UploadFailed _ ->
                     A.icon "icon-alert-triangle has-text-danger"
     in
-    span [ class "tag is-weak" ]
+    span [ class "tag" ]
         [ statusEl
         , span [ class "ml-1" ] [ text p.filename ]
         , button
@@ -1699,8 +1702,8 @@ viewSavedAttachments session c =
                 |> List.filter (\f -> not f.embedded)
                 |> List.map
                     (\f ->
-                        span [ class "tag is-weak mr-2 mb-1" ]
-                            [ A.icon "icon-paperclip"
+                        span [ class "tag mr-2 mb-1" ]
+                            [ A.icon "icon-paperclip icon-xs"
                             , a
                                 [ href (session.file_server_url ++ "/file/" ++ f.id)
                                 , target "_blank"

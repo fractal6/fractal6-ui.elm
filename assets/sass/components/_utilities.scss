@@ -270,6 +270,12 @@ a {
         }
     }
 }
+.tag > a {
+    text-decoration: none !important;
+    &:hover {
+        text-decoration: underline !important;
+    }
+}
 
 .tag-circle {
     min-width: 4.5rem;
