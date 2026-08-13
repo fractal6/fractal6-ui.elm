@@ -1685,7 +1685,7 @@ viewPendingsRow targetId pendings =
         visible =
             List.filter (not << .isPaste) pendings
     in
-    div [ class "is-flex is-flex-wrap-wrap is-align-items-center mt-1", style "gap" "0.4rem" ]
+    div [ class "is-flex is-flex-wrap-wrap is-align-items-center", style "gap" "0.4rem" ]
         ([ button
             [ class "button is-small is-tiny py-1"
             , type_ "button"
@@ -1782,19 +1782,19 @@ viewNewTensionCommentInput session opts (State model) =
         , div [ class "message-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ] [ viewCommentTextarea session "textAreaModal" opts model.tension_form model.userInput model.emojiPicker (Dict.get "textAreaModal" model.pendingByEditor |> withDefault []) ]
-                , showIf opts.attachmentsEnabled <|
-                    viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault [])
+                , div [ class "is-flex is-flex-wrap-wrap is-align-items-center is-justify-content-space-between mt-1", style "gap" "0.4rem" ]
+                    [ showIf opts.attachmentsEnabled <|
+                        viewPendingsRow "textAreaModal" (Dict.get "textAreaModal" model.pendingByEditor |> withDefault [])
+                    , showIf opts.hasTips <|
+                        span
+                            [ class "is-hidden-mobile help ml-auto"
+                            , classList [ ( "is-hidden", isMobile session.screen ) ]
+                            , style "font-size" "10px"
+                            ]
+                            [ text "Tips: <C+Enter> to submit" ]
+                    ]
                 , showIf (opts.messageHelper /= "") <|
                     p [ class "help-label" ] [ text opts.messageHelper ]
-                , showIf opts.hasTips <|
-                    div
-                        [ class "is-hidden-mobile is-pulled-right help"
-                        , classList [ ( "is-hidden", isMobile session.screen ) ]
-                        , style "font-size" "10px"
-                        ]
-                        [ text "Tips: <C+Enter> to submit" ]
-                , br [ class "is-hidden-mobile", classList [ ( "is-hidden", isMobile session.screen ) ] ]
-                    []
                 ]
             ]
         ]
