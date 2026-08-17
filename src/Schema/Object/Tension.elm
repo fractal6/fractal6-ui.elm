@@ -11,7 +11,6 @@ import Graphql.Operation exposing (RootMutation, RootQuery, RootSubscription)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
-import Schema.Enum.TensionAction
 import Schema.Enum.TensionStatus
 import Schema.Enum.TensionType
 import Schema.InputObject
@@ -85,11 +84,6 @@ type_ =
 status : SelectionSet Schema.Enum.TensionStatus.TensionStatus Schema.Object.Tension
 status =
     Object.selectionForField "Enum.TensionStatus.TensionStatus" "status" [] Schema.Enum.TensionStatus.decoder
-
-
-action : SelectionSet (Maybe Schema.Enum.TensionAction.TensionAction) Schema.Object.Tension
-action =
-    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Schema.Enum.TensionAction.decoder |> Decode.nullable)
 
 
 type alias AssigneesOptionalArguments =
@@ -186,6 +180,26 @@ blobs fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "blobs" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+type alias GovernedNodeOptionalArguments =
+    { filter : OptionalArgument Schema.InputObject.NodeFilter }
+
+
+governed_node :
+    (GovernedNodeOptionalArguments -> GovernedNodeOptionalArguments)
+    -> SelectionSet decodesTo Schema.Object.Node
+    -> SelectionSet (Maybe decodesTo) Schema.Object.Tension
+governed_node fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Schema.InputObject.encodeNodeFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "governed_node" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias HistoryOptionalArguments =

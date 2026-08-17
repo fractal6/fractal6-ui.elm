@@ -30,7 +30,7 @@ import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, mergePinnedTensi
 import Fractale.HotUpdate exposing (hotTensionPush, hotTensionPush2)
 import Fractale.User exposing (freshSessionOnOrgaSwitch)
 import Fractale.Board as BB exposing (viewBoard)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
@@ -57,7 +57,6 @@ import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
 import Generated.Route exposing (Route(..), toHref)
@@ -1735,7 +1734,7 @@ view global model =
             }
 
         panelData =
-            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            { lifecycle = Active
             , isRight = True
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu

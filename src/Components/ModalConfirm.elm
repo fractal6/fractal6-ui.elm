@@ -22,7 +22,6 @@
 module Components.ModalConfirm exposing (..)
 
 import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (ActionType(..), DocType(..))
 import Utils.Html exposing (showMsg)
 import Html exposing (Html, button, div, span, text)
 import Html.Attributes exposing (attribute, class, classList, id)

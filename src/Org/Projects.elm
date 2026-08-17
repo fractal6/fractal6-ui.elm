@@ -40,7 +40,7 @@ import Dict exposing (Dict)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.Form exposing (ProjectForm, initProjectForm)
 import Fractale.User exposing (UserState(..), freshSessionOnOrgaSwitch)
@@ -55,7 +55,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isDataEmpty, withDefaultData, withMapData, withMaybeData)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (ColumnDraft, LocalGraph, NewTensionInput(..), Node, ProjectFull, ProjectTemplateFull, ProjectTemplateLite, ProjectsCount)
+import ModelSchema exposing (ColumnDraft, LocalGraph, NewTensionInput(..), Node, NodeLifecycle(..), ProjectFull, ProjectTemplateFull, ProjectTemplateLite, ProjectsCount)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchNode exposing (addOneProject, removeOneProject, updateOneProject)
@@ -65,7 +65,6 @@ import Requests exposing (fetchProjectCount, fetchProjectTemplatesTop, fetchProj
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
-import Schema.Enum.TensionAction as TensionAction
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, Theme(..))
 import String.Format as Format
@@ -1562,7 +1561,7 @@ view global model =
             }
 
         panelData =
-            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            { lifecycle = Active
             , isRight = True
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu

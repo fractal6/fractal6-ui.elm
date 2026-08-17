@@ -43,7 +43,7 @@ import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
 import Query.QueryContract exposing (contractPayload)
 import Query.QueryNode exposing (tidPayload)
-import Query.QueryTension exposing (blobPayload, commentPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload, governedNodePayload)
 import RemoteData exposing (RemoteData)
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.CommentOrderable as CommentOrderable
@@ -572,11 +572,12 @@ publishBlob url bid form msg =
             (publishBlobInputEncoder bid form)
             (SelectionSet.map TensionBlobFlagPayload <|
                 Schema.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map2 TensionBlobFlag
+                    SelectionSet.map3 TensionBlobFlag
                         Schema.Object.Tension.title
                         (Schema.Object.Tension.blobs (bidFilter bid) <|
                             SelectionSet.map BlobFlag (Schema.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
                         )
+                        (Schema.Object.Tension.governed_node identity governedNodePayload)
             )
         )
         (RemoteData.fromResult >> decodeResponse publishBlobDecoder >> msg)

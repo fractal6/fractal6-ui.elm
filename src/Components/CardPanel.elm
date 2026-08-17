@@ -30,13 +30,13 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict exposing (Dict)
 import Form exposing (isPostEmpty, isPostSendable)
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, getTensionNode, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
 import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode, TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
 import Fractale.Graph exposing (getPathWithChildren)
 import Fractale.HotUpdate exposing (pushCommentReaction, removeCommentReaction)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.View exposing (action2icon, statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
+import Fractale.View exposing (statusColor, tensionIcon2, tensionIcon3, tensionStatus2str, viewCircleTarget, viewTensionDateAndUser)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, spellcheck, style, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -836,7 +836,7 @@ viewTitle t model =
             ]
             [ text t.title ]
         , div [ class "is-flex is-align-items-center" ]
-            [ if (model.isTensionAdmin || isAuthor) && t.action == Nothing then
+            [ if (model.isTensionAdmin || isAuthor) && getTensionNode t == Nothing then
                 span
                     [ class "is-small button-light mr-4"
                     , title T.editTitle
@@ -957,7 +957,7 @@ viewTensionComments path_data t model =
                         text ""
     in
     div [ class "comments" ]
-        [ Comments.viewCommentsTension model.mobileConf t.action model.comments |> Html.map CommentsMsg
+        [ Comments.viewCommentsTension model.mobileConf t model.comments |> Html.map CommentsMsg
         , hr [ class "is-2" ] []
         , userInput
         ]

@@ -31,7 +31,7 @@ import Fractale.Form exposing (..)
 import Fractale.User exposing (..)
 import Fractale.Graph exposing (..)
 import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nearestCircleid, nid2rootid, tensionCharacFromNode, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
 import Fractale.View exposing (mediaTension, viewPinnedTensions)
@@ -55,7 +55,6 @@ import Form.Help as Help
 import Form.NewTension as NTF
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
@@ -1208,7 +1207,8 @@ view global model =
             }
 
         panelData =
-            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            -- The tree query excludes archived nodes, so Overview only ever sees Active ones (Unarchive is offered from the tension page).
+            { lifecycle = Active
             , isRight = True
             , domid = "actionPanelHelper"
             , tree_data = model.tree_data
@@ -1259,7 +1259,6 @@ view_ global model =
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
-            , receiver = nearestCircleid model.node_focus.nameid
             , hasInnerToolbar = True
             , isAdmin = Maybe.map2 (\node uctx -> List.length (getNodeRights uctx node model.tree_data) > 0) focus_m (maybeUctx global.session.common.user) |> withDefault False
             }
@@ -1377,7 +1376,8 @@ viewActionPanel domid us node o actionPanel =
             showIf hasConfig <|
                 let
                     panelData =
-                        { tc = tensionCharacFromNode node
+                        -- The tree query excludes archived nodes, so Overview only ever sees Active ones.
+                        { lifecycle = Active
                         , isRight = True
                         , domid = domid
                         , tree_data = o

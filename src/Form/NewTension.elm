@@ -35,7 +35,7 @@ import Components.UserInput as UserInput
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
+import Fractale.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, toLink, ur2eor)
 import Fractale.Error exposing (viewAuthNeeded, viewGqlErrors, viewJoinForTensionNeeded)
 import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, initFormText, isSelfContract, makeCandidateContractForm, tensionToActionForm)
 import Fractale.Graph exposing (getPath, getPathWithChildren, localGraphFromOrga)
@@ -64,7 +64,6 @@ import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
@@ -338,7 +337,7 @@ switchTab tab model =
                     NewTensionTab ->
                         { form
                             | type_ = Just TensionType.Operational
-                            , action = Nothing
+                            , isNewNode = False
                             , blob_type = Nothing
                             , users = []
                             , txt = initFormText model.session.lexicon Nothing
@@ -349,7 +348,7 @@ switchTab tab model =
                             | type_ = Just TensionType.Governance
                             , blob_type = Just BlobType.OnNode
                             , node = { node | type_ = Just NodeType.Role }
-                            , action = Just TensionAction.NewRole
+                            , isNewNode = True
                             , users = []
                             , txt = initFormText model.session.lexicon (Just NodeType.Role)
                         }
@@ -360,7 +359,7 @@ switchTab tab model =
                             | type_ = Just TensionType.Governance
                             , blob_type = Just BlobType.OnNode
                             , node = { node | type_ = Just NodeType.Circle }
-                            , action = Just TensionAction.NewCircle
+                            , isNewNode = True
                             , users = []
                             , txt = initFormText model.session.lexicon (Just NodeType.Circle)
                         }

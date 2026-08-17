@@ -24,13 +24,6 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionCharac, id3Changed, nid2rootid, nodeFromFragment, tensionAction2NodeType, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
-import Fractale.View exposing (action2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink)
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -47,23 +40,15 @@ import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf, textD)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (decap)
-import Utils.Date exposing (formatDate)
-import Utils.DomEvents exposing (onClickSP)
-import Utils.Url exposing (queryParser)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.Lang as Lang
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionEvent as TensionEvent
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (FocusState, FractalBaseRoute(..), NodeFocus, eor2ur, focusFromNameid, focusFromPath, focusState, getOrgaRoles, getTensionNode, id3Changed, nid2rootid, nodeFromTensionHead, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewJoinForCommentNeeded, viewMaybeErrors)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (statusColor, tensionIcon2, tensionStatus2str, viewCircleTarget, viewNodeDescr, viewNodeRefShort, viewRole, viewRoleExt, viewTensionDateAndUser, viewUserFull, viewUsernameLink)
 import Generated.Route as Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, ul)
@@ -82,6 +67,12 @@ import Query.PatchUser exposing (markAsRead, toggleOrgaWatch, toggleTensionSubsc
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.Reaction exposing (addReaction, deleteReaction)
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Scroll
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), ProjectSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..), ViewMode(..), isMobile)
 import String.Extra as SE
@@ -89,6 +80,14 @@ import String.Format as Format
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.Date exposing (formatDate)
+import Utils.DomEvents exposing (onClickSP)
+import Utils.Html exposing (showIf, textD)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (decap)
+import Utils.Url exposing (queryParser)
 
 
 
@@ -383,7 +382,7 @@ init global flags =
                     |> (\x ->
                             case session.data.tension_head of
                                 Just th ->
-                                    NodeDoc.initBlob sessionCommon.lexicon (nodeFromTension th) x
+                                    NodeDoc.initBlob sessionCommon.lexicon (th.latest_blob |> Maybe.andThen .node |> withDefault (initNodeFragment Nothing)) x
 
                                 Nothing ->
                                     x
@@ -743,24 +742,17 @@ update global message model =
                 OkAuth th ->
                     let
                         ( targetid, nodeDoc ) =
-                            case th.action of
-                                Just action ->
-                                    case (getTensionCharac action).doc_type of
-                                        NODE _ ->
-                                            let
-                                                node =
-                                                    nodeFromTension th
-                                            in
-                                            ( ternary th.hasBeenPushed (NodeDoc.getNodeNameid th.receiver.nameid node) th.receiver.nameid
-                                            , NodeDoc.initBlob model.session.lexicon node model.nodeDoc
-                                            )
-
-                                        MD ->
-                                            -- not implemented
-                                            ( th.receiver.nameid, model.nodeDoc )
+                            case getTensionNode th of
+                                Just _ ->
+                                    let
+                                        node =
+                                            th.latest_blob |> Maybe.andThen .node |> withDefault (initNodeFragment Nothing)
+                                    in
+                                    ( th.governed_node |> Maybe.map .nameid |> withDefault th.receiver.nameid
+                                    , NodeDoc.initBlob model.session.lexicon node model.nodeDoc
+                                    )
 
                                 Nothing ->
-                                    -- No Document attached or Unknown format
                                     ( th.receiver.nameid, model.nodeDoc )
 
                         hasLocalGraph =
@@ -1045,7 +1037,7 @@ update global message model =
 
         DoMove t ->
             ( model
-            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ]
+            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid t.latest_blob)) ]
             , Cmd.none
             )
 
@@ -1091,8 +1083,20 @@ update global message model =
                         th =
                             case model.tension_head of
                                 Success t ->
+                                    let
+                                        latest_blob =
+                                            case tp.blobs of
+                                                Just blobs ->
+                                                    List.head blobs
+
+                                                Nothing ->
+                                                    t.latest_blob
+                                    in
                                     Success
-                                        { t | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs }
+                                        { t
+                                            | latest_blob = latest_blob
+                                            , draft_node_type = latest_blob |> Maybe.andThen .node |> Maybe.andThen .type_
+                                        }
 
                                 other ->
                                     other
@@ -1100,7 +1104,7 @@ update global message model =
                         nd =
                             case th of
                                 Success t ->
-                                    NodeDoc.initBlob model.session.lexicon (nodeFromTension t) newDoc
+                                    NodeDoc.initBlob model.session.lexicon (t.latest_blob |> Maybe.andThen .node |> withDefault (initNodeFragment Nothing)) newDoc
 
                                 _ ->
                                     newDoc
@@ -1147,19 +1151,13 @@ update global message model =
                     case model.tension_head of
                         Success th ->
                             let
-                                blobs =
-                                    th.blobs
+                                latest_blob =
+                                    th.latest_blob
                                         |> Maybe.map
-                                            (\bs ->
-                                                bs
-                                                    |> List.head
-                                                    |> Maybe.map
-                                                        (\b -> [ { b | pushedFlag = withDefault [] r.blobs |> List.head |> Maybe.map .pushedFlag |> withDefault b.pushedFlag } ])
-                                            )
-                                        |> withDefault Nothing
+                                            (\b -> { b | pushedFlag = withDefault [] r.blobs |> List.head |> Maybe.map .pushedFlag |> withDefault b.pushedFlag })
 
                                 newTh =
-                                    { th | blobs = blobs, title = r.title, hasBeenPushed = True }
+                                    { th | latest_blob = latest_blob, title = r.title, governed_node = r.governed_node }
 
                                 resetForm =
                                     initTensionForm global.session.common.lexicon model.tensionid Nothing global.session.common.user
@@ -1422,17 +1420,33 @@ update global message model =
                 ( data, out ) =
                     ActionPanel.update apis msg model.actionPanel
 
-                -- Update NodeFragment locally
+                -- Update NodeFragment and governed archive state locally.
                 th =
                     Maybe.map
                         (\r ->
                             withMapData
                                 (\x ->
                                     let
-                                        blobs =
-                                            Maybe.map (\y -> List.map (\b -> { b | node = Just <| nodeFragmentUpdate b.node r }) y) x.blobs
+                                        latest_blob =
+                                            Maybe.map (\b -> { b | node = Just <| nodeFragmentUpdate b.node r }) x.latest_blob
+
+                                        -- Archive transitions: flip the client-requested state, which the backend just applied.
+                                        governed_node =
+                                            case ActionPanel.getState_ model.actionPanel of
+                                                ActionPanel.ArchiveAction ->
+                                                    Maybe.map (\g -> { g | isArchived = True }) x.governed_node
+
+                                                ActionPanel.UnarchiveAction ->
+                                                    Maybe.map (\g -> { g | isArchived = False }) x.governed_node
+
+                                                _ ->
+                                                    x.governed_node
                                     in
-                                    { x | blobs = blobs }
+                                    { x
+                                        | latest_blob = latest_blob
+                                        , governed_node = governed_node
+                                        , draft_node_type = latest_blob |> Maybe.andThen .node |> Maybe.andThen .type_
+                                    }
                                 )
                                 model.tension_head
                         )
@@ -1442,7 +1456,10 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | actionPanel = data, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | actionPanel = data, tension_head = th }
+            , out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch gcmds
+            )
 
         JoinOrgaMsg msg ->
             let
@@ -1593,7 +1610,7 @@ view global model =
             }
 
         panelData =
-            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            { lifecycle = Active
             , isRight = True
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu
@@ -1693,8 +1710,11 @@ viewTension u t model =
         isAuthor =
             Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
 
+        tensionNode =
+            getTensionNode t
+
         blob_m =
-            t.blobs |> withDefault [] |> List.head
+            t.latest_blob
     in
     div []
         [ div [ class "columns m-0" ]
@@ -1763,28 +1783,13 @@ viewTension u t model =
                                 , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                                 ]
                                 [ tensionIcon2 t.type_ ]
-                            , let
-                                -- Governance tensions with a circle/role blob get auto-closed on creation,
-                                -- so showing "Closed" status is misleading since the object exists.
-                                isAutoClosedGov =
-                                    t.type_
-                                        == TensionType.Governance
-                                        && t.status
-                                        == TensionStatus.Closed
-                                        && (case Maybe.map (\a -> (getTensionCharac a).doc_type) t.action of
-                                                Just (NODE _) ->
-                                                    True
-
-                                                _ ->
-                                                    False
-                                           )
-                              in
-                              if not isAutoClosedGov then
-                                span [ class ("tag is-rounded is-w  is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
-                                    [ t.status |> tensionStatus2str |> text ]
+                            , -- Governance tensions with a node doc are auto-closed on creation; a "Closed" tag would be misleading since the object exists.
+                              if t.type_ == TensionType.Governance && tensionNode /= Nothing then
+                                text ""
 
                               else
-                                text ""
+                                span [ class ("tag is-rounded is-w  is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
+                                    [ t.status |> tensionStatus2str |> text ]
                             , viewTensionDateAndUser model.session "is-discrete" t.createdAt t.createdBy
                             ]
                     , div [ class "level-right" ] <|
@@ -1801,7 +1806,7 @@ viewTension u t model =
                             [ a [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                 [ A.icon1 "icon-message-square" T.conversation ]
                             ]
-                        , if t.blobs /= Nothing && t.blobs /= Just [] then
+                        , if t.latest_blob /= Nothing then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                     [ A.icon1 "icon-copy" T.document ]
@@ -1824,11 +1829,11 @@ viewTension u t model =
                         viewConversation u t model
 
                     Document ->
-                        case t.blobs |> withDefault [] of
-                            [ b ] ->
+                        case t.latest_blob of
+                            Just b ->
                                 viewDocument u t b model
 
-                            _ ->
+                            Nothing ->
                                 div [] [ text "No document yet..." ]
 
                     Contracts ->
@@ -1885,7 +1890,7 @@ viewConversation u t model =
     case model.tension_comments of
         Success t_comments ->
             div [ class "comments" ]
-                [ Lazy.lazy3 Comments.viewCommentsTension model.session t.action model.comments |> Html.map CommentsMsg
+                [ Lazy.lazy3 Comments.viewCommentsTension model.session t model.comments |> Html.map CommentsMsg
                 , hr [ class "is-2" ] []
                 , userInput
                 ]
@@ -1912,14 +1917,13 @@ viewDocument u t b model =
             nodeData =
                 { focus = model.node_focus
                 , tid_r = Success t.id
-                , node = b.node |> Maybe.map (nodeFromFragment t.receiver.nameid)
+                , node = b.node |> Maybe.map (nodeFromTensionHead t)
                 , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault initNodeData
                 , leads = []
                 , session = model.session
                 , isLazy = False
                 , source = model.baseUri
-                , hasBeenPushed = t.hasBeenPushed
-                , receiver = t.receiver.nameid
+                , hasBeenPushed = t.governed_node /= Nothing
                 , hasInnerToolbar = False
                 , isAdmin = model.isTensionAdmin
                 }
@@ -1955,8 +1959,8 @@ viewDocument u t b model =
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
 viewSidePane u t model =
     let
-        tc_m =
-            Maybe.map (\a -> getTensionCharac a) t.action
+        tensionNode =
+            getTensionNode t
 
         assignees =
             t.assignees |> withDefault []
@@ -1965,7 +1969,7 @@ viewSidePane u t model =
             t.labels |> withDefault []
 
         blob_m =
-            t.blobs |> withDefault [] |> List.head
+            t.latest_blob
 
         --
         uctx_m =
@@ -2007,7 +2011,7 @@ viewSidePane u t model =
             isAdmin || isAuthor
 
         hasBlobRight =
-            isAdmin && t.hasBeenPushed && blob_m /= Nothing
+            isAdmin && t.governed_node /= Nothing && blob_m /= Nothing
 
         rid =
             nid2rootid t.receiver.nameid
@@ -2140,7 +2144,7 @@ viewSidePane u t model =
 
         -- Document
         , Maybe.map2
-            (\blob tc ->
+            (\blob nodeState ->
                 -- Hide if there is no document
                 let
                     domid =
@@ -2150,7 +2154,7 @@ viewSidePane u t model =
                         ActionPanel.isOpen_ domid model.actionPanel && (hasBlobRight || hasRole)
 
                     node =
-                        blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
+                        blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromTensionHead t
                 in
                 div
                     [ class "media"
@@ -2184,7 +2188,7 @@ viewSidePane u t model =
                                         , if hasBlobRight || hasRole then
                                             let
                                                 panelData =
-                                                    { tc = tc
+                                                    { lifecycle = nodeState.lifecycle
                                                     , isRight = False
                                                     , domid = domid
                                                     , tree_data = TreeMenu.getOrgaData_ model.treeMenu
@@ -2200,7 +2204,7 @@ viewSidePane u t model =
                                 LoggedOut ->
                                     [ h2 [ class "subtitle" ] [ text T.document ] ]
                             )
-                                ++ [ viewNodeDescr True node tc
+                                ++ [ viewNodeDescr True node
                                    , -- Node Artefact
                                      case node.type_ of
                                         NodeType.Circle ->
@@ -2212,7 +2216,7 @@ viewSidePane u t model =
                                         NodeType.Role ->
                                             case node.role_type of
                                                 Just rt ->
-                                                    if t.hasBeenPushed then
+                                                    if t.governed_node /= Nothing then
                                                         viewRole "" False False Nothing (Just <| toLink OverviewBaseUri node.nameid []) (\_ _ _ -> NoMsg) (eor2ur node)
 
                                                     else
@@ -2226,7 +2230,7 @@ viewSidePane u t model =
                                         )
                                         node.first_link
                                         |> withDefault (text "")
-                                   , if tc.action_type == ARCHIVE then
+                                   , if nodeState.lifecycle == Archived then
                                         div [ class "mt-2 has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
 
                                      else
@@ -2263,7 +2267,7 @@ viewSidePane u t model =
                     ]
             )
             blob_m
-            tc_m
+            tensionNode
             |> withDefault (text "")
         , -- Subscriptions
           case u of
@@ -2307,15 +2311,7 @@ viewSidePane u t model =
             ++ (if not isRoot && (isAdmin || isAuthor) then
                     let
                         hasNode =
-                            Maybe.map .doc_type tc_m
-                                |> (\x ->
-                                        case x of
-                                            Just (NODE _) ->
-                                                True
-
-                                            _ ->
-                                                False
-                                   )
+                            tensionNode /= Nothing
                     in
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ (if isAdmin then

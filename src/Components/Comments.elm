@@ -49,6 +49,7 @@ import Dict
 import File
 import File.Select
 import Form exposing (isPostSendable)
+import Fractale.Codecs exposing (getTensionNode)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Event exposing (viewEvent)
 import Fractale.Form exposing (CommentPatchForm, Ev, InputViewMode(..), TensionForm, eventFromForm, initCommentPatchForm, initTensionForm)
@@ -65,13 +66,13 @@ import List.Extra as LE
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMapData, withMaybeMapData)
 import Markdown exposing (renderMarkdown, setMdCheckbox)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Comment, CommentFile, Event, IdPayload, PatchTensionPayloadID, Post, ReactionResponse, TensionHead, UserCtx, Username)
+import ModelSchema exposing (Comment, CommentFile, Event, GovernedNode, IdPayload, PatchTensionPayloadID, Post, ReactionResponse, UserCtx, Username)
 import Ports
 import Query.PatchContract exposing (pushContractComment)
 import Query.PatchTension exposing (deleteComment, patchComment, pushTensionPatch)
 import Query.Reaction exposing (addReaction, deleteReaction)
 import Schema.Enum.Lang as Lang
-import Schema.Enum.TensionAction as TensionAction
+import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile, toReflink)
@@ -1354,17 +1355,17 @@ viewCommentsContract session (State model) =
         ]
 
 
-viewCommentsTension : SessionCommon -> Maybe TensionAction.TensionAction -> State -> Html Msg
-viewCommentsTension session action (State model) =
+viewCommentsTension : SessionCommon -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> State -> Html Msg
+viewCommentsTension session tension (State model) =
     div []
-        [ viewComments_ session action model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.fadingOut
+        [ viewComments_ session tension model.history model.comments model.comment_form model.comment_result model.comment_delete_result model.expandedEvents model.highlightedCommentId model.userInput model.emojiPicker model.pendingByEditor model.fadingOut
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
 viewComments_ :
     SessionCommon
-    -> Maybe TensionAction.TensionAction
+    -> { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType }
     -> List Event
     -> List Comment
     -> CommentPatchForm
@@ -1377,8 +1378,11 @@ viewComments_ :
     -> Dict.Dict String (List PendingFile)
     -> List String
     -> Html Msg
-viewComments_ session action history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor fadingOut =
+viewComments_ session tension history comments comment_form comment_result comment_delete_result expandedEvents highlightedCommentId userInput emojiPicker pendingByEditor fadingOut =
     let
+        nodeType =
+            getTensionNode tension |> Maybe.map .type_ |> withDefault NodeType.Role
+
         allEvts =
             -- When event and comment are created at the same time, show the comment first.
             List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
@@ -1408,7 +1412,7 @@ viewComments_ session action history comments comment_form comment_result commen
                                 focusid =
                                     Dict.get "focusid" comment_form.post
                             in
-                            Lazy.lazy4 viewEvent session focusid action event
+                            Lazy.lazy4 viewEvent session focusid nodeType event
 
                         Nothing ->
                             text ""

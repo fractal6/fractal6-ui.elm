@@ -21,17 +21,11 @@
 
 module Requests exposing (..)
 
-import Fractale.Codecs exposing (nid2rootid)
 import Bytes exposing (Bytes)
 import Codecs exposing (QuickDoc, emitterOrReceiverDecoder, labelDecoder, nodeIdDecoder, projectDecoder, projectTemplateLiteDecoder, quickDocDecoder, roleDecoder, tensionTemplateLiteDecoder, userCtxDecoder, userDecoder)
 import Dict exposing (Dict)
 import File exposing (File)
-import Schema.Enum.Lang as Lang
-import Schema.Enum.ProjectStatus as ProjectStatus
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (nid2rootid)
 import Http exposing (expectWhatever)
 import Image exposing (Image)
 import Json.Decode as JD
@@ -40,9 +34,15 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Loading exposing (GqlData, RestData, expectJson, fromResult, mapRest2Gql)
 import Maybe
-import ModelSchema exposing (Label, Member, NodeId, ProjectFull, ProjectTemplateLite, ProjectsCount, RoleExt, Tension, TensionLight, TensionTemplateLite, TensionsCount, User, UserCtx, Username)
+import ModelSchema exposing (GovernedNode, Label, Member, NodeId, ProjectFull, ProjectTemplateLite, ProjectsCount, RoleExt, Tension, TensionLight, TensionTemplateLite, TensionsCount, User, UserCtx, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData
+import Schema.Enum.Lang as Lang
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Session exposing (Apis)
 
 
@@ -398,10 +398,28 @@ tensionDecoder =
         |> JDE.andMap (JD.maybe <| JD.field "labels" (JD.list <| labelDecoder))
         --|> JDE.andMap (JD.field "emitter" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
-        |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
+        |> JDE.andMap (JD.maybe <| JD.field "governed_node" governedNodeDecoder)
+        |> JDE.andMap
+            (JD.maybe (JD.field "blobs" (JD.list draftNodeTypeDecoder))
+                |> JD.map (Maybe.andThen List.head >> Maybe.andThen identity)
+            )
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
         |> JDE.andMap (JD.maybe <| JD.field "assignees" (JD.list <| userDecoder))
+
+
+governedNodeDecoder : JD.Decoder GovernedNode
+governedNodeDecoder =
+    JD.map3 GovernedNode
+        (JD.field "nameid" JD.string)
+        (JD.field "type_" NodeType.decoder)
+        (JD.field "isArchived" JD.bool)
+
+
+draftNodeTypeDecoder : JD.Decoder (Maybe NodeType.NodeType)
+draftNodeTypeDecoder =
+    JD.maybe (JD.field "node" (JD.maybe <| JD.field "type_" NodeType.decoder))
+        |> JD.map (Maybe.andThen identity)
 
 
 tensionLightDecoder : JD.Decoder TensionLight

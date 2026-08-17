@@ -22,18 +22,17 @@
 module Fractale.Codecs exposing (..)
 
 import Array
-import Utils.Bool exposing (ternary)
-import Utils.String exposing (cleanDup)
+import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
+import List.Extra as LE
+import Maybe exposing (withDefault)
+import ModelSchema exposing (EmitterOrReceiver, GovernedNode, LocalGraph, Node, NodeFragment, NodeLifecycle(..), TensionNode, UserCommon, UserCtx, UserRole, UserRoleCommon)
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
-import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
-import List.Extra as LE
-import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, LocalGraph, Node, NodeFragment, UserCommon, UserCtx, UserRole, UserRoleCommon)
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.String exposing (cleanDup)
 
 
 
@@ -656,102 +655,22 @@ playsRole uctx nameid =
 -}
 
 
-type alias TensionCharac =
-    { action_type : ActionType
-    , doc_type : DocType
-    , action : TensionAction.TensionAction
-    }
+getTensionNode : { t | governed_node : Maybe GovernedNode, draft_node_type : Maybe NodeType.NodeType } -> Maybe TensionNode
+getTensionNode tension =
+    case tension.governed_node of
+        Just node ->
+            Just
+                { type_ = node.type_
+                , lifecycle =
+                    if node.isArchived then
+                        Archived
 
+                    else
+                        Active
+                }
 
-type ActionType
-    = NEW
-    | EDIT
-    | ARCHIVE
-
-
-type DocType
-    = NODE NodeType.NodeType
-    | MD
-
-
-getTensionCharac : TensionAction.TensionAction -> TensionCharac
-getTensionCharac action =
-    case action of
-        TensionAction.NewRole ->
-            { action = action, action_type = NEW, doc_type = NODE NodeType.Role }
-
-        TensionAction.EditRole ->
-            { action = action, action_type = EDIT, doc_type = NODE NodeType.Role }
-
-        TensionAction.ArchivedRole ->
-            { action = action, action_type = ARCHIVE, doc_type = NODE NodeType.Role }
-
-        TensionAction.NewCircle ->
-            { action = action, action_type = NEW, doc_type = NODE NodeType.Circle }
-
-        TensionAction.EditCircle ->
-            { action = action, action_type = EDIT, doc_type = NODE NodeType.Circle }
-
-        TensionAction.ArchivedCircle ->
-            { action = action, action_type = ARCHIVE, doc_type = NODE NodeType.Circle }
-
-        TensionAction.NewMd ->
-            { action = action, action_type = NEW, doc_type = MD }
-
-        TensionAction.EditMd ->
-            { action = action, action_type = EDIT, doc_type = MD }
-
-        TensionAction.ArchivedMd ->
-            { action = action, action_type = ARCHIVE, doc_type = MD }
-
-
-type alias Node_ a =
-    { a
-        | type_ : NodeType.NodeType
-    }
-
-
-tensionCharacFromNode : Node_ a -> TensionCharac
-tensionCharacFromNode node =
-    -- @DEBUG/@FIX: archive circle can be query now...
-    -- Action type should be queried with queryNodesSub !
-    -- @TODO: special color/shape for archive circle.
-    case node.type_ of
-        NodeType.Circle ->
-            { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
-
-        NodeType.Role ->
-            { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
-
-
-tensionAction2NodeType : Maybe TensionAction.TensionAction -> Maybe NodeType.NodeType
-tensionAction2NodeType action_m =
-    action_m
-        |> Maybe.map
-            (\action ->
-                case action of
-                    TensionAction.NewRole ->
-                        Just NodeType.Role
-
-                    TensionAction.EditRole ->
-                        Just NodeType.Role
-
-                    TensionAction.ArchivedRole ->
-                        Just NodeType.Role
-
-                    TensionAction.NewCircle ->
-                        Just NodeType.Circle
-
-                    TensionAction.EditCircle ->
-                        Just NodeType.Circle
-
-                    TensionAction.ArchivedCircle ->
-                        Just NodeType.Circle
-
-                    _ ->
-                        Nothing
-            )
-        |> withDefault Nothing
+        Nothing ->
+            Maybe.map (\type_ -> { type_ = type_, lifecycle = Draft }) tension.draft_node_type
 
 
 nodeFromFragment : String -> NodeFragment -> Node
@@ -770,3 +689,20 @@ nodeFromFragment parentid f =
     , n_open_tensions = 0
     , n_open_contracts = 0
     }
+
+
+{-| Node identity of a governance tension: the governed Node is authoritative once published,
+otherwise fall back to the draft fragment resolved against the receiver.
+-}
+nodeFromTensionHead : { t | receiver : EmitterOrReceiver, governed_node : Maybe GovernedNode } -> NodeFragment -> Node
+nodeFromTensionHead t f =
+    let
+        node =
+            nodeFromFragment t.receiver.nameid f
+    in
+    case t.governed_node of
+        Just g ->
+            { node | nameid = g.nameid, type_ = g.type_ }
+
+        Nothing ->
+            node

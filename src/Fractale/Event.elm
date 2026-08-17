@@ -22,10 +22,10 @@
 module Fractale.Event exposing (..)
 
 import Assets as A
-import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), getTensionCharac, nid2rootid, shortId, tensionAction2NodeType, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), nid2rootid, shortId, toLink)
 import Fractale.Form exposing (decodeColumnRef, decodeLabel, decodeProjectRef)
 import Fractale.User exposing (UserState(..))
-import Fractale.View exposing (action2str, byAt, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
+import Fractale.View exposing (byAt, nodeType2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
 import Components.LabelSearchPanel exposing (viewLabel)
 import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProjectTag)
 import Dict exposing (Dict)
@@ -36,7 +36,6 @@ import Utils.String exposing (decap, space_)
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
@@ -434,8 +433,8 @@ eventToIcon ev =
 --
 
 
-viewEvent : SessionCommon -> Maybe String -> Maybe TensionAction.TensionAction -> Event -> Html msg
-viewEvent session focusid_m action event =
+viewEvent : SessionCommon -> Maybe String -> NodeType.NodeType -> Event -> Html msg
+viewEvent session focusid_m nodeType event =
     let
         eventView =
             case event.event_type of
@@ -455,7 +454,7 @@ viewEvent session focusid_m action event =
                     viewEventVisibility session event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority session event action
+                    viewEventAuthority session event nodeType
 
                 TensionEvent.AssigneeAdded ->
                     viewEventAssignee session event True
@@ -470,25 +469,25 @@ viewEvent session focusid_m action event =
                     viewEventLabel focusid_m session event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed session event action
+                    viewEventPushed session event nodeType
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived session event action True
+                    viewEventArchived session event nodeType True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived session event action False
+                    viewEventArchived session event nodeType False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked session event action
+                    viewEventMemberLinked session event nodeType
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked session event action
+                    viewEventMemberUnlinked session event nodeType
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined session event action
+                    viewEventUserJoined session event nodeType
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft session event action
+                    viewEventUserLeft session event nodeType
 
                 TensionEvent.Moved ->
                     viewEventMoved session event
@@ -596,19 +595,16 @@ viewEventVisibility session event =
     ]
 
 
-viewEventAuthority : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventAuthority session event action =
+viewEventAuthority : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventAuthority session event nodeType =
     let
         ( icon, eventText ) =
-            case tensionAction2NodeType action of
-                Just NodeType.Circle ->
+            case nodeType of
+                NodeType.Circle ->
                     ( A.icon "icon-shield", T.theGovernance )
 
-                Just NodeType.Role ->
+                NodeType.Role ->
                     ( A.icon "icon-key", T.theAuthority )
-
-                _ ->
-                    ( A.icon "icon-key", "unknown action" )
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
@@ -676,25 +672,18 @@ viewEventLabel focusid_m session event isNew =
     ]
 
 
-viewEventPushed : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventPushed session event action_m =
-    let
-        action =
-            withDefault TensionAction.NewRole action_m
-    in
+viewEventPushed : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventPushed session event nodeType =
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventArchived : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html msg)
-viewEventArchived session event action_m isArchived =
+viewEventArchived : SessionCommon -> Event -> NodeType.NodeType -> Bool -> List (Html msg)
+viewEventArchived session event nodeType isArchived =
     let
-        action =
-            withDefault TensionAction.NewRole action_m
-
         ( icon, txt ) =
             if isArchived then
                 ( A.icon "icon-archive", T.archived2 )
@@ -704,13 +693,13 @@ viewEventArchived session event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (action2str action), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
 
-viewEventMemberLinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventMemberLinked session event action_m =
+viewEventMemberLinked : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventMemberLinked session event _ =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), strong [ class "has-text-evidence" ] [ text T.linked2 ], text T.toThisRole, text (formatDate session.lang session.now event.createdAt) ]
@@ -718,15 +707,15 @@ viewEventMemberLinked session event action_m =
     ]
 
 
-viewEventMemberUnlinked : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventMemberUnlinked session event action_m =
+viewEventMemberUnlinked : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventMemberUnlinked session event nodeType =
     let
         action_txt =
-            case (getTensionCharac (withDefault TensionAction.NewRole action_m)).doc_type of
-                NODE NodeType.Circle ->
+            case nodeType of
+                NodeType.Circle ->
                     T.toThisOrganisation
 
-                _ ->
+                NodeType.Role ->
                     T.toThisRole
     in
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
@@ -736,8 +725,8 @@ viewEventMemberUnlinked session event action_m =
     ]
 
 
-viewEventUserJoined : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventUserJoined session event action_m =
+viewEventUserJoined : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventUserJoined session event _ =
     let
         action_txt =
             T.theOrganisation
@@ -749,12 +738,9 @@ viewEventUserJoined session event action_m =
     ]
 
 
-viewEventUserLeft : SessionCommon -> Event -> Maybe TensionAction.TensionAction -> List (Html msg)
-viewEventUserLeft session event action_m =
+viewEventUserLeft : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
+viewEventUserLeft session event nodeType =
     let
-        action =
-            withDefault TensionAction.NewRole action_m
-
         action_txt =
             case event.new of
                 Just type_ ->
@@ -769,7 +755,7 @@ viewEventUserLeft session event action_m =
                             T.this ++ " " ++ decap T.role
 
                 Nothing ->
-                    action2str action |> decap
+                    nodeType2str nodeType |> decap
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]

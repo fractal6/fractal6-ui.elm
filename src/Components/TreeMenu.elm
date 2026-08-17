@@ -26,9 +26,9 @@ import Auth exposing (ErrState(..), parseErr)
 import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga)
 import Fractale.HotUpdate exposing (hotNodeInsert, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
 import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (action2icon, counter)
+import Fractale.View exposing (counter, nodeType2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Dict.Extra as DE
@@ -768,7 +768,7 @@ viewCircleLine hover focus collapsible isCollapsed node =
         ]
         [ div [ class "level is-mobile" ]
             [ div [ class "level-left" ]
-                [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
+                [ A.icon1_sm (nodeType2icon node.type_) node.name
                 , showMaybe node.first_link
                     (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
                 , case node.n_open_tensions of
@@ -932,7 +932,7 @@ viewNodeLine onTargetClick selected node =
                     []
                )
         )
-        [ A.icon1_sm (action2icon { doc_type = NODE node.type_ }) node.name
+        [ A.icon1_sm (nodeType2icon node.type_) node.name
         , showMaybe node.first_link
             (\f -> span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ])
         ]

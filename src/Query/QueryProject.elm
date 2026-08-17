@@ -35,10 +35,16 @@ module Query.QueryProject exposing
     , updateProjectDraft
     )
 
-import Fractale.Form exposing (AssigneeForm, LabelForm)
 import Dict
-import Utils.Bool exposing (ternary)
-import Utils.Maybe exposing (unwrap, unwrap2)
+import Fractale.Form exposing (AssigneeForm, LabelForm)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, userPayload)
+import Query.QueryTension exposing (draftNodeTypePayload, governedNodePayload, tensionPayload)
+import RemoteData
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.RoleType as RoleType
 import Schema.InputObject as Input
@@ -66,15 +72,9 @@ import Schema.Query as Query
 import Schema.Scalar
 import Schema.Union
 import Schema.Union.CardKind
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, userPayload)
-import Query.QueryTension exposing (tensionPayload)
-import RemoteData
 import String.Extra as SE
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
 
 
 
@@ -531,7 +531,8 @@ tensionPayload2 =
         |> with (Schema.Object.Tension.labels identity labelPayload)
         --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
-        |> with Schema.Object.Tension.action
+        |> with (Schema.Object.Tension.governed_node identity governedNodePayload)
+        |> with draftNodeTypePayload
         |> with Schema.Object.Tension.status
         -- Aggreate doesn not seem to work with enum...
         --|> with

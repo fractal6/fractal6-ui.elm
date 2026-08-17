@@ -76,7 +76,6 @@ import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
@@ -109,7 +108,7 @@ type alias TensionForm =
     , target : PNode
     , status : Maybe TensionStatus.TensionStatus
     , type_ : Maybe TensionType.TensionType
-    , action : Maybe TensionAction.TensionAction
+    , isNewNode : Bool
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message and Node attr...
@@ -135,7 +134,7 @@ initTensionForm lexicon tid node_type user =
     , target = initPNode
     , status = Nothing
     , type_ = Nothing
-    , action = Nothing
+    , isNewNode = False
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty

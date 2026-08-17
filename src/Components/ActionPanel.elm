@@ -19,35 +19,22 @@
 -}
 
 
-module Components.ActionPanel exposing (Msg(..), PanelState(..), State, init, isOpen_, setTargetid_, subscriptions, update, view)
+module Components.ActionPanel exposing (Msg(..), PanelState(..), State, getState_, init, isOpen_, setTargetid_, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), getNodeRights, parseErr)
 import Browser.Events as Events
-import Fractale.Form exposing (ActionForm, Ev, initActionForm, isSelfContract, makeCandidateContractForm)
-import Fractale.Graph exposing (blobFromTensionHead, getNode)
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), TensionCharac, getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf)
-import Utils.Maybe exposing (mor)
-import Utils.String exposing (space_)
-import Utils.DomEvents exposing (onClickPD)
-import Utils.Html exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
-import Schema.Enum.NodeMode as NodeMode
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, isBaseMember, isMembershipNode, isOwner, nid2rootid, playsRole, toLink, userFromBaseMember)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (ActionForm, Ev, initActionForm, isSelfContract, makeCandidateContractForm)
+import Fractale.Graph exposing (getNode)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
@@ -62,10 +49,21 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionEvent as TensionEvent
 import Session exposing (Apis, GlobalCmd(..), SessionCommon, isMobile)
 import String.Format as Format
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickPD)
+import Utils.Html exposing (showIf, showMsg)
+import Utils.Maybe exposing (mor)
+import Utils.String exposing (space_)
 
 
 type State
@@ -310,6 +308,11 @@ isOpen_ domid (State model) =
 setTargetid_ : String -> State -> State
 setTargetid_ targetid (State model) =
     { model | targetid = targetid } |> State
+
+
+getState_ : State -> PanelState
+getState_ (State model) =
+    model.state
 
 
 
@@ -908,7 +911,7 @@ update_ apis message model =
                     ( model, noOut )
 
         DoMove t ->
-            ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
+            ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid t.latest_blob)) ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -1034,7 +1037,7 @@ subscriptions (State model) =
 
 
 type alias Op =
-    { tc : TensionCharac
+    { lifecycle : NodeLifecycle
     , isRight : Bool -- view option
     , domid : String
     , tree_data : GqlData NodesDict
@@ -1174,7 +1177,7 @@ viewPanelMenu op model =
                         [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (panelAction2str MoveAction) ]
                 , -- Authority Action
                   div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
-                    [ A.icon1 (auth2icon op.tc) (auth2str op.tc) ]
+                    [ A.icon1 (auth2icon model.form.node.type_) (auth2str model.form.node.type_) ]
                 , -- Visibility Action
                   showIf isCircle <|
                     div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
@@ -1182,16 +1185,16 @@ viewPanelMenu op model =
                 ]
                     ++ -- ARCHIVE ACTION
                        (if not isRoot then
-                            [ case op.tc.action_type of
-                                EDIT ->
+                            [ case op.lifecycle of
+                                Active ->
                                     div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
                                         [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
 
-                                ARCHIVE ->
+                                Archived ->
                                     div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
                                         [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
 
-                                NEW ->
+                                Draft ->
                                     div [] [ text T.notImplemented ]
                             ]
 

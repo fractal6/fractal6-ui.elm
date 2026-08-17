@@ -25,7 +25,7 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Fractale.Form exposing (Ev)
 import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (ActionType(..), DocType(..), nid2rootid)
+import Fractale.Codecs exposing (nid2rootid)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Codecs exposing (QuickDoc)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)

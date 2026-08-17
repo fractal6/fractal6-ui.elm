@@ -22,12 +22,14 @@
 module Query.QueryTension exposing
     ( blobPayload
     , commentPayload
+    , draftNodeTypePayload
     , eventPayload
     , getTensionBlobs
     , getTensionComments
     , getTensionHead
     , getTensionPanel
     , getTensionProjects
+    , governedNodePayload
     , nodeFragmentLightPayload
     , nodeFragmentPayload
     , queryAllTension
@@ -39,12 +41,19 @@ module Query.QueryTension exposing
     , tensionPayload
     )
 
-import Fractale.Codecs exposing (nid2rootid)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Maybe exposing (unwrap, unwrap2)
+import Fractale.Codecs exposing (nid2rootid)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import List.Extra exposing (uniqueBy)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (Blob, Comment, CommentFile, Count, EmitterOrReceiver, Event, GovernedNode, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, ProjectCardLite, ProjectColumnLite, ProjectWithColumns, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, TensionProject, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
+import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, projectColumnLitePayload, projectWithColumnsPayload, userPayload)
+import RemoteData
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionOrderable as TensionOrderable
 import Schema.Enum.TensionStatus as TensionStatus
@@ -68,15 +77,9 @@ import Schema.Object.User
 import Schema.Query as Query
 import Schema.Union
 import Schema.Union.CardKind
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
-import List.Extra exposing (uniqueBy)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (Blob, Comment, CommentFile, Count, EmitterOrReceiver, Event, IdPayload, Label, MentionedTension, NodeFragment, NodeFragmentLight, PinTension, ProjectCardLite, ProjectColumnLite, ProjectWithColumns, Reaction, Tension, TensionBlobs, TensionComments, TensionHead, TensionPanel, TensionProject, User, UserCtx, Username, decodeResponse, decodedId, decodedTime, encodeId)
-import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPinPayload, labelPayload, mandatePayload, nidFilter, pinPayload, projectColumnLitePayload, projectWithColumnsPayload, userPayload)
-import RemoteData
 import String.Extra as SE
+import Utils.Bool exposing (ternary)
+import Utils.Maybe exposing (unwrap, unwrap2)
 
 
 
@@ -166,8 +169,7 @@ tensionProjectStatusPayload tid =
             )
 
 
-projectCardWithTensionIdPayload :
-    SelectionSet { id : String, pos : Int, tensionId : Maybe String } Schema.Object.ProjectCard
+projectCardWithTensionIdPayload : SelectionSet { id : String, pos : Int, tensionId : Maybe String } Schema.Object.ProjectCard
 projectCardWithTensionIdPayload =
     SelectionSet.succeed (\a b c -> { id = a, pos = b, tensionId = c })
         |> with (Schema.Object.ProjectCard.id |> SelectionSet.map decodedId)
@@ -185,7 +187,7 @@ projectCardWithTensionIdPayload =
 tensionHeadPayload : String -> UserCtx -> SelectionSet TensionHead Schema.Object.Tension
 tensionHeadPayload tid uctx =
     SelectionSet.succeed
-        (\a b c d e f g receiver i j k l m n o history q ->
+        (\a b c d e f g receiver i j k l n o history q ->
             let
                 eor =
                     EmitterOrReceiver receiver.name receiver.nameid receiver.role_type receiver.color
@@ -193,10 +195,10 @@ tensionHeadPayload tid uctx =
                 isPinned =
                     receiver.pinned == Just [ { id = tid } ]
 
-                hasBeenPushed =
-                    history |> withDefault [] |> List.map .event_type |> List.member TensionEvent.BlobPushed
+                draftNodeType =
+                    n |> Maybe.andThen .node |> Maybe.andThen .type_
             in
-            TensionHead a b c d e f g eor i j k hasBeenPushed isPinned n o history q
+            TensionHead a b c d e f g eor i j k isPinned n draftNodeType o history q
         )
         |> with (Schema.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Schema.Object.Tension.createdAt |> SelectionSet.map decodedTime)
@@ -208,7 +210,7 @@ tensionHeadPayload tid uctx =
         --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Schema.Object.Tension.receiver identity (emiterOrReceiverWithPinPayload tid))
         |> with Schema.Object.Tension.status
-        |> with Schema.Object.Tension.action
+        |> with (Schema.Object.Tension.governed_node identity governedNodePayload)
         |> (\x ->
                 case uctx.username of
                     "" ->
@@ -233,7 +235,6 @@ tensionHeadPayload tid uctx =
                             x
            )
         |> hardcoded False
-        |> hardcoded False
         |> with
             (Schema.Object.Tension.blobs
                 (\args ->
@@ -246,6 +247,7 @@ tensionHeadPayload tid uctx =
                     }
                 )
                 blobPayload
+                |> SelectionSet.map (Maybe.andThen List.head)
             )
         |> with
             (Schema.Object.Tension.contracts
@@ -295,7 +297,7 @@ tensionPanelPayload uctx =
         --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Schema.Object.Tension.status
-        |> with Schema.Object.Tension.action
+        |> with (Schema.Object.Tension.governed_node identity governedNodePayload)
         |> (\x ->
                 case uctx.username of
                     "" ->
@@ -319,6 +321,7 @@ tensionPanelPayload uctx =
                             )
                             x
            )
+        |> with draftNodeTypePayload
         |> with
             (Schema.Object.Tension.history
                 (\args ->
@@ -430,6 +433,32 @@ blobPayload =
         |> with (Schema.Object.Blob.node identity nodeFragmentPayload)
         |> with Schema.Object.Blob.md
         |> with (Schema.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
+
+
+governedNodePayload : SelectionSet GovernedNode Schema.Object.Node
+governedNodePayload =
+    SelectionSet.succeed GovernedNode
+        |> with Schema.Object.Node.nameid
+        |> with Schema.Object.Node.type_
+        |> with Schema.Object.Node.isArchived
+
+
+{-| Latest blob's Node kind for unpublished drafts. Selected on every list tension but only
+read when `governed_node` is null; move to a backend computed field if list latency suffers.
+-}
+draftNodeTypePayload : SelectionSet (Maybe NodeType.NodeType) Schema.Object.Tension
+draftNodeTypePayload =
+    Schema.Object.Tension.blobs
+        (\args ->
+            { args
+                | first = Present 1
+                , order = Input.buildBlobOrder (\x -> { x | desc = Present BlobOrderable.CreatedAt }) |> Present
+            }
+        )
+        (Schema.Object.Blob.node identity Schema.Object.NodeFragment.type_
+            |> SelectionSet.map (Maybe.andThen identity)
+        )
+        |> SelectionSet.map (Maybe.andThen List.head >> Maybe.andThen identity)
 
 
 eventPayload : SelectionSet Event Schema.Object.Event
@@ -590,7 +619,8 @@ tensionPayload =
         |> with (Schema.Object.Tension.labels identity labelPayload)
         --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
-        |> with Schema.Object.Tension.action
+        |> with (Schema.Object.Tension.governed_node identity governedNodePayload)
+        |> with draftNodeTypePayload
         |> with Schema.Object.Tension.status
         |> with
             (SelectionSet.map (unwrap Nothing .count) <|
@@ -611,7 +641,8 @@ tensionPayloadFiltered authors labels =
         |> with (Schema.Object.Tension.labels identity labelPayload)
         --|> with (Schema.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Schema.Object.Tension.receiver identity emiterOrReceiverPayload)
-        |> with Schema.Object.Tension.action
+        |> with (Schema.Object.Tension.governed_node identity governedNodePayload)
+        |> with draftNodeTypePayload
         |> with Schema.Object.Tension.status
         |> with
             (SelectionSet.map (unwrap Nothing .count) <|

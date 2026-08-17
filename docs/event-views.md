@@ -19,12 +19,12 @@ All event view functions live in `src/Fractale/Event.elm`. This module serves as
 The main dispatcher. Signature:
 
 ```elm
-viewEvent : SessionCommon -> Maybe String -> Maybe TensionAction -> Event -> Html msg
+viewEvent : SessionCommon -> Maybe String -> NodeType.NodeType -> Event -> Html msg
 ```
 
 - `SessionCommon` — session context (language, current time, lexicon)
 - `Maybe String` — optional focus node ID (used for label links)
-- `Maybe TensionAction` — the tension's action type (NewRole, EditCircle, etc.)
+- `NodeType.NodeType` — governed or draft Node kind for governance event wording (Role when absent)
 - `Event` — the event record to render
 
 Returns `text ""` for unhandled event types.
@@ -41,10 +41,14 @@ pattern-matching on `Fractal.Enum.TensionEvent`.
 `Components/Comments.elm` imports `viewEvent` from `Fractale.Event` and uses it via `Html.Lazy.lazy4`:
 
 ```elm
-Lazy.lazy4 viewEvent session focusid action event
+Lazy.lazy4 viewEvent session focusid nodeType event
 ```
 
 The view functions use polymorphic `Html msg` signatures (not `Html Msg`), making them reusable from any module without message type coupling.
+
+## Governance context
+
+The Node kind passed to `viewEvent` is derived from the tension's governed/draft Node state; see `docs/node-governance.md`.
 
 ## i18n
 

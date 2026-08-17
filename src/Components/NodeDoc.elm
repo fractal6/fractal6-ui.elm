@@ -22,27 +22,14 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
-import Fractale.User exposing (UserState(..))
-import Fractale.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nodeIdCodec, tensionCharacFromNode)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
 import Components.Comments exposing (viewCommentInputHeader)
 import Components.UserSearchPanel exposing (viewUser, viewUsers)
 import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Html exposing (showIf, showMaybe)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (space_)
-import Utils.Date exposing (formatDate)
-import Schema.Enum.BlobType as BlobType
-import Schema.Enum.NodeMode as NodeMode
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.NodeVisibility as NodeVisibility
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, nameidEncoder)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, input, label, p, span, strong, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)
@@ -53,10 +40,22 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
+import Schema.Enum.BlobType as BlobType
+import Schema.Enum.NodeMode as NodeMode
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.NodeVisibility as NodeVisibility
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Session exposing (SessionCommon)
 import String.Format as Format
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Date exposing (formatDate)
+import Utils.Html exposing (showIf, showMaybe)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_)
 
 
 
@@ -161,16 +160,6 @@ getMandate data =
 getRoleType : NodeDoc -> Maybe RoleType.RoleType
 getRoleType data =
     data.form.node.role_type
-
-
-getNodeNameid : String -> NodeFragment -> String
-getNodeNameid receiverid node =
-    node.nameid
-        |> Maybe.map
-            (\nid ->
-                nodeIdCodec receiverid nid (withDefault NodeType.Role node.type_)
-            )
-        |> withDefault ""
 
 
 hasMandate : Maybe Mandate -> Bool
@@ -459,7 +448,6 @@ type alias OrgaNodeData =
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
-    , receiver : String
     , hasInnerToolbar : Bool
     , isAdmin : Bool
     }
@@ -803,7 +791,7 @@ viewAboutSection node data op_m =
           showIf (op_m == Nothing) <|
             div [ class "columns mt-1 mb-3" ]
                 [ div [ class "column is-6 py-0" ]
-                    [ viewNodeDescr False node (tensionCharacFromNode node) ]
+                    [ viewNodeDescr False node ]
                 ]
         , -- Node About
           showMaybe data.node_data.about
@@ -1421,7 +1409,7 @@ updateNodeForm field value form =
             { form | node = { node | mode = NodeMode.fromString value } }
 
         "name" ->
-            if List.member form.action [ Just TensionAction.NewRole, Just TensionAction.NewCircle ] then
+            if form.isNewNode then
                 { form
                     | node = { node | name = Just value, nameid = Just (nameidEncoder value) }
                     , post = Dict.insert "title" value form.post

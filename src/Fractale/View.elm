@@ -24,7 +24,7 @@ module Fractale.View exposing (..)
 import Assets as A
 import Components.LabelSearchPanel exposing (viewLabels)
 import Dict exposing (Dict)
-import Fractale.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, TensionCharac, eor2ur, getOrgaRoles, getTensionCharac, nid2rootid, nid2type, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, eor2ur, getOrgaRoles, getTensionNode, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParentFragmentFromRole, maxPinnedTensions)
 import Fractale.User exposing (UserState(..))
 import Generated.Route as Route exposing (toHref)
@@ -35,7 +35,7 @@ import Identicon
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, NodeLifecycle(..), PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode
@@ -43,7 +43,6 @@ import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
 import Session exposing (CommonMsg, SessionCommon)
@@ -76,20 +75,8 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
         rootnameid =
             nid2rootid tension.receiver.nameid
 
-        -- Governance tensions with a circle/role blob get auto-closed on creation,
-        -- so showing "Closed" status is misleading since the object exists.
-        isAutoClosedGov =
-            tension.type_
-                == TensionType.Governance
-                && tension.status
-                == TensionStatus.Closed
-                && (case Maybe.map (\a -> (getTensionCharac a).doc_type) tension.action of
-                        Just (NODE _) ->
-                            True
-
-                        _ ->
-                            False
-                   )
+        tensionNode =
+            getTensionNode tension
     in
     div
         [ class ("media mediaBox is-hoverable " ++ size) ]
@@ -117,7 +104,8 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
                 ]
             , span [ class "level is-smaller2 is-mobile" ]
                 [ div [ class "level-left" ]
-                    [ showIf (showStatus && not isAutoClosedGov) <|
+                    [ -- Governance tensions with a node doc are auto-closed on creation; a "Closed" tag would be misleading since the object exists.
+                      showIf (showStatus && not (tension.type_ == TensionType.Governance && tensionNode /= Nothing)) <|
                         span
                             [ title (tensionStatus2str tension.status)
                             ]
@@ -135,19 +123,15 @@ mediaTension baseUri commonOp session focusid tension showStatus showRecip size 
             [ showIf showRecip (viewCircleTarget baseUri commonOp "is-small" tension.receiver)
             , br [] []
             , span [ class "level is-mobile icons-list" ]
-                [ case tension.action of
-                    Just action ->
-                        let
-                            tc =
-                                getTensionCharac action
-                        in
+                [ case tensionNode of
+                    Just node ->
                         a
                             [ class "level-item discrete-link"
-                            , title ("1 " ++ action2str action ++ " " ++ T.attached)
+                            , title ("1 " ++ nodeType2str node.type_ ++ " " ++ T.attached)
                             , href (Route.Tension_Dynamic_Dynamic_Action { param1 = rootnameid, param2 = tension.id } |> toHref)
                             ]
-                            [ A.icon (action2icon tc ++ " icon-sm")
-                            , showIf (tc.action_type == ARCHIVE) <|
+                            [ A.icon (nodeType2icon node.type_ ++ " icon-sm")
+                            , showIf (node.lifecycle == Archived) <|
                                 span [ title T.archived ] [ A.icon0 "ml-2 icon-archive icon-sm has-text-warning" ]
                             ]
 
@@ -725,8 +709,8 @@ counter c =
 --
 
 
-viewNodeDescr : Bool -> Node -> TensionCharac -> Html msg
-viewNodeDescr inPanel node tc =
+viewNodeDescr : Bool -> Node -> Html msg
+viewNodeDescr inPanel node =
     let
         cls =
             if inPanel then
@@ -736,29 +720,26 @@ viewNodeDescr inPanel node tc =
                 "is-flex"
     in
     div [] <|
-        case tc.doc_type of
-            NODE NodeType.Circle ->
+        case node.type_ of
+            NodeType.Circle ->
                 [ div [ class "is-mobile mb-3", classList [ ( cls, True ) ] ] <|
                     [ span [ class "level-left mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (nodeType2icon node.type_) (SE.humanize (nodeType2str node.type_)) ] ]
                     , span [ class "level-item mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon node.type_) (auth2val node) ] ]
                     , span [ class "level-right" ]
                         [ span [ class "tag tagHint" ] [ A.icon1 (visibility2icon node.visibility) (NodeVisibility.toString node.visibility) ] ]
                     ]
                 ]
 
-            NODE NodeType.Role ->
+            NodeType.Role ->
                 [ div [ class "is-mobile mb-3 is-flex" ] <|
                     [ span [ class "level-left mr-4" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ] ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (nodeType2icon node.type_) (SE.humanize (nodeType2str node.type_)) ] ]
                     , span [ class "level-item" ]
-                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ] ]
+                        [ span [ class "tag tagHint" ] [ A.icon1 (auth2icon node.type_) (auth2val node) ] ]
                     ]
                 ]
-
-            MD ->
-                [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
 
 
 viewNodeRef : Bool -> FractalBaseRoute -> EmitterOrReceiver -> Html msg
@@ -986,131 +967,44 @@ visibility2extra visibility =
             T.notImplemented
 
 
-auth2str : TensionCharac -> String
-auth2str tc =
-    case tc.doc_type of
-        NODE nt ->
-            case nt of
-                NodeType.Circle ->
-                    T.governance
+auth2str : NodeType.NodeType -> String
+auth2str nodeType =
+    case nodeType of
+        NodeType.Circle ->
+            T.governance
 
-                NodeType.Role ->
-                    T.authority
-
-        MD ->
-            T.notImplemented
+        NodeType.Role ->
+            T.authority
 
 
-action2str : TensionAction.TensionAction -> String
-action2str action =
-    case action of
-        TensionAction.NewCircle ->
-            T.circle
+auth2val : Node -> String
+auth2val node =
+    case node.type_ of
+        NodeType.Circle ->
+            NodeMode.toString node.mode
 
-        TensionAction.EditCircle ->
-            T.circle
-
-        TensionAction.ArchivedCircle ->
-            T.circle
-
-        TensionAction.NewRole ->
-            T.role
-
-        TensionAction.EditRole ->
-            T.role
-
-        TensionAction.ArchivedRole ->
-            T.role
-
-        TensionAction.NewMd ->
-            T.document
-
-        TensionAction.EditMd ->
-            T.document
-
-        TensionAction.ArchivedMd ->
-            T.document
+        NodeType.Role ->
+            Maybe.map RoleType.toString node.role_type |> withDefault T.unknown
 
 
-auth2val : Node -> TensionCharac -> String
-auth2val node tc =
-    case tc.doc_type of
-        NODE nt ->
-            case nt of
-                NodeType.Circle ->
-                    NodeMode.toString node.mode
+auth2icon : NodeType.NodeType -> String
+auth2icon nodeType =
+    case nodeType of
+        NodeType.Circle ->
+            "icon-shield"
 
-                NodeType.Role ->
-                    Maybe.map RoleType.toString node.role_type |> withDefault T.unknown
-
-        MD ->
-            T.notImplemented
+        NodeType.Role ->
+            "icon-key"
 
 
-auth2icon : TensionCharac -> String
-auth2icon tc =
-    case tc.doc_type of
-        NODE nt ->
-            case nt of
-                NodeType.Circle ->
-                    "icon-shield"
+nodeType2icon : NodeType.NodeType -> String
+nodeType2icon nodeType =
+    case nodeType of
+        NodeType.Circle ->
+            "icon-git-branch"
 
-                NodeType.Role ->
-                    "icon-key"
-
-        MD ->
-            T.notImplemented
-
-
-action2icon : { x | doc_type : DocType } -> String
-action2icon x =
-    case x.doc_type of
-        NODE nt ->
-            case nt of
-                NodeType.Circle ->
-                    "icon-git-branch"
-
-                NodeType.Role ->
-                    "icon-leaf"
-
-        MD ->
-            "icon-markdown"
-
-
-archiveActionToggle : Maybe TensionAction.TensionAction -> Maybe TensionAction.TensionAction
-archiveActionToggle action_m =
-    action_m
-        |> Maybe.map
-            (\action ->
-                case action of
-                    TensionAction.EditCircle ->
-                        Just TensionAction.ArchivedCircle
-
-                    TensionAction.ArchivedCircle ->
-                        Just TensionAction.EditCircle
-
-                    TensionAction.EditRole ->
-                        Just TensionAction.ArchivedRole
-
-                    TensionAction.ArchivedRole ->
-                        Just TensionAction.EditRole
-
-                    TensionAction.EditMd ->
-                        Just TensionAction.ArchivedMd
-
-                    TensionAction.ArchivedMd ->
-                        Just TensionAction.EditMd
-
-                    TensionAction.NewCircle ->
-                        Nothing
-
-                    TensionAction.NewRole ->
-                        Nothing
-
-                    TensionAction.NewMd ->
-                        Nothing
-            )
-        |> withDefault Nothing
+        NodeType.Role ->
+            "icon-leaf"
 
 
 

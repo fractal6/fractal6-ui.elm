@@ -24,24 +24,14 @@ module Components.Board exposing (Msg(..), State, board_result, init, nodeID, su
 import Assets as A
 import Browser.Dom as Dom
 import Browser.Events as Events
-import Fractale.User exposing (UserState(..), uctxFromUser)
-import Utils.Bulma as B
-import Fractale.Codecs exposing (ActionType(..), NodeFocus, getTensionCharac, nid2rootid)
-import Fractale.View exposing (action2icon, action2str, statusColor, tensionIcon)
 import Components.LabelSearchPanel exposing (viewLabels)
 import Components.LinkTensionPanel as LinkTensionPanel exposing (ColTarget)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.ProjectColumnModal as ProjectColumnModal exposing (ModalType(..))
 import Dict exposing (Dict)
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendSleep)
-import Utils.List exposing (insertAt)
-import Utils.Maybe exposing (unwrap)
-import Utils.DomEvents exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
-import Schema.Enum.ProjectColumnType as ProjectColumnType
-import Schema.Enum.ProjectStatus as ProjectStatus
-import Schema.Enum.TensionStatus as TensionStatus
+import Fractale.Codecs exposing (NodeFocus, getTensionNode, nid2rootid)
+import Fractale.User exposing (UserState(..), uctxFromUser)
+import Fractale.View exposing (nodeType2icon, nodeType2str, statusColor, tensionIcon)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, div, hr, i, span, text, textarea)
 import Html.Attributes exposing (attribute, autofocus, class, classList, href, id, readonly, rows, style, target, title, value)
@@ -54,10 +44,19 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (CardKind(..), IdPayload, Label, Post, ProjectCard, ProjectColumn, ProjectColumnLite, ProjectData, ProjectDraft, Tension, TensionProject, User, UserCtx, Username)
 import Ports
 import Query.QueryProject exposing (addProjectCard, deleteProjectColumns, moveProjectCard, moveProjectColumn, removeProjectCards)
+import Schema.Enum.ProjectColumnType as ProjectColumnType
+import Schema.Enum.ProjectStatus as ProjectStatus
+import Schema.Enum.TensionStatus as TensionStatus
 import Scroll exposing (scrollToSubBottom)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Task
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickPD, onClickSP, onDragEnd, onDragEnter, onDragLeave, onDragOverPD, onDragStart, onMousedownPD)
+import Utils.List exposing (insertAt)
+import Utils.Maybe exposing (unwrap)
 
 
 type State
@@ -1312,17 +1311,13 @@ viewMediaTension cardid isProjectAdmin isEdited focus t =
             withDefault 0 t.n_comments
 
         status_html =
-            case t.action of
-                Just action ->
-                    let
-                        tc =
-                            getTensionCharac action
-                    in
+            case getTensionNode t of
+                Just node ->
                     div
-                        [ title (action2str tc.action)
+                        [ title (nodeType2str node.type_)
                         , style "left" "15px"
                         ]
-                        [ A.icon0 (action2icon tc ++ " icon-sm") ]
+                        [ A.icon0 (nodeType2icon node.type_ ++ " icon-sm") ]
 
                 Nothing ->
                     case t.status of

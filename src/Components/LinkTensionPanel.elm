@@ -26,9 +26,8 @@ import Auth exposing (ErrState(..), parseErr)
 import Fractale.Graph exposing (getPathWithChildren)
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Utils.Bulma as B
-import Fractale.Codecs exposing (DocType(..))
 import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (action2icon, tensionIcon3, viewTensionLight)
+import Fractale.View exposing (nodeType2icon, tensionIcon3, viewTensionLight)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu as TreeMenu exposing (viewSelectorTree)
@@ -607,7 +606,7 @@ viewPanel tree_data path_data model =
                     , isOpen = model.isOpenTargetFilter
                     , dropdown_cls = "mr-2"
                     , button_cls = "is-small"
-                    , button_html = A.icon1 (action2icon { doc_type = NODE model.target.type_ }) model.target.name
+                    , button_html = A.icon1 (nodeType2icon model.target.type_) model.target.name
                     , msg = OnToggleTargetFilter
                     , menu_cls = ""
                     , content_cls = ""

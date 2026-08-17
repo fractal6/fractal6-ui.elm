@@ -23,7 +23,13 @@
 module ModelSchema exposing (..)
 
 import Dict exposing (Dict)
-import Utils.Maybe exposing (mor)
+import Graphql.Http
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet
+import Json.Encode as JE
+import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
+import Maybe exposing (withDefault)
+import RemoteData
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.ContractType as ContractType
@@ -34,21 +40,14 @@ import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.ProjectColumnType as ProjectColumnType
 import Schema.Enum.ProjectStatus as ProjectStatus
 import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
 import Schema.Enum.UserType as UserType
 import Schema.Scalar
 import Schema.ScalarCodecs
-import Graphql.Http
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet
-import Json.Encode as JE
-import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
-import Maybe exposing (withDefault)
-import RemoteData
 import Text as T
+import Utils.Maybe exposing (mor)
 
 
 
@@ -352,7 +351,8 @@ type alias Tension =
 
     --, emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
-    , action : Maybe TensionAction.TensionAction
+    , governed_node : Maybe GovernedNode
+    , draft_node_type : Maybe NodeType.NodeType
     , status : TensionStatus.TensionStatus
 
     -- aggregated
@@ -498,15 +498,15 @@ type alias TensionHead =
     --, emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , status : TensionStatus.TensionStatus
-    , action : Maybe TensionAction.TensionAction
+    , governed_node : Maybe GovernedNode
 
     -- Computed
     , isSubscribed : Bool
-    , hasBeenPushed : Bool
     , isPinned : Bool
 
     -- List and Head
-    , blobs : Maybe (List Blob) -- head / len() == 1
+    , latest_blob : Maybe Blob
+    , draft_node_type : Maybe NodeType.NodeType
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : Maybe (List Event)
 
@@ -525,12 +525,13 @@ type alias TensionPanel =
     , assignees : Maybe (List User)
     , receiver : EmitterOrReceiver
     , status : TensionStatus.TensionStatus
-    , action : Maybe TensionAction.TensionAction
+    , governed_node : Maybe GovernedNode
 
     -- Computed
     , isSubscribed : Bool
 
     -- List and Head
+    , draft_node_type : Maybe NodeType.NodeType
     , history : Maybe (List Event)
     , comments : Maybe (List Comment)
     }
@@ -601,8 +602,30 @@ type alias Blob =
     }
 
 
+type alias GovernedNode =
+    { nameid : String
+    , type_ : NodeType.NodeType
+    , isArchived : Bool
+    }
+
+
+type NodeLifecycle
+    = Draft
+    | Active
+    | Archived
+
+
+type alias TensionNode =
+    { type_ : NodeType.NodeType
+    , lifecycle : NodeLifecycle
+    }
+
+
 type alias TensionBlobFlag =
-    { title : String, blobs : Maybe (List BlobFlag) }
+    { title : String
+    , blobs : Maybe (List BlobFlag)
+    , governed_node : Maybe GovernedNode
+    }
 
 
 type alias BlobFlag =

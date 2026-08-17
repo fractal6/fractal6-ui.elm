@@ -39,7 +39,7 @@ import Components.UserSearchPanel as UserSearchPanel exposing (viewUsers)
 import Dict
 import Form.Help as Help
 import Form.NewTension as NTF
-import Fractale.Codecs exposing (ActionType(..), DocType(..), Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.Form exposing (..)
 import Fractale.Graph exposing (..)
@@ -67,7 +67,6 @@ import Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchProjectTemplatesS
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.ProjectColumnType
-import Schema.Enum.TensionAction as TensionAction
 import Schema.Enum.TensionType as TensionType
 import Session exposing (CommonMsg, GlobalCmd(..), LabelSearchPanelOnClickAction(..), SessionCommon, UserSearchPanelOnClickAction(..))
 import Text as T
@@ -2190,7 +2189,7 @@ view global model =
             }
 
         panelData =
-            { tc = { action = TensionAction.EditRole, action_type = EDIT, doc_type = NODE NodeType.Role }
+            { lifecycle = Active
             , isRight = True
             , domid = "actionPanelHelper"
             , tree_data = TreeMenu.getOrgaData_ model.treeMenu

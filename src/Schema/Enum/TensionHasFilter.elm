@@ -19,11 +19,11 @@ type TensionHasFilter
     | Title
     | Type_
     | Status
-    | Action
     | Assignees
     | Labels
     | Comments
     | Blobs
+    | Governed_node
     | History
     | Mentions
     | Contracts
@@ -34,7 +34,7 @@ type TensionHasFilter
 
 list : List TensionHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Assignees, Labels, Comments, Blobs, History, Mentions, Contracts, Subscribers, Project_statuses, N_comments ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Assignees, Labels, Comments, Blobs, Governed_node, History, Mentions, Contracts, Subscribers, Project_statuses, N_comments ]
 
 
 decoder : Decoder TensionHasFilter
@@ -76,9 +76,6 @@ decoder =
                     "status" ->
                         Decode.succeed Status
 
-                    "action" ->
-                        Decode.succeed Action
-
                     "assignees" ->
                         Decode.succeed Assignees
 
@@ -90,6 +87,9 @@ decoder =
 
                     "blobs" ->
                         Decode.succeed Blobs
+
+                    "governed_node" ->
+                        Decode.succeed Governed_node
 
                     "history" ->
                         Decode.succeed History
@@ -152,9 +152,6 @@ toString enum____ =
         Status ->
             "status"
 
-        Action ->
-            "action"
-
         Assignees ->
             "assignees"
 
@@ -166,6 +163,9 @@ toString enum____ =
 
         Blobs ->
             "blobs"
+
+        Governed_node ->
+            "governed_node"
 
         History ->
             "history"
@@ -233,9 +233,6 @@ fromString enumString____ =
         "status" ->
             Just Status
 
-        "action" ->
-            Just Action
-
         "assignees" ->
             Just Assignees
 
@@ -247,6 +244,9 @@ fromString enumString____ =
 
         "blobs" ->
             Just Blobs
+
+        "governed_node" ->
+            Just Governed_node
 
         "history" ->
             Just History

@@ -27,9 +27,9 @@ import Browser.Events as Events
 import Fractale.Form exposing (Ev)
 import Fractale.User exposing (UserState(..))
 import Utils.Bulma as B
-import Fractale.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
+import Fractale.Codecs exposing (nid2type, nodeIdCodec)
 import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (action2icon)
+import Fractale.View exposing (nodeType2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu exposing (viewSelectorTree)
@@ -756,11 +756,11 @@ viewNodeSelect n onChangeTarget =
         ]
         [ case nid2type n.nameid of
             NodeType.Circle ->
-                A.icon1 (action2icon { doc_type = NODE NodeType.Circle }) n.name
+                A.icon1 (nodeType2icon NodeType.Circle) n.name
 
             NodeType.Role ->
                 span []
-                    [ A.icon1 (action2icon { doc_type = NODE NodeType.Role }) n.name
+                    [ A.icon1 (nodeType2icon NodeType.Role) n.name
                     , case n.first_link of
                         Just f ->
                             span [ class "is-username is-size-7" ] [ text (space_ ++ "@" ++ f.username) ]

@@ -20,8 +20,7 @@
 
 
 module Fractale.Graph exposing
-    ( blobFromTensionHead
-    , countOpenTensions
+    ( countOpenTensions
     , getChildren
     , getNode
     , getNodeName
@@ -360,16 +359,6 @@ localGraphFromOrga nameid orga_d =
                     }
                 )
                 focus_m
-
-        _ ->
-            Nothing
-
-
-blobFromTensionHead : TensionHead -> Maybe Blob
-blobFromTensionHead th =
-    case th.blobs of
-        Just [ b ] ->
-            Just b
 
         _ ->
             Nothing

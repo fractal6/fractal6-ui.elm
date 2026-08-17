@@ -22,7 +22,7 @@
 module Components.HelperBar exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
-import Fractale.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isProjectBaseUri, isTensionBaseUri, nearestCircleid, nid2rootid, nid2type, toLink)
 import Fractale.Graph exposing (getParent)
 import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (counter, viewRole, visibility2icon)
@@ -414,7 +414,6 @@ viewPath baseUri uriQuery maybePath =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
 
                     icon =
-                        --span [ onClick OnToggleTreeMenu ] [ A.icon0 ("button-light has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
                         --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
                         A.icon0 "icon-layers icon-lg"
                 in

@@ -28,9 +28,15 @@ module Query.AddTension exposing
     , buildMandate
     )
 
-import Fractale.Form exposing (Ev, TensionForm, UserForm, encodeLabel)
 import Dict
-import Utils.List exposing (listToMaybe)
+import Fractale.Form exposing (Ev, TensionForm, UserForm, encodeLabel)
+import GqlClient exposing (..)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
+import Graphql.SelectionSet as SelectionSet exposing (with)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (..)
+import Query.QueryTension exposing (tensionPayload)
+import RemoteData exposing (RemoteData)
 import Schema.Enum.BlobType as BlobType
 import Schema.Enum.CommentOrderable as CommentOrderable
 import Schema.Enum.NodeType as NodeType
@@ -44,13 +50,7 @@ import Schema.Object.AddTensionPayload
 import Schema.Object.Comment
 import Schema.Object.Tension
 import Schema.Scalar
-import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (with)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (..)
-import Query.QueryTension exposing (tensionPayload)
-import RemoteData exposing (RemoteData)
+import Utils.List exposing (listToMaybe)
 
 
 
@@ -169,8 +169,7 @@ addTensionInputEncoder f =
         inputOpt =
             \x ->
                 { x
-                    | action = fromMaybe f.action
-                    , comments = buildComment createdAt f.uctx.username (Just message)
+                    | comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                     , labels = buildLabels f
                     , assignees = buildAssignees f
