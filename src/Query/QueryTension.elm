@@ -37,12 +37,15 @@ module Query.QueryTension exposing
     , queryCircleTension
     , queryExtTension
     , queryIntTension
+    , orgNodesFilter
+    , orgTensionPayload
+    , queryOrgTensions
     , queryPinnedTensions
     , tensionPayload
     )
 
 import Dict exposing (Dict)
-import Fractale.Codecs exposing (nid2rootid)
+import Fractale.Codecs exposing (membershipRoleTypes, nid2rootid)
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
@@ -53,6 +56,8 @@ import Query.QueryNode exposing (emiterOrReceiverPayload, emiterOrReceiverWithPi
 import RemoteData
 import Schema.Enum.BlobOrderable as BlobOrderable
 import Schema.Enum.ContractStatus as ContractStatus
+import Schema.Enum.NodeHasFilter as NodeHasFilter
+import Schema.Enum.NodeOrderable as NodeOrderable
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionOrderable as TensionOrderable
@@ -740,6 +745,115 @@ queryExtTension url targetids first offset query_ status_ authors labels type_ m
             (tensionPayloadFiltered authors labels)
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+
+
+
+--
+-- Org filters: list the governance tensions behind the nodes of a subtree
+-- (roles/circles, archived or not). Tension filters can't reach node
+-- properties, so we query Node and walk back through `source` (the published
+-- blob) to its tension.
+--
+
+
+type alias OrgNodeQuery =
+    { nameid : String -- subtree root, matched by nameid prefix
+    , type_ : NodeType.NodeType
+    , isArchived : Bool
+    , noFirstLink : Bool -- True: vacant role (no first_link)
+    , sort : Maybe String -- newest (default) | oldest | activity
+    , first : Int
+    , offset : Int
+    }
+
+
+queryOrgTensions url q msg =
+    makeGQLQuery url
+        (Query.queryNode (orgNodesFilter q) orgTensionPayload)
+        (RemoteData.fromResult >> decodeResponse orgTensionDecoder >> msg)
+
+
+orgTensionPayload : SelectionSet (Maybe Tension) Schema.Object.Node
+orgTensionPayload =
+    Schema.Object.Node.source identity (Schema.Object.Blob.tension identity tensionPayload)
+
+
+orgTensionDecoder : Maybe (List (Maybe (Maybe Tension))) -> Maybe (List Tension)
+orgTensionDecoder data =
+    Maybe.map (List.filterMap (Maybe.andThen identity)) data
+
+
+orgNodesFilter : OrgNodeQuery -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+orgNodesFilter q a =
+    { a
+        | first = Present q.first
+        , offset = Present q.offset
+        , order = Present (orgNodesOrder q.sort)
+        , filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c
+                        | nameid = Present { eq = Absent, in_ = Absent, regexp = Present ("/^" ++ q.nameid ++ "(#|$)/") }
+                        , type_ = Present { eq = Present q.type_, in_ = Absent }
+                        , isArchived = Present q.isArchived
+
+                        -- Exclude membership nodes (@username roles) and the Owner role:
+                        -- they have no governance tension, hence no `source` blob.
+                        -- Open roles also exclude nodes that already have a first_link.
+                        , not = Present (orgNodesNot q.noFirstLink)
+                    }
+                )
+                |> Present
+    }
+
+
+{-| Membership nodes (and Owner) have no source tension. Open roles also drop
+nodes that already have a first_link — `not: { or: [role_type, has] }`.
+-}
+orgNodesNot : Bool -> Input.NodeFilter
+orgNodesNot noFirstLink =
+    let
+        excludeMembership =
+            Input.buildNodeFilter
+                (\d ->
+                    { d
+                        | role_type =
+                            Present
+                                { eq = Absent
+                                , in_ = Present (List.map Just membershipRoleTypes)
+                                }
+                    }
+                )
+    in
+    if noFirstLink then
+        Input.buildNodeFilter
+            (\d ->
+                { d
+                    | or =
+                        Present
+                            [ Just excludeMembership
+                            , Just (Input.buildNodeFilter (\e -> { e | has = Present [ Just NodeHasFilter.First_link ] }))
+                            ]
+                }
+            )
+
+    else
+        excludeMembership
+
+
+{-| Mirror of the tension sort keys on the node, since we order on Node here.
+-}
+orgNodesOrder : Maybe String -> Input.NodeOrder
+orgNodesOrder sort =
+    case sort of
+        Just "oldest" ->
+            Input.buildNodeOrder (\b -> { b | asc = Present NodeOrderable.CreatedAt })
+
+        Just "activity" ->
+            Input.buildNodeOrder (\b -> { b | desc = Present NodeOrderable.UpdatedAt })
+
+        _ ->
+            Input.buildNodeOrder (\b -> { b | desc = Present NodeOrderable.CreatedAt })
 
 
 subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments

@@ -26,13 +26,6 @@ import Auth exposing (ErrState(..))
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, mergePinnedTensions)
-import Fractale.HotUpdate exposing (hotTensionPush, hotTensionPush2)
-import Fractale.User exposing (freshSessionOnOrgaSwitch)
-import Fractale.Board as BB exposing (viewBoard)
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
-import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
-import Fractale.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -45,20 +38,16 @@ import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Dict.Extra as DE
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf)
-import Utils.Maybe exposing (unwrap)
-import Utils.String exposing (space_, upH)
-import Utils.DomEvents exposing (onClickPD, onKeydown)
-import Utils.Url exposing (queryBuilder, queryParser)
 import Fifo exposing (Fifo)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.TensionStatus as TensionStatus
-import Schema.Enum.TensionType as TensionType
+import Fractale.Board as BB exposing (viewBoard)
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
+import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
+import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, mergePinnedTensions)
+import Fractale.HotUpdate exposing (hotTensionPush, hotTensionPush2)
+import Fractale.User exposing (freshSessionOnOrgaSwitch)
+import Fractale.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, button, div, h2, input, li, span, text, ul)
@@ -72,13 +61,24 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryLocalGraph, queryPinnedTensionsSub)
+import Query.QueryTension exposing (queryOrgTensions)
 import RemoteData
 import Requests exposing (fetchTensionsAll, fetchTensionsCount, fetchTensionsInt)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionStatus as TensionStatus
+import Schema.Enum.TensionType as TensionType
 import Session exposing (CommonMsg, GlobalCmd(..), SessionCommon, ViewMode(..))
 import Task
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickPD, onClickSP, onKeydown)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
+import Utils.String exposing (space_, upH)
+import Utils.Url exposing (queryBuilder, queryParser)
 
 
 
@@ -202,6 +202,9 @@ type alias Model =
     , viewMode : TensionsView
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
+    , orgFilter : OrgFilter
+    , isOrgFilterOpen : Bool
+    , isCatMoreOpen : Bool
     , depthFilter : DepthFilter
     , sortFilter : SortFilter
     , authors : List User
@@ -256,6 +259,7 @@ queryIsEmpty : Model -> Bool
 queryIsEmpty model =
     (model.statusFilter == defaultStatusFilter)
         && (model.typeFilter == defaultTypeFilter)
+        && (model.orgFilter == defaultOrgFilter)
         && (model.depthFilter == defaultDepthFilter)
         && (model.authors == defaultAuthorsFilter)
         && (model.labels == defaultLabelsFilter)
@@ -459,6 +463,127 @@ typeFilter2Text x =
             tensionType2str t
 
 
+
+{- Org filters: filter on the governance tension of the org nodes (roles/circles) -}
+
+
+type OrgFilter
+    = NoOrgFilter
+    | OpenRolesFilter
+    | RolesFilter
+    | CirclesFilter
+    | ArchivedRolesFilter
+    | ArchivedCirclesFilter
+
+
+orgFilterList =
+    [ OpenRolesFilter, RolesFilter, CirclesFilter, ArchivedRolesFilter, ArchivedCirclesFilter ]
+
+
+orgFilterEncoder : OrgFilter -> String
+orgFilterEncoder x =
+    case x of
+        NoOrgFilter ->
+            ""
+
+        OpenRolesFilter ->
+            "open_roles"
+
+        RolesFilter ->
+            "roles"
+
+        CirclesFilter ->
+            "circles"
+
+        ArchivedRolesFilter ->
+            "archived_roles"
+
+        ArchivedCirclesFilter ->
+            "archived_circles"
+
+
+orgFilterDecoder : String -> OrgFilter
+orgFilterDecoder x =
+    case x of
+        "open_roles" ->
+            OpenRolesFilter
+
+        "roles" ->
+            RolesFilter
+
+        "circles" ->
+            CirclesFilter
+
+        "archived_roles" ->
+            ArchivedRolesFilter
+
+        "archived_circles" ->
+            ArchivedCirclesFilter
+
+        _ ->
+            NoOrgFilter
+
+
+defaultOrgFilter =
+    NoOrgFilter
+
+
+orgFilter2Text : OrgFilter -> String
+orgFilter2Text x =
+    case x of
+        NoOrgFilter ->
+            T.all
+
+        OpenRolesFilter ->
+            T.openRoles
+
+        RolesFilter ->
+            T.roles
+
+        CirclesFilter ->
+            T.circles
+
+        ArchivedRolesFilter ->
+            T.archivedRoles
+
+        ArchivedCirclesFilter ->
+            T.archivedCircles
+
+
+orgFilter2Help : OrgFilter -> Maybe String
+orgFilter2Help x =
+    case x of
+        OpenRolesFilter ->
+            Just T.openRolesHelp
+
+        _ ->
+            Nothing
+
+
+{-| Node selector behind each org filter. Nothing means no org filtering.
+-}
+orgFilterSpec : OrgFilter -> Maybe { type_ : NodeType.NodeType, isArchived : Bool, noFirstLink : Bool }
+orgFilterSpec x =
+    case x of
+        NoOrgFilter ->
+            Nothing
+
+        OpenRolesFilter ->
+            Just { type_ = NodeType.Role, isArchived = False, noFirstLink = True }
+
+        RolesFilter ->
+            Just { type_ = NodeType.Role, isArchived = False, noFirstLink = False }
+
+        CirclesFilter ->
+            Just { type_ = NodeType.Circle, isArchived = False, noFirstLink = False }
+
+        ArchivedRolesFilter ->
+            Just { type_ = NodeType.Role, isArchived = True, noFirstLink = False }
+
+        ArchivedCirclesFilter ->
+            Just { type_ = NodeType.Circle, isArchived = True, noFirstLink = False }
+
+
 type SortFilter
     = NewestSort
     | OldestSort
@@ -657,6 +782,9 @@ init global flags =
         sessionCommon =
             freshSessionOnOrgaSwitch fs session.common
 
+        orgFilter_ =
+            Dict.get "org" session.common.query |> withDefault [] |> List.head |> withDefault "" |> orgFilterDecoder
+
         -- Model init
         model =
             { node_focus = newFocus
@@ -674,6 +802,9 @@ init global flags =
             , viewMode = Dict.get "v" session.common.query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
             , statusFilter = Dict.get "s" session.common.query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , typeFilter = Dict.get "t" session.common.query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
+            , orgFilter = orgFilter_
+            , isOrgFilterOpen = orgFilter_ /= defaultOrgFilter
+            , isCatMoreOpen = False
             , depthFilter = Dict.get "d" session.common.query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , sortFilter = Dict.get "sort" session.common.query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
             , authors = Dict.get "u" session.common.query |> withDefault [] |> List.map (\x -> User x Nothing)
@@ -838,6 +969,9 @@ type Msg
     | ChangeViewFilter TensionsView
     | ChangeStatusFilter StatusFilter
     | ChangeTypeFilter TypeFilter
+    | ChangeOrgFilter OrgFilter
+    | OnToggleOrgFilter
+    | OnToggleCatMore
     | ChangeDepthFilter DepthFilter
     | ChangeSortFilter SortFilter
     | ChangeAuthor
@@ -1100,6 +1234,9 @@ update global message model =
                     else
                         ( 1, nfirstL, offset * nfirstL )
 
+                isBoard =
+                    List.member model.viewMode [ CircleView, LabelView, AssigneeView ]
+
                 query =
                     { targetids = nameids
                     , first = first
@@ -1117,32 +1254,61 @@ update global message model =
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
 
-            else if List.member model.viewMode [ CircleView, LabelView, AssigneeView ] then
-                ( { model | tensions_all = LoadingSlowly }
-                , fetchTensionsAll apis { query | first = nfirstC, offset = 0 } GotTensionsAll
-                , Ports.hide "footBar"
-                )
-
-            else if List.member model.viewMode [ ListView, IntExtView ] then
-                ( if reset then
-                    { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
-
-                  else
-                    model
-                , Cmd.batch
-                    [ fetchTensionsInt apis query (GotTensionsInt inc)
-
-                    -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
-                    -- @DEBUG: tension_ext obsolete. SortBy broken for ListTension direction view...
-                    --, fetchTensionExt apis query GotTensionsExt
-                    --
-                    , fetchTensionsCount apis { query | status = Nothing } GotTensionsCount
-                    ]
-                , Ports.show "footBar"
-                )
-
             else
-                ( model, Cmd.none, Cmd.none )
+                case orgFilterSpec model.orgFilter of
+                    Just spec ->
+                        let
+                            orgQuery =
+                                { nameid = model.node_focus.nameid
+                                , type_ = spec.type_
+                                , isArchived = spec.isArchived
+                                , noFirstLink = spec.noFirstLink
+                                , sort = query.sort
+                                , first = ternary isBoard nfirstC first
+                                , offset = ternary isBoard 0 skip
+                                }
+                        in
+                        if isBoard then
+                            ( { model | tensions_all = LoadingSlowly }
+                            , queryOrgTensions apis orgQuery GotTensionsAll
+                            , Ports.hide "footBar"
+                            )
+
+                        else
+                            -- No count query here: governance tensions are auto-closed, so open/closed
+                            -- counters are meaningless and hidden by the view.
+                            ( ternary reset { model | offset = offset, tensions_int = LoadingSlowly } model
+                            , queryOrgTensions apis orgQuery (GotTensionsInt inc)
+                            , Ports.show "footBar"
+                            )
+
+                    Nothing ->
+                        if isBoard then
+                            ( { model | tensions_all = LoadingSlowly }
+                            , fetchTensionsAll apis { query | first = nfirstC, offset = 0 } GotTensionsAll
+                            , Ports.hide "footBar"
+                            )
+
+                        else if List.member model.viewMode [ ListView, IntExtView ] then
+                            ( if reset then
+                                { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
+
+                              else
+                                model
+                            , Cmd.batch
+                                [ fetchTensionsInt apis query (GotTensionsInt inc)
+
+                                -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
+                                -- @DEBUG: tension_ext obsolete. SortBy broken for ListTension direction view...
+                                --, fetchTensionExt apis query GotTensionsExt
+                                --
+                                , fetchTensionsCount apis { query | status = Nothing } GotTensionsCount
+                                ]
+                            , Ports.show "footBar"
+                            )
+
+                        else
+                            ( model, Cmd.none, Cmd.none )
 
         ChangePattern value ->
             ( { model | pattern = value }, Cmd.none, Cmd.none )
@@ -1155,10 +1321,20 @@ update global message model =
 
         ChangeTypeFilter value ->
             if List.member value [ OneType TensionType.Announcement, OneType TensionType.Governance, OneType TensionType.Help ] then
-                ( { model | typeFilter = value, statusFilter = AllStatus }, send SubmitSearchReset, Cmd.none )
+                ( { model | typeFilter = value, orgFilter = NoOrgFilter, isOrgFilterOpen = False, isCatMoreOpen = False, statusFilter = AllStatus }, send SubmitSearchReset, Cmd.none )
 
             else
-                ( { model | typeFilter = value, statusFilter = OpenStatus }, send SubmitSearchReset, Cmd.none )
+                ( { model | typeFilter = value, orgFilter = NoOrgFilter, isOrgFilterOpen = False, isCatMoreOpen = False, statusFilter = OpenStatus }, send SubmitSearchReset, Cmd.none )
+
+        ChangeOrgFilter value ->
+            -- Org filters query nodes, they supersede the type filter.
+            ( { model | orgFilter = value, typeFilter = AllTypes }, send SubmitSearchReset, Cmd.none )
+
+        OnToggleOrgFilter ->
+            ( { model | isOrgFilterOpen = not model.isOrgFilterOpen }, Cmd.none, Cmd.none )
+
+        OnToggleCatMore ->
+            ( { model | isCatMoreOpen = not model.isCatMoreOpen }, Cmd.none, Cmd.none )
 
         ChangeDepthFilter value ->
             ( { model | depthFilter = value }, send SubmitSearchReset, Cmd.none )
@@ -1240,6 +1416,7 @@ update global message model =
                          , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
+                         , ( "org", orgFilterEncoder model.orgFilter )
                          , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
                          , ( "sort", sortFilterEncoder model.sortFilter |> (\x -> ternary (x == defaultSort) "" x) )
                          , ( "load", loadEncoder model.offset |> (\x -> ternary (x == "0" || x == "1") "" x) )
@@ -1845,25 +2022,86 @@ view_ global model =
         ]
 
 
-viewCatMenu : TypeFilter -> Html Msg
-viewCatMenu typeFilter =
-    div [ class "list-settings menu mt-1 is-hidden-mobile" ]
-        [ TensionType.list
-            |> List.map
-                (\x ->
-                    li []
-                        [ a [ onClickPD (ChangeTypeFilter (OneType x)), target "_blank", classList [ ( "is-active", OneType x == typeFilter ) ] ]
-                            [ tensionIcon3 x ]
+viewCatMenu : TypeFilter -> OrgFilter -> Bool -> Html Msg
+viewCatMenu typeFilter orgFilter isOpen =
+    let
+        typeItems =
+            TensionType.list
+                |> List.map
+                    (\x ->
+                        li []
+                            [ a [ onClickPD (ChangeTypeFilter (OneType x)), target "_blank", classList [ ( "is-active", orgFilter == NoOrgFilter && OneType x == typeFilter ) ] ]
+                                [ tensionIcon3 x ]
+                            ]
+                    )
+                |> List.append
+                    [ li []
+                        [ a [ onClickPD (ChangeTypeFilter AllTypes), target "_blank", classList [ ( "is-active", orgFilter == NoOrgFilter && AllTypes == typeFilter ) ] ]
+                            [ text T.allCat ]
                         ]
-                )
-            |> List.append
-                [ li []
-                    [ a [ onClickPD (ChangeTypeFilter AllTypes), target "_blank", classList [ ( "is-active", AllTypes == typeFilter ) ] ]
-                        [ text T.allCat ]
                     ]
+
+        moreFilters =
+            li [ class "more-filters-item" ]
+                [ a
+                    [ onClickPD OnToggleCatMore
+                    , target "_blank"
+                    , class "more-filters"
+                    , classList [ ( "is-open", isOpen ), ( "is-active", not isOpen && orgFilter /= NoOrgFilter ) ]
+                    , attribute "aria-expanded" (ternary isOpen "true" "false")
+                    ]
+                    [ span [] [ text T.moreFilters ]
+                    , A.icon "icon-chevron-right1 icon-tiny"
+                    ]
+                , ul [ class "org-filter-acc", classList [ ( "is-open", isOpen ) ] ] <|
+                    List.map
+                        (\t ->
+                            li []
+                                [ a
+                                    ([ onClickPD (ChangeOrgFilter t), target "_blank", classList [ ( "is-active", orgFilter == t ) ] ]
+                                        ++ unwrap [] (title >> List.singleton) (orgFilter2Help t)
+                                    )
+                                    [ text (orgFilter2Text t) ]
+                                ]
+                        )
+                        orgFilterList
                 ]
-            |> ul [ class "menu-list" ]
+    in
+    div [ class "list-settings menu mt-1 is-hidden-mobile" ]
+        [ ul [ class "menu-list" ] (typeItems ++ [ moreFilters ]) ]
+
+
+{-| Second pane of the type dropdown: org-node filters (roles/circles).
+-}
+viewOrgFilterItems : OrgFilter -> List (Html Msg)
+viewOrgFilterItems current =
+    List.map
+        (\t ->
+            div
+                ([ class "dropdown-item button-light", onClick <| ChangeOrgFilter t ]
+                    ++ unwrap [] (title >> List.singleton) (orgFilter2Help t)
+                )
+                [ ternary (current == t) A.checked A.unchecked, text (orgFilter2Text t) ]
+        )
+        orgFilterList
+
+
+viewMoreFiltersToggle : Bool -> Html Msg
+viewMoreFiltersToggle isBack =
+    div
+        [ class "dropdown-item button-light more-filters is-flex is-align-items-center"
+        , onClickSP OnToggleOrgFilter
         ]
+        (if isBack then
+            [ A.icon "icon-chevron-left1 icon-tiny"
+            , span [ class "ml-2" ] [ text T.moreFilters ]
+            ]
+
+         else
+            [ span [ class "is-flex-grow-1" ] [ text T.moreFilters ]
+            , A.icon "icon-chevron-right1 icon-tiny"
+            ]
+        )
 
 
 viewSearchBar : Model -> Html Msg
@@ -1887,43 +2125,48 @@ viewSearchBar model =
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "type-filter" ]
-                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
+                            [ ternary (model.typeFilter /= defaultTypeFilter || model.orgFilter /= defaultOrgFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
                             , text T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "type-filter", class "dropdown-menu", attribute "role" "menu" ]
-                            [ div
-                                [ class "dropdown-content" ]
-                                ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
-                                    [ ternary (model.typeFilter == AllTypes) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
-                                 ]
-                                    ++ List.map
-                                        (\t ->
-                                            div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
-                                                [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
-                                        )
-                                        TensionType.list
-                                )
-                            ]
-                        ]
-                    , div [ class "control dropdown" ]
-                        [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
-                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
-                            , text T.status
-                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
-                            ]
-                        , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
-                            [ div
-                                [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (model.statusFilter == AllStatus) A.checked A.unchecked, text (statusFilter2Text AllStatus) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (model.statusFilter == OpenStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (model.statusFilter == ClosedStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
+                            [ div [ class "dropdown-content type-filter-slide", classList [ ( "is-org", model.isOrgFilterOpen ) ] ]
+                                [ div [ class "type-filter-pane type-filter-pane-types" ]
+                                    ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
+                                        [ ternary (model.typeFilter == AllTypes && model.orgFilter == NoOrgFilter) A.checked A.unchecked, text (typeFilter2Text AllTypes) ]
+                                     ]
+                                        ++ List.map
+                                            (\t ->
+                                                div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
+                                                    [ ternary (model.typeFilter == OneType t) A.checked A.unchecked, tensionIcon3 t ]
+                                            )
+                                            TensionType.list
+                                        ++ [ viewMoreFiltersToggle False ]
+                                    )
+                                , div [ class "type-filter-pane type-filter-pane-org" ]
+                                    (viewMoreFiltersToggle True :: viewOrgFilterItems model.orgFilter)
                                 ]
                             ]
                         ]
+                    , showIf (model.orgFilter == NoOrgFilter) <|
+                        div [ class "control dropdown" ]
+                            [ div [ class "button is-small dropdown-trigger", attribute "aria-controls" "status-filter" ]
+                                [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
+                                , text T.status
+                                , A.icon "ml-2 icon-chevron-down1 icon-tiny"
+                                ]
+                            , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
+                                [ div
+                                    [ class "dropdown-content" ]
+                                    [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
+                                        [ ternary (model.statusFilter == AllStatus) A.checked A.unchecked, text (statusFilter2Text AllStatus) ]
+                                    , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
+                                        [ ternary (model.statusFilter == OpenStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Open) (statusFilter2Text OpenStatus) ] ]
+                                    , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
+                                        [ ternary (model.statusFilter == ClosedStatus) A.checked A.unchecked, span [ class "is-inline-flex" ] [ A.icon1 ("icon-alert-circle icon-sm has-text-" ++ statusColor TensionStatus.Closed) (statusFilter2Text ClosedStatus) ] ]
+                                    ]
+                                ]
+                            ]
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "button is-small" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-top-right is-link-back" ] []) (text "")
@@ -2019,8 +2262,8 @@ viewSearchBar model =
         ]
 
 
-viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> SortFilter -> Bool -> Html Msg
-viewTensionsListHeader focus counts statusFilter sortFilter isEmpty =
+viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> OrgFilter -> Int -> SortFilter -> Bool -> Html Msg
+viewTensionsListHeader focus counts statusFilter orgFilter orgN sortFilter isEmpty =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
@@ -2037,7 +2280,12 @@ viewTensionsListHeader focus counts statusFilter sortFilter isEmpty =
         ]
         [ div [ class "level m-0 is-mobile" ]
             [ div [ class "level-left px-3" ]
-                [ viewTensionsCount counts statusFilter
+                -- Governance tensions are auto-closed: show "N Open roles" instead of open/closed counters.
+                [ if orgFilter == NoOrgFilter then
+                    viewTensionsCount counts statusFilter
+
+                  else
+                    viewOrgFilterTitle orgFilter orgN
                 , showIf showGoRoot <|
                     viewGoRoot "is-hidden-mobile is-align-self-flex-start px-5 " OnGoRoot
                 ]
@@ -2101,6 +2349,19 @@ viewTensionsCount counts statusFilter =
             div [] []
 
 
+viewOrgFilterTitle : OrgFilter -> Int -> Html Msg
+viewOrgFilterTitle orgFilter orgN =
+    span [ class "is-size-6 has-text-weight-semibold is-discrete ml-1" ]
+        [ text
+            (if orgN < 0 then
+                orgFilter2Text orgFilter
+
+             else
+                String.fromInt orgN ++ " " ++ orgFilter2Text orgFilter
+            )
+        ]
+
+
 viewListTensions : Model -> Html Msg
 viewListTensions model =
     let
@@ -2109,13 +2370,19 @@ viewListTensions model =
 
         isEmpty =
             isDataEmpty model.tensions_int
+
+        orgN =
+            withMaybeMapData List.length model.tensions_int |> withDefault -1
+
+        isOrgFilterCatMenuOpen =
+            model.isCatMoreOpen || model.orgFilter /= NoOrgFilter
     in
     div [ class "columns" ]
         [ showIf (model.session.viewMode == DesktopView) <|
-            div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter ]
+            div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter model.orgFilter isOrgFilterCatMenuOpen ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
-                Lazy.lazy5 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.sortFilter isEmpty
+                Lazy.lazy7 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.orgFilter orgN model.sortFilter isEmpty
             , viewTensions ListTension model
             ]
         ]

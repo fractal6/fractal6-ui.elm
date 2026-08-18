@@ -683,6 +683,26 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Archived"
   fr="Archivé"
 
+[moreFilters]
+  en="More filters"
+  fr="Plus de filtres"
+
+[openRoles]
+  en="Open roles"
+  fr="Rôles ouverts"
+
+[openRolesHelp]
+  en="Roles without a member linked"
+  fr="Rôles sans membre lié"
+
+[archivedRoles]
+  en="Archived roles"
+  fr="Rôles archivés"
+
+[archivedCircles]
+  en="Archived circles"
+  fr="Cercles archivés"
+
 [revisionNotPublished]
   en="Revision not published"
   fr="Révision non publiée"

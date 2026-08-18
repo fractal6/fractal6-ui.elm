@@ -443,4 +443,40 @@
             font-weight: 600;
         }
     }
+
+    .more-filters-item {
+        margin-top: 0.4rem;
+    }
+
+    .more-filters {
+        color: var(--text-weak);
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        i {
+            display: inline-block;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        &.is-open i {
+            transform: rotate(90deg);
+        }
+    }
+
+    .org-filter-acc {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        padding: 0 0 0 0.35rem;
+        margin: 0;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease;
+
+        &.is-open {
+            max-height: 14rem;
+            opacity: 1;
+        }
+    }
 }

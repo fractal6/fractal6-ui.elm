@@ -47,6 +47,47 @@
     }
 }
 
+.dropdown-content.type-filter-slide {
+    display: grid;
+    overflow: hidden;
+
+    .type-filter-pane {
+        grid-area: 1 / 1;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease;
+    }
+
+    .type-filter-pane-types {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .type-filter-pane-org {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    &.is-org {
+        .type-filter-pane-types {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .type-filter-pane-org {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+
+    .more-filters {
+        color: var(--text-weak);
+        font-size: 0.85em;
+    }
+}
+
 .filterBar.has-addons {
     .control {
         &:first-child .button {
