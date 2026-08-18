@@ -74,6 +74,7 @@ type Msg
     | OnClickEmoji String
     | OnArrowMove String
     | OnSelectActive
+    | NoMsg
 
 
 type alias Out =
@@ -147,6 +148,9 @@ update msg (State model) =
                 Nothing ->
                     ( State model, out0 )
 
+        NoMsg ->
+            ( State model, out0 )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
@@ -199,4 +203,9 @@ viewEmojiSeeker (State model) =
                                     [ text e.unicode ]
                             )
             ]
+        , if model.results == [] then
+            text ""
+
+          else
+            p [ class "help-label is-weak p-1", attribute "style" "cursor: default !important;", onMousedownPD NoMsg ] [ text "type text to filter emoji" ]
         ]
