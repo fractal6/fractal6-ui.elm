@@ -1308,23 +1308,29 @@ viewVerRow session expandedDiff onToggleDiff i blob prevBlob =
     in
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
         [ td []
-            [ span [ class "is-w", title T.showDiff, onClick (onToggleDiff blob.id) ]
-                [ A.icon (ternary isExpanded "icon-chevron-down1" "icon-chevron-right1") ]
-            , span [] [ text (blobTypeStr session.lexicon blob.blob_type) ]
+            [ span [] [ text (blobTypeStr session.lexicon blob.blob_type) ]
             , text space_
             , byAt session blob.createdBy blob.createdAt
             ]
-        , td []
+        , td [ class "has-text-right" ]
             [ case blob.pushedFlag of
                 Just flag ->
-                    div
-                        [ attribute "style" "cursor: inherit;"
+                    span
+                        [ class "mr-3"
+                        , attribute "style" "cursor: inherit;"
                         , title (T.published ++ " " ++ formatDate session.lang session.now flag)
                         ]
                         [ A.icon "icon-flag" ]
 
                 Nothing ->
                     text ""
+            , button
+                [ class "button is-small is-rounded is-discrete"
+                , classList [ ( "is-active", isExpanded ) ]
+                , title T.showDiff
+                , onClick (onToggleDiff blob.id)
+                ]
+                [ A.icon "icon-eye" ]
             ]
         ]
     ]

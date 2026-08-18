@@ -14,6 +14,14 @@ and status tags are hidden for governance tensions since they are auto-closed
 on creation. The receiver codec is still used to build identity for drafts and
 the NewTension preview, where no Node exists yet.
 
+## Revisions
+
+The document history is shown under the Tension page **Revisions** tab
+(`…/action?v=history`, `NodeView = NodeVersions`). Each revision row
+(`Components/NodeDoc.elm` `viewVersions`) has an inline eye button toggling a
+split diff against the previous revision. Revision deletion (via a
+`TensionEvent.BlobDeleted` event proxy) is planned but not implemented yet.
+
 ## Where things live
 
 - `src/ModelSchema.elm` — `GovernedNode`, `NodeLifecycle`, `TensionNode` types.
