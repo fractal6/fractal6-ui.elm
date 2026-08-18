@@ -57,16 +57,6 @@
     border: 2px dashed var(--border-color-light) !important;
 }
 
-.docToolbar {
-    .button {
-        background-color: var(--background-evidence) !important;
-        &.is-active {
-            color: var(--link) !important;
-            border: 1px solid var(--link);
-        }
-    }
-}
-
 .doc-container {
     .subtitle {
         color: var(--text-light);
@@ -76,12 +66,6 @@
 
     .level {
         margin-bottom: 1rem;
-    }
-
-    .is-small .docToolbar {
-        .button {
-            font-size: 0.6rem !important;
-        }
     }
 }
 

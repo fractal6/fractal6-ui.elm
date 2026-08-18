@@ -1624,7 +1624,7 @@ view global model =
                         t.title
 
                     Document ->
-                        t.title ++ " · " ++ T.document
+                        t.title ++ " · " ++ ternary (model.nodeView == NodeVersions) T.revisions T.document
 
                     Contracts ->
                         t.title ++ " · " ++ T.contracts
@@ -1807,9 +1807,17 @@ viewTension u t model =
                                 [ A.icon1 "icon-message-square" T.conversation ]
                             ]
                         , if t.latest_blob /= Nothing then
-                            li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
+                            li [ classList [ ( "is-active", model.activeTab == Document && model.nodeView /= NodeVersions ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                     [ A.icon1 "icon-copy" T.document ]
+                                ]
+
+                          else
+                            text ""
+                        , if t.latest_blob /= Nothing then
+                            li [ classList [ ( "is-active", model.activeTab == Document && model.nodeView == NodeVersions ) ] ]
+                                [ a [ href ((Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ++ "?v=history") ]
+                                    [ A.icon1 "icon-history" T.revisions ]
                                 ]
 
                           else

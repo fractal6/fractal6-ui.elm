@@ -498,9 +498,7 @@ view_ data op_m =
                         Just op ->
                             div [ class "mb-4" ]
                                 [ div [ class "level" ]
-                                    [ div [ class "level-left" ]
-                                        [ viewToolbar op.data.mode data ]
-                                    , div [ class "level-right" ]
+                                    [ div [ class "level-right" ]
                                         [ viewNodeStatus data.isAdmin op ]
                                     ]
                                 , case op.publish_result of
@@ -527,43 +525,6 @@ view_ data op_m =
 
         _ ->
             text ""
-
-
-viewToolbar : NodeView -> OrgaNodeData -> Html msg
-viewToolbar mode data =
-    let
-        tid =
-            withDefaultData "" data.tid_r
-
-        iconOpts =
-            ternary data.hasInnerToolbar "icon-xs" ""
-    in
-    div [ class "field has-addons docToolbar" ]
-        [ p
-            [ class "control"
-            , title T.edit
-            ]
-            [ a
-                [ class "button is-small is-rounded  is-discrete"
-                , classList [ ( "is-active", mode == NodeEdit ) ]
-                , href
-                    (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
-                ]
-                [ A.icon ("icon-edit-2 " ++ iconOpts) ]
-            ]
-        , p
-            [ class "control"
-            , title T.revisions
-            ]
-            [ a
-                [ class "button is-small is-rounded  is-discrete"
-                , classList [ ( "is-active", mode == NodeVersions ) ]
-                , href
-                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
-                ]
-                [ A.icon ("icon-history " ++ iconOpts) ]
-            ]
-        ]
 
 
 viewToolbarDropdown : NodeView -> OrgaNodeData -> Html msg
