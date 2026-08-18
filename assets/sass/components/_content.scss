@@ -57,6 +57,54 @@
     border: 2px dashed var(--border-color-light) !important;
 }
 
+.diff-split {
+    width: 100%;
+    table-layout: fixed;
+    font-family: monospace;
+    font-size: 0.85em;
+
+    td {
+        width: 50%;
+        padding: 0 0.5em;
+        border: none;
+        vertical-align: top;
+        white-space: pre-wrap;
+        word-break: break-word;
+
+        &:empty::before {
+            content: "\00a0";
+        }
+    }
+
+    .diff-del {
+        background-color: rgba(255, 82, 82, 0.14);
+
+        .diff-chg {
+            background-color: rgba(255, 82, 82, 0.4);
+        }
+    }
+
+    .diff-add {
+        background-color: rgba(35, 209, 96, 0.14);
+
+        .diff-chg {
+            background-color: rgba(35, 209, 96, 0.4);
+        }
+    }
+
+    .diff-chg {
+        border-radius: 2px;
+    }
+
+    .diff-skip td {
+        background-color: var(--background-evidence);
+        color: var(--text-light);
+        font-style: italic;
+        text-align: center;
+        font-size: 0.9em;
+    }
+}
+
 .doc-container {
     .subtitle {
         color: var(--text-light);

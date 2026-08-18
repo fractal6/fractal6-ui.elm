@@ -630,6 +630,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Revisions"
   fr="Révisions"
 
+[showDiff]
+  en="Show changes"
+  fr="Voir les modifications"
+
+[noChanges]
+  en="No changes"
+  fr="Aucune modification"
+
+[unchangedLines]
+  en="{{}} unchanged lines"
+  fr="{{}} lignes inchangées"
+
 [history]
   en="History"
   fr="Historique"

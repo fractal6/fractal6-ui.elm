@@ -32,7 +32,7 @@ import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, input, label, p, span, strong, table, tbody, td, text, textarea, th, thead, tr)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -48,12 +48,14 @@ import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
 import Session exposing (SessionCommon)
+import Set
 import String.Format as Format
 import Text as T
 import Time
 import Utils.Bool exposing (ternary)
 import Utils.Date exposing (formatDate)
 import Utils.Html exposing (showIf, showMaybe)
+import Utils.Diff as Diff
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (space_)
 
@@ -462,6 +464,8 @@ type alias Op msg =
     , tension_blobs : GqlData TensionBlobs
 
     -- Blob control
+    , expandedDiff : String -- blob id whose diff is expanded in the revisions view ("" = none)
+    , onToggleDiff : String -> msg
     , onSubmit : Bool -> (Time.Posix -> msg) -> msg
     , onSubmitBlob : NodeDoc -> Time.Posix -> msg
     , onCancelBlob : msg
@@ -647,7 +651,7 @@ viewBlob data op_m =
                                )
 
                 NodeVersions ->
-                    viewVersions op.session op.tension_blobs
+                    viewVersions op.session op.expandedDiff op.onToggleDiff op.tension_blobs
 
                 NoView ->
                     text ""
@@ -1263,28 +1267,24 @@ viewSelectGovernance op =
 -- Versions view
 
 
-viewVersions : SessionCommon -> GqlData TensionBlobs -> Html msg
-viewVersions session blobsData =
-    Lazy.lazy2 viewVersions_ session blobsData
+viewVersions : SessionCommon -> String -> (String -> msg) -> GqlData TensionBlobs -> Html msg
+viewVersions session expandedDiff onToggleDiff blobsData =
+    Lazy.lazy4 viewVersions_ session expandedDiff onToggleDiff blobsData
 
 
-viewVersions_ : SessionCommon -> GqlData TensionBlobs -> Html msg
-viewVersions_ session blobsData =
+viewVersions_ : SessionCommon -> String -> (String -> msg) -> GqlData TensionBlobs -> Html msg
+viewVersions_ session expandedDiff onToggleDiff blobsData =
     case blobsData of
         Success tblobs ->
             let
-                headers =
-                    []
+                blobs =
+                    withDefault [] tblobs.blobs
             in
             div [ class "table-containe" ]
                 -- @debug table-container with width=100%, do not work!
                 [ table [ class "table is-fullwidth table-container" ]
-                    [ thead [ class "is-size-7" ]
-                        [ tr [] (headers |> List.map (\x -> th [] [ text x ]))
-                        ]
-                    , tblobs.blobs
-                        |> withDefault []
-                        |> List.indexedMap (\i d -> viewVerRow session i d)
+                    [ blobs
+                        |> List.indexedMap (\i d -> viewVerRow session expandedDiff onToggleDiff i d (LE.getAt (i + 1) blobs))
                         |> List.concat
                         |> tbody []
                     ]
@@ -1300,10 +1300,20 @@ viewVersions_ session blobsData =
             text ""
 
 
-viewVerRow : SessionCommon -> Int -> Blob -> List (Html msg)
-viewVerRow session i blob =
+viewVerRow : SessionCommon -> String -> (String -> msg) -> Int -> Blob -> Maybe Blob -> List (Html msg)
+viewVerRow session expandedDiff onToggleDiff i blob prevBlob =
+    let
+        isExpanded =
+            expandedDiff == blob.id
+    in
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr session.lexicon blob.blob_type) ], text space_, byAt session blob.createdBy blob.createdAt ]
+        [ td []
+            [ span [ class "is-w", title T.showDiff, onClick (onToggleDiff blob.id) ]
+                [ A.icon (ternary isExpanded "icon-chevron-down1" "icon-chevron-right1") ]
+            , span [] [ text (blobTypeStr session.lexicon blob.blob_type) ]
+            , text space_
+            , byAt session blob.createdBy blob.createdAt
+            ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
@@ -1318,6 +1328,244 @@ viewVerRow session i blob =
             ]
         ]
     ]
+        ++ (if isExpanded then
+                [ tr [] [ td [ colspan 2 ] [ viewBlobDiff blob prevBlob ] ] ]
+
+            else
+                []
+           )
+
+
+
+--- Blob diff (split view)
+
+
+{-| The diffable text fields of a blob, labels aligned across revisions. -}
+blobFields : Blob -> List ( String, String )
+blobFields blob =
+    let
+        n =
+            withDefault (initNodeFragment Nothing) blob.node
+
+        m =
+            withDefault initMandate n.mandate
+    in
+    [ ( T.name, withDefault "" n.name )
+    , ( T.about, withDefault "" n.about )
+    , ( T.purpose, m.purpose )
+    , ( T.responsabilities, withDefault "" m.responsabilities )
+    , ( T.domains, withDefault "" m.domains )
+    , ( T.policies, withDefault "" m.policies )
+    , ( T.document, withDefault "" blob.md )
+    ]
+
+
+viewBlobDiff : Blob -> Maybe Blob -> Html msg
+viewBlobDiff blob prevBlob =
+    let
+        old_fields =
+            prevBlob
+                |> Maybe.map blobFields
+                |> withDefault (List.map (\( k, _ ) -> ( k, "" )) (blobFields blob))
+
+        changed =
+            List.map2 (\( k, new ) ( _, old ) -> ( k, old, new )) (blobFields blob) old_fields
+                |> List.filter (\( _, old, new ) -> old /= new)
+    in
+    if changed == [] then
+        div [ class "is-discrete is-italic pb-2" ] [ text T.noChanges ]
+
+    else
+        div [ class "pb-2" ] <|
+            List.map
+                (\( k, old, new ) ->
+                    div [ class "mb-3" ]
+                        [ div [ class "is-size-7 has-text-weight-semibold mb-1" ] [ text k ]
+                        , table [ class "diff-split" ]
+                            [ tbody [] (Diff.diffLines old new |> toSplitRows |> withContext diffContext |> List.map viewHunk) ]
+                        ]
+                )
+                changed
+
+
+type alias DiffRow =
+    { left : Maybe String, right : Maybe String, changed : Bool }
+
+
+{-| Unchanged lines kept around each change. -}
+diffContext : Int
+diffContext =
+    4
+
+
+type Hunk
+    = Line DiffRow
+    | Skipped Int
+
+
+{-| Pair removed/added hunks side by side, padding the shorter side. -}
+toSplitRows : List (Diff.Change () String) -> List DiffRow
+toSplitRows changes =
+    let
+        flush ( rem, add ) rows =
+            rows ++ zipPad (List.reverse rem) (List.reverse add)
+
+        step change ( pending, rows ) =
+            case change of
+                Diff.Removed l ->
+                    ( Tuple.mapFirst ((::) l) pending, rows )
+
+                Diff.Added l ->
+                    ( Tuple.mapSecond ((::) l) pending, rows )
+
+                Diff.Similar l r _ ->
+                    ( ( [], [] ), flush pending rows ++ [ DiffRow (Just l) (Just r) True ] )
+
+                Diff.NoChange l ->
+                    ( ( [], [] ), flush pending rows ++ [ DiffRow (Just l) (Just l) False ] )
+
+        ( leftover, rows_ ) =
+            List.foldl step ( ( [], [] ), [] ) changes
+    in
+    flush leftover rows_
+
+
+zipPad : List String -> List String -> List DiffRow
+zipPad rem add =
+    let
+        n =
+            max (List.length rem) (List.length add)
+
+        pad xs =
+            List.map Just xs ++ List.repeat (n - List.length xs) Nothing
+    in
+    List.map2 (\l r -> DiffRow l r True) (pad rem) (pad add)
+
+
+{-| Keep changed lines plus `n` lines of context, collapsing the gaps. -}
+withContext : Int -> List DiffRow -> List Hunk
+withContext n rows =
+    let
+        kept =
+            rows
+                |> List.indexedMap Tuple.pair
+                |> List.filter (Tuple.second >> .changed)
+                |> List.concatMap (\( i, _ ) -> List.range (i - n) (i + n))
+                |> Set.fromList
+
+        step ( i, row ) acc =
+            if Set.member i kept then
+                Line row :: acc
+
+            else
+                case acc of
+                    (Skipped k) :: rest ->
+                        Skipped (k + 1) :: rest
+
+                    _ ->
+                        Skipped 1 :: acc
+    in
+    rows
+        |> List.indexedMap Tuple.pair
+        |> List.foldl step []
+        |> List.reverse
+
+
+viewHunk : Hunk -> Html msg
+viewHunk hunk =
+    case hunk of
+        Line row ->
+            viewDiffRow row
+
+        Skipped k ->
+            tr [ class "diff-skip" ]
+                [ td [ colspan 2 ] [ text (T.unchangedLines |> Format.value (String.fromInt k)) ] ]
+
+
+viewDiffRow : DiffRow -> Html msg
+viewDiffRow row =
+    let
+        ( left, right ) =
+            case ( row.changed, row.left, row.right ) of
+                ( True, Just l, Just r ) ->
+                    inlineDiff l r
+
+                _ ->
+                    ( [ text (withDefault "" row.left) ], [ text (withDefault "" row.right) ] )
+    in
+    tr []
+        [ td [ classList [ ( "diff-del", row.changed && row.left /= Nothing ) ] ] left
+        , td [ classList [ ( "diff-add", row.changed && row.right /= Nothing ) ] ] right
+        ]
+
+
+{-| Char-level highlight within a changed line pair. Skipped when the lines are
+too long or too dissimilar, where a char diff is noise rather than signal.
+-}
+inlineDiff : String -> String -> ( List (Html msg), List (Html msg) )
+inlineDiff l r =
+    let
+        size =
+            String.length l + String.length r
+    in
+    -- ponytail: O(NP) over chars, guarded by length; switch to word-level if prose diffs read noisy
+    if size > 4000 then
+        ( [ text l ], [ text r ] )
+
+    else
+        let
+            changes =
+                Diff.diff (String.toList l) (String.toList r)
+
+            common =
+                LE.count isNoChange changes
+        in
+        if toFloat (2 * common) / toFloat size < 0.3 then
+            -- too dissimilar: highlighting every char adds nothing
+            ( [ text l ], [ text r ] )
+
+        else
+            ( viewRuns (sideRuns True changes), viewRuns (sideRuns False changes) )
+
+
+isNoChange : Diff.Change Never Char -> Bool
+isNoChange c =
+    case c of
+        Diff.NoChange _ ->
+            True
+
+        _ ->
+            False
+
+
+{-| Keep the chars visible on one side, flagging those that changed. -}
+sideChar : Bool -> Diff.Change Never Char -> Maybe ( Bool, Char )
+sideChar isLeft c =
+    case c of
+        Diff.NoChange ch ->
+            Just ( False, ch )
+
+        Diff.Removed ch ->
+            ternary isLeft (Just ( True, ch )) Nothing
+
+        Diff.Added ch ->
+            ternary isLeft Nothing (Just ( True, ch ))
+
+        Diff.Similar _ _ ever ->
+            never ever
+
+
+sideRuns : Bool -> List (Diff.Change Never Char) -> List ( Bool, String )
+sideRuns isLeft changes =
+    changes
+        |> List.filterMap (sideChar isLeft)
+        |> LE.groupWhile (\a b -> Tuple.first a == Tuple.first b)
+        |> List.map (\( x, xs ) -> ( Tuple.first x, String.fromList (List.map Tuple.second (x :: xs)) ))
+
+
+viewRuns : List ( Bool, String ) -> List (Html msg)
+viewRuns =
+    List.map (\( changed, s ) -> ternary changed (span [ class "diff-chg" ] [ text s ]) (text s))
 
 
 

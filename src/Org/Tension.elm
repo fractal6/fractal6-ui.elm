@@ -234,6 +234,7 @@ type alias Model =
     -- Blob Edit
     , nodeDoc : NodeDoc
     , publish_result : GqlData TensionBlobFlag
+    , expandedDiff : String -- blob id expanded in the revisions view ("" = none)
 
     -- Side Pane
     , isTensionAdmin : Bool
@@ -388,6 +389,7 @@ init global flags =
                                     x
                        )
             , publish_result = NotAsked
+            , expandedDiff = ""
 
             -- Side Pane
             , isTensionAdmin = withDefault False session.isAdmin
@@ -564,6 +566,7 @@ type Msg
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
       -- Blob edit
+    | OnToggleDiff String
     | ChangeBlobEdit NodeEdit
     | ChangeBlobPost String String
     | AddDomains
@@ -1040,6 +1043,9 @@ update global message model =
             , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid t.latest_blob)) ]
             , Cmd.none
             )
+
+        OnToggleDiff bid ->
+            ( { model | expandedDiff = ternary (model.expandedDiff == bid) "" bid }, Cmd.none, Cmd.none )
 
         ChangeBlobEdit value ->
             ( { model | nodeDoc = NodeDoc.setNodeEdit (Just value) model.nodeDoc }, Cmd.none, Ports.bulma_driver "blobDocument" )
@@ -1943,6 +1949,8 @@ viewDocument u t b model =
                 , publish_result = model.publish_result
                 , blob = b
                 , tension_blobs = model.tension_blobs
+                , expandedDiff = model.expandedDiff
+                , onToggleDiff = OnToggleDiff
                 , onSubmit = Submit
                 , onSubmitBlob = CommitBlob
                 , onCancelBlob = CancelBlob
@@ -2256,6 +2264,8 @@ viewSidePane u t model =
                                     , publish_result = model.publish_result
                                     , blob = blob
                                     , tension_blobs = model.tension_blobs
+                                    , expandedDiff = model.expandedDiff
+                                    , onToggleDiff = OnToggleDiff
                                     , onSubmit = Submit
                                     , onSubmitBlob = CommitBlob
                                     , onCancelBlob = CancelBlob
