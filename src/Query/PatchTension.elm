@@ -166,7 +166,7 @@ patchTensionInputEncoder f =
                                 | updatedAt = fromMaybe updatedAt
                                 , comments = buildComment createdAt f.uctx.username message
                                 , history = buildEvents createdAt f.uctx.username (f.events ++ pce_m)
-                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
+                                , blobs = buildBlob createdAt f.uctx.username f.withBlob f.users f.node
                             }
                         )
                         |> Present

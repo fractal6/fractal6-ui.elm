@@ -13,16 +13,13 @@ type BlobHasFilter
     | UpdatedAt
     | Message
     | Tension
-    | Blob_type
     | PushedFlag
-    | ArchivedFlag
     | Node
-    | Md
 
 
 list : List BlobHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Blob_type, PushedFlag, ArchivedFlag, Node, Md ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, PushedFlag, Node ]
 
 
 decoder : Decoder BlobHasFilter
@@ -46,20 +43,11 @@ decoder =
                     "tension" ->
                         Decode.succeed Tension
 
-                    "blob_type" ->
-                        Decode.succeed Blob_type
-
                     "pushedFlag" ->
                         Decode.succeed PushedFlag
 
-                    "archivedFlag" ->
-                        Decode.succeed ArchivedFlag
-
                     "node" ->
                         Decode.succeed Node
-
-                    "md" ->
-                        Decode.succeed Md
 
                     _ ->
                         Decode.fail ("Invalid BlobHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -86,20 +74,11 @@ toString enum____ =
         Tension ->
             "tension"
 
-        Blob_type ->
-            "blob_type"
-
         PushedFlag ->
             "pushedFlag"
 
-        ArchivedFlag ->
-            "archivedFlag"
-
         Node ->
             "node"
-
-        Md ->
-            "md"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -131,20 +110,11 @@ fromString enumString____ =
         "tension" ->
             Just Tension
 
-        "blob_type" ->
-            Just Blob_type
-
         "pushedFlag" ->
             Just PushedFlag
 
-        "archivedFlag" ->
-            Just ArchivedFlag
-
         "node" ->
             Just Node
-
-        "md" ->
-            Just Md
 
         _ ->
             Nothing

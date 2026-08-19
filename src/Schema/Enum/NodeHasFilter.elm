@@ -32,6 +32,7 @@ type NodeHasFilter
     | Lexicon
     | IsTemplateTensionOnly
     | IsPinnedTensionfetchRecursively
+    | IsRootArchived
     | Watchers
     | Children
     | Projects
@@ -53,7 +54,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Project_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Avatar, Cascade_directive ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Nameid, Rootnameid, Source, Name, About, Skills, IsRoot, Parent, Type_, Tensions_out, Tensions_in, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Lexicon, IsTemplateTensionOnly, IsPinnedTensionfetchRecursively, IsRootArchived, Watchers, Children, Projects, Pinned, Labels, Roles, Tension_templates, Project_templates, Role_ext, Role_type, Color, First_link, Contracts, Events_history, Activity, Avatar, Cascade_directive ]
 
 
 decoder : Decoder NodeHasFilter
@@ -133,6 +134,9 @@ decoder =
 
                     "isPinnedTensionfetchRecursively" ->
                         Decode.succeed IsPinnedTensionfetchRecursively
+
+                    "isRootArchived" ->
+                        Decode.succeed IsRootArchived
 
                     "watchers" ->
                         Decode.succeed Watchers
@@ -266,6 +270,9 @@ toString enum____ =
 
         IsPinnedTensionfetchRecursively ->
             "isPinnedTensionfetchRecursively"
+
+        IsRootArchived ->
+            "isRootArchived"
 
         Watchers ->
             "watchers"
@@ -404,6 +411,9 @@ fromString enumString____ =
 
         "isPinnedTensionfetchRecursively" ->
             Just IsPinnedTensionfetchRecursively
+
+        "isRootArchived" ->
+            Just IsRootArchived
 
         "watchers" ->
             Just Watchers

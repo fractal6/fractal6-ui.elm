@@ -231,6 +231,11 @@ isPinnedTensionfetchRecursively =
     Object.selectionForField "(Maybe Bool)" "isPinnedTensionfetchRecursively" [] (Decode.bool |> Decode.nullable)
 
 
+isRootArchived : SelectionSet (Maybe Bool) Schema.Object.Node
+isRootArchived =
+    Object.selectionForField "(Maybe Bool)" "isRootArchived" [] (Decode.bool |> Decode.nullable)
+
+
 type alias WatchersOptionalArguments =
     { filter : OptionalArgument Schema.InputObject.UserFilter
     , order : OptionalArgument Schema.InputObject.UserOrder

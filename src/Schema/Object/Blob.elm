@@ -11,7 +11,6 @@ import Graphql.Operation exposing (RootMutation, RootQuery, RootSubscription)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
-import Schema.Enum.BlobType
 import Schema.InputObject
 import Schema.Interface
 import Schema.Object
@@ -40,19 +39,9 @@ tension fillInOptionals____ object____ =
     Object.selectionForCompositeField "tension" optionalArgs____ object____ Basics.identity
 
 
-blob_type : SelectionSet Schema.Enum.BlobType.BlobType Schema.Object.Blob
-blob_type =
-    Object.selectionForField "Enum.BlobType.BlobType" "blob_type" [] Schema.Enum.BlobType.decoder
-
-
 pushedFlag : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.Blob
 pushedFlag =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "pushedFlag" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
-archivedFlag : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.Blob
-archivedFlag =
-    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "archivedFlag" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
 
 
 type alias NodeOptionalArguments =
@@ -73,11 +62,6 @@ node fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "node" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
-
-
-md : SelectionSet (Maybe String) Schema.Object.Blob
-md =
-    Object.selectionForField "(Maybe String)" "md" [] (Decode.string |> Decode.nullable)
 
 
 id : SelectionSet Schema.ScalarCodecs.Id Schema.Object.Blob

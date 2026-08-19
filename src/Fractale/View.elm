@@ -36,7 +36,6 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (EmitterOrReceiver, Label, Node, NodeExt, NodeLifecycle(..), PinTension, RoleExtCommon, TaggedPin, Tension, TensionLight, User, UserCommon, UserRoleCommon, UserView, Username)
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.Lang as Lang
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
@@ -1005,31 +1004,6 @@ nodeType2icon nodeType =
 
         NodeType.Role ->
             "icon-leaf"
-
-
-
---
--- Blob
---
-
-
-blobTypeStr : Dict String String -> BlobType.BlobType -> String
-blobTypeStr lexicon btype =
-    case btype of
-        BlobType.OnNode ->
-            T.onNode_blob
-
-        BlobType.OnAbout ->
-            T.onAbout_blob
-
-        BlobType.OnMandate ->
-            T.onMandate_blob lexicon
-
-        BlobType.OnAboutAndMandate ->
-            T.onAboutAndMandate_blob lexicon
-
-        BlobType.OnDoc ->
-            T.onDoc_blob
 
 
 

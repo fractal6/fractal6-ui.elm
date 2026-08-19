@@ -30,7 +30,6 @@ import Json.Encode as JE
 import Loading exposing (GqlData, RequestResult(..), errorGraphQLHttpToString)
 import Maybe exposing (withDefault)
 import RemoteData
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.Lang as Lang
@@ -595,9 +594,7 @@ type alias Blob =
     { id : String
     , createdAt : String
     , createdBy : Username
-    , blob_type : BlobType.BlobType
     , node : Maybe NodeFragment
-    , md : Maybe String
     , pushedFlag : Maybe String
     }
 

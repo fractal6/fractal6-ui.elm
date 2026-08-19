@@ -29,7 +29,7 @@ import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, nameidEncoder)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (Ev, FormText, InputViewMode(..), TensionForm, UserForm, initFormText, initTensionForm)
 import Fractale.User exposing (UserState(..))
-import Fractale.View exposing (blobTypeStr, byAt, helperButton, viewNodeDescr, viewUrlForm)
+import Fractale.View exposing (byAt, helperButton, viewNodeDescr, viewUrlForm)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, hr, i, input, label, p, span, strong, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, name, placeholder, required, rows, spellcheck, style, title, type_, value)
@@ -40,7 +40,6 @@ import Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadi
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
@@ -627,7 +626,7 @@ viewBlob data op_m =
                                     op.data.result == LoadingSlowly
                             in
                             [ viewAboutInput data.hasBeenPushed op.data.form.txt op.data.form.node op
-                            , viewBlobButtons BlobType.OnAbout isSendable isLoading op
+                            , viewBlobButtons isSendable isLoading op
                             ]
 
                          else
@@ -643,7 +642,7 @@ viewBlob data op_m =
                                             op.data.result == LoadingSlowly
                                     in
                                     [ viewMandateInput op.data.form.txt op.data.form.node.mandate op
-                                    , viewBlobButtons BlobType.OnMandate isSendable isLoading op
+                                    , viewBlobButtons isSendable isLoading op
                                     ]
 
                                 else
@@ -1159,8 +1158,8 @@ viewMandateInput txt mandate op =
 
 {-| Integrate in view\*Input when ths will be a state-full component
 -}
-viewBlobButtons : BlobType.BlobType -> Bool -> Bool -> Op msg -> Html msg
-viewBlobButtons blob_type isSendable isLoading op =
+viewBlobButtons : Bool -> Bool -> Op msg -> Html msg
+viewBlobButtons isSendable isLoading op =
     let
         d =
             op.data
@@ -1169,7 +1168,7 @@ viewBlobButtons blob_type isSendable isLoading op =
             op.data.form
 
         data =
-            { d | form = { f | blob_type = Just blob_type } }
+            { d | form = { f | withBlob = True } }
     in
     div []
         [ case op.data.result of
@@ -1308,7 +1307,14 @@ viewVerRow session expandedDiff onToggleDiff i blob prevBlob =
     in
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
         [ td []
-            [ span [] [ text (blobTypeStr session.lexicon blob.blob_type) ]
+            [ span []
+                [ text <|
+                    if prevBlob == Nothing then
+                        T.onNode_blob
+
+                    else
+                        T.document ++ space_ ++ T.edited
+                ]
             , text space_
             , byAt session blob.createdBy blob.createdAt
             ]
@@ -1362,7 +1368,6 @@ blobFields blob =
     , ( T.responsabilities, withDefault "" m.responsabilities )
     , ( T.domains, withDefault "" m.domains )
     , ( T.policies, withDefault "" m.policies )
-    , ( T.document, withDefault "" blob.md )
     ]
 
 

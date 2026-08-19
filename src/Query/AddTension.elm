@@ -37,7 +37,6 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.CommentOrderable as CommentOrderable
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.TensionEvent as TensionEvent
@@ -170,7 +169,7 @@ addTensionInputEncoder f =
             \x ->
                 { x
                     | comments = buildComment createdAt f.uctx.username (Just message)
-                    , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
+                    , blobs = buildBlob createdAt f.uctx.username f.withBlob f.users f.node
                     , labels = buildLabels f
                     , assignees = buildAssignees f
                     , message = fromMaybe (Dict.get "message" f.post)
@@ -230,27 +229,25 @@ buildComment createdAt username message_m =
         |> fromMaybe
 
 
-buildBlob : Schema.Scalar.DateTime -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
-buildBlob createdAt username blob_type_m users node post =
-    blob_type_m
-        |> Maybe.map
-            (\blob_type ->
-                [ Input.buildBlobRef
-                    (\x ->
-                        { x
-                            | createdAt = Present createdAt
-                            , createdBy =
-                                Input.buildUserRef
-                                    (\u -> { u | username = Present username })
-                                    |> Present
-                            , blob_type = Present blob_type
-                            , node = buildNodeFragmentRef users node
-                            , md = Dict.get "md" post |> fromMaybe
-                        }
-                    )
-                ]
-            )
-        |> fromMaybe
+buildBlob : Schema.Scalar.DateTime -> String -> Bool -> List UserForm -> NodeFragment -> OptionalArgument (List Input.BlobRef)
+buildBlob createdAt username withBlob users node =
+    if withBlob then
+        Present
+            [ Input.buildBlobRef
+                (\x ->
+                    { x
+                        | createdAt = Present createdAt
+                        , createdBy =
+                            Input.buildUserRef
+                                (\u -> { u | username = Present username })
+                                |> Present
+                        , node = buildNodeFragmentRef users node
+                    }
+                )
+            ]
+
+    else
+        Absent
 
 
 buildEvents : Schema.Scalar.DateTime -> String -> List Ev -> OptionalArgument (List Input.EventRef)

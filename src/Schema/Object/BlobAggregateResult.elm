@@ -62,23 +62,3 @@ pushedFlagMin =
 pushedFlagMax : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.BlobAggregateResult
 pushedFlagMax =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "pushedFlagMax" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
-archivedFlagMin : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.BlobAggregateResult
-archivedFlagMin =
-    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "archivedFlagMin" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
-archivedFlagMax : SelectionSet (Maybe Schema.ScalarCodecs.DateTime) Schema.Object.BlobAggregateResult
-archivedFlagMax =
-    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "archivedFlagMax" [] (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
-mdMin : SelectionSet (Maybe String) Schema.Object.BlobAggregateResult
-mdMin =
-    Object.selectionForField "(Maybe String)" "mdMin" [] (Decode.string |> Decode.nullable)
-
-
-mdMax : SelectionSet (Maybe String) Schema.Object.BlobAggregateResult
-mdMax =
-    Object.selectionForField "(Maybe String)" "mdMax" [] (Decode.string |> Decode.nullable)

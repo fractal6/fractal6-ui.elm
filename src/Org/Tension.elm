@@ -1921,49 +1921,44 @@ viewConversation u t model =
 
 viewDocument : UserState -> TensionHead -> Blob -> Model -> Html Msg
 viewDocument u t b model =
-    if b.md /= Nothing then
-        -- Markdown Document
-        div [] [ text "Markdown view not implemented" ]
+    -- Node Document
+    let
+        nodeData =
+            { focus = model.node_focus
+            , tid_r = Success t.id
+            , node = b.node |> Maybe.map (nodeFromTensionHead t)
+            , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault initNodeData
+            , leads = []
+            , session = model.session
+            , isLazy = False
+            , source = model.baseUri
+            , hasBeenPushed = t.governed_node /= Nothing
+            , hasInnerToolbar = False
+            , isAdmin = model.isTensionAdmin
+            }
 
-    else
-        -- Node Document
-        let
-            nodeData =
-                { focus = model.node_focus
-                , tid_r = Success t.id
-                , node = b.node |> Maybe.map (nodeFromTensionHead t)
-                , node_data = b.node |> Maybe.map (\d -> NodeData d.about d.mandate) |> withDefault initNodeData
-                , leads = []
-                , session = model.session
-                , isLazy = False
-                , source = model.baseUri
-                , hasBeenPushed = t.governed_node /= Nothing
-                , hasInnerToolbar = False
-                , isAdmin = model.isTensionAdmin
-                }
-
-            op =
-                { session = model.session
-                , data = model.nodeDoc
-                , result = NotAsked
-                , publish_result = model.publish_result
-                , blob = b
-                , tension_blobs = model.tension_blobs
-                , expandedDiff = model.expandedDiff
-                , onToggleDiff = OnToggleDiff
-                , onSubmit = Submit
-                , onSubmitBlob = CommitBlob
-                , onCancelBlob = CancelBlob
-                , onPushBlob = PushBlob
-                , onChangeEdit = ChangeBlobEdit
-                , onChangePost = ChangeBlobPost
-                , onAddDomains = AddDomains
-                , onAddPolicies = AddPolicies
-                , onAddResponsabilities = AddResponsabilities
-                , mdOps = Nothing
-                }
-        in
-        NodeDoc.view nodeData (Just op)
+        op =
+            { session = model.session
+            , data = model.nodeDoc
+            , result = NotAsked
+            , publish_result = model.publish_result
+            , blob = b
+            , tension_blobs = model.tension_blobs
+            , expandedDiff = model.expandedDiff
+            , onToggleDiff = OnToggleDiff
+            , onSubmit = Submit
+            , onSubmitBlob = CommitBlob
+            , onCancelBlob = CancelBlob
+            , onPushBlob = PushBlob
+            , onChangeEdit = ChangeBlobEdit
+            , onChangePost = ChangeBlobPost
+            , onAddDomains = AddDomains
+            , onAddPolicies = AddPolicies
+            , onAddResponsabilities = AddResponsabilities
+            , mdOps = Nothing
+            }
+    in
+    NodeDoc.view nodeData (Just op)
 
 
 

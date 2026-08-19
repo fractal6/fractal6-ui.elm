@@ -69,7 +69,6 @@ import Fractale.Codecs exposing (contractIdCodec, memberIdCodec, nid2rootid, nod
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.Lang as Lang
@@ -117,9 +116,8 @@ type alias TensionForm =
 
     -- data
     , events : List Ev
-    , blob_type : Maybe BlobType.BlobType
+    , withBlob : Bool
     , node : NodeFragment
-    , md : Maybe String
     , users : List UserForm
     , labels : List Label
     , assignees : List User
@@ -142,9 +140,8 @@ initTensionForm lexicon tid node_type user =
     , events = []
     , labels = []
     , assignees = []
-    , blob_type = Nothing
+    , withBlob = False
     , node = initNodeFragment node_type
-    , md = Nothing
     , viewMode = Write
     , txt = initFormText lexicon node_type
     }

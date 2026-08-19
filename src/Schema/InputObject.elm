@@ -14,7 +14,6 @@ import Schema.Enum.ActivityHasFilter
 import Schema.Enum.ActivityOrderable
 import Schema.Enum.BlobHasFilter
 import Schema.Enum.BlobOrderable
-import Schema.Enum.BlobType
 import Schema.Enum.BuildInfoHasFilter
 import Schema.Enum.BuildInfoOrderable
 import Schema.Enum.CardKindType
@@ -314,16 +313,15 @@ buildAddBlobInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, message = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
+                { updatedAt = Absent, message = Absent, pushedFlag = Absent, node = Absent }
     in
-    AddBlobInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = required____.tension, blob_type = required____.blob_type, pushedFlag = optionals____.pushedFlag, archivedFlag = optionals____.archivedFlag, node = optionals____.node, md = optionals____.md }
+    AddBlobInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = required____.tension, pushedFlag = optionals____.pushedFlag, node = optionals____.node }
 
 
 type alias AddBlobInputRequiredFields =
     { createdBy : UserRef
     , createdAt : Schema.ScalarCodecs.DateTime
     , tension : TensionRef
-    , blob_type : Schema.Enum.BlobType.BlobType
     }
 
 
@@ -331,9 +329,7 @@ type alias AddBlobInputOptionalFields =
     { updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -348,11 +344,8 @@ type alias AddBlobInputRaw =
     , updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , tension : TensionRef
-    , blob_type : Schema.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -367,7 +360,7 @@ type AddBlobInput
 encodeAddBlobInput : AddBlobInput -> Value
 encodeAddBlobInput (AddBlobInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef input____.tension |> Just ), ( "blob_type", Encode.enum Schema.Enum.BlobType.toString input____.blob_type |> Just ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "archivedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ), ( "md", Encode.string |> Encode.optional input____.md ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef input____.tension |> Just ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ) ]
 
 
 buildAddBuildInfoInput :
@@ -901,9 +894,9 @@ buildAddNodeInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, source = Absent, about = Absent, skills = Absent, parent = Absent, tensions_out = Absent, tensions_in = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
+                { updatedAt = Absent, source = Absent, about = Absent, skills = Absent, parent = Absent, tensions_out = Absent, tensions_in = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, isRootArchived = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
     in
-    AddNodeInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, nameid = required____.nameid, rootnameid = required____.rootnameid, source = optionals____.source, name = required____.name, about = optionals____.about, skills = optionals____.skills, isRoot = required____.isRoot, parent = optionals____.parent, type_ = required____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = required____.visibility, mode = required____.mode, rights = required____.rights, isArchived = required____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
+    AddNodeInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, nameid = required____.nameid, rootnameid = required____.rootnameid, source = optionals____.source, name = required____.name, about = optionals____.about, skills = optionals____.skills, isRoot = required____.isRoot, parent = optionals____.parent, type_ = required____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = required____.visibility, mode = required____.mode, rights = required____.rights, isArchived = required____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, isRootArchived = optionals____.isRootArchived, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
 
 
 type alias AddNodeInputRequiredFields =
@@ -935,6 +928,7 @@ type alias AddNodeInputOptionalFields =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -985,6 +979,7 @@ type alias AddNodeInputRaw =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -1016,7 +1011,7 @@ type AddNodeInput
 encodeAddNodeInput : AddNodeInput -> Value
 encodeAddNodeInput (AddNodeInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "nameid", Encode.string input____.nameid |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool input____.isRoot |> Just ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString input____.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString input____.visibility |> Just ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString input____.mode |> Just ), ( "rights", Encode.int input____.rights |> Just ), ( "isArchived", Encode.bool input____.isArchived |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "nameid", Encode.string input____.nameid |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool input____.isRoot |> Just ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString input____.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString input____.visibility |> Just ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString input____.mode |> Just ), ( "rights", Encode.int input____.rights |> Just ), ( "isArchived", Encode.bool input____.isArchived |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "isRootArchived", Encode.bool |> Encode.optional input____.isRootArchived ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
 
 
 buildAddNotifInput :
@@ -2092,18 +2087,16 @@ buildBlobFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, message = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, message = Absent, pushedFlag = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    BlobFilter { id = optionals____.id, createdAt = optionals____.createdAt, message = optionals____.message, blob_type = optionals____.blob_type, pushedFlag = optionals____.pushedFlag, archivedFlag = optionals____.archivedFlag, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    BlobFilter { id = optionals____.id, createdAt = optionals____.createdAt, message = optionals____.message, pushedFlag = optionals____.pushedFlag, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias BlobFilterOptionalFields =
     { id : OptionalArgument (List Schema.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
-    , blob_type : OptionalArgument BlobType_hash
     , pushedFlag : OptionalArgument DateTimeFilter
-    , archivedFlag : OptionalArgument DateTimeFilter
     , has : OptionalArgument (List (Maybe Schema.Enum.BlobHasFilter.BlobHasFilter))
     , and : OptionalArgument (List (Maybe BlobFilter))
     , or : OptionalArgument (List (Maybe BlobFilter))
@@ -2120,9 +2113,7 @@ type alias BlobFilterRaw =
     { id : OptionalArgument (List Schema.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
-    , blob_type : OptionalArgument BlobType_hash
     , pushedFlag : OptionalArgument DateTimeFilter
-    , archivedFlag : OptionalArgument DateTimeFilter
     , has : OptionalArgument (List (Maybe Schema.Enum.BlobHasFilter.BlobHasFilter))
     , and : OptionalArgument (List (Maybe BlobFilter))
     , or : OptionalArgument (List (Maybe BlobFilter))
@@ -2141,7 +2132,7 @@ type BlobFilter
 encodeBlobFilter : BlobFilter -> Value
 encodeBlobFilter (BlobFilter input____) =
     Encode.maybeObject
-        [ ( "id", ((Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input____.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input____.blob_type ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input____.pushedFlag ), ( "archivedFlag", encodeDateTimeFilter |> Encode.optional input____.archivedFlag ), ( "has", (Encode.enum Schema.Enum.BlobHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeBlobFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeBlobFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeBlobFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input____.message ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input____.pushedFlag ), ( "has", (Encode.enum Schema.Enum.BlobHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeBlobFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeBlobFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeBlobFilter |> Encode.optional input____.not ) ]
 
 
 buildBlobOrder :
@@ -2196,9 +2187,9 @@ buildBlobPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension = Absent, pushedFlag = Absent, node = Absent }
     in
-    BlobPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = optionals____.tension, blob_type = optionals____.blob_type, pushedFlag = optionals____.pushedFlag, archivedFlag = optionals____.archivedFlag, node = optionals____.node, md = optionals____.md }
+    BlobPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = optionals____.tension, pushedFlag = optionals____.pushedFlag, node = optionals____.node }
 
 
 type alias BlobPatchOptionalFields =
@@ -2207,11 +2198,8 @@ type alias BlobPatchOptionalFields =
     , updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , tension : OptionalArgument TensionRef
-    , blob_type : OptionalArgument Schema.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -2226,11 +2214,8 @@ type alias BlobPatchRaw =
     , updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , tension : OptionalArgument TensionRef
-    , blob_type : OptionalArgument Schema.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -2245,7 +2230,7 @@ type BlobPatch
 encodeBlobPatch : BlobPatch -> Value
 encodeBlobPatch (BlobPatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "blob_type", Encode.enum Schema.Enum.BlobType.toString |> Encode.optional input____.blob_type ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "archivedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ), ( "md", Encode.string |> Encode.optional input____.md ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ) ]
 
 
 buildBlobRef :
@@ -2255,9 +2240,9 @@ buildBlobRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension = Absent, pushedFlag = Absent, node = Absent }
     in
-    BlobRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = optionals____.tension, blob_type = optionals____.blob_type, pushedFlag = optionals____.pushedFlag, archivedFlag = optionals____.archivedFlag, node = optionals____.node, md = optionals____.md }
+    BlobRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension = optionals____.tension, pushedFlag = optionals____.pushedFlag, node = optionals____.node }
 
 
 type alias BlobRefOptionalFields =
@@ -2267,11 +2252,8 @@ type alias BlobRefOptionalFields =
     , updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , tension : OptionalArgument TensionRef
-    , blob_type : OptionalArgument Schema.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -2287,11 +2269,8 @@ type alias BlobRefRaw =
     , updatedAt : OptionalArgument Schema.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , tension : OptionalArgument TensionRef
-    , blob_type : OptionalArgument Schema.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
-    , archivedFlag : OptionalArgument Schema.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
-    , md : OptionalArgument String
     }
 
 
@@ -2306,41 +2285,7 @@ type BlobRef
 encodeBlobRef : BlobRef -> Value
 encodeBlobRef (BlobRef input____) =
     Encode.maybeObject
-        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "blob_type", Encode.enum Schema.Enum.BlobType.toString |> Encode.optional input____.blob_type ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "archivedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ), ( "md", Encode.string |> Encode.optional input____.md ) ]
-
-
-buildBlobType_hash :
-    (BlobType_hashOptionalFields -> BlobType_hashOptionalFields)
-    -> BlobType_hash
-buildBlobType_hash fillOptionals____ =
-    let
-        optionals____ =
-            fillOptionals____
-                { eq = Absent, in_ = Absent }
-    in
-    { eq = optionals____.eq, in_ = optionals____.in_ }
-
-
-type alias BlobType_hashOptionalFields =
-    { eq : OptionalArgument Schema.Enum.BlobType.BlobType
-    , in_ : OptionalArgument (List (Maybe Schema.Enum.BlobType.BlobType))
-    }
-
-
-{-| Type for the BlobType\_hash input object.
--}
-type alias BlobType_hash =
-    { eq : OptionalArgument Schema.Enum.BlobType.BlobType
-    , in_ : OptionalArgument (List (Maybe Schema.Enum.BlobType.BlobType))
-    }
-
-
-{-| Encode a BlobType\_hash into a value that can be used as an argument.
--}
-encodeBlobType_hash : BlobType_hash -> Value
-encodeBlobType_hash input____ =
-    Encode.maybeObject
-        [ ( "eq", Encode.enum Schema.Enum.BlobType.toString |> Encode.optional input____.eq ), ( "in", (Encode.enum Schema.Enum.BlobType.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.in_ ) ]
+        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension", encodeTensionRef |> Encode.optional input____.tension ), ( "pushedFlag", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input____.node ) ]
 
 
 buildBuildInfoFilter :
@@ -5245,9 +5190,9 @@ buildNodePatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, source = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, rootnameid = Absent, source = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, isRootArchived = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
     in
-    NodePatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, source = optionals____.source, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
+    NodePatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, rootnameid = optionals____.rootnameid, source = optionals____.source, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, isRootArchived = optionals____.isRootArchived, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
 
 
 type alias NodePatchOptionalFields =
@@ -5274,6 +5219,7 @@ type alias NodePatchOptionalFields =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -5323,6 +5269,7 @@ type alias NodePatchRaw =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -5354,7 +5301,7 @@ type NodePatch
 encodeNodePatch : NodePatch -> Value
 encodeNodePatch (NodePatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "isRootArchived", Encode.bool |> Encode.optional input____.isRootArchived ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
 
 
 buildNodeRef :
@@ -5364,9 +5311,9 @@ buildNodeRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, nameid = Absent, rootnameid = Absent, source = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, nameid = Absent, rootnameid = Absent, source = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, guestCanCreateTension = Absent, lexicon = Absent, isTemplateTensionOnly = Absent, isPinnedTensionfetchRecursively = Absent, isRootArchived = Absent, watchers = Absent, children = Absent, projects = Absent, pinned = Absent, labels = Absent, roles = Absent, tension_templates = Absent, project_templates = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, contracts = Absent, events_history = Absent, activity = Absent, avatar = Absent, cascade_directive = Absent }
     in
-    NodeRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, source = optionals____.source, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
+    NodeRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, source = optionals____.source, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, guestCanCreateTension = optionals____.guestCanCreateTension, lexicon = optionals____.lexicon, isTemplateTensionOnly = optionals____.isTemplateTensionOnly, isPinnedTensionfetchRecursively = optionals____.isPinnedTensionfetchRecursively, isRootArchived = optionals____.isRootArchived, watchers = optionals____.watchers, children = optionals____.children, projects = optionals____.projects, pinned = optionals____.pinned, labels = optionals____.labels, roles = optionals____.roles, tension_templates = optionals____.tension_templates, project_templates = optionals____.project_templates, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, contracts = optionals____.contracts, events_history = optionals____.events_history, activity = optionals____.activity, avatar = optionals____.avatar, cascade_directive = optionals____.cascade_directive }
 
 
 type alias NodeRefOptionalFields =
@@ -5395,6 +5342,7 @@ type alias NodeRefOptionalFields =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -5446,6 +5394,7 @@ type alias NodeRefRaw =
     , lexicon : OptionalArgument String
     , isTemplateTensionOnly : OptionalArgument Bool
     , isPinnedTensionfetchRecursively : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , watchers : OptionalArgument (List UserRef)
     , children : OptionalArgument (List NodeRef)
     , projects : OptionalArgument (List ProjectRef)
@@ -5477,7 +5426,7 @@ type NodeRef
 encodeNodeRef : NodeRef -> Value
 encodeNodeRef (NodeRef input____) =
     Encode.maybeObject
-        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
+        [ ( "id", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Schema.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "visibility", Encode.enum Schema.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Schema.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "guestCanCreateTension", Encode.bool |> Encode.optional input____.guestCanCreateTension ), ( "lexicon", Encode.string |> Encode.optional input____.lexicon ), ( "isTemplateTensionOnly", Encode.bool |> Encode.optional input____.isTemplateTensionOnly ), ( "isPinnedTensionfetchRecursively", Encode.bool |> Encode.optional input____.isPinnedTensionfetchRecursively ), ( "isRootArchived", Encode.bool |> Encode.optional input____.isRootArchived ), ( "watchers", (encodeUserRef |> Encode.list) |> Encode.optional input____.watchers ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "projects", (encodeProjectRef |> Encode.list) |> Encode.optional input____.projects ), ( "pinned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.pinned ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "tension_templates", (encodeTensionTemplateRef |> Encode.list) |> Encode.optional input____.tension_templates ), ( "project_templates", (encodeProjectTemplateRef |> Encode.list) |> Encode.optional input____.project_templates ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Schema.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ), ( "activity", (encodeActivityRef |> Encode.list) |> Encode.optional input____.activity ), ( "avatar", encodeFileRef |> Encode.optional input____.avatar ), ( "cascade_directive", Encode.bool |> Encode.optional input____.cascade_directive ) ]
 
 
 buildNodeType_hash :

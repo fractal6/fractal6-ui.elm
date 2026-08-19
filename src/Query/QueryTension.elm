@@ -100,7 +100,7 @@ nCommentPerTension =
 
 nBlobPerTension : Int
 nBlobPerTension =
-    50
+    100
 
 
 getTensionHead url uctx tensionid msg =
@@ -434,9 +434,7 @@ blobPayload =
         |> with (Schema.Object.Blob.id |> SelectionSet.map decodedId)
         |> with (Schema.Object.Blob.createdAt |> SelectionSet.map decodedTime)
         |> with (Schema.Object.Blob.createdBy identity <| SelectionSet.map Username Schema.Object.User.username)
-        |> with Schema.Object.Blob.blob_type
         |> with (Schema.Object.Blob.node identity nodeFragmentPayload)
-        |> with Schema.Object.Blob.md
         |> with (Schema.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map decodedTime))
 
 

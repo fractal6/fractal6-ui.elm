@@ -60,7 +60,6 @@ import Query.QueryNode exposing (getTensionTemplateById, getTensionTemplates, qu
 import Query.QueryProject exposing (addProjectCard)
 import RemoteData
 import Requests exposing (fetchTensionTemplatesTop)
-import Schema.Enum.BlobType as BlobType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
 import Schema.Enum.RoleType as RoleType
@@ -338,7 +337,7 @@ switchTab tab model =
                         { form
                             | type_ = Just TensionType.Operational
                             , isNewNode = False
-                            , blob_type = Nothing
+                            , withBlob = False
                             , users = []
                             , txt = initFormText model.session.lexicon Nothing
                         }
@@ -346,7 +345,7 @@ switchTab tab model =
                     NewRoleTab ->
                         { form
                             | type_ = Just TensionType.Governance
-                            , blob_type = Just BlobType.OnNode
+                            , withBlob = True
                             , node = { node | type_ = Just NodeType.Role }
                             , isNewNode = True
                             , users = []
@@ -357,7 +356,7 @@ switchTab tab model =
                     NewCircleTab ->
                         { form
                             | type_ = Just TensionType.Governance
-                            , blob_type = Just BlobType.OnNode
+                            , withBlob = True
                             , node = { node | type_ = Just NodeType.Circle }
                             , isNewNode = True
                             , users = []

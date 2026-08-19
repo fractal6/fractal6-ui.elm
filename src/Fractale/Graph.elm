@@ -35,7 +35,6 @@ module Fractale.Graph exposing
     , isPinnedRecursivelyOn
     , localGraphFromOrga
     , maxPinnedTensions
-    , mdFromTension
     , mergePinnedTensions
     , nodeFromTension
     , sortNode
@@ -221,14 +220,6 @@ nodeFromTension t =
         |> Maybe.map .node
         |> withDefault Nothing
         |> withDefault (initNodeFragment Nothing)
-
-
-mdFromTension t =
-    t.blobs
-        |> withDefault []
-        |> List.head
-        |> Maybe.map .md
-        |> withDefault Nothing
 
 
 tidFromPath : GqlData LocalGraph -> Maybe String

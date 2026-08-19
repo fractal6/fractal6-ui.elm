@@ -2710,22 +2710,6 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Document created"
   fr="Document créé"
 
-[onAbout_blob]
-  en="Description edited"
-  fr="Description edité"
-
-[onMandate_blob]
-  en="{{_Mandate_}} edited"
-  fr="{{_Mandate_}} édité"
-
-[onAboutAndMandate_blob]
-  en="{{_Mandate_}} and description edited"
-  fr="{{_Mandate_}} et description édité"
-
-[onDoc_blob]
-  en="File edited"
-  fr="Fichier édité"
-
 
 #
 # Event Notification Text
