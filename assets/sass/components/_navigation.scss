@@ -327,6 +327,18 @@
 
     .breadcrumb {
         font-size: 1.15rem;
+        // Bulma defaults to flex-start: items of different heights (icons, tags) misalign vertically.
+        ul {
+            align-items: center;
+        }
+        //li {
+        //    // Box-centering misaligns text of mixed font sizes (name vs archived tag): align baselines,
+        //    // and keep icon wrappers (glyphs without a meaningful baseline) centered.
+        //    align-items: baseline;
+        //    > span:not(.tag) {
+        //        align-self: center;
+        //    }
+        //}
         a {
             color: var(--text-evidence);
             padding-right: 0.4rem;

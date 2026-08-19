@@ -1402,7 +1402,7 @@ viewCardDropdown model =
                         div [ class "dropdown-content p-0", onClick (OnCardClick Nothing) ]
                             [ div [ class "dropdown-item button-light", onClick (OnConvertDraft card.id d) ] [ A.icon1 "icon-exchange" (T.convertDraft model.session.lexicon) ]
                             , hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]
+                            , div [ class "dropdown-item button-light is-danger", onClick (OnRemoveCard card.id) ] [ A.icon1 "icon-trash" T.deleteDraft ]
                             ]
                 ]
 

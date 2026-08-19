@@ -420,7 +420,7 @@ viewPath baseUri uriQuery isRootArchived maybePath =
 
                     archivedTag i =
                         showIf (i == 0 && isRootArchived) <|
-                            span [ class "tag is-weak is-warning is-rounded mx-1" ] [ text T.archived ]
+                            span [ class "tag is-soft is-warning is-rounded mx-1" ] [ text T.archived ]
                 in
                 [ g.path
                     |> List.indexedMap
