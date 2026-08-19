@@ -410,10 +410,11 @@ tensionDecoder =
 
 governedNodeDecoder : JD.Decoder GovernedNode
 governedNodeDecoder =
-    JD.map3 GovernedNode
+    JD.map4 GovernedNode
         (JD.field "nameid" JD.string)
         (JD.field "type_" NodeType.decoder)
         (JD.field "isArchived" JD.bool)
+        (JD.maybe <| JD.field "isRootArchived" JD.bool)
 
 
 draftNodeTypeDecoder : JD.Decoder (Maybe NodeType.NodeType)

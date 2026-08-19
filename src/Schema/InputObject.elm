@@ -4832,9 +4832,9 @@ buildNodeFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, nameid = Absent, rootnameid = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, type_ = Absent, visibility = Absent, mode = Absent, isArchived = Absent, isPersonal = Absent, role_type = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, nameid = Absent, rootnameid = Absent, name = Absent, about = Absent, skills = Absent, isRoot = Absent, type_ = Absent, visibility = Absent, mode = Absent, isArchived = Absent, isPersonal = Absent, isRootArchived = Absent, role_type = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeFilter { id = optionals____.id, createdAt = optionals____.createdAt, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, type_ = optionals____.type_, visibility = optionals____.visibility, mode = optionals____.mode, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, role_type = optionals____.role_type, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    NodeFilter { id = optionals____.id, createdAt = optionals____.createdAt, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, skills = optionals____.skills, isRoot = optionals____.isRoot, type_ = optionals____.type_, visibility = optionals____.visibility, mode = optionals____.mode, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, isRootArchived = optionals____.isRootArchived, role_type = optionals____.role_type, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias NodeFilterOptionalFields =
@@ -4851,6 +4851,7 @@ type alias NodeFilterOptionalFields =
     , mode : OptionalArgument NodeMode_hash
     , isArchived : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , role_type : OptionalArgument RoleType_hash
     , has : OptionalArgument (List (Maybe Schema.Enum.NodeHasFilter.NodeHasFilter))
     , and : OptionalArgument (List (Maybe NodeFilter))
@@ -4878,6 +4879,7 @@ type alias NodeFilterRaw =
     , mode : OptionalArgument NodeMode_hash
     , isArchived : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
+    , isRootArchived : OptionalArgument Bool
     , role_type : OptionalArgument RoleType_hash
     , has : OptionalArgument (List (Maybe Schema.Enum.NodeHasFilter.NodeHasFilter))
     , and : OptionalArgument (List (Maybe NodeFilter))
@@ -4897,7 +4899,7 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input____) =
     Encode.maybeObject
-        [ ( "id", ((Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.rootnameid ), ( "name", encodeStringFullTextFilter |> Encode.optional input____.name ), ( "about", encodeStringFullTextFilter |> Encode.optional input____.about ), ( "skills", encodeStringTermFilter |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "type_", encodeNodeType_hash |> Encode.optional input____.type_ ), ( "visibility", encodeNodeVisibility_hash |> Encode.optional input____.visibility ), ( "mode", encodeNodeMode_hash |> Encode.optional input____.mode ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "role_type", encodeRoleType_hash |> Encode.optional input____.role_type ), ( "has", (Encode.enum Schema.Enum.NodeHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeNodeFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Schema.ScalarCodecs.codecs |> Schema.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.rootnameid ), ( "name", encodeStringFullTextFilter |> Encode.optional input____.name ), ( "about", encodeStringFullTextFilter |> Encode.optional input____.about ), ( "skills", encodeStringTermFilter |> Encode.optional input____.skills ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "type_", encodeNodeType_hash |> Encode.optional input____.type_ ), ( "visibility", encodeNodeVisibility_hash |> Encode.optional input____.visibility ), ( "mode", encodeNodeMode_hash |> Encode.optional input____.mode ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "isRootArchived", Encode.bool |> Encode.optional input____.isRootArchived ), ( "role_type", encodeRoleType_hash |> Encode.optional input____.role_type ), ( "has", (Encode.enum Schema.Enum.NodeHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeNodeFilter |> Encode.optional input____.not ) ]
 
 
 buildNodeFragmentFilter :

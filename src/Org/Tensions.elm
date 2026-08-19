@@ -44,7 +44,7 @@ import Form.NewTension as NTF
 import Fractale.Board as BB exposing (viewBoard)
 import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, isRole, nameidFromFlags, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
-import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, mergePinnedTensions)
+import Fractale.Graph exposing (getPath, isPinnedRecursivelyOn, isRootArchivedOn, mergePinnedTensions)
 import Fractale.HotUpdate exposing (hotTensionPush, hotTensionPush2)
 import Fractale.User exposing (freshSessionOnOrgaSwitch)
 import Fractale.View exposing (mediaTension, statusColor, tensionIcon3, tensionStatus2str, tensionType2str, viewGoRoot, viewPinnedTensions, viewUserFull)
@@ -1908,6 +1908,7 @@ view global model =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.data.orgaInfo
+            , isRootArchived = isRootArchivedOn model.node_focus.rootnameid model.path_data (TreeMenu.getOrgaData_ model.treeMenu)
             }
 
         panelData =

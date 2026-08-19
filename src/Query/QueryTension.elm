@@ -444,6 +444,7 @@ governedNodePayload =
         |> with Schema.Object.Node.nameid
         |> with Schema.Object.Node.type_
         |> with Schema.Object.Node.isArchived
+        |> with Schema.Object.Node.isRootArchived
 
 
 {-| Latest blob's Node kind for unpublished drafts. Selected on every list tension but only

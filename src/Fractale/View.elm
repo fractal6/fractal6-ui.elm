@@ -858,6 +858,16 @@ nodeType2str x =
             T.role
 
 
+-- Localized node label, root node being an organisation.
+node2str : Node -> String
+node2str node =
+    if nid2rootid node.nameid == node.nameid then
+        T.organisation
+
+    else
+        nodeType2str node.type_
+
+
 projectStatus2str : ProjectStatus.ProjectStatus -> String
 projectStatus2str s =
     case s of

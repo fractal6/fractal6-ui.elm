@@ -34,7 +34,7 @@ import Fractale.Error exposing (viewGqlErrors)
 import Fractale.Form exposing (ActionForm, Ev, initActionForm, isSelfContract, makeCandidateContractForm)
 import Fractale.Graph exposing (getNode)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.View exposing (auth2icon, auth2str, viewUserFull, visibility2descr, visibility2icon)
+import Fractale.View exposing (auth2icon, auth2str, node2str, viewUserFull, visibility2descr, visibility2icon)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
@@ -789,10 +789,18 @@ update_ apis message model =
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
                             ArchiveAction ->
-                                [ DoDelNodes [ model.form.node.nameid ] ]
+                                if nid2rootid model.form.node.nameid == model.form.node.nameid then
+                                    [ DoUpdateNode model.form.node.nameid (\n -> { n | isRootArchived = Just True }) ]
+
+                                else
+                                    [ DoDelNodes [ model.form.node.nameid ] ]
 
                             UnarchiveAction ->
-                                []
+                                if nid2rootid model.form.node.nameid == model.form.node.nameid then
+                                    [ DoUpdateNode model.form.node.nameid (\n -> { n | isRootArchived = Just False }) ]
+
+                                else
+                                    []
 
                             LinkAction ->
                                 if isSelfContract model.form.uctx model.form.users then
@@ -878,7 +886,7 @@ update_ apis message model =
                             , content =
                                 div [ class "is-flex is-align-items-center mr-5" ]
                                     [ A.icon1 "icon-check icon-2x has-text-success" " "
-                                    , text (action2post model.state selfContract ++ ".")
+                                    , text ((action2post model.state selfContract |> Format.namedValue "type" (node2str model.form.node)) ++ ".")
                                     , text space_
                                     , showIf (model.state == LinkAction && not selfContract) <|
                                         let
@@ -1105,6 +1113,15 @@ viewPanelMenu op model =
         isRoot =
             nid2rootid model.form.node.nameid == model.form.node.nameid
 
+        lifecycle =
+            if isRoot then
+                -- op.lifecycle tracks isArchived, which is never set on a root;
+                -- roots carry the isRootArchived flag instead.
+                ternary (model.form.node.isRootArchived == Just True) Archived Active
+
+            else
+                op.lifecycle
+
         ownerRole =
             model.form.node.role_type == Just RoleType.Owner
 
@@ -1184,23 +1201,18 @@ viewPanelMenu op model =
                         [ A.icon1 "icon-lock" (panelAction2str VisibilityAction) ]
                 ]
                     ++ -- ARCHIVE ACTION
-                       (if not isRoot then
-                            [ case op.lifecycle of
-                                Active ->
-                                    div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                        [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
+                       [ case lifecycle of
+                            Active ->
+                                div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
+                                    [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
 
-                                Archived ->
-                                    div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                        [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
+                            Archived ->
+                                div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
+                                    [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
 
-                                Draft ->
-                                    div [] [ text T.notImplemented ]
-                            ]
-
-                        else
-                            []
-                       )
+                            Draft ->
+                                div [] [ text T.notImplemented ]
+                       ]
                     |> (\l ->
                             ternary isCircle l (l ++ [ hr [ class "dropdown-divider" ] [] ])
                        )
@@ -1290,7 +1302,7 @@ viewModalContent op model =
                 [ class "notification is-success-light" ]
                 [ button [ class "delete", onClick (OnCloseModalSafe "" "") ] []
                 , A.icon1 "icon-check icon-2x has-text-success" " "
-                , text (action2post model.state selfContract ++ ". ")
+                , text ((action2post model.state selfContract |> Format.namedValue "type" (node2str model.form.node)) ++ ". ")
                 , showIf (model.state == LinkAction && not selfContract) <|
                     let
                         link =
@@ -1322,7 +1334,7 @@ viewStep1 op model =
         [ div [ class ("modal-card-head is-" ++ color) ]
             [ div [ class "modal-card-title is-wrapped is-size-6 has-text-weight-semibold" ]
                 [ action2header model.state model.form.node.type_
-                    |> Format.namedValue "type" (NodeType.toString model.form.node.type_)
+                    |> Format.namedValue "type" (node2str model.form.node)
                     |> text
                     |> List.singleton
                     |> span []
@@ -1368,7 +1380,10 @@ viewStep1 op model =
                     ]
 
                 ArchiveAction ->
-                    [ viewComment model ]
+                    [ showIf (nid2rootid model.form.node.nameid == model.form.node.nameid) <|
+                        showMsg "archiveRoot" "is-info" "icon-info" T.archiveRootInfo ""
+                    , viewComment model
+                    ]
 
                 UnarchiveAction ->
                     [ viewComment model ]

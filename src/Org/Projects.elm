@@ -43,6 +43,7 @@ import Form.NewTension as NTF
 import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidEncoder, nameidFromFlags, nid2rootid, shortId, toLink)
 import Fractale.Error exposing (viewGqlErrors, viewHttpErrors)
 import Fractale.Form exposing (ProjectForm, initProjectForm)
+import Fractale.Graph exposing (isRootArchivedOn)
 import Fractale.User exposing (UserState(..), freshSessionOnOrgaSwitch)
 import Fractale.View exposing (nodeType2str, projectStatus2str, viewCircleTarget, viewGoRoot, viewUrlForm)
 import Generated.Route as Route exposing (toHref)
@@ -1558,6 +1559,7 @@ view global model =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.data.orgaInfo
+            , isRootArchived = isRootArchivedOn model.node_focus.rootnameid model.path_data (TreeMenu.getOrgaData_ model.treeMenu)
             }
 
         panelData =

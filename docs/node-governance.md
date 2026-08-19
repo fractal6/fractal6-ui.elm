@@ -7,12 +7,29 @@ no persisted action state.
 ## How it works
 
 A tension's Node state is derived, never stored: a governed Node with
-`isArchived` gives `Active`/`Archived`; before publication the latest blob
+`isArchived` (or `isRootArchived` for a root) gives `Active`/`Archived`; before publication the latest blob
 fragment gives `Draft`; ordinary tensions have none. `receiver` is the parent
 circle, never the governed Node. Publish/archive/unarchive are tension events,
 and status tags are hidden for governance tensions since they are auto-closed
 on creation. The receiver codec is still used to build identity for drafts and
 the NewTension preview, where no Node exists yet.
+
+## Root archiving
+
+Archiving an **organisation** (root node) is a flat flag, `Node.isRootArchived`, deliberately not
+the `isArchived` used for circles and roles: it skips the hierarchy rules that come with the latter
+(a circle cannot be archived while it has children, a node cannot be unarchived under an archived
+parent) and the first-link unlink. Nothing is deleted, children and tensions are untouched, and the
+action is reversible. It is written through the same `BlobArchived` /
+`BlobUnarchived` tension events; the backend branches on the root and flips `isRootArchived`.
+
+`getTensionNode` reports `Archived` when either flag is set. In the ActionPanel the root's menu state
+comes from the node's own flag (`Op.lifecycle` only ever tracks `isArchived`) and success patches the
+tree via `DoUpdateNode` instead of `DoDelNodes`. The breadcrumb badge (`Components/HelperBar.elm`)
+and the profile "active | archived" tabs (`src/User/Profile.elm`, see `docs/orga-search-profile.md`)
+read the flag through `Fractale.Graph.isRootArchivedOn`, which prefers the tree (patched in place, so
+the badge flips without a refetch) and falls back to the path. The Explore listing
+(`queryPublicOrga`) excludes archived orgs in the GraphQL filter.
 
 ## Revisions
 

@@ -1204,6 +1204,7 @@ view global model =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.data.orgaInfo
+            , isRootArchived = isRootArchivedOn model.node_focus.rootnameid model.path_data model.tree_data
             }
 
         panelData =

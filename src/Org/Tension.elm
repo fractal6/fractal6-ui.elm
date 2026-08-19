@@ -1440,10 +1440,10 @@ update global message model =
                                         governed_node =
                                             case ActionPanel.getState_ model.actionPanel of
                                                 ActionPanel.ArchiveAction ->
-                                                    Maybe.map (\g -> { g | isArchived = True }) x.governed_node
+                                                    Maybe.map (setGovernedArchived True) x.governed_node
 
                                                 ActionPanel.UnarchiveAction ->
-                                                    Maybe.map (\g -> { g | isArchived = False }) x.governed_node
+                                                    Maybe.map (setGovernedArchived False) x.governed_node
 
                                                 _ ->
                                                     x.governed_node
@@ -1603,6 +1603,18 @@ subscriptions _ model =
 
 
 
+{-| Roots carry the isRootArchived flag; regular nodes the isArchived one.
+-}
+setGovernedArchived : Bool -> GovernedNode -> GovernedNode
+setGovernedArchived archived g =
+    if nid2rootid g.nameid == g.nameid then
+        { g | isRootArchived = Just archived }
+
+    else
+        { g | isArchived = archived }
+
+
+
 ---- VIEW ----
 
 
@@ -1613,6 +1625,7 @@ view global model =
             { path_data = withMaybeData model.path_data
             , isPanelOpen = ActionPanel.isOpen_ "actionPanelHelper" model.actionPanel
             , orgaInfo = global.session.data.orgaInfo
+            , isRootArchived = isRootArchivedOn model.node_focus.rootnameid model.path_data (TreeMenu.getOrgaData_ model.treeMenu)
             }
 
         panelData =

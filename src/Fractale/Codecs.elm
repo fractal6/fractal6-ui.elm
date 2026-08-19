@@ -662,7 +662,7 @@ getTensionNode tension =
             Just
                 { type_ = node.type_
                 , lifecycle =
-                    if node.isArchived then
+                    if node.isArchived || node.isRootArchived == Just True then
                         Archived
 
                     else
@@ -685,6 +685,7 @@ nodeFromFragment parentid f =
     , mode = withDefault NodeMode.Coordinated f.mode
     , source = Nothing
     , userCanJoin = Nothing
+    , isRootArchived = Nothing
     , first_link = Maybe.map (\fs -> { username = fs, name = Nothing }) f.first_link
     , n_open_tensions = 0
     , n_open_contracts = 0

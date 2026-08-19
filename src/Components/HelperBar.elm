@@ -210,6 +210,7 @@ type alias Op =
     { path_data : Maybe LocalGraph
     , isPanelOpen : Bool
     , orgaInfo : Maybe OrgaInfo
+    , isRootArchived : Bool
     }
 
 
@@ -232,7 +233,7 @@ view op (State model) =
 viewPathContextEmbed : Op -> Model -> Html Msg
 viewPathContextEmbed op model =
     nav [ class "level" ]
-        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
+        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.isRootArchived op.path_data ]
         ]
 
 
@@ -257,7 +258,7 @@ viewPathContext op model =
                 ( "icon-eye", T.watch, T.watchThisOrganisation )
     in
     nav [ class "level" ]
-        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.path_data ]
+        [ div [ class "level-left" ] [ viewPath model.baseUri model.uriQuery op.isRootArchived op.path_data ]
         , div [ class "level-right" ]
             [ case op.path_data of
                 Just _ ->
@@ -400,8 +401,8 @@ viewNavTabs op model =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html Msg
-viewPath baseUri uriQuery maybePath =
+viewPath : FractalBaseRoute -> Maybe String -> Bool -> Maybe LocalGraph -> Html Msg
+viewPath baseUri uriQuery isRootArchived maybePath =
     div
         [ class "breadcrumb has-succeeds-separator wrapped-container"
         , attribute "aria-label" "breadcrumbs"
@@ -416,6 +417,10 @@ viewPath baseUri uriQuery maybePath =
                     icon =
                         --span [ class "button-light", onClick OnToggleTreeMenu ] [ A.icon0 "icon-layers icon-lg" ]
                         A.icon0 "icon-layers icon-lg"
+
+                    archivedTag i =
+                        showIf (i == 0 && isRootArchived) <|
+                            span [ class "tag is-weak is-warning is-rounded mx-1" ] [ text T.archived ]
                 in
                 [ g.path
                     |> List.indexedMap
@@ -431,12 +436,14 @@ viewPath baseUri uriQuery maybePath =
                                       else
                                         a [ class "is-block is-wrapped", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ]
                                             [ text p.name ]
+                                    , archivedTag i
                                     ]
 
                             else
                                 li [ class "wrapped-container" ]
                                     [ ternary (i == 0) icon (text "")
                                     , a [ class "is-block is-wrapped has-text-weight-bold has-text-strong", href (toLink baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
+                                    , archivedTag i
                                     , span
                                         [ class ""
                                         , title (T.thisThingIs |> Format.value (NodeType.toString (nid2type p.nameid)) |> Format.value (NodeVisibility.toString g.focus.visibility))

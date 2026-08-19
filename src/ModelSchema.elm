@@ -98,6 +98,9 @@ type alias Node =
     -- Only here to build LocalGraph from OrgaData
     , userCanJoin : Maybe Bool
 
+    -- Root only: organisation archived flag
+    , isRootArchived : Maybe Bool
+
     -- Aggregated
     , n_open_tensions : Int
     , n_open_contracts : Int
@@ -115,6 +118,7 @@ type alias NodeExt =
     , first_link : Maybe Username
     , visibility : NodeVisibility.NodeVisibility
     , about : Maybe String
+    , isRootArchived : Maybe Bool
 
     -- aggregated
     , n_members : Int
@@ -173,6 +177,7 @@ type alias RNode =
     , mode : NodeMode.NodeMode
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
+    , isRootArchived : Maybe Bool
     }
 
 
@@ -603,6 +608,7 @@ type alias GovernedNode =
     { nameid : String
     , type_ : NodeType.NodeType
     , isArchived : Bool
+    , isRootArchived : Maybe Bool
     }
 
 
@@ -986,6 +992,7 @@ initNode =
     , mode = NodeMode.Coordinated
     , source = Nothing
     , userCanJoin = Nothing
+    , isRootArchived = Nothing
     , n_open_tensions = 0
     , n_open_contracts = 0
     }

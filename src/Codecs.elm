@@ -315,6 +315,7 @@ nodeEncoder node =
                 node.source
       )
     , ( "userCanJoin", JEE.maybe JE.bool node.userCanJoin )
+    , ( "isRootArchived", JEE.maybe JE.bool node.isRootArchived )
     , ( "n_open_tensions", JE.int node.n_open_tensions )
     , ( "n_open_contracts", JE.int node.n_open_contracts )
     ]
@@ -338,6 +339,7 @@ nodeDecoder =
         |> JDE.andMap (JD.field "mode" NodeMode.decoder)
         |> JDE.andMap (JD.maybe (JD.field "source" blobIdDecoder))
         |> JDE.andMap (JD.maybe (JD.field "userCanJoin" JD.bool))
+        |> JDE.andMap (JD.maybe (JD.field "isRootArchived" JD.bool))
         |> JDE.andMap (JD.field "n_open_tensions" JD.int)
         |> JDE.andMap (JD.field "n_open_contracts" JD.int)
 

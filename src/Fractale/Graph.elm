@@ -33,6 +33,7 @@ module Fractale.Graph exposing
     , getPathWithChildren
     , isFreshOrga
     , isPinnedRecursivelyOn
+    , isRootArchivedOn
     , localGraphFromOrga
     , maxPinnedTensions
     , mergePinnedTensions
@@ -50,6 +51,7 @@ import Loading exposing (GqlData, RequestResult(..), withDefaultData, withMaybeD
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Schema.Enum.RoleType as RoleType
+import Utils.Maybe exposing (mor)
 
 
 isFreshOrga : NodesDict -> Bool
@@ -243,6 +245,17 @@ maxPinnedTensions =
     21
 
 
+{-| The tree wins when loaded: it is patched in place on archive/unarchive, so the state flips
+without a refetch. It is lazy-loaded outside of Overview though, hence the path fallback.
+-}
+isRootArchivedOn : String -> GqlData LocalGraph -> GqlData NodesDict -> Bool
+isRootArchivedOn nameid path_data tree_data =
+    mor
+        (getNode (nid2rootid nameid) tree_data |> Maybe.andThen .isRootArchived)
+        (withMaybeData path_data |> Maybe.andThen .root |> Maybe.andThen .isRootArchived)
+        == Just True
+
+
 isPinnedRecursivelyOn : GqlData LocalGraph -> Bool
 isPinnedRecursivelyOn path_data =
     withMaybeData path_data
@@ -290,6 +303,7 @@ localGraphFromOrga nameid orga_d =
                                 , mode = n.mode
                                 , isTemplateTensionOnly = Nothing
                                 , isPinnedTensionfetchRecursively = Nothing
+                                , isRootArchived = n.isRootArchived
                                 }
                             )
 

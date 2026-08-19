@@ -695,6 +695,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Archived"
   fr="Archivé"
 
+[active]
+  en="Active"
+  fr="Actives"
+
 [moreFilters]
   en="More filters"
   fr="Plus de filtres"
@@ -2570,6 +2574,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Unarchive {{type}}"
   fr="Désarchiver le {{type}}"
 
+[archiveRootInfo]
+  en="Nothing will be deleted, you can unarchive the organisation at any time."
+  fr="Rien ne sera supprimé, vous pouvez désarchiver l'organisation à tout moment."
+
 [leave_header]
   en="Leave {{type}}"
   fr="Quitter le {{type}}"
@@ -2581,12 +2589,12 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   fr="Type de la {{_tension_}} modifié."
 
 [archive_action_success]
-  en="Document archived"
-  fr="Document archivé"
+  en="{{type}} archived"
+  fr="{{type}} archivé"
 
 [unarchive_action_success]
-  en="Document unarchived"
-  fr="Document désarchivé"
+  en="{{type}} unarchived"
+  fr="{{type}} désarchivé"
 
 [left_action_success]
   en="Role left"

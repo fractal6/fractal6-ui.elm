@@ -40,9 +40,10 @@ import Utils.Maybe exposing (unwrap)
 import Form.Help as Help
 import Schema.Enum.NodeOrderable as NodeOrderable
 import Global exposing (Msg(..))
-import Html exposing (Html, a, div, h1, i, p, span, text)
-import Html.Attributes exposing (attribute, class, id)
+import Html exposing (Html, a, div, h1, i, li, p, span, text, ul)
+import Html.Attributes exposing (attribute, class, classList, id, target)
 import Html.Events exposing (onClick)
+import Utils.DomEvents exposing (onClickPD)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
@@ -77,6 +78,11 @@ orgaSortFilter2Text x =
 
         NewestSort ->
             T.newest
+
+
+type OrgaTab
+    = ActiveOrgaTab
+    | ArchivedOrgaTab
 
 
 orgaSortFilter2Order : OrgaSortFilter -> NodeOrderable.NodeOrderable
@@ -142,6 +148,7 @@ type alias Model =
     , sortFilter : OrgaSortFilter
     , orgaFilter : String
     , orgaLookup : Maybe (List String)
+    , orgaTab : OrgaTab
 
     -- Common
     , help : Help.State
@@ -172,6 +179,7 @@ init global flags =
             , sortFilter = ActivitySort
             , orgaFilter = ""
             , orgaLookup = Nothing
+            , orgaTab = ActiveOrgaTab
 
             -- common
             , refresh_trial = 0
@@ -206,6 +214,7 @@ type Msg
     | OnOrgaFilterInput String
     | OnOrgaSearchKeyDown Int
     | ChangeOrgaLookup (List String)
+    | OnChangeOrgaTab OrgaTab
       -- Common
     | NoMsg
     | LogErr String
@@ -318,6 +327,9 @@ update global message model =
 
         ChangeOrgaLookup nameids ->
             ( { model | orgaLookup = Just nameids }, Cmd.none, Cmd.none )
+
+        OnChangeOrgaTab tab ->
+            ( { model | orgaTab = tab }, Cmd.none, Cmd.none )
 
         -- Common
         NoMsg ->
@@ -486,7 +498,11 @@ viewProfileRight user_s user model =
                     div []
                         [ showIf (List.length orgas >= 5) <|
                             viewSearchField opSearch model.orgaFilter model.orgaFilter
-                        , viewUserOrgas model.commonOp user model.orgaLookup orgas
+                        , showIf (List.any isOrgaArchived orgas) <|
+                            viewOrgaTabs model.orgaTab
+                        , orgas
+                            |> List.filter (\o -> isOrgaArchived o == (model.orgaTab == ArchivedOrgaTab))
+                            |> viewUserOrgas model.commonOp user model.orgaLookup
                         ]
 
                 Failure err ->
@@ -531,6 +547,24 @@ viewProfileRight user_s user model =
                                 ]
                             ]
                         ]
+        ]
+
+
+isOrgaArchived : NodeExt -> Bool
+isOrgaArchived o =
+    o.isRootArchived == Just True
+
+
+viewOrgaTabs : OrgaTab -> Html Msg
+viewOrgaTabs orgaTab =
+    div [ class "tabs is-small" ]
+        [ ul [] <|
+            List.map
+                (\( t, name ) ->
+                    li [ classList [ ( "is-active", orgaTab == t ) ] ]
+                        [ a [ onClickPD (OnChangeOrgaTab t), target "_blank" ] [ text name ] ]
+                )
+                [ ( ActiveOrgaTab, T.active ), ( ArchivedOrgaTab, T.archived ) ]
         ]
 
 

@@ -27,6 +27,9 @@ A search-as-you-type filter bar on the User Profile page (`/u/{username}`) that 
 - `OnOrgaFilterInput ""`: resets filter, shows all orgs.
 - `OnOrgaFilterInput pattern`: triggers JS search.
 - `ChangeOrgaLookup nameids`: stores results; view filters orgs by matching nameids.
+- `orgaTab`: "active | archived" tabs, only rendered when at least one org has `isRootArchived`
+  (see `docs/node-governance.md`). The tab filter composes with the search lookup; the MiniSearch index
+  stays built over all orgs.
 
 ### i18n
 - Key: `searchOrganisations` — "Search organisations" (EN) / "Rechercher des organisations" (FR)

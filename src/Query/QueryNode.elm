@@ -195,6 +195,9 @@ publicOrgaFilter a =
                         | isRoot = Present True
                         , visibility = Present { eq = Present NodeVisibility.Public, in_ = Absent }
 
+                        -- `not: {eq: true}` rather than `eq: false`: the flag is null on orgs never archived.
+                        , not = Input.buildNodeFilter (\c -> { c | isRootArchived = Present True }) |> Present
+
                         --, not = Input.buildNodeFilter (\c -> { c | isPersonal = Present True }) |> Present
                     }
                 )
@@ -219,6 +222,7 @@ nodeOrgaExtPayload =
         |> with (Schema.Object.Node.first_link identity <| SelectionSet.map Username Schema.Object.User.username)
         |> with Schema.Object.Node.visibility
         |> with Schema.Object.Node.about
+        |> with Schema.Object.Node.isRootArchived
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
                 Schema.Object.Node.childrenAggregate
@@ -412,6 +416,7 @@ nodeOrgaPayload =
         |> with Schema.Object.Node.mode
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with Schema.Object.Node.userCanJoin
+        |> with Schema.Object.Node.isRootArchived
         |> with
             (SelectionSet.map (unwrap2 0 .count) <|
                 Schema.Object.Node.tensions_inAggregate (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) }) <|
@@ -447,6 +452,7 @@ nodeOrgaPayload2 =
         |> with Schema.Object.Node.mode
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with Schema.Object.Node.userCanJoin
+        |> with Schema.Object.Node.isRootArchived
         |> hardcoded 0
         |> hardcoded 0
 
@@ -639,6 +645,7 @@ type alias LocalNode =
     , userCanJoin : Maybe Bool
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
+    , isRootArchived : Maybe Bool
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
     , children : Maybe (List EmitterOrReceiver)
@@ -654,6 +661,7 @@ type alias LocalRootNode =
     , mode : NodeMode.NodeMode
     , isTemplateTensionOnly : Maybe Bool
     , isPinnedTensionfetchRecursively : Maybe Bool
+    , isRootArchived : Maybe Bool
     , source : Maybe BlobId
     }
 
@@ -671,7 +679,7 @@ lgDecoder data =
                 case n.parent of
                     Just p ->
                         if p.isRoot then
-                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly p.isPinnedTensionfetchRecursively |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin p.mode p.isTemplateTensionOnly p.isPinnedTensionfetchRecursively p.isRootArchived |> Just
                             , path = [ shrinkNode p, shrinkNode n ]
                             , focus = ln2fn n
                             }
@@ -685,7 +693,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly n.isPinnedTensionfetchRecursively |> Just
+                        { root = RNode n.name n.nameid n.userCanJoin n.mode n.isTemplateTensionOnly n.isPinnedTensionfetchRecursively n.isRootArchived |> Just
                         , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
@@ -712,6 +720,7 @@ lgPayload isInit =
         |> with Schema.Object.Node.userCanJoin
         |> with Schema.Object.Node.isTemplateTensionOnly
         |> with Schema.Object.Node.isPinnedTensionfetchRecursively
+        |> with Schema.Object.Node.isRootArchived
         |> with (Schema.Object.Node.source identity blobIdPayload)
         |> with (Schema.Object.Node.parent identity lg2Payload)
         |> (\x ->
@@ -737,6 +746,7 @@ lg2Payload =
         |> with Schema.Object.Node.mode
         |> with Schema.Object.Node.isTemplateTensionOnly
         |> with Schema.Object.Node.isPinnedTensionfetchRecursively
+        |> with Schema.Object.Node.isRootArchived
         |> with (Schema.Object.Node.source identity blobIdPayload)
 
 
