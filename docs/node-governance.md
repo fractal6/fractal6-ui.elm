@@ -31,6 +31,20 @@ read the flag through `Fractale.Graph.isRootArchivedOn`, which prefers the tree 
 the badge flips without a refetch) and falls back to the path. The Explore listing
 (`queryPublicOrga`) excludes archived orgs in the GraphQL filter.
 
+## Recursive archive
+
+Archiving a **circle** archives its whole subtree, and optionally closes every open tension attached
+to it (checkbox in the ActionPanel archive modal, sent as the `BlobArchived` event `new` field:
+`"true"` or `""`). The checkbox is shown for roles too (a role has its own tensions), not for a root
+(flat flag, children untouched).
+
+The backend requires authority on **every descendant circle** before archiving anything. The modal
+probes it with `hasSubtreeAuthority` (`POST /q/nodes/subauth` → bare bool, `src/Requests.elm`): only
+`Success True` renders the hint + checkbox and enables the confirm button (`isSendable`), anything
+else (pending, failed, denied) shows an authorization message and keeps the action disabled —
+fail-closed. The probe is advisory only; the backend stays the gate, so its error (which names the
+blocking circle) is still rendered in the modal footer. Roles and roots skip the round trip.
+
 ## Revisions
 
 The document history is shown under the Tension page **Revisions** tab

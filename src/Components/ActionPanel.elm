@@ -36,12 +36,12 @@ import Fractale.Graph exposing (getNode)
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Fractale.View exposing (auth2icon, auth2str, node2str, viewUserFull, visibility2descr, visibility2icon)
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, button, div, h2, hr, i, p, span, text, textarea)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
+import Html exposing (Html, a, button, div, h2, hr, i, input, p, span, text, textarea)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, href, id, name, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
-import Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, loadingSpin, loadingSpinR, loadingSpinRight)
+import Loading exposing (GqlData, ModalData, RequestResult(..), RestData, isFailure, isSuccess, loadingSpin, loadingSpinR, loadingSpinRight)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
@@ -49,6 +49,8 @@ import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode2)
 import Query.QueryTension exposing (getTensionHead)
+import RemoteData
+import Requests exposing (hasSubtreeAuthority)
 import Schema.Enum.NodeMode as NodeMode
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.NodeVisibility as NodeVisibility
@@ -80,6 +82,8 @@ type alias Model =
     , domid : String -- allow multiple panel to coexists
     , targetid : String -- real nameid of the target (case of node whithout tension ->  membership roles)
     , pos : Maybe ( Int, Int )
+    , closeTensions : Bool -- archive action: also close the open tensions of the subtree
+    , subAuth : RestData Bool -- archive action: has authority on all sub-circles ?
     , action_result : GqlData IdPayload
     , node_result : GqlData Node
 
@@ -123,6 +127,8 @@ initModel session =
     , domid = "actionPanelHelper"
     , targetid = ""
     , pos = Nothing
+    , closeTensions = True
+    , subAuth = RemoteData.NotAsked
 
     -- Common
     , session = session
@@ -421,7 +427,13 @@ setActionForm model =
                     [ Ev TensionEvent.MemberUnlinked user.username (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "") ]
 
                 ArchiveAction ->
-                    [ Ev TensionEvent.BlobArchived "" "" ]
+                    case node.type_ of
+                        NodeType.Circle ->
+                            -- the flag is only read for non-root circles (recursive archive)
+                            [ Ev TensionEvent.BlobArchived "" (ternary (model.closeTensions && nid2rootid node.nameid /= node.nameid) "true" "") ]
+
+                        NodeType.Role ->
+                            [ Ev TensionEvent.BlobArchived "" "" ]
 
                 UnarchiveAction ->
                     [ Ev TensionEvent.BlobUnarchived "" "" ]
@@ -531,6 +543,9 @@ isSendable model =
         LinkAction ->
             isUsersSendable model.form.users
 
+        ArchiveAction ->
+            model.subAuth == RemoteData.Success True
+
         _ ->
             True
 
@@ -557,6 +572,8 @@ type Msg
     | OnChangeVisibility NodeVisibility.NodeVisibility
     | OnChangeMode NodeMode.NodeMode
     | OnChangeRoleType RoleType.RoleType
+    | OnToggleCloseTensions
+    | OnSubAuthAck (RestData Bool)
     | OnActionSubmit Time.Posix
       -- Actions
     | PushAction ActionForm PanelState
@@ -714,21 +731,32 @@ update_ apis message model =
 
         OnOpenModal action ->
             let
+                node_cmds =
+                    case model.node_result of
+                        NotAsked ->
+                            [ fetchNode2 apis model.targetid OnGetNode ]
+
+                        _ ->
+                            []
+
                 cmds =
                     case action of
                         LinkAction ->
                             [ Cmd.map UserInputMsg (send UserInput.OnLoad) ]
 
-                        _ ->
-                            []
-                                |> List.append
-                                    (case model.node_result of
-                                        NotAsked ->
-                                            [ fetchNode2 apis model.targetid OnGetNode ]
+                        ArchiveAction ->
+                            -- Probe the authority on the subtree (advisory, the backend is the gate)
+                            (if model.form.node.type_ == NodeType.Circle && nid2rootid model.form.node.nameid /= model.form.node.nameid then
+                                hasSubtreeAuthority apis model.form.node.nameid OnSubAuthAck
 
-                                        _ ->
-                                            []
-                                    )
+                             else
+                                -- No descendant circle, no round trip
+                                send (OnSubAuthAck (RemoteData.Success True))
+                            )
+                                :: node_cmds
+
+                        _ ->
+                            node_cmds
             in
             ( model
                 |> openModal
@@ -839,6 +867,12 @@ update_ apis message model =
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )
+
+        OnToggleCloseTensions ->
+            ( { model | closeTensions = not model.closeTensions }, noOut )
+
+        OnSubAuthAck result ->
+            ( { model | subAuth = result }, noOut )
 
         OnChangeVisibility visibility ->
             ( setFragment (\frag -> { frag | visibility = Just visibility }) model, noOut )
@@ -1380,10 +1414,32 @@ viewStep1 op model =
                     ]
 
                 ArchiveAction ->
-                    [ showIf (nid2rootid model.form.node.nameid == model.form.node.nameid) <|
-                        showMsg "archiveRoot" "is-info" "icon-info" T.archiveRootInfo ""
-                    , viewComment model
-                    ]
+                    let
+                        isRoot =
+                            nid2rootid model.form.node.nameid == model.form.node.nameid
+                    in
+                    case model.subAuth of
+                        RemoteData.Success True ->
+                            [ showIf isRoot <|
+                                showMsg "archiveRoot" "is-info" "icon-info" T.archiveRootInfo ""
+                            , showIf (not isRoot && model.form.node.type_ == NodeType.Circle) <|
+                                showMsg "archiveChildren" "is-info" "icon-info" T.archiveChildrenInfo ""
+                            , showIf (not isRoot) <|
+                                div [ class "field mb-4" ]
+                                    [ Html.label [ class "checkbox" ]
+                                        [ input [ type_ "checkbox", checked model.closeTensions, onClick OnToggleCloseTensions ] []
+                                        , span [ class "ml-2" ] [ text T.closeTensionsAsk ]
+                                        ]
+                                    ]
+                            , viewComment model
+                            ]
+
+                        RemoteData.Loading ->
+                            [ div [ class "spinner" ] [ loadingSpin True ] ]
+
+                        _ ->
+                            -- Fail-closed: NotAsked, Failure or no authority on the subtree
+                            [ showMsg "archiveSubAuth" "is-warning" "icon-alert-triangle" T.authorizationNeeded T.archiveSubAuthNeeded ]
 
                 UnarchiveAction ->
                     [ viewComment model ]

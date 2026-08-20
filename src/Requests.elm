@@ -87,6 +87,25 @@ fetchChildren api targetid msg =
 
 {-|
 
+    Tells whether the user has authority on every sub-circle of the given node
+    (i.e can archive it recursively).
+
+-}
+hasSubtreeAuthority : Apis -> String -> (RestData Bool -> msg) -> Cmd msg
+hasSubtreeAuthority api nameid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.rest ++ "/nodes/subauth"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-|
+
     Get all member ** Nodes ** below the given node (role with lead link) recursively
 
 -}

@@ -23,7 +23,7 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga)
+import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
 import Fractale.HotUpdate exposing (hotNodeInsert, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
 import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
@@ -526,8 +526,12 @@ update_ apis message model =
                     -- For exemple, when Guest leave an organisation
                     ( model, out1 [ DoUpdateToken ] )
 
-        DelNodes nameids ->
+        DelNodes nameids_ ->
             let
+                -- Archive/delete cascades to the subtree
+                nameids =
+                    withDescendants nameids_ model.tree_result
+
                 ( data, _ ) =
                     hotNodePull nameids model.tree_result
             in

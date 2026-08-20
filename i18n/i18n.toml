@@ -2578,6 +2578,18 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Nothing will be deleted, you can unarchive the organisation at any time."
   fr="Rien ne sera supprimé, vous pouvez désarchiver l'organisation à tout moment."
 
+[archiveChildrenInfo]
+  en="All children of this circle will be archived too."
+  fr="Tous les enfants de ce cercle seront également archivés."
+
+[closeTensionsAsk]
+  en="Close all open tensions attached to it and its children."
+  fr="Fermer toutes les tensions ouvertes qui lui sont rattachées, ainsi qu’à ses enfants."
+
+[archiveSubAuthNeeded]
+  en="You need authority on all the sub-circles to archive this circle. Please, ask a coordinator of the sub-circles to perform this action."
+  fr="Vous devez avoir l’autorité sur tous les sous-cercles pour archiver ce cercle. Veuillez demander à un coordinateur des sous-cercles d’effectuer cette action."
+
 [leave_header]
   en="Leave {{type}}"
   fr="Quitter le {{type}}"

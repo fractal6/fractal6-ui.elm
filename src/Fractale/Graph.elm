@@ -41,6 +41,7 @@ module Fractale.Graph exposing
     , sortNode
     , tidFromPath
     , treeMatchesFocus
+    , withDescendants
     )
 
 import Dict
@@ -189,6 +190,41 @@ getChildren nid odata =
                 x |> Dict.values |> List.filter (\n -> n.first_link /= Nothing && (Just parentid == Maybe.map .nameid n.parent))
             )
         |> withDefault []
+
+
+{-| Expand nameids with all their descendants, by walking the parent links.
+(the nameid does not encode the path: circles are flat, only roles carry their parent circle)
+-}
+withDescendants : List String -> GqlData NodesDict -> List String
+withDescendants nameids odata =
+    case odata of
+        Success data ->
+            let
+                childrenOf : List String -> List String -> List String
+                childrenOf acc parents =
+                    Dict.values data
+                        |> List.filterMap
+                            (\n ->
+                                if List.member (Maybe.map .nameid n.parent |> withDefault "") parents && not (List.member n.nameid acc) then
+                                    Just n.nameid
+
+                                else
+                                    Nothing
+                            )
+
+                go : List String -> List String -> List String
+                go acc frontier =
+                    case childrenOf acc frontier of
+                        [] ->
+                            acc
+
+                        children ->
+                            go (acc ++ children) children
+            in
+            go nameids nameids
+
+        _ ->
+            nameids
 
 
 getOwners : GqlData NodesDict -> List Node
