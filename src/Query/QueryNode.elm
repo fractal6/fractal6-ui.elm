@@ -87,6 +87,7 @@ import Fractale.Codecs exposing (activeMembershipRoleTypes, membershipRoleTypes,
 import Dict exposing (Dict)
 import Utils.Bool exposing (ternary)
 import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (parseSearchPattern)
 import Schema.Enum.ContractStatus as ContractStatus
 import Schema.Enum.LabelOrderable as LabelOrderable
 import Schema.Enum.NodeMode as NodeMode
@@ -1455,6 +1456,25 @@ projectsFullDecoder d =
         }
 
 
+{-| Fulltext filter for a search pattern: anyoftext on the unquoted part, alloftext
+on the quoted spans (joined: alloftext of joined spans == AND of per-span alloftext).
+-}
+searchNameFilter : Maybe String -> OptionalArgument { alloftext : OptionalArgument String, anyoftext : OptionalArgument String }
+searchNameFilter pattern =
+    case Maybe.map parseSearchPattern pattern of
+        Just ( unquoted, span :: spans ) ->
+            Present
+                { anyoftext = fromMaybe unquoted
+                , alloftext = Present (String.join " " (span :: spans))
+                }
+
+        Just ( Just unquoted, [] ) ->
+            Present { anyoftext = Present unquoted, alloftext = Absent }
+
+        _ ->
+            Absent
+
+
 getProjects url nid pattern status msg =
     -- Fetch on the given node
     makeGQLQuery url
@@ -1468,7 +1488,7 @@ getProjects url nid pattern status msg =
                                 (\c ->
                                     { c
                                         | parentnameid = Present { eq = Present nid, in_ = Absent }
-                                        , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                        , name = searchNameFilter pattern
                                         , status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
                                     }
                                 )
@@ -1485,7 +1505,7 @@ getProjects url nid pattern status msg =
                                 (\c ->
                                     { c
                                         | parentnameid = Present { eq = Present nid, in_ = Absent }
-                                        , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                        , name = searchNameFilter pattern
                                         , status = Present { eq = Present ProjectStatus.Closed, in_ = Absent }
                                     }
                                 )
@@ -1508,7 +1528,7 @@ nodeProjectsFullPayload pattern status =
                         Input.buildProjectFilter
                             (\c ->
                                 { c
-                                    | name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern
+                                    | name = searchNameFilter pattern
                                     , status = Present <| { eq = Present status, in_ = Absent }
                                 }
                             )
@@ -1723,7 +1743,7 @@ nodeOpenProjectsPayload pattern_m =
                             (\f ->
                                 { f
                                     | status = Present { eq = Present ProjectStatus.Open, in_ = Absent }
-                                    , name = fromMaybe <| Maybe.map (\x -> { anyoftext = Present x, alloftext = Absent }) pattern_m
+                                    , name = searchNameFilter pattern_m
                                 }
                             )
                             |> Present

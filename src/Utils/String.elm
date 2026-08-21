@@ -22,6 +22,7 @@
 module Utils.String exposing
     ( cleanDup
     , decap
+    , parseSearchPattern
     , regexContains
     , regexFromString
     , regexfirstMatchLength
@@ -59,6 +60,60 @@ decap t =
 space_ : String
 space_ =
     "\u{00A0}"
+
+
+{-| Split a search pattern into its unquoted remainder and quoted spans (" or ' pairs).
+No escapes; an unmatched quote leaves the rest unquoted (quote char dropped).
+-}
+parseSearchPattern : String -> ( Maybe String, List String )
+parseSearchPattern pattern =
+    let
+        go s unquoted quoted =
+            case List.minimum (String.indexes "\"" s ++ String.indexes "'" s) of
+                Nothing ->
+                    ( unquoted ++ [ s ], quoted )
+
+                Just i ->
+                    let
+                        qc =
+                            String.slice i (i + 1) s
+
+                        rest =
+                            String.dropLeft (i + 1) s
+                    in
+                    case String.indexes qc rest of
+                        [] ->
+                            ( unquoted ++ [ String.left i s, rest ], quoted )
+
+                        j :: _ ->
+                            let
+                                span =
+                                    String.left j rest |> String.trim
+                            in
+                            go (String.dropLeft (j + 1) rest)
+                                (unquoted ++ [ String.left i s ])
+                                (quoted
+                                    ++ (if span == "" then
+                                            []
+
+                                        else
+                                            [ span ]
+                                       )
+                                )
+
+        ( unq, qs ) =
+            go pattern [] []
+
+        unquotedStr =
+            String.join " " (List.filter ((/=) "") (List.map String.trim unq))
+    in
+    ( if unquotedStr == "" then
+        Nothing
+
+      else
+        Just unquotedStr
+    , qs
+    )
 
 
 regexFromString : String -> Regex

@@ -17,6 +17,22 @@ rebuilds the URL keeping only `v` and `sort`.
 | `u`    | authors       | –        |
 | `l`    | labels        | –        |
 
+## Text pattern (`q=`)
+
+The pattern is parsed by `Utils.String.parseSearchPattern`: `"quoted"` (or
+`'quoted'`) spans require **all** their words to match (`alloftext`), the
+unquoted remainder matches **any** word (`anyoftext`); clauses are ANDed, each
+matching title OR message. The split happens client-side everywhere:
+
+- GraphQL `queryTension` builds the filter directly (`searchFilters` in
+  `Query/QueryTension.elm`);
+- REST `/q/tensions/*` receives `pattern` + `pattern_exact` (split in
+  `tensionQueryEncoder`), assembled server-side by `db.SearchTextFilter`.
+
+Project search (`Org/Projects.elm`, link-tension panel) applies the same rule
+on `Project.name` via `searchNameFilter` in `Query/QueryNode.elm`. The journal
+search does not support quoted spans.
+
 ## Org filters (`org=`)
 
 Values: `open_roles`, `roles`, `circles`, `archived_roles`, `archived_circles`.

@@ -85,6 +85,7 @@ import Schema.Union.CardKind
 import String.Extra as SE
 import Utils.Bool exposing (ternary)
 import Utils.Maybe exposing (unwrap, unwrap2)
+import Utils.String exposing (parseSearchPattern)
 
 
 
@@ -855,6 +856,36 @@ orgNodesOrder sort =
             Input.buildNodeOrder (\b -> { b | desc = Present NodeOrderable.CreatedAt })
 
 
+{-| Text search clauses ANDed together: anyoftext on the unquoted part,
+alloftext per quoted span, each matching title OR message.
+-}
+searchFilters : Maybe String -> List (Maybe Input.TensionFilter)
+searchFilters query_ =
+    case query_ of
+        Nothing ->
+            []
+
+        Just q ->
+            let
+                ( unquoted, quoted ) =
+                    parseSearchPattern q
+
+                clause tf =
+                    Input.buildTensionFilter
+                        (\d ->
+                            { d
+                                | title = Present tf
+                                , or =
+                                    Present
+                                        [ Input.buildTensionFilter (\d2 -> { d2 | message = Present tf }) |> Just ]
+                            }
+                        )
+                        |> Just
+            in
+            (unquoted |> Maybe.map (\u -> [ clause { alloftext = Absent, anyoftext = Present u } ]) |> withDefault [])
+                ++ List.map (\s -> clause { alloftext = Present s, anyoftext = Absent }) quoted
+
+
 subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
     { a
@@ -888,30 +919,7 @@ subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
                                     )
                                     |> Just
                                  ]
-                                    ++ (query_
-                                            |> Maybe.map
-                                                (\q ->
-                                                    [ Input.buildTensionFilter
-                                                        (\d3 ->
-                                                            { d3
-                                                                | title = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                , or =
-                                                                    Present
-                                                                        [ Input.buildTensionFilter
-                                                                            (\d4 ->
-                                                                                { d4
-                                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                                }
-                                                                            )
-                                                                            |> Just
-                                                                        ]
-                                                            }
-                                                        )
-                                                        |> Just
-                                                    ]
-                                                )
-                                            |> withDefault []
-                                       )
+                                    ++ searchFilters query_
                                 )
                     }
                 )
@@ -937,29 +945,12 @@ subTensionIntFilterByDate nameids first offset query_ status_ type_ a =
                         , emitterid = { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present } |> Present
                         , receiverid = { eq = Absent, regexp = Absent, in_ = List.map Just nameids |> Present } |> Present
                         , and =
-                            query_
-                                |> Maybe.map
-                                    (\q ->
-                                        [ Input.buildTensionFilter
-                                            (\d2 ->
-                                                { d2
-                                                    | title = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                    , or =
-                                                        Present
-                                                            [ Input.buildTensionFilter
-                                                                (\d3 ->
-                                                                    { d3
-                                                                        | message = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                    }
-                                                                )
-                                                                |> Just
-                                                            ]
-                                                }
-                                            )
-                                            |> Just
-                                        ]
-                                    )
-                                |> fromMaybe
+                            case searchFilters query_ of
+                                [] ->
+                                    Absent
+
+                                fs ->
+                                    Present fs
                     }
                 )
                 |> Present
@@ -983,19 +974,8 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
                     { c
                         | status = status_ |> Maybe.map (\s -> { eq = Present s, in_ = Absent }) |> fromMaybe
                         , type_ = type_ |> Maybe.map (\t -> { eq = Present t, in_ = Absent }) |> fromMaybe
-                        , title = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
-                        , or =
-                            Present
-                                [ Input.buildTensionFilter
-                                    (\d3 ->
-                                        { d3
-                                            | message = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
-                                        }
-                                    )
-                                    |> Just
-                                ]
                         , and =
-                            Present
+                            Present <|
                                 [ Input.buildTensionFilter
                                     (\d ->
                                         { d
@@ -1030,6 +1010,7 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
                                     )
                                     |> Just
                                 ]
+                                    ++ searchFilters query_
                     }
                 )
                 |> Present

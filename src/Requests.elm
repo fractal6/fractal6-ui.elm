@@ -44,6 +44,7 @@ import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
 import Session exposing (Apis)
+import Utils.String exposing (parseSearchPattern)
 
 
 
@@ -392,10 +393,16 @@ fetchTension api route q msg decoder =
 
 tensionQueryEncoder : TensionQuery -> List ( String, JD.Value )
 tensionQueryEncoder q =
+    let
+        -- Quoted spans get an exact (all-words) match server-side.
+        ( pattern, patternExact ) =
+            q.pattern |> Maybe.map parseSearchPattern |> Maybe.withDefault ( Nothing, [] )
+    in
     [ ( "nameids", JE.list JE.string q.targetids )
     , ( "first", JE.int q.first )
     , ( "offset", JE.int q.offset )
-    , ( "pattern", JEE.maybe JE.string q.pattern )
+    , ( "pattern", JEE.maybe JE.string pattern )
+    , ( "pattern_exact", JE.list JE.string patternExact )
     , ( "status", JEE.maybe JE.string <| Maybe.map TensionStatus.toString q.status )
     , ( "type_", JEE.maybe JE.string <| Maybe.map TensionType.toString q.type_ )
     , ( "authors", JE.list JE.string <| List.map .username q.authors )
