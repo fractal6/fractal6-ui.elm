@@ -1569,7 +1569,7 @@ viewComment session c form result delete_result highlightedCommentId userInput e
                                                     [ hr [ class "dropdown-divider" ] []
                                                     , div [ class "dropdown-item", onClick (OnUpdateComment c) ] [ A.icon1 "icon-edit-2" T.edit ]
                                                     , div
-                                                        [ class "dropdown-item"
+                                                        [ class "dropdown-item button-light is-danger"
                                                         , onClick <|
                                                             DoModalConfirmOpen (OnDeleteComment c.id)
                                                                 { message = Nothing

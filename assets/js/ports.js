@@ -445,7 +445,6 @@ export const actions = {
                 return
             }
             gp.drawCanvas();
-            gp.drawCanvas(true);
 
             // Fix bad drawing... (observed when adding, moving or removing node)
             gp.resizeMe();
@@ -465,7 +464,6 @@ export const actions = {
             var gp = session.gp;
             gp.resetGraphPack(data.data, true, gp.focusedNode.data.nameid);
             gp.drawCanvas();
-            gp.drawCanvas(true);
         }
     },
     'DRAW_BUTTONS_GRAPHPACK' : (app, session, _) => {

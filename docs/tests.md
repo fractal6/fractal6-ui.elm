@@ -19,7 +19,8 @@ tests/
 │   ├── setup.js                  # execCommand polyfill
 │   ├── replaceRange.test.js
 │   ├── markupRichText.test.js
-│   └── markdownFormatters.test.js
+│   ├── markdownFormatters.test.js
+│   └── graphpackHitTest.test.js
 ├── robot/                        # Robot Framework e2e tests
 │   ├── data/                     # test fixtures
 │   ├── robotresults/             # output dir (gitignored)
@@ -57,8 +58,9 @@ elm-test tests/Elm/MarkdownTest.elm
 
 ## JS Unit Tests (Jest)
 
-Covers the `assets/js/` helpers — `replaceRange` and the markup keyboard handlers
-in `bulma_drivers.js` / `ports.js` — which Elm tests can't reach.
+Covers the `assets/js/` helpers — `replaceRange`, the markup keyboard handlers
+in `bulma_drivers.js` / `ports.js`, and the graphpack canvas hit-testing
+(`graphpack_d3.js`) — which Elm tests can't reach.
 
 ### Prerequisites
 

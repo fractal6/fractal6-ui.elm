@@ -18,13 +18,12 @@
  * along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { select } from 'd3-selection'
 import { timer } from 'd3-timer'
 import { interpolateZoom } from 'd3-interpolate'
 import { easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
 //import { scaleOrdinal } from 'd3-scale'
-import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
+import { shadeColor, setpixelated, ptInTriangle } from './custom.js'
 
 
 /*
@@ -33,16 +32,9 @@ import { shadeColor, setpixelated, sleep, ptInTriangle } from './custom.js'
  *
  */
 
-(function() {
-    var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-        window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-    window.requestAnimationFrame = requestAnimationFrame;
-})();
-
 const d3 = Object.assign(
     {},
     {
-        select,
         timer,
         interpolateZoom,
         easePolyInOut,
@@ -194,7 +186,6 @@ export const GraphPack = {
     // Html element ID
     canvasParentId: "canvasParent",
     canvasId: "canvasOrga",
-    hiddenCanvasId: "hiddenCanvasOrga",
 
     // Geometry
     minWidth: 300,
@@ -228,9 +219,6 @@ export const GraphPack = {
     nodeOffsetY: 0,
 
     // State
-    colToCircle: {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
-    nextCol: 1,
-    colorCircle: null,
     rootNode: null, // The root node of the graph
     focusedNode: null, // The node that has the active focus
     zoomedNode: null, // The node that has is centered
@@ -253,13 +241,11 @@ export const GraphPack = {
     // Html Elements
     $nextToChart: null,
     $canvas: null,
-    $hiddenCanvas: null,
     $welcomeButtons: null,
     $canvasButtons: null,
     $tooltip: null,
     // Canvas ctx
     ctx2d: null,
-    hiddenCtx2d: null,
 
     // Dat3
     gPack: null, // Receive D3 data structure
@@ -277,29 +263,14 @@ export const GraphPack = {
     // Canvas drawing methods
     //
 
-    // Reset drawing
-    clearAll() {
-        //this.$canvasButtons.classList.add("is-invisible");
-        //this.$tooltip.classList.add("is-invisible");
-
-        //if (this.$canvas) {
-        //    this.$canvas.parentNode.removeChild(this.$canvas);
-        //    //delete $canvas;
-        //}
-        //if (this.$hiddenCanvas)  {
-        //    this.$hiddenCanvas.parentNode.removeChild(this.$hiddenCanvas);
-        //    //delete $hiddenCanvas;
-        //}
-    },
-
     //Clear canvas
     clearCanvas(ctx2d) {
         //var backgoundGrd = ctx2d.createLinearGradient(0, 0, this.width, 0);
         //backgoundGrd.addColorStop(0, this.colorDarker1);
         //backgoundGrd.addColorStop(1, this.colorDarker2);
+        // fillRect: do not use rect()+fill(), it would accumulate subpaths on the persistent context.
         ctx2d.fillStyle = this.backgroundColor;
-        ctx2d.rect(0, 0, this.width, this.height);
-        ctx2d.fill();
+        ctx2d.fillRect(0, 0, this.width, this.height);
     },
 
     drawButtons() {
@@ -352,61 +323,36 @@ export const GraphPack = {
         // Size Canvas
         this.$canvas.width = this.width;
         this.$canvas.height = this.height;
-        if (this.$hiddenCanvas) {
-            this.$hiddenCanvas.width = this.width;
-            this.$hiddenCanvas.height = this.height;
-        }
 
         // Size Element next to the canvas
         this.$nextToChart.style.minHeight = 1.5 * this.height + "px";
     },
 
     //The draw function of the canvas that gets called on each frame
-    drawCanvas(isHidden) {
+    drawCanvas() {
         if (!this.graph) return
 
-        var ctx2d;
-        if (isHidden) {
-            ctx2d = this.hiddenCtx2d;
-        } else {
-            ctx2d = this.ctx2d;
-        }
-        this.clearCanvas(ctx2d);
-
-        //Select our dummy nodes and draw the data to canvas.
-        this.drawCurrent(isHidden, ctx2d)
-    },
-
-    drawCurrent(isHidden, ctx) {
-        // Separator between the opaque nodes and the other.
-        var boundary = this.focusedNode;
-
-        // First draw the node above the zoomedNode and their children (opacity)
-        this.drawOutside(boundary, isHidden, ctx);
-
-        // Then draw the zoomedNode/focusedNode and descendends
-        this.drawInside(boundary, isHidden, ctx);
-
-        if (!isHidden)
-            // Draw names when zooming in/out
-            this.drawNodeNames(this.zoomedNode)
-    },
-
-    // Not ready...Doesn't work.
-    drawCanvasLight() {
         this.clearCanvas(this.ctx2d);
 
+        //Select our dummy nodes and draw the data to canvas.
+        this.drawCurrent()
+    },
+
+    drawCurrent() {
         // Separator between the opaque nodes and the other.
         var boundary = this.focusedNode;
 
         // First draw the node above the zoomedNode and their children (opacity)
-        this.drawOutside(boundary, false, this.ctx2d, 100);
+        this.drawOutside(boundary);
 
         // Then draw the zoomedNode/focusedNode and descendends
-        this.drawInside(boundary, false, this.ctx2d, 100);
+        this.drawInside(boundary);
+
+        // Draw names when zooming in/out
+        this.drawNodeNames(this.zoomedNode)
     },
 
-    drawOutside(b, isHidden, ctx, max_draw) {
+    drawOutside(b) {
         // list of nodes to draw.
         var tree;
         if (b.parent) {
@@ -423,55 +369,46 @@ export const GraphPack = {
             }
             // It's slightly faster than .forEach()
             for (var i = 0; i < tree.length; i++) {
-                this.drawNode(tree[i], isHidden, ctx, this.outsideZoomOpacity);
-                if (i > max_draw) break
+                this.drawNode(tree[i], this.outsideZoomOpacity);
             }
         }
     },
 
-    drawInside(b, isHidden, ctx, max_draw) {
+    drawInside(b) {
+        var ctx = this.ctx2d;
         // list of nodes to draw.
         var tree = b.descendants();
-        var cpt = 0;
         for (var i = 0; i < tree.length; i++) {
             let d = tree[i].depth - this.focusedNode.depth
             if (d >= 0 && d < 4 || tree[i].depth == 0) {
-                this.drawNode(tree[i], isHidden, ctx);
-                if (i > max_draw) break
-                cpt++;
+                this.drawNode(tree[i]);
             }
         }
 
-        if (!isHidden && !max_draw) {
-            // Draw focused border
-            var w = this.focusCircleWidth;
-            var color = this.focusCircleColor;
-            // Draw border
-            ctx.beginPath();
-            ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon + 0.1 + w * 0.5,
-                0, 2 * Math.PI, true);
-            ctx.lineWidth = w;
-            ctx.strokeStyle = color;
-            ctx.stroke();
-        }
-
+        // Draw focused border
+        var w = this.focusCircleWidth;
+        var color = this.focusCircleColor;
+        ctx.beginPath();
+        ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon + 0.1 + w * 0.5,
+            0, 2 * Math.PI, true);
+        ctx.lineWidth = w;
+        ctx.strokeStyle = color;
+        ctx.stroke();
     },
 
-    drawNode(node, isHidden, ctx, opac) {
+    drawNode(node, opac) {
+        var ctx = this.ctx2d;
         var circleColor;
 
         if (node.data.type_ === "Hidden") return
         else this.addNodeCtx(node);
 
         // Get the circle Color
-        if (isHidden) {
-            // On the hidden canvas each rectangle gets a unique color.
-            circleColor = node.colorid;
-        } else if (opac && (opac[0] == "#" || !opac.length)) {
+        if (opac && (opac[0] == "#" || !opac.length)) {
             // Given color OR given colorGradient (ot length)
             circleColor = opac;
         } else {
-            circleColor = this.getNodeColor(node, opac);
+            circleColor = this.getNodeColor(node);
         }
 
         // Draw node
@@ -499,7 +436,7 @@ export const GraphPack = {
         }
 
         // Draw owned Role
-        if ((!isHidden && this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
+        if ((this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
             // Draw user pin
             //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
             //ctx.beginPath();
@@ -732,7 +669,7 @@ export const GraphPack = {
         var w;
         if (node == this.focusedNode) w = this.focusCircleWidth;
         else w = this.hoverCircleWidth;
-        //this.ctx2d.restore();
+        this.ctx2d.beginPath();
         this.ctx2d.lineWidth = w * 1.5;
         this.ctx2d.strokeStyle = this.getNodeColor(node.parent || this.rootNode);
         this.ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon + 0.1 + w / 2, 0, 2 * Math.PI, true);
@@ -740,27 +677,27 @@ export const GraphPack = {
 
         // Fix canvas alteration (text cutted and opacity stacked)
         if (this.focusedNode == this.zoomedNode)
-            this.drawInside(this.focusedNode, false, this.ctx2d);
+            this.drawInside(this.focusedNode);
         else {
             // Redraw zommed node with the color of its parent.
             //1) This allow opacity color to be consitent !
             var p = this.zoomedNode.parent;
             // First reset the node colors
-            this.drawNode(this.zoomedNode, false, this.ctx2d, this.backgroundColor);
+            this.drawNode(this.zoomedNode, this.backgroundColor);
             //2) Then redraw the inner circle with its parents colors.
             for (var j = 0; j < this.zoomedNode.depth; j++) {
-                var color = this.getNodeColor(p, this.outsideZoomOpacity);
-                this.drawNode(this.zoomedNode, false, this.ctx2d, color);
-                parent = p.parent;
+                var color = this.getNodeColor(p);
+                this.drawNode(this.zoomedNode, color);
+                p = p.parent;
             }
 
             // Redraw the zommed node before redrawing names
             var tree = [this.zoomedNode, ...this.zoomedNode.children]
             for (var i = 0; i < tree.length; i++) {
-                this.drawNode(tree[i], false, this.ctx2d, this.outsideZoomOpacity);
+                this.drawNode(tree[i], this.outsideZoomOpacity);
             }
 
-            this.drawInside(this.focusedNode, false, this.ctx2d);
+            this.drawInside(this.focusedNode);
         }
         this.drawNodeNames(this.zoomedNode);
 
@@ -852,7 +789,11 @@ export const GraphPack = {
         if (this.isZooming || !this.focusedNode) return false
 
         if (focus && typeof (focus) === 'string') {
-            var maybeFocus = this.nodesDict[unescape(focus)];
+            var maybeFocus = this.nodesDict[focus];
+            if (!maybeFocus) {
+                // nameid may come percent-encoded (e.g. from the URL path)
+                try { maybeFocus = this.nodesDict[decodeURIComponent(focus)]; } catch (e) { }
+            }
             if (!maybeFocus) {
                 console.warn("Unknown node:", focus);
                 console.warn("Redirecting to root");
@@ -914,12 +855,10 @@ export const GraphPack = {
             var finished = interpolateZoom(elapsed - dt);
             dt = elapsed;
             this.drawCanvas();
-            //this.drawCanvasLight();
             //stats.end();
             if (finished) {
                 this.isZooming = false;
                 this.drawCanvas();
-                this.drawCanvas(true);
                 this.drawNodeHover(this.focusedNode, true);
                 if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
                 t.stop();
@@ -1039,42 +978,18 @@ export const GraphPack = {
         return c
     },
 
-    getNodeColor(node, opac) {
+    getNodeColor(node) {
         var z = this.zoomedNode || this.focusedNode;
-        var color, depth;
         var depth = z.depth > 2 ? node.depth - z.depth + 2 : node.depth;
-        opac = opac || "";
-        if (opac.startsWith('hsl')) {
-            opac = "";
-        }
-
-        // See doc here: https://www.w3resource.com/html5-canvas/html5-canvas-gradients-patterns.php
-        var grd = this.ctx2d.createRadialGradient(
-            node.ctx.centerX - node.ctx.rayon / 4, node.ctx.centerY - node.ctx.rayon / 2, 0,
-            node.ctx.centerX, node.ctx.centerY, node.ctx.rayon
-        );
+        var color;
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
-            grd = color;
-            //grd.addColorStop(0, shadeColor(color, 10) + opac);
-            // 3D effects
-            //grd.addColorStop(0.2, color + opac);
-            //grd.addColorStop(1, this.colorCircle(depth + 1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
-            if (color.substring(0, 1) == "r" || color.substring(0, 1) == "h") {
-                grd = color;
-            } else {
-                grd = color;
-                //grd.addColorStop(0, color + opac);
-                // 3D effects
-                //grd.addColorStop(1, shadeColor(color, -20) + opac);
-            }
         } else {
             console.warn("Node type unknonw", node.data.type_);
         }
-
-        return grd
+        return color
     },
 
     getZoomFactor(node) {
@@ -1213,15 +1128,9 @@ export const GraphPack = {
 
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants(graph);
-        this.circles_len = this.nodes.filter(x => x.data.type_ === NodeType.Circle).length
-        this.roles_len = this.nodes.filter(x => x.data.type_ === NodeType.Role).length
         this.rootNode = this.nodes[0];
         this.hoveredNode = null;
         this.nodes.forEach(n => {
-            // If the hidden canvas was send into this function and it does not yet have a color,
-            // generate a unique one.
-            n.colorid = this.genColor();
-            this.colToCircle[n.colorid] = n;
             this.nodesDict[n.data.nameid] = n
         });
         this.graph = graph;
@@ -1273,40 +1182,57 @@ export const GraphPack = {
     // Utils Methods
     //
 
-    //Generates the next color in the sequence, going from 0,0,0 to 255,255,255.
-    //From: https://bocoup.com/weblog/2d-picking-in-canvas
-    genColor() {
-        var ret = [];
-        // via http://stackoverflow.com/a/15804183
-        if (this.nextCol < 16777215) {
-            ret.push(this.nextCol & 0xff); // R
-            ret.push((this.nextCol & 0xff00) >> 8); // G
-            ret.push((this.nextCol & 0xff0000) >> 16); // B
-
-            this.nextCol += 100; // This is exagerated for this example and would ordinarily be 1.
-        }
-        var col = "rgb(" + ret.join(',') + ")";
-        return col;
-    },
-
     // Get the mouse coordinate whithin the canvas reference.
     getPointerCtx(e) {
         var r = this.$canvas.getBoundingClientRect();
         return { mouseX: (e.clientX - r.left), mouseY: (e.clientY - r.top) }
     },
 
-    // Get the node under cursor in the canvas
-    getNodeUnderPointer(e, p) {
-        //Figure out where the mouse click occurred.
-        if (!p) p = this.getPointerCtx(e);
-        var hiddenCtx2d = this.hiddenCtx2d;
+    // Drawn radius of a node in pack coordinates (roles are shrunk by type).
+    nodeRayon(node) {
+        if (node.data.type_ === NodeType.Role) {
+            if (node.data.role_type === RoleType.Guest) return node.r * this.rayonFactorGuest
+            if (node.data.role_type === RoleType.Bot) return node.r * this.rayonFactorBot
+            return node.r * this.rayonFactorRole
+        }
+        return node.r
+    },
 
-        // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
-        // This will return that pixel's color
-        var pixel = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
-        //Our map uses these rgb strings as keys to nodes.
-        var color = "rgb(" + pixel[0] + "," + pixel[1] + "," + pixel[2] + ")";
-        var node = this.colToCircle[color];
+    // Test if a point, in graph (pack) coordinates, falls within a node's drawn circle.
+    nodeContains(node, gx, gy) {
+        var r = this.nodeRayon(node);
+        return (gx - node.x) ** 2 + (gy - node.y) ** 2 <= r ** 2
+    },
+
+    // Get the node under cursor by geometric hit-testing.
+    // Note: do not use pixel picking here (hidden canvas + getImageData), as browsers
+    // with fingerprinting protection (e.g. Brave) add noise to canvas readbacks.
+    getNodeUnderPointer(e, p) {
+        if (!p) p = this.getPointerCtx(e);
+        if (!this.rootNode || !this.focusedNode || !this.zoomCtx) return undefined
+
+        // Pointer position in graph (pack) coordinates -- inverse of addNodeCtx.
+        var gx = (p.mouseX - this.centerX) / this.zoomCtx.scale + this.zoomCtx.centerX;
+        var gy = (p.mouseY - this.centerY - this.nodeOffsetY) / this.zoomCtx.scale + this.zoomCtx.centerY;
+        if (!this.nodeContains(this.rootNode, gx, gy)) return undefined
+
+        // Walk down the hierarchy, mirroring what drawCurrent renders: circles are
+        // drawn up to 3 levels below the focused node inside its subtree, and only
+        // down to the focused node's siblings outside of it.
+        var node = this.rootNode;
+        var inFocusPath = (node === this.focusedNode);
+        while (node.children && node.data.type_ === NodeType.Circle) {
+            var next = null;
+            for (var i = 0; i < node.children.length; i++) {
+                var c = node.children[i];
+                if (c.data.type_ === "Hidden") continue
+                if (this.nodeContains(c, gx, gy)) { next = c; break }
+            }
+            var maxDepth = inFocusPath ? this.focusedNode.depth + 3 : this.focusedNode.depth;
+            if (!next || next.depth > maxDepth) break
+            node = next;
+            if (node === this.focusedNode) inFocusPath = true;
+        }
         return node;
     },
 
@@ -1317,24 +1243,9 @@ export const GraphPack = {
     // Get node position and properties
     addNodeCtx(node) {
         var zoomCtx = this.zoomCtx;
-        var ctx, centerX, centerY, rayon;
-
-        centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
-        centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
-        if (node.data.type_ === NodeType.Role) {
-            if (node.data.role_type === RoleType.Guest) {
-                rayon = node.r * this.rayonFactorGuest;
-            } else if (node.data.role_type === RoleType.Bot) {
-                rayon = node.r * this.rayonFactorBot;
-            } else {
-                rayon = node.r * this.rayonFactorRole;
-            }
-        } else {
-            // Circle
-            rayon = node.r;
-        }
-        rayon *= (zoomCtx.scale);
-        //rayon = node.r * (zoomCtx.scale);
+        var centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
+        var centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
+        var rayon = this.nodeRayon(node) * zoomCtx.scale;
         node.ctx = { centerX, centerY, rayon };
         return
     },
@@ -1589,18 +1500,6 @@ export const GraphPack = {
         //this.ctx2d.clearRect(0, 0, this.width, this.height);
         setpixelated(this.ctx2d, true); // @debug: do we need this ?
 
-        // Create a hidden canvas in which each circle will have a different color.
-        // We use this to capture the clicked on circle
-        var hiddenCanvas = d3.select("#" + this.canvasParentId).append("canvas")
-            .attr("id", this.hiddenCanvasId)
-            .attr("width", this.width)
-            .attr("height", this.height)
-            .style("display", "none");
-        this.$hiddenCanvas = hiddenCanvas.node();
-        this.hiddenCtx2d = this.$hiddenCanvas.getContext("2d", { willReadFrequently: true });
-
-        //this.hiddenCtx2d.clearRect(0, 0,this.width, this.height);
-
         //
         // Update Html Elemens
         //
@@ -1709,7 +1608,8 @@ export const GraphPack = {
                 if (node == this.hoveredNode) return
                 if (node !== this.hoveredNode && this.checkIf(p, "InZoomed") && !this.checkIf(p, "InTooltip", this.hoveredNode))
                     this.drawNodeHover(node, true);
-                else if (node !== this.hoveredNode && !this.checkIf(p, "InZoomed"))
+                else if (node !== this.hoveredNode && this.hoveredNode != this.focusedNode && !this.checkIf(p, "InZoomed"))
+                    // Outside the zoomed area: reset hover to the focused node (once)
                     this.drawNodeHover(this.focusedNode, true);
             } else if (this.hoveredNode != this.focusedNode) {
                 // @DEBUG: there is a little dead zone between circle.
@@ -1867,7 +1767,8 @@ export const GraphPack = {
         this.isFrozen = false;
         this.isFrozenMenu = false;
 
-        this.drawCanvas(true); // to add node.ctx
+        // Prime node.ctx (canvas positions) so hover/focus drawing works before the first zoom.
+        this.nodes.forEach(n => { if (n.data.type_ !== "Hidden") this.addNodeCtx(n) });
 
         //
         // Event listeners
@@ -1922,7 +1823,6 @@ export const GraphPack = {
 
                 this.resetGraphPack(this.graph, false);
                 this.clearCanvas(this.ctx2d);
-                this.clearCanvas(this.hiddenCtx2d);
 
                 this.zoomToNode(this.rootNode, 0.9);
                 setTimeout(() => {

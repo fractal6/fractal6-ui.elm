@@ -11,6 +11,9 @@ module.exports = {
     transform: {
         '^.+\\.js$': 'babel-jest',
     },
+    // d3 packages are ESM-only: let babel-jest transform them (needed by
+    // graphpack_d3 tests that exercise the real module).
+    transformIgnorePatterns: ['/node_modules/(?!d3-)'],
     setupFiles: ['<rootDir>/tests/Js/setup.js'],
     moduleFileExtensions: ['js'],
     testMatch: ['**/*.test.js'],
