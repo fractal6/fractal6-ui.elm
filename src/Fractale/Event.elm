@@ -22,31 +22,31 @@
 module Fractale.Event exposing (..)
 
 import Assets as A
+import Components.LabelSearchPanel exposing (viewLabel)
+import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProjectTag)
+import Dict exposing (Dict)
 import Fractale.Codecs exposing (FractalBaseRoute(..), nid2rootid, shortId, toLink)
 import Fractale.Form exposing (decodeColumnRef, decodeLabel, decodeProjectRef)
 import Fractale.User exposing (UserState(..))
 import Fractale.View exposing (byAt, nodeType2str, statusColor, tensionIcon2, tensionStatus2str, viewCircleSimple, viewNodeRefShort, viewUsernameLink)
-import Components.LabelSearchPanel exposing (viewLabel)
-import Components.ProjectSearchPanel exposing (viewProjectColumnTag, viewProjectTag)
-import Dict exposing (Dict)
-import Utils.Bool exposing (ternary)
-import Utils.Date exposing (formatDate)
-import Utils.Html exposing (textD)
-import Utils.String exposing (decap, space_)
+import Generated.Route as Route exposing (toHref)
+import Html exposing (Html, a, div, i, p, small, span, strong, text)
+import Html.Attributes exposing (attribute, class, classList, href, id, style)
+import Maybe exposing (withDefault)
+import ModelSchema exposing (ContractNotif, Event, EventFragment, EventNotif, Label, UserEvent, Username)
 import Schema.Enum.ContractType as ContractType
 import Schema.Enum.NodeType as NodeType
 import Schema.Enum.RoleType as RoleType
 import Schema.Enum.TensionEvent as TensionEvent
 import Schema.Enum.TensionStatus as TensionStatus
 import Schema.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, div, i, p, small, span, strong, text)
-import Html.Attributes exposing (attribute, class, classList, href, id, style)
-import Maybe exposing (withDefault)
-import ModelSchema exposing (ContractNotif, Event, EventFragment, EventNotif, Label, UserEvent, Username)
 import Session exposing (SessionCommon)
 import String.Extra as SE
 import Text as T
+import Utils.Bool exposing (ternary)
+import Utils.Date exposing (formatDate)
+import Utils.Html exposing (textL)
+import Utils.String exposing (decap, space_)
 
 
 eventToLink : UserEvent -> EventNotif -> String
@@ -676,7 +676,7 @@ viewEventPushed : SessionCommon -> Event -> NodeType.NodeType -> List (Html msg)
 viewEventPushed session event nodeType =
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textD (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text T.published2 ], text T.this, textL (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -693,7 +693,7 @@ viewEventArchived session event nodeType isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textD (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [ class "has-text-evidence" ] [ text txt ], text T.this, textL (nodeType2str nodeType), text (formatDate session.lang session.now event.createdAt) ]
         ]
     ]
 
@@ -853,12 +853,11 @@ viewEventPinned session event isPinned =
                 [ viewUsernameLink event.createdBy.username
                 , strong [ class "has-text-evidence" ] [ text actionText ]
                 , text T.thisF
-                , textD (T.tension session.lexicon)
+                , textL (T.tension session.lexicon)
                 , text (formatDate session.lang session.now event.createdAt)
                 ]
         ]
     ]
-
 
 
 viewEventProject : Maybe String -> SessionCommon -> Event -> Bool -> List (Html msg)

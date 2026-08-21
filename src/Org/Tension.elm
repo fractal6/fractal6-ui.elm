@@ -84,7 +84,7 @@ import Utils.Bool exposing (ternary)
 import Utils.Cmd exposing (send, sendNow, sendSleep)
 import Utils.Date exposing (formatDate)
 import Utils.DomEvents exposing (onClickSP)
-import Utils.Html exposing (showIf, textD)
+import Utils.Html exposing (showIf)
 import Utils.Maybe exposing (unwrap)
 import Utils.String exposing (decap)
 import Utils.Url exposing (queryParser)
@@ -1600,7 +1600,6 @@ subscriptions _ model =
                     ContractsPage.subscriptions model.contractsPage |> List.map (\s -> Sub.map ContractsPageMsg s)
            )
         |> Sub.batch
-
 
 
 {-| Roots carry the isRootArchived flag; regular nodes the isArchived one.

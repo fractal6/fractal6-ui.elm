@@ -26,6 +26,7 @@ module Utils.Html exposing
     , textA
     , textD
     , textH
+    , textL
     , textT
     , toText
     )
@@ -68,6 +69,11 @@ toText l =
 textH : String -> Html msg
 textH s =
     s |> upH |> text
+
+
+textL : String -> Html msg
+textL s =
+    s |> String.toLower |> text
 
 
 textT : String -> Html msg

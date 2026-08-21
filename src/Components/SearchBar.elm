@@ -15,7 +15,7 @@
    GNU Affero General Public License for more details.
 
    You should have received a copy of the GNU Affero General Public License
-   along with Fractale.  If not, see <http://www.gnu.org/licenses/>.
+   along with Fractale.  If not, see <https://www.gnu.org/licenses/>.
 -}
 
 
@@ -27,10 +27,11 @@ import Fractale.User exposing (UserState(..))
 import Fractale.Error exposing (viewGqlErrors)
 import Dict
 import Utils.Bool exposing (ternary)
-import Utils.DomEvents exposing (onKeydown, onMousedownPD)
-import Html exposing (Html, button, div, i, input, span, text)
-import Html.Attributes exposing (attribute, autocomplete, autofocus, class, disabled, id, placeholder, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Utils.DomEvents exposing (onMousedownPD)
+import Html exposing (Html, button, div, form, i, input, span, text)
+import Html.Attributes exposing (attribute, autofocus, class, disabled, id, name, placeholder, type_, value)
+import Html.Events exposing (keyCode, on, onClick, onInput, onSubmit)
+import Json.Decode as JD
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -54,18 +55,24 @@ type alias Op msg =
 -}
 viewSearchField : Op msg -> String -> String -> Html msg
 viewSearchField op pattern_init pattern =
-    div [ class ("field has-addons searchBar " ++ op.field_class) ]
+    let
+        -- Per-bar token: tensions / projects / members / activities / orgs stay in separate native histories.
+        historyName =
+            "fractale-" ++ op.id_name
+    in
+    form [ class ("field has-addons searchBar " ++ op.field_class), onSubmit (op.onSearchKeyDown 13) ]
         [ div [ class "control is-expanded" ]
             [ input
                 [ id op.id_name
                 , class "is-rounded input is-small pr-6"
                 , type_ "search"
-                , autocomplete False
+                , name historyName
+                , attribute "autocomplete" historyName
                 , autofocus False
                 , placeholder op.placeholder_txt
                 , value pattern
                 , onInput op.onChangePattern
-                , onKeydown op.onSearchKeyDown
+                , on "keydown" (onKeydownExceptEnter op.onSearchKeyDown)
                 ]
                 []
 
@@ -106,3 +113,17 @@ viewSearchBarLevel op pattern_init pattern rightContent =
         , div [ class "level-right" ]
             rightContent
         ]
+
+
+-- Enter fires keydown 13 then form submit; both would call onSearchKeyDown 13, so skip 13 here.
+onKeydownExceptEnter : (Int -> msg) -> JD.Decoder msg
+onKeydownExceptEnter toMsg =
+    keyCode
+        |> JD.andThen
+            (\k ->
+                if k == 13 then
+                    JD.fail "enter"
+
+                else
+                    JD.succeed (toMsg k)
+            )
