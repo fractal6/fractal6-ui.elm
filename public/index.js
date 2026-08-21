@@ -81,5 +81,31 @@ window.addEventListener('load', _ => {
         setTimeout(Ports.actions["OPEN_TREE_MENU"], 333);
     }
 
+    // Track the visual viewport (mobile keyboard, pinch-zoom) in --vvh/--vvt, consumed by the modal css.
+    var vv = window.visualViewport;
+    if (vv) {
+        var pending = false;
+        var lastH = -1;
+        var lastT = -1;
+        var updateViewport = function() {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(function() {
+                pending = false;
+                // Skip the write when unchanged, a root custom property invalidates the whole document style
+                var h = Math.round(vv.height);
+                var t = Math.round(vv.offsetTop);
+                if (h === lastH && t === lastT) return;
+                lastH = h;
+                lastT = t;
+                var s = document.documentElement.style;
+                s.setProperty("--vvh", h + "px");
+                s.setProperty("--vvt", t + "px");
+            });
+        };
+        updateViewport();
+        vv.addEventListener("resize", updateViewport);
+        vv.addEventListener("scroll", updateViewport);
+    }
 
 });

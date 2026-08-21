@@ -44,6 +44,13 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .modal {
+    // Follow the visual viewport so the keyboard never hides the modal footer
+    @include mobile {
+        top: var(--vvt, 0px);
+        bottom: auto;
+        height: var(--vvh, 100%);
+    }
+
     *:not(.modal-card) > .modal-card-body {
         border-radius: 10px;
     }
@@ -150,7 +157,7 @@ html.has-modal-active, html.has-modal-active2 {
         @include mobile {
             width: 98%;
             margin: 0 1%;
-            max-height: calc(100vh - 20px);
+            max-height: calc(var(--vvh, 100vh) - 20px);
         }
         @include tablet {
             min-width: $modal-width;
@@ -161,7 +168,7 @@ html.has-modal-active, html.has-modal-active2 {
             &.is-huge {
                 width: 100%;
                 margin: 0px 20px;
-                max-height: calc(100vh - 40px);
+                max-height: calc(var(--vvh, 100vh) - 40px);
             }
         }
         &.is-small {
@@ -175,7 +182,7 @@ html.has-modal-active, html.has-modal-active2 {
         &.is-huge {
             width: 100%;
             margin: 0px 20px;
-            max-height: calc(100vh - 40px);
+            max-height: calc(var(--vvh, 100vh) - 40px);
         }
         &.is-image {
             text-align: center;
@@ -184,7 +191,7 @@ html.has-modal-active, html.has-modal-active2 {
             }
 
             img {
-                max-height: calc(100vh - 50px);
+                max-height: calc(var(--vvh, 100vh) - 50px);
             }
         }
     }
