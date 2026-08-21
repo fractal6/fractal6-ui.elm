@@ -1974,7 +1974,7 @@ viewProjects model =
             [ viewProjectsListHeader model.node_focus model.projects_count model.statusFilter (isDataEmpty model.projects)
             , viewProjectsList canEditProject model.commonOp model.session model.node_focus model.pattern_init model.statusFilter model.projects
             , showIf (model.statusFilter == OpenStatus) <|
-                viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.projects_sub
+                viewProjectsSub canEditProject model.commonOp model.session model.node_focus model.pattern_init model.projects_sub
             ]
         ]
 
@@ -2081,10 +2081,22 @@ viewProjectsList canEditProject commonOp session focus pattern statusFilter data
         ]
 
 
-viewProjectsSub : (ProjectFull -> Bool) -> CommonMsg Msg -> SessionCommon -> NodeFocus -> RestData (List ProjectFull) -> Html Msg
-viewProjectsSub canEditProject commonOp session focus data =
+viewProjectsSub : (ProjectFull -> Bool) -> CommonMsg Msg -> SessionCommon -> NodeFocus -> String -> RestData (List ProjectFull) -> Html Msg
+viewProjectsSub canEditProject commonOp session focus pattern data =
     case data of
-        RemoteData.Success items ->
+        RemoteData.Success items_ ->
+            let
+                -- OR substring match, on each word of the pattern
+                terms =
+                    String.words (String.toLower pattern)
+
+                items =
+                    if List.isEmpty terms then
+                        items_
+
+                    else
+                        List.filter (\p -> List.any (\t -> String.contains t (String.toLower p.name)) terms) items_
+            in
             if List.length items > 0 then
                 div [ class "mt-6" ]
                     [ h2 [ class "subtitle is-size-6 has-text-weight-semibold" ] [ text T.subProjects ]
