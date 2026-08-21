@@ -45,15 +45,6 @@ export function shadeColor(color, percent) {
     return "#"+RR+GG+BB;
 }
 
-export function setpixelated(ctx2d, v) {
-    ctx2d['imageSmoothingEnabled'] = v;       /* standard */
-    ctx2d['oImageSmoothingEnabled'] = v;      /* Opera */
-    ctx2d['webkitImageSmoothingEnabled'] = v; /* Safari */
-    ctx2d['msImageSmoothingEnabled'] = v;     /* IE */
-    //ctx2d['mozImageSmoothingEnabled'] = v;    /* Firefox (deprecated) */
-}
-
-
 // sleep time expects milliseconds
 // usage: sleep(1000).then(() => {...})
 export function sleep (time) {

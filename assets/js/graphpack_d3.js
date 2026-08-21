@@ -23,7 +23,7 @@ import { interpolateZoom } from 'd3-interpolate'
 import { easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
 //import { scaleOrdinal } from 'd3-scale'
-import { shadeColor, setpixelated, ptInTriangle } from './custom.js'
+import { shadeColor, ptInTriangle } from './custom.js'
 
 
 /*
@@ -320,9 +320,14 @@ export const GraphPack = {
 
     // Resize Html Elements created here
     sizeDom() {
-        // Size Canvas
-        this.$canvas.width = this.width;
-        this.$canvas.height = this.height;
+        // Size Canvas -- backing store in device pixels, drawing done in CSS pixels via the DPR transform
+        var dpr = window.devicePixelRatio || 1;
+        this.$canvas.width = Math.round(this.width * dpr);
+        this.$canvas.height = Math.round(this.height * dpr);
+        this.$canvas.style.width = this.width + "px";
+        this.$canvas.style.height = this.height + "px";
+        // Setting width/height resets the context state, so re-apply the transform
+        this.$canvas.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
 
         // Size Element next to the canvas
         this.$nextToChart.style.minHeight = 1.5 * this.height + "px";
@@ -1418,9 +1423,9 @@ export const GraphPack = {
 
 
         // First
-        var x = canvas.width / 2;
-        var y = canvas.height / 2;
-        var r = canvas.height / 2.1;
+        var x = this.width / 2;
+        var y = this.height / 2;
+        var r = this.height / 2.1;
 
         ctx.lineWidth = 5;
         ctx.strokeStyle = this.hoverCircleColor;
@@ -1498,7 +1503,6 @@ export const GraphPack = {
         this.$canvas.classList.remove("is-invisible");
         this.ctx2d = this.$canvas.getContext("2d");
         //this.ctx2d.clearRect(0, 0, this.width, this.height);
-        setpixelated(this.ctx2d, true); // @debug: do we need this ?
 
         //
         // Update Html Elemens

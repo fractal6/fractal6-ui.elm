@@ -18,7 +18,9 @@ invisible "Hidden" filler children so lone circles pack nicely, then
 
 ## Rendering
 
-Single visible canvas (`#canvasOrga`). Each frame: `drawCanvas` →
+Single visible canvas (`#canvasOrga`). The backing store is scaled by
+`devicePixelRatio` (`sizeDom`), all drawing and hit-testing stay in CSS pixels
+through the context transform. Each frame: `drawCanvas` →
 `clearCanvas` + `drawCurrent`, which draws two zones split at the focused node:
 
 - `drawOutside` — up to 2 ancestors and the focused node's siblings, dimmed.
