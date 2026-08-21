@@ -347,7 +347,7 @@ userButtons : SessionCommon -> (String -> msg) -> List (Html msg)
 userButtons session replaceUrl =
     case session.user of
         LoggedIn uctx ->
-            [ div [ class "navbar-item has-dropdown is-hoverabl" ]
+            [ div [ class "navbar-item has-dropdown" ]
                 [ div
                     [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"

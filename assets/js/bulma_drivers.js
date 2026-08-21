@@ -29,6 +29,9 @@ import { replaceRange, getCaretCoordinates } from './textutils'
 // The container where the burgers should close when a clicl "anywhere" occurs
 const closeOnClickBurger = ['userMenu']; // data-target of burger
 
+// Dropdowns driven by this file (`.elm` ones are controlled by Elm).
+const DROPDOWN_SELECTOR = '.dropdown:not(.is-hoverable):not(.elm), .has-dropdown:not(.is-hoverable)';
+
 export function InitBulma(app, session, eltId) {
     var handlers = session.bulmaHandlers;
     if (!eltId)
@@ -366,25 +369,13 @@ if ($autofocuses.length > 0) {
     // Dropdown open/close rationale
     //
     // * toggle dropdown state on click
+    // * close the others, and close all on a click outside
     // * close on Escape
-    // * stopeventpropgation (difference witn preventdefault ?)
     //
-    // Get all dropdowns on the page that aren't hoverable.
-    const $dropdowns = $doc.querySelectorAll('.dropdown:not(.is-hoverable):not(.elm), .has-dropdown:not(.is-hoverable)');
-    if ($dropdowns.length > 0) {
-
-        // Toggle on click
-        $dropdowns.forEach(function(el) {
-            // For each dropdown, add event handler to toggle on click.
-            setupHandler("click", dropdownToggleHandler, el, el, $dropdowns);
-        });
-
-        // For each dropdown, add event handler to close on Esc.
-        setupHandler("esc", closeDropdowns, document, $dropdowns);
-
-        // For each dropdown, add event handler to close if a click occurs outside.
-        setupHandler("click", closeDropdowns, document, $dropdowns);
-    }
+    // Delegated on document: dropdowns are resolved at click time, so handlers
+    // survive any re-render (elements rendered after this driver run included).
+    setupHandler("click", dropdownDelegate, document);
+    setupHandler("esc", closeDropdowns, document);
 
     //
     // Button **Toggle** effect rational
@@ -896,20 +887,23 @@ function closeBurgersClick(e, objs) {
 // Dropdown metdods
 //
 
-function dropdownToggleHandler(e, btn, all) {
-    // @debug: if bulma is not reset the $all object will changed !
-    e.stopPropagation();
-    all.forEach(function(el) {
-        if (el !== btn) {
+// Toggle the clicked dropdown, close the others (a click outside closes all).
+function dropdownDelegate(e) {
+    var btn = e.target.closest(DROPDOWN_SELECTOR);
+    document.querySelectorAll(DROPDOWN_SELECTOR).forEach(function(el) {
+        // keep ancestors of the clicked dropdown open (nested dropdowns)
+        if (el !== btn && !el.contains(btn)) {
             el.classList.remove('is-active');
         }
     });
-    btn.classList.toggle('is-active');
+    if (btn) {
+        btn.classList.toggle('is-active');
+    }
 }
 
 // Close all dropdown by removing `is-active` class.
-function closeDropdowns(e, objs) {
-    objs.forEach(function(el) {
+function closeDropdowns(e) {
+    document.querySelectorAll(DROPDOWN_SELECTOR).forEach(function(el) {
         el.classList.remove('is-active');
     });
 }
