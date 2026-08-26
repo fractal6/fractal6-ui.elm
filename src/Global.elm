@@ -657,14 +657,11 @@ update msg model =
                 common =
                     session.common
             in
-            case data of
-                "light" ->
-                    ( { model | session = { session | common = { common | theme = LightTheme } } }, Cmd.none )
+            case Session.themeFromString data of
+                Just theme ->
+                    ( { model | session = { session | common = { common | theme = theme } } }, Cmd.none )
 
-                "dark" ->
-                    ( { model | session = { session | common = { common | theme = DarkTheme } } }, Cmd.none )
-
-                _ ->
+                Nothing ->
                     ( model, Ports.logErr ("Error: Bad theme format: " ++ data) )
 
         UpdateSessionNotif data ->

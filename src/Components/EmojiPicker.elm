@@ -28,6 +28,7 @@ import Html.Attributes exposing (attribute, class, classList, title)
 import List.Extra as LE
 import Ports
 import Session exposing (GlobalCmd(..))
+import Text as T
 
 
 type State
@@ -207,5 +208,5 @@ viewEmojiSeeker (State model) =
             text ""
 
           else
-            p [ class "help-label is-weak p-1", attribute "style" "cursor: default !important;", onMousedownPD NoMsg ] [ text "type text to filter emoji" ]
+            p [ class "help-label is-weak p-1", attribute "style" "cursor: default !important;", onMousedownPD NoMsg ] [ text T.typeToFilterEmoji ]
         ]

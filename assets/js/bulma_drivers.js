@@ -57,6 +57,23 @@ export function catchEnter(e, fun, ...args) {
     }
 }
 
+// Theme preference: "system" (default) | "light" | "dark".
+// "system" sets no attribute, so the prefers-color-scheme rules in the stylesheet apply.
+export function getThemePref() {
+    var pref = localStorage.getItem('theme');
+    return (pref === 'light' || pref === 'dark') ? pref : 'system';
+}
+
+// Mirrored by the inline boot script in public/index.html (runs before first paint).
+export function applyTheme(pref) {
+    var root = document.documentElement;
+    if (pref === 'light' || pref === 'dark') {
+        root.setAttribute('data-theme', pref);
+    } else {
+        root.removeAttribute('data-theme');
+    }
+}
+
 export function updateLang(app, lang) {
     localStorage.setItem('lang', lang);
     app.ports.updateLangFromJs.send(lang);
@@ -180,7 +197,7 @@ export function BulmaDriver(app, target, handlers) {
 
     // Special Elm function
 
-    const $themeTrigger = $doc.querySelectorAll('#themeTrigger');
+    const $themeTrigger = $doc.querySelectorAll('.themeTrigger');
     if ($themeTrigger.length > 0) {
         $themeTrigger.forEach(el => {
             setupHandler("click", triggerTheme, el, el, app);
@@ -1013,19 +1030,10 @@ function triggerMenuTree(e, el, app) {
 }
 
 function triggerTheme(e, el, app) {
-    // Toggle theme color
-    var theme;
-    if (document.documentElement.classList.contains("is-dark")) {
-        theme = "light";
-    } else if (document.documentElement.classList.contains("is-light")) {
-        theme = "dark";
-    } else {
-        // Default theme
-        theme = "light"
-    }
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.className = "is-" + theme;
+    var theme = el.dataset.themePref;
+    if (!theme) return
     localStorage.setItem('theme', theme);
+    applyTheme(theme);
     app.ports.flushGraphPackFromJs.send(null)
     app.ports.updateThemeFromJs.send(theme);
 }

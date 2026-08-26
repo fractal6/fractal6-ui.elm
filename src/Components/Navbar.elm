@@ -82,6 +82,7 @@ view apis session notif serverBuild tension_head handlers =
              , attribute "role" "navigation"
              , attribute "aria-label" "main navigation"
              ]
+                -- Logged out navbar is is-primary, a fixed bright surface: pin the light palette.
                 ++ ternary isLoggedOut [ attribute "data-theme" "light" ] []
             )
             [ Html.Keyed.node "div"
@@ -343,6 +344,31 @@ helpButton user =
             text ""
 
 
+{-| Three-way theme preference. Clicks are handled in JS (see `triggerTheme` in bulma\_drivers.js).
+-}
+viewThemeSwitch : Theme -> Html msg
+viewThemeSwitch theme =
+    let
+        viewButton pref icon title_ =
+            button
+                [ class "button is-rounded is-small themeTrigger"
+                , classList
+                    [ ( "is-hovered is-active has-text-weight-semibold", theme == pref )
+                    , ( "has-background-header", theme /= pref )
+                    ]
+                , attribute "data-theme-pref" (Session.themeToString pref)
+                , attribute "aria-pressed" (ternary (theme == pref) "true" "false")
+                , title title_
+                ]
+                [ A.icon icon ]
+    in
+    div [ class "buttons has-addons mb-0" ]
+        [ viewButton SystemTheme "icon-adjust" T.toggleSystemMode
+        , viewButton LightTheme "icon-sun" T.toggleLightMode
+        , viewButton DarkTheme "icon-moon" T.toggleDarkMode
+        ]
+
+
 userButtons : SessionCommon -> (String -> msg) -> List (Html msg)
 userButtons session replaceUrl =
     case session.user of
@@ -358,14 +384,7 @@ userButtons session replaceUrl =
                         [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
-                    , div [ id "themeTrigger", class "navbar-item pb-3" ]
-                        [ case session.theme of
-                            LightTheme ->
-                                A.icon1 "icon-moon" T.toggleDarkMode
-
-                            DarkTheme ->
-                                A.icon1 "icon-sun" T.toggleLightMode
-                        ]
+                    , div [ class "navbar-item pb-3" ] [ viewThemeSwitch session.theme ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item py-3", href (toHref New_Orga) ]
                         [ A.icon1 "icon-plus" T.newOrganisation ]

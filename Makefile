@@ -52,7 +52,7 @@ build_: assets
 	npm run build
 
 prod:
-	npm run prod -- --env lang=fr --env theme=light;
+	npm run prod -- --env lang=fr;
 
 dev:
 	npm run dev
@@ -120,7 +120,7 @@ $(BUILD_DIRS): public-build/%:
 		if [ $(MAKECMDGOALS) == publish_test ]; then \
 			npm run prod -- --env lang=$* --env debug=test; \
 		elif [ $(MAKECMDGOALS) == publish_op ]; then \
-			npm run prod -- --env lang=$* --env theme=light; \
+			npm run prod -- --env lang=$*; \
 		else \
 			npm run prod -- --env lang=$*; \
 		fi && \
@@ -208,7 +208,7 @@ $(RELEASE_BUILD_DIRS): releases/%:
 		if [ $(MAKECMDGOALS) == publish_test ]; then \
 			npm run prod -- --env lang=$* --env debug=test; \
         elif [ $(MAKECMDGOALS) == publish_op ]; then \
-			npm run prod -- --env lang=$* --env theme=light; \
+			npm run prod -- --env lang=$*; \
 		else \
 			npm run prod -- --env lang=$* --env debug=public_build; \
 		fi && \

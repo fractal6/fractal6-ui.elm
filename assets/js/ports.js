@@ -19,7 +19,7 @@
  */
 
 import MiniSearch from 'minisearch'
-import { InitBulma, catchEsc, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
+import { InitBulma, catchEsc, getThemePref, updateLang, showSearchInput, hideSearchInput, showEmojiInput, hideEmojiInput } from './bulma_drivers'
 import { replaceRange } from './textutils'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
@@ -127,6 +127,12 @@ window.addEventListener('load', _ => {
 
             // setup the dragstart and dragover ports subscriptions.
             //DragPorts.setup( app );
+
+            // In "system" mode the stylesheet follows the OS on its own, but the graphpack
+            // canvas samples the css variables at draw time and needs a redraw.
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', _ => {
+                if (getThemePref() === "system") app.ports.flushGraphPackFromJs.send(null);
+            });
 
             // Paste-capture: any element with [data-paste-capture] forwards
             // file items from the clipboard to Elm. The element id (if any)

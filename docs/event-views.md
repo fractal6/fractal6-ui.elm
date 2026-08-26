@@ -1,57 +1,24 @@
-# Event Views Architecture
+# Event Views
 
-## Overview
-
-Event views render the timeline/history entries in tension pages. Each `TensionEvent` type has a corresponding view function that produces an HTML representation showing who did what and when.
-
-## Location
-
-All event view functions live in `src/Fractale/Event.elm`. This module serves as the single source of truth for:
-
-- **Event metadata** — `eventTypeToText`, `eventToIcon`, `eventToLink`
-- **Event rendering** — `viewEvent` dispatcher and all `viewEvent*` sub-functions
-- **Contract utilities** — `contractTypeToText`, `contractEventToText`, etc.
-
-## Key Functions
-
-### `viewEvent`
-
-The main dispatcher. Signature:
+The timeline entries on tension pages — who did what, when. Everything lives in
+`src/Fractale/Event.elm`: event metadata (`eventTypeToText`, `eventToIcon`, `eventToLink`),
+the `viewEvent` dispatcher with its `viewEvent*` functions, and the contract wording helpers.
 
 ```elm
 viewEvent : SessionCommon -> Maybe String -> NodeType.NodeType -> Event -> Html msg
 ```
 
-- `SessionCommon` — session context (language, current time, lexicon)
-- `Maybe String` — optional focus node ID (used for label links)
-- `NodeType.NodeType` — governed or draft Node kind for governance event wording (Role when absent)
-- `Event` — the event record to render
+The `Maybe String` is the focus node id (label links) and the `NodeType` gives the wording for
+governance events, derived from the tension's governed/draft Node (see
+`docs/node-governance.md`); it defaults to Role when absent. Unhandled event types render
+`text ""`.
 
-Returns `text ""` for unhandled event types.
+Views are polymorphic in `msg`, so any module can use them. `Components/Comments.elm` calls
+them through `Lazy.lazy4 viewEvent session focusid nodeType event`.
 
-### Supported Events
-
-The list of event types and their authoritative semantics live in the backend
-EMAP at `fractal6.go/graph/tension_op.go` (`TensionEventHook`). The frontend
-mirrors each one in a `viewEvent*` function, dispatched from `viewEvent` by
+The authoritative list of event types and their semantics is the backend EMAP
+(`fractal6.go/graph/tension_op.go`, `TensionEventHook`); the frontend mirrors it by
 pattern-matching on `Fractal.Enum.TensionEvent`.
 
-## Usage
-
-`Components/Comments.elm` imports `viewEvent` from `Fractale.Event` and uses it via `Html.Lazy.lazy4`:
-
-```elm
-Lazy.lazy4 viewEvent session focusid nodeType event
-```
-
-The view functions use polymorphic `Html msg` signatures (not `Html Msg`), making them reusable from any module without message type coupling.
-
-## Governance context
-
-The Node kind passed to `viewEvent` is derived from the tension's governed/draft Node state; see `docs/node-governance.md`.
-
-## i18n
-
-Event-related translations are in `i18n/i18n.toml` under two groups:
-- **Event descriptions** (e.g. `pinned_event`, `closed_event`) — used in notification panels
-- **Action verbs** (e.g. `pinned2`, `closed2`) — used in timeline event views
+i18n has two groups in `i18n/i18n.toml`: event descriptions (`pinned_event`, `closed_event`)
+for notification panels, and action verbs (`pinned2`, `closed2`) for the timeline.

@@ -1,56 +1,36 @@
 # Project Peer/Guest Edit Permissions
 
-## Overview
+Two boolean flags on a project extend edit access beyond coordinators and explicit
+collaborators, both `False` by default:
 
-Projects now support two boolean flags that extend edit access beyond coordinators and explicit collaborators:
+- `peerCanEditProject` — any org member with a Peer or higher role can edit.
+- `guestCanEditProject` — any org member, Guests included. Enabling it implies peer access.
 
-- **peerCanEditProject**: When `True`, any organization member with a Peer (or higher) role can edit the project.
-- **guestCanEditProject**: When `True`, any organization member including Guests can edit the project. Enabling this implicitly enables peer access as well.
+## Authorization
 
-Both default to `False`, preserving the original behavior where only coordinators and explicit collaborators have edit rights.
+`Auth.getProjectRights` allows on the first match:
 
-## Authorization Logic (`Auth.getProjectRights`)
+1. explicit collaborator
+2. org owner
+3. `guestCanEditProject` and the user has any org role
+4. `peerCanEditProject` and the user has a non-Guest org role
+5. otherwise, fall through to the circle-mode checks (Agile / Coordinated)
 
-The permission check evaluates in this order:
-1. Is the user an explicit collaborator? -> allow
-2. Is the user the org owner? -> allow
-3. Is `guestCanEditProject` true and user has any org role? -> allow
-4. Is `peerCanEditProject` true and user has a non-Guest org role? -> allow
-5. Fall through to existing circle-mode-based checks (Agile/Coordinated)
+## Data model
 
-## Data Model
+`ProjectData` and `ProjectFull` (`src/ModelSchema.elm`) carry both flags as `Bool`;
+`ProjectForm` (`src/Fractale/Form.elm`) uses `Maybe Bool` to tell "unset" from an explicit
+value. `Codecs.projectDecoder` defaults them to `False`.
 
-### `ProjectData` and `ProjectFull` (ModelSchema.elm)
-Both types include:
-```elm
-, peerCanEditProject : Bool
-, guestCanEditProject : Bool
-```
-
-### `ProjectForm` (Fractale/Form.elm)
-Uses `Maybe Bool` to distinguish between "not set" and explicit values:
-```elm
-, peerCanEditProject : Maybe Bool
-, guestCanEditProject : Maybe Bool
-```
-
-## GraphQL
-
-- **Query**: Both fields are fetched in `projectDataPayload` (QueryProject.elm) and `projectFullPayload` (QueryNode.elm).
-- **Create**: Both are required fields in `AddProjectInput`, defaulting to `False` via `withDefault`.
-- **Update**: Both are optional in `ProjectPatch`, sent only when changed.
-- **JSON Decoder**: `Codecs.projectDecoder` decodes both fields with `withDefault False`.
+GraphQL: fetched in `projectDataPayload` (`QueryProject.elm`) and `projectFullPayload`
+(`QueryNode.elm`), required on create (`AddProjectInput`), optional on update
+(`ProjectPatch`, sent only when changed).
 
 ## UI
 
-### Project Creation/Edit Form (Org/Projects.elm)
-Two checkbox fields appear after the collaborators section:
-- "Allow peers to edit" (`TogglePeerCanEdit`)
-- "Allow guests to edit" (`ToggleGuestCanEdit`)
-Toggling guest ON automatically enables peer. The form tracks changes for the edit `isSendable` check.
+Checkboxes in the project create/edit form (`src/Org/Projects.elm`, after the collaborators
+section, `TogglePeerCanEdit` / `ToggleGuestCanEdit` — guest ON turns peer ON) and in the
+"Permissions" section of `src/Components/ProjectSettingsPanel.elm`, which submits immediately
+through `DoSubmitPermissions`.
 
-### Project Settings Panel (Components/ProjectSettingsPanel.elm)
-A "Permissions" section appears below collaborators with the same two checkboxes. Changes are submitted immediately via `DoSubmitPermissions`.
-
-## i18n Keys
-- `permissions`, `peerCanEditProject`, `peerCanEditProjectHelp`, `guestCanEditProject`, `guestCanEditProjectHelp`
+i18n keys: `permissions`, `peerCanEditProject(Help)`, `guestCanEditProject(Help)`.

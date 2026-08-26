@@ -550,6 +550,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="New Organisation"
   fr="Nouvelle Organisation"
 
+[toggleSystemMode]
+  en="System Theme"
+  fr="Thème Système"
+
 [toggleLightMode]
   en="Light Theme"
   fr="Thème Clair"
@@ -934,6 +938,10 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [typeToFilter]
   en="Type to filter"
   fr="Tapez pour filter"
+
+[typeToFilterEmoji]
+  en="type text to filter emoji"
+  fr="tapez pour filtrer les emoji"
 
 [searchTensions]
   en="Search {{_tension_}}s"
@@ -1379,9 +1387,11 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 
 [addAssignees]
   en="Add assignees..."
+  fr="Ajouter des assignés..."
 
 [addLabels]
   en="Add labels..."
+  fr="Ajouter des étiquettes..."
 
 [tensionSubscribeText]
   en="You’re receiving notifications because you’re subscribed to this thread."
@@ -2416,6 +2426,54 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
 [markdownSupport]
   en="Markdown formatting is supported"
   fr="Le formatage Markdown est pris en charge"
+
+[headingText]
+  en="Heading text"
+  fr="Titre"
+
+[boldText]
+  en="Bold text"
+  fr="Texte en gras"
+
+[italicText]
+  en="Italic text"
+  fr="Texte en italique"
+
+[strikethroughText]
+  en="Strikethrough"
+  fr="Texte barré"
+
+[quoteText]
+  en="Quote"
+  fr="Citation"
+
+[linkText]
+  en="Link"
+  fr="Lien"
+
+[listText]
+  en="List"
+  fr="Liste"
+
+[orderedListText]
+  en="Ordered list"
+  fr="Liste numérotée"
+
+[checkListText]
+  en="Check list"
+  fr="Liste à cocher"
+
+[collapsibleSectionText]
+  en="Collapsible section"
+  fr="Section repliable"
+
+[mentionUserText]
+  en="Mention an user"
+  fr="Mentionner un utilisateur"
+
+[mentionTensionText]
+  en="Reference a tension"
+  fr="Référencer une tension"
 
 [confirmAction]
   en="Confirm action"

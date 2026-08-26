@@ -275,6 +275,18 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
   }
 }
 
+// Emit a theme's custom properties, plus the native color-scheme so browser chrome
+// (search history popup, scrollbars, form widgets) follows the app theme.
+@mixin theme-vars($f6-theme, $bulma-theme, $scheme) {
+  color-scheme: $scheme;
+  @each $name, $value in $f6-theme {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $bulma-theme {
+    --bulma-#{$name}: #{$value};
+  }
+}
+
 @mixin light-theme-config {
   @include light.light-theme;
   @include _register-theme-palette($f6-light-palette, light.$scheme-main);
@@ -318,25 +330,16 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 // Apply light theme
 // --
 // prefers-color-scheme
+// :not([data-theme]) == "system" preference, so an explicit theme always wins
 @media (prefers-color-scheme: light) {
-  :root {
-    @each $name, $value in $f6-light-theme {
-      --#{$name}: #{$value};
-    }
-    @each $name, $value in $bulma-light-theme {
-        --bulma-#{$name}: #{$value};
-    }
+  :root:not([data-theme]) {
+    @include theme-vars($f6-light-theme, $bulma-light-theme, light);
   }
   @include apply-bulma-overrides($bulma-light-theme);
 }
 // Class-based overrides
-[data-theme=light], .theme-light, .is-light, :root.is-light {
-  @each $name, $value in $f6-light-theme {
-    --#{$name}: #{$value};
-  }
-  @each $name, $value in $bulma-light-theme {
-    --bulma-#{$name}: #{$value};
-  }
+[data-theme=light], .theme-light, .is-light {
+  @include theme-vars($f6-light-theme, $bulma-light-theme, light);
   @include apply-bulma-overrides($bulma-light-theme);
 }
 
@@ -344,25 +347,15 @@ $f6-roles: (owner, member, coordinator, peer, bot, guest, pending, retired);
 // --
 // prefers-color-scheme
 @media (prefers-color-scheme: dark) {
-  :root {
-    @each $name, $value in $f6-dark-theme {
-      --#{$name}: #{$value};
-    }
-    @each $name, $value in $bulma-dark-theme {
-        --bulma-#{$name}: #{$value};
-    }
+  :root:not([data-theme]) {
+    @include theme-vars($f6-dark-theme, $bulma-dark-theme, dark);
   }
   @include apply-bulma-overrides($bulma-dark-theme);
 }
 
 // Class-based overrides
-[data-theme=dark], .theme-dark, .is-dark, :root.is-dark{
-  @each $name, $value in $f6-dark-theme {
-    --#{$name}: #{$value};
-  }
-  @each $name, $value in $bulma-dark-theme {
-    --bulma-#{$name}: #{$value};
-  }
+[data-theme=dark], .theme-dark, .is-dark {
+  @include theme-vars($f6-dark-theme, $bulma-dark-theme, dark);
   @include apply-bulma-overrides($bulma-dark-theme);
 }
 

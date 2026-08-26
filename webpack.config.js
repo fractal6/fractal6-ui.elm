@@ -28,7 +28,6 @@ module.exports = (env, argv) => {
     const watchCssOnly = env.WATCH_CSS_ONLY === 'true';
 
     var DEFAULT_LANG = env.lang !== undefined ? env.lang.toUpperCase() : "EN";
-    var DEFAULT_THEME = env.theme !== undefined ? env.theme.toUpperCase() : "LIGHT";
     var API_URL;
     if (isDev || CMD == 'webprod' || env.debug == "test") {
         API_URL = {
@@ -102,7 +101,6 @@ module.exports = (env, argv) => {
                 'ASSETS_API': JSON.stringify(API_URL.assets),
                 'VERSION': JSON.stringify(commitHash),
                 'DEFAULT_LANG': JSON.stringify(DEFAULT_LANG),
-                'DEFAULT_THEME': JSON.stringify(DEFAULT_THEME),
             }),
             // Copy images
             new CopyPlugin({

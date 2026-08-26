@@ -1,82 +1,33 @@
-# Lexicon Feature — User-Defined Terminology
+# Lexicon — User-Defined Terminology
 
-**Status**: Active
-**Introduced**: v0.8.5 (2025-10-12)
-
-## Overview
-
-The lexicon feature allows organisations to customise the vocabulary used throughout the Fractale UI. For example, an organisation could rename "Tension" to "Ticket", "Issue", or "Mandate" to "Charter", "Readme", etc. Substitutions are applied dynamically at render time via the i18n system.
-
-## How It Works
-
-### Data flow
+Organisations can rename the vocabulary the UI uses: "Tension" → "Ticket", "Mandate" →
+"Charter", etc. Substitution happens at render time, through the i18n system.
 
 ```
-localStorage("lexicon")  →  Elm flags  →  SessionCommon.lexicon (Dict String String)  →  Text.* functions
+localStorage("lexicon") → Elm flag → SessionCommon.lexicon (Dict String String) → Text.* functions
 ```
 
-1. **Startup**: `public/index.js` reads `localStorage.getItem("lexicon")` and passes it to Elm as a flag.
-2. **Decoding**: `Session.elm` decodes the JSON into `Dict String String` and stores it in `SessionCommon.lexicon`.
-3. **Rendering**: Translation functions in `Text.elm` that contain lexicon placeholders accept the dict and perform substitution at call-site.
+`public/index.js` reads the flag, `Session.elm` decodes it into `SessionCommon.lexicon`, and
+the generated `Text.elm` functions substitute at the call site.
 
-### i18n placeholder syntax
+## Authoring
 
-In `i18n/i18n.toml`, lexicon-aware entries use the pattern `{{_TERM_}}`:
+Lexicon-aware entries in `i18n/i18n.toml` use the `{{_Term_}}` placeholder, e.g.
+`en = "Search {{_tension_}}s"`. `i18n.py` detects them and generates a function taking
+`Dict String String` that substitutes with `jorgengranseth/elm-string-format`, falling back to
+`default_lexicon` in `i18n.py`. Case variants (`tension` / `Tension`) are separate keys so
+capitalisation stays contextual.
 
-```toml
-[tensions]
-  en = "{{_Tension_}}s"
-  fr = "{{_Tension_}}s"
+Regenerate with `python i18n.py gen -w -l en`.
 
-[moveTension]
-  en = "Move {{_tension_}}"
-  fr = "Deplacer la {{_tension_}}"
+## Backend
 
-[searchTensions]
-  en = "Search {{_tension_}}s"
-  fr = "Rechercher des {{_tension_}}s"
-```
+`Node.lexicon` is a JSON string on the root node
+(`{"Tension":"Ticket","tension":"ticket",…}`), written through
+`POST /auth/setlexicon` with `{ nameid, val }`.
 
-### Generated Elm code
+## Reading it
 
-`i18n.py` detects `{{_TERM_}}` patterns and generates functions with a `Dict String String -> String` signature:
-
-```elm
-tensions : Dict String String -> String
-tensions lexicon =
-    "{{_Tension_}}s"
-        |> String.Format.namedValue "_Tension_" (withDefault "Tension" (Dict.get "Tension" lexicon))
-```
-
-The substitution uses `jorgengranseth/elm-string-format` (v1.0.1). Each term falls back to a hardcoded default defined in `i18n.py`:
-
-```python
-default_lexicon = {
-    "tension": "tension",
-    "Tension": "Tension",
-    "mandate": "mandate",
-    "Mandate": "Mandate",
-}
-```
-
-Case variants are separate keys so that capitalisation is preserved contextually.
-
-### Regenerating Text.elm
-
-```bash
-python i18n.py gen -w -l en
-```
-
-### Backend
-
-- `Node.lexicon` is a JSON string stored on the root node (e.g., `{"Tension":"Ticket","tension":"ticket","Mandate":"Charter","mandate":"charter"}`)
-- `POST /auth/setlexicon` endpoint accepts `{ "nameid": rootid, "val": lexiconJsonString }`
-
-
-## Key implementation details
-
-### Accessing lexicon in different contexts
-
-- **Pages** (Org/Tension.elm, etc.): `session.common.lexicon` or `global.session.common.lexicon`
-- **Components** (with `SessionCommon`): `model.session.lexicon` or `session.lexicon`
-- **Org/Settings.elm**: `model.lexicon` (stored in Model at init time from `session.common.lexicon`)
+- Pages: `global.session.common.lexicon`
+- Components holding a `SessionCommon`: `session.lexicon`
+- `Org/Settings.elm`: `model.lexicon`, copied at init

@@ -26,6 +26,16 @@
         <meta property="og:image" content="https://fractale.co/static/images/logo/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="1200" />
+
+        <!-- Theme: applied before first paint to avoid a flash of the OS theme.
+             "system" (or unset) leaves no attribute, so prefers-color-scheme applies.
+             Kept in sync with applyTheme() in assets/js/bulma_drivers.js -->
+        <script>
+            (function () {
+                var t = localStorage.getItem('theme');
+                if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+            })();
+        </script>
     </head>
 
     <body>

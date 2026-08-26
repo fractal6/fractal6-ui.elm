@@ -3,6 +3,7 @@ require( '../assets/sass/main.scss' );
 
 // JS entry point
 var Ports = require( '../assets/js/ports.js' )
+import { getThemePref } from '../assets/js/bulma_drivers'
 
 // Inject bundled Elm app into div#main
 var App = require( '../src/Main' );
@@ -15,7 +16,6 @@ window.addEventListener('load', _ => {
     // User session
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
     // UX contexts
-    var theme = localStorage.getItem("theme");
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
     var recent_activity_tab = JSON.parse(localStorage.getItem("recent_activity_tab"));
     // Menu data
@@ -23,11 +23,8 @@ window.addEventListener('load', _ => {
     var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
     // Draft persistence
     var drafts = JSON.parse(localStorage.getItem("drafts"));
-    if (!theme || !uctx) {
-        theme = DEFAULT_THEME.toLowerCase();
-    }
-    document.documentElement.className = "is-" + theme;
-    document.documentElement.setAttribute('data-theme', theme);
+    // Already applied on <html> by the boot script in index.html; passed to Elm as a flag.
+    var theme = getThemePref();
     // Lang
     var lang = localStorage.getItem("lang");
     if (uctx && uctx.lang) {

@@ -69,9 +69,41 @@ type alias Screen =
     { w : Int, h : Int }
 
 
+{-| Theme preference. `SystemTheme` defers to the OS `prefers-color-scheme`.
+-}
 type Theme
-    = DarkTheme
+    = SystemTheme
+    | DarkTheme
     | LightTheme
+
+
+themeToString : Theme -> String
+themeToString theme =
+    case theme of
+        SystemTheme ->
+            "system"
+
+        DarkTheme ->
+            "dark"
+
+        LightTheme ->
+            "light"
+
+
+themeFromString : String -> Maybe Theme
+themeFromString s =
+    case s of
+        "system" ->
+            Just SystemTheme
+
+        "dark" ->
+            Just DarkTheme
+
+        "light" ->
+            Just LightTheme
+
+        _ ->
+            Nothing
 
 
 type ViewMode
@@ -388,14 +420,13 @@ fromLocalSession url flags =
             case flags.theme of
                 Just raw ->
                     case JD.decodeValue JD.string raw of
-                        Ok "light" ->
-                            ( Just LightTheme, Cmd.none )
+                        Ok s ->
+                            case themeFromString s of
+                                Just t ->
+                                    ( Just t, Cmd.none )
 
-                        Ok "dark" ->
-                            ( Just DarkTheme, Cmd.none )
-
-                        Ok l ->
-                            ( Nothing, Ports.logErr "Unknown theme string" )
+                                Nothing ->
+                                    ( Nothing, Ports.logErr ("Unknown theme string: " ++ s) )
 
                         Err err ->
                             ( Nothing, Ports.logErr (JD.errorToString err) )
@@ -443,7 +474,7 @@ fromLocalSession url flags =
       , common =
             { user = user
             , lang = withDefault Lang.En lang
-            , theme = withDefault DarkTheme theme
+            , theme = withDefault SystemTheme theme
             , lexicon = withDefault Dict.empty lexicon
             , screen = flags.screen
             , now = Time.millisToPosix 0
