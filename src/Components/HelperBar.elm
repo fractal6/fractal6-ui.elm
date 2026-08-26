@@ -59,6 +59,7 @@ type State
 type alias Model =
     { rolesState : RolesState
     , focus : NodeFocus
+    , panelTargetid : String -- role the action panel has been opened on
 
     -- Common
     , session : SessionCommon
@@ -77,6 +78,7 @@ initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> SessionCommon -> Mo
 initModel baseUri uriQuery focus session =
     { rolesState = Collapsed
     , focus = focus
+    , panelTargetid = ""
 
     -- Common
     , session = session
@@ -174,7 +176,7 @@ update_ apis message model =
             ( model, out1 [ DoToggleTreeMenu ] )
 
         OnOpenPanel domid nameid pos ->
-            ( model, out1 [ DoOpenActionPanel domid nameid pos ] )
+            ( { model | panelTargetid = nameid }, out1 [ DoOpenActionPanel domid nameid pos ] )
 
         OnToggleWatch ->
             ( model, out1 [ DoToggleWatchOrga model.focus.rootnameid ] )
@@ -502,7 +504,7 @@ memberButtons roles_ op model =
                     []
 
                 else
-                    [ viewRole "" True True Nothing Nothing (ternary op.isPanelOpen (\_ _ _ -> NoMsg) OnOpenPanel) r ]
+                    [ viewRole (ternary (op.isPanelOpen && r.nameid == model.panelTargetid) "is-active" "") True True Nothing Nothing (ternary op.isPanelOpen (\_ _ _ -> NoMsg) OnOpenPanel) r ]
             )
         |> List.reverse
         |> List.append [ lastButton ]

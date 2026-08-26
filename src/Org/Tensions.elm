@@ -55,7 +55,7 @@ import Html.Attributes exposing (attribute, autocomplete, autofocus, class, clas
 import Html.Events exposing (onClick, onInput)
 import Html.Lazy as Lazy
 import List.Extra as LE
-import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isDataEmpty, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
+import Loading exposing (GqlData, RequestResult(..), RestData, errorIsNoDataFound, fromMaybeData, fromMaybeDataRest, isSuccess, withDefaultData, withDefaultDataRest, withMapData, withMaybeData, withMaybeMapData)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -2263,8 +2263,8 @@ viewSearchBar model =
         ]
 
 
-viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> OrgFilter -> Int -> SortFilter -> Bool -> Html Msg
-viewTensionsListHeader focus counts statusFilter orgFilter orgN sortFilter isEmpty =
+viewTensionsListHeader : NodeFocus -> GqlData TensionsCount -> StatusFilter -> OrgFilter -> Int -> SortFilter -> Html Msg
+viewTensionsListHeader focus counts statusFilter orgFilter orgN sortFilter =
     let
         checked =
             A.icon1 "icon-check has-text-success" ""
@@ -2273,7 +2273,7 @@ viewTensionsListHeader focus counts statusFilter orgFilter orgN sortFilter isEmp
             A.icon1 "icon-check has-text-success is-invisible" ""
 
         showGoRoot =
-            focus.nameid /= focus.rootnameid && not isEmpty
+            focus.nameid /= focus.rootnameid
     in
     div
         [ class "pt-3 pb-3 has-border-light has-background-header"
@@ -2369,9 +2369,6 @@ viewListTensions model =
         cls_width =
             ternary (model.session.viewMode == DesktopView) "is-10" "is-12"
 
-        isEmpty =
-            isDataEmpty model.tensions_int
-
         orgN =
             withMaybeMapData List.length model.tensions_int |> withDefault -1
 
@@ -2383,7 +2380,7 @@ viewListTensions model =
             div [ class "column is-2 is-hidden-embed" ] [ viewCatMenu model.typeFilter model.orgFilter isOrgFilterCatMenuOpen ]
         , div [ class "column", classList [ ( cls_width, True ) ] ]
             [ showIf (model.session.viewMode == DesktopView) <|
-                Lazy.lazy7 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.orgFilter orgN model.sortFilter isEmpty
+                Lazy.lazy6 viewTensionsListHeader model.node_focus model.tensions_count model.statusFilter model.orgFilter orgN model.sortFilter
             , viewTensions ListTension model
             ]
         ]
@@ -2643,41 +2640,12 @@ viewTensions tensionDir model =
                     div [ class "m-4" ] [ text T.noResultsFor, text ": ", text model.pattern_init ]
 
                 else
-                    let
-                        goRoot =
-                            showIf (tensionDir == ListTension && model.node_focus.nameid /= model.node_focus.rootnameid)
-                                (viewGoRoot "" OnGoRoot)
-                    in
                     case model.node_focus.type_ of
                         NodeType.Role ->
-                            let
-                                clearFilter =
-                                    viewClearFilterButton model
-                            in
-                            case tensionDir of
-                                InternalTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
-
-                                ExternalTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter ]
-
-                                ListTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon), clearFilter, goRoot ]
+                            div [ class "m-4" ] [ text (T.noTensionRole model.session.lexicon) ]
 
                         NodeType.Circle ->
-                            let
-                                clearFilter =
-                                    viewClearFilterButton model
-                            in
-                            case tensionDir of
-                                InternalTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
-
-                                ExternalTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter ]
-
-                                ListTension ->
-                                    div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon), clearFilter, goRoot ]
+                            div [ class "m-4" ] [ text (T.noTensionCircle model.session.lexicon) ]
 
             Failure err ->
                 div []

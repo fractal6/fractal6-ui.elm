@@ -46,6 +46,12 @@
         filter: brightness(0.92);
     }
 
+    // Panel opened on this role: double ring (light inner + dark outer) so it shows on any role color
+    &.is-active {
+        border-color: var(--text) !important;
+        box-shadow: 0 0 0 2px var(--text);
+    }
+
 }
 
 .tagHint {

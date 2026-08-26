@@ -362,7 +362,7 @@ viewThemeSwitch theme =
                 ]
                 [ A.icon icon ]
     in
-    div [ class "buttons has-addons mb-0" ]
+    div [ class "buttons has-addons is-centered my-2" ]
         [ viewButton SystemTheme "icon-adjust" T.toggleSystemMode
         , viewButton LightTheme "icon-sun" T.toggleLightMode
         , viewButton DarkTheme "icon-moon" T.toggleDarkMode
@@ -384,7 +384,7 @@ userButtons session replaceUrl =
                         [ A.icon1 "icon-home" T.home ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" T.settings ]
-                    , div [ class "navbar-item pb-3" ] [ viewThemeSwitch session.theme ]
+                    , div [ class "navbar-item" ] [ viewThemeSwitch session.theme ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item py-3", href (toHref New_Orga) ]
                         [ A.icon1 "icon-plus" T.newOrganisation ]
