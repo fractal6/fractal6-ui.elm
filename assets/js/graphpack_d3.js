@@ -1666,7 +1666,7 @@ export const GraphPack = {
             return false
         };
 
-        // Catch right click context menu
+        // Catch right click context menu (canvas and node tooltip)
         var contextMenuEvent = e => {
             if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
@@ -1735,6 +1735,7 @@ export const GraphPack = {
 
         // Tooltip Clicks
         var tooltipTensionClick = e => {
+            if (e.button !== 0) return true
             if (this.isFrozen) {
                 this.isFrozen = false;
                 return false
@@ -1744,6 +1745,7 @@ export const GraphPack = {
             return true
         };
         var tooltipActionClick = e => {
+            if (e.button !== 0) return true
             this.isFrozen = !this.isFrozen;
             return true
         };
@@ -1800,6 +1802,7 @@ export const GraphPack = {
             // Tooltip events
             [$subTooltipTension, "mousedown", tooltipTensionClick],
             [$subTooltipAction, "mousedown", tooltipActionClick],
+            [this.$tooltip, "contextmenu", contextMenuEvent],
         ];
 
         // Setup handlers
