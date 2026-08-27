@@ -240,7 +240,7 @@ update_ apis message model =
                 ( model, noOut )
 
         OnMakeOwner time ->
-            ( model, out0 [ makeOwner apis model.focus.nameid model.target_username GotMakeOwner ] )
+            ( { model | owner_result = RemoteData.Loading }, out0 [ makeOwner apis model.focus.nameid model.target_username GotMakeOwner ] )
 
         GotMakeOwner result ->
             let

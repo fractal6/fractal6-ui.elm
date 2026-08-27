@@ -368,7 +368,7 @@ update global message model =
                 post =
                     model.form.post |> Dict.insert "username" model.username
             in
-            ( model, updatePassword apis post OnPasswordUpdateAck, Cmd.none )
+            ( { model | password_result = RemoteData.Loading }, updatePassword apis post OnPasswordUpdateAck, Cmd.none )
 
         OnPasswordUpdateAck result ->
             ( { model | password_result = result }
