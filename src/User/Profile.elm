@@ -24,26 +24,21 @@ module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, upda
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (mediaOrga, viewProfileC)
 import Components.AuthModal as AuthModal
 import Components.SearchBar exposing (viewSearchField)
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf)
-import Utils.Maybe exposing (unwrap)
 import Form.Help as Help
-import Schema.Enum.NodeOrderable as NodeOrderable
+import Fractale.Codecs exposing (FractalBaseRoute(..), getRoles, getRootids)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (mediaOrga, viewProfileC)
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, div, h1, i, li, p, span, text, ul)
-import Html.Attributes exposing (attribute, class, classList, id, target)
+import Html.Attributes exposing (attribute, class, classList, href, id, style, target)
 import Html.Events exposing (onClick)
-import Utils.DomEvents exposing (onClickPD)
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import Loading exposing (GqlData, ModalData, RequestResult(..), withMaybeData)
@@ -54,10 +49,16 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUserProfile)
+import Schema.Enum.NodeOrderable as NodeOrderable
 import Session exposing (CommonMsg, GlobalCmd(..))
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents exposing (onClickPD)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
 
 
 type OrgaSortFilter
@@ -454,12 +455,6 @@ viewProfileRight user_s user model =
         [ div [ class "level" ]
             [ div [ class "level-left" ]
                 [ h1 [ class "subtitle mb-0" ] [ text T.organisations ] ]
-            , case model.orgas of
-                Success _ ->
-                    div [ class "level-right" ] [ viewSortFilter model.sortFilter ]
-
-                _ ->
-                    text ""
             ]
         , if List.length (getRoles user) == 0 then
             p [ class "section content" ]
@@ -491,15 +486,25 @@ viewProfileRight user_s user model =
                             , onSubmitText = OnOrgaFilterInput
                             , id_name = "orgaSearchInput"
                             , column_class = ""
-                            , field_class = ""
+                            , field_class = "is-flex-grow"
                             , placeholder_txt = T.typeToFilter
                             }
                     in
                     div []
-                        [ showIf (List.length orgas >= 5) <|
-                            viewSearchField opSearch model.orgaFilter model.orgaFilter
-                        , showIf (List.any isOrgaArchived orgas) <|
-                            viewOrgaTabs model.orgaTab
+                        [ div [ class "level is-mobile" ]
+                            [ div [ class "level-left is-flex-grow mr-5" ]
+                                [ showIf (List.length orgas >= 5) <|
+                                    viewSearchField opSearch model.orgaFilter model.orgaFilter
+                                ]
+                            , div [ class "level-right" ]
+                                [ showIf ((uctxFromUser user_s).username == model.username) <|
+                                    a [ class "button is-small is-success", href (toHref Route.New_Orga) ]
+                                        [ span [ class "is-hidden-mobile" ] [ A.icon1 "icon-plus" T.newOrganisation ]
+                                        , span [ class "is-hidden-tablet" ] [ A.icon "icon-plus" ]
+                                        ]
+                                ]
+                            ]
+                        , viewOrgaTabs model.orgaTab (List.any isOrgaArchived orgas) model.sortFilter
                         , orgas
                             |> List.filter (\o -> isOrgaArchived o == (model.orgaTab == ArchivedOrgaTab))
                             |> viewUserOrgas model.commonOp user model.orgaLookup
@@ -555,16 +560,24 @@ isOrgaArchived o =
     o.isRootArchived == Just True
 
 
-viewOrgaTabs : OrgaTab -> Html Msg
-viewOrgaTabs orgaTab =
-    div [ class "tabs is-small" ]
+viewOrgaTabs : OrgaTab -> Bool -> OrgaSortFilter -> Html Msg
+viewOrgaTabs orgaTab hasArchived sortFilter =
+    -- overflow visible, else .tabs clips the sort dropdown menu
+    div [ class "tabs is-small", style "overflow" "visible" ]
         [ ul [] <|
-            List.map
-                (\( t, name ) ->
-                    li [ classList [ ( "is-active", orgaTab == t ) ] ]
-                        [ a [ onClickPD (OnChangeOrgaTab t), target "_blank" ] [ text name ] ]
-                )
-                [ ( ActiveOrgaTab, T.active ), ( ArchivedOrgaTab, T.archived ) ]
+            (if hasArchived then
+                List.map
+                    (\( t, name ) ->
+                        li [ classList [ ( "is-active", orgaTab == t ) ] ]
+                            [ a [ onClickPD (OnChangeOrgaTab t), target "_blank" ] [ text name ] ]
+                    )
+                    [ ( ActiveOrgaTab, T.active ), ( ArchivedOrgaTab, T.archived ) ]
+
+             else
+                []
+            )
+                -- sort sits on the tabs line, pushed right, so the border spans the full width
+                ++ [ li [ class "ml-auto pb-1" ] [ viewSortFilter sortFilter ] ]
         ]
 
 
