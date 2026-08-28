@@ -509,17 +509,26 @@ update_ apis message model =
 
         UpdateNode nameid fun ->
             let
+                old_m =
+                    getNode nameid model.tree_result
+
                 node_m =
-                    getNode nameid model.tree_result |> Maybe.map fun
+                    Maybe.map fun old_m
             in
             case node_m of
                 Just n ->
                     let
                         data =
                             hotNodeInsert n model.tree_result
+
+                        -- on root (un)archive, drop the orga menu session data and reload the menu
+                        isArchiveChange =
+                            Maybe.map .isRootArchived old_m /= Just n.isRootArchived
                     in
                     ( { model | tree_result = Success data } |> setTree
-                    , out1 [ DoUpdateToken, DoUpdateTree (Just data) ]
+                    , Out (ternary isArchiveChange [ Ports.reloadOrgaMenu ] [])
+                        ([ DoUpdateToken, DoUpdateTree (Just data) ] ++ ternary isArchiveChange [ DoUpdateOrgs Nothing ] [])
+                        Nothing
                     )
 
                 Nothing ->

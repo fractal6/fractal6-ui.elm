@@ -136,6 +136,7 @@ type Msg
       OnLoad
     | OnReload UserCtx
     | OnDataAck (GqlData (List OrgaNode))
+    | OnReloadOrgs
     | OnToggle
     | SetIsActive2 Bool
     | OnOrgHover (Maybe String) String -- nameid and orgName
@@ -241,6 +242,9 @@ update_ apis message model =
                 _ ->
                     ( data, noOut )
 
+        OnReloadOrgs ->
+            ( setDataResult LoadingSlowly model, out0 [ send OnLoad ] )
+
         OnToggle ->
             if model.isActive then
                 ( { model | isActive = False }
@@ -326,6 +330,7 @@ update_ apis message model =
 subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.triggerMenuOrgaFromJs (always OnToggle)
+    , Ports.reloadOrgaMenuFromJs (always OnReloadOrgs)
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr OnReload
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]

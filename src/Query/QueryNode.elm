@@ -260,7 +260,7 @@ nodeOrgaExtPayload =
 queryNodeExt url nameids orderBy msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeExtFilter nameids orderBy)
+            (nodeExtFilter nameids orderBy False)
             nodeOrgaExtPayload
         )
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
@@ -269,7 +269,7 @@ queryNodeExt url nameids orderBy msg =
 queryOrgaNode url nameids msg =
     makeGQLQuery url
         (Query.queryNode
-            (nodeExtFilter nameids NodeOrderable.UpdatedAt)
+            (nodeExtFilter nameids NodeOrderable.UpdatedAt True)
             (SelectionSet.map2 OrgaNode
                 Schema.Object.Node.name
                 Schema.Object.Node.nameid
@@ -278,14 +278,20 @@ queryOrgaNode url nameids msg =
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
 
 
-nodeExtFilter : List String -> NodeOrderable.NodeOrderable -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nodeExtFilter nameids orderBy a =
+nodeExtFilter : List String -> NodeOrderable.NodeOrderable -> Bool -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeExtFilter nameids orderBy excludeArchived a =
     { a
         | filter =
             Input.buildNodeFilter
                 (\b ->
                     { b
                         | nameid = { regexp = Absent, eq = Absent, in_ = List.map Just nameids |> Present } |> Present
+
+                        -- `not` (instead of isRootArchived=false) to also catch nodes where the flag is unset
+                        , not =
+                            ternary excludeArchived
+                                (Input.buildNodeFilter (\c -> { c | isRootArchived = Present True }) |> Present)
+                                Absent
                     }
                 )
                 |> Present

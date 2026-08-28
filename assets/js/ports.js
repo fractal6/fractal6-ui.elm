@@ -664,6 +664,9 @@ export const actions = {
             $t.classList.remove('has-orga-menu');
         }
     },
+    'RELOAD_ORGA_MENU': (app, session, _) => {
+        app.ports.reloadOrgaMenuFromJs.send(null);
+    },
     'OPEN_TREE_MENU': (app, session, _) => {
         var $t = document.getElementById("body");
         if ($t) {

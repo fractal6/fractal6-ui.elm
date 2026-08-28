@@ -103,6 +103,9 @@ port updateNotifFromJs : (NotifCount -> msg) -> Sub msg
 port reloadNotifFromJs : (() -> msg) -> Sub msg
 
 
+port reloadOrgaMenuFromJs : (() -> msg) -> Sub msg
+
+
 port reloadPathFromJs : (() -> msg) -> Sub msg
 
 
@@ -662,6 +665,14 @@ closeOrgaMenu : Cmd msg
 closeOrgaMenu =
     outgoing
         { action = "CLOSE_ORGA_MENU"
+        , data = JE.string ""
+        }
+
+
+reloadOrgaMenu : Cmd msg
+reloadOrgaMenu =
+    outgoing
+        { action = "RELOAD_ORGA_MENU"
         , data = JE.string ""
         }
 
