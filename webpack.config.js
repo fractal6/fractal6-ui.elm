@@ -269,6 +269,11 @@ module.exports = (env, argv) => {
     } else if (isProd) {
         return module.exports = merge(common, {
             cache: false,
+            // Hints measure raw bytes, which is the wrong metric here: the served
+            // assets are gzipped (~67KB css, ~300KB js). The Elm bundle is a
+            // single module that webpack cannot code-split, so the raw JS size
+            // is a floor, not a fixable warning.
+            performance: { hints: 'warning', maxAssetSize: 1.5e6, maxEntrypointSize: 2e6 },
             //devtool: 'sourcemap',
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
