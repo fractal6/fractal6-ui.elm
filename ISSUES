@@ -1,6 +1,5 @@
 # P3
 
-- SW (`public/service-worker.js`): tighten path skips from `startsWith('/api'|'/auth'|'/q'|'/notifications')` to exact match or trailing-slash prefix — protects against future SPA routes silently bypassing the SW.
 - Version banner (long-term): switch to backend `X-Server-Version` response header read by the GraphQL/HTTP client → free version detection on every existing request, no extra round-trips. Requires a small `fractal6.go` middleware + a way to expose response headers from `dillonkearns/elm-graphql`.
 
 # P2
@@ -21,3 +20,9 @@
 # Codefactor Elm
 - as Conf.user exists now, some code function arguments could be absorb here.
 - use showIf and showMaybe everywhere !
+
+# PWA discoverability
+
+- Google Play: wrap the deployed PWA as a TWA with Bubblewrap or PWABuilder → produces an APK/AAB; requires /.well-known/assetlinks.json on fractale.co + a $25 one-time dev account. The store app is just a shell pointing at the live site.
+- Microsoft Store: same via PWABuilder.
+- Apple App Store: no direct PWA listing; needs a wrapper + $99/yr, and Apple routinely rejects thin website wrappers. iOS users are meant to use Add to Home Screen.

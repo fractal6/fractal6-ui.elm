@@ -1,7 +1,12 @@
 const CACHE_NAME = 'VERSION_PLACEHOLDER';
 
+// Precache the SPA shell so navigations to never-visited routes work offline.
 self.addEventListener('install', (e) => {
-  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.add('/'))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -17,32 +22,26 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Skip cross-origin, non-GET, and same-origin API calls
+  // Skip cross-origin and non-GET
   if (url.origin !== location.origin) return;
   if (e.request.method !== 'GET') return;
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/auth') ||
-      url.pathname.startsWith('/q') || url.pathname.startsWith('/notifications')) return;
 
-  // Network-first for navigations: ensures a fresh SPA shell after deploys,
-  // falls back to cache when offline.
+  // Network-first for navigations: every SPA route returns the same shell,
+  // so a fresh fetch after deploys, the precached '/' shell when offline.
   if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request)
-        .then((res) => {
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, res.clone()));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match('/')));
     return;
   }
 
-  // Cache-first for static assets (content-hashed URLs are immutable).
+  // Cache-first for /static/ only (content-hashed URLs are immutable).
+  // Everything else passes through: backend routes (/api, /q, /file, ...) can
+  // share the SPA origin, and /assets content updates independently of deploys.
+  if (!url.pathname.startsWith('/static/')) return;
   e.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
       cache.match(e.request).then((response) =>
         response || fetch(e.request).then((fetchResponse) => {
-          cache.put(e.request, fetchResponse.clone());
+          if (fetchResponse.ok) cache.put(e.request, fetchResponse.clone());
           return fetchResponse;
         })
       )

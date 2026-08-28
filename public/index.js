@@ -105,4 +105,10 @@ window.addEventListener('load', _ => {
         vv.addEventListener("scroll", updateViewport);
     }
 
+    // Register the service worker. Prod only: dev bundles are unhashed,
+    // the SW cache-first strategy would serve stale code.
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js');
+    }
+
 });
