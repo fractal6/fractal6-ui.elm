@@ -457,21 +457,26 @@ update_ apis message model =
                     ( model, out1 [ DoNavigate (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.rootnameid, param2 = model.form.tid } |> toHref) ] )
 
         DoVote v time ->
-            let
-                f =
-                    model.voteForm
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.vote_result then
+                ( model, noOut )
 
-                form =
-                    { f
-                        | vote = v
+            else
+                let
+                    f =
+                        model.voteForm
 
-                        --, cid = model.form.cid
-                        , contractid = model.form.contractid
-                        , rootnameid = model.rootnameid
-                        , post = Dict.insert "createdAt" (fromTime time) f.post
-                    }
-            in
-            ( { model | voteForm = form, vote_result = LoadingSlowly }, out0 [ sendVote apis form OnVoteAck ] )
+                    form =
+                        { f
+                            | vote = v
+
+                            --, cid = model.form.cid
+                            , contractid = model.form.contractid
+                            , rootnameid = model.rootnameid
+                            , post = Dict.insert "createdAt" (fromTime time) f.post
+                        }
+                in
+                ( { model | voteForm = form, vote_result = LoadingSlowly }, out0 [ sendVote apis form OnVoteAck ] )
 
         OnVoteAck result ->
             let

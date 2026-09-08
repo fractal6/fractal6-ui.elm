@@ -30,6 +30,14 @@ private, so parents cannot poke at internals. `init` builds it, setter functions
 `cmds` (local), `gcmds` (application-wide `GlobalCmd`s) and an optional `result` for the
 parent. The `noOut` / `out0` / `out1` / `out2` helpers cover the common shapes.
 
+**Submit guard.** `OnSubmit isSendable next` is only a routing gate: the `isSendable` flag is
+baked into the rendered handler and is stale on a double click/tap (the second click lands
+before the rAF re-render disables the button). The operation branch (`SubmitX time`) is the
+real guard: it re-checks `Loading.isLoading` on the result it owns and returns `noOut`.
+Retries (`PushTension`, token refresh) either bypass the gate or reset that result first.
+When the view needs the same predicate (`canSubmitTension`, `canSubmitTensionComment`, …),
+share it instead of duplicating.
+
 **GlobalCmd.** The bridge from a component to `Global.elm` (`DoFocus`, `DoNavigate`,
 `DoUpdateTree`, `DoPushSystemNotif`, …). Pages translate them in `mapGlobalOutcmds`.
 

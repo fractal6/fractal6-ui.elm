@@ -240,7 +240,12 @@ update_ apis message model =
                 ( model, noOut )
 
         OnMakeOwner time ->
-            ( { model | owner_result = RemoteData.Loading }, out0 [ makeOwner apis model.focus.nameid model.target_username GotMakeOwner ] )
+            -- Re-check validity/in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if model.target_username == "" || Loading.isLoadingRest model.owner_result then
+                ( model, noOut )
+
+            else
+                ( { model | owner_result = RemoteData.Loading }, out0 [ makeOwner apis model.focus.nameid model.target_username GotMakeOwner ] )
 
         GotMakeOwner result ->
             let

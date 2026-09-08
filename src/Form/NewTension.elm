@@ -575,6 +575,40 @@ resetModel data =
 -- utils
 
 
+canStartCreation : Model -> Bool
+canStartCreation model =
+    -- Creation availability only; each form validates its own body.
+    not (Loading.isLoading model.result || isSuccess model.result)
+
+
+isInvitationPhase : Model -> Bool
+isInvitationPhase model =
+    isSuccess model.result && model.doInvite && not (List.isEmpty model.nodeDoc.form.users)
+
+
+canSubmitInvitation : Model -> Bool
+canSubmitInvitation model =
+    isInvitationPhase model
+        && not (Loading.isLoading model.action_result || isSuccess model.action_result)
+
+
+canSubmitTension : Model -> Bool
+canSubmitTension model =
+    -- Creation availability + the active tab's required fields (mirrors the views).
+    canStartCreation model
+        && (case model.activeTab of
+                NewTensionTab ->
+                    isPostSendable [ "title" ] model.nodeDoc.form.post
+
+                _ ->
+                    isPostSendable [ "title" ] model.nodeDoc.form.post
+                        && model.nodeDoc.form.node.name
+                        /= Nothing
+                        && (model.nodeDoc.form.node.mandate |> Maybe.map .purpose)
+                        /= Nothing
+           )
+
+
 canExitSafe : Model -> Bool
 canExitSafe data =
     not (hasData data) || isSuccess data.result
@@ -1103,35 +1137,39 @@ update_ apis message model =
             ( { model | doInvite = True }, out0 [ Ports.focusOn "userInput" ] )
 
         OnInvite time ->
-            let
-                form =
-                    model.nodeDoc.form
+            if not (canSubmitInvitation model) then
+                ( model, noOut )
 
-                newModel =
-                    model
-                        |> post "createdAt" (fromTime time)
-                        |> setEvents
-                            [ Ev TensionEvent.MemberLinked
-                                ""
-                                ((List.head form.users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email))
-                                    |> withDefault ""
-                                )
-                            ]
-
-                aform =
-                    tensionToActionForm newModel.nodeDoc.form
-            in
-            ( { newModel | action_result = LoadingSlowly }
-            , if isSelfContract form.uctx form.users then
-                out0 [ actionRequest apis aform PushAck ]
-
-              else
+            else
                 let
-                    contractForms =
-                        makeCandidateContractForm aform
+                    form =
+                        model.nodeDoc.form
+
+                    newModel =
+                        model
+                            |> post "createdAt" (fromTime time)
+                            |> setEvents
+                                [ Ev TensionEvent.MemberLinked
+                                    ""
+                                    ((List.head form.users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email))
+                                        |> withDefault ""
+                                    )
+                                ]
+
+                    aform =
+                        tensionToActionForm newModel.nodeDoc.form
                 in
-                out0 (List.map (\c -> addOneContract apis c PushAck) contractForms)
-            )
+                ( { newModel | action_result = LoadingSlowly }
+                , if isSelfContract form.uctx form.users then
+                    out0 [ actionRequest apis aform PushAck ]
+
+                  else
+                    let
+                        contractForms =
+                            makeCandidateContractForm aform
+                    in
+                    out0 (List.map (\c -> addOneContract apis c PushAck) contractForms)
+                )
 
         PushAck result ->
             case parseErr result model.refresh_trial of
@@ -1139,7 +1177,7 @@ update_ apis message model =
                     ( { model | action_result = NotAsked }, out0 [ Ports.raiseAuthModal model.nodeDoc.form.uctx ] )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit True OnInvite) 500 ] [ DoUpdateToken ] )
+                    ( { model | refresh_trial = i, action_result = NotAsked }, out2 [ sendSleep (OnSubmit True OnInvite) 500 ] [ DoUpdateToken ] )
 
                 OkAuth c ->
                     let
@@ -1262,41 +1300,46 @@ update_ apis message model =
             ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnSubmitTension doClose time ->
-            let
-                newModel =
-                    if model.activeTab == NewTensionTab then
-                        { model | nodeDoc = NodeDoc.resetNode model.nodeDoc }
+            -- Reject stale or incomplete submits before any state change.
+            if not (canSubmitTension model) then
+                ( model, noOut )
 
-                    else
-                        model
+            else
+                let
+                    newModel =
+                        if model.activeTab == NewTensionTab then
+                            { model | nodeDoc = NodeDoc.resetNode model.nodeDoc }
 
-                events =
-                    case model.activeTab of
-                        NewTensionTab ->
-                            [ Ev TensionEvent.Created "" "" ]
+                        else
+                            model
 
-                        NewRoleTab ->
-                            if doClose then
-                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
+                    events =
+                        case model.activeTab of
+                            NewTensionTab ->
+                                [ Ev TensionEvent.Created "" "" ]
 
-                            else
-                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
+                            NewRoleTab ->
+                                if doClose then
+                                    [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
 
-                        NewCircleTab ->
-                            if doClose then
-                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
+                                else
+                                    [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
 
-                            else
-                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
-            in
-            ( newModel
-                |> post "createdAt" (fromTime time)
-                |> setEvents events
-                |> setStatus (ternary doClose TensionStatus.Closed TensionStatus.Open)
-                |> setActiveButton doClose
-                |> setResult LoadingSlowly
-            , out0 [ send (PushTension OnTensionAck) ]
-            )
+                            NewCircleTab ->
+                                if doClose then
+                                    [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
+
+                                else
+                                    [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
+                in
+                ( newModel
+                    |> post "createdAt" (fromTime time)
+                    |> setEvents events
+                    |> setStatus (ternary doClose TensionStatus.Closed TensionStatus.Open)
+                    |> setActiveButton doClose
+                    |> setResult LoadingSlowly
+                , out0 [ send (PushTension OnTensionAck) ]
+                )
 
         OnTensionAck result ->
             let
@@ -2101,10 +2144,10 @@ viewTension tree_data model =
             }
 
         isLoading =
-            model.result == LoadingSlowly
+            Loading.isLoading model.result
 
         isSendable =
-            isPostSendable [ "title" ] form.post
+            canSubmitTension model
     in
     div [ class "panel modal-card submitFocus" ]
         [ if model.simplifiedView then
@@ -2230,7 +2273,7 @@ viewTension tree_data model =
                             [ class "button is-success defaultSubmit"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (OnSubmit (isSendable && not isLoading) (OnSubmitTension False))
+                            , onClick (OnSubmit isSendable (OnSubmitTension False))
                             ]
                             [ text form.txt.submit ]
                         ]
@@ -2250,10 +2293,17 @@ viewCircle tree_data model =
             hasLazyAdminRole form.uctx Nothing form.target.nameid
 
         isLoading =
-            model.result == LoadingSlowly || model.action_result == LoadingSlowly
+            Loading.isLoading model.result || Loading.isLoading model.action_result
+
+        isInvitation =
+            isInvitationPhase model
 
         isSendable =
-            isPostSendable [ "title" ] form.post && form.node.name /= Nothing && (form.node.mandate |> Maybe.map .purpose) /= Nothing
+            if isSuccess model.result then
+                canSubmitInvitation model
+
+            else
+                canSubmitTension model
     in
     div [ class "panel modal-card submitFocus" ] <|
         [ if model.simplifiedView then
@@ -2335,9 +2385,16 @@ viewCircle tree_data model =
                                             [ class "button is-success defaultSubmit"
                                             , classList [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
                                             , disabled (not isSendable || isLoading)
-                                            , onClickSafe (OnSubmit (isSendable && not isLoading) <| OnSubmitTension True)
+                                            , onClickSafe (OnSubmit (isSendable && not isLoading) <| ternary isInvitation OnInvite (OnSubmitTension True))
                                             ]
-                                            [ text (form.txt.close_submit ++ inviteText) ]
+                                            [ text
+                                                (if isInvitation then
+                                                    ternary (isSelfContract form.uctx form.users) T.link T.invite
+
+                                                 else
+                                                    form.txt.close_submit ++ inviteText
+                                                )
+                                            ]
                                         ]
                                     ]
                                 ]

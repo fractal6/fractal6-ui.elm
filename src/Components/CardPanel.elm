@@ -393,12 +393,17 @@ update_ apis message model =
                             ]
                     }
             in
-            case model.card.card of
-                CardTension _ ->
-                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis newForm TitleAck ] )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.title_result then
+                ( model, noOut )
 
-                CardDraft _ ->
-                    ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ updateProjectDraft apis newForm TitleAck ] )
+            else
+                case model.card.card of
+                    CardTension _ ->
+                        ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ patchLiteral apis newForm TitleAck ] )
+
+                    CardDraft _ ->
+                        ( { model | tension_form = newForm, title_result = LoadingSlowly }, out0 [ updateProjectDraft apis newForm TitleAck ] )
 
         TitleAck result ->
             case parseErr result 2 of
@@ -472,7 +477,12 @@ update_ apis message model =
                 newForm =
                     { form | post = form.post |> Dict.insert "createdAt" (fromTime time) }
             in
-            ( { model | tension_form = newForm, message_result = LoadingSlowly }, out0 [ updateProjectDraft apis model.tension_form MessageAck ] )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.message_result then
+                ( model, noOut )
+
+            else
+                ( { model | tension_form = newForm, message_result = LoadingSlowly }, out0 [ updateProjectDraft apis model.tension_form MessageAck ] )
 
         MessageAck result ->
             case parseErr result 2 of

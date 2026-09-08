@@ -53,6 +53,12 @@
                     background-color: map.get($f6-dark-palette, link2) !important;
                 }
             }
+
+            .navbar-orga-nav .navbar-item.is-active,
+            .navbar-orga-nav .navbar-item:hover,
+            .navbar-tension-title .tension-title-text:hover {
+                color: hsl(256, 91.7%, 47.3%);
+            }
         }
 
         // Apply logged-in styles on mobile
@@ -146,6 +152,7 @@
 
             }
         }
+
     }
 
     svg {

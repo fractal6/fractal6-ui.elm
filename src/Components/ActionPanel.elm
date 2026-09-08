@@ -884,17 +884,22 @@ update_ apis message model =
             ( setFragment (\frag -> { frag | role_type = Just role_type }) model, noOut )
 
         OnActionSubmit time ->
-            let
-                data =
-                    model
-                        -- This is where the tension event and old/new data is set
-                        -- which will actually propagate mutation to the node if
-                        -- user pass the @auth process.
-                        |> setActionForm
-                        |> setActionResult LoadingSlowly
-                        |> updatePost "createdAt" (fromTime time)
-            in
-            ( data, out0 [ send (PushAction data.form data.state) ] )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.action_result then
+                ( model, noOut )
+
+            else
+                let
+                    data =
+                        model
+                            -- This is where the tension event and old/new data is set
+                            -- which will actually propagate mutation to the node if
+                            -- user pass the @auth process.
+                            |> setActionForm
+                            |> setActionResult LoadingSlowly
+                            |> updatePost "createdAt" (fromTime time)
+                in
+                ( data, out0 [ send (PushAction data.form data.state) ] )
 
         PushAck result ->
             case parseErr result model.refresh_trial of

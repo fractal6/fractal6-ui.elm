@@ -405,9 +405,14 @@ update_ apis message model =
                     ( data, noOut )
 
         OnColAdd ->
-            ( setDataResult LoadingSlowly model
-            , out0 [ addProjectColumn apis model.form OnColAddAck ]
-            )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.data_result then
+                ( model, noOut )
+
+            else
+                ( setDataResult LoadingSlowly model
+                , out0 [ addProjectColumn apis model.form OnColAddAck ]
+                )
 
         OnColAddAck result ->
             case result of

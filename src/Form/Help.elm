@@ -245,6 +245,12 @@ setLabelsFeedback data =
     { data | formFeedback = NT.setLabels [ labelCodec data.type_ ] data.formFeedback }
 
 
+canSubmit : NT.Model -> Bool
+canSubmit form =
+    not (Loading.isLoading form.result)
+        && isPostSendable [ "title", "message" ] form.nodeDoc.form.post
+
+
 
 -- ------------------------------
 -- U P D A T E
@@ -424,27 +430,35 @@ update_ apis message model =
             ( model, out0 [ addOneTension apis form.nodeDoc.form ack ] )
 
         OnSubmitAsk time ->
-            let
-                newModel =
-                    model
-                        |> postAsk "createdAt" (fromTime time)
-                        |> setResultAsk LoadingSlowly
-            in
-            ( newModel
-            , out0 [ send (PushTension newModel.formAsk OnAskAck) ]
-            )
+            if not (canSubmit model.formAsk) then
+                ( model, noOut )
+
+            else
+                let
+                    newModel =
+                        model
+                            |> postAsk "createdAt" (fromTime time)
+                            |> setResultAsk LoadingSlowly
+                in
+                ( newModel
+                , out0 [ send (PushTension newModel.formAsk OnAskAck) ]
+                )
 
         OnSubmitFeedback time ->
-            let
-                newModel =
-                    model
-                        |> postFeedback "createdAt" (fromTime time)
-                        |> setLabelsFeedback
-                        |> setResultFeedback LoadingSlowly
-            in
-            ( newModel
-            , out0 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
-            )
+            if not (canSubmit model.formFeedback) then
+                ( model, noOut )
+
+            else
+                let
+                    newModel =
+                        model
+                            |> postFeedback "createdAt" (fromTime time)
+                            |> setLabelsFeedback
+                            |> setResultFeedback LoadingSlowly
+                in
+                ( newModel
+                , out0 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
+                )
 
         OnAskAck result ->
             let
@@ -481,7 +495,7 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( setResultFeedback (withMapData .tension result) { model | formAsk = NT.resetPost model.formFeedback }, noOut )
+                    ( setResultFeedback (withMapData .tension result) { model | formFeedback = NT.resetPost model.formFeedback }, noOut )
 
                 _ ->
                     ( setResultFeedback (withMapData .tension result) model, noOut )
@@ -646,7 +660,7 @@ viewAskQuestion fromModal op (State model) =
             model.formAsk.result == LoadingSlowly
 
         isSendable =
-            isPostSendable [ "title", "message" ] form.post
+            canSubmit model.formAsk
     in
     case model.formAsk.result of
         Success res ->
@@ -737,7 +751,7 @@ viewAskQuestion fromModal op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick <| OnSubmit (isSendable && not isLoading) OnSubmitAsk
+                            , onClick <| OnSubmit isSendable OnSubmitAsk
                             ]
                             [ text T.send ]
                         ]
@@ -761,7 +775,7 @@ viewFeedback fromModal op (State model) =
             model.formFeedback.result == LoadingSlowly
 
         isSendable =
-            isPostSendable [ "title", "message" ] form.post
+            canSubmit model.formFeedback
     in
     case model.formFeedback.result of
         Success res ->
@@ -888,7 +902,7 @@ viewFeedback fromModal op (State model) =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick <| OnSubmit (isSendable && not isLoading) OnSubmitFeedback
+                            , onClick <| OnSubmit isSendable OnSubmitFeedback
                             ]
                             [ text T.send ]
                         ]

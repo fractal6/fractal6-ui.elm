@@ -314,6 +314,18 @@ resetModel model =
     initModel model.tension_form.id model.focusid model.session
 
 
+canSubmitTensionComment : Maybe TensionStatus.TensionStatus -> Model -> Bool
+canSubmitTensionComment status model =
+    not (Loading.isLoading model.tension_patch)
+        && (status /= Nothing || isPostSendable [ "message" ] model.tension_form.post)
+
+
+canSubmitContractComment : Model -> Bool
+canSubmitContractComment model =
+    not (Loading.isLoading model.comment_result)
+        && isPostSendable [ "message" ] model.contract_form.post
+
+
 type Msg
     = ExpandEvent Int
     | SetTensionid String
@@ -502,34 +514,39 @@ update_ apis message model =
             ( { model | contract_form = contract_form }, Out [] [] (Just (PostChanged ( field, value ))) )
 
         SubmitTensionComment status_m time ->
-            let
-                form =
-                    model.tension_form
+            -- Reject stale submissions while busy or after an acknowledgement resets the form.
+            if not (canSubmitTensionComment status_m model) then
+                ( model, noOut )
 
-                eventStatus =
-                    case status_m of
-                        Just TensionStatus.Open ->
-                            [ Ev TensionEvent.Reopened "Closed" "Open" ]
+            else
+                let
+                    form =
+                        model.tension_form
 
-                        Just TensionStatus.Closed ->
-                            [ Ev TensionEvent.Closed "Open" "Closed" ]
+                    eventStatus =
+                        case status_m of
+                            Just TensionStatus.Open ->
+                                [ Ev TensionEvent.Reopened "Closed" "Open" ]
 
-                        Nothing ->
-                            []
+                            Just TensionStatus.Closed ->
+                                [ Ev TensionEvent.Closed "Open" "Closed" ]
 
-                tension_form =
-                    { form
-                        | post =
-                            form.post
-                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
-                                |> Dict.insert "createdAt" (fromTime time)
-                        , status = status_m
-                        , events = eventStatus
-                    }
-            in
-            ( { model | tension_form = tension_form, tension_patch = LoadingSlowly }
-            , out0 [ pushTensionPatch apis tension_form TensionCommentAck ]
-            )
+                            Nothing ->
+                                []
+
+                    tension_form =
+                        { form
+                            | post =
+                                form.post
+                                    |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                    |> Dict.insert "createdAt" (fromTime time)
+                            , status = status_m
+                            , events = eventStatus
+                        }
+                in
+                ( { model | tension_form = tension_form, tension_patch = LoadingSlowly }
+                , out0 [ pushTensionPatch apis tension_form TensionCommentAck ]
+                )
 
         TensionCommentAck result ->
             case parseErr result 2 of
@@ -595,24 +612,28 @@ update_ apis message model =
                             ( { model | tension_patch = result }, noOut )
 
         SubmitContractComment time ->
-            let
-                form =
-                    model.contract_form
+            if not (canSubmitContractComment model) then
+                ( model, noOut )
 
-                contract_form =
-                    { form
-                        | post =
-                            form.post
-                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
-                                |> Dict.insert "createdAt" (fromTime time)
-                    }
-            in
-            ( { model
-                | contract_form = contract_form
-                , comment_result = LoadingSlowly
-              }
-            , out0 [ pushContractComment apis contract_form ContractCommentAck ]
-            )
+            else
+                let
+                    form =
+                        model.contract_form
+
+                    contract_form =
+                        { form
+                            | post =
+                                form.post
+                                    |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                    |> Dict.insert "createdAt" (fromTime time)
+                        }
+                in
+                ( { model
+                    | contract_form = contract_form
+                    , comment_result = LoadingSlowly
+                  }
+                , out0 [ pushContractComment apis contract_form ContractCommentAck ]
+                )
 
         ContractCommentAck result ->
             case parseErr result 2 of
@@ -660,21 +681,25 @@ update_ apis message model =
             ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
 
         SubmitCommentPatch time ->
-            let
-                form =
-                    model.comment_form
+            if Loading.isLoading model.comment_result then
+                ( model, noOut )
 
-                comment_form =
-                    { form
-                        | post =
-                            form.post
-                                |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
-                                |> Dict.insert "updatedAt" (fromTime time)
-                    }
-            in
-            ( { model | comment_form = comment_form, comment_result = LoadingSlowly }
-            , out0 [ patchComment apis comment_form CommentPatchAck ]
-            )
+            else
+                let
+                    form =
+                        model.comment_form
+
+                    comment_form =
+                        { form
+                            | post =
+                                form.post
+                                    |> Dict.update "message" (Maybe.map (collapseFileUrls model.session.file_server_url))
+                                    |> Dict.insert "updatedAt" (fromTime time)
+                        }
+                in
+                ( { model | comment_form = comment_form, comment_result = LoadingSlowly }
+                , out0 [ patchComment apis comment_form CommentPatchAck ]
+                )
 
         CommentPatchAck result ->
             case parseErr result 2 of
@@ -738,13 +763,17 @@ update_ apis message model =
         -- Delete comment
         OnDeleteComment cid ->
             if List.head model.comments |> Maybe.map (\c -> c.id == cid) |> withDefault False then
-                let
-                    form =
-                        model.comment_form
-                in
-                ( { model | comment_form = { form | id = cid, post = Dict.insert "message" "" form.post } }
-                , out0 [ sendNow SubmitCommentPatch ]
-                )
+                if Loading.isLoading model.comment_result then
+                    ( model, noOut )
+
+                else
+                    let
+                        form =
+                            model.comment_form
+                    in
+                    ( { model | comment_form = { form | id = cid, post = Dict.insert "message" "" form.post } }
+                    , out0 [ sendNow SubmitCommentPatch ]
+                    )
 
             else
                 ( model, out0 [ sendNow (SubmitDeleteComment cid) ] )
@@ -892,39 +921,43 @@ update_ apis message model =
 
         -- Markdown
         OnCheckbox checkbox ->
-            case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
-                Just c ->
-                    let
-                        -- Backup the current comment_form if user is editing a comment
-                        backup =
-                            if model.comment_form.id /= "" then
-                                Dict.get "message" model.comment_form.post
-                                    |> Maybe.map (\msg -> { id = model.comment_form.id, message = msg })
+            if Loading.isLoading model.comment_result then
+                ( model, noOut )
 
-                            else
-                                Nothing
+            else
+                case model.comments |> List.filter (\c -> c.id == checkbox.cid) |> List.head of
+                    Just c ->
+                        let
+                            -- Backup the current comment_form if user is editing a comment
+                            backup =
+                                if model.comment_form.id /= "" then
+                                    Dict.get "message" model.comment_form.post
+                                        |> Maybe.map (\msg -> { id = model.comment_form.id, message = msg })
 
-                        -- Simulate comment updated
-                        form =
-                            model.comment_form
+                                else
+                                    Nothing
 
-                        comment_form =
-                            { form
-                                | id = c.id
-                                , post =
-                                    form.post
-                                        |> Dict.insert "message" (setMdCheckbox checkbox c.message)
-                                        |> Dict.insert "stealth" "true"
-                            }
+                            -- Simulate comment updated
+                            form =
+                                model.comment_form
 
-                        -- send SubmitCommentPatch
-                    in
-                    ( { model | comment_form = comment_form, post_backup = backup }
-                    , out0 [ send (OnSubmit True SubmitCommentPatch) ]
-                    )
+                            comment_form =
+                                { form
+                                    | id = c.id
+                                    , post =
+                                        form.post
+                                            |> Dict.insert "message" (setMdCheckbox checkbox c.message)
+                                            |> Dict.insert "stealth" "true"
+                                }
 
-                Nothing ->
-                    ( model, noOut )
+                            -- send SubmitCommentPatch
+                        in
+                        ( { model | comment_form = comment_form, post_backup = backup }
+                        , out0 [ send (OnSubmit True SubmitCommentPatch) ]
+                        )
+
+                    Nothing ->
+                        ( model, noOut )
 
         -- Attachments
         OnPickFiles targetId ->
@@ -1880,20 +1913,20 @@ viewTensionCommentInput session tension (State model) =
             Loading.isLoading model.tension_patch
 
         isSendable =
-            isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
+            canSubmitTensionComment Nothing model
 
         submit =
-            onClick (OnSubmit (isSendable && not isLoading) <| SubmitTensionComment Nothing)
+            onClick (OnSubmit isSendable <| SubmitTensionComment Nothing)
 
         ( submitCloseOpen, closeOpenTxt ) =
             case tension.status of
                 TensionStatus.Open ->
-                    ( onClick (OnSubmit (not isLoading) <| SubmitTensionComment (Just TensionStatus.Closed))
+                    ( onClick (OnSubmit (canSubmitTensionComment (Just TensionStatus.Closed) model) <| SubmitTensionComment (Just TensionStatus.Closed))
                     , ternary (message == "") T.close T.closeComment
                     )
 
                 TensionStatus.Closed ->
-                    ( onClick (OnSubmit (not isLoading) <| SubmitTensionComment (Just TensionStatus.Open))
+                    ( onClick (OnSubmit (canSubmitTensionComment (Just TensionStatus.Open) model) <| SubmitTensionComment (Just TensionStatus.Open))
                     , ternary (message == "") T.reopen T.reopenComment
                     )
 
@@ -1917,11 +1950,7 @@ viewTensionCommentInput session tension (State model) =
                         ]
                     , case model.tension_patch of
                         Failure err ->
-                            if isSendable then
-                                viewGqlErrors err
-
-                            else
-                                text ""
+                            viewGqlErrors err
 
                         _ ->
                             text ""
@@ -1931,6 +1960,7 @@ viewTensionCommentInput session tension (State model) =
                                 [ button
                                     [ class "button"
                                     , classList [ ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                    , disabled isLoading
                                     , submitCloseOpen
                                     ]
                                     [ A.icon1 ("icon-alert-circle has-text-" ++ statusColorReverse tension.status) closeOpenTxt ]
@@ -1960,7 +1990,7 @@ viewContractCommentInput session (State model) =
             Loading.isLoading model.comment_result
 
         isSendable =
-            isPostSendable [ "message" ] form.post
+            canSubmitContractComment model
 
         opHeader =
             { onChangeViewMode = ChangeContractInputViewMode
@@ -1980,11 +2010,7 @@ viewContractCommentInput session (State model) =
                         ]
                     , case model.comment_result of
                         Failure err ->
-                            if isSendable then
-                                viewGqlErrors err
-
-                            else
-                                text ""
+                            viewGqlErrors err
 
                         _ ->
                             text ""
@@ -1995,7 +2021,7 @@ viewContractCommentInput session (State model) =
                                     [ class "button defaultSubmit"
                                     , classList [ ( "is-loading", isLoading ) ]
                                     , disabled (not isSendable)
-                                    , onClick (OnSubmit (isSendable && not isLoading) SubmitContractComment)
+                                    , onClick (OnSubmit isSendable SubmitContractComment)
                                     ]
                                     [ text T.comment ]
                                 ]

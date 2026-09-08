@@ -868,7 +868,12 @@ update global message model =
             )
 
         SubmitAddLabel _ ->
-            ( { model | label_result = LoadingSlowly }, addOneLabel apis model.artefact_form GotLabel, Cmd.none )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.label_result then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | label_result = LoadingSlowly }, addOneLabel apis model.artefact_form GotLabel, Cmd.none )
 
         SubmitEditLabel _ ->
             ( { model | label_result = LoadingSlowly }, updateOneLabel apis model.artefact_form GotLabel, Cmd.none )
@@ -890,7 +895,7 @@ update global message model =
 
                 RefreshToken i ->
                     if model.label_add then
-                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddLabel) 500, send UpdateUserToken )
+                        ( { model | refresh_trial = i, label_result = NotAsked }, sendSleep (Submit SubmitAddLabel) 500, send UpdateUserToken )
 
                     else
                         -- assume edit
@@ -1055,7 +1060,11 @@ update global message model =
             )
 
         SubmitAddRole _ ->
-            ( { model | role_result = LoadingSlowly }, addOneRole apis model.artefact_form GotRole, Cmd.none )
+            if Loading.isLoading model.role_result then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | role_result = LoadingSlowly }, addOneRole apis model.artefact_form GotRole, Cmd.none )
 
         SubmitEditRole _ ->
             ( { model | role_result = LoadingSlowly }, updateOneRole apis model.artefact_form GotRole, Cmd.none )
@@ -1084,7 +1093,7 @@ update global message model =
 
                 RefreshToken i ->
                     if model.role_add then
-                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddRole) 500, send UpdateUserToken )
+                        ( { model | refresh_trial = i, role_result = NotAsked }, sendSleep (Submit SubmitAddRole) 500, send UpdateUserToken )
 
                     else
                         -- assume edit
@@ -1350,7 +1359,11 @@ update global message model =
             ( { model | template_form = { f | post = Dict.insert field val f.post } }, Cmd.none, Cmd.none )
 
         SubmitAddTemplate _ ->
-            ( { model | template_result = LoadingSlowly }, addOneTensionTemplate apis model.template_form GotTemplate, Cmd.none )
+            if Loading.isLoading model.template_result then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | template_result = LoadingSlowly }, addOneTensionTemplate apis model.template_form GotTemplate, Cmd.none )
 
         SubmitEditTemplate _ ->
             ( { model | template_result = LoadingSlowly }, updateOneTensionTemplate apis model.template_form GotTemplate, Cmd.none )
@@ -1372,7 +1385,7 @@ update global message model =
 
                 RefreshToken i ->
                     if model.template_add then
-                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddTemplate) 500, send UpdateUserToken )
+                        ( { model | refresh_trial = i, template_result = NotAsked }, sendSleep (Submit SubmitAddTemplate) 500, send UpdateUserToken )
 
                     else
                         ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditTemplate) 500, send UpdateUserToken )
@@ -1646,7 +1659,11 @@ update global message model =
             ( { model | ptemplate_form = { f | columns = cols }, ptemplate_color_picker_idx = Nothing }, Cmd.none, Cmd.none )
 
         SubmitAddProjectTemplate _ ->
-            ( { model | ptemplate_result = LoadingSlowly }, addOneProjectTemplate apis model.ptemplate_form GotProjectTemplate, Cmd.none )
+            if Loading.isLoading model.ptemplate_result then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                ( { model | ptemplate_result = LoadingSlowly }, addOneProjectTemplate apis model.ptemplate_form GotProjectTemplate, Cmd.none )
 
         SubmitEditProjectTemplate _ ->
             ( { model | ptemplate_result = LoadingSlowly }, updateOneProjectTemplate apis model.ptemplate_form GotProjectTemplate, Cmd.none )
@@ -1668,7 +1685,7 @@ update global message model =
 
                 RefreshToken i ->
                     if model.ptemplate_add then
-                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddProjectTemplate) 500, send UpdateUserToken )
+                        ( { model | refresh_trial = i, ptemplate_result = NotAsked }, sendSleep (Submit SubmitAddProjectTemplate) 500, send UpdateUserToken )
 
                     else
                         ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditProjectTemplate) 500, send UpdateUserToken )

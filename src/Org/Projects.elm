@@ -1062,20 +1062,25 @@ update global message model =
             )
 
         SubmitAddProject time ->
-            let
-                form =
-                    model.project_form
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.project_result then
+                ( model, Cmd.none, Cmd.none )
 
-                newForm =
-                    { form
-                        | post =
-                            Dict.insert "createdAt" (fromTime time) form.post
-                    }
-            in
-            ( { model | project_result = LoadingSlowly, project_form = newForm }
-            , addOneProject apis newForm GotProject
-            , Cmd.none
-            )
+            else
+                let
+                    form =
+                        model.project_form
+
+                    newForm =
+                        { form
+                            | post =
+                                Dict.insert "createdAt" (fromTime time) form.post
+                        }
+                in
+                ( { model | project_result = LoadingSlowly, project_form = newForm }
+                , addOneProject apis newForm GotProject
+                , Cmd.none
+                )
 
         SubmitEditProject time ->
             let
@@ -1123,7 +1128,7 @@ update global message model =
 
                 RefreshToken i ->
                     if model.project_add then
-                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddProject) 500, send UpdateUserToken )
+                        ( { model | refresh_trial = i, project_result = NotAsked }, sendSleep (Submit SubmitAddProject) 500, send UpdateUserToken )
 
                     else
                         -- assume edit

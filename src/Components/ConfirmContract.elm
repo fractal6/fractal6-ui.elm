@@ -297,7 +297,12 @@ update_ apis message model =
             ( updatePost field value model, noOut )
 
         DoAddContract ->
-            ( setDataResult LoadingSlowly model, out0 [ addOneContract apis model.form OnDataAck ] )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.data_result then
+                ( model, noOut )
+
+            else
+                ( setDataResult LoadingSlowly model, out0 [ addOneContract apis model.form OnDataAck ] )
 
         OnSubmit next ->
             ( model

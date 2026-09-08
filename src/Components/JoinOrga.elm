@@ -427,7 +427,11 @@ update_ apis message model =
 
         --Query
         PushGuest form ->
-            if List.member model.step [ JoinOne, InviteOne ] then
+            -- Re-check in-flight here: the button is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.join_result then
+                ( model, noOut )
+
+            else if List.member model.step [ JoinOne, InviteOne ] then
                 let
                     contractForms =
                         makeCandidateContractForm form
@@ -484,7 +488,7 @@ update_ apis message model =
                     ( { model | join_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )
+                    ( { model | refresh_trial = i, join_result = NotAsked }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )
 
                 OkAuth data ->
                     let

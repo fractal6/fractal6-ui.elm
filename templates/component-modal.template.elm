@@ -291,10 +291,15 @@ update_ apis message model =
             ( model, out0 [ send OnQueryData ] )
 
         OnQueryData ->
-            -- Adapt your query
-            ( setDataResult LoadingSlowly model
-            , out0 [ getData apis model.form OnDataAck ]
-            )
+            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            if Loading.isLoading model.data_result then
+                ( model, noOut )
+
+            else
+                -- Adapt your query
+                ( setDataResult LoadingSlowly model
+                , out0 [ getData apis model.form OnDataAck ]
+                )
 
         OnDataAck result ->
             let

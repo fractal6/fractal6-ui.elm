@@ -247,6 +247,9 @@ viewOrgaNav session =
 viewTensionTitle : SessionCommon -> Maybe TensionHead -> NavbarHandlers msg -> Html msg
 viewTensionTitle session tension_head handlers =
     let
+        isLoggedOut =
+            session.user == LoggedOut
+
         isTensionPage =
             isTensionUrl session.url
 
@@ -267,6 +270,8 @@ viewTensionTitle session tension_head handlers =
                         )
                     , tensionIcon th.type_
                     ]
+
+                -- click the tension title to go up
                 , span
                     [ class "tension-title-text"
                     , title T.scrollToTop
@@ -275,6 +280,7 @@ viewTensionTitle session tension_head handlers =
                     [ text th.title ]
                 , button
                     [ class "button is-small ml-2"
+                    , classList [ ( "is-primary has-border", isLoggedOut  ) ]
                     , title T.scrollToBottom
                     , onClick handlers.onScrollToBottom
                     ]
