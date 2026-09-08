@@ -237,6 +237,7 @@ export const GraphPack = {
     rtime: null,
     timeout: false,
     delta: 200,
+    userHeight: null, // canvas height set by the user with the resizer grip
 
     // Html Elements
     $nextToChart: null,
@@ -300,7 +301,7 @@ export const GraphPack = {
     // Size the canvas
     computeGeometry() {
         this.computedWidth = this.$canvasParent.offsetWidth; //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
-        this.computedHeight = (window.innerHeight) / 2;
+        this.computedHeight = this.userHeight || (window.innerHeight) / 2;
 
         // Canvas settings
         this.width = Math.max(this.computedWidth - 4, this.minWidth);
@@ -1372,6 +1373,58 @@ export const GraphPack = {
     // Init
     //
 
+    // Resize of the canvas by dragging the grips (bottom: height, right: column width)
+    initResizer() {
+        this.bindResizer(document.getElementById('canvasResizer'), false);
+        this.bindResizer(document.getElementById('canvasResizerV'), true);
+    },
+
+    bindResizer($h, horizontal) {
+        if (!$h) return
+        var $col = this.$canvasParent.parentElement;
+        var $colRight = this.$nextToChart.parentElement;
+
+        $h.onpointerdown = e => {
+            if (e.button !== 0) return
+            e.preventDefault();
+            var p0 = horizontal ? e.clientX : e.clientY;
+            var s0 = horizontal ? $col.offsetWidth : this.height;
+            // Keep the total width of both columns, so the row keeps its margins
+            var wTotal = $col.offsetWidth + $colRight.offsetWidth;
+            $h.setPointerCapture(e.pointerId);
+
+            $h.onpointermove = ev => {
+                var d = (horizontal ? ev.clientX : ev.clientY) - p0;
+                if (horizontal) {
+                    var w = Math.min(Math.max(s0 + d, this.minWidth), wTotal - this.minWidth);
+                    $col.style.flex = "none";
+                    $col.style.width = w + "px";
+                    $colRight.style.flex = "none";
+                    $colRight.style.width = (wTotal - w) + "px";
+                } else {
+                    this.userHeight = Math.max(this.minHeight, s0 + d);
+                }
+
+                this.computeGeometry();
+                this.sizeDom();
+                // computeGeometry resets zoomCtx, restore the current viewport
+                if (this.vpOld) {
+                    this.zoomCtx.centerX = this.vpOld[0];
+                    this.zoomCtx.centerY = this.vpOld[1];
+                    this.zoomCtx.scale = (this.rayon * 2) / this.vpOld[2];
+                }
+                this.drawCanvas();
+            };
+
+            $h.onpointerup = () => {
+                $h.onpointermove = null;
+                $h.onpointerup = null;
+                this.rtime = new Date() - this.delta;
+                this.resizeMe();
+            };
+        };
+    },
+
     resizeMe() {
         if (!this.$canvas) return
 
@@ -1523,6 +1576,7 @@ export const GraphPack = {
         this.clearNodeTooltip()
 
         this.sizeDom();
+        this.initResizer();
 
         //
         // Create Circle Packing - GraphPack
