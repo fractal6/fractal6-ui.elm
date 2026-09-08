@@ -16,6 +16,12 @@
 
 #canvasOrga {
     border-radius: var(--bulma-radius-large) !important;
+    // Keep single-finger moves as pointer events (drag-and-drop), leave pinch to the browser
+    touch-action: pinch-zoom;
+    // The focused circle border is the focus indicator, no ring on the element itself
+    &:focus {
+        outline: none;
+    }
     //background-image: linear-gradient(white, black) ;
 }
 

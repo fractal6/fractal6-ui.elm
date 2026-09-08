@@ -1313,6 +1313,32 @@ export const GraphPack = {
         return this.nodesDict[node.data.parent.nameid]
     },
 
+    // Node to focus for a navigation key: undefined if the key is not handled,
+    // null if handled but there is nowhere to go.
+    keyTarget(key) {
+        var f = this.focusedNode;
+        var visible = ns => (ns || []).filter(n => n.data.type_ !== "Hidden");
+        switch (key) {
+            case "ArrowLeft":
+            case "ArrowRight":
+                var siblings = f.parent ? visible(f.parent.children) : [];
+                if (siblings.length < 2) return null
+                var i = siblings.indexOf(f) + (key === "ArrowRight" ? 1 : -1);
+                return siblings[(i + siblings.length) % siblings.length]
+            case "ArrowDown":
+            case "Enter":
+                return visible(f.children)[0] || null
+            case "ArrowUp":
+            case "Escape":
+            case "Backspace":
+                return f.parent || null
+            case "Home":
+                return f === this.rootNode ? null : this.rootNode
+            default:
+                return undefined
+        }
+    },
+
     // Get node position and properties
     addNodeCtx(node) {
         var zoomCtx = this.zoomCtx;
@@ -1846,6 +1872,8 @@ export const GraphPack = {
         var contextMenuEvent = e => {
             if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
+                // Touch long-press: drop the pending press so the trailing pointerup is not a click
+                this.endDrag();
                 this.sendNodeRightClickFromJs(this.hoveredNode);
                 this.isFrozen = true;
                 this.isFrozenMenu = true;
@@ -1862,6 +1890,17 @@ export const GraphPack = {
                 }
                 return true
             }
+        };
+
+        // Keyboard navigation (canvas is focusable through tabindex)
+        var canvasKeyDownEvent = e => {
+            if (this.isZooming || this.isFrozen || this.isFrozenMenu) return false
+            if (e.altKey || e.ctrlKey || e.metaKey) return false
+            var node = this.keyTarget(e.key);
+            if (node === undefined) return false
+            e.preventDefault();
+            if (node) this.nodeClickedFromJs(node);
+            return false
         };
 
         // Mouse wheel To study
@@ -1942,6 +1981,10 @@ export const GraphPack = {
         // Prime node.ctx (canvas positions) so hover/focus drawing works before the first zoom.
         this.nodes.forEach(n => { if (n.data.type_ !== "Hidden") this.addNodeCtx(n) });
 
+        // Keyboard navigation ready on load, unless the user is already in a field
+        if (!document.activeElement || document.activeElement === document.body)
+            this.$canvas.focus({ preventScroll: true });
+
         //
         // Event listeners
         //
@@ -1955,19 +1998,21 @@ export const GraphPack = {
         }
 
         this.handlers = [
-            // Canvas mouse event
-            [this.$canvas, "mousemove", canvasMouseMoveEvent],
-            [this.$canvas, "mouseenter", canvasMouseEnterEvent],
-            [this.$canvas, "mouseleave", canvasMouseLeaveEvent],
-            [this.$canvas, "mousedown", canvasMouseDownEvent],
-            [this.$canvas, "mouseup", canvasMouseUpEvent],
+            // Canvas pointer events (mouse, touch and pen alike)
+            [this.$canvas, "pointermove", canvasMouseMoveEvent],
+            [this.$canvas, "pointerenter", canvasMouseEnterEvent],
+            [this.$canvas, "pointerleave", canvasMouseLeaveEvent],
+            [this.$canvas, "pointerdown", canvasMouseDownEvent],
+            [this.$canvas, "pointerup", canvasMouseUpEvent],
+            [this.$canvas, "pointercancel", documentMouseUpEvent],
             [this.$canvas, "contextmenu", contextMenuEvent],
+            [this.$canvas, "keydown", canvasKeyDownEvent],
             //[this.$canvas, "wheel", contextMenuEvent], // or "scroll" ?
-            [document, "mouseup", documentMouseUpEvent],
+            [document, "pointerup", documentMouseUpEvent],
             // Canvas buttons events
-            [this.$canvasButtons, "mousedown", canvasButtonsDown],
-            [this.$canvasButtons, "mouseup", canvasButtonsUp],
-            [this.$canvasButtons, "mousemove", canvasButtonsMove],
+            [this.$canvasButtons, "pointerdown", canvasButtonsDown],
+            [this.$canvasButtons, "pointerup", canvasButtonsUp],
+            [this.$canvasButtons, "pointermove", canvasButtonsMove],
             // Tooltip events
             [$subTooltipTension, "mousedown", tooltipTensionClick],
             [$subTooltipAction, "mousedown", tooltipActionClick],

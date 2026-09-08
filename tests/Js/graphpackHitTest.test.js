@@ -159,3 +159,36 @@ describe('getDropTarget (drag-and-drop move)', () => {
         expect(mkDrag(g, g.circleF).getDropTarget(null, at(300, 300))).toBeNull();
     });
 });
+
+describe('keyTarget (keyboard navigation)', () => {
+    test('arrows cycle through visible siblings, skipping Hidden fillers', () => {
+        const g = mkGraph();
+        const gp = mkGp(g, g.circleA);
+        expect(gp.keyTarget('ArrowRight')).toBe(g.roleB);
+        expect(gp.keyTarget('ArrowLeft')).toBe(g.roleB); // wraps around hiddenH
+        gp.focusedNode = g.roleB;
+        expect(gp.keyTarget('ArrowRight')).toBe(g.circleA);
+    });
+
+    test('down/enter dive into the first child, up/escape/backspace go to the parent', () => {
+        const g = mkGraph();
+        const gp = mkGp(g, g.circleA);
+        expect(gp.keyTarget('ArrowDown')).toBe(g.circleC);
+        expect(gp.keyTarget('Enter')).toBe(g.circleC);
+        expect(gp.keyTarget('ArrowUp')).toBe(g.root);
+        expect(gp.keyTarget('Escape')).toBe(g.root);
+        expect(gp.keyTarget('Backspace')).toBe(g.root);
+        expect(gp.keyTarget('Home')).toBe(g.root);
+    });
+
+    test('nowhere to go yields null, unhandled keys undefined', () => {
+        const g = mkGraph();
+        const gp = mkGp(g, g.root);
+        expect(gp.keyTarget('ArrowUp')).toBeNull();
+        expect(gp.keyTarget('ArrowLeft')).toBeNull();
+        expect(gp.keyTarget('Home')).toBeNull();
+        gp.focusedNode = g.roleB; // leaf
+        expect(gp.keyTarget('ArrowDown')).toBeNull();
+        expect(gp.keyTarget('a')).toBeUndefined();
+    });
+});

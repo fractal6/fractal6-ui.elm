@@ -51,12 +51,19 @@ noise to canvas readbacks, which silently breaks color-keyed lookups.
 
 ## Interaction
 
-Mouse handlers on the canvas (registered in `init`) resolve the node under the
+Pointer handlers on the canvas (registered in `init`; `pointer*` events so mouse,
+touch and pen share one code path, with `touch-action: pinch-zoom` so
+single-finger moves are not eaten by page scrolling) resolve the node under the
 pointer and notify Elm through ports: `nodeClickedFromJs` (navigate),
 `nodeHoveredFromJs` (tooltip), `nodeFocusedFromJs`, `nodeLeftClickedFromJs` /
 `nodeRightClickedFromJs` (tooltip actions / context menu). The tooltip
 (`#nodeTooltip`) is an Elm-rendered element positioned by JS; `isFrozen` /
 `isFrozenMenu` pause hover updates while it is open.
+
+The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
+the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/
+Backspace go to the parent, Home goes to the root. Modifier combos are left to
+the browser.
 
 ## Drag-and-drop move
 

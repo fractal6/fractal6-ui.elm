@@ -59,7 +59,7 @@ import Schema.Enum.TensionStatus as TensionStatus
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, target, title, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Lazy as Lazy
 import Json.Decode as JD
@@ -1567,7 +1567,7 @@ viewCanvas us model =
                     ]
                     [ text T.help ]
                 ]
-        , canvas [ id "canvasOrga", class "has-border-light is-invisible" ] []
+        , canvas [ id "canvasOrga", class "has-border-light is-invisible", tabindex 0 ] []
         , div [ id "canvasResizer" ] []
         , div [ id "canvasResizerV", class "is-hidden-mobile" ] []
 
