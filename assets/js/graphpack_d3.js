@@ -313,9 +313,9 @@ export const GraphPack = {
         // Canvas settings
         this.width = Math.max(this.computedWidth - 4, this.minWidth);
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
-        // The packing is bounded by the smallest side: taller than wide is wasted space
-        if (!this.userHeight) this.height = Math.min(this.height, this.width);
         this.mobileSize = (window.innerWidth < 768 ? true : false);
+        // On mobile the packing is bounded by the width: taller than wide is wasted space
+        if (this.mobileSize && !this.userHeight) this.height = Math.min(this.height, this.width);
 
         this.rayon = (Math.min(this.width * 0.97, this.height * 0.97)) / 2;
         this.centerX = this.width / 2;
