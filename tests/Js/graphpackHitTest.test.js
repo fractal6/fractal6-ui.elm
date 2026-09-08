@@ -9,7 +9,10 @@ import { GraphPack } from '../../assets/js/graphpack_d3.js';
 // Build a d3-hierarchy-like node (only the fields hit-testing reads).
 function mkNode(data, x, y, r, depth, children) {
     const n = { data, x, y, r, depth };
-    if (children && children.length) n.children = children;
+    if (children && children.length) {
+        n.children = children;
+        children.forEach(c => { c.parent = n });
+    }
     return n;
 }
 const circle = (x, y, r, depth, children) => mkNode({ type_: 'Circle' }, x, y, r, depth, children);
@@ -117,5 +120,42 @@ describe('getNodeUnderPointer (geometric hit-testing)', () => {
         const gp = Object.create(GraphPack);
         gp.rootNode = null;
         expect(gp.getNodeUnderPointer(null, at(0, 0))).toBeUndefined();
+    });
+});
+
+describe('getDropTarget (drag-and-drop move)', () => {
+    // Drag circleF (85,100 r10 d2), focused on circleA so its subtree is reachable.
+    function mkDrag(g, source) {
+        const gp = mkGp(g, g.circleA);
+        gp.dragCandidate = { node: source };
+        return gp;
+    }
+
+    test('accepts another circle', () => {
+        const g = mkGraph();
+        expect(mkDrag(g, g.circleF).getDropTarget(null, at(50, 100))).toBe(g.circleE);
+    });
+
+    test('rejects the current parent', () => {
+        const g = mkGraph();
+        // pointer in circleA, the parent of circleF
+        expect(mkDrag(g, g.circleF).getDropTarget(null, at(30, 100))).toBeNull();
+    });
+
+    test('rejects the dragged node itself and its subtree', () => {
+        const g = mkGraph();
+        expect(mkDrag(g, g.circleC).getDropTarget(null, at(50, 100))).toBeNull();
+    });
+
+    test('rejects a role target', () => {
+        const g = mkGraph();
+        const gp = mkGp(g, g.root);
+        gp.dragCandidate = { node: g.circleF };
+        expect(gp.getDropTarget(null, at(150, 100))).toBeNull();
+    });
+
+    test('returns null outside the graph', () => {
+        const g = mkGraph();
+        expect(mkDrag(g, g.circleF).getDropTarget(null, at(300, 300))).toBeNull();
     });
 });

@@ -454,6 +454,7 @@ type Msg
       -- GP JS Interop
     | FlushGraphpack
     | NodeClicked String
+    | NodeDragged ( String, String )
     | NodeHovered String
     | NodeFocused ( String, Int )
     | OnClearTooltip
@@ -906,6 +907,29 @@ update global message model =
         NodeClicked nameid ->
             ( model, Cmd.none, send (NavigateNode nameid) )
 
+        NodeDragged ( nameid, target_nameid ) ->
+            -- Move a node by drag-and-drop, gated like the action panel Move entry.
+            let
+                uctx =
+                    uctxFromUser global.session.common.user
+
+                cmd =
+                    Maybe.map2
+                        (\node target ->
+                            if nid2rootid nameid == nameid || List.isEmpty (getNodeRights uctx node model.tree_data) then
+                                Cmd.none
+
+                            else
+                                unwrap Cmd.none
+                                    (\b -> Cmd.map ActionPanelMsg (send (ActionPanel.OnMoveTo "actionPanelHelper" b.tension.id target)))
+                                    node.source
+                        )
+                        (getNode nameid model.tree_data)
+                        (getNode target_nameid model.tree_data)
+                        |> withDefault Cmd.none
+            in
+            ( model, cmd, Cmd.none )
+
         NodeHovered nid ->
             let
                 ( node, cmd ) =
@@ -1124,6 +1148,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ flushGraphPackFromJs (always FlushGraphpack)
     , nodeClickedFromJs NodeClicked
+    , nodeDraggedFromJs NodeDragged
 
     -- @CODEFACTOR: since node_hovered is know, leftClick and rightClick could be replace by a JS .click() function on #doTension and #doAction...
     -- what would be the advantage of using .click instead of ports ?
@@ -1172,6 +1197,9 @@ port flushGraphPackFromJs : (() -> msg) -> Sub msg
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
+
+
+port nodeDraggedFromJs : (( String, String ) -> msg) -> Sub msg
 
 
 port nodeLeftClickedFromJs : (String -> msg) -> Sub msg

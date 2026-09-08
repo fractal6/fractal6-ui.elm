@@ -24,23 +24,16 @@ module Components.MoveTension exposing (Msg(..), State, init, subscriptions, upd
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Fractale.Form exposing (Ev)
-import Fractale.User exposing (UserState(..))
-import Utils.Bulma as B
-import Fractale.Codecs exposing (nid2type, nodeIdCodec)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.View exposing (nodeType2icon)
 import Components.ConfirmContract as ConfirmContract
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.TreeMenu exposing (viewSelectorTree)
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.String exposing (space_)
 import Form exposing (isPostEmpty)
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.TensionEvent as TensionEvent
+import Fractale.Codecs exposing (nid2type, nodeIdCodec)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Form exposing (Ev)
+import Fractale.User exposing (UserState(..))
+import Fractale.View exposing (nodeType2icon)
 import Html exposing (Html, button, div, i, p, span, text, textarea)
 import Html.Attributes exposing (attribute, class, classList, disabled, id, placeholder, rows, target, value)
 import Html.Events exposing (onClick, onInput)
@@ -50,10 +43,17 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.TensionEvent as TensionEvent
 import Schemas.TreeMenu exposing (ExpandedLines)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Text as T
 import Time
+import Utils.Bool exposing (ternary)
+import Utils.Bulma as B
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom
+import Utils.String exposing (space_)
 
 
 type State
@@ -221,7 +221,7 @@ canExitSafe model =
 
 hasData : Model -> Bool
 hasData model =
-    not (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "")
+    not (isPostEmpty [ "message" ] model.form.post)
 
 
 buildOutResult : Model -> ( String, ( String, String, String ) )

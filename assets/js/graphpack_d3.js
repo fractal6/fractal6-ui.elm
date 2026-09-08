@@ -227,6 +227,13 @@ export const GraphPack = {
     isFrozenMenu: false, // Tooltip right click state
     handlers: [],
 
+    // Dragging (move a node by drag-and-drop)
+    dragThreshold: 5, // px before a mousedown becomes a drag
+    pressed: false, // left button pressed on the canvas
+    dragCandidate: null, // {node, x, y} node pressed on, dragged once armed
+    dragTarget: null,
+    isDragging: false,
+
     // Zooming
     ease: d3.easePolyInOut.exponent(4),
     //ease: d3.easePolyOut.exponent(4),
@@ -306,6 +313,8 @@ export const GraphPack = {
         // Canvas settings
         this.width = Math.max(this.computedWidth - 4, this.minWidth);
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
+        // The packing is bounded by the smallest side: taller than wide is wasted space
+        if (!this.userHeight) this.height = Math.min(this.height, this.width);
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
         this.rayon = (Math.min(this.width * 0.97, this.height * 0.97)) / 2;
@@ -664,6 +673,51 @@ export const GraphPack = {
         // Update global context
         this.hoveredNode = node; //@debug: use globCtx
         return
+    },
+
+    // Redraw the graph with the drag ghost and the highlighted drop target
+    drawDragFeedback(p) {
+        this.hoveredNode = null;
+        this.drawCanvas();
+        var ctx2d = this.ctx2d;
+        var target = this.dragTarget;
+
+        // Drop target border
+        if (target && target.ctx) {
+            var w = this.hoverCircleWidth;
+            ctx2d.beginPath();
+            ctx2d.setLineDash([6, 4]);
+            ctx2d.lineWidth = w * 2;
+            ctx2d.strokeStyle = this.hoverCircleColor;
+            ctx2d.arc(target.ctx.centerX, target.ctx.centerY, target.ctx.rayon + 0.1 + w, 0, 2 * Math.PI, true);
+            ctx2d.stroke();
+            ctx2d.setLineDash([]);
+        }
+
+        // Ghost of the dragged node under the pointer
+        var source = this.dragCandidate.node;
+        var rayon = Math.min(source.ctx ? source.ctx.rayon : 20, 25);
+        ctx2d.beginPath();
+        ctx2d.globalAlpha = 0.6;
+        ctx2d.fillStyle = this.getNodeColor(source);
+        ctx2d.arc(p.mouseX, p.mouseY, rayon, 0, 2 * Math.PI, true);
+        ctx2d.fill();
+        ctx2d.globalAlpha = 1;
+    },
+
+    // Reset the drag state and repaint the graph
+    endDrag() {
+        var wasDragging = this.isDragging;
+        this.pressed = false;
+        this.dragCandidate = null;
+        this.dragTarget = null;
+        this.isDragging = false;
+        if (this.$canvas) this.$canvas.style.cursor = "";
+        if (wasDragging) {
+            this.hoveredNode = null;
+            this.drawCanvas();
+            this.drawNodeHover(this.focusedNode, false);
+        }
     },
 
     // Clean node hovering
@@ -1242,6 +1296,19 @@ export const GraphPack = {
         return node;
     },
 
+    // Valid drop target: a circle that is neither the dragged node's parent nor part of its own subtree.
+    getDropTarget(e, p) {
+        var node = this.getNodeUnderPointer(e, p);
+        var source = this.dragCandidate && this.dragCandidate.node;
+        if (!node || !source) return null
+        if (node.data.type_ !== NodeType.Circle) return null
+        if (node === source.parent) return null
+        for (var n = node; n; n = n.parent) {
+            if (n === source) return null
+        }
+        return node
+    },
+
     getParent(node) {
         return this.nodesDict[node.data.parent.nameid]
     },
@@ -1367,6 +1434,10 @@ export const GraphPack = {
 
     sendNodeRightClickFromJs(node) {
         this.app.ports.nodeRightClickedFromJs.send(node.data.nameid);
+    },
+
+    sendNodeDraggedFromJs(source, target) {
+        this.app.ports.nodeDraggedFromJs.send([source.data.nameid, target.data.nameid]);
     },
 
     //
@@ -1654,8 +1725,57 @@ export const GraphPack = {
             return false;
         };
 
+        // Start a potential node drag (nav/zoom happens on mouseup instead)
+        var canvasMouseDownEvent = e => {
+            if (e.button !== 0) return false
+            this.pressed = true;
+            if (this.isZooming || this.isFrozen || this.isFrozenMenu) return false
+            var p = this.getPointerCtx(e);
+            if (!this.checkIf(p, "InZoomed")) return false
+            var node = this.getNodeUnderPointer(e, p);
+            if (!node || node === this.rootNode || node === this.focusedNode) return false
+            this.dragCandidate = { node: node, x: e.clientX, y: e.clientY };
+            return false
+        };
+
+        // Release: either a drop (move the node) or a plain click (navigate)
+        var canvasMouseUpEvent = e => {
+            // Ignore a release whose press did not start on the canvas (e.g. from the tooltip)
+            if (e.button !== 0 || !this.pressed) return false
+            if (!this.isDragging) {
+                this.endDrag();
+                return nodeClickEvent(e)
+            }
+            var source = this.dragCandidate.node;
+            var target = this.dragTarget;
+            this.endDrag();
+            if (target) this.sendNodeDraggedFromJs(source, target);
+            return false
+        };
+
+        // Cancel a drag released outside the canvas
+        var documentMouseUpEvent = e => {
+            if (this.pressed) this.endDrag();
+            return false
+        };
+
+        // Arm the drag past the threshold, then track the drop target
+        var dragMoveEvent = e => {
+            if (!this.isDragging) {
+                var d = this.dragCandidate;
+                if (Math.abs(e.clientX - d.x) < this.dragThreshold && Math.abs(e.clientY - d.y) < this.dragThreshold) return false
+                this.isDragging = true;
+                this.$canvas.style.cursor = "grabbing";
+            }
+            var p = this.getPointerCtx(e);
+            this.dragTarget = this.getDropTarget(e, p);
+            this.drawDragFeedback(p);
+            return false
+        };
+
         // Listen for mouse moves/hoovering on the main canvas
         var canvasMouseMoveEvent = e => {
+            if (this.dragCandidate) return dragMoveEvent(e)
             if (this.isZooming) return false
             if (this.isFrozen) return false
             if (this.isFrozenMenu) return false
@@ -1686,6 +1806,7 @@ export const GraphPack = {
 
         // Listen for mouse entering canvas
         var canvasMouseEnterEvent = e => {
+            if (this.dragCandidate) return false
             if (this.isZooming) return false
             if (this.isFrozen) return false
             if (this.isFrozenMenu) return false
@@ -1700,6 +1821,7 @@ export const GraphPack = {
 
         // Listen for mouse moves/hooverout on the main canvas
         var canvasMouseLeaveEvent = e => {
+            if (this.dragCandidate) return false
             var p = this.getPointerCtx(e);
             var isInCanvas = this.checkIf(p, "InCanvas"); // purpose of that is possibliy linked to issue #9232dcd
             if (!isInCanvas && !this.isFrozenMenu) {
@@ -1764,28 +1886,17 @@ export const GraphPack = {
 
         // Canvas button events redirection
         // Review -- Better implementation ?
-        var canvasButtonsClick = e => {
+        var isInCanvasButtons = e => {
             var p = this.getPointerCtx(e);
             var isInButtons = false;
             this.$canvasButtons.childNodes.forEach(o => {
                 isInButtons |= this.checkIf(p, 'InButtons', o);
             });
-            if (!isInButtons) {
-                return nodeClickEvent(e)
-            }
-            return true
+            return isInButtons
         };
-        var canvasButtonsMove = e => {
-            var p = this.getPointerCtx(e);
-            var isInButtons = false;
-            this.$canvasButtons.childNodes.forEach(o => {
-                isInButtons |= this.checkIf(p, 'InButtons', o);
-            });
-            if (!isInButtons) {
-                return canvasMouseMoveEvent(e)
-            }
-            return true
-        };
+        var canvasButtonsDown = e => isInCanvasButtons(e) ? true : canvasMouseDownEvent(e);
+        var canvasButtonsUp = e => isInCanvasButtons(e) ? true : canvasMouseUpEvent(e);
+        var canvasButtonsMove = e => isInCanvasButtons(e) ? true : canvasMouseMoveEvent(e);
 
         // Tooltip Clicks
         var tooltipTensionClick = e => {
@@ -1826,6 +1937,7 @@ export const GraphPack = {
         this.isZooming = false;
         this.isFrozen = false;
         this.isFrozenMenu = false;
+        this.endDrag();
 
         // Prime node.ctx (canvas positions) so hover/focus drawing works before the first zoom.
         this.nodes.forEach(n => { if (n.data.type_ !== "Hidden") this.addNodeCtx(n) });
@@ -1847,11 +1959,14 @@ export const GraphPack = {
             [this.$canvas, "mousemove", canvasMouseMoveEvent],
             [this.$canvas, "mouseenter", canvasMouseEnterEvent],
             [this.$canvas, "mouseleave", canvasMouseLeaveEvent],
-            [this.$canvas, "mousedown", nodeClickEvent],
+            [this.$canvas, "mousedown", canvasMouseDownEvent],
+            [this.$canvas, "mouseup", canvasMouseUpEvent],
             [this.$canvas, "contextmenu", contextMenuEvent],
             //[this.$canvas, "wheel", contextMenuEvent], // or "scroll" ?
+            [document, "mouseup", documentMouseUpEvent],
             // Canvas buttons events
-            [this.$canvasButtons, "mousedown", canvasButtonsClick],
+            [this.$canvasButtons, "mousedown", canvasButtonsDown],
+            [this.$canvasButtons, "mouseup", canvasButtonsUp],
             [this.$canvasButtons, "mousemove", canvasButtonsMove],
             // Tooltip events
             [$subTooltipTension, "mousedown", tooltipTensionClick],

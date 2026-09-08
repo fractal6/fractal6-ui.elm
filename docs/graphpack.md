@@ -58,6 +58,19 @@ pointer and notify Elm through ports: `nodeClickedFromJs` (navigate),
 (`#nodeTooltip`) is an Elm-rendered element positioned by JS; `isFrozen` /
 `isFrozenMenu` pause hover updates while it is open.
 
+## Drag-and-drop move
+
+Dragging a node onto another circle moves it there. Navigation fires on
+`mouseup` so a press can become a drag: past `dragThreshold` px the drag arms
+(`drawDragFeedback`), and the drop sends `nodeDraggedFromJs [source, target]`.
+`getDropTarget` rejects roles, the current parent and the dragged node's own
+subtree.
+
+Elm side (`Org/Overview.elm`, `NodeDragged`): gated by `getNodeRights`, then
+`ActionPanel.OnMoveTo domid tid target` opens `MoveTension` with the target
+pre-selected. `domid` must name a rendered panel, as `ActionPanel.view` only
+renders the move modal for its own `domid`.
+
 ## Tests
 
 `tests/Js/graphpackHitTest.test.js` covers the geometric hit-testing (depth

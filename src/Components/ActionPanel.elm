@@ -580,6 +580,8 @@ type Msg
     | PushAck (GqlData IdPayload)
     | OnActionMove
     | GotTensionToMove (GqlData TensionHead)
+    | OnMoveTo String String Node
+    | GotTensionToMoveTo Node (GqlData TensionHead)
       -- Autonomous Action (components)
     | DoMove TensionHead
       -- Confirm Modal
@@ -959,6 +961,24 @@ update_ apis message model =
 
         DoMove t ->
             ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid t.latest_blob)) ] )
+
+        OnMoveTo domid tid target ->
+            -- Open the move modal with a preset target (drag-and-drop on the graphpack).
+            -- domid must be a rendered panel, as it carries the MoveTension view.
+            ( { model | domid = domid }, out0 [ getTensionHead apis model.form.uctx tid (GotTensionToMoveTo target) ] )
+
+        GotTensionToMoveTo target result ->
+            case result of
+                Success th ->
+                    ( close model
+                    , out0
+                        [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen th.id th.receiver.nameid th.latest_blob))
+                        , Cmd.map MoveTensionMsg (send (MoveTension.OnChangeTarget target))
+                        ]
+                    )
+
+                _ ->
+                    ( model, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
