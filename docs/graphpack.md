@@ -35,7 +35,8 @@ Zooming (`zoomToNode`) runs `d3.interpolateZoom` in a `d3.timer` that mutates
 `zoomCtx` and redraws every frame.
 
 The canvas is resizable by dragging the grips around it (`#canvasResizer`
-below, `#canvasResizerV` on the right, wired by `bindResizer`): height goes to
+below, `#canvasResizerV` on the right, `#canvasResizerC` on the bottom-right
+corner for both axes, wired by `bindResizer`): height goes to
 `userHeight`, width splits the two Bulma columns. Both reset on page reload.
 
 ## Hit-testing

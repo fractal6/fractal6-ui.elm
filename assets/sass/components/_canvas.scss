@@ -80,6 +80,34 @@
     }
 }
 
+// Corner grip: height + width at once. Painted over the two other grips (later in the DOM)
+#canvasResizerC {
+    position: absolute;
+    bottom: 0;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    touch-action: none;
+
+    // Grip
+    &::after {
+        content: "";
+        display: block;
+        width: 9px;
+        height: 9px;
+        margin: 1px 1px 0 auto;
+        border-right: 3px solid var(--border-color);
+        border-bottom: 3px solid var(--border-color);
+        border-radius: 0 0 3px 0;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
 #canvasLegend {
     position: absolute;
     z-index: 2;

@@ -1470,13 +1470,14 @@ export const GraphPack = {
     // Init
     //
 
-    // Resize of the canvas by dragging the grips (bottom: height, right: column width)
+    // Resize of the canvas by dragging the grips (bottom: height, right: column width, corner: both)
     initResizer() {
-        this.bindResizer(document.getElementById('canvasResizer'), false);
-        this.bindResizer(document.getElementById('canvasResizerV'), true);
+        this.bindResizer(document.getElementById('canvasResizer'), false, true);
+        this.bindResizer(document.getElementById('canvasResizerV'), true, false);
+        this.bindResizer(document.getElementById('canvasResizerC'), true, true);
     },
 
-    bindResizer($h, horizontal) {
+    bindResizer($h, doX, doY) {
         if (!$h) return
         var $col = this.$canvasParent.parentElement;
         var $colRight = this.$nextToChart.parentElement;
@@ -1484,22 +1485,22 @@ export const GraphPack = {
         $h.onpointerdown = e => {
             if (e.button !== 0) return
             e.preventDefault();
-            var p0 = horizontal ? e.clientX : e.clientY;
-            var s0 = horizontal ? $col.offsetWidth : this.height;
+            var x0 = e.clientX, y0 = e.clientY;
+            var w0 = $col.offsetWidth, h0 = this.height;
             // Keep the total width of both columns, so the row keeps its margins
             var wTotal = $col.offsetWidth + $colRight.offsetWidth;
             $h.setPointerCapture(e.pointerId);
 
             $h.onpointermove = ev => {
-                var d = (horizontal ? ev.clientX : ev.clientY) - p0;
-                if (horizontal) {
-                    var w = Math.min(Math.max(s0 + d, this.minWidth), wTotal - this.minWidth);
+                if (doX) {
+                    var w = Math.min(Math.max(w0 + ev.clientX - x0, this.minWidth), wTotal - this.minWidth);
                     $col.style.flex = "none";
                     $col.style.width = w + "px";
                     $colRight.style.flex = "none";
                     $colRight.style.width = (wTotal - w) + "px";
-                } else {
-                    this.userHeight = Math.max(this.minHeight, s0 + d);
+                }
+                if (doY) {
+                    this.userHeight = Math.max(this.minHeight, h0 + ev.clientY - y0);
                 }
 
                 this.computeGeometry();

@@ -1570,6 +1570,7 @@ viewCanvas us model =
         , canvas [ id "canvasOrga", class "has-border-light is-invisible", tabindex 0 ] []
         , div [ id "canvasResizer" ] []
         , div [ id "canvasResizerV", class "is-hidden-mobile" ] []
+        , div [ id "canvasResizerC", class "is-hidden-mobile" ] []
 
         {- Hidden classes use in graphpack_d3.js -}
         --
