@@ -309,7 +309,7 @@ export const actions = {
     },
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qsn;
-        var nodes = session.gp.nodesDict;
+        var nodes = session.gp.nodesDict || {};
         var res = qs.search(pattern, {prefix:true}).slice(0,11).map(n => {
             // Ignore Filtered Node (Owner, Member, etc)
             if (nodes[n.nameid]) {
@@ -402,83 +402,73 @@ export const actions = {
     'INIT_GRAPHPACK': (app, session, data) => {
         var gp = session.gp;
 
-        // Loading empty canvas
-        if (!data.data || data.data.length == 0 ) {
-            gp.isLoading = true;
-            gp.init_canvas()
+        if (gp.$canvas && !gp.isActive()) gp.dispose();
+        var previousFocus = gp.pendingInit?.focusid || gp.rootNode?.data.nameid;
+        if (data.focusid && previousFocus && data.focusid.split(/#|%23/i)[0] !== previousFocus.split(/#|%23/i)[0]) {
+            gp.dispose();
+            initQuickSearch(session.qsn, []);
+            gp.init_canvas();
+        }
+        // Same-org loading placeholders must not erase a confirmed transition.
+        if (!data.data || data.data.length === 0) {
+            gp.init_canvas();
             return
         }
 
-        setTimeout(() => { // to wait that layout is ready
-            // Setup Graphpack
-            var ok = gp.init(app, data, session.isInit);
-            if (ok) {
+        clearTimeout(gp.initTimer);
+        var canvas = document.getElementById(gp.canvasId);
+        gp.pendingInit = data;
+        gp.initTimer = setTimeout(() => {
+            gp.initTimer = null;
+            var snapshot = gp.pendingInit;
+            gp.pendingInit = null;
+            if (!snapshot || (canvas && canvas !== document.getElementById(gp.canvasId))) return
+            if (gp.init(app, snapshot, session.isInit)) {
                 session.isInit = false;
-                gp.zoomToNode(data.focusid, 0.5);
-            } else {
-                gp.isLoading = true;
-                gp.init_canvas()
+                initQuickSearch(session.qsn, snapshot.data);
             }
-
-            // Setup Node quickSearch
-            initQuickSearch(session.qsn, data.data);
         }, 150);
     },
     'FOCUS_GRAPHPACK': (app, session, focusid) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            var gp = session.gp;
-            gp.zoomToNode(focusid);
-        }
+        var gp = session.gp;
+        if (gp.pendingInit) gp.pendingInit = { ...gp.pendingInit, focusid };
+        else gp.zoomToNode(focusid);
     },
     'FLUSH_GRAPHPACK': (app, session, focusid) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            var gp = session.gp;
+        var gp = session.gp;
+        if (gp.isActive()) {
+            gp.uctx = JSON.parse(localStorage.getItem(UCTX_KEY));
             gp.computeCircleColorRange()
             gp.drawCanvas();
         }
     },
     'DRAW_GRAPHPACK' : (app, session, data) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            var gp = session.gp;
-            var focusid = gp.focusedNode ? gp.focusedNode.data.nameid : null;
-            try {
-                gp.resetGraphPack(data.data, true, focusid);
-            } catch {
-                console.warn("Webpack bad initialization -- probably due to dev env, please report.")
-                return
-            }
-            gp.drawCanvas();
-
-            // Fix bad drawing... (observed when adding, moving or removing node)
-            gp.resizeMe();
+        var gp = session.gp;
+        var focusid = gp.pendingInit?.focusid || gp.focusedNode?.data.nameid || data.focusid;
+        focusid = data.nodeRenames[focusid] || focusid;
+        clearTimeout(gp.initTimer);
+        gp.initTimer = gp.pendingInit = null;
+        initQuickSearch(session.qsn, data.data);
+        if (!gp.isActive() || !gp.graph) {
+            actions.INIT_GRAPHPACK(app, session, { ...data, focusid });
+            return
         }
+        gp.resetGraphPack(data.data, focusid, data.nodeRenames);
     },
     'REMOVEDRAW_GRAPHPACK' : (app, session, data) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            // Remove a node
-            for (var i=0; i<data.data.length; i++) {
-                if (data.data[i].nameid == data.focusid) {
-                    data.data.splice(i, 1);
-                    break
-                }
-            }
-
-            var gp = session.gp;
-            gp.resetGraphPack(data.data, true, gp.focusedNode.data.nameid);
-            gp.drawCanvas();
-        }
+        actions.DRAW_GRAPHPACK(app, session, {
+            ...data,
+            data: data.data.filter(n => n.nameid !== data.focusid),
+        });
     },
     'DRAW_BUTTONS_GRAPHPACK' : (app, session, _) => {
-        var $canvas = document.getElementById("canvasOrga");
-        if ($canvas) {
-            var gp = session.gp;
-            setTimeout( () => {
-                gp.drawButtons()}, 333);
-        }
+        var gp = session.gp;
+        var canvas = gp.$canvas;
+        clearTimeout(gp.buttonsTimer);
+        gp.buttonsTimer = setTimeout(() => {
+            gp.buttonsTimer = null;
+            if (gp.isActive() && gp.graph && gp.$canvas === canvas) gp.drawButtons();
+        }, 333);
     },
     'CLEAR_TOOLTIP': (app, session, message) => {
         var $canvas = document.getElementById("canvasOrga");
@@ -515,6 +505,7 @@ export const actions = {
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
         app.ports.reloadNotifFromJs.send(null);
+        actions.FLUSH_GRAPHPACK(app, session);
     },
     'SAVE_SESSION_ITEM' : (app, session, data) => {
         if (data.val == null) {
@@ -533,8 +524,10 @@ export const actions = {
             resizePage = true;
         }
 
-        if (resizePage)
-            setTimeout(() => session.gp.resizeMe(), 333);
+        if (resizePage) {
+            clearTimeout(session.gp.resizeTimer);
+            session.gp.resizeTimer = setTimeout(() => session.gp.resizeMe(), 333);
+        }
     },
     'SAVE_DRAFTS' : (app, session, data) => {
         localStorage.setItem('drafts', JSON.stringify(data));

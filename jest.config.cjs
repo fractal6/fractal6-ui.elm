@@ -18,12 +18,11 @@ module.exports = {
     moduleFileExtensions: ['js'],
     testMatch: ['**/*.test.js'],
     // Stub heavy deps ports.js drags in but the markdown helpers don't touch
-    // (d3 via graphpack_d3, minisearch, bulma_drivers, custom). Avoids Jest
+    // (d3 via graphpack_d3, minisearch, bulma_drivers). Avoids Jest
     // tripping over ESM-only packages in node_modules.
     moduleNameMapper: {
         '^minisearch$': '<rootDir>/tests/Js/__mocks__/empty.js',
         '^\\./graphpack_d3$': '<rootDir>/tests/Js/__mocks__/empty.js',
         '^\\./bulma_drivers$': '<rootDir>/tests/Js/__mocks__/empty.js',
-        '^\\./custom\\.js$': '<rootDir>/tests/Js/__mocks__/empty.js',
     },
 };

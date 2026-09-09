@@ -965,7 +965,7 @@ update_ apis message model =
         OnMoveTo domid tid target ->
             -- Open the move modal with a preset target (drag-and-drop on the graphpack).
             -- domid must be a rendered panel, as it carries the MoveTension view.
-            ( { model | domid = domid }, out0 [ getTensionHead apis model.form.uctx tid (GotTensionToMoveTo target) ] )
+            ( { model | domid = domid, state = MoveAction }, out0 [ getTensionHead apis model.form.uctx tid (GotTensionToMoveTo target) ] )
 
         GotTensionToMoveTo target result ->
             case result of

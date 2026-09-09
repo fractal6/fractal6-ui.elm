@@ -24,9 +24,9 @@ module Components.TreeMenu exposing (Msg(..), State, getList, getList_, getOrgaD
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Fractale.Graph exposing (getNode, getParentId, localGraphFromOrga, withDescendants)
-import Fractale.HotUpdate exposing (hotNodeInsert, hotNodePull, hotNodePush)
+import Fractale.HotUpdate exposing (hotNodeInsert, hotNodeMove, hotNodePull, hotNodePush)
 import Fractale.User exposing (UserState(..), uctxFromUser)
-import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRootids, isRole, nearestCircleid, toLink)
+import Fractale.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusFromNameid, getRootids, isRole, nearestCircleid, toLink)
 import Fractale.Error exposing (viewGqlErrors)
 import Fractale.View exposing (counter, nodeType2icon)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -294,6 +294,7 @@ type Msg
     | UpdateNode String (Node -> Node)
     | DelNodes (List String)
     | MoveNode String String String
+    | MovedTreeAck String NodesDict (GqlData NodesDict)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -311,27 +312,28 @@ type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
     , result : Maybe ( Bool, Bool ) -- define what data is to be returned
+    , nodeRenames : Dict String String
     }
 
 
 noOut : Out
 noOut =
-    Out [] [] Nothing
+    Out [] [] Nothing Dict.empty
 
 
 out0 : List (Cmd Msg) -> Out
 out0 cmds =
-    Out cmds [] Nothing
+    Out cmds [] Nothing Dict.empty
 
 
 out1 : List GlobalCmd -> Out
 out1 cmds =
-    Out [] cmds Nothing
+    Out [] cmds Nothing Dict.empty
 
 
 out2 : List (Cmd Msg) -> List GlobalCmd -> Out
 out2 cmds gcmds =
-    Out cmds gcmds Nothing
+    Out cmds gcmds Nothing Dict.empty
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -373,7 +375,7 @@ update_ apis message model =
 
         OnRequireData ->
             if isSuccess model.tree_result then
-                ( model, Out [] [] (Just ( True, False )) )
+                ( model, Out [] [] (Just ( True, False )) Dict.empty )
 
             else if model.fetching then
                 ( model, noOut )
@@ -398,7 +400,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep OnLoad 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( setTree data, Out [ send (ScrollToElement model.focus.nameid) ] [ DoUpdateTree (Just d) ] (Just ( True, True )) )
+                    ( setTree data, Out [ send (ScrollToElement model.focus.nameid) ] [ DoUpdateTree (Just d) ] (Just ( True, True )) Dict.empty )
 
                 _ ->
                     ( data, noOut )
@@ -529,6 +531,7 @@ update_ apis message model =
                     , Out (ternary isArchiveChange [ Ports.reloadOrgaMenu ] [])
                         ([ DoUpdateToken, DoUpdateTree (Just data) ] ++ ternary isArchiveChange [ DoUpdateOrgs Nothing ] [])
                         Nothing
+                        Dict.empty
                     )
 
                 Nothing ->
@@ -567,13 +570,50 @@ update_ apis message model =
 
         MoveNode nameid_old parentid_new nameid_new ->
             let
-                ( data, _ ) =
-                    hotNodePull [ nameid_old ] model.tree_result
+                ( data, nodeRenames ) =
+                    hotNodeMove nameid_old parentid_new nameid_new model.tree_result
             in
-            ( { model | tree_result = Success data }
-              --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , out0 [ send (FetchNewNode nameid_new False) ]
-            )
+            if Dict.isEmpty nodeRenames then
+                ( model, noOut )
+
+            else
+                ( { model
+                    | tree_result = Success data
+                    , focus = Dict.get model.focus.nameid nodeRenames |> Maybe.map focusFromNameid |> withDefault model.focus
+                  }
+                    |> setTree
+                , Out [ queryOrgaTree apis model.focus.rootnameid (MovedTreeAck model.focus.rootnameid data) ]
+                    [ DoUpdateToken, DoUpdateTree (Just data) ]
+                    Nothing
+                    nodeRenames
+                )
+
+        MovedTreeAck rootid expected result ->
+            if rootid /= model.focus.rootnameid then
+                ( model, noOut )
+
+            else if model.tree_result /= Success expected then
+                -- Requery rather than overwrite a newer move/add/archive with an older snapshot.
+                ( model
+                , withMaybeData model.tree_result
+                    |> Maybe.map (\current -> out0 [ queryOrgaTree apis rootid (MovedTreeAck rootid current) ])
+                    |> withDefault noOut
+                )
+
+            else
+                case result of
+                    Success data ->
+                        ( { model | tree_result = result } |> setTree, out1 [ DoUpdateTree (Just data) ] )
+
+                    Failure err ->
+                        if errorIsNoDataFound err then
+                            ( { model | tree_result = Success Dict.empty } |> setTree, out1 [ DoUpdateTree (Just Dict.empty) ] )
+
+                        else
+                            ( model, out0 [ Ports.logErr (String.join "; " err) ] )
+
+                    _ ->
+                        ( model, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

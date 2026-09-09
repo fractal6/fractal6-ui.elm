@@ -393,7 +393,7 @@ update_ apis message model =
                             ]
                     }
             in
-            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            -- Guard repeated submit clicks, not TitleAck; rendered isSendable may be stale.
             if Loading.isLoading model.title_result then
                 ( model, noOut )
 
@@ -477,7 +477,7 @@ update_ apis message model =
                 newForm =
                     { form | post = form.post |> Dict.insert "createdAt" (fromTime time) }
             in
-            -- Re-check in-flight here: isSendable is a render-time snapshot, stale on a double click/tap.
+            -- Guard repeated submit clicks, not MessageAck; rendered isSendable may be stale.
             if Loading.isLoading model.message_result then
                 ( model, noOut )
 

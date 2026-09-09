@@ -93,10 +93,9 @@ const formatGraph = dataset => {
         //}
 
         if (aData.parent) {
-            // If private date contains public, some parent may be
-            // hidden here.
+            // Hidden parent: detach only the graph copy, keeping the snapshot intact for rebuilds.
             if (!dataDict[aData.parent.nameid]) {
-                aData.parent = null;
+                dataDict[aData.nameid].parent = null;
                 dataTree.push(dataDict[aData.nameid])
             } else {
                 dataDict[aData.parent.nameid].children.push(dataDict[aData.nameid])
@@ -204,8 +203,7 @@ export const GraphPack = {
     fontstyleCircle: "Cantarell, Quicksand, Roboto, Lato, Ubuntu, Open Sans, Oxygen, sans-serif, fractaleicon",
 
     // Graph fx settings
-    isLoading: true,
-    minZoomDuration: 450, // 1250
+    motionDuration: 400,
     zoomFactorRoot: 2.02,
     zoomFactorCircle: 2.02,
     zoomFactorRole: 6,
@@ -234,15 +232,20 @@ export const GraphPack = {
     dragTarget: null,
     isDragging: false,
 
-    // Zooming
-    ease: d3.easePolyInOut.exponent(4),
-    //ease: d3.easePolyOut.exponent(4),
+    // One motion owns both layout and viewport; node geometry is always the displayed frame.
+    ease: d3.easePolyInOut.exponent(3),
     isZooming: false,
-    vpOld: null,
+    motion: null,
+    motionTimer: null,
+    viewport: null,
+    exitingNodes: [],
+    initTimer: null,
+    tooltipTimer: null,
+    buttonsTimer: null,
+    observer: null,
 
     // Resizing
-    rtime: null,
-    timeout: false,
+    resizeTimer: null,
     delta: 200,
     userHeight: null, // canvas height set by the user with the resizer grip
     userColWidth: null, // canvas column width set by the user with the resizer grip
@@ -283,6 +286,7 @@ export const GraphPack = {
     },
 
     drawButtons() {
+        this.$welcomeButtons = document.getElementById('welcomeButtons');
         var r = this.$canvas.getBoundingClientRect();
         var p = this.$canvasParent.getBoundingClientRect();
         var offsetLeft = r.left - p.left;
@@ -302,8 +306,7 @@ export const GraphPack = {
             this.$welcomeButtons.classList.remove("is-invisible");
         }
 
-        // Tooltip
-        this.$tooltip.classList.remove("is-invisible");
+        // The tooltip stays hidden until its current node has been positioned.
     },
 
     // Size the canvas
@@ -321,12 +324,8 @@ export const GraphPack = {
         this.rayon = (Math.min(this.width * 0.97, this.height * 0.97)) / 2;
         this.centerX = this.width / 2;
         this.centerY = this.height / 2;
-        this.zoomCtx = {
-            // Init at CenterX, centerY
-            centerX: this.centerX,
-            centerY: this.centerY,
-            scale: 1
-        };
+        if (this.viewport) this.setViewport(this.viewport);
+        else this.zoomCtx = { centerX: this.centerX, centerY: this.centerY, scale: 1 };
     },
 
     // Resize Html Elements created here
@@ -355,6 +354,20 @@ export const GraphPack = {
     },
 
     drawCurrent() {
+        if (this.motion) {
+            // Radius ordering keeps travelling children and exits above overlapping parents.
+            var motion = this.motion;
+            if (motion.changingRadii) motion.drawNodes.sort((a, b) => b.r - a.r || a.depth - b.depth);
+            for (var n of motion.drawNodes) {
+                if (n.opacity <= 0 || n.r <= 0) continue
+                this.ctx2d.globalAlpha = n.opacity;
+                this.drawNode(n);
+            }
+            this.ctx2d.globalAlpha = 1;
+            this.drawFocusBorder(this.focusedNode);
+            this.drawNodeNames(this.zoomedNode);
+            return
+        }
         // Separator between the opaque nodes and the other.
         var boundary = this.focusedNode;
 
@@ -391,7 +404,6 @@ export const GraphPack = {
     },
 
     drawInside(b) {
-        var ctx = this.ctx2d;
         // list of nodes to draw.
         var tree = b.descendants();
         for (var i = 0; i < tree.length; i++) {
@@ -401,7 +413,14 @@ export const GraphPack = {
             }
         }
 
-        // Draw focused border
+        this.drawFocusBorder(b);
+    },
+
+    drawFocusBorder(b) {
+        this.addNodeCtx(b);
+        if (b.ctx.rayon <= 0) return
+        var ctx = this.ctx2d;
+        ctx.globalAlpha = b.opacity ?? 1;
         var w = this.focusCircleWidth;
         var color = this.focusCircleColor;
         ctx.beginPath();
@@ -410,6 +429,7 @@ export const GraphPack = {
         ctx.lineWidth = w;
         ctx.strokeStyle = color;
         ctx.stroke();
+        ctx.globalAlpha = 1;
     },
 
     drawNode(node, opac) {
@@ -452,7 +472,7 @@ export const GraphPack = {
         }
 
         // Draw owned Role
-        if ((this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
+        if (rayon > 1 && (this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
             // Draw user pin
             //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
             //ctx.beginPath();
@@ -477,6 +497,7 @@ export const GraphPack = {
     },
 
     drawNodeNames(node) {
+        var ctx = this.ctx2d;
         var n, opac;
         var defOpac = (node == this.focusedNode)
 
@@ -486,7 +507,9 @@ export const GraphPack = {
         }
         for (var i = 0; i < node.data.children.length; i++) {
             n = node.children[i];
-            if (!n.ctx || node.depth !== n.depth - 1) continue
+            if (n.data.type_ === "Hidden" || !n.ctx || node.depth !== n.depth - 1) continue
+            if (this.motion && (!n.opacity || n.ctx.rayon < 8)) continue
+            ctx.globalAlpha = this.motion ? n.opacity : 1;
 
             // Draw names
             if (defOpac) {
@@ -502,7 +525,7 @@ export const GraphPack = {
                 this.drawRoleName(n, opac)
             }
         }
-
+        ctx.globalAlpha = 1;
     },
 
     drawCircleName(node, opac) {
@@ -634,6 +657,7 @@ export const GraphPack = {
 
     // Draw node border + eventually tooltip
     drawNodeHover(node, doDrawTooltip) {
+        if (this.isZooming || !node) return
         if (!node.ctx) {
             // Wait for the canvas to render before drawing border.
             // If not, focus border won be draw if another circle in hover before rendering.
@@ -723,7 +747,7 @@ export const GraphPack = {
 
     // Clean node hovering
     clearNodeHover() {
-        if (!this.hoveredNode) return
+        if (this.isZooming || !this.hoveredNode) return
 
         // Remove the circle border
         var node = this.hoveredNode;
@@ -775,8 +799,10 @@ export const GraphPack = {
         this.nodeHoveredFromJs(node);
         // Add a timer, to wait the nodeHover elm render the toolip options.
         // elm code.
-        setTimeout(() => {
-            this.drawNodeTooltip_(node);
+        clearTimeout(this.tooltipTimer);
+        this.tooltipTimer = setTimeout(() => {
+            if (this.isActive() && !this.isZooming && this.hoveredNode === node)
+                this.drawNodeTooltip_(node);
         }, 25);
     },
     drawNodeTooltip_(node) {
@@ -786,6 +812,9 @@ export const GraphPack = {
         var $subTooltip = document.getElementById(this.$tooltip.dataset.eventTension);
         if (!$subTooltip) return
         $subTooltip.childNodes[0].textContent = node.data.name;
+        $tooltip.classList.remove("is-invisible");
+        $tooltip.style.pointerEvents = "";
+        $tooltip.inert = false;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
         // -- Position relative to canvasParent (the positioned ancestor)
@@ -822,17 +851,14 @@ export const GraphPack = {
 
     // Clear node tooltip.
     clearNodeTooltip() {
-        // with the css animation, no more needs to clear it.
-        return
-
+        clearTimeout(this.tooltipTimer);
+        this.tooltipTimer = null;
         if (this.$tooltip) {
             this.$tooltip.classList.remove("fadeIn");
-            this.$tooltip.classList.add("fadeOut");
-            //this.$tooltip.style.display = "none";
+            this.$tooltip.classList.add("is-invisible");
+            this.$tooltip.style.pointerEvents = "none";
+            this.$tooltip.inert = true;
         }
-
-        this.nodeHoveredFromJs("");
-        return
     },
     clearContextMenu() {
         this.isFrozen = false;
@@ -840,92 +866,120 @@ export const GraphPack = {
     },
 
 
-    // Create the interpolation function between current view and the clicked on node.
-    // It firsts zoom to get the circles to the right location
-    // then timer the interpolateZoom and rendering.
-    // If `delay` is given, it overwrite the zoom duration. Give a low value for flush reset.
-    zoomToNode(focus, delay) {
-        //Based on the generous help by Stephan Smola
-        //http://bl.ocks.org/smoli/d7e4f9199c15d71258b5
-        if (this.isZooming || !this.focusedNode) return false
+    setViewport(vp) {
+        this.viewport = vp;
+        this.zoomCtx = { centerX: vp[0], centerY: vp[1], scale: this.rayon * 2 / vp[2] };
+    },
 
-        if (focus && typeof (focus) === 'string') {
-            var maybeFocus = this.nodesDict[focus];
-            if (!maybeFocus) {
-                // nameid may come percent-encoded (e.g. from the URL path)
-                try { maybeFocus = this.nodesDict[decodeURIComponent(focus)]; } catch (e) { }
+    visibleNodes() {
+        var b = this.focusedNode;
+        if (!b) return []
+        var outside = b.parent ? [...b.parent.ancestors().slice(0, 2), ...b.parent.children] : [];
+        return [...new Set([...outside, ...b.descendants().filter(n => n.depth - b.depth < 4)])]
+            .filter(n => n.data.type_ !== "Hidden");
+    },
+
+    cancelMotion() {
+        if (this.motionTimer) this.motionTimer.stop();
+        this.motionTimer = null;
+        this.motion = null;
+        this.isZooming = false;
+    },
+
+    startMotion(layout = false, immediate = false) {
+        this.cancelMotion();
+        this.endDrag();
+        this.hoveredNode = null;
+        this.clearContextMenu();
+        this.clearNodeTooltip();
+        this.nodeHoveredFromJs(null);
+
+        var visible = new Set(this.visibleNodes());
+        var tracks = [];
+        this.nodes.forEach(node => {
+            if (node.data.type_ === "Hidden") return
+            if (!visible.has(node) && !(node.opacity > 0)) {
+                Object.assign(node, node.target);
+                node.opacity = 0;
+                node.ctx = null;
+                return
             }
-            if (!maybeFocus) {
-                console.warn("Unknown node:", focus);
-                console.warn("Redirecting to root");
-                maybeFocus = this.setFocus(this.rootNode);
-                //delay = 0.5;
-            }
-            focus = maybeFocus;
-        } else { // assume node
-            // pass
-        }
-
-        var elmHasBeenUpdated = false;
-        if (this.focusedNode.ctx) {
-            this.clearNodeHover();
-            this.nodeFocusedFromJs(focus);
-            elmHasBeenUpdated = true;
-        }
-        var oldFocus = this.focusedNode;
-        this.focusedNode = focus;
-        this.drawNodeHover(this.focusedNode, false); // why this one ?
-        var zoomTo = this.setZoomed();
-
-        // Configre interpolator
-        var zoomFactor = this.getZoomFactor(zoomTo);
-        var vp = [zoomTo.x, zoomTo.y, zoomTo.r * zoomFactor]; //The center and width of the new "viewport"
-        delay = (delay === undefined ? 0 : delay * this.minZoomDuration);
-        var maxDuration = this.minZoomDuration * 2;
-        var interpolator = d3.interpolateZoom(this.vpOld, vp); //Create interpolation between current and new "viewport"
-        var duration = Math.min(interpolator.duration, maxDuration) || delay; //Interpolation gives back a suggested duration
-        duration = (duration < 0) ? maxDuration : duration;
-        var timeElapsed = 0 + delay; //Set the time elapsed for the interpolateZoom function to 0
-        //console.log("old", this.vpOld, "new", vp, "delay", delay)
-        this.vpOld = vp; //Save the "viewport" of the next state as the next "old" state
-
-        //Perform the interpolation and continuously change the zoomCtx while the "transition" occurs.
-        var interpolateZoom = (dt) => {
-            if (duration) {
-                timeElapsed += dt;
-                var t = this.ease(timeElapsed / duration);
-
-                this.zoomCtx.centerX = interpolator(t)[0];
-                this.zoomCtx.centerY = interpolator(t)[1];
-                this.zoomCtx.scale = (this.rayon * 2) / interpolator(t)[2];
-
-                if (timeElapsed >= duration) {
-                    return true
-                } else {
-                    return false
-                }
-            }
-            // do no stay lock here
-            return true
-        };
-
-        var dt = 0;
-        var t = d3.timer((elapsed) => {
-            //stats.begin();
-            this.isZooming = true;
-            var finished = interpolateZoom(elapsed - dt);
-            dt = elapsed;
-            this.drawCanvas();
-            //stats.end();
-            if (finished) {
-                this.isZooming = false;
-                this.drawCanvas();
-                this.drawNodeHover(this.focusedNode, true);
-                if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
-                t.stop();
-            }
+            tracks.push({
+                node,
+                from: { x: node.x, y: node.y, r: node.r, opacity: node.opacity ?? 0 },
+                to: { ...node.target, opacity: visible.has(node) ? 1 : 0 },
+            });
         });
+        tracks.push(...this.exitingNodes.map(node => ({
+            node,
+            from: { x: node.x, y: node.y, r: node.r, opacity: node.opacity },
+            to: { x: node.x, y: node.y, r: 0, opacity: 0 },
+        })));
+        var z = this.zoomedNode.target;
+        var vp = [z.x, z.y, z.r * this.getZoomFactor(this.zoomedNode)];
+        var from = this.viewport || vp;
+        var interpolate = layout ? t => from.map((v, i) => v + (vp[i] - v) * t) : d3.interpolateZoom(from, vp);
+        // Compare displayed geometry, not the request type: zoom may interrupt a reflow.
+        tracks.forEach(track => {
+            var { from, to } = track;
+            track.geometry = from.x !== to.x || from.y !== to.y || from.r !== to.r;
+        });
+        var changingRadii = tracks.some(({ from, to }) => from.r !== to.r);
+        var drawNodes = tracks.map(t => t.node).sort((a, b) => b.r - a.r || a.depth - b.depth);
+        var motion = { tracks, drawNodes, changingRadii, interpolate, vp };
+        this.motion = motion;
+        this.isZooming = true;
+        var reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+        if (immediate || reduced?.matches) {
+            this.stepMotion(1);
+            return
+        }
+        this.stepMotion(0);
+        this.motionTimer = d3.timer(elapsed => {
+            if (this.motion !== motion) return
+            if (!this.isActive()) { this.dispose(); return }
+            this.stepMotion(reduced?.matches ? 1 : Math.min(1, elapsed / this.motionDuration));
+        });
+    },
 
+    stepMotion(progress) {
+        var motion = this.motion;
+        if (!motion) return
+        var t = this.ease(Math.max(0, Math.min(1, progress)));
+        motion.tracks.forEach(({ node, from, to, geometry }) => {
+            if (geometry) {
+                node.x = t === 1 ? to.x : from.x + (to.x - from.x) * t;
+                node.y = t === 1 ? to.y : from.y + (to.y - from.y) * t;
+                node.r = t === 1 ? to.r : from.r + (to.r - from.r) * t;
+            }
+            if (from.opacity !== to.opacity)
+                node.opacity = t === 1 ? to.opacity : from.opacity + (to.opacity - from.opacity) * t;
+            node.ctx = null;
+        });
+        this.setViewport(t === 1 ? motion.vp : motion.interpolate(t));
+        if (t === 1) {
+            this.cancelMotion();
+            this.exitingNodes = [];
+        }
+        this.drawCanvas();
+        if (t === 1) this.drawNodeHover(this.focusedNode, true);
+    },
+
+    zoomToNode(focus) {
+        if (!this.focusedNode || !this.isActive()) return
+        if (typeof focus === 'string' && !this.nodesDict[focus]) {
+            try { focus = decodeURIComponent(focus); } catch (_) { }
+            if (!this.nodesDict[focus] && this.dataNodes.some(n => n.nameid === focus)) {
+                this.resetGraphPack(this.dataNodes, focus);
+                return
+            }
+        }
+        var previous = this.focusedNode;
+        this.setFocus(focus);
+        // Route reinitializations must not restart an in-flight layout for the same focus.
+        if (previous !== this.focusedNode) this.startMotion();
+        else if (!this.isZooming) this.drawNodeHover(this.focusedNode, true);
+        this.nodeFocusedFromJs(this.focusedNode);
     },
 
     //
@@ -934,25 +988,6 @@ export const GraphPack = {
 
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
-    nodeSizeTopDown_orig(n, stats) {
-        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        return 10000 / (stats.maxdepth) ** (Math.max(1.5, n.depth)) / dvd
-    },
-    nodeSizeTopDown2(n, stats) {
-        var t = 0;
-        var rt = 0;
-        if (n.type_ == "Circle") {
-            t = 1;
-        } else if (n.type_ == "Role") {
-            t = 2;
-        } else {
-            t = 1;
-        }
-
-        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        var v = t + rt;
-        return Math.log(1 / n.depth ** v + 1) / dvd
-    },
     nodeSizeTopDown(n, stats) {
         //var dvd = 1;
         //if (n.role_type == RoleType.Guest) {
@@ -1041,7 +1076,7 @@ export const GraphPack = {
 
     getNodeColor(node) {
         var z = this.zoomedNode || this.focusedNode;
-        var depth = z.depth > 2 ? node.depth - z.depth + 2 : node.depth;
+        var depth = Math.max(0, z.depth > 2 ? node.depth - z.depth + 2 : node.depth);
         var color;
         if (node.data.type_ === NodeType.Circle) {
             color = this.colorCircle(depth);
@@ -1072,59 +1107,47 @@ export const GraphPack = {
     },
 
     // Init and create the GraphPack data structure
-    resetGraphPack(dataNodes, doFormat, focusid) {
-        this.computeCircleColorRange();
-        var graph;
-        if (doFormat) {
-            if (dataNodes.length == 0) {
-                console.warn("Graph is empty, aborting");
-                return
-            } else if (dataNodes.filter(x => x.nameid === focusid) == 0) {
-                console.warn("Focus node not found");
-                focusid = null
-            }
-            graph = formatGraph(dataNodes);
-            if (!graph) {
-                console.warn("Could not load graph.");
-            } else if (graph.length > 1) {
-                console.warn("More than 1 graph given -> Some nodes are not connected.");
-                if (!focusid) {
-                    console.warn("no focus found, aborting.");
-                    return
-                }
-                // Keep only the relevant tree
-                // Get last parent thant contains focusid
-                var root;
-                var rootid = focusid;
-                var i = 0; // infinite loop security
-                while (rootid && i < 1000) {
-                    root = dataNodes.find(x => x.nameid == rootid);
-                    if (!root) break
-                    rootid = root.parent ? root.parent.nameid : null;
-                    i++;
-                }
-                if (root)
-                    graph = graph.find(x => x.nameid === root.nameid);
-            } else {
-                graph = graph[0];
-            }
+    resetGraphPack(dataNodes, focusid, nodeRenames = {}) {
+        // Server metadata refreshes must not restart an unchanged layout or consume its exits.
+        var layoutKey = nodes => JSON.stringify(nodes.map(n => [n.nameid, n.parent?.nameid, n.name, n.type_, n.role_type]));
+        if (this.graph && (!focusid || this.nodesDict[focusid]) && this.packedNodeSize === this.nodeSize && layoutKey(dataNodes) === layoutKey(this.dataNodes)) {
+            this.dataNodes = dataNodes;
+            dataNodes.forEach(data => {
+                var node = this.nodesDict[data.nameid];
+                if (node) Object.assign(node.data, data);
+            });
+            this.uctx = JSON.parse(localStorage.getItem("user_ctx"));
+            this.drawCanvas();
+            this.zoomToNode(focusid);
+            return
         }
-        else
-            graph = dataNodes;
-
-        const getTypeValue = (n) => {
-            var v = ""
-            switch (n.data.role_type) {
-                case undefined:
-                    v = 100
-                case null:
-                    v = 100
-                case RoleType.Guest:
-                    v = 0
-                default:
-                    v = 0
-            }
-            return v
+        var oldNodes = new Map([...this.exitingNodes, ...(this.nodes || [])]
+            .filter(n => n.data.type_ !== "Hidden")
+            .map(n => [nodeRenames[n.data.nameid] || n.data.nameid, n]));
+        var oldFocusPath = this.focusedNode ? this.focusedNode.ancestors().map(n => nodeRenames[n.data.nameid] || n.data.nameid) : [];
+        this.computeCircleColorRange();
+        var ids = new Set(dataNodes.map(n => n.nameid));
+        if (!ids.has(focusid)) {
+            try { focusid = decodeURIComponent(focusid); } catch (_) { }
+        }
+        if (!ids.has(focusid)) focusid = oldFocusPath.find(id => ids.has(id));
+        var graph = formatGraph(dataNodes);
+        if (graph.length > 1) {
+            // Private parents may be absent: keep the connected tree containing the focus.
+            var root = dataNodes.find(n => n.nameid === focusid);
+            var i = 0;
+            while (root && root.parent && ids.has(root.parent.nameid) && i++ < 1000)
+                root = dataNodes.find(n => n.nameid === root.parent.nameid);
+            graph = graph.find(n => root && n.nameid === root.nameid) || graph[0];
+        } else {
+            graph = graph[0];
+        }
+        if (!graph) {
+            // An authoritative empty/unusable snapshot must not leave old authorized data visible.
+            this.dispose();
+            this.init_canvas();
+            this.nodeHoveredFromJs(null);
+            return
         }
 
         // Role type+name based order
@@ -1154,24 +1177,6 @@ export const GraphPack = {
                 return 1
             }
         }
-        // Role type based order
-        const nodeTypeOrder = (n1, n2) => {
-            if (getTypeValue(n1) - getTypeValue(n2) > 0) {
-                return -1
-            } else {
-                return 1
-            }
-        }
-        // Name based order
-        const nodeNameOrder = (n1, n2) => {
-            return n1.data.name.localeCompare(n2.data.name)
-        }
-        // CreatedAt based order
-        // @WARNING: {createdAt} may not be querie, verify in ModelSchema.elm
-        const nodeNewestOrder = (n1, n2) => {
-            return n1.data.createdAt.localeCompare(n2.data.createdAt)
-        }
-
         // Compute global statistics
         this.gStats = computeDepth(graph);
 
@@ -1181,33 +1186,45 @@ export const GraphPack = {
             .size([this.rayon * 2, this.rayon * 2])
             (d3.hierarchy(graph)
                 .sum(d => this.nodeSize(d, this.gStats))
-                //.sort(nodeNewestOrder)
-                //.sort(nodeNameOrder)
-                //.sort(nodeTypeOrder)
                 .sort(nodeNameTypeOrder)
             );
 
+        this.cancelMotion();
         this.nodesDict = Object.create(null);
-        this.nodes = this.gPack.descendants(graph);
+        this.nodes = this.gPack.descendants();
         this.rootNode = this.nodes[0];
-        this.hoveredNode = null;
         this.nodes.forEach(n => {
-            this.nodesDict[n.data.nameid] = n
+            if (n.data.type_ === "Hidden") return
+            this.nodesDict[n.data.nameid] = n;
+            n.target = { x: n.x, y: n.y, r: n.r };
+            var old = oldNodes.get(n.data.nameid);
+            n.opacity = old ? old.opacity : 0;
+            if (old) {
+                n.x = old.x;
+                n.y = old.y;
+                n.r = old.r;
+                oldNodes.delete(n.data.nameid);
+            } else if (this.viewport) n.r = 0;
         });
+        this.exitingNodes = [...oldNodes.values()].filter(n => n.opacity > 0 && n.r > 0);
         this.graph = graph;
-        this.setFocus(focusid, true);
-
-        this.uctx = JSON.parse(localStorage.getItem("user_ctx"))
+        this.dataNodes = dataNodes;
+        this.packedNodeSize = this.nodeSize;
+        this.setFocus(this.nodesDict[focusid] ? focusid : oldFocusPath.find(id => this.nodesDict[id]));
+        this.uctx = JSON.parse(localStorage.getItem("user_ctx"));
+        this.startMotion(true, !this.viewport);
+        this.nodeFocusedFromJs(this.focusedNode);
     },
 
-    setFocus(n, setViewport) {
+    setFocus(n) {
         if (!n) {
             // focus on root node by default
             this.focusedNode = this.rootNode;
         } else if (typeof (n) === 'string') {
-            // Whit it doesnt works ?
-            //this.focusedNode = this.nodes.find(n => {n.data.nameid === n });
             this.focusedNode = this.nodesDict[n];
+            if (!this.focusedNode) {
+                try { this.focusedNode = this.nodesDict[decodeURIComponent(n)]; } catch (_) { }
+            }
         } else {
             // Assume node
             this.focusedNode = n;
@@ -1219,10 +1236,6 @@ export const GraphPack = {
 
         if (!this.focusedNode) return
         this.setZoomed();
-
-        if (setViewport) {
-            this.vpOld = [this.zoomedNode.x, this.zoomedNode.y, this.zoomedNode.r * this.getZoomFactor(this.zoomedNode)];
-        }
 
         return this.focusedNode
     },
@@ -1270,7 +1283,7 @@ export const GraphPack = {
     // with fingerprinting protection (e.g. Brave) add noise to canvas readbacks.
     getNodeUnderPointer(e, p) {
         if (!p) p = this.getPointerCtx(e);
-        if (!this.rootNode || !this.focusedNode || !this.zoomCtx) return undefined
+        if (this.isZooming || !this.rootNode || !this.focusedNode || !this.zoomCtx) return undefined
 
         // Pointer position in graph (pack) coordinates -- inverse of addNodeCtx.
         var gx = (p.mouseX - this.centerX) / this.zoomCtx.scale + this.zoomCtx.centerX;
@@ -1431,7 +1444,7 @@ export const GraphPack = {
     //
 
     nodeClickedFromJs(node) {
-        if (!node) return
+        if (this.isZooming || !node) return
         this.clearNodeHover();
         this.app.ports.nodeClickedFromJs.send(node.data.nameid);
     },
@@ -1451,19 +1464,22 @@ export const GraphPack = {
 
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
-        if (!node) return
+        if (!node || !this.app) return
         this.app.ports.nodeFocusedFromJs.send([node.data.nameid, this.gStats.maxdepth]);
     },
 
     sendNodeLeftClickFromJs(node) {
+        if (this.isZooming || !node) return
         this.app.ports.nodeLeftClickedFromJs.send(node.data.nameid);
     },
 
     sendNodeRightClickFromJs(node) {
+        if (this.isZooming || !node) return
         this.app.ports.nodeRightClickedFromJs.send(node.data.nameid);
     },
 
     sendNodeDraggedFromJs(source, target) {
+        if (this.isZooming || !source || !target) return
         this.app.ports.nodeDraggedFromJs.send([source.data.nameid, target.data.nameid]);
     },
 
@@ -1499,8 +1515,9 @@ export const GraphPack = {
     bindResizer($h, doX, doY) {
         if (!$h) return
 
+        this.resizers = [...(this.resizers || []), $h];
         $h.onpointerdown = e => {
-            if (e.button !== 0) return
+            if (e.button !== 0 || !this.isActive()) return
             e.preventDefault();
             var x0 = e.clientX, y0 = e.clientY;
             var w0 = this.$canvasParent.parentElement.offsetWidth, h0 = this.height;
@@ -1516,44 +1533,62 @@ export const GraphPack = {
 
                 this.computeGeometry();
                 this.sizeDom();
-                // computeGeometry resets zoomCtx, restore the current viewport
-                if (this.vpOld) {
-                    this.zoomCtx.centerX = this.vpOld[0];
-                    this.zoomCtx.centerY = this.vpOld[1];
-                    this.zoomCtx.scale = (this.rayon * 2) / this.vpOld[2];
-                }
+                this.clearNodeTooltip();
                 this.drawCanvas();
             };
 
-            $h.onpointerup = () => {
-                $h.onpointermove = null;
-                $h.onpointerup = null;
-                this.rtime = new Date() - this.delta;
+            $h.onpointerup = $h.onpointercancel = () => {
+                $h.onpointermove = $h.onpointerup = $h.onpointercancel = null;
                 this.resizeMe();
             };
         };
     },
 
     resizeMe() {
-        if (!this.$canvas) return
+        clearTimeout(this.resizeTimer);
+        this.resizeTimer = null;
+        if (!this.isActive() || !this.graph) return
+        this.clearNodeTooltip();
+        this.computeGeometry();
+        this.sizeDom();
+        this.drawButtons();
+        this.drawCanvas();
+        this.drawNodeHover(this.focusedNode, true);
+    },
 
-        if (new Date() - this.rtime < this.delta) {
-            setTimeout(() => this.resizeMe(), this.delta);
-        } else {
-            this.timeout = false;
+    isActive() {
+        return this.$canvas && this.$canvas.isConnected && document.getElementById(this.canvasId) === this.$canvas;
+    },
 
-            this.$canvasButtons.classList.add("is-invisible");
-            this.$tooltip.classList.add("is-invisible");
-            if (this.$welcomeButtons) this.$welcomeButtons.classList.add("is-invisible");
-
-            this.computeGeometry();
-            this.sizeDom();
-            this.drawButtons();
-            this.zoomToNode(this.focusedNode, 0.9);
-        }
+    dispose() {
+        this.cancelMotion();
+        clearTimeout(this.initTimer);
+        clearTimeout(this.resizeTimer);
+        clearTimeout(this.buttonsTimer);
+        this.initTimer = this.resizeTimer = this.buttonsTimer = this.pendingInit = null;
+        this.clearNodeTooltip();
+        if (this.observer) this.observer.disconnect();
+        this.observer = null;
+        this.handlers.forEach(([element, event, handler]) => element.removeEventListener(event, handler));
+        this.handlers = [];
+        (this.resizers || []).forEach(el => {
+            el.onpointerdown = el.onpointermove = el.onpointerup = el.onpointercancel = null;
+        });
+        this.resizers = [];
+        this.pressed = this.isDragging = false;
+        this.dragCandidate = this.dragTarget = this.hoveredNode = null;
+        this.clearContextMenu();
+        this.nodes = this.nodesDict = this.graph = this.dataNodes = this.gPack = this.gStats = null;
+        this.focusedNode = this.zoomedNode = this.rootNode = null;
+        this.viewport = null;
+        this.exitingNodes = [];
+        this.$canvas = this.$canvasParent = this.$nextToChart = null;
+        this.$tooltip = this.$canvasButtons = this.$welcomeButtons = this.ctx2d = null;
     },
 
     init_canvas() {
+        if (this.pendingInit || (this.isActive() && this.graph)) return
+        this.dispose();
         this.computeCircleColorRange();
         this.$canvas = document.getElementById(this.canvasId);
         this.$canvasParent = document.getElementById(this.canvasParentId);
@@ -1565,11 +1600,9 @@ export const GraphPack = {
         this.$nextToChart.style.flexDirection = "column";
         //this.$nextToChart.style.overflowY = "auto";
 
+        this.computeGeometry();
         this.sizeDom();
-
-        // Not ready
-        //this.loading()
-        setTimeout(() => this.drawStargate(0, 1), 10);
+        this.drawStargate(0, 1);
     },
 
     drawStargate(radius, down) {
@@ -1604,48 +1637,17 @@ export const GraphPack = {
         ctx.fill();
     },
 
-    loading() {
-        var r = this.$canvas.getBoundingClientRect();
-
-        var canvas = this.$canvas;
-        var ctx = this.ctx2d;
-        var x = canvas.width / 2;
-        var y = canvas.height / 2;
-        var radius = canvas.height / 2.1;
-
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = this.hoverCircleColor;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 3;
-        ctx.shadowColor = '#656565';
-
-        var isLoading = this.isLoading;
-        function animate(r) {
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, 2 * Math.PI, false);
-            ctx.stroke();
-            r--;
-            // @Debug, can't we stopt it !?
-            if (r <= 0) {
-                r = canvas.height / 2.1;
-            }
-            if (isLoading) {
-                requestAnimationFrame(function() {
-                    animate(radius)
-                });
-            }
-        }
-
-        if (isLoading) {
-            animate();
-        }
-    },
-
     // Init the canvas and draw the graph
     init(app, data, isInit) {
         var dataNodes = data.data;
         this.app = app;
+        if (this.isActive() && this.graph && dataNodes.some(n => n.nameid === this.rootNode.data.nameid)) {
+            if (JSON.stringify(dataNodes) !== JSON.stringify(this.dataNodes))
+                this.resetGraphPack(dataNodes, data.focusid, data.nodeRenames);
+            else this.zoomToNode(data.focusid);
+            return !!this.graph
+        }
+        this.dispose();
 
         // Set the parent element
         this.$canvasParent = document.getElementById(this.canvasParentId);
@@ -1662,6 +1664,7 @@ export const GraphPack = {
 
         // Create the visible canvas and context
         this.$canvas = document.getElementById(this.canvasId);
+        if (!this.$canvas) return
         this.$canvas.classList.remove("is-invisible");
         this.ctx2d = this.$canvas.getContext("2d");
         //this.ctx2d.clearRect(0, 0, this.width, this.height);
@@ -1692,7 +1695,7 @@ export const GraphPack = {
         //
 
         this.nodeSize = this.nodeSizeTopDown;
-        this.resetGraphPack(dataNodes, true, data.focusid);
+        this.resetGraphPack(dataNodes, data.focusid);
 
         /*////////////////////////////////////////////////////////////
         ////////////////// Events Handler callback ///////////////////
@@ -1765,9 +1768,8 @@ export const GraphPack = {
 
         // Start a potential node drag (nav/zoom happens on mouseup instead)
         var canvasMouseDownEvent = e => {
-            if (e.button !== 0) return false
+            if (e.button !== 0 || this.isZooming || this.isFrozen || this.isFrozenMenu) return false
             this.pressed = true;
-            if (this.isZooming || this.isFrozen || this.isFrozenMenu) return false
             var p = this.getPointerCtx(e);
             if (!this.checkIf(p, "InZoomed")) return false
             var node = this.getNodeUnderPointer(e, p);
@@ -1779,7 +1781,7 @@ export const GraphPack = {
         // Release: either a drop (move the node) or a plain click (navigate)
         var canvasMouseUpEvent = e => {
             // Ignore a release whose press did not start on the canvas (e.g. from the tooltip)
-            if (e.button !== 0 || !this.pressed) return false
+            if (this.isZooming || e.button !== 0 || !this.pressed) return false
             if (!this.isDragging) {
                 this.endDrag();
                 return nodeClickEvent(e)
@@ -1813,8 +1815,8 @@ export const GraphPack = {
 
         // Listen for mouse moves/hoovering on the main canvas
         var canvasMouseMoveEvent = e => {
-            if (this.dragCandidate) return dragMoveEvent(e)
             if (this.isZooming) return false
+            if (this.dragCandidate) return dragMoveEvent(e)
             if (this.isFrozen) return false
             if (this.isFrozenMenu) return false
             var p = this.getPointerCtx(e);
@@ -1859,7 +1861,7 @@ export const GraphPack = {
 
         // Listen for mouse moves/hooverout on the main canvas
         var canvasMouseLeaveEvent = e => {
-            if (this.dragCandidate) return false
+            if (this.isZooming || this.dragCandidate) return false
             var p = this.getPointerCtx(e);
             var isInCanvas = this.checkIf(p, "InCanvas"); // purpose of that is possibliy linked to issue #9232dcd
             if (!isInCanvas && !this.isFrozenMenu) {
@@ -1882,6 +1884,7 @@ export const GraphPack = {
 
         // Catch right click context menu (canvas and node tooltip)
         var contextMenuEvent = e => {
+            if (this.isZooming) { e.preventDefault(); return false }
             if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
                 // Touch long-press: drop the pending press so the trailing pointerup is not a click
@@ -1906,8 +1909,12 @@ export const GraphPack = {
 
         // Keyboard navigation (canvas is focusable through tabindex)
         var canvasKeyDownEvent = e => {
-            if (this.isZooming || this.isFrozen || this.isFrozenMenu) return false
             if (e.altKey || e.ctrlKey || e.metaKey) return false
+            if (this.isZooming) {
+                if (this.keyTarget(e.key) !== undefined) e.preventDefault();
+                return false
+            }
+            if (this.isFrozen || this.isFrozenMenu) return false
             var node = this.keyTarget(e.key);
             if (node === undefined) return false
             e.preventDefault();
@@ -1951,7 +1958,7 @@ export const GraphPack = {
 
         // Tooltip Clicks
         var tooltipTensionClick = e => {
-            if (e.button !== 0) return true
+            if (this.isZooming || e.button !== 0) return true
             if (this.isFrozen) {
                 this.isFrozen = false;
                 return false
@@ -1961,21 +1968,15 @@ export const GraphPack = {
             return true
         };
         var tooltipActionClick = e => {
-            if (e.button !== 0) return true
+            if (this.isZooming || e.button !== 0) return true
             this.isFrozen = !this.isFrozen;
             return true
         };
 
         // On Resize handle
-        window.onresize = () => {
-            if (!this.focusedNode) return
-            this.rtime = new Date();
-            if (this.timeout === false) {
-                this.timeout = true;
-
-                // Smooth redraw
-                setTimeout(() => this.resizeMe(), this.delta);
-            }
+        var resizeEvent = () => {
+            clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => this.resizeMe(), this.delta);
         };
 
         //////////////////////////////////////////////////////////////
@@ -1984,8 +1985,6 @@ export const GraphPack = {
 
         if (!this.graph) return
         console.log("Orga Canvas Initalization");
-        this.isLoading = false;
-        this.isZooming = false;
         this.isFrozen = false;
         this.isFrozenMenu = false;
         this.endDrag();
@@ -2021,6 +2020,7 @@ export const GraphPack = {
             [this.$canvas, "keydown", canvasKeyDownEvent],
             //[this.$canvas, "wheel", contextMenuEvent], // or "scroll" ?
             [document, "pointerup", documentMouseUpEvent],
+            [window, "resize", resizeEvent],
             // Canvas buttons events
             [this.$canvasButtons, "pointerdown", canvasButtonsDown],
             [this.$canvasButtons, "pointerup", canvasButtonsUp],
@@ -2035,6 +2035,10 @@ export const GraphPack = {
         for (var i = 0; i < this.handlers.length; i++) {
             this.handlers[i][0].addEventListener(this.handlers[i][1], this.handlers[i][2]);
         }
+        this.observer = new MutationObserver(() => {
+            if (!this.isActive()) this.dispose();
+        });
+        this.observer.observe(document.body, { childList: true, subtree: true });
 
         //
         // ELM Subscriptions
@@ -2044,23 +2048,14 @@ export const GraphPack = {
 
             // ToggleGrahReverse button
             app.ports.sendToggleGraphReverse.subscribe(e => {
-                if (this.nodeSize.name == "nodeSizeTopDown") {
+                if (!this.isActive() || !this.graph) return
+                if (this.nodeSize === this.nodeSizeTopDown) {
                     this.nodeSize = this.nodeSizeBottomUp;
                 } else {
                     this.nodeSize = this.nodeSizeTopDown;
                 }
 
-                if (this.hoveredNode) this.clearNodeHover();
-
-                var focus = this.focusedNode
-
-                this.resetGraphPack(this.graph, false);
-                this.clearCanvas(this.ctx2d);
-
-                this.zoomToNode(this.rootNode, 0.9);
-                setTimeout(() => {
-                    this.zoomToNode(this.nodesDict[focus.data.nameid]);
-                }, 50)
+                this.resetGraphPack(this.dataNodes, this.focusedNode.data.nameid);
             });
 
         }

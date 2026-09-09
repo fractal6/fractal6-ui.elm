@@ -14,7 +14,22 @@ tree (dropping Owner/Member special roles), `computeDepth` adds stats and
 invisible "Hidden" filler children so lone circles pack nicely, then
 `d3.hierarchy` + `d3.pack` compute the layout (`resetGraphPack`). Other actions:
 `FOCUS_GRAPHPACK` (zoom to a node), `DRAW_GRAPHPACK` / `REMOVEDRAW_GRAPHPACK`
-(re-layout after node changes), `FLUSH_GRAPHPACK` (recolor, e.g. theme change).
+(re-layout after node changes), `FLUSH_GRAPHPACK` (recolor, e.g. theme or user change).
+
+### Update payload and identity
+
+`DRAW_GRAPHPACK` receives `{ data, focusid, nodeRenames }`: a complete snapshot
+and its **old nameid → new nameid** dictionary (empty for ordinary updates).
+`TreeMenu` atomically reparents the confirmed move with `hotNodeMove`, carrying
+that mapping through `Overview.OnUpdateTree`. Descendants follow parent links:
+circle IDs are flat and unchanged; moving a role changes its ID. No API or blob
+ID is used. Session data is installed before renamed-focus URL navigation.
+
+Moves also refresh the authoritative tree: parent-dependent authorization and
+aggregates cannot be inferred from the cache. Stale responses requery instead of
+overwriting newer edits; refreshes carry no rename map. Unchanged layout inputs
+update metadata without restarting motion. Token storage only flushes colors.
+All additions, archives, restores and node edits redraw through `OnUpdateTree`.
 
 ## Rendering
 
@@ -31,8 +46,23 @@ through the context transform. Each frame: `drawCanvas` →
 (`nodeRayon`). Names, hover borders and the tooltip are drawn on top. Colors
 come from CSS variables (`computeCircleColorRange`).
 
-Zooming (`zoomToNode`) runs `d3.interpolateZoom` in a `d3.timer` that mutates
-`zoomCtx` and redraws every frame.
+### Motion and lifecycle
+
+One cancelable D3 timer eases layout and viewport over 400ms. Visible nodes and
+ancestors interpolate `x/y/r`; entries grow, exits shrink/fade outside the live
+hierarchy. The renderer retains old/new visible nodes during reparenting and
+paints larger circles first. Interruptions resume from the displayed frame;
+focus zooms use `interpolateZoom`. Reduced motion applies endpoints immediately.
+Motion caches the old/new visible draw list; invisible nodes settle immediately.
+Static zoom skips unchanged geometry and reuses radius order; changing radii
+still sort each frame, including reflows and exits interrupted by zoom.
+
+Hit-testing, dragging, keyboard navigation and tooltip actions pause during
+motion; the focused tooltip returns on completion. External focus commands may
+interrupt. Resize preserves the viewport; reverse uses the same transition path.
+Same-canvas initialization preserves active motion, and redraw cancels stale
+initialization. Canvas removal cancels listeners/timers. Empty or unusable
+snapshots and different-org loading clear old data rather than leaving it active.
 
 The canvas is resizable by dragging the grips around it (`#canvasResizer`
 below, `#canvasResizerV` on the right, `#canvasResizerC` on the bottom-right
@@ -85,3 +115,8 @@ renders the move modal for its own `domid`.
 
 `tests/Js/graphpackHitTest.test.js` covers the geometric hit-testing (depth
 caps, sibling stop level, role factors, transform inversion).
+`tests/Js/graphpackPorts.test.js` exercises the real canvas renderer with controlled
+D3 timers: mapping, endpoints, interruptions, exits, reduced motion, interaction
+pauses, resize/reverse, initialization races, cleanup, and recolor-only refreshes.
+`tests/Elm/GraphTest.elm` covers subtree discovery, atomic moves, snapshot-scoped
+rename payloads, authoritative reconciliation and drag-modal activation.

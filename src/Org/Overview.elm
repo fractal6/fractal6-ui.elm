@@ -100,7 +100,12 @@ page =
 
 
 mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
-mapGlobalOutcmds gcmds =
+mapGlobalOutcmds =
+    mapGlobalOutcmdsWithRenames Dict.empty
+
+
+mapGlobalOutcmdsWithRenames : Dict.Dict String String -> List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmdsWithRenames nodeRenames gcmds =
     gcmds
         |> List.map
             (\m ->
@@ -124,9 +129,6 @@ mapGlobalOutcmds gcmds =
                     DoUpdatePath path ->
                         ( Cmd.none, send (UpdateSessionPath path) )
 
-                    --DoUpdateTree tree ->
-                    --    ( Cmd.none, send (UpdateSessionTree tree) )
-                    --
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
@@ -177,7 +179,7 @@ mapGlobalOutcmds gcmds =
                         ( send (PushTension tension), Cmd.none )
 
                     DoUpdateTree tree ->
-                        ( send (OnUpdateTree tree), Cmd.none )
+                        ( send (OnUpdateTree tree nodeRenames), Cmd.none )
 
                     DoUpdateDraft draftUpdate ->
                         ( Cmd.none, send (Global.UpdateDraft draftUpdate) )
@@ -343,7 +345,7 @@ init global flags =
         cmds_ =
             if fs.orgChange || isInit then
                 [ send LoadOrga
-                , Ports.initGraphPack Dict.empty "" -- canvas loading effet
+                , Ports.initGraphPack Dict.empty newFocus.nameid -- canvas loading effect
 
                 --, queryCircleTension apis newFocus.nameid GotTensions
                 , fetchNodeData apis newFocus.nameid GotData
@@ -358,7 +360,7 @@ init global flags =
                             case session.data.tree_data of
                                 Just _ ->
                                     [ send LoadOrga
-                                    , Ports.initGraphPack Dict.empty "" --canvas loading effect
+                                    , Ports.initGraphPack Dict.empty newFocus.nameid -- canvas loading effect
                                     ]
 
                                 Nothing ->
@@ -370,7 +372,7 @@ init global flags =
 
             else if fs.menuChange then
                 [ send LoadOrga
-                , Ports.initGraphPack Dict.empty "" --canvas loading effect
+                , Ports.initGraphPack Dict.empty newFocus.nameid -- canvas loading effect
 
                 --, queryCircleTension apis newFocus.nameid GotTensions
                 , fetchNodeData apis newFocus.nameid GotData
@@ -422,7 +424,7 @@ type Msg
     = -- Loading
       PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get the current time
-    | OnUpdateTree (Maybe NodesDict)
+    | OnUpdateTree (Maybe NodesDict) (Dict.Dict String String)
     | PushTension Tension
     | LoadOrga
     | GotOrga (GqlData NodesDict)
@@ -488,10 +490,24 @@ update global message model =
         LoadOrga ->
             ( model, queryOrgaTree apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
-        OnUpdateTree tree ->
+        OnUpdateTree tree nodeRenames ->
             case tree of
                 Just data ->
-                    ( { model | tree_data = Success data }, Cmd.none, send (UpdateSessionTree tree) )
+                    let
+                        focus =
+                            Dict.get model.node_focus.nameid nodeRenames
+                                |> Maybe.map focusFromNameid
+                                |> withDefault model.node_focus
+                    in
+                    ( { model | tree_data = Success data, node_focus = focus, node_hovered = Nothing }
+                    , Ports.redrawGraphPack data nodeRenames
+                    , if focus.nameid /= model.node_focus.nameid then
+                        -- Update the session tree before the new URL reinitializes this page.
+                        send (UpdateSessionTreeAndFocus data focus.nameid)
+
+                      else
+                        send (UpdateSessionTree tree)
+                    )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
@@ -553,10 +569,19 @@ update global message model =
                         )
 
                     else
-                        ( { model | tree_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
+                        ( { model | tree_data = Failure [ T.nodeNotExist ] }, Ports.redrawGraphPack Dict.empty Dict.empty, send (UpdateSessionTree Nothing) )
 
                 _ ->
-                    ( { model | tree_data = result }, Cmd.none, Cmd.none )
+                    case result of
+                        Failure err ->
+                            if errorIsNoDataFound err then
+                                ( { model | tree_data = result }, Ports.redrawGraphPack Dict.empty Dict.empty, send (UpdateSessionTree Nothing) )
+
+                            else
+                                ( { model | tree_data = result }, Cmd.none, Cmd.none )
+
+                        _ ->
+                            ( { model | tree_data = result }, Cmd.none, Cmd.none )
 
         GotTensions result ->
             case result of
@@ -960,9 +985,18 @@ update global message model =
                             withMaybeMapData (\p -> p.focus.nameid == path.focus.nameid && p.root /= Nothing) model.path_data
                                 |> withDefault False
 
+                        -- Refresh path/children but retain server-only root settings and pins.
                         path_data =
                             if hasServerPath then
-                                model.path_data
+                                withMapData
+                                    (\current ->
+                                        let
+                                            focus =
+                                                path.focus
+                                        in
+                                        { path | root = current.root, focus = { focus | pinned = current.focus.pinned } }
+                                    )
+                                    model.path_data
 
                             else
                                 Success path
@@ -1013,7 +1047,9 @@ update global message model =
                           else
                             Cmd.none
                         ]
-                    , ternary isPathNew (send (UpdateSessionPath (Just path))) Cmd.none
+                    , ternary (withMaybeData path_data /= global.session.common.path_data)
+                        (send (UpdateSessionPath (withMaybeData path_data)))
+                        Cmd.none
                     )
 
                 Nothing ->
@@ -1140,7 +1176,7 @@ update global message model =
                     TreeMenu.update apis msg model.treeMenu
 
                 ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
+                    mapGlobalOutcmdsWithRenames out.nodeRenames out.gcmds
             in
             ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 

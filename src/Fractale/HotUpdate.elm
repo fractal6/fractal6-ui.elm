@@ -21,6 +21,7 @@
 
 module Fractale.HotUpdate exposing
     ( hotNodeInsert
+    , hotNodeMove
     , hotNodePull
     , hotNodePush
     , hotTensionPush
@@ -31,6 +32,7 @@ module Fractale.HotUpdate exposing
 
 import Dict
 import Dict.Extra as DE
+import Fractale.Graph exposing (withDescendants)
 import List.Extra as LE
 import Loading exposing (GqlData, RequestResult(..))
 import Maybe exposing (withDefault)
@@ -69,6 +71,36 @@ hotNodePull nameids odata =
 
         _ ->
             ( Dict.empty, Nothing )
+
+
+hotNodeMove : String -> String -> String -> GqlData NodesDict -> ( NodesDict, Dict.Dict String String )
+hotNodeMove oldNameid parentNameid newNameid odata =
+    case odata of
+        Success data ->
+            case ( Dict.get oldNameid data, Dict.get parentNameid data ) of
+                ( Just node, Just parent ) ->
+                    if newNameid == "" then
+                        ( data, Dict.empty )
+
+                    else
+                        let
+                            -- Circles have flat IDs; moving within an org only renames a moved role.
+                            renames =
+                                withDescendants [ oldNameid ] odata
+                                    |> List.map (\nid -> ( nid, nid ))
+                                    |> Dict.fromList
+                                    |> Dict.insert oldNameid newNameid
+
+                            moved =
+                                { node | nameid = newNameid, parent = Just { nameid = parentNameid, source = parent.source } }
+                        in
+                        ( data |> Dict.remove oldNameid |> Dict.insert newNameid moved, renames )
+
+                _ ->
+                    ( data, Dict.empty )
+
+        _ ->
+            ( Dict.empty, Dict.empty )
 
 
 hotTensionPush : Tension -> GqlData (List Tension) -> List Tension

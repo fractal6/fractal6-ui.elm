@@ -262,7 +262,7 @@ initGraphPack : NodesDict -> String -> Cmd msg
 initGraphPack data focus =
     outgoing
         { action = "INIT_GRAPHPACK"
-        , data = graphPackEncoder data focus
+        , data = graphPackEncoder data focus Dict.empty
         }
 
 
@@ -282,11 +282,11 @@ flushGraphPack =
         }
 
 
-redrawGraphPack : NodesDict -> Cmd msg
-redrawGraphPack data =
+redrawGraphPack : NodesDict -> Dict.Dict String String -> Cmd msg
+redrawGraphPack data nodeRenames =
     outgoing
         { action = "DRAW_GRAPHPACK"
-        , data = graphPackEncoder data ""
+        , data = graphPackEncoder data "" nodeRenames
         }
 
 
@@ -294,7 +294,7 @@ removeRedrawGraphPack : NodesDict -> String -> Cmd msg
 removeRedrawGraphPack data nid =
     outgoing
         { action = "REMOVEDRAW_GRAPHPACK"
-        , data = graphPackEncoder data nid
+        , data = graphPackEncoder data nid Dict.empty
         }
 
 
@@ -833,11 +833,12 @@ revokeObjectUrl url =
 --
 
 
-graphPackEncoder : NodesDict -> String -> JE.Value
-graphPackEncoder data focus =
+graphPackEncoder : NodesDict -> String -> Dict.Dict String String -> JE.Value
+graphPackEncoder data focus nodeRenames =
     JE.object
         [ ( "data", nodesEncoder data )
         , ( "focusid", JE.string focus )
+        , ( "nodeRenames", JE.dict identity JE.string nodeRenames )
         ]
 
 

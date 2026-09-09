@@ -132,6 +132,7 @@ type Msg
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionChildren (Maybe (List NodeId))
     | UpdateSessionTree (Maybe NodesDict)
+    | UpdateSessionTreeAndFocus NodesDict String
     | UpdateSessionData (Maybe NodeData)
     | UpdateSessionOrgs (Maybe (List OrgaNode))
     | UpdateSessionTensions (Maybe (List Tension))
@@ -387,6 +388,14 @@ update msg model =
                     session.common
             in
             ( { model | session = { session | data = { sessionData | tree_data = data, orgaInfo = orgaInfo }, common = { common | path_data = pdata } } }, Cmd.none )
+
+        UpdateSessionTreeAndFocus data focusid ->
+            let
+                ( newModel, cmd ) =
+                    update (UpdateSessionTree (Just data)) model
+            in
+            -- Install the moved tree before navigation reinitializes Overview from the session.
+            ( newModel, Cmd.batch [ cmd, send (NavigateNode focusid) ] )
 
         UpdateSessionData data ->
             let
@@ -888,13 +897,6 @@ update msg model =
                     Nothing ->
                         Cmd.none
               ]
-                ++ (case model.session.data.tree_data of
-                        Just ndata ->
-                            [ Ports.redrawGraphPack ndata ]
-
-                        Nothing ->
-                            []
-                   )
                 |> Cmd.batch
             )
 
