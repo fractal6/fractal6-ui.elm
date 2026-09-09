@@ -67,6 +67,32 @@ afterEach(() => {
     jest.useRealTimers();
 });
 
+test.each(['nodeSizeTopDown', 'nodeSizeBottomUp'])('packing order and geometry survive shuffled snapshots with %s', nodeSize => {
+    const data = [
+        circle('org', null),
+        ...['org#a', 'org#b'].map(id => ({ ...circle(id, parent('org')), name: 'Circle' })),
+        circle('org#large', parent('org')),
+        circle('org#small', parent('org#large')),
+        role('org#small#role', parent('org#small')),
+        role('org##a', parent('org')),
+        role('org##b', parent('org')),
+        { ...role('org##c', parent('org')), name: 'Alpha' },
+    ];
+    const { gp } = graph(data, 'org');
+    reduced = true;
+    gp.nodeSize = gp[nodeSize];
+    gp.resetGraphPack(data, 'org');
+    const expected = Object.fromEntries(Object.entries(gp.nodesDict).map(([id, node]) => [id, geometry(node)]));
+    expect(gp.rootNode.children.map(n => n.data.nameid)).toEqual([
+        'org#large', 'org#a', 'org#b', 'org##c', 'org##a', 'org##b',
+    ]);
+    expect(gp.nodesDict['org#small'].children.map(n => n.data.type_)).toEqual(['Role', 'Hidden', 'Hidden', 'Hidden']);
+    for (const snapshot of [[...data].reverse(), [...data.slice(3), ...data.slice(0, 3)]]) {
+        gp.resetGraphPack(snapshot, 'org');
+        expect(Object.fromEntries(Object.entries(gp.nodesDict).map(([id, node]) => [id, geometry(node)]))).toEqual(expected);
+    }
+});
+
 test('redraw maps renamed focus and starts at displayed geometry, without leaking the map', () => {
     const { gp, app, session } = graph();
     const old = geometry(gp.focusedNode);
@@ -411,10 +437,10 @@ test('initial percent-encoded focus is decoded and deleted focus falls back to i
     expect(gp.exitingNodes).toEqual([]);
 });
 
-test('a redraw received before initialization uses the newer snapshot and remaps pending focus', () => {
+test.each(['org#a#role', 'org%23a%23role'])('redraw before initialization remaps pending focus %s', focusid => {
     const { gp, app, session } = graph();
     gp.dispose();
-    actions.INIT_GRAPHPACK(app, session, payload(tree('org#a#role'), 'org#a#role'));
+    actions.INIT_GRAPHPACK(app, session, payload(tree('org#a#role'), focusid));
     actions.DRAW_GRAPHPACK(app, session, payload(tree('org#b#role'), '', { 'org#a#role': 'org#b#role' }));
     actions.INIT_GRAPHPACK(app, session, payload([], ''));
     jest.advanceTimersByTime(150);
@@ -432,6 +458,179 @@ test('a token refresh updates ownership styling without repacking or canceling m
     expect(gp.uctx.username).toBe('alice');
     expect(gp.nodes).toBe(nodes);
     expect(gp.motionTimer).toBe(active);
+});
+
+test.each([
+    ['org#a', 'org#a', 167],
+    ['org#a', 'org', 127],
+    ['org', 'org#a', 127],
+])('tooltip placement requires matching focus %s and zoom %s', (focusid, zoomid, top) => {
+    const { gp } = graph();
+    const node = gp.nodesDict['org#a'];
+    node.ctx = { centerX: 200, centerY: 200, rayon: 30 };
+    gp.focusedNode = gp.nodesDict[focusid];
+    gp.zoomedNode = gp.nodesDict[zoomid];
+    Object.defineProperties(gp.$tooltip, {
+        clientWidth: { value: 120 },
+        clientHeight: { value: 40 },
+    });
+    gp.drawNodeTooltip_(node);
+    expect(gp.$tooltip.style.top).toBe(`${top}px`);
+    expect(gp.$tooltip.style.left).toBe('139px');
+    expect(gp.$tooltip.inert).toBe(false);
+});
+
+test('hidden tooltip placement settles before revealing, without forcing visible replacements to settle', () => {
+    const { gp } = graph(tree('org#a#role'), 'org');
+    const settle = jest.fn(() => {
+        expect(gp.$tooltip.classList.contains('is-invisible')).toBe(true);
+        expect(gp.$tooltip.style.left).not.toBe('');
+        expect(gp.$tooltip.style.top).not.toBe('');
+    });
+    gp.$tooltip.getBoundingClientRect = settle;
+    gp.drawNodeHover(gp.nodesDict['org#a'], true);
+    jest.advanceTimersToNextFrame();
+    expect(settle).toHaveBeenCalledTimes(1);
+    gp.drawNodeHover(gp.nodesDict['org#b'], true);
+    jest.advanceTimersToNextFrame();
+    expect(settle).toHaveBeenCalledTimes(1);
+});
+
+test('hover replacements stay visible and commit the latest title, options and position after rendering', () => {
+    const { gp, app } = graph(tree('org#a#role'), 'org');
+    const title = document.querySelector('#doTension > span');
+    const options = document.getElementById('doAction');
+    Object.defineProperties(gp.$tooltip, {
+        clientWidth: { get: () => 100 + options.textContent.length * 10 },
+        clientHeight: { value: 40 },
+    });
+    // Model the port's Elm render, queued before JS measures the conditional options.
+    app.ports.nodeHoveredFromJs.send.mockImplementation(id => {
+        requestAnimationFrame(() => { options.textContent = id; });
+    });
+    const draw = jest.spyOn(gp, 'drawNodeTooltip_');
+    const a = gp.nodesDict['org#a'], b = gp.nodesDict['org#b'], roleNode = gp.nodesDict['org#a#role'];
+    gp.drawNodeHover(a, true);
+    jest.advanceTimersToNextFrame();
+    expect(gp.$tooltip.classList.contains('is-invisible')).toBe(false);
+    expect(title.textContent).toBe(a.data.name);
+
+    gp.drawNodeHover(b, true);
+    expect(gp.$tooltip.classList.contains('is-invisible')).toBe(false);
+    expect(gp.$tooltip.inert).toBe(true);
+    expect(title.textContent).toBe(a.data.name);
+    document.getElementById('doTension').dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+    gp.$tooltip.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    gp.$canvas.dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+    expect(app.ports.nodeLeftClickedFromJs.send).not.toHaveBeenCalled();
+    expect(app.ports.nodeRightClickedFromJs.send).not.toHaveBeenCalled();
+
+    gp.drawNodeHover(roleNode, true);
+    jest.advanceTimersToNextFrame();
+    expect(draw.mock.calls.map(([node]) => node.data.nameid)).toEqual([a.data.nameid, roleNode.data.nameid]);
+    expect(options.textContent).toBe(roleNode.data.nameid);
+    expect(title.textContent).toBe(roleNode.data.name);
+    expect(gp.$tooltip.style.left).toBe(`${roleNode.ctx.centerX - (gp.$tooltip.clientWidth / 2 + 1)}px`);
+    expect(gp.$tooltip.inert).toBe(false);
+    expect(gp.tooltipFrame).toBeNull();
+    document.getElementById('doTension').dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+    expect(app.ports.nodeLeftClickedFromJs.send).toHaveBeenLastCalledWith(roleNode.data.nameid);
+});
+
+test('entry and rapid node-gap-node movement use the picked target without hiding the tooltip', () => {
+    const { gp } = graph(tree('org#a#role').filter(n => n.type_ === 'Circle'), 'org');
+    jest.advanceTimersToNextFrame();
+    const a = gp.nodesDict['org#a'], b = gp.nodesDict['org#b'];
+    const gap = { centerX: (a.ctx.centerX + b.ctx.centerX) / 2, centerY: (a.ctx.centerY + b.ctx.centerY) / 2 };
+    for (const [type, point, expected] of [
+        ['pointerenter', a.ctx, a],
+        ['pointermove', b.ctx, b],
+        ['pointermove', gap, gp.rootNode],
+        ['pointermove', a.ctx, a],
+    ]) {
+        gp.$canvas.dispatchEvent(new MouseEvent(type, { clientX: point.centerX, clientY: point.centerY }));
+        expect(gp.hoveredNode).toBe(expected);
+        expect(gp.$tooltip.classList.contains('is-invisible')).toBe(false);
+    }
+    jest.advanceTimersToNextFrame();
+    expect(document.querySelector('#doTension > span').textContent).toBe(a.data.name);
+});
+
+test.each([[100, 160], [260, 240]])('tooltip handoff follows its actual rectangle at y=%s, including canvas offsets', (top, gapY) => {
+    const { gp } = graph(tree('org#a#role'), 'org');
+    const node = gp.nodesDict['org#a'];
+    gp.drawNodeHover(node, true);
+    jest.advanceTimersToNextFrame();
+    node.ctx = { centerX: 200, centerY: 200, rayon: 30 };
+    gp.$canvas.getBoundingClientRect = () => ({ left: 80, top: 50, width: 600, height: 444 });
+    gp.$tooltip.getBoundingClientRect = () => ({ left: 220, top: top + 50, width: 120, height: 40 });
+    const gap = { mouseX: 200, mouseY: gapY };
+    expect(gp.checkIf({ mouseX: 200, mouseY: top + 20 }, 'InTooltip', node)).toBe(true);
+    expect(gp.checkIf(gap, 'InTooltip', node)).toBe(true);
+    expect(gp.checkIf({ mouseX: 80, mouseY: gapY }, 'InTooltip', node)).toBe(false);
+    expect(gp.checkIf({ mouseX: 200, mouseY: 200 }, 'InTooltip', node)).toBe(false);
+    gp.$tooltip.inert = true;
+    expect(gp.checkIf(gap, 'InTooltip', node)).toBe(false);
+    gp.clearNodeTooltip();
+    gp.$tooltip.inert = false;
+    expect(gp.checkIf(gap, 'InTooltip', node)).toBe(false);
+});
+
+test('canvas-to-tooltip handoff and menu interaction retain their target until the menu closes', () => {
+    const { gp, app, session } = graph(tree('org#a#role').filter(n => n.type_ === 'Circle'), 'org');
+    const a = gp.nodesDict['org#a'], b = gp.nodesDict['org#b'];
+    gp.drawNodeHover(a, true);
+    jest.advanceTimersToNextFrame();
+    document.getElementById('doAction').innerHTML = '<span class="clickMe"><i></i></span><div class="menu-item"></div>';
+    const trigger = document.querySelector('#doAction i');
+    gp.$canvas.dispatchEvent(new MouseEvent('pointerleave', { clientX: 620, clientY: 200, relatedTarget: trigger }));
+    expect(gp.hoveredNode).toBe(a);
+    trigger.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    document.querySelector('.menu-item').dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    expect(gp.isFrozen).toBe(true);
+    expect(gp.isFrozenMenu).toBe(true);
+    gp.$canvas.dispatchEvent(new MouseEvent('pointerleave', { clientX: 620, clientY: 200, relatedTarget: document.body }));
+    expect(gp.hoveredNode).toBe(a);
+    gp.resizeMe();
+    jest.advanceTimersToNextFrame();
+    expect(gp.hoveredNode).toBe(a);
+    actions.CLEAR_CONTEXT_MENU(app, session);
+    gp.$canvas.dispatchEvent(new MouseEvent('pointermove', { clientX: b.ctx.centerX, clientY: b.ctx.centerY }));
+    expect(gp.hoveredNode).toBe(b);
+});
+
+test('the connecting gap outside the canvas does not reset hover to focus', () => {
+    const { gp } = graph(tree('org#a#role'), 'org');
+    const node = gp.nodesDict['org#a'];
+    gp.drawNodeHover(node, true);
+    jest.advanceTimersToNextFrame();
+    node.ctx = { centerX: gp.centerX, centerY: 40, rayon: 20 };
+    gp.$tooltip.getBoundingClientRect = () => ({ left: gp.centerX - 60, top: -70, width: 120, height: 40 });
+    gp.$canvas.dispatchEvent(new MouseEvent('pointerleave', { clientX: gp.centerX, clientY: -1, relatedTarget: document.body }));
+    expect(gp.hoveredNode).toBe(node);
+    gp.$canvas.dispatchEvent(new MouseEvent('pointerleave', { clientX: 620, clientY: 200, relatedTarget: document.body }));
+    expect(gp.hoveredNode).toBe(gp.focusedNode);
+});
+
+test.each(['dismiss', 'navigate', 'drag', 'dispose'])('%s cancels pending tooltip rendering', action => {
+    const { gp } = graph(tree('org#a#role').filter(n => n.type_ === 'Circle'), 'org');
+    const node = gp.nodesDict['org#a'];
+    const tooltip = gp.$tooltip;
+    const draw = jest.spyOn(gp, 'drawNodeTooltip_');
+    gp.drawNodeHover(node, true);
+    if (action === 'dismiss') gp.clearNodeTooltip();
+    else if (action === 'navigate') gp.nodeClickedFromJs(node);
+    else if (action === 'dispose') gp.dispose();
+    else {
+        gp.$canvas.dispatchEvent(new MouseEvent('pointerdown', { clientX: node.ctx.centerX, clientY: node.ctx.centerY, button: 0 }));
+        gp.$canvas.dispatchEvent(new MouseEvent('pointermove', { clientX: node.ctx.centerX + 10, clientY: node.ctx.centerY + 10 }));
+        expect(gp.isDragging).toBe(true);
+    }
+    expect(gp.tooltipFrame).toBeNull();
+    jest.advanceTimersToNextFrame();
+    expect(draw).not.toHaveBeenCalled();
+    expect(tooltip.classList.contains('is-invisible')).toBe(true);
+    expect(tooltip.inert).toBe(true);
 });
 
 test('focus tooltip and its actions resume after layout, keyboard zoom, reduced motion and resize', () => {
@@ -470,6 +669,37 @@ test('authoritative metadata refresh preserves the running layout and updates li
     expect(focused.data.visibility).toBe('Secret');
     active.tick(400);
     expect(geometry(focused)).toEqual(focused.target);
+});
+
+test('encoded focus preserves active layout during same-canvas metadata initialization and focus commands', () => {
+    const { gp, app, session } = graph();
+    const data = [...gp.dataNodes, circle('org#extra', parent('org'))];
+    actions.DRAW_GRAPHPACK(app, session, payload(data));
+    gp.motionTimer.tick(200);
+    const active = gp.motionTimer;
+    const nodes = gp.nodes;
+    const viewport = gp.viewport;
+    const focused = gp.focusedNode;
+    const fresh = data.map(n => ({ ...n, n_open_tensions: 7 }));
+    actions.INIT_GRAPHPACK(app, session, payload(fresh, 'org%23a%23role'));
+    jest.advanceTimersByTime(150);
+    actions.FOCUS_GRAPHPACK(app, session, 'org%23a%23role');
+    expect(gp.motionTimer).toBe(active);
+    expect(active.stop).not.toHaveBeenCalled();
+    expect(gp.nodes).toBe(nodes);
+    expect(gp.viewport).toBe(viewport);
+    expect(gp.focusedNode).toBe(focused);
+    expect(focused.data.n_open_tensions).toBe(7);
+});
+
+test('malformed percent-encoded focus safely falls back to the root', () => {
+    const { gp, app, session } = graph(tree('org#a#role'), 'org%ZZ');
+    expect(gp.focusedNode).toBe(gp.rootNode);
+    reduced = true;
+    gp.zoomToNode(gp.nodesDict['org#a#role']);
+    expect(gp.focusedNode.data.nameid).toBe('org#a#role');
+    actions.FOCUS_GRAPHPACK(app, session, 'org%ZZ');
+    expect(gp.focusedNode).toBe(gp.rootNode);
 });
 
 test.each([{ data: [] }, { data: [circle('cycle', parent('cycle'))] }])('unusable redraw $data clears old data and cancels every canvas timer', ({ data }) => {

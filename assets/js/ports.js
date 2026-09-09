@@ -444,7 +444,7 @@ export const actions = {
     },
     'DRAW_GRAPHPACK' : (app, session, data) => {
         var gp = session.gp;
-        var focusid = gp.pendingInit?.focusid || gp.focusedNode?.data.nameid || data.focusid;
+        var focusid = gp.normalizeFocusId(gp.pendingInit?.focusid || gp.focusedNode?.data.nameid || data.focusid);
         focusid = data.nodeRenames[focusid] || focusid;
         clearTimeout(gp.initTimer);
         gp.initTimer = gp.pendingInit = null;

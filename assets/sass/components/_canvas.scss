@@ -128,6 +128,16 @@
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
     position: absolute;
+    transition: left 0.3s ease, top 0.3s ease;
+
+    &.is-invisible {
+        transition: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -165,21 +175,6 @@
     //    border-width: 6px;
     //    border-top-color: var(--node-tooltip-background);
     //}
-
-    // Animate the tooltip
-    &.fadeIn {
-        visibility: inherit;
-        transition: 0.3s;
-        opacity: 1;
-        &:hover {
-            transition: background-color 0s;
-        }
-    }
-
-    &.fadeOut {
-        visibility: hidden;
-        opacity: 0;
-    }
 
     .custom-style {
         margin-left: 5px !important;

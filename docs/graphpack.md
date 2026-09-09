@@ -15,6 +15,8 @@ invisible "Hidden" filler children so lone circles pack nicely, then
 `d3.hierarchy` + `d3.pack` compute the layout (`resetGraphPack`). Other actions:
 `FOCUS_GRAPHPACK` (zoom to a node), `DRAW_GRAPHPACK` / `REMOVEDRAW_GRAPHPACK`
 (re-layout after node changes), `FLUSH_GRAPHPACK` (recolor, e.g. theme or user change).
+Packing orders circles by descending size, then roles, then Hidden fillers.
+Names and stable `nameid` tie-breakers keep sibling order independent of snapshot order.
 
 ### Update payload and identity
 
@@ -24,6 +26,7 @@ and its **old nameid → new nameid** dictionary (empty for ordinary updates).
 that mapping through `Overview.OnUpdateTree`. Descendants follow parent links:
 circle IDs are flat and unchanged; moving a role changes its ID. No API or blob
 ID is used. Session data is installed before renamed-focus URL navigation.
+Route focus IDs are normalized before layout cache checks and rename mapping.
 
 Moves also refresh the authoritative tree: parent-dependent authorization and
 aggregates cannot be inferred from the cache. Stale responses requery instead of
@@ -90,8 +93,13 @@ single-finger moves are not eaten by page scrolling) resolve the node under the
 pointer and notify Elm through ports: `nodeClickedFromJs` (navigate),
 `nodeHoveredFromJs` (tooltip), `nodeFocusedFromJs`, `nodeLeftClickedFromJs` /
 `nodeRightClickedFromJs` (tooltip actions / context menu). The tooltip
-(`#nodeTooltip`) is an Elm-rendered element positioned by JS; `isFrozen` /
-`isFrozenMenu` pause hover updates while it is open.
+(`#nodeTooltip`) is an Elm-rendered element positioned by JS. Node switches keep
+it visible and replace its title/position after Elm renders the options, using a
+cancelable animation frame; pending actions stay inert. Visible replacements glide
+between nodes with explicit position transitions, unchanged on hover. Hidden
+placement and reduced-motion preferences skip the animation. Hover handoff follows
+the tooltip's current rectangle and its connecting gap, including outside the canvas. `isFrozen` /
+`isFrozenMenu` keep the menu's target fixed until it closes.
 
 The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
 the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/
@@ -116,7 +124,9 @@ renders the move modal for its own `domid`.
 `tests/Js/graphpackHitTest.test.js` covers the geometric hit-testing (depth
 caps, sibling stop level, role factors, transform inversion).
 `tests/Js/graphpackPorts.test.js` exercises the real canvas renderer with controlled
-D3 timers: mapping, endpoints, interruptions, exits, reduced motion, interaction
-pauses, resize/reverse, initialization races, cleanup, and recolor-only refreshes.
+D3 timers: deterministic packing, encoded focus and move mapping, tooltip placement,
+endpoints, interruptions, exits, reduced motion, interaction pauses, resize/reverse,
+initialization races, cleanup, and recolor-only refreshes. Hover checks cover
+frame-coalesced replacement, action gating, node entry, tooltip handoff and menu freezing.
 `tests/Elm/GraphTest.elm` covers subtree discovery, atomic moves, snapshot-scoped
 rename payloads, authoritative reconciliation and drag-modal activation.

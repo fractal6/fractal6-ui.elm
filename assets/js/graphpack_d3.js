@@ -240,7 +240,7 @@ export const GraphPack = {
     viewport: null,
     exitingNodes: [],
     initTimer: null,
-    tooltipTimer: null,
+    tooltipFrame: null,
     buttonsTimer: null,
     observer: null,
 
@@ -657,6 +657,7 @@ export const GraphPack = {
 
     // Draw node border + eventually tooltip
     drawNodeHover(node, doDrawTooltip) {
+        if (this.isFrozen || this.isFrozenMenu) node = this.hoveredNode;
         if (this.isZooming || !node) return
         if (!node.ctx) {
             // Wait for the canvas to render before drawing border.
@@ -786,9 +787,6 @@ export const GraphPack = {
         }
         this.drawNodeNames(this.zoomedNode);
 
-        // Clear node tooltip
-        this.clearNodeTooltip();
-
         // Update context
         this.hoveredNode = null; //@debug: use globCtx
         return
@@ -796,27 +794,22 @@ export const GraphPack = {
 
     // Draw the node tooltip
     drawNodeTooltip(node) {
+        cancelAnimationFrame(this.tooltipFrame);
+        this.$tooltip.inert = true;
         this.nodeHoveredFromJs(node);
-        // Add a timer, to wait the nodeHover elm render the toolip options.
-        // elm code.
-        clearTimeout(this.tooltipTimer);
-        this.tooltipTimer = setTimeout(() => {
-            if (this.isActive() && !this.isZooming && this.hoveredNode === node)
+        // Elm queues its render on the hover port; measure its options in the same frame, afterwards.
+        this.tooltipFrame = requestAnimationFrame(() => {
+            this.tooltipFrame = null;
+            if (this.isActive() && !this.isZooming && !this.isDragging && this.hoveredNode === node)
                 this.drawNodeTooltip_(node);
-        }, 25);
+        });
     },
     drawNodeTooltip_(node) {
         var $tooltip = this.$tooltip
-        // == add tooltip
-        // @warning: tooltip neeed to be displayed to get its clientWidth.
         var $subTooltip = document.getElementById(this.$tooltip.dataset.eventTension);
         if (!$subTooltip) return
         $subTooltip.childNodes[0].textContent = node.data.name;
-        $tooltip.classList.remove("is-invisible");
-        $tooltip.style.pointerEvents = "";
-        $tooltip.inert = false;
-        $tooltip.classList.remove("fadeOut");
-        $tooltip.classList.add("fadeIn");
+        // Visibility-hidden elements remain measurable; reveal only after positioning.
         // -- Position relative to canvasParent (the positioned ancestor)
         var r = this.$canvas.getBoundingClientRect();
         var p = this.$canvasParent.getBoundingClientRect();
@@ -824,7 +817,7 @@ export const GraphPack = {
         var offsetTop = r.top - p.top;
         var tw = $tooltip.clientWidth;
         var l = (node.ctx.centerX + offsetLeft - (tw / 2 + 1));
-        if (node == this.focusedNode == this.zoomedNode) {
+        if (node === this.focusedNode && node === this.zoomedNode) {
             // below the circle
             var hw = (-$tooltip.clientHeight + 2 * node.ctx.rayon);
             var t = (node.ctx.centerY + offsetTop - (hw / 2 + 23));
@@ -845,16 +838,20 @@ export const GraphPack = {
         }
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";
+        // Settle hidden placement before enabling transitions; visible replacements glide from the current frame.
+        if ($tooltip.classList.contains("is-invisible")) $tooltip.getBoundingClientRect();
+        $tooltip.classList.remove("is-invisible");
+        $tooltip.style.pointerEvents = "";
+        $tooltip.inert = false;
 
         return
     },
 
     // Clear node tooltip.
     clearNodeTooltip() {
-        clearTimeout(this.tooltipTimer);
-        this.tooltipTimer = null;
+        cancelAnimationFrame(this.tooltipFrame);
+        this.tooltipFrame = null;
         if (this.$tooltip) {
-            this.$tooltip.classList.remove("fadeIn");
             this.$tooltip.classList.add("is-invisible");
             this.$tooltip.style.pointerEvents = "none";
             this.$tooltip.inert = true;
@@ -965,14 +962,17 @@ export const GraphPack = {
         if (t === 1) this.drawNodeHover(this.focusedNode, true);
     },
 
+    normalizeFocusId(focusid) {
+        if (typeof focusid !== 'string' || this.nodesDict?.[focusid]) return focusid;
+        try { return decodeURIComponent(focusid); } catch (_) { return focusid; }
+    },
+
     zoomToNode(focus) {
         if (!this.focusedNode || !this.isActive()) return
-        if (typeof focus === 'string' && !this.nodesDict[focus]) {
-            try { focus = decodeURIComponent(focus); } catch (_) { }
-            if (!this.nodesDict[focus] && this.dataNodes.some(n => n.nameid === focus)) {
-                this.resetGraphPack(this.dataNodes, focus);
-                return
-            }
+        focus = this.normalizeFocusId(focus);
+        if (typeof focus === 'string' && !this.nodesDict[focus] && this.dataNodes.some(n => n.nameid === focus)) {
+            this.resetGraphPack(this.dataNodes, focus);
+            return
         }
         var previous = this.focusedNode;
         this.setFocus(focus);
@@ -1108,6 +1108,8 @@ export const GraphPack = {
 
     // Init and create the GraphPack data structure
     resetGraphPack(dataNodes, focusid, nodeRenames = {}) {
+        const ids = new Set(dataNodes.map(n => n.nameid));
+        if (!ids.has(focusid)) focusid = this.normalizeFocusId(focusid);
         // Server metadata refreshes must not restart an unchanged layout or consume its exits.
         var layoutKey = nodes => JSON.stringify(nodes.map(n => [n.nameid, n.parent?.nameid, n.name, n.type_, n.role_type]));
         if (this.graph && (!focusid || this.nodesDict[focusid]) && this.packedNodeSize === this.nodeSize && layoutKey(dataNodes) === layoutKey(this.dataNodes)) {
@@ -1126,10 +1128,6 @@ export const GraphPack = {
             .map(n => [nodeRenames[n.data.nameid] || n.data.nameid, n]));
         var oldFocusPath = this.focusedNode ? this.focusedNode.ancestors().map(n => nodeRenames[n.data.nameid] || n.data.nameid) : [];
         this.computeCircleColorRange();
-        var ids = new Set(dataNodes.map(n => n.nameid));
-        if (!ids.has(focusid)) {
-            try { focusid = decodeURIComponent(focusid); } catch (_) { }
-        }
         if (!ids.has(focusid)) focusid = oldFocusPath.find(id => ids.has(id));
         var graph = formatGraph(dataNodes);
         if (graph.length > 1) {
@@ -1150,33 +1148,13 @@ export const GraphPack = {
             return
         }
 
-        // Role type+name based order
-        const nodeNameTypeOrder = (n1, n2) => {
-            if (n1.data.type_ === n2.data.type_) {
-                // Circle case
-                if (n1.data.type_ == NodeType.Circle) {
-                    if (n1.value == n2.value) {
-                        // alphabetically
-                        return n1.data.name.localeCompare(n2.data.name)
-                    } else {
-                        // Draw the biggest circle first
-                        return (n1.value < n2.value ? 1 : -1)
-                    }
-                } else { // Role case
-                    // alphabetically
-                    return n1.data.name.localeCompare(n2.data.name)
-                }
-            } else if (n1.data.type_ == "Hidden") {
-                // Draw hidden node last
-                return 1
-            } else if (n2.data.type_ == "Hidden") {
-                return -1
-            } else {
-                // Circle in the center, roles surround
-                // Note: pre-order traversal: https://github.com/d3/d3-hierarchy#node_eachBefore
-                return 1
-            }
-        }
+        // Circles first (largest first), then roles, then hidden fillers; IDs break name ties.
+        const typeOrder = { Circle: 0, Role: 1, Hidden: 2 };
+        const nodeNameTypeOrder = (n1, n2) =>
+            typeOrder[n1.data.type_] - typeOrder[n2.data.type_]
+            || (n1.data.type_ === NodeType.Circle ? n2.value - n1.value : 0)
+            || n1.data.name.localeCompare(n2.data.name)
+            || (n1.data.nameid < n2.data.nameid ? -1 : n1.data.nameid > n2.data.nameid ? 1 : 0);
         // Compute global statistics
         this.gStats = computeDepth(graph);
 
@@ -1222,9 +1200,6 @@ export const GraphPack = {
             this.focusedNode = this.rootNode;
         } else if (typeof (n) === 'string') {
             this.focusedNode = this.nodesDict[n];
-            if (!this.focusedNode) {
-                try { this.focusedNode = this.nodesDict[decodeURIComponent(n)]; } catch (_) { }
-            }
         } else {
             // Assume node
             this.focusedNode = n;
@@ -1388,32 +1363,21 @@ export const GraphPack = {
                 test = (p.mouseX > x1) && (p.mouseY > y1) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
             case 'InTooltip':
-                if (!n || !this.$tooltip) break
-                // Intial version
-                //var h = this.$tooltip.clientHeight +12;
-                //var w = this.$tooltip.clientWidth/2 +6;
-                //var x1 = n.ctx.centerX - w;
-                //var x2 = n.ctx.centerX + w;
-                //var y1 = n.ctx.centerY - n.ctx.rayon - h;
-                //var y2;
-                //if (n === this.focusedNode) {
-                //    y2 = n.ctx.centerY - n.ctx.rayon*0.85;
-                //} else {
-                //    y2 = n.ctx.centerY - n.ctx.rayon*0.75;
-                //}
-                //test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
-                // --
-
-                var h = this.$tooltip.clientHeight;
-                var w = this.$tooltip.clientWidth / 2 + h;
-                var r = n.ctx.rayon;
-                var x = { x: p.mouseX, y: p.mouseY }
-                var a = { x: n.ctx.centerX, y: n.ctx.centerY + r }
-                var b = { x: n.ctx.centerX - w, y: n.ctx.centerY - r - h }
-                var c = { x: n.ctx.centerX + w, y: n.ctx.centerY - r - h }
-                // First verify that the pointer is bear the border circle
-                test = ((p.mouseX - n.ctx.centerX) ** 2 + (p.mouseY - n.ctx.centerY) ** 2 >= r ** 2)
-                    && ptInTriangle(x, a, b, c)
+                if (!n?.ctx || !this.$tooltip || this.$tooltip.inert || this.$tooltip.classList.contains("is-invisible")) break
+                var r = this.$canvas.getBoundingClientRect();
+                var rect = this.$tooltip.getBoundingClientRect();
+                if (!rect.width || !rect.height) break
+                var x1 = rect.left - r.left - 6;
+                var x2 = x1 + rect.width + 12;
+                var y1 = rect.top - r.top - 6;
+                var y2 = y1 + rect.height + 12;
+                var x = { x: p.mouseX, y: p.mouseY };
+                var a = { x: n.ctx.centerX, y: n.ctx.centerY };
+                var y = y2 < a.y ? y2 : y1 > a.y ? y1 : a.y;
+                // Keep the visible tooltip and its connecting gap reachable, without masking child nodes.
+                test = (x.x >= x1 && x.x <= x2 && x.y >= y1 && x.y <= y2)
+                    || (y !== a.y && (x.x - a.x) ** 2 + (x.y - a.y) ** 2 >= n.ctx.rayon ** 2
+                        && ptInTriangle(x, a, { x: x1, y }, { x: x2, y }));
                 break
             case 'InFocus':
                 var x = p.mouseX - this.focusedNode.ctx.centerX;
@@ -1445,6 +1409,7 @@ export const GraphPack = {
 
     nodeClickedFromJs(node) {
         if (this.isZooming || !node) return
+        this.clearNodeTooltip();
         this.clearNodeHover();
         this.app.ports.nodeClickedFromJs.send(node.data.nameid);
     },
@@ -1805,6 +1770,7 @@ export const GraphPack = {
                 var d = this.dragCandidate;
                 if (Math.abs(e.clientX - d.x) < this.dragThreshold && Math.abs(e.clientY - d.y) < this.dragThreshold) return false
                 this.isDragging = true;
+                this.clearNodeTooltip();
                 this.$canvas.style.cursor = "grabbing";
             }
             var p = this.getPointerCtx(e);
@@ -1822,69 +1788,37 @@ export const GraphPack = {
             var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e, p);
 
-            if (node) {
-                if (node == this.hoveredNode) return
-                if (node !== this.hoveredNode && this.checkIf(p, "InZoomed") && !this.checkIf(p, "InTooltip", this.hoveredNode))
-                    this.drawNodeHover(node, true);
-                else if (node !== this.hoveredNode && this.hoveredNode != this.focusedNode && !this.checkIf(p, "InZoomed"))
-                    // Outside the zoomed area: reset hover to the focused node (once)
-                    this.drawNodeHover(this.focusedNode, true);
-            } else if (this.hoveredNode != this.focusedNode) {
-                // @DEBUG: there is a little dead zone between circle.
-                // When it happens, it goes there and focused node receive the hover...
-                // Or when not in the zoomed area
-                //if (!this.checkIf(p, "InZoomed") || !this.checkIf(p, "InTooltip", this.hoveredNode))
-                //    this.drawNodeHover(this.focusedNode, true);
-                if (this.checkIf(p, "InVoid"))
-                    this.drawNodeHover(this.focusedNode, true);
-            } else {
-                // nothing
-            }
+            if (node === this.hoveredNode || this.checkIf(p, "InTooltip", this.hoveredNode)) return false
+            if (node && this.checkIf(p, "InZoomed"))
+                this.drawNodeHover(node, true);
+            else if (this.hoveredNode !== this.focusedNode && (node || this.checkIf(p, "InVoid")))
+                this.drawNodeHover(this.focusedNode, true);
 
             return false
         };
 
-        // Listen for mouse entering canvas
+        // Entry uses the same target and handoff rules as movement, without arming a drag.
         var canvasMouseEnterEvent = e => {
             if (this.dragCandidate) return false
-            if (this.isZooming) return false
-            if (this.isFrozen) return false
-            if (this.isFrozenMenu) return false
-            var node = this.getNodeUnderPointer(e);
-            // Avoid redrawing and avoid glitch when leaving tooltip.
-            if (node != this.hoveredNode && !this.checkIf(this.getPointerCtx(e), "InTooltip", this.hoveredNode)) {
-                this.drawNodeHover(this.focusedNode, true);
-            }
+            return canvasMouseMoveEvent(e)
+        };
 
-            return false
-        }
-
-        // Listen for mouse moves/hooverout on the main canvas
+        // Keep the target while crossing into the tooltip, including outside the canvas bounds.
         var canvasMouseLeaveEvent = e => {
-            if (this.isZooming || this.dragCandidate) return false
+            if (this.isZooming || this.dragCandidate || this.isFrozen || this.isFrozenMenu) return false
+            if (this.$tooltip.contains(e.relatedTarget)) return false
             var p = this.getPointerCtx(e);
-            var isInCanvas = this.checkIf(p, "InCanvas"); // purpose of that is possibliy linked to issue #9232dcd
-            if (!isInCanvas && !this.isFrozenMenu) {
-                // Remove the node hover and border
-                var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
-                if (clearBorder) this.clearNodeHover();
-
-                // Set the hover by default on the focused node
+            if (!this.checkIf(p, "InCanvas") && !this.checkIf(p, "InTooltip", this.hoveredNode) && this.hoveredNode !== this.focusedNode)
                 this.drawNodeHover(this.focusedNode, true);
-            } else {
-                if (this.isFrozen) return false
-
-                // Only show tooltip options/ellipsis on hoover
-                //this.nodeHoveredFromJs(this.hoveredNode);
-            }
-
-            this.isFrozen = false;
             return false
         };
 
         // Catch right click context menu (canvas and node tooltip)
         var contextMenuEvent = e => {
-            if (this.isZooming) { e.preventDefault(); return false }
+            if (this.isZooming || this.tooltipFrame !== null || (this.$tooltip.contains(e.target) && this.$tooltip.inert)) {
+                e.preventDefault();
+                return false
+            }
             if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
                 // Touch long-press: drop the pending press so the trailing pointerup is not a click
@@ -1958,7 +1892,7 @@ export const GraphPack = {
 
         // Tooltip Clicks
         var tooltipTensionClick = e => {
-            if (this.isZooming || e.button !== 0) return true
+            if (this.isZooming || this.$tooltip.inert || e.button !== 0) return true
             if (this.isFrozen) {
                 this.isFrozen = false;
                 return false
@@ -1968,8 +1902,11 @@ export const GraphPack = {
             return true
         };
         var tooltipActionClick = e => {
-            if (this.isZooming || e.button !== 0) return true
-            this.isFrozen = !this.isFrozen;
+            if (this.isZooming || this.$tooltip.inert || e.button !== 0) return true
+            if (e.target.closest(".clickMe")) {
+                this.isFrozen = true;
+                this.isFrozenMenu = true;
+            }
             return true
         };
 
