@@ -98,8 +98,12 @@ it visible and replace its title/position after Elm renders the options, using a
 cancelable animation frame; pending actions stay inert. Visible replacements glide
 between nodes with explicit position transitions, unchanged on hover. Hidden
 placement and reduced-motion preferences skip the animation. Hover handoff follows
-the tooltip's current rectangle and its connecting gap, including outside the canvas. `isFrozen` /
-`isFrozenMenu` keep the menu's target fixed until it closes.
+the tooltip's current rectangle and its connecting gap, including outside the canvas. `isFrozen`
+locks the target while the tooltip's `ActionPanel` menu is open. The
+menu renders inside the trigger's `#domid` (`Overview.viewActionPanel`), so picking
+an item is not an outside click; the lock is only released by `ActionPanel.OnClose`
+(`CLEAR_CONTEXT_MENU`): click outside, click on the tooltip, or the item's
+modal / move closing.
 
 The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
 the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/
@@ -129,4 +133,4 @@ endpoints, interruptions, exits, reduced motion, interaction pauses, resize/reve
 initialization races, cleanup, and recolor-only refreshes. Hover checks cover
 frame-coalesced replacement, action gating, node entry, tooltip handoff and menu freezing.
 `tests/Elm/GraphTest.elm` covers subtree discovery, atomic moves, snapshot-scoped
-rename payloads, authoritative reconciliation and drag-modal activation.
+rename payloads, authoritative reconciliation, drag-modal activation and the tooltip menu nesting.

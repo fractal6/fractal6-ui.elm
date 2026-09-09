@@ -295,15 +295,6 @@ isOutside targetId =
                         (JD.succeed False)
                         (JD.fail "continue")
                 )
-
-        -- ignore if a modal is open (@DEBUG: do not work, never get inside)
-        , JD.field "class" (JD.list JD.string)
-            |> JD.andThen
-                (\cls ->
-                    ternary (List.member "has-modal-active" cls)
-                        (JD.succeed False)
-                        (JD.fail "continue")
-                )
         , JD.lazy (\_ -> isOutside targetId |> JD.field "parentNode")
 
         -- fallback if all previous decoders failed

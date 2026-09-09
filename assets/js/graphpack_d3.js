@@ -221,8 +221,7 @@ export const GraphPack = {
     focusedNode: null, // The node that has the active focus
     zoomedNode: null, // The node that has is centered
     hoveredNode: null, // The node that is curently hoovered
-    isFrozen: false, // Tooltip click state
-    isFrozenMenu: false, // Tooltip right click state
+    isFrozen: false, // Hover/tooltip locked on its node while its ActionPanel menu (or a modal from it) is open
     handlers: [],
 
     // Dragging (move a node by drag-and-drop)
@@ -657,7 +656,7 @@ export const GraphPack = {
 
     // Draw node border + eventually tooltip
     drawNodeHover(node, doDrawTooltip) {
-        if (this.isFrozen || this.isFrozenMenu) node = this.hoveredNode;
+        if (this.isFrozen) node = this.hoveredNode;
         if (this.isZooming || !node) return
         if (!node.ctx) {
             // Wait for the canvas to render before drawing border.
@@ -859,7 +858,6 @@ export const GraphPack = {
     },
     clearContextMenu() {
         this.isFrozen = false;
-        this.isFrozenMenu = false;
     },
 
 
@@ -1415,7 +1413,7 @@ export const GraphPack = {
     },
 
     nodeHoveredFromJs(node) {
-        if (!this.app || this.isFrozenMenu || this.isFrozen) return
+        if (!this.app || this.isFrozen) return
 
         var nid;
         if (!node) {
@@ -1669,10 +1667,6 @@ export const GraphPack = {
         // Listen for clicks on the main canvas
         var nodeClickEvent = e => {
             if (this.isZooming) return false
-            if (this.isFrozen) {
-                this.isFrozen = false;
-                return true
-            }
 
             if (e.button === 0) {
                 // Left click
@@ -1733,7 +1727,7 @@ export const GraphPack = {
 
         // Start a potential node drag (nav/zoom happens on mouseup instead)
         var canvasMouseDownEvent = e => {
-            if (e.button !== 0 || this.isZooming || this.isFrozen || this.isFrozenMenu) return false
+            if (e.button !== 0 || this.isZooming || this.isFrozen) return false
             this.pressed = true;
             var p = this.getPointerCtx(e);
             if (!this.checkIf(p, "InZoomed")) return false
@@ -1784,7 +1778,6 @@ export const GraphPack = {
             if (this.isZooming) return false
             if (this.dragCandidate) return dragMoveEvent(e)
             if (this.isFrozen) return false
-            if (this.isFrozenMenu) return false
             var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e, p);
 
@@ -1805,7 +1798,7 @@ export const GraphPack = {
 
         // Keep the target while crossing into the tooltip, including outside the canvas bounds.
         var canvasMouseLeaveEvent = e => {
-            if (this.isZooming || this.dragCandidate || this.isFrozen || this.isFrozenMenu) return false
+            if (this.isZooming || this.dragCandidate || this.isFrozen) return false
             if (this.$tooltip.contains(e.relatedTarget)) return false
             var p = this.getPointerCtx(e);
             if (!this.checkIf(p, "InCanvas") && !this.checkIf(p, "InTooltip", this.hoveredNode) && this.hoveredNode !== this.focusedNode)
@@ -1819,18 +1812,16 @@ export const GraphPack = {
                 e.preventDefault();
                 return false
             }
-            if (!this.isFrozen && !this.isFrozenMenu) {
+            if (!this.isFrozen) {
                 e.preventDefault();
                 // Touch long-press: drop the pending press so the trailing pointerup is not a click
                 this.endDrag();
                 this.sendNodeRightClickFromJs(this.hoveredNode);
                 this.isFrozen = true;
-                this.isFrozenMenu = true;
                 return false
             } else {
                 // does not work well
                 e.preventDefault();
-                this.isFrozenMenu = false;
                 this.isFrozen = false;
                 // Simulate on click to close the action panel
                 var $c = document.getElementById(this.$tooltip.dataset.eventAction).querySelector(".clickMe");
@@ -1848,7 +1839,7 @@ export const GraphPack = {
                 if (this.keyTarget(e.key) !== undefined) e.preventDefault();
                 return false
             }
-            if (this.isFrozen || this.isFrozenMenu) return false
+            if (this.isFrozen) return false
             var node = this.keyTarget(e.key);
             if (node === undefined) return false
             e.preventDefault();
@@ -1893,20 +1884,17 @@ export const GraphPack = {
         // Tooltip Clicks
         var tooltipTensionClick = e => {
             if (this.isZooming || this.$tooltip.inert || e.button !== 0) return true
+            // A click on the tooltip closes an open menu instead of opening a tension.
             if (this.isFrozen) {
                 this.isFrozen = false;
                 return false
             }
             this.sendNodeLeftClickFromJs(this.hoveredNode);
-            this.isFrozen = false;
             return true
         };
         var tooltipActionClick = e => {
             if (this.isZooming || this.$tooltip.inert || e.button !== 0) return true
-            if (e.target.closest(".clickMe")) {
-                this.isFrozen = true;
-                this.isFrozenMenu = true;
-            }
+            if (e.target.closest(".clickMe")) this.isFrozen = true;
             return true
         };
 
@@ -1923,7 +1911,6 @@ export const GraphPack = {
         if (!this.graph) return
         console.log("Orga Canvas Initalization");
         this.isFrozen = false;
-        this.isFrozenMenu = false;
         this.endDrag();
 
         // Prime node.ctx (canvas positions) so hover/focus drawing works before the first zoom.

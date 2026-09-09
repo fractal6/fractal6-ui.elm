@@ -588,7 +588,6 @@ test('canvas-to-tooltip handoff and menu interaction retain their target until t
     trigger.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     document.querySelector('.menu-item').dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     expect(gp.isFrozen).toBe(true);
-    expect(gp.isFrozenMenu).toBe(true);
     gp.$canvas.dispatchEvent(new MouseEvent('pointerleave', { clientX: 620, clientY: 200, relatedTarget: document.body }));
     expect(gp.hoveredNode).toBe(a);
     gp.resizeMe();

@@ -19,7 +19,7 @@
 -}
 
 
-port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view, viewActionPanel)
 
 import Array
 import Assets as A
@@ -1455,14 +1455,14 @@ viewActionPanel domid us node o actionPanel =
                         , tree_data = o
                         }
                 in
-                span []
-                    [ span [ id domid ]
-                        [ span
-                            [ class "button is-small clickMe"
-                            , onClick (OpenActionPanel domid node.nameid Nothing)
-                            ]
-                            [ i [ class "icon-more-vertical" ] [] ]
+                -- The panel lives inside #domid: a mouseup on a menu item is not an outside click,
+                -- so the graphpack tooltip stays locked on its node until the modal closes.
+                span [ id domid ]
+                    [ span
+                        [ class "button is-small clickMe"
+                        , onClick (OpenActionPanel domid node.nameid Nothing)
                         ]
+                        [ i [ class "icon-more-vertical" ] [] ]
                     , ActionPanel.view panelData actionPanel |> Html.map ActionPanelMsg
                     ]
 

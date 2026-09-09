@@ -6,15 +6,19 @@ import Dict
 import Expect
 import Fractale.Codecs exposing (FractalBaseRoute(..), focusFromNameid)
 import Fractale.Graph exposing (withDescendants)
-import Fractale.User exposing (UserState(..))
 import Fractale.HotUpdate exposing (hotNodeMove)
+import Fractale.User exposing (UserState(..))
+import Html
 import Json.Decode as JD
 import Loading exposing (GqlData, RequestResult(..), withDefaultData)
-import ModelSchema exposing (NodesDict, initNode)
+import ModelSchema exposing (NodesDict, initNode, initUserctx)
+import Org.Overview exposing (viewActionPanel)
 import Ports
 import Schema.Enum.Lang as Lang
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
 import Test exposing (Test, describe, test)
+import Test.Html.Query as Query
+import Test.Html.Selector exposing (class, id)
 import Time
 import Url
 
@@ -219,4 +223,29 @@ refreshTests =
                     |> Tuple.first
                     |> ActionPanel.getState_
                     |> Expect.equal ActionPanel.MoveAction
+        , test "the tooltip menu renders inside its trigger's #domid, so its items are not outside clicks" <|
+            -- A mouseup on an item must not fire OnClose: that would unlock the graphpack tooltip before the modal opens.
+            \_ ->
+                let
+                    domid =
+                        "actionPanelContentTooltip"
+
+                    uctx =
+                        { initUserctx | username = "bob" }
+
+                    node =
+                        { initNode | nameid = "org#c1", first_link = Just { username = "bob", name = Nothing } }
+
+                    panel =
+                        ActionPanel.init { session | user = LoggedIn uctx }
+                            |> ActionPanel.update apis (ActionPanel.OnOpen domid node.nameid orga Nothing)
+                            |> Tuple.first
+                            |> ActionPanel.update apis (ActionPanel.OnOpen_ domid)
+                            |> Tuple.first
+                in
+                Html.div [] [ viewActionPanel domid (LoggedIn uctx) node orga panel ]
+                    |> Query.fromHtml
+                    |> Query.find [ id domid ]
+                    |> Query.findAll [ class "actionPanelStyle" ]
+                    |> Query.count (Expect.equal 1)
         ]

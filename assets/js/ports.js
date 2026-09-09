@@ -228,9 +228,6 @@ export const actions = {
     'BULMA': (app, session, id) => {
         InitBulma(app, session, id);
 
-        // Unlock tooltip (GP)
-        session.gp.isFrozen = false;
-
         // Check if jwt token has expired
         var uctx = JSON.parse(localStorage.getItem(UCTX_KEY))
         if (uctx !== null && (uctx.expiresAt === undefined || new Date(uctx.expiresAt) < new Date())) {

@@ -857,7 +857,6 @@ update_ apis message model =
                         ( model, [] )
             in
             ( closeModal newModel
-              -- Ports.click: unock the tooltip if click from the tooltip, else avoid id as the click will move to the parent node
             , Out
                 (cmds ++ [ Ports.close_modal, send OnClose ])
                 gcmds
@@ -1007,11 +1006,12 @@ update_ apis message model =
             in
             ( { model | session = { session | user = LoggedIn uctx }, form = { form | uctx = uctx } }, noOut )
 
+        -- Items leaving the panel flow: close and release the graphpack tooltip now.
         Navigate link ->
-            ( model, out1 [ DoNavigate link ] )
+            ( model, out2 [ send OnClose ] [ DoNavigate link ] )
 
         Do gcmds ->
-            ( close model, out1 gcmds )
+            ( model, out2 [ send OnClose ] gcmds )
 
         OnCloseModalSafe link onCloseTxt ->
             if canExitSafe model then
@@ -1040,7 +1040,8 @@ update_ apis message model =
                                     ( [], [ DoMoveNode nameid parentid_new nameid_new ] )
 
                                 else if closing && (model.domid == "actionPanelContentTooltip") then
-                                    ( [ Ports.click "canvasOrga" ], [] )
+                                    -- Release the graphpack tooltip lock (the canvas has no click listener).
+                                    ( [ send OnClose ], [] )
 
                                 else
                                     ( [], [] )
@@ -1078,6 +1079,8 @@ subscriptions (State model) =
                 [ Events.onKeyUp (Dom.key "Escape" (OnCloseModal { reset = False, link = "" })) ]
 
             else if model.isOpen then
+                -- Panels rendered outside their #domid (page-level ones) close on the item's mouseup and only
+                -- keep its click because Elm patches the DOM next frame; nest them like Overview.viewActionPanel.
                 [ Events.onMouseUp (Dom.outsideClickClose model.domid OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
                 ]
