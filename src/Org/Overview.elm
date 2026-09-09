@@ -1300,7 +1300,7 @@ view global model =
         , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy3 TreeMenu.view model.empty helperData.isPanelOpen model.treeMenu |> Html.map TreeMenuMsg
         , ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
         ]
     }

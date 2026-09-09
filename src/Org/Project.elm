@@ -881,7 +881,7 @@ view global model =
         , Lazy.lazy2 JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
         , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         , Lazy.lazy2 OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
-        , Lazy.lazy2 TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
+        , Lazy.lazy3 TreeMenu.view model.empty helperData.isPanelOpen model.treeMenu |> Html.map TreeMenuMsg
         , Lazy.lazy3 LinkTensionPanel.view tree_data model.path_data model.linkTensionPanel |> Html.map LinkTensionPanelMsg
         , Lazy.lazy3 CardPanel.view tree_data model.path_data model.cardPanel |> Html.map CardPanelMsg
         , Lazy.lazy ProjectSettingsPanel.view model.projectSettingsPanel |> Html.map ProjectSettingsPanelMsg

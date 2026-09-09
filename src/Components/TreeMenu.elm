@@ -674,20 +674,21 @@ type alias Op =
     {}
 
 
-view : Op -> State -> Html Msg
-view op (State model) =
+view : Op -> Bool -> State -> Html Msg
+view op isPanelOpen (State model) =
     if model.isActive2 then
         let
+            -- An open action panel keeps the hovered menu open until it is closed.
             isActive =
-                model.isActive || model.isHover
+                model.isActive || model.isHover || isPanelOpen
         in
         div
             [ id "tree-menu"
             , class "is-hidden-embed"
             , classList [ ( "off", not isActive ) ]
-            , onMouseLeave (ternary model.isHover (OnToggleHover False) NoMsg)
+            , onMouseLeave (ternary (model.isHover && not isPanelOpen) (OnToggleHover False) NoMsg)
             ]
-            [ viewTreeMenu model
+            [ viewTreeMenu isPanelOpen model
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
             , div
                 [ class "button is-small bottom-button"
@@ -718,12 +719,12 @@ view op (State model) =
 --[ div [ class "border-hinter is-hidden-mobile", onClick OnToggle ] [] ]
 
 
-viewTreeMenu : Model -> Html Msg
-viewTreeMenu model =
-    div [ class "menu", onMouseLeave (OnNodeHover Nothing) ]
+viewTreeMenu : Bool -> Model -> Html Msg
+viewTreeMenu isPanelOpen model =
+    div [ class "menu", onMouseLeave (ternary isPanelOpen NoMsg (OnNodeHover Nothing)) ]
         [ case model.tree_result of
             Success data ->
-                viewSubTree 0 model.hover model.focus model.tree model.expanded_lines
+                viewSubTree isPanelOpen 0 model.hover model.focus model.tree model.expanded_lines
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]
@@ -753,8 +754,8 @@ viewTreeMenu model =
         ]
 
 
-viewSubTree : Int -> Maybe String -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
-viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
+viewSubTree : Bool -> Int -> Maybe String -> NodeFocus -> Tree Node -> ExpandedLines -> Html Msg
+viewSubTree isPanelOpen depth hover focus (Tree { node, children }) expanded_lines =
     let
         roles =
             children |> List.filter (\(Tree c) -> List.member c.node.role_type [ Just RoleType.Coordinator, Just RoleType.Peer, Just RoleType.Bot ]) |> List.map (\(Tree c) -> c.node)
@@ -777,7 +778,7 @@ viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
         hasCollapsible =
             nonRoleChildrenCount > 0 || List.length roles > 0
     in
-    ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnNodeHover Nothing) ] [])
+    ul ([ class "menu-list" ] ++ ternary (depth == 0 && not isPanelOpen) [ onMouseLeave (OnNodeHover Nothing) ] [])
         [ li []
             (Lazy.lazy5 viewCircleLine hover focus hasCollapsible isCollapsed node
                 :: (if isCollapsed then
@@ -787,7 +788,7 @@ viewSubTree depth hover focus (Tree { node, children }) expanded_lines =
                         List.map
                             (\(Tree c) ->
                                 showIf (c.node.role_type == Nothing) <|
-                                    viewSubTree (depth + 1) hover focus (Tree c) expanded_lines
+                                    viewSubTree isPanelOpen (depth + 1) hover focus (Tree c) expanded_lines
                             )
                             children
                    )
