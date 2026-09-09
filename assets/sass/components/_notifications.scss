@@ -20,7 +20,7 @@
     transform: translateX(-50%);
     max-width: 50%;
     min-width: 250px;
-    z-index: 9999; // Ensure a high z-index value to place the element on top
+    z-index: 30; // above page content, below modals (40+)
 
 
     /* Add a pseudo-element for the progress bar */
