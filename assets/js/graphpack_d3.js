@@ -245,6 +245,7 @@ export const GraphPack = {
     timeout: false,
     delta: 200,
     userHeight: null, // canvas height set by the user with the resizer grip
+    userColWidth: null, // canvas column width set by the user with the resizer grip
 
     // Html Elements
     $nextToChart: null,
@@ -1475,29 +1476,39 @@ export const GraphPack = {
         this.bindResizer(document.getElementById('canvasResizer'), false, true);
         this.bindResizer(document.getElementById('canvasResizerV'), true, false);
         this.bindResizer(document.getElementById('canvasResizerC'), true, true);
+        // The columns are re-created by Elm on page change, re-apply the user width
+        if (this.userColWidth) {
+            this.setColWidth(this.userColWidth);
+            this.computeGeometry();
+            this.sizeDom();
+        }
+    },
+
+    // Split the row between the canvas column and its sibling, keeping their total width
+    setColWidth(w) {
+        var $col = this.$canvasParent.parentElement;
+        var $colRight = this.$nextToChart.parentElement;
+        var wTotal = $col.offsetWidth + $colRight.offsetWidth;
+        this.userColWidth = Math.min(Math.max(w, this.minWidth), wTotal - this.minWidth);
+        $col.style.flex = "none";
+        $col.style.width = this.userColWidth + "px";
+        $colRight.style.flex = "none";
+        $colRight.style.width = (wTotal - this.userColWidth) + "px";
     },
 
     bindResizer($h, doX, doY) {
         if (!$h) return
-        var $col = this.$canvasParent.parentElement;
-        var $colRight = this.$nextToChart.parentElement;
 
         $h.onpointerdown = e => {
             if (e.button !== 0) return
             e.preventDefault();
             var x0 = e.clientX, y0 = e.clientY;
-            var w0 = $col.offsetWidth, h0 = this.height;
-            // Keep the total width of both columns, so the row keeps its margins
-            var wTotal = $col.offsetWidth + $colRight.offsetWidth;
+            var w0 = this.$canvasParent.parentElement.offsetWidth, h0 = this.height;
             $h.setPointerCapture(e.pointerId);
 
             $h.onpointermove = ev => {
                 if (doX) {
-                    var w = Math.min(Math.max(w0 + ev.clientX - x0, this.minWidth), wTotal - this.minWidth);
-                    $col.style.flex = "none";
-                    $col.style.width = w + "px";
-                    $colRight.style.flex = "none";
-                    $colRight.style.width = (wTotal - w) + "px";
+                    this.setColWidth(w0 + ev.clientX - x0);
                 }
                 if (doY) {
                     this.userHeight = Math.max(this.minHeight, h0 + ev.clientY - y0);

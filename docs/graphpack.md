@@ -36,8 +36,10 @@ Zooming (`zoomToNode`) runs `d3.interpolateZoom` in a `d3.timer` that mutates
 
 The canvas is resizable by dragging the grips around it (`#canvasResizer`
 below, `#canvasResizerV` on the right, `#canvasResizerC` on the bottom-right
-corner for both axes, wired by `bindResizer`): height goes to
-`userHeight`, width splits the two Bulma columns. Both reset on page reload.
+corner for both axes, wired by `bindResizer`): height goes to `userHeight`,
+width to `userColWidth`, split between the two Bulma columns by `setColWidth`.
+Both reset on page reload. The `#overview` row is `Html.Keyed` so Elm drops
+those JS inline styles when leaving the page.
 
 ## Hit-testing
 

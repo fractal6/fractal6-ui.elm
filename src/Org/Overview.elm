@@ -61,6 +61,7 @@ import Global exposing (Msg(..))
 import Html exposing (Html, a, br, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Keyed as Keyed
 import Html.Lazy as Lazy
 import Json.Decode as JD
 import List.Extra as LE
@@ -1319,17 +1320,23 @@ view_ global model =
                 _ ->
                     text "wrong position"
     in
-    div [ id "overview", class "columns is-centered" ]
-        [ div [ class "column is-6 is-5-fullhd" ]
-            [ --viewQuickSearchBar global.session.common.user model
-              viewCanvas global.session.common.user model
-            , viewFromPos model.window_pos.bottomLeft
-            ]
-        , div [ class "divider is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
-        , div [ class "column is-6 is-5-fullhd" ]
-            [ div [ id "nextToChart" ]
-                [ viewFromPos model.window_pos.topRight ]
-            ]
+    -- Keyed: the resizer sets inline widths on the columns, they must not be inherited by the next page
+    Keyed.node "div"
+        [ id "overview", class "columns is-centered" ]
+        [ ( "canvas-column"
+          , div [ class "column is-6 is-5-fullhd" ]
+                [ --viewQuickSearchBar global.session.common.user model
+                  viewCanvas global.session.common.user model
+                , viewFromPos model.window_pos.bottomLeft
+                ]
+          )
+        , ( "divider", div [ class "divider is-vertical is-h is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ] )
+        , ( "next-column"
+          , div [ class "column is-6 is-5-fullhd" ]
+                [ div [ id "nextToChart" ]
+                    [ viewFromPos model.window_pos.topRight ]
+                ]
+          )
         ]
 
 
