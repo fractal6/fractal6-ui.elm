@@ -21,7 +21,7 @@
 import { timer } from 'd3-timer'
 import { interpolateZoom } from 'd3-interpolate'
 import { easePolyInOut } from 'd3-ease'
-import { hierarchy, pack } from 'd3-hierarchy'
+import { hierarchy, packSiblings } from 'd3-hierarchy'
 //import { scaleOrdinal } from 'd3-scale'
 import { shadeColor, ptInTriangle } from './custom.js'
 
@@ -38,7 +38,7 @@ const d3 = Object.assign(
         timer,
         interpolateZoom,
         easePolyInOut,
-        hierarchy, pack
+        hierarchy, packSiblings
         //scaleOrdinal,
     },
 )
@@ -108,54 +108,10 @@ const formatGraph = dataset => {
     return dataTree
 }
 
-// Recursively traverse the graph and add to each nodes the attributes:
-// * depth: depth position (startinf at 0)
-// * neigbor: number of neogbor
-// * cumchild: total number of child
-// WARNING: @HACK: the improve the VX we add an invisible node
-// for circle that have only one child.
-const computeDepth = (obj, depth, neigbor) => {
-    var maxdepth = 0;
-    var cumchild = 0;
-    if (depth === undefined) {
-        var currentdepth = 0;
-        var neigbor = 1;
-    } else {
-        var currentdepth = depth;
-        neigbor = neigbor;
-    }
-
-    obj.depth = currentdepth;
-    obj.neigbor = neigbor;
-
-    if (obj.children && obj.type_ == NodeType.Circle) {
-        // Add hidden node to have a consistent visual circle packing
-        var n_bots = obj.children.filter(x => x.role_type == RoleType.Bot).length
-        var n_roles = obj.children.filter(x => x.type_ == NodeType.Role && x.role_type != RoleType.Bot).length
-        var n_circles = obj.children.filter(x => x.type_ == NodeType.Circle).length
-        var bot_to_add = 6 - n_bots - n_roles * 3 - n_circles * 3;
-        for (var i = 0; i < bot_to_add; i++) {
-            obj.children.push({
-                type_: "Hidden",
-                role_type: RoleType.Bot,
-                name: "",
-            })
-        }
-
-        // Compute cumchild and maxdepth
-        obj.children.forEach((d, i) => {
-            var d = computeDepth(d, currentdepth + 1, obj.children.length - 1);
-            var tmpDepth = d.maxdepth;
-            cumchild += d.cumchild;
-            if (tmpDepth > maxdepth) {
-                maxdepth = tmpDepth;
-            }
-        });
-    }
-    maxdepth = maxdepth + 1;
-    cumchild = cumchild + 1;
-    obj.cumchild = cumchild;
-    return { maxdepth, cumchild }
+// Recursively set node.depth on the tree (root at 0) and return the tree height.
+const computeDepth = (obj, depth = 0) => {
+    obj.depth = depth;
+    return (obj.children || []).reduce((m, c) => Math.max(m, computeDepth(c, depth + 1)), depth + 1)
 }
 
 export const GraphPack = {
@@ -435,8 +391,7 @@ export const GraphPack = {
         var ctx = this.ctx2d;
         var circleColor;
 
-        if (node.data.type_ === "Hidden") return
-        else this.addNodeCtx(node);
+        this.addNodeCtx(node);
 
         // Get the circle Color
         if (opac && (opac[0] == "#" || !opac.length)) {
@@ -506,7 +461,7 @@ export const GraphPack = {
         }
         for (var i = 0; i < node.data.children.length; i++) {
             n = node.children[i];
-            if (n.data.type_ === "Hidden" || !n.ctx || node.depth !== n.depth - 1) continue
+            if (!n.ctx || node.depth !== n.depth - 1) continue
             if (this.motion && (!n.opacity || n.ctx.rayon < 8)) continue
             ctx.globalAlpha = this.motion ? n.opacity : 1;
 
@@ -870,8 +825,7 @@ export const GraphPack = {
         var b = this.focusedNode;
         if (!b) return []
         var outside = b.parent ? [...b.parent.ancestors().slice(0, 2), ...b.parent.children] : [];
-        return [...new Set([...outside, ...b.descendants().filter(n => n.depth - b.depth < 4)])]
-            .filter(n => n.data.type_ !== "Hidden");
+        return [...new Set([...outside, ...b.descendants().filter(n => n.depth - b.depth < 4)])];
     },
 
     cancelMotion() {
@@ -892,7 +846,6 @@ export const GraphPack = {
         var visible = new Set(this.visibleNodes());
         var tracks = [];
         this.nodes.forEach(node => {
-            if (node.data.type_ === "Hidden") return
             if (!visible.has(node) && !(node.opacity > 0)) {
                 Object.assign(node, node.target);
                 node.opacity = 0;
@@ -984,8 +937,7 @@ export const GraphPack = {
     // D3/GraphPack
     //
 
-    // Determine the node size in the circle packing
-    // Returns: int f(n.depth, n.neigbor, n.cumchild)
+    // Determine the leaf (role) weight in the circle packing; its radius is sqrt(weight).
     nodeSizeTopDown(n, stats) {
         //var dvd = 1;
         //if (n.role_type == RoleType.Guest) {
@@ -994,8 +946,6 @@ export const GraphPack = {
         //     dvd = 1;
         //}
 
-        // Circle has a default capacity of 2 roles
-        // and 6 collectors
         var v = 2000;
         if (n.type_ == "Role" || n.type_ == "Hidden") {
             if (n.role_type == RoleType.Bot) {
@@ -1122,7 +1072,6 @@ export const GraphPack = {
             return
         }
         var oldNodes = new Map([...this.exitingNodes, ...(this.nodes || [])]
-            .filter(n => n.data.type_ !== "Hidden")
             .map(n => [nodeRenames[n.data.nameid] || n.data.nameid, n]));
         var oldFocusPath = this.focusedNode ? this.focusedNode.ancestors().map(n => nodeRenames[n.data.nameid] || n.data.nameid) : [];
         this.computeCircleColorRange();
@@ -1146,31 +1095,17 @@ export const GraphPack = {
             return
         }
 
-        // Circles first (largest first), then roles, then hidden fillers; IDs break name ties.
-        const typeOrder = { Circle: 0, Role: 1, Hidden: 2 };
-        const nodeNameTypeOrder = (n1, n2) =>
-            typeOrder[n1.data.type_] - typeOrder[n2.data.type_]
-            || (n1.data.type_ === NodeType.Circle ? n2.value - n1.value : 0)
-            || n1.data.name.localeCompare(n2.data.name)
-            || (n1.data.nameid < n2.data.nameid ? -1 : n1.data.nameid > n2.data.nameid ? 1 : 0);
         // Compute global statistics
-        this.gStats = computeDepth(graph);
+        this.gStats = { maxdepth: computeDepth(graph) };
 
         // Compute circle packing
-        this.gPack = d3.pack()
-            .padding(this.circlesPadding)
-            .size([this.rayon * 2, this.rayon * 2])
-            (d3.hierarchy(graph)
-                .sum(d => this.nodeSize(d, this.gStats))
-                .sort(nodeNameTypeOrder)
-            );
+        this.gPack = this.packGraph(d3.hierarchy(graph));
 
         this.cancelMotion();
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants();
         this.rootNode = this.nodes[0];
         this.nodes.forEach(n => {
-            if (n.data.type_ === "Hidden") return
             this.nodesDict[n.data.nameid] = n;
             n.target = { x: n.x, y: n.y, r: n.r };
             var old = oldNodes.get(n.data.nameid);
@@ -1190,6 +1125,57 @@ export const GraphPack = {
         this.uctx = JSON.parse(localStorage.getItem("user_ctx"));
         this.startMotion(true, !this.viewport);
         this.nodeFocusedFromJs(this.focusedNode);
+    },
+
+    // Minimum radius of a circle: the footprint of two of its (would-be) roles.
+    minCircleRayon(node, pad) {
+        var u = Math.sqrt(this.nodeSize({ type_: NodeType.Role, role_type: RoleType.Peer, depth: node.depth + 1 }, this.gStats));
+        return 2 * (u + pad) + pad
+    },
+
+    // Bottom-up packing: a circle encloses its packed children but never shrinks below
+    // minCircleRayon, so sparse circles (empty, one role, two roles) keep the same size.
+    // Siblings are ordered by kind then drawn size, so a rename cannot reshape a circle.
+    packLayout(node, pad) {
+        if (node.children) {
+            node.children.forEach(c => this.packLayout(c, pad));
+            node.children.sort(this.nodeOrder);
+            var cs = node.children;
+            cs.forEach(c => c.r += pad);
+            // packSiblings centers the arrangement on its enclosing circle.
+            d3.packSiblings(cs);
+            node.r = cs.reduce((r, c) => Math.max(r, Math.hypot(c.x, c.y) + c.r), 0) + pad;
+            cs.forEach(c => c.r -= pad);
+        } else {
+            node.r = node.data.type_ === NodeType.Circle ? 0 : Math.sqrt(this.nodeSize(node.data, this.gStats));
+        }
+        if (node.data.type_ === NodeType.Circle) node.r = Math.max(node.r, this.minCircleRayon(node, pad));
+        return node.r
+    },
+
+    // Circles first (largest first), then roles; names and IDs break size ties.
+    nodeOrder(n1, n2) {
+        const typeOrder = { Circle: 0, Role: 1 };
+        return typeOrder[n1.data.type_] - typeOrder[n2.data.type_]
+            || n2.r - n1.r
+            || n1.data.name.localeCompare(n2.data.name)
+            || (n1.data.nameid < n2.data.nameid ? -1 : n1.data.nameid > n2.data.nameid ? 1 : 0)
+    },
+
+    // Lay out the hierarchy, then scale it to fill the canvas (padding stays ~circlesPadding px at root).
+    packGraph(root) {
+        this.packLayout(root, 0);
+        this.packLayout(root, this.circlesPadding * root.r / (this.rayon * 2));
+        var k = this.rayon / root.r;
+        root.x = root.y = this.rayon;
+        root.eachBefore(n => {
+            n.r *= k;
+            if (n.parent) {
+                n.x = n.parent.x + k * n.x;
+                n.y = n.parent.y + k * n.y;
+            }
+        });
+        return root
     },
 
     setFocus(n) {
@@ -1216,7 +1202,7 @@ export const GraphPack = {
     setZoomed() {
         var zoomTo;
         var focus = this.focusedNode;
-        if (focus.parent && (focus.data.children === null || focus.data.children.filter(x => x.type_ !== "Hidden").length == 0)) {
+        if (focus.parent && !focus.children) {
             zoomTo = focus.parent;
         } else {
             zoomTo = focus;
@@ -1272,7 +1258,6 @@ export const GraphPack = {
             var next = null;
             for (var i = 0; i < node.children.length; i++) {
                 var c = node.children[i];
-                if (c.data.type_ === "Hidden") continue
                 if (this.nodeContains(c, gx, gy)) { next = c; break }
             }
             var maxDepth = inFocusPath ? this.focusedNode.depth + 3 : this.focusedNode.depth;
@@ -1304,17 +1289,16 @@ export const GraphPack = {
     // null if handled but there is nowhere to go.
     keyTarget(key) {
         var f = this.focusedNode;
-        var visible = ns => (ns || []).filter(n => n.data.type_ !== "Hidden");
         switch (key) {
             case "ArrowLeft":
             case "ArrowRight":
-                var siblings = f.parent ? visible(f.parent.children) : [];
+                var siblings = f.parent ? f.parent.children : [];
                 if (siblings.length < 2) return null
                 var i = siblings.indexOf(f) + (key === "ArrowRight" ? 1 : -1);
                 return siblings[(i + siblings.length) % siblings.length]
             case "ArrowDown":
             case "Enter":
-                return visible(f.children)[0] || null
+                return (f.children || [])[0] || null
             case "ArrowUp":
             case "Escape":
             case "Backspace":
@@ -1914,7 +1898,7 @@ export const GraphPack = {
         this.endDrag();
 
         // Prime node.ctx (canvas positions) so hover/focus drawing works before the first zoom.
-        this.nodes.forEach(n => { if (n.data.type_ !== "Hidden") this.addNodeCtx(n) });
+        this.nodes.forEach(n => this.addNodeCtx(n));
 
         // Keyboard navigation ready on load, unless the user is already in a field
         if (!document.activeElement || document.activeElement === document.body)

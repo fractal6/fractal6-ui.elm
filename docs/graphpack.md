@@ -10,13 +10,21 @@ page (`src/Org/Overview.elm`). It is a plain-canvas app living outside Elm:
 ## Data flow
 
 Elm sends the flat node list (`INIT_GRAPHPACK`). `formatGraph` nests it into a
-tree (dropping Owner/Member special roles), `computeDepth` adds stats and
-invisible "Hidden" filler children so lone circles pack nicely, then
-`d3.hierarchy` + `d3.pack` compute the layout (`resetGraphPack`). Other actions:
+tree (dropping Owner/Member special roles), `computeDepth` adds stats, then
+`d3.hierarchy` + `packGraph` compute the layout (`resetGraphPack`). Other actions:
 `FOCUS_GRAPHPACK` (zoom to a node), `DRAW_GRAPHPACK` / `REMOVEDRAW_GRAPHPACK`
 (re-layout after node changes), `FLUSH_GRAPHPACK` (recolor, e.g. theme or user change).
-Packing orders circles by descending size, then roles, then Hidden fillers.
-Names and stable `nameid` tie-breakers keep sibling order independent of snapshot order.
+
+### Sizing
+
+`packGraph`/`packLayout` pack the tree bottom-up with `d3.packSiblings`, then scale
+it to fit the canvas. A role's radius is `sqrt(nodeSize)` (weight decreasing with
+depth); a circle encloses its packed children but never goes below
+`minCircleRayon`, the footprint of two of its own roles. Empty, one-role and
+two-role circles therefore share one baseline size, and a circle only grows when
+its content needs the room. Siblings are packed circles first, then by descending
+radius, with names and stable `nameid` as tie-breakers only: sibling order and
+sizes are independent of the snapshot order and of renames.
 
 ### Update payload and identity
 
@@ -79,7 +87,7 @@ those JS inline styles when leaving the page.
 `getNodeUnderPointer` is purely geometric: it inverts the `zoomCtx` transform
 and walks the hierarchy downward (`nodeContains`), mirroring the render rules —
 at most 3 levels below the focus inside its subtree, down to the siblings
-outside, skipping Hidden fillers.
+outside.
 
 Do not replace this with hidden-canvas pixel picking (`getImageData`): browsers
 with fingerprinting protection (Brave, Firefox `resistFingerprinting`) add

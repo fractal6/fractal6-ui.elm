@@ -83,14 +83,39 @@ test.each(['nodeSizeTopDown', 'nodeSizeBottomUp'])('packing order and geometry s
     gp.nodeSize = gp[nodeSize];
     gp.resetGraphPack(data, 'org');
     const expected = Object.fromEntries(Object.entries(gp.nodesDict).map(([id, node]) => [id, geometry(node)]));
-    expect(gp.rootNode.children.map(n => n.data.nameid)).toEqual([
-        'org#large', 'org#a', 'org#b', 'org##c', 'org##a', 'org##b',
-    ]);
-    expect(gp.nodesDict['org#small'].children.map(n => n.data.type_)).toEqual(['Role', 'Hidden', 'Hidden', 'Hidden']);
+    const kids = gp.rootNode.children;
+    // Circles first, largest first; then roles, ordered by name then nameid.
+    expect(kids.map(n => n.data.type_)).toEqual(['Circle', 'Circle', 'Circle', 'Role', 'Role', 'Role']);
+    expect(kids.slice(0, 3).map(n => n.r)).toEqual([...kids.slice(0, 3).map(n => n.r)].sort((x, y) => y - x));
+    expect(kids.slice(3).map(n => n.data.nameid)).toEqual(['org##c', 'org##a', 'org##b']);
+    expect(gp.nodesDict['org#small'].children.map(n => n.data.type_)).toEqual(['Role']);
     for (const snapshot of [[...data].reverse(), [...data.slice(3), ...data.slice(0, 3)]]) {
         gp.resetGraphPack(snapshot, 'org');
         expect(Object.fromEntries(Object.entries(gp.nodesDict).map(([id, node]) => [id, geometry(node)]))).toEqual(expected);
     }
+});
+
+test('sparse circles share a minimum footprint, and sizing ignores names', () => {
+    const bot = (nameid, p) => ({ ...role(nameid, p), role_type: 'Bot' });
+    const roles = (id, n) => Array.from({ length: n }, (_, i) => role(`${id}#r${i}`, parent(id)));
+    const data = [
+        circle('org', null),
+        ...['org#e', 'org#1', 'org#2', 'org#3', 'org#m'].map(id => circle(id, parent('org'))),
+        ...roles('org#1', 1), ...roles('org#2', 2), ...roles('org#3', 3),
+        ...roles('org#m', 3), ...[1, 2, 3].map(i => bot(`org#m#b${i}`, parent('org#m'))),
+    ];
+    const { gp } = graph(data, 'org');
+    const r = id => gp.nodesDict[id].target.r;
+    // Empty, one role and two roles all get the two-role footprint; a third role grows it.
+    expect(r('org#1')).toBeCloseTo(r('org#e'));
+    expect(r('org#2')).toBeCloseTo(r('org#e'));
+    expect(r('org#3')).toBeGreaterThan(r('org#e'));
+    const mixed = r('org#m');
+    // Siblings pack by size, so renaming a role cannot reorder or reshape its circle.
+    gp.resetGraphPack(data.map(n => n.nameid === 'org#m#r0' ? { ...n, name: 'Zzz' } : n), 'org');
+    expect(gp.nodesDict['org#m'].children.map(n => n.data.role_type))
+        .toEqual(['Peer', 'Peer', 'Peer', 'Bot', 'Bot', 'Bot']);
+    expect(r('org#m')).toBeCloseTo(mixed);
 });
 
 test('redraw maps renamed focus and starts at displayed geometry, without leaking the map', () => {
@@ -263,7 +288,8 @@ test('static zoom keeps geometry and opacity untouched and reuses its sorted dra
 });
 
 test('changing radii remain sorted each frame when their ordering crosses', () => {
-    const { gp } = graph(tree('org#a#role'), 'org');
+    const crowded = [...tree('org#a#role'), ...[1, 2, 3].map(i => role(`org#b#r${i}`, parent('org#b')))];
+    const { gp } = graph(crowded, 'org');
     const a = gp.nodesDict['org#b'], b = gp.nodesDict['org#a'];
     expect(a.r).toBeGreaterThan(b.r);
     a.target = { ...a.target, r: b.r / 2 };

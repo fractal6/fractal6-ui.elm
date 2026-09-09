@@ -17,7 +17,6 @@ function mkNode(data, x, y, r, depth, children) {
 }
 const circle = (x, y, r, depth, children) => mkNode({ type_: 'Circle' }, x, y, r, depth, children);
 const role = (x, y, r, depth, role_type) => mkNode({ type_: 'Role', role_type }, x, y, r, depth);
-const hidden = (x, y, r, depth) => mkNode({ type_: 'Hidden', role_type: 'Bot' }, x, y, r, depth);
 
 /*
  * Fixture tree (graph/pack coordinates):
@@ -29,8 +28,7 @@ const hidden = (x, y, r, depth) => mkNode({ type_: 'Hidden', role_type: 'Bot' },
  *   │   │       └── circleE (50,100 r3 d4)
  *   │   └── circleF (85,100 r10 d2)
  *   │       └── circleG (85,100 r4 d3)
- *   ├── roleB (150,100 r20 d1, Peer)
- *   └── hiddenH (100,160 r10 d1)
+ *   └── roleB (150,100 r20 d1, Peer)
  */
 function mkGraph() {
     const circleE = circle(50, 100, 3, 4);
@@ -40,9 +38,8 @@ function mkGraph() {
     const circleF = circle(85, 100, 10, 2, [circleG]);
     const circleA = circle(60, 100, 40, 1, [circleC, circleF]);
     const roleB = role(150, 100, 20, 1, 'Peer');
-    const hiddenH = hidden(100, 160, 10, 1);
-    const root = circle(100, 100, 100, 0, [circleA, roleB, hiddenH]);
-    return { root, circleA, circleC, circleD, circleE, circleF, circleG, roleB, hiddenH };
+    const root = circle(100, 100, 100, 0, [circleA, roleB]);
+    return { root, circleA, circleC, circleD, circleE, circleF, circleG, roleB };
 }
 
 // GraphPack instance with an identity canvas->graph transform (mouseX == gx).
@@ -90,12 +87,6 @@ describe('getNodeUnderPointer (geometric hit-testing)', () => {
         const gp = mkGp(g, g.circleC);
         // pointer in circleG (d3), child of sibling circleF: only circleF is drawn
         expect(gp.getNodeUnderPointer(null, at(85, 100))).toBe(g.circleF);
-    });
-
-    test('skips Hidden filler nodes', () => {
-        const g = mkGraph();
-        const gp = mkGp(g, g.root);
-        expect(gp.getNodeUnderPointer(null, at(100, 160))).toBe(g.root);
     });
 
     test('applies the role rayon factor', () => {
@@ -161,11 +152,11 @@ describe('getDropTarget (drag-and-drop move)', () => {
 });
 
 describe('keyTarget (keyboard navigation)', () => {
-    test('arrows cycle through visible siblings, skipping Hidden fillers', () => {
+    test('arrows cycle through siblings', () => {
         const g = mkGraph();
         const gp = mkGp(g, g.circleA);
         expect(gp.keyTarget('ArrowRight')).toBe(g.roleB);
-        expect(gp.keyTarget('ArrowLeft')).toBe(g.roleB); // wraps around hiddenH
+        expect(gp.keyTarget('ArrowLeft')).toBe(g.roleB); // wraps around
         gp.focusedNode = g.roleB;
         expect(gp.keyTarget('ArrowRight')).toBe(g.circleA);
     });
