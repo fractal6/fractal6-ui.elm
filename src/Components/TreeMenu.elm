@@ -639,11 +639,19 @@ update_ apis message model =
             let
                 q =
                     model.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+
+                -- Reclicking the focused node focuses its parent (like the graphpack canvas).
+                nameid =
+                    if n.nameid == model.focus.nameid then
+                        getParentId n.nameid model.tree_result |> withDefault n.nameid
+
+                    else
+                        n.nameid
             in
             ( model
             , out2 [ Ports.send_if_mobile "triggerMenuTreeFromJs" ]
-                [ DoUpdatePath (localGraphFromOrga n.nameid model.tree_result)
-                , DoNavigate (toLink model.baseUri n.nameid [ getSourceTid n ] ++ q)
+                [ DoUpdatePath (localGraphFromOrga nameid model.tree_result)
+                , DoNavigate (toLink model.baseUri nameid [ getSourceTid n ] ++ q)
                 ]
             )
 
