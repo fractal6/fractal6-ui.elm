@@ -24,11 +24,12 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, subscr
 import Assets as A
 import Auth exposing (ErrState(..))
 import Fractale.User exposing (UserState(..))
+import Fractale.Welcome as Welcome
 import Fractale.Error exposing (viewAuthNeeded, viewHttpErrors)
 import Dict exposing (Dict)
 import Utils.Bool exposing (ternary)
 import Utils.Cmd exposing (send)
-import Utils.DomEvents exposing (onClickPD, onKeydown)
+import Utils.DomEvents exposing (onClickPD, onClickSafe, onKeydown)
 import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, div, input, p, span, text)
@@ -43,7 +44,6 @@ import Ports
 import RemoteData
 import Requests exposing (login, signupValidate)
 import Session exposing (Apis, GlobalCmd(..), SessionCommon)
-import String.Format as Format
 import Text as T
 
 
@@ -232,7 +232,7 @@ update_ apis message model =
                         Active _ result ->
                             case result of
                                 RemoteData.Success uctx ->
-                                    Just ( model.refreshAfter, uctx )
+                                    Just ( model.refreshAfter && link == "", uctx )
 
                                 _ ->
                                     Nothing
@@ -511,11 +511,10 @@ viewSignupModal op model =
                     Active form result ->
                         case result of
                             RemoteData.Success uctx ->
-                                [ div [ class "px-3 mt-2 mb-6" ]
-                                    [ T.welcomeLetter
-                                        |> Format.namedValue "username" uctx.username
-                                        |> renderMarkdown "" "is-human"
-                                    ]
+                                [ Welcome.view
+                                    { username = uctx.username
+                                    , linkAttributes = \link -> [ onClickSafe (DoCloseAuthModal link), target "_blank" ]
+                                    }
                                 , div [ class "is-aligned-center" ]
                                     [ button [ class "button is-success ", onClick <| DoCloseAuthModal "" ] [ text T.gotIt ] ]
                                 ]

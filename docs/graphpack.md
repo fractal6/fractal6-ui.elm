@@ -117,6 +117,8 @@ A freshly created organisation shows `#welcomeCards` (action cards for new
 tension, new project, circle, role) above the canvas. Once the root has other
 nodes, the cards hide; a grid icon in `#canvasButtons` toggles them. The project
 card goes to `/p/{nameid}?new=1`, which `Org.Projects` reads to open the create form.
+Cards use the shared [ActionCard component](action-cards.md), also used by both
+post-signup welcome screens.
 
 The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
 the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/

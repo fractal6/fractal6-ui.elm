@@ -146,6 +146,22 @@
   en="to reset your password"
   fr="pour réinitialiser votre mot de passe"
 
+[welcomeUser]
+  en="Welcome @{{username}}"
+  fr="Bienvenue @{{username}}"
+
+[accountActivated]
+  en="Your account is now active."
+  fr="Votre compte est maintenant actif."
+
+[createOrgaHint]
+  en="A space for your team, or for your own projects."
+  fr="Un espace pour votre équipe, ou pour vos propres projets."
+
+[exploreOrgaHint]
+  en="See how other organisations work."
+  fr="Découvrez comment fonctionnent d’autres organisations."
+
 [gotItCreateOrga]
   en="Got it, let’s create my first organisation."
   fr="Compris, je veux créer ma première organisation"
@@ -3305,36 +3321,6 @@ Ligne horizontale:
 ```
 ---
 ```
-"""
-
-[welcomeLetter]
-  en="""
-Welcome @{{username}},
-
-**Your account has been successfully activated.**
-
-Fractale is a platform for organisations and collectives. We are dedicated to provide you the best experience and tools to enact collective intelligence and boost productivity.
-
-You can also use it for individual projects to organise, manage or share your work.
-
-In order to help your navigation, you will find some shortcuts in the top right corner:
-- the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
-- the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us for any questions or feedback.
-- the **user button** to access your profile and other shortcuts.
-"""
-  fr="""
-Bienvenue @{{username}},
-
-**Votre compte a été activé avec succès.**
-
-Fractale est une plateforme destinée aux organisations et collectifs. Nous nous engageons à vous fournir la meilleure expérience et les meilleurs outils pour mettre en œuvre l’intelligence collective et stimuler la productivité.
-
-Vous pouvez également l’utiliser pour des projets individuels afin d’organiser, gérer ou partager votre travail.
-
-Afin de faciliter votre navigation, vous trouverez quelques raccourcis dans le coin supérieur droit :
-- le bouton **de notification** (<i class="icon icon-bell"></i>) pour voir et accéder à vos dernières notifications.
-- le bouton **d’aide** (<i class="icon icon-question"></i>) pour accéder à de la documentation ou nous contacter pour toutes questions ou feedback.
-- le bouton **d’utilisateur** pour accéder à votre profil et d’autre raccourcis.
 """
 
 [authorityHelper]

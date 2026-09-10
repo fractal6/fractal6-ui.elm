@@ -28,6 +28,7 @@ import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Codecs exposing (RecentActivityTab(..), WindowPos, nodeDecoder)
+import Components.ActionCard as ActionCard
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
@@ -1776,55 +1777,36 @@ viewWelcomeCards isAdmin model =
                     FromNameid model.node_focus.rootnameid
 
         tensionCard =
-            button
-                [ class "welcome-card box media is-featured"
-                , type_ "button"
-                , onClick (NewTensionMsg <| NTF.OnOpen p Nothing)
-                ]
-                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-exchange" ] ]
-                , div [ class "media-content" ]
-                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text (T.createNewTension model.session.lexicon) ]
-                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeTensionHint ]
-                    ]
-                ]
+            { icon = "icon-exchange"
+            , title = T.createNewTension model.session.lexicon
+            , description = T.welcomeTensionHint
+            , featured = True
+            , action = ActionCard.Click (NewTensionMsg <| NTF.OnOpen p Nothing)
+            }
 
         projectCard =
-            a
-                [ class "welcome-card box media is-featured"
-                , href (toLink ProjectsBaseUri model.node_focus.nameid [] ++ "?new=1")
-                ]
-                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-layout" ] ]
-                , div [ class "media-content" ]
-                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewProject ]
-                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeProjectHint ]
-                    ]
-                ]
+            { icon = "icon-layout"
+            , title = T.createNewProject
+            , description = T.welcomeProjectHint
+            , featured = True
+            , action = ActionCard.Link (toLink ProjectsBaseUri model.node_focus.nameid [] ++ "?new=1")
+            }
 
         circleCard =
-            button
-                [ class "welcome-card box media"
-                , type_ "button"
-                , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
-                ]
-                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-git-branch" ] ]
-                , div [ class "media-content" ]
-                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewCircle ]
-                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeCircleHint ]
-                    ]
-                ]
+            { icon = "icon-git-branch"
+            , title = T.createNewCircle
+            , description = T.welcomeCircleHint
+            , featured = False
+            , action = ActionCard.Click (NewTensionMsg <| NTF.OnOpenCircle p)
+            }
 
         roleCard =
-            button
-                [ class "welcome-card box media"
-                , type_ "button"
-                , onClick (NewTensionMsg <| NTF.OnOpenRole p)
-                ]
-                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-leaf" ] ]
-                , div [ class "media-content" ]
-                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewRole ]
-                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeRoleHint ]
-                    ]
-                ]
+            { icon = "icon-leaf"
+            , title = T.createNewRole
+            , description = T.welcomeRoleHint
+            , featured = False
+            , action = ActionCard.Click (NewTensionMsg <| NTF.OnOpenRole p)
+            }
     in
     div [ id "welcomeCards", class "columns is-multiline" ]
         (tensionCard
@@ -1834,7 +1816,7 @@ viewWelcomeCards isAdmin model =
                 else
                     []
                )
-            |> List.map (\c -> div [ class "column is-half" ] [ c ])
+            |> List.map (\card -> div [ class "column is-half" ] [ ActionCard.view [] card ])
         )
 
 

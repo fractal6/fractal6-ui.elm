@@ -40,51 +40,6 @@
     + #canvasParent {
         margin-top: 0;
     }
-
-    .welcome-card {
-        display: flex;
-        width: 100%;
-        height: 100%;
-        appearance: none;
-        font: inherit;
-        text-align: left;
-        color: var(--text);
-        cursor: pointer;
-        // Flat surface: the border stays 1px in every state, only the color changes.
-        background-color: var(--node-tooltip-background);
-        border: 1px solid var(--border-color-light);
-        border-radius: 14px;
-        box-shadow: none;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
-
-        // Same hover for <button> and <a>: Bulma rings a.box with the link color.
-        &:hover, &:focus-visible {
-            background-color: var(--background-hover-discrete);
-            border-color: var(--border-color);
-            box-shadow: none;
-            color: var(--text);
-        }
-    }
-
-    .welcome-card-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.85rem;
-        height: 1.85rem;
-        border-radius: 999px;
-        background-color: var(--background-hover);
-        color: var(--text-weak);
-        font-size: 0.9rem;
-        line-height: 1;
-
-        i { line-height: 1; }
-    }
-
-    .welcome-card.is-featured .welcome-card-icon {
-        background-color: var(--user-emoticon-bg);
-        color: var(--primary);
-    }
 }
 
 .buttonRole {

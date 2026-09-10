@@ -21,8 +21,9 @@
 
 module Pages.Verification exposing (Flags, Model, Msg, page)
 
-import Assets as A exposing (almostThere)
+import Assets exposing (almostThere)
 import Fractale.User exposing (UserState(..))
+import Fractale.Welcome as Welcome
 import Fractale.Error exposing (viewHttpErrors)
 import Components.AuthModal exposing (UserAuthForm)
 import Dict
@@ -36,18 +37,16 @@ import Form exposing (isSignupSendable)
 import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
+import Html exposing (Html, div)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick, onInput)
 import Loading exposing (RestData)
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData
 import Requests exposing (signupValidate)
 import Session exposing (GlobalCmd(..))
-import String.Format as Format
 import Text as T
 
 
@@ -208,7 +207,7 @@ viewVerification global model =
     div []
         [ case model.result of
             RemoteData.Success uctx ->
-                welcome uctx
+                Welcome.view { username = uctx.username, linkAttributes = always [] }
 
             RemoteData.Loading ->
                 div [ class "spinner" ] []
@@ -222,23 +221,5 @@ viewVerification global model =
                         almostThere (withDefault "" model.email) T.toConfirmYourAccount (toHref Route.Signup)
 
                     LoggedIn uctx ->
-                        welcome uctx
-        ]
-
-
-welcome : UserCtx -> Html Msg
-welcome uctx =
-    div []
-        [ div [ class "mt-2 mb-6 is-size-bg" ]
-            [ T.welcomeLetter
-                |> Format.namedValue "username" uctx.username
-                |> renderMarkdown "" "is-human"
-            ]
-        , div [ class "is-aligned-center" ]
-            [ a [ class "button is-success breakable", href (toHref Route.New_Orga) ] [ text T.gotItCreateOrga ]
-            , br [] []
-            , text T.or_
-            , br [] []
-            , a [ class "button is-success breakable", href (toHref Route.Explore) ] [ text T.explorePublicOrga ]
-            ]
+                        Welcome.view { username = uctx.username, linkAttributes = always [] }
         ]

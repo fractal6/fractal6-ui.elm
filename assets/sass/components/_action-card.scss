@@ -1,0 +1,56 @@
+// Shared action surface; neutralize Bulma's link-only hover/focus/active shadows.
+.action-card.box {
+    --bulma-box-link-hover-shadow: none;
+    --bulma-box-link-active-shadow: none;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    appearance: none;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    cursor: pointer;
+    background-color: var(--node-tooltip-background);
+    border: 1px solid var(--border-color-light);
+    border-radius: 14px;
+    box-shadow: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    &:hover, &:focus-visible {
+        background-color: var(--background-hover-discrete);
+        border-color: var(--border-color);
+        color: var(--text);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--link2);
+        outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}
+
+.action-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 999px;
+    background-color: var(--background-hover);
+    color: var(--text-weak);
+    font-size: 0.9rem;
+    line-height: 1;
+
+    i { line-height: 1; }
+}
+
+.action-card.is-featured .action-card-icon {
+    background-color: var(--user-emoticon-bg);
+    color: var(--primary);
+}
