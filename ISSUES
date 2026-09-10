@@ -6,15 +6,10 @@
 
 # P1
 
-- OPT: make the role circle smaller (+ user inside + pending hint ?)
-- Assign leader (instead of first-link)
 - append/remove _archived suffix when archiving/unarchiving ---> *** Rename nameid function !? ***
 
 
 # P0
-
-- ModelSchema -> Schemas/Model.elm
-- xr new tension dropdown refactor (sttil too long to wrote tension)
 
 
 # Codefactor Elm

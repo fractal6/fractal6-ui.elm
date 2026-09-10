@@ -144,6 +144,7 @@ type Msg
     | UpdateSessionProject (Maybe ProjectData)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
+    | UpdateSessionWelcomeCards Bool
     | UpdateSessionRecentActivityTab (Maybe RecentActivityTab)
     | UpdateSessionActivityPattern (Maybe String)
     | UpdateSessionMenuOrga (Maybe Bool)
@@ -576,6 +577,16 @@ update msg model =
                     session.data
             in
             ( { model | session = { session | data = { sessionData | window_pos = data } } }, Ports.saveWindowpos data )
+
+        UpdateSessionWelcomeCards data ->
+            let
+                session =
+                    model.session
+
+                sessionData =
+                    session.data
+            in
+            ( { model | session = { session | data = { sessionData | welcome_cards = Just data } } }, Ports.saveWelcomeCards data )
 
         UpdateSessionRecentActivityTab data ->
             let

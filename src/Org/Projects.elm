@@ -518,12 +518,23 @@ init global flags =
             , userInput = UserInput.init [ newFocus.nameid ] True True sessionCommon
             }
 
+        openNew =
+            Dict.member "new" query
+                && (case sessionCommon.user of
+                        LoggedIn uctx ->
+                            hasLazyAdminRole uctx Nothing newFocus.rootnameid
+
+                        LoggedOut ->
+                            False
+                   )
+
         cmds =
             [ ternary fs.focusChange (queryLocalGraph session.apis newFocus.nameid True (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , send DoLoad
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
+            , ternary openNew (send AddProject) Cmd.none
             ]
     in
     ( model

@@ -42,6 +42,7 @@ export const UCTX_KEY = "user_ctx";
 export const VOLATILE_SESSION_ITEMS = [
     UCTX_KEY,
     "window_pos",
+    "welcome_cards",
     "recent_activity_tab",
     "orga_menu",
     // "tree_menu",

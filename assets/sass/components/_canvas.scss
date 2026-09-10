@@ -218,16 +218,6 @@
     }
 }
 
-#welcomeButtons {
-    position: absolute;
-    flex-direction: column;
-
-    .button {
-        border-radius: 25px;
-        min-width: 11.5rem;
-    }
-}
-
 #canvasButtons {
     position: absolute;
     //display: flex;

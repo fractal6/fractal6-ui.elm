@@ -208,7 +208,6 @@ export const GraphPack = {
     // Html Elements
     $nextToChart: null,
     $canvas: null,
-    $welcomeButtons: null,
     $canvasButtons: null,
     $tooltip: null,
     // Canvas ctx
@@ -241,7 +240,6 @@ export const GraphPack = {
     },
 
     drawButtons() {
-        this.$welcomeButtons = document.getElementById('welcomeButtons');
         var r = this.$canvas.getBoundingClientRect();
         var p = this.$canvasParent.getBoundingClientRect();
         var offsetLeft = r.left - p.left;
@@ -253,13 +251,6 @@ export const GraphPack = {
         this.$canvasButtons.style.left = offsetLeft + r.width - this.$canvasButtons.offsetWidth - buttonMargin + "px";
         this.$canvasButtons.style.top = offsetTop + buttonMargin + "px";
         this.$canvasButtons.classList.remove("is-invisible");
-
-        // Draw welcome buttons
-        if (this.$welcomeButtons) {
-            this.$welcomeButtons.style.left = offsetLeft + r.width / 2 - this.$welcomeButtons.offsetWidth / 2 + 8 + "px";
-            this.$welcomeButtons.style.top = offsetTop + this.$welcomeButtons.offsetHeight * 0.75 + "px";
-            this.$welcomeButtons.classList.remove("is-invisible");
-        }
 
         // The tooltip stays hidden until its current node has been positioned.
     },
@@ -1498,8 +1489,8 @@ export const GraphPack = {
         this.clearNodeTooltip();
         this.computeGeometry();
         this.sizeDom();
-        this.drawButtons();
         this.drawCanvas();
+        this.drawButtons();
         this.drawNodeHover(this.focusedNode, true);
     },
 
@@ -1530,7 +1521,7 @@ export const GraphPack = {
         this.viewport = null;
         this.exitingNodes = [];
         this.$canvas = this.$canvasParent = this.$nextToChart = null;
-        this.$tooltip = this.$canvasButtons = this.$welcomeButtons = this.ctx2d = null;
+        this.$tooltip = this.$canvasButtons = this.ctx2d = null;
     },
 
     init_canvas() {
@@ -1628,7 +1619,6 @@ export const GraphPack = {
 
         // Setup Buttons
         this.$canvasButtons = document.getElementById('canvasButtons');
-        this.$welcomeButtons = document.getElementById('welcomeButtons');
 
         // Setup nodeTooltip Tooltip
         this.$tooltip = document.getElementById('nodeTooltip');

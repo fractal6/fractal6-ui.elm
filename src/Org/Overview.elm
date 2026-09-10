@@ -27,14 +27,6 @@ import Assets.Logo as Logo
 import Auth exposing (ErrState(..), getNodeRights, hasLazyAdminRole, parseErr)
 import Browser.Events as Events
 import Browser.Navigation as Nav
-import Fractale.Form exposing (..)
-import Fractale.User exposing (..)
-import Fractale.Graph exposing (..)
-import Fractale.HotUpdate exposing (..)
-import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
-import Fractale.Error exposing (viewGqlErrors)
-import Fractale.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
-import Fractale.View exposing (mediaTension, viewPinnedTensions)
 import Codecs exposing (RecentActivityTab(..), WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
@@ -45,20 +37,19 @@ import Components.OrgaMenu as OrgaMenu
 import Components.SearchBar exposing (viewSearchBarLevel)
 import Components.TreeMenu as TreeMenu
 import Dict
-import Utils.DomEvents as Dom
-import Utils.Bool exposing (ternary)
-import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.Html exposing (showIf)
-import Utils.Maybe exposing (unwrap)
-import Utils.DomEvents exposing (onClickPD, onKeydown)
 import Form.Help as Help
 import Form.NewTension as NTF
-import Schema.Enum.NodeType as NodeType
-import Schema.Enum.RoleType as RoleType
-import Schema.Enum.TensionStatus as TensionStatus
+import Fractale.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nid2rootid, toLink)
+import Fractale.Error exposing (viewGqlErrors)
+import Fractale.Event exposing (eventToIcon, eventToLink, eventTypeToText, viewEventMedia)
+import Fractale.Form exposing (..)
+import Fractale.Graph exposing (..)
+import Fractale.HotUpdate exposing (..)
+import Fractale.User exposing (..)
+import Fractale.View exposing (mediaTension, viewPinnedTensions)
 import Generated.Route exposing (Route(..), toHref)
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, canvas, div, h6, i, input, li, p, span, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, href, id, placeholder, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onBlur, onClick, onInput)
 import Html.Keyed as Keyed
@@ -73,12 +64,20 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (fetchNodeData, queryJournal, queryLocalGraph, queryOrgaTree, queryPinnedTensionsSub)
 import Query.QueryTension exposing (queryAllTension)
+import Schema.Enum.NodeType as NodeType
+import Schema.Enum.RoleType as RoleType
+import Schema.Enum.TensionStatus as TensionStatus
 import Session exposing (CommonMsg, GlobalCmd(..), NodesQuickSearch, SessionCommon, isMobile)
 import Set exposing (Set)
 import String
 import Text as T
 import Time
 import Url exposing (Url)
+import Utils.Bool exposing (ternary)
+import Utils.Cmd exposing (send, sendNow, sendSleep)
+import Utils.DomEvents as Dom exposing (onClickPD, onKeydown)
+import Utils.Html exposing (showIf)
+import Utils.Maybe exposing (unwrap)
 
 
 
@@ -214,6 +213,7 @@ type alias Model =
     , activity_searching : Bool
     , depth : Maybe Int
     , legend : Bool
+    , welcomeOpen : Bool
     , leaders : List User
     , children_expanded : Set String
     , children_data : Dict.Dict String (GqlData NodeData)
@@ -320,6 +320,7 @@ init global flags =
             , activity_searching = False
             , depth = Nothing
             , legend = False
+            , welcomeOpen = withDefault False session.data.welcome_cards
             , leaders = []
             , children_expanded = Set.empty
             , children_data = Dict.empty
@@ -438,6 +439,7 @@ type Msg
       -- Page
     | SwitchWindow
     | SetLegend Bool
+    | ToggleWelcome
     | UpdatePath
       -- Quick search
     | LookupFocus String
@@ -548,6 +550,13 @@ update global message model =
 
         SetLegend val ->
             ( { model | legend = val }, Cmd.none, Cmd.none )
+
+        ToggleWelcome ->
+            let
+                welcomeOpen =
+                    not model.welcomeOpen
+            in
+            ( { model | welcomeOpen = welcomeOpen }, Cmd.none, send (UpdateSessionWelcomeCards welcomeOpen) )
 
         UpdatePath ->
             ( { model | path_data = fromMaybeData global.session.common.path_data Loading }, Cmd.none, Cmd.none )
@@ -1309,6 +1318,13 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
+        user =
+            global.session.common.user
+
+        -- A fresh orga (root alone) shows the welcome cards, otherwise they are toggled from the canvas buttons.
+        isFresh =
+            withMaybeData model.tree_data |> withDefault Dict.empty |> isFreshOrga
+
         focus_m =
             getNode model.node_focus.nameid model.tree_data
 
@@ -1362,7 +1378,9 @@ view_ global model =
         [ ( "canvas-column"
           , div [ class "column is-6 is-5-fullhd" ]
                 [ --viewQuickSearchBar global.session.common.user model
-                  viewCanvas global.session.common.user model
+                  showIf (model.node_focus.nameid == model.node_focus.rootnameid && (isFresh || model.welcomeOpen)) <|
+                    viewWelcomeCards (isOrgaAdmin user model) model
+                , viewCanvas user isFresh model
                 , viewFromPos model.window_pos.bottomLeft
                 ]
           )
@@ -1544,23 +1562,19 @@ viewSearchList _ model =
         ]
 
 
-viewCanvas : UserState -> Model -> Html Msg
-viewCanvas us model =
+viewCanvas : UserState -> Bool -> Model -> Html Msg
+viewCanvas us isFresh model =
     let
-        ( isAdmin, hasRole ) =
-            case us of
-                LoggedIn uctx ->
-                    ( hasLazyAdminRole uctx (withMaybeMapData (\p -> Maybe.map .mode p.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
-                    , case model.node_hovered of
-                        Just node ->
-                            Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+        isAdmin =
+            isOrgaAdmin us model
 
-                        Nothing ->
-                            False
-                    )
+        hasRole =
+            case ( us, model.node_hovered ) of
+                ( LoggedIn uctx, Just node ) ->
+                    Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
 
-                LoggedOut ->
-                    ( False, False )
+                _ ->
+                    False
 
         hasConfig =
             isAdmin || hasRole
@@ -1617,50 +1631,12 @@ viewCanvas us model =
 
         {- Hidden classes use in graphpack_d3.js -}
         --
-        -- Welcome buttons
-        --
-        , withMaybeData model.tree_data
-            |> withDefault Dict.empty
-            |> (\orga ->
-                    showIf (isFreshOrga orga) <|
-                        let
-                            p =
-                                case model.path_data of
-                                    Success path ->
-                                        FromPath path
-
-                                    _ ->
-                                        FromNameid model.node_focus.rootnameid
-                        in
-                        div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
-                            [ div
-                                [ class "button is-success"
-                                , onClick (NewTensionMsg <| NTF.OnOpen p Nothing)
-                                ]
-                                [ text (T.createNewTension model.session.lexicon) ]
-                            , div [ class "hbar", classList [ ( "is-invisible", not isAdmin ) ] ] []
-                            , div
-                                [ class "button is-success"
-                                , classList [ ( "is-invisible", not isAdmin ) ]
-                                , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
-                                ]
-                                [ text T.createNewCircle ]
-                            , div
-                                [ class "button is-success"
-                                , classList [ ( "is-invisible", not isAdmin ) ]
-                                , onClick (NewTensionMsg <| NTF.OnOpenRole p)
-                                ]
-                                [ text T.createNewRole ]
-                            ]
-               )
-
-        --
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             ((withMaybeMapData
                 (\path ->
-                    [ div
+                    [ button
                         [ class "button"
                         , title (T.add ++ "...")
                         , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path) Nothing)
@@ -1672,12 +1648,26 @@ viewCanvas us model =
                 |> withDefault []
              )
                 ++ (if isAdmin then
-                        [ div
+                        [ button
                             [ class "button"
                             , title T.inviteMembers
                             , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
                             ]
                             [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
+                        ]
+
+                    else
+                        []
+                   )
+                ++ (if model.node_focus.nameid == model.node_focus.rootnameid && not isFresh then
+                        [ button
+                            [ class "button"
+                            , type_ "button"
+                            , classList [ ( "is-active", model.welcomeOpen ) ]
+                            , title T.welcomeActions
+                            , onClick ToggleWelcome
+                            ]
+                            [ span [ style "padding" "2px" ] [ A.icon "icon-grid icon-xs" ] ]
                         ]
 
                     else
@@ -1690,13 +1680,13 @@ viewCanvas us model =
                         []
 
                     else
-                        [ div
+                        [ button
                             [ class "button"
                             , title T.goRoot
                             , onClick (NodeClicked model.node_focus.rootnameid)
                             ]
                             [ A.icon "icon-chevrons-up" ]
-                        , div
+                        , button
                             [ class "button"
                             , title T.goParent
                             , case model.path_data of
@@ -1714,7 +1704,7 @@ viewCanvas us model =
                         ]
                    )
                 ++ (if isComplex then
-                        [ div
+                        [ button
                             [ class "button buttonToggle"
                             , title T.reverseTooltip
                             , onClick ToggleGraphReverse
@@ -1760,6 +1750,92 @@ viewCanvas us model =
                 ]
             ]
         ]
+
+
+isOrgaAdmin : UserState -> Model -> Bool
+isOrgaAdmin us model =
+    case us of
+        LoggedIn uctx ->
+            hasLazyAdminRole uctx (withMaybeMapData (\g -> Maybe.map .mode g.root) model.path_data |> withDefault Nothing) model.node_focus.rootnameid
+
+        LoggedOut ->
+            False
+
+
+{-| Onboarding actions, above the canvas. Advertise what can be done in an orga.
+-}
+viewWelcomeCards : Bool -> Model -> Html Msg
+viewWelcomeCards isAdmin model =
+    let
+        p =
+            case model.path_data of
+                Success path ->
+                    FromPath path
+
+                _ ->
+                    FromNameid model.node_focus.rootnameid
+
+        tensionCard =
+            button
+                [ class "welcome-card box media is-featured"
+                , type_ "button"
+                , onClick (NewTensionMsg <| NTF.OnOpen p Nothing)
+                ]
+                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-exchange" ] ]
+                , div [ class "media-content" ]
+                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text (T.createNewTension model.session.lexicon) ]
+                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeTensionHint ]
+                    ]
+                ]
+
+        projectCard =
+            a
+                [ class "welcome-card box media is-featured"
+                , href (toLink ProjectsBaseUri model.node_focus.nameid [] ++ "?new=1")
+                ]
+                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-layout" ] ]
+                , div [ class "media-content" ]
+                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewProject ]
+                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeProjectHint ]
+                    ]
+                ]
+
+        circleCard =
+            button
+                [ class "welcome-card box media"
+                , type_ "button"
+                , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
+                ]
+                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-git-branch" ] ]
+                , div [ class "media-content" ]
+                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewCircle ]
+                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeCircleHint ]
+                    ]
+                ]
+
+        roleCard =
+            button
+                [ class "welcome-card box media"
+                , type_ "button"
+                , onClick (NewTensionMsg <| NTF.OnOpenRole p)
+                ]
+                [ div [ class "media-left" ] [ span [ class "welcome-card-icon" ] [ A.icon "icon-leaf" ] ]
+                , div [ class "media-content" ]
+                    [ div [ class "has-text-weight-semibold has-text-strong" ] [ text T.createNewRole ]
+                    , div [ class "is-size-7 is-discrete" ] [ text T.welcomeRoleHint ]
+                    ]
+                ]
+    in
+    div [ id "welcomeCards", class "columns is-multiline" ]
+        (tensionCard
+            :: (if isAdmin then
+                    [ projectCard, circleCard, roleCard ]
+
+                else
+                    []
+               )
+            |> List.map (\c -> div [ class "column is-half" ] [ c ])
+        )
 
 
 viewChildrenExplorer : Model -> Html Msg

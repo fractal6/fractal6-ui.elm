@@ -360,6 +360,18 @@ saveWindowpos x =
         }
 
 
+saveWelcomeCards : Bool -> Cmd msg
+saveWelcomeCards x =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "welcome_cards" )
+                , ( "val", JE.bool x )
+                ]
+        }
+
+
 saveRecentActivityTab : Maybe RecentActivityTab -> Cmd msg
 saveRecentActivityTab x =
     outgoing

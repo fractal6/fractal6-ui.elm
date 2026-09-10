@@ -17,6 +17,7 @@ window.addEventListener('load', _ => {
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
     // UX contexts
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
+    var welcome_cards = JSON.parse(localStorage.getItem("welcome_cards"));
     var recent_activity_tab = JSON.parse(localStorage.getItem("recent_activity_tab"));
     // Menu data
     var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
@@ -46,6 +47,7 @@ window.addEventListener('load', _ => {
                 uctx: uctx,
                 lang: lang,
                 window_pos: window_pos,
+                welcome_cards: welcome_cards,
                 recent_activity_tab: recent_activity_tab,
                 orga_menu: orga_menu,
                 tree_menu: tree_menu,

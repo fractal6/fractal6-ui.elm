@@ -1838,6 +1838,30 @@ Vous pouvez [Explorer](/explore) les organisations publiques ou créer votre [Pr
   en="Add role"
   fr="Ajouter un rôle"
 
+[createNewProject]
+  en="Create project"
+  fr="Créer un projet"
+
+[welcomeTensionHint]
+  en="Start a discussion or track work."
+  fr="Lancer une discussion ou suivre un travail."
+
+[welcomeProjectHint]
+  en="Organize work on a board."
+  fr="Organiser le travail sur un tableau."
+
+[welcomeCircleHint]
+  en="Create a team or area."
+  fr="Créer une équipe ou un domaine."
+
+[welcomeRoleHint]
+  en="Give someone a mandate."
+  fr="Confier un mandat à quelqu'un."
+
+[welcomeActions]
+  en="Actions"
+  fr="Actions"
+
 [editTitle]
   en="Edit subjet"
   fr="Editer le sujet"

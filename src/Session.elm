@@ -169,6 +169,7 @@ type alias SessionFlags =
     { uctx : Maybe JD.Value
     , lang : Maybe JD.Value
     , window_pos : Maybe JD.Value
+    , welcome_cards : Maybe Bool
     , recent_activity_tab : Maybe JD.Value
     , orga_menu : Maybe Bool
     , tree_menu : Maybe JD.Value
@@ -217,6 +218,7 @@ type alias SessionData =
     , tree_data : Maybe NodesDict
     , node_quickSearch : Maybe NodesQuickSearch
     , window_pos : Maybe WindowPos
+    , welcome_cards : Maybe Bool
     , recent_activity_tab : Maybe RecentActivityTab
     , activity_pattern : Maybe String
     , orga_menu : Maybe Bool
@@ -339,6 +341,7 @@ resetSession session flags =
         , tree_data = Nothing
         , node_quickSearch = Nothing
         , window_pos = Nothing
+        , welcome_cards = Nothing
         , recent_activity_tab = Nothing
         , activity_pattern = Nothing
         , orga_menu = Nothing
@@ -501,6 +504,7 @@ fromLocalSession url flags =
             , tree_data = Nothing
             , node_quickSearch = Nothing
             , window_pos = window_pos
+            , welcome_cards = flags.welcome_cards
             , recent_activity_tab = recent_activity_tab
             , activity_pattern = Nothing
             , orga_menu = flags.orga_menu

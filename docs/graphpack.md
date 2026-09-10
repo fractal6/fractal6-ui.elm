@@ -113,6 +113,11 @@ an item is not an outside click; the lock is only released by `ActionPanel.OnClo
 (`CLEAR_CONTEXT_MENU`): click outside, click on the tooltip, or the item's
 modal / move closing.
 
+A freshly created organisation shows `#welcomeCards` (action cards for new
+tension, new project, circle, role) above the canvas. Once the root has other
+nodes, the cards hide; a grid icon in `#canvasButtons` toggles them. The project
+card goes to `/p/{nameid}?new=1`, which `Org.Projects` reads to open the create form.
+
 The canvas is focusable (`tabindex=0`) and `canvasKeyDownEvent` navigates from
 the keyboard: ←/→ cycle siblings, ↓/Enter dive into the first child, ↑/Esc/
 Backspace go to the parent, Home goes to the root. Modifier combos are left to
