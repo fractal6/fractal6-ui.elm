@@ -215,7 +215,6 @@ type alias Model =
     , depth : Maybe Int
     , legend : Bool
     , welcomeOpen : Bool
-    , leaders : List User
     , children_expanded : Set String
     , children_data : Dict.Dict String (GqlData NodeData)
     , pinned_sub : GqlData (List NodeWithPins)
@@ -322,7 +321,6 @@ init global flags =
             , depth = Nothing
             , legend = False
             , welcomeOpen = withDefault False session.data.welcome_cards
-            , leaders = []
             , children_expanded = Set.empty
             , children_data = Dict.empty
             , pinned_sub = NotAsked
@@ -383,10 +381,13 @@ init global flags =
             else
                 []
 
+        isIdle =
+            cmds_ == []
+
         model2 =
             -- if nothing changed, assumes side data are already loaded,
             -- else they will be loaded in the NodeFocused message.
-            ternary (cmds_ == [])
+            ternary isIdle
                 { model
                     | init_tensions = not (model.recent_activity_tab == TensionTab)
                     , init_journal = not (model.recent_activity_tab == JournalTab)
@@ -399,6 +400,10 @@ init global flags =
                 ++ [ sendSleep PassedSlowLoadTreshold 500
                    , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
                    , Cmd.map TreeMenuMsg (send (TreeMenu.ScrollToElement newFocus.nameid))
+
+                   -- Re-init on the same focus (e.g. clicking the current node in the path) drops
+                   -- node_hovered: ask graphpack to resend the focused hover (tooltip menu).
+                   , ternary isIdle (Ports.focusGraphPack newFocus.nameid) Cmd.none
                    ]
     in
     ( model2
@@ -1027,7 +1032,6 @@ update global message model =
                     ( { model
                         | path_data = path_data
                         , depth = Just maxdepth
-                        , leaders = getLeaders path_data model.tree_data
                         , activity_searching = False
                         , children_expanded = Set.empty
                         , children_data = Dict.empty
@@ -1337,7 +1341,7 @@ view_ global model =
             , tid_r = withMapData (\_ -> tid) model.node_data
             , node = focus_m
             , node_data = withDefaultData initNodeData model.node_data
-            , leads = model.leaders
+            , leads = getLeaders model.path_data model.tree_data
             , session = global.session.common
             , isLazy = model.init_data
             , source = OverviewBaseUri
