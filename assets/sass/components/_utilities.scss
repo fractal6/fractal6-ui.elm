@@ -541,7 +541,9 @@ i.va {
 
 .card.is-h:not(.is-selected) {
   &:hover {
-    border-color: var(--bulma-link-invert) !important;
+    // Saturated color: contrasts with both the hover background and the page,
+    // so the rounded corners don't blend into a fuzzy arc.
+    border-color: var(--link) !important;
   }
 }
 
