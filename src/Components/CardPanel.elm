@@ -23,6 +23,7 @@ port module Components.CardPanel exposing (CardPanelResult(..), Msg(..), State, 
 
 import Assets as A
 import Auth exposing (ErrState(..), getTensionRights, parseErr)
+import Browser.Events as Events
 import Codecs exposing (CommentDraft, DraftUpdate(..))
 import Components.Comments as Comments exposing (OutType(..), viewCommentInputHeader)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (viewLabels)
@@ -64,7 +65,7 @@ import Time
 import Utils.Bool exposing (ternary)
 import Utils.Bulma as B
 import Utils.Cmd exposing (send, sendNow, sendSleep)
-import Utils.DomEvents exposing (onClickPD, onClickSP, onKeydown)
+import Utils.DomEvents as Dom exposing (onClickPD, onClickSP, onKeydown)
 import Utils.Html exposing (showIf, textH)
 import Utils.Maybe exposing (unwrap, unwrap2)
 import Utils.String exposing (upH)
@@ -294,7 +295,7 @@ update_ apis message model =
                     )
 
         OnOutsideClickClose ->
-            ( model, out0 [ Ports.outsideClickClose "closeCardPanelFromJs" "cardPanel" ] )
+            ( model, out0 [ Ports.outsideClickClose "closeCardPanelFromJs" "cardPanel" False ] )
 
         OnClose ->
             -- @warning: Ports.click to reset the outsideClickClose handler.
@@ -744,6 +745,15 @@ subscriptions (State model) =
         [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
         , closeCardPanelFromJs (always OnClose)
         ]
+            -- Escape is owned here (port called with hasEsc=False), and skipped when an inner
+            -- widget consumes it: Browser.Events subs all fire, none can stop propagation.
+            -- keydown, so the guard is read before JS widgets (emoji, mention, modal) close.
+            ++ (if hasEscConsumer model then
+                    []
+
+                else
+                    [ Events.onKeyDown (Dom.key "Escape" OnClose) ]
+               )
             ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
             ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
             ++ (Comments.subscriptions model.comments |> List.map (\s -> Sub.map CommentsMsg s))
@@ -753,6 +763,16 @@ subscriptions (State model) =
 
 
 port closeCardPanelFromJs : (() -> msg) -> Sub msg
+
+
+{-| True when an inner widget already closes on Escape.
+-}
+hasEscConsumer : Model -> Bool
+hasEscConsumer model =
+    model.modal_confirm.isOpen
+        || UserSearchPanel.isOpen_ model.assigneesPanel
+        || LabelSearchPanel.isOpen_ model.labelsPanel
+        || Comments.hasEscConsumer model.comments
 
 
 

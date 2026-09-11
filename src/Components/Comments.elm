@@ -24,6 +24,7 @@ module Components.Comments exposing
     , OutType(..)
     , State
     , getCurrentMessage
+    , hasEscConsumer
     , init
     , initWithDraft
     , kickoffUploads
@@ -1349,6 +1350,17 @@ drainNext apis tid cid queue activeByCid =
             , ApiFile.upload apis (ApiFile.CommentAnchor { tid = tid, cid = cid }) head.file (OnUploadAck cid head.filename)
             , Dict.insert cid batch1 activeByCid
             )
+
+
+{-| True when an inner widget already closes on Escape (so parents must not).
+-}
+hasEscConsumer : State -> Bool
+hasEscConsumer (State model) =
+    model.highlightedCommentId
+        /= ""
+        || model.modal_confirm.isOpen
+        || EmojiPicker.isOpen_ model.emojiPicker
+        || UserInput.isOpen_ model.userInput
 
 
 subscriptions : State -> List (Sub Msg)

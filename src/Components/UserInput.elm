@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view, viewUserSeeker)
+port module Components.UserInput exposing (Msg(..), State, init, isOpen_, subscriptions, update, view, viewUserSeeker)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -103,10 +103,15 @@ init targets isInvite multiSelect session =
 
 
 -- Global methods
---isOpen_ : State -> Bool
---isOpen_ (State model) =
---    model.isOpen
---- State Controls
+
+
+isOpen_ : State -> Bool
+isOpen_ (State model) =
+    model.isOpen
+
+
+
+-- State Controls
 
 
 reset : Model -> Model

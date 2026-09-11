@@ -204,7 +204,7 @@ update_ apis message model =
             )
 
         OnOutsideClickClose ->
-            ( model, out0 [ Ports.outsideClickClose "closeProjectSettingsPanelFromJs" "projectSettingsPanel" ] )
+            ( model, out0 [ Ports.outsideClickClose "closeProjectSettingsPanelFromJs" "projectSettingsPanel" True ] )
 
         OnClose ->
             ( { model | isOpen = False, editField = Nothing, update_result = NotAsked }, out0 [ Ports.click "" ] )

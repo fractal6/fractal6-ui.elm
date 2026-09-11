@@ -19,7 +19,7 @@
 -}
 
 
-port module Components.EmojiPicker exposing (Msg(..), State, init, subscriptions, update, viewEmojiSeeker)
+port module Components.EmojiPicker exposing (Msg(..), State, init, isOpen_, subscriptions, update, viewEmojiSeeker)
 
 import Components.EmojiData exposing (Emoji, searchEmojis)
 import Utils.DomEvents exposing (onMousedownPD)
@@ -56,6 +56,11 @@ rowSize =
 init : State
 init =
     State (resetAll { isOpen = False, pattern = "", results = [], activePos = 0, isArrowMode = False })
+
+
+isOpen_ : State -> Bool
+isOpen_ (State model) =
+    model.isOpen
 
 
 resetNav : Model -> Model

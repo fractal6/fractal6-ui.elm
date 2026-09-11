@@ -223,6 +223,11 @@ window.addEventListener('load', _ => {
     }
 })
 
+// Depth of synthetic clicks emitted by the CLICK action (Elm's `Ports.click ""`,
+// used to unregister an OUTSIDE_CLICK_CLOSE listener). They have no matching
+// mousedown, so the mousedown-inside guard must not swallow them.
+let syntheticClickDepth = 0;
+
 // Elm outgoing Ports Actions.
 // Maps actions to functions!
 export const actions = {
@@ -581,8 +586,9 @@ export const actions = {
         }, 100);
     },
     'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {
-        var id = data.target; // close the given target if a click occurs outside the div or if ESC is pressed
+        var id = data.target; // close the given target if a click occurs outside the div
         var msg = data.msg; // automatically send the given msg to Elm
+        var hasEsc = data.hasEsc; // also close on ESC, unless the caller handles it in Elm
 
         // @debug: breaks the "close on click" event of burgers and dropdowns
         //InitBulma(app, session, id);
@@ -601,7 +607,7 @@ export const actions = {
 
         // outside click listener
         const outsideClickListener = event => {
-            if (mouseDownInsideTarget) {
+            if (mouseDownInsideTarget && syntheticClickDepth === 0) {
                 mouseDownInsideTarget = false;
                 return;
             }
@@ -628,13 +634,16 @@ export const actions = {
         setTimeout(() => {
             document.addEventListener('mousedown', mouseDownListener);
             document.addEventListener('click', outsideClickListener);
-            document.addEventListener('keydown', escListener);
 
             // add listenner to global handlers LUT to clean it on navigation
             var handlers = session.bulmaHandlers;
             handlers.push(["mousedown", mouseDownListener, document, mouseDownListener])
             handlers.push(["click", outsideClickListener, document, outsideClickListener])
-            handlers.push(["keydown", escListener, document, escListener])
+
+            if (hasEsc) {
+                document.addEventListener('keydown', escListener);
+                handlers.push(["keydown", escListener, document, escListener])
+            }
 
         }, 50);
 
@@ -719,7 +728,10 @@ export const actions = {
             target = "body";
         }
         var elt = document.getElementById(target);
-        if (elt) elt.click();
+        if (elt) {
+            syntheticClickDepth++;
+            try { elt.click(); } finally { syntheticClickDepth--; }
+        }
     },
     'FORCE_RELOAD': (app, session, target) => {
         // Clear service worker caches and navigate with a cache-busting query param

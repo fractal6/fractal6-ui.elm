@@ -461,7 +461,7 @@ update_ apis message model =
         OpenColor ->
             ( { model | colorPicker = ColorPicker.open model.colorPicker }
             , if not model.colorPicker.isOpen then
-                out0 [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" ]
+                out0 [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" True ]
 
               else
                 noOut

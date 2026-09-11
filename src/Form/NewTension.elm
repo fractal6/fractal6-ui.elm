@@ -833,7 +833,7 @@ update_ apis message model =
                 ( model, noOut )
 
             else
-                ( { model | freezeOutsideClick = True }, out0 [ Ports.outsideClickClose "closeTreeSelFromJs" "tree-selector", sendSleep UnfreezeOutsideClick 250 ] )
+                ( { model | freezeOutsideClick = True }, out0 [ Ports.outsideClickClose "closeTreeSelFromJs" "tree-selector" True, sendSleep UnfreezeOutsideClick 250 ] )
 
         UnfreezeOutsideClick ->
             ( { model | freezeOutsideClick = False }, noOut )

@@ -264,7 +264,7 @@ update_ apis message model =
             )
 
         OnOutsideClickClose ->
-            ( model, out0 [ Ports.outsideClickClose "closeLinkTensionPanelFromJs" "linkTensionPanel" ] )
+            ( model, out0 [ Ports.outsideClickClose "closeLinkTensionPanelFromJs" "linkTensionPanel" True ] )
 
         OnClose ->
             -- @warning: Ports.click to reset the outsideClickClose handler.

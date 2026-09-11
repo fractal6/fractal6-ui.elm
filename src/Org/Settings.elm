@@ -1627,7 +1627,7 @@ update global message model =
         OpenPTemplateColumnColor idx ->
             ( { model | ptemplate_color_picker_idx = Just idx }
             , if model.ptemplate_color_picker_idx == Nothing then
-                Ports.outsideClickClose "cancelColorFromJs" "colorPicker"
+                Ports.outsideClickClose "cancelColorFromJs" "colorPicker" True
 
               else
                 Cmd.none
@@ -2003,7 +2003,7 @@ update global message model =
         OpenColor ->
             ( { model | colorPicker = ColorPicker.open model.colorPicker }
             , if not model.colorPicker.isOpen then
-                Cmd.batch [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" ]
+                Cmd.batch [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" True ]
 
               else
                 Cmd.none

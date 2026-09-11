@@ -647,14 +647,18 @@ focusOn target =
         }
 
 
-outsideClickClose : String -> String -> Cmd msg
-outsideClickClose msg target =
+{-| Close `target` on an outside click. `hasEsc` also closes it on Escape,
+set it to False when the caller handles Escape itself (Elm subscription).
+-}
+outsideClickClose : String -> String -> Bool -> Cmd msg
+outsideClickClose msg target hasEsc =
     outgoing
         { action = "OUTSIDE_CLICK_CLOSE"
         , data =
             JE.object
                 [ ( "msg", JE.string msg )
                 , ( "target", JE.string target )
+                , ( "hasEsc", JE.bool hasEsc )
                 ]
         }
 
